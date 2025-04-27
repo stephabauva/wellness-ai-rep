@@ -64,6 +64,7 @@ export const connectedDevices = pgTable("connected_devices", {
   lastSync: timestamp("last_sync"),
   isActive: boolean("is_active").default(true),
   metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertConnectedDeviceSchema = createInsertSchema(connectedDevices).pick({

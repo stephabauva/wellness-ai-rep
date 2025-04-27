@@ -160,7 +160,7 @@ const ConnectedDevicesSection: React.FC = () => {
                       key={device.id}
                       name={device.deviceName}
                       type={device.deviceType}
-                      connectedSince={new Date(device.createdAt)}
+                      connectedSince={device.createdAt ? new Date(device.createdAt) : new Date()}
                       lastSync={device.lastSync ? new Date(device.lastSync) : undefined}
                       features={device.metadata?.features || []}
                       onDisconnect={() => handleDisconnectDevice(device.id)}

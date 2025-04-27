@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils";
 const Sidebar: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
 
+  const handleNavClick = (section: "chat" | "health" | "devices" | "settings") => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveSection(section);
+  };
+
   return (
     <div className="hidden md:flex md:flex-shrink-0">
       <div className="flex flex-col w-20 border-r border-border bg-card">
@@ -26,12 +32,8 @@ const Sidebar: React.FC = () => {
         <div className="flex-1 flex flex-col justify-between overflow-y-auto">
           <nav className="flex-1 px-2 py-4 space-y-2">
             {/* Chat Icon */}
-            <a 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveSection("chat");
-              }}
+            <button 
+              onClick={handleNavClick("chat")}
               className={cn(
                 "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
                 activeSection === "chat" && "active"
@@ -39,15 +41,11 @@ const Sidebar: React.FC = () => {
             >
               <MessageSquare className="h-6 w-6" />
               <span className="sr-only">Chat</span>
-            </a>
+            </button>
             
             {/* Health Data Icon */}
-            <a 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveSection("health");
-              }}
+            <button 
+              onClick={handleNavClick("health")}
               className={cn(
                 "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
                 activeSection === "health" && "active"
@@ -55,15 +53,11 @@ const Sidebar: React.FC = () => {
             >
               <BarChart3 className="h-6 w-6" />
               <span className="sr-only">Health Data</span>
-            </a>
+            </button>
             
             {/* Connected Devices Icon */}
-            <a 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveSection("devices");
-              }}
+            <button 
+              onClick={handleNavClick("devices")}
               className={cn(
                 "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
                 activeSection === "devices" && "active"
@@ -71,15 +65,11 @@ const Sidebar: React.FC = () => {
             >
               <Cpu className="h-6 w-6" />
               <span className="sr-only">Connected Devices</span>
-            </a>
+            </button>
             
             {/* Settings Icon */}
-            <a 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveSection("settings");
-              }}
+            <button 
+              onClick={handleNavClick("settings")}
               className={cn(
                 "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
                 activeSection === "settings" && "active"
@@ -87,7 +77,7 @@ const Sidebar: React.FC = () => {
             >
               <Settings className="h-6 w-6" />
               <span className="sr-only">Settings</span>
-            </a>
+            </button>
           </nav>
           
           {/* User Profile */}

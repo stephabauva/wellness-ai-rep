@@ -81,11 +81,15 @@
 }
 
 .nav-icon {
-  @apply transition-all duration-200 ease-in-out;
+  @apply transition-all duration-200 ease-in-out cursor-pointer border-none outline-none;
 }
 
 .nav-icon:hover {
   @apply bg-muted text-primary;
+}
+
+.nav-icon:focus {
+  @apply outline-none ring-2 ring-primary ring-offset-1;
 }
 
 .nav-icon.active {

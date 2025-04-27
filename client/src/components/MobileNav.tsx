@@ -16,9 +16,14 @@ const MobileNav: React.FC = () => {
 
   const toggleNav = () => setIsOpen(!isOpen);
 
-  const handleNavClick = (section: string) => {
-    setActiveSection(section);
-    setIsOpen(false);
+  const handleNavClick = (section: "chat" | "health" | "devices" | "settings") => {
+    // Using a closure to properly handle click events
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setActiveSection(section);
+      setIsOpen(false);
+    };
   };
 
   return (
@@ -45,12 +50,8 @@ const MobileNav: React.FC = () => {
         isOpen ? "block" : "hidden"
       )}>
         <nav className="grid grid-cols-4 gap-2">
-          <a 
-            href="#" 
-            onClick={(e) => {
-              e.preventDefault();
-              handleNavClick("chat");
-            }}
+          <button 
+            onClick={handleNavClick("chat")}
             className={cn(
               "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
               activeSection === "chat" && "text-primary"
@@ -58,13 +59,9 @@ const MobileNav: React.FC = () => {
           >
             <MessageSquare className="h-6 w-6" />
             <span>Chat</span>
-          </a>
-          <a 
-            href="#" 
-            onClick={(e) => {
-              e.preventDefault();
-              handleNavClick("health");
-            }}
+          </button>
+          <button 
+            onClick={handleNavClick("health")}
             className={cn(
               "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
               activeSection === "health" && "text-primary"
@@ -72,13 +69,9 @@ const MobileNav: React.FC = () => {
           >
             <BarChart3 className="h-6 w-6" />
             <span>Health</span>
-          </a>
-          <a 
-            href="#" 
-            onClick={(e) => {
-              e.preventDefault();
-              handleNavClick("devices");
-            }}
+          </button>
+          <button 
+            onClick={handleNavClick("devices")}
             className={cn(
               "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
               activeSection === "devices" && "text-primary"
@@ -86,13 +79,9 @@ const MobileNav: React.FC = () => {
           >
             <Cpu className="h-6 w-6" />
             <span>Devices</span>
-          </a>
-          <a 
-            href="#" 
-            onClick={(e) => {
-              e.preventDefault();
-              handleNavClick("settings");
-            }}
+          </button>
+          <button 
+            onClick={handleNavClick("settings")}
             className={cn(
               "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
               activeSection === "settings" && "text-primary"
@@ -100,7 +89,7 @@ const MobileNav: React.FC = () => {
           >
             <Settings className="h-6 w-6" />
             <span>Settings</span>
-          </a>
+          </button>
         </nav>
       </div>
     </div>

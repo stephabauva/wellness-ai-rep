@@ -190,8 +190,7 @@ export class MemStorage implements IStorage {
       isActive: true,
       metadata: {
         features: ["Step tracking", "Heart rate", "Sleep tracking", "Exercise detection"]
-      },
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30) // 30 days ago
+      }
     };
     
     const scale: ConnectedDevice = {
@@ -203,8 +202,7 @@ export class MemStorage implements IStorage {
       isActive: true,
       metadata: {
         features: ["Weight", "Body fat", "Muscle mass", "BMI"]
-      },
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15) // 15 days ago
+      }
     };
     
     this.devices.set(smartwatch.id, smartwatch);
@@ -321,8 +319,7 @@ export class MemStorage implements IStorage {
     
     const newDevice: ConnectedDevice = {
       id,
-      ...device,
-      createdAt: new Date()
+      ...device
     };
     
     this.devices.set(id, newDevice);

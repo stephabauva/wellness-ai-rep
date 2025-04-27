@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { 
   Menu, 
   MessageSquare, 
@@ -10,24 +10,41 @@ import {
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
+const NavButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}> = ({ active, onClick, label, icon }) => {
+  return (
+    <button 
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
+        active && "text-primary"
+      )}
+      aria-label={label}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+};
+
 const MobileNav: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
 
-  const toggleNav = () => setIsOpen(!isOpen);
+  const toggleNav = useCallback(() => setIsOpen(prev => !prev), []);
 
-  const handleNavClick = (section: "chat" | "health" | "devices" | "settings") => {
-    // Using a closure to properly handle click events
-    return (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setActiveSection(section);
-      setIsOpen(false);
-    };
-  };
+  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "settings") => {
+    setActiveSection(section);
+    setIsOpen(false);
+  }, [setActiveSection]);
 
   return (
-    <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-card border-b border-border px-4 py-2">
+    <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-4 py-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center mr-2">
@@ -36,6 +53,7 @@ const MobileNav: React.FC = () => {
           <span className="font-semibold text-lg">WellnessAI</span>
         </div>
         <button 
+          type="button"
           className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none"
           onClick={toggleNav}
           aria-label="Toggle mobile menu"
@@ -50,46 +68,33 @@ const MobileNav: React.FC = () => {
         isOpen ? "block" : "hidden"
       )}>
         <nav className="grid grid-cols-4 gap-2">
-          <button 
-            onClick={handleNavClick("chat")}
-            className={cn(
-              "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
-              activeSection === "chat" && "text-primary"
-            )}
-          >
-            <MessageSquare className="h-6 w-6" />
-            <span>Chat</span>
-          </button>
-          <button 
-            onClick={handleNavClick("health")}
-            className={cn(
-              "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
-              activeSection === "health" && "text-primary"
-            )}
-          >
-            <BarChart3 className="h-6 w-6" />
-            <span>Health</span>
-          </button>
-          <button 
-            onClick={handleNavClick("devices")}
-            className={cn(
-              "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
-              activeSection === "devices" && "text-primary"
-            )}
-          >
-            <Cpu className="h-6 w-6" />
-            <span>Devices</span>
-          </button>
-          <button 
-            onClick={handleNavClick("settings")}
-            className={cn(
-              "flex flex-col items-center p-2 text-xs rounded hover:bg-muted",
-              activeSection === "settings" && "text-primary"
-            )}
-          >
-            <Settings className="h-6 w-6" />
-            <span>Settings</span>
-          </button>
+          <NavButton 
+            active={activeSection === "chat"}
+            onClick={() => handleNavClick("chat")}
+            label="Chat"
+            icon={<MessageSquare className="h-6 w-6" />}
+          />
+          
+          <NavButton 
+            active={activeSection === "health"}
+            onClick={() => handleNavClick("health")}
+            label="Health"
+            icon={<BarChart3 className="h-6 w-6" />}
+          />
+          
+          <NavButton 
+            active={activeSection === "devices"}
+            onClick={() => handleNavClick("devices")}
+            label="Devices"
+            icon={<Cpu className="h-6 w-6" />}
+          />
+          
+          <NavButton 
+            active={activeSection === "settings"}
+            onClick={() => handleNavClick("settings")}
+            label="Settings"
+            icon={<Settings className="h-6 w-6" />}
+          />
         </nav>
       </div>
     </div>

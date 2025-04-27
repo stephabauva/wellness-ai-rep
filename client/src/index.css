@@ -81,7 +81,8 @@
 }
 
 .nav-icon {
-  @apply transition-all duration-200 ease-in-out cursor-pointer border-none outline-none;
+  @apply transition-all duration-200 ease-in-out cursor-pointer border-none outline-none relative;
+  z-index: 100; /* Ensure higher z-index for clickability */
 }
 
 .nav-icon:hover {
@@ -90,6 +91,10 @@
 
 .nav-icon:focus {
   @apply outline-none ring-2 ring-primary ring-offset-1;
+}
+
+.nav-icon:active {
+  @apply scale-95; /* Give a slight push effect when clicked */
 }
 
 .nav-icon.active {

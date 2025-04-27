@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { 
   MessageSquare, 
   BarChart3, 
@@ -9,17 +9,37 @@ import {
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
+const NavButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}> = ({ active, onClick, label, icon }) => {
+  return (
+    <button 
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
+        active && "active"
+      )}
+      aria-label={label}
+    >
+      {icon}
+      <span className="sr-only">{label}</span>
+    </button>
+  );
+};
+
 const Sidebar: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
 
-  const handleNavClick = (section: "chat" | "health" | "devices" | "settings") => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "settings") => {
     setActiveSection(section);
-  };
+  }, [setActiveSection]);
 
   return (
-    <div className="hidden md:flex md:flex-shrink-0">
+    <div className="hidden md:flex md:flex-shrink-0 z-50">
       <div className="flex flex-col w-20 border-r border-border bg-card">
         {/* App Logo */}
         <div className="flex-shrink-0 flex items-center justify-center h-16 border-b border-border">
@@ -31,58 +51,41 @@ const Sidebar: React.FC = () => {
         {/* Navigation Icons */}
         <div className="flex-1 flex flex-col justify-between overflow-y-auto">
           <nav className="flex-1 px-2 py-4 space-y-2">
-            {/* Chat Icon */}
-            <button 
-              onClick={handleNavClick("chat")}
-              className={cn(
-                "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
-                activeSection === "chat" && "active"
-              )}
-            >
-              <MessageSquare className="h-6 w-6" />
-              <span className="sr-only">Chat</span>
-            </button>
+            <NavButton 
+              active={activeSection === "chat"}
+              onClick={() => handleNavClick("chat")}
+              label="Chat"
+              icon={<MessageSquare className="h-6 w-6" />}
+            />
             
-            {/* Health Data Icon */}
-            <button 
-              onClick={handleNavClick("health")}
-              className={cn(
-                "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
-                activeSection === "health" && "active"
-              )}
-            >
-              <BarChart3 className="h-6 w-6" />
-              <span className="sr-only">Health Data</span>
-            </button>
+            <NavButton 
+              active={activeSection === "health"}
+              onClick={() => handleNavClick("health")}
+              label="Health Data"
+              icon={<BarChart3 className="h-6 w-6" />}
+            />
             
-            {/* Connected Devices Icon */}
-            <button 
-              onClick={handleNavClick("devices")}
-              className={cn(
-                "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
-                activeSection === "devices" && "active"
-              )}
-            >
-              <Cpu className="h-6 w-6" />
-              <span className="sr-only">Connected Devices</span>
-            </button>
+            <NavButton 
+              active={activeSection === "devices"}
+              onClick={() => handleNavClick("devices")}
+              label="Connected Devices"
+              icon={<Cpu className="h-6 w-6" />}
+            />
             
-            {/* Settings Icon */}
-            <button 
-              onClick={handleNavClick("settings")}
-              className={cn(
-                "nav-icon flex items-center justify-center h-12 w-12 rounded-lg mx-auto",
-                activeSection === "settings" && "active"
-              )}
-            >
-              <Settings className="h-6 w-6" />
-              <span className="sr-only">Settings</span>
-            </button>
+            <NavButton 
+              active={activeSection === "settings"}
+              onClick={() => handleNavClick("settings")}
+              label="Settings"
+              icon={<Settings className="h-6 w-6" />}
+            />
           </nav>
           
           {/* User Profile */}
           <div className="flex-shrink-0 px-2 py-4 space-y-1">
-            <button className="flex items-center justify-center h-12 w-12 rounded-full mx-auto bg-muted hover:bg-muted/80 focus:outline-none">
+            <button 
+              type="button"
+              className="flex items-center justify-center h-12 w-12 rounded-full mx-auto bg-muted hover:bg-muted/80 focus:outline-none"
+            >
               <span className="text-sm font-medium text-foreground">JS</span>
             </button>
           </div>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
 import { CoachingMode } from "@shared/schema";
 
 type ActiveSection = "chat" | "health" | "devices" | "settings";
@@ -17,16 +17,28 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [activeSection, setActiveSection] = useState<ActiveSection>("chat");
-  const [coachingMode, setCoachingMode] = useState<string>("weight-loss");
+  const [activeSection, setActiveSectionState] = useState<ActiveSection>("chat");
+  const [coachingMode, setCoachingModeState] = useState<string>("weight-loss");
+  
+  // Memoized callback functions to prevent unnecessary re-renders
+  const setActiveSection = useCallback((section: ActiveSection) => {
+    setActiveSectionState(section);
+  }, []);
+
+  const setCoachingMode = useCallback((mode: string) => {
+    setCoachingModeState(mode);
+  }, []);
+  
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    activeSection,
+    setActiveSection,
+    coachingMode,
+    setCoachingMode
+  }), [activeSection, setActiveSection, coachingMode, setCoachingMode]);
   
   return (
-    <AppContext.Provider value={{
-      activeSection,
-      setActiveSection,
-      coachingMode,
-      setCoachingMode
-    }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

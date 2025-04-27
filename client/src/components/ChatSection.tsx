@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Send, Mic, MicOff } from "lucide-react";
 import { CoachSelect } from "@/components/ui/coach-select";
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,51 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
 
+// Add TypeScript definitions for SpeechRecognition
+interface SpeechRecognition {
+  new(): SpeechRecognition;
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onstart: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognition;
+    webkitSpeechRecognition: SpeechRecognition;
+  }
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative;
+  isFinal: boolean;
+  length: number;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
 type Message = {
   id: string;
   content: string;
@@ -22,6 +67,7 @@ type Message = {
 const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -86,6 +132,79 @@ const ChatSection: React.FC = () => {
   
   const handleDownloadPDF = () => {
     downloadReportMutation.mutate();
+  };
+  
+  // Handle voice input
+  const toggleVoiceInput = () => {
+    if (!isListening) {
+      startListening();
+    } else {
+      stopListening();
+    }
+  };
+  
+  const startListening = () => {
+    if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+      toast({
+        title: "Not Supported",
+        description: "Voice input is not supported in your browser.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Use the SpeechRecognition API
+      // Use any type to work around TypeScript limitations with browser APIs
+      const SpeechRecognition = (window.SpeechRecognition || window.webkitSpeechRecognition) as any;
+      const recognition = new SpeechRecognition();
+      
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast({
+          title: "Listening...",
+          description: "Speak now to add your message.",
+        });
+      };
+      
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        const transcript = event.results[0][0].transcript;
+        setInputMessage(prev => prev + transcript);
+      };
+      
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+        toast({
+          title: "Error",
+          description: "There was a problem with voice recognition.",
+          variant: "destructive"
+        });
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      recognition.start();
+    } catch (error) {
+      console.error('Failed to initialize speech recognition', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize speech recognition.",
+        variant: "destructive"
+      });
+      setIsListening(false);
+    }
+  };
+  
+  const stopListening = () => {
+    setIsListening(false);
+    // The recognition will stop automatically due to onend event
   };
   
   // Scroll to bottom when messages change
@@ -167,6 +286,16 @@ const ChatSection: React.FC = () => {
             placeholder="Type your message..."
             className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
+          <Button 
+            onClick={toggleVoiceInput}
+            variant="ghost" 
+            size="icon" 
+            className={`ml-1 text-muted-foreground hover:text-foreground ${isListening ? 'text-red-500 hover:text-red-600' : ''}`}
+            title={isListening ? "Stop voice input" : "Voice input"}
+            aria-label={isListening ? "Stop voice input" : "Voice input"}
+          >
+            {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+          </Button>
           <Button 
             onClick={handleSendMessage} 
             disabled={sendMessageMutation.isPending || !inputMessage.trim()} 

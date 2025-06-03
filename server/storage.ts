@@ -82,8 +82,9 @@ export class MemStorage implements IStorage {
         pushNotifications: true,
         emailSummaries: true,
         dataSharing: false,
-        aiProvider: "google",
-        aiModel: "gemini-2.0-flash-exp"
+        aiProvider: "openai",
+        aiModel: "gpt-4o",
+        language: "en"
       },
       createdAt: new Date()
     };

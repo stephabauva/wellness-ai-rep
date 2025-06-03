@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useTranslation } from "react-i18next";
 import { 
   Form, 
   FormControl, 
@@ -43,6 +44,7 @@ const formSchema = z.object({
   dataSharing: z.boolean(),
   aiProvider: z.enum(["openai", "google"]),
   aiModel: z.string(),
+  language: z.enum(["en", "fr"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -50,6 +52,7 @@ type FormValues = z.infer<typeof formSchema>;
 const SettingsSection: React.FC = () => {
   const { toast } = useToast();
   const { coachingMode, setCoachingMode } = useAppContext();
+  const { t, i18n } = useTranslation();
   
   // Fetch user settings
   const { data: settings, isLoading } = useQuery({

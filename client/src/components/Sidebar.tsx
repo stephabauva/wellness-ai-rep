@@ -56,28 +56,28 @@ const Sidebar: React.FC = () => {
             <NavButton 
               active={activeSection === "chat"}
               onClick={() => handleNavClick("chat")}
-              label="Chat"
+              label={t("navigation.chat")}
               icon={<MessageSquare className="h-6 w-6" />}
             />
             
             <NavButton 
               active={activeSection === "health"}
               onClick={() => handleNavClick("health")}
-              label="Health Data"
+              label={t("navigation.health")}
               icon={<BarChart3 className="h-6 w-6" />}
             />
             
             <NavButton 
               active={activeSection === "devices"}
               onClick={() => handleNavClick("devices")}
-              label="Connected Devices"
+              label={t("navigation.devices")}
               icon={<Cpu className="h-6 w-6" />}
             />
             
             <NavButton 
               active={activeSection === "settings"}
               onClick={() => handleNavClick("settings")}
-              label="Settings"
+              label={t("navigation.settings")}
               icon={<Settings className="h-6 w-6" />}
             />
           </nav>

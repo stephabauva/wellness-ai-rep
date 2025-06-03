@@ -144,20 +144,6 @@ const SettingsSection: React.FC = () => {
   }, [settings, form]);
   
   const onSubmit = (data: FormValues) => {
-    // Update language immediately if changed
-    if (data.language !== i18n.language) {
-      i18n.changeLanguage(data.language).then(() => {
-        // Force re-render by updating localStorage and triggering storage event
-        localStorage.setItem('i18nextLng', data.language);
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'i18nextLng',
-          newValue: data.language
-        }));
-        // Force page reload to ensure all components update
-        window.location.reload();
-      });
-    }
-    
     updateSettingsMutation.mutate(data);
     
     // Update coaching mode in context if primary goal changed
@@ -615,7 +601,12 @@ const SettingsSection: React.FC = () => {
                           <FormLabel>{t("settings.language")}</FormLabel>
                           <Select onValueChange={(value) => {
                             field.onChange(value);
-                            i18n.changeLanguage(value);
+                            // Immediately change language and force reload
+                            i18n.changeLanguage(value).then(() => {
+                              localStorage.setItem('i18nextLng', value);
+                              // Force complete page reload to ensure all translations update
+                              setTimeout(() => window.location.reload(), 100);
+                            });
                           }} value={field.value}>
                             <FormControl>
                               <SelectTrigger>

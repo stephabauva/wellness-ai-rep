@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { translations, type Language, type TranslationKey } from "@/lib/translations";
-import { SupportedLanguage } from "@shared/schema";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+
+type Language = 'en' | 'fr';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: TranslationKey) => string;
+  changeLanguage: (lang: Language) => void;
+  t: (key: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -15,18 +17,24 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('en');
+  const { t, i18n: i18nInstance } = useTranslation();
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('i18nextLng');
+    return (saved === 'fr' ? 'fr' : 'en') as Language;
+  });
 
-  const setLanguage = useCallback((lang: Language) => {
-    setLanguageState(lang);
-  }, []);
+  const changeLanguage = async (lang: Language) => {
+    setLanguage(lang);
+    await i18nInstance.changeLanguage(lang);
+    localStorage.setItem('i18nextLng', lang);
+  };
 
-  const t = useCallback((key: TranslationKey): string => {
-    return translations[language][key] || translations.en[key] || key;
-  }, [language]);
+  useEffect(() => {
+    i18nInstance.changeLanguage(language);
+  }, [language, i18nInstance]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, changeLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );

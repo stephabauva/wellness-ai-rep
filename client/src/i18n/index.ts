@@ -5,10 +5,14 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 
+// Get the saved language or default to 'en'
+const savedLanguage = localStorage.getItem('i18nextLng') || 'en';
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    lng: savedLanguage, // Set initial language explicitly
     fallbackLng: 'en',
     debug: false,
     
@@ -26,8 +30,9 @@ i18n
     },
     
     detection: {
-      order: ['localStorage', 'sessionStorage', 'navigator'],
-      caches: ['localStorage', 'sessionStorage']
+      order: ['localStorage'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'i18nextLng'
     }
   });
 

@@ -607,7 +607,7 @@ const SettingsSection: React.FC = () => {
                           <Select onValueChange={(value) => {
                             field.onChange(value);
                             i18n.changeLanguage(value);
-                          }} defaultValue={field.value}>
+                          }} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select language" />

@@ -1,0 +1,95 @@
+{
+  "navigation": {
+    "chat": "Chat",
+    "health": "Health",
+    "devices": "Devices",
+    "settings": "Settings"
+  },
+  "welcome": {
+    "message": "Welcome to your AI wellness coach! I'm here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you're focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I'm ready to help. What would you like to work on today?"
+  },
+  "chat": {
+    "typeMessage": "Type your message...",
+    "send": "Send",
+    "downloadReport": "Download Health Report"
+  },
+  "coachingModes": {
+    "weight-loss": "Weight Loss",
+    "muscle-gain": "Muscle Gain",
+    "fitness": "Fitness",
+    "mental-wellness": "Mental Wellness",
+    "nutrition": "Nutrition"
+  },
+  "settings": {
+    "personalInformation": "Personal Information",
+    "name": "Name",
+    "email": "Email",
+    "coachingPreferences": "Coaching Preferences",
+    "primaryGoal": "Primary Goal",
+    "coachStyle": "Coach Style",
+    "reminderFrequency": "Reminder Frequency",
+    "focusAreas": "Focus Areas",
+    "preferences": "Preferences",
+    "darkMode": "Dark Mode",
+    "pushNotifications": "Push Notifications",
+    "emailSummaries": "Email Summaries",
+    "dataSharing": "Data Sharing",
+    "language": "Language",
+    "english": "English",
+    "french": "Français",
+    "aiConfiguration": "AI Assistant Configuration",
+    "aiProvider": "AI Provider",
+    "aiModel": "AI Model",
+    "chooseAIProvider": "Choose your preferred AI provider for coaching responses",
+    "selectAIModel": "Select the specific model for enhanced coaching capabilities",
+    "saveChanges": "Save Changes",
+    "settingsUpdated": "Settings updated",
+    "settingsUpdatedDesc": "Your settings have been saved successfully."
+  },
+  "coachStyles": {
+    "motivational": "Motivational",
+    "gentle": "Gentle",
+    "analytical": "Analytical"
+  },
+  "reminderFrequencies": {
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "biweekly": "Bi-weekly"
+  },
+  "focusAreas": {
+    "exercise": "Exercise",
+    "nutrition": "Nutrition",
+    "sleep": "Sleep",
+    "stress": "Stress Management"
+  },
+  "health": {
+    "healthData": "Health Data",
+    "steps": "Steps",
+    "heartRate": "Heart Rate",
+    "weight": "Weight",
+    "sleep": "Sleep"
+  },
+  "devices": {
+    "connectedDevices": "Connected Devices",
+    "connectDevice": "Connect Device",
+    "deviceName": "Device Name",
+    "deviceType": "Device Type",
+    "smartwatch": "Smartwatch",
+    "scale": "Scale",
+    "fitnessTracker": "Fitness Tracker",
+    "heartRateMonitor": "Heart Rate Monitor",
+    "bloodPressureMonitor": "Blood Pressure Monitor",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "deviceSettings": "Device Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close"
+  }
+}

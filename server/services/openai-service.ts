@@ -45,7 +45,6 @@ class ChatService {
     aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" }
   ): Promise<string> {
     try {
-      // Validate coaching mode
       const mode = coachingModes.includes(coachingMode as CoachingMode) 
         ? coachingMode 
         : "weight-loss";
@@ -65,7 +64,7 @@ class ChatService {
 
   private async getOpenAIResponse(userMessage: string, persona: string, model: OpenAIModel): Promise<string> {
     const response = await this.openai.chat.completions.create({
-      model: model, // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      model: model,
       messages: [
         {
           role: "system",
@@ -154,7 +153,6 @@ User: ${userMessage}`;
         const response = await result.response;
         const text = response.text();
         
-        // Parse bullet points or lines into array
         return text.split('\n')
           .filter(line => line.trim() && (line.includes('•') || line.includes('-') || line.includes('*')))
           .map(line => line.replace(/^[•\-*]\s*/, '').trim())
@@ -170,7 +168,6 @@ User: ${userMessage}`;
     }
   }
 
-  // Get available models for each provider
   getAvailableModels(): Record<AIProvider, { id: string; name: string; description: string }[]> {
     return {
       openai: [

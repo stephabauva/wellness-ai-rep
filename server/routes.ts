@@ -9,7 +9,9 @@ import { nanoid } from "nanoid";
 // Message payload schema
 const messageSchema = z.object({
   content: z.string().min(1),
-  coachingMode: z.string().optional().default("weight-loss")
+  coachingMode: z.string().optional().default("weight-loss"),
+  aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
+  aiModel: z.string().optional().default("gpt-4o")
 });
 
 // Device connect schema
@@ -29,7 +31,9 @@ const settingsUpdateSchema = z.object({
   darkMode: z.boolean().optional(),
   pushNotifications: z.boolean().optional(),
   emailSummaries: z.boolean().optional(),
-  dataSharing: z.boolean().optional()
+  dataSharing: z.boolean().optional(),
+  aiProvider: z.enum(["openai", "google"]).optional(),
+  aiModel: z.string().optional()
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -48,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send a new message
   app.post("/api/messages", async (req, res) => {
     try {
-      const { content, coachingMode } = messageSchema.parse(req.body);
+      const { content, coachingMode, aiProvider, aiModel } = messageSchema.parse(req.body);
       
       // Save user message
       const userMessage = await storage.createMessage({
@@ -57,8 +61,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUserMessage: true
       });
       
-      // Get AI response from OpenAI
-      const aiResponse = await chatService.getChatResponse(content, coachingMode);
+      // Get AI response with provider configuration
+      const aiConfig = { provider: aiProvider, model: aiModel };
+      const aiResponse = await chatService.getChatResponse(content, coachingMode, aiConfig);
       
       // Save AI message
       const aiMessage = await storage.createMessage({
@@ -198,6 +203,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reportData);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate health report" });
+    }
+  });
+
+  // Get available AI models
+  app.get("/api/ai-models", async (req, res) => {
+    try {
+      const models = chatService.getAvailableModels();
+      res.json(models);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch AI models" });
     }
   });
   

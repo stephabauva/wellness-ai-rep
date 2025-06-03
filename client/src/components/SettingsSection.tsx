@@ -41,6 +41,8 @@ const formSchema = z.object({
   pushNotifications: z.boolean(),
   emailSummaries: z.boolean(),
   dataSharing: z.boolean(),
+  aiProvider: z.enum(["openai", "google"]),
+  aiModel: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,6 +57,16 @@ const SettingsSection: React.FC = () => {
     queryFn: async () => {
       const response = await fetch('/api/settings');
       if (!response.ok) throw new Error('Failed to fetch settings');
+      return await response.json();
+    }
+  });
+
+  // Fetch available AI models
+  const { data: aiModels, isLoading: modelsLoading } = useQuery({
+    queryKey: ['/api/ai-models'],
+    queryFn: async () => {
+      const response = await fetch('/api/ai-models');
+      if (!response.ok) throw new Error('Failed to fetch AI models');
       return await response.json();
     }
   });

@@ -83,18 +83,19 @@ export class MemStorage implements IStorage {
         emailSummaries: true,
         dataSharing: false,
         aiProvider: "google",
-        aiModel: "gemini-2.0-flash-exp"
+        aiModel: "gemini-2.0-flash-exp",
+        language: "en"
       },
       createdAt: new Date()
     };
     this.users.set(1, defaultUser);
     
-    // Create welcome message
+    // Create welcome message (will be translated on frontend)
     const initialMessages: ChatMessage[] = [
       {
         id: this.messageId++,
         userId: 1,
-        content: "Welcome to your AI wellness coach! I'm here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you're focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I'm ready to help. What would you like to work on today?",
+        content: "welcomeMessage", // Translation key
         isUserMessage: false,
         timestamp: new Date()
       }

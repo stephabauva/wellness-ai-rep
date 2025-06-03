@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
@@ -66,6 +67,7 @@ type Message = {
 
 const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
+  const { t } = useLanguage();
   const [inputMessage, setInputMessage] = useState("");
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -256,7 +258,7 @@ const ChatSection: React.FC = () => {
           messages?.map((message) => (
             <ChatMessage
               key={message.id}
-              message={message.content}
+              message={message.content === "welcomeMessage" ? t("welcomeMessage") : message.content}
               isUser={message.isUserMessage}
               timestamp={new Date(message.timestamp)}
             />

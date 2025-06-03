@@ -1,0 +1,95 @@
+{
+  "navigation": {
+    "chat": "Chat",
+    "health": "Santé",
+    "devices": "Appareils",
+    "settings": "Paramètres"
+  },
+  "welcome": {
+    "message": "Bienvenue chez votre coach de bien-être IA ! Je suis là pour vous accompagner dans votre parcours de bien-être avec des conseils personnalisés adaptés à vos objectifs. Que vous vous concentriez sur la perte de poids, la prise de muscle, la forme physique, le bien-être mental ou la nutrition, je suis prêt à vous aider. Sur quoi aimeriez-vous travailler aujourd'hui ?"
+  },
+  "chat": {
+    "typeMessage": "Tapez votre message...",
+    "send": "Envoyer",
+    "downloadReport": "Télécharger le rapport de santé"
+  },
+  "coachingModes": {
+    "weight-loss": "Perte de poids",
+    "muscle-gain": "Prise de muscle",
+    "fitness": "Forme physique",
+    "mental-wellness": "Bien-être mental",
+    "nutrition": "Nutrition"
+  },
+  "settings": {
+    "personalInformation": "Informations personnelles",
+    "name": "Nom",
+    "email": "Email",
+    "coachingPreferences": "Préférences de coaching",
+    "primaryGoal": "Objectif principal",
+    "coachStyle": "Style de coach",
+    "reminderFrequency": "Fréquence des rappels",
+    "focusAreas": "Domaines d'attention",
+    "preferences": "Préférences",
+    "darkMode": "Mode sombre",
+    "pushNotifications": "Notifications push",
+    "emailSummaries": "Résumés par email",
+    "dataSharing": "Partage de données",
+    "language": "Langue",
+    "english": "English",
+    "french": "Français",
+    "aiConfiguration": "Configuration de l'assistant IA",
+    "aiProvider": "Fournisseur IA",
+    "aiModel": "Modèle IA",
+    "chooseAIProvider": "Choisissez votre fournisseur IA préféré pour les réponses de coaching",
+    "selectAIModel": "Sélectionnez le modèle spécifique pour des capacités de coaching améliorées",
+    "saveChanges": "Enregistrer les modifications",
+    "settingsUpdated": "Paramètres mis à jour",
+    "settingsUpdatedDesc": "Vos paramètres ont été enregistrés avec succès."
+  },
+  "coachStyles": {
+    "motivational": "Motivant",
+    "gentle": "Doux",
+    "analytical": "Analytique"
+  },
+  "reminderFrequencies": {
+    "daily": "Quotidien",
+    "weekly": "Hebdomadaire",
+    "biweekly": "Bi-hebdomadaire"
+  },
+  "focusAreas": {
+    "exercise": "Exercice",
+    "nutrition": "Nutrition",
+    "sleep": "Sommeil",
+    "stress": "Gestion du stress"
+  },
+  "health": {
+    "healthData": "Données de santé",
+    "steps": "Pas",
+    "heartRate": "Rythme cardiaque",
+    "weight": "Poids",
+    "sleep": "Sommeil"
+  },
+  "devices": {
+    "connectedDevices": "Appareils connectés",
+    "connectDevice": "Connecter un appareil",
+    "deviceName": "Nom de l'appareil",
+    "deviceType": "Type d'appareil",
+    "smartwatch": "Montre connectée",
+    "scale": "Balance",
+    "fitnessTracker": "Traqueur de fitness",
+    "heartRateMonitor": "Moniteur de fréquence cardiaque",
+    "bloodPressureMonitor": "Tensiomètre",
+    "connect": "Connecter",
+    "disconnect": "Déconnecter",
+    "deviceSettings": "Paramètres de l'appareil"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer"
+  }
+}

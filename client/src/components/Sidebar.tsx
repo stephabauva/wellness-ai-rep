@@ -6,6 +6,7 @@ import {
   Settings, 
   Zap
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ const NavButton: React.FC<{
 
 const Sidebar: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
+  const { t } = useTranslation();
 
   const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "settings") => {
     setActiveSection(section);

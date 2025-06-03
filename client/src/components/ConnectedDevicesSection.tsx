@@ -9,10 +9,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ConnectedDevicesSection: React.FC = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   // Fetch connected devices
   const { data: devices, isLoading: loadingDevices } = useQuery({

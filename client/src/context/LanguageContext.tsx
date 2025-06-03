@@ -17,25 +17,6 @@ interface LanguageProviderProps {
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('en');
 
-  // Sync with user settings on mount and when settings change
-  React.useEffect(() => {
-    const fetchUserLanguage = async () => {
-      try {
-        const response = await fetch('/api/settings');
-        if (response.ok) {
-          const settings = await response.json();
-          if (settings.language && settings.language !== language) {
-            setLanguageState(settings.language);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch user language preference:', error);
-      }
-    };
-
-    fetchUserLanguage();
-  }, []);
-
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
   }, []);

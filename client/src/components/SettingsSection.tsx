@@ -29,7 +29,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/context/AppContext";
-import { useLanguage } from "@/context/LanguageContext";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -44,7 +43,6 @@ const formSchema = z.object({
   dataSharing: z.boolean(),
   aiProvider: z.enum(["openai", "google"]),
   aiModel: z.string(),
-  language: z.enum(["en", "fr"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,7 +50,6 @@ type FormValues = z.infer<typeof formSchema>;
 const SettingsSection: React.FC = () => {
   const { toast } = useToast();
   const { coachingMode, setCoachingMode } = useAppContext();
-  const { language, setLanguage, t } = useLanguage();
   
   // Fetch user settings
   const { data: settings, isLoading } = useQuery({
@@ -79,14 +76,8 @@ const SettingsSection: React.FC = () => {
     mutationFn: async (data: FormValues) => {
       return apiRequest('PATCH', '/api/settings', data);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
-      
-      // Update language context immediately when language changes
-      if (variables.language && variables.language !== language) {
-        setLanguage(variables.language);
-      }
-      
       toast({
         title: "Settings updated",
         description: "Your settings have been saved successfully.",
@@ -117,17 +108,11 @@ const SettingsSection: React.FC = () => {
       dataSharing: settings?.dataSharing || false,
       aiProvider: settings?.aiProvider || "google",
       aiModel: settings?.aiModel || "gemini-2.0-flash-exp",
-      language: settings?.language || language,
     }
   });
   
   const onSubmit = (data: FormValues) => {
     updateSettingsMutation.mutate(data);
-    
-    // Update language in context if changed
-    if (data.language !== language) {
-      setLanguage(data.language);
-    }
     
     // Update coaching mode in context if primary goal changed
     if (data.primaryGoal !== coachingMode) {
@@ -562,30 +547,6 @@ const SettingsSection: React.FC = () => {
                           </Select>
                           <FormDescription>
                             Select the specific model for enhanced coaching capabilities
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Language</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select language" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="en">English</SelectItem>
-                              <SelectItem value="fr">Français</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Choose your preferred language for the interface
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

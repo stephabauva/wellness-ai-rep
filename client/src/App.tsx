@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import { AppProvider } from "@/context/AppContext";
-import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "next-themes";
 
 function Router() {
@@ -18,28 +18,16 @@ function Router() {
   );
 }
 
-function AppWithLanguageKey() {
-  const { language } = useLanguage();
-  
-  return (
-    <div key={language}>
-      <AppProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </AppProvider>
-    </div>
-  );
-}
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class">
-        <LanguageProvider>
-          <AppWithLanguageKey />
-        </LanguageProvider>
+        <AppProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AppProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

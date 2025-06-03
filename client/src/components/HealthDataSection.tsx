@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest } from "@/lib/queryClient";
 import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/context/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart,
@@ -27,7 +26,6 @@ import {
 const HealthDataSection: React.FC = () => {
   const [timeRange, setTimeRange] = useState("7days");
   const { toast } = useToast();
-  const { t } = useLanguage();
   
   // Fetch health data
   const { data: healthData, isLoading } = useQuery({
@@ -49,7 +47,7 @@ const HealthDataSection: React.FC = () => {
     onSuccess: (data) => {
       generatePDF(data);
       toast({
-        title: t("downloadReport"),
+        title: "Report downloaded",
         description: "Your health report has been downloaded successfully.",
       });
     },
@@ -97,7 +95,7 @@ const HealthDataSection: React.FC = () => {
       <div className="flex-1 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">{t("healthData")}</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
             <div className="mt-4 md:mt-0 flex space-x-2">
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger className="w-[180px]">

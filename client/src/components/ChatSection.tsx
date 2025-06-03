@@ -80,13 +80,25 @@ const ChatSection: React.FC = () => {
       return await response.json() as Message[];
     }
   });
+
+  // Get user settings for AI configuration
+  const { data: settings } = useQuery({
+    queryKey: ['/api/settings'],
+    queryFn: async () => {
+      const response = await fetch('/api/settings');
+      if (!response.ok) throw new Error('Failed to fetch settings');
+      return await response.json();
+    }
+  });
   
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
       return apiRequest('POST', '/api/messages', { 
         content, 
-        coachingMode
+        coachingMode,
+        aiProvider: settings?.aiProvider || "openai",
+        aiModel: settings?.aiModel || "gpt-4o"
       });
     },
     onSuccess: () => {

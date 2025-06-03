@@ -106,6 +106,8 @@ const SettingsSection: React.FC = () => {
       pushNotifications: settings?.pushNotifications || true,
       emailSummaries: settings?.emailSummaries || true,
       dataSharing: settings?.dataSharing || false,
+      aiProvider: settings?.aiProvider || "openai",
+      aiModel: settings?.aiModel || "gpt-4o",
     }
   });
   
@@ -477,6 +479,79 @@ const SettingsSection: React.FC = () => {
                         />
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* AI Configuration */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AI Assistant Configuration</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="aiProvider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>AI Provider</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select AI provider" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="openai">OpenAI</SelectItem>
+                              <SelectItem value="google">Google Gemini</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose your preferred AI provider for coaching responses
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="aiModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>AI Model</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select AI model" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {!modelsLoading && aiModels && (
+                                <>
+                                  {form.watch("aiProvider") === "openai" && aiModels.openai?.map((model: any) => (
+                                    <SelectItem key={model.id} value={model.id}>
+                                      {model.name} - {model.description}
+                                    </SelectItem>
+                                  ))}
+                                  {form.watch("aiProvider") === "google" && aiModels.google?.map((model: any) => (
+                                    <SelectItem key={model.id} value={model.id}>
+                                      {model.name} - {model.description}
+                                    </SelectItem>
+                                  ))}
+                                </>
+                              )}
+                              {modelsLoading && (
+                                <SelectItem value="loading" disabled>Loading models...</SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Select the specific model for enhanced coaching capabilities
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 

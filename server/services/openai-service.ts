@@ -44,20 +44,27 @@ class ChatService {
     coachingMode: string = "weight-loss",
     aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" }
   ): Promise<string> {
+    console.log(`[ChatService] Getting response with provider: ${aiConfig.provider}, model: ${aiConfig.model}`);
+    console.log(`[ChatService] User message: ${userMessage}`);
+    console.log(`[ChatService] Coaching mode: ${coachingMode}`);
+    
     try {
       const mode = coachingModes.includes(coachingMode as CoachingMode) 
         ? coachingMode 
         : "weight-loss";
       
       const persona = this.getCoachingPersona(mode);
+      console.log(`[ChatService] Using persona for mode: ${mode}`);
       
       if (aiConfig.provider === "openai") {
+        console.log(`[ChatService] Calling OpenAI with model: ${aiConfig.model}`);
         return await this.getOpenAIResponse(userMessage, persona, aiConfig.model as OpenAIModel);
       } else {
+        console.log(`[ChatService] Calling Google with model: ${aiConfig.model}`);
         return await this.getGoogleResponse(userMessage, persona, aiConfig.model as GoogleModel);
       }
     } catch (error) {
-      console.error(`${aiConfig.provider} API error:`, error);
+      console.error(`[ChatService] ${aiConfig.provider} API error:`, error);
       return "I apologize, but I'm having trouble connecting to my coaching system right now. Please try again in a moment.";
     }
   }

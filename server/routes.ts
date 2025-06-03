@@ -63,7 +63,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get AI response with provider configuration
       const aiConfig = { provider: aiProvider, model: aiModel };
+      console.log(`[Routes] Calling chatService with config:`, aiConfig);
       const aiResponse = await chatService.getChatResponse(content, coachingMode, aiConfig);
+      console.log(`[Routes] Received AI response:`, aiResponse);
       
       // Save AI message
       const aiMessage = await storage.createMessage({

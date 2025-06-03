@@ -81,7 +81,9 @@ export class MemStorage implements IStorage {
         darkMode: false,
         pushNotifications: true,
         emailSummaries: true,
-        dataSharing: false
+        dataSharing: false,
+        aiProvider: "google",
+        aiModel: "gemini-2.0-flash-exp"
       },
       createdAt: new Date()
     };
@@ -524,7 +526,9 @@ export class DatabaseStorage implements IStorage {
           darkMode: false,
           pushNotifications: true,
           emailSummaries: true,
-          dataSharing: false
+          dataSharing: false,
+          aiProvider: "google",
+          aiModel: "gemini-2.0-flash-exp"
         },
         createdAt: new Date()
       }).returning();

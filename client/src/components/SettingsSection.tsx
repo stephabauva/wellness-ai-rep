@@ -558,6 +558,42 @@ const SettingsSection: React.FC = () => {
                   </CardContent>
                 </Card>
 
+                {/* Language Selection */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("settings.language")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="language"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("settings.language")}</FormLabel>
+                          <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            i18n.changeLanguage(value);
+                          }} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select language" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="en">{t("settings.english")}</SelectItem>
+                              <SelectItem value="fr">{t("settings.french")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose your preferred language for the interface
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
                 {/* Save Button */}
                 <div className="flex justify-end">
                   <Button 

@@ -95,6 +95,13 @@ const SettingsSection: React.FC = () => {
     }
   });
   
+  // Initialize language from settings
+  React.useEffect(() => {
+    if (settings?.language && settings.language !== i18n.language) {
+      i18n.changeLanguage(settings.language);
+    }
+  }, [settings?.language, i18n]);
+
   // Set up form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -111,10 +118,37 @@ const SettingsSection: React.FC = () => {
       dataSharing: settings?.dataSharing || false,
       aiProvider: settings?.aiProvider || "google",
       aiModel: settings?.aiModel || "gemini-2.0-flash-exp",
+      language: settings?.language || "en",
     }
   });
+
+  // Update form when settings change
+  React.useEffect(() => {
+    if (settings) {
+      form.reset({
+        name: settings.name || "Jane Smith",
+        email: settings.email || "jane.smith@example.com",
+        primaryGoal: settings.primaryGoal || "weight-loss",
+        coachStyle: settings.coachStyle || "motivational",
+        reminderFrequency: settings.reminderFrequency || "daily",
+        focusAreas: settings.focusAreas || ["nutrition", "exercise", "sleep"],
+        darkMode: settings.darkMode || false,
+        pushNotifications: settings.pushNotifications || true,
+        emailSummaries: settings.emailSummaries || true,
+        dataSharing: settings.dataSharing || false,
+        aiProvider: settings.aiProvider || "google",
+        aiModel: settings.aiModel || "gemini-2.0-flash-exp",
+        language: settings.language || "en",
+      });
+    }
+  }, [settings, form]);
   
   const onSubmit = (data: FormValues) => {
+    // Update language immediately if changed
+    if (data.language !== i18n.language) {
+      i18n.changeLanguage(data.language);
+    }
+    
     updateSettingsMutation.mutate(data);
     
     // Update coaching mode in context if primary goal changed
@@ -601,7 +635,7 @@ const SettingsSection: React.FC = () => {
                     className="bg-primary hover:bg-primary/90"
                     disabled={updateSettingsMutation.isPending}
                   >
-                    Save Changes
+                    {t("settings.saveChanges")}
                   </Button>
                 </div>
               </form>

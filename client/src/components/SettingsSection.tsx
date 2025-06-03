@@ -144,11 +144,23 @@ const SettingsSection: React.FC = () => {
   }, [settings, form]);
   
   const onSubmit = (data: FormValues) => {
+    // Check if language changed
+    const languageChanged = data.language !== i18n.language;
+    
     updateSettingsMutation.mutate(data);
     
     // Update coaching mode in context if primary goal changed
     if (data.primaryGoal !== coachingMode) {
       setCoachingMode(data.primaryGoal);
+    }
+    
+    // Handle language change after form submission
+    if (languageChanged) {
+      i18n.changeLanguage(data.language).then(() => {
+        localStorage.setItem('i18nextLng', data.language);
+        // Force reload to ensure all components update with new language
+        window.location.reload();
+      });
     }
   };
   
@@ -599,15 +611,7 @@ const SettingsSection: React.FC = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("settings.language")}</FormLabel>
-                          <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            // Immediately change language and force reload
-                            i18n.changeLanguage(value).then(() => {
-                              localStorage.setItem('i18nextLng', value);
-                              // Force complete page reload to ensure all translations update
-                              setTimeout(() => window.location.reload(), 100);
-                            });
-                          }} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select language" />

@@ -146,7 +146,16 @@ const SettingsSection: React.FC = () => {
   const onSubmit = (data: FormValues) => {
     // Update language immediately if changed
     if (data.language !== i18n.language) {
-      i18n.changeLanguage(data.language);
+      i18n.changeLanguage(data.language).then(() => {
+        // Force re-render by updating localStorage and triggering storage event
+        localStorage.setItem('i18nextLng', data.language);
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'i18nextLng',
+          newValue: data.language
+        }));
+        // Force page reload to ensure all components update
+        window.location.reload();
+      });
     }
     
     updateSettingsMutation.mutate(data);

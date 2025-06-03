@@ -1,10 +1,11 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import Backend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
+import en from './locales/en.json';
+import fr from './locales/fr.json';
+
 i18n
-  .use(Backend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -14,15 +15,20 @@ i18n
     interpolation: {
       escapeValue: false,
     },
-
-    backend: {
-      loadPath: '/locales/{{lng}}/translation.json',
+    
+    resources: {
+      en: {
+        translation: en
+      },
+      fr: {
+        translation: fr
+      }
     },
-
+    
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
-    },
+      order: ['localStorage', 'sessionStorage', 'navigator'],
+      caches: ['localStorage', 'sessionStorage']
+    }
   });
 
 export default i18n;

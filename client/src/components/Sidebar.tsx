@@ -7,6 +7,7 @@ import {
   Zap
 } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
 const NavButton: React.FC<{
@@ -33,6 +34,7 @@ const NavButton: React.FC<{
 
 const Sidebar: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
+  const { t } = useLanguage();
 
   const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "settings") => {
     setActiveSection(section);
@@ -54,28 +56,28 @@ const Sidebar: React.FC = () => {
             <NavButton 
               active={activeSection === "chat"}
               onClick={() => handleNavClick("chat")}
-              label="Chat"
+              label={t("chat")}
               icon={<MessageSquare className="h-6 w-6" />}
             />
             
             <NavButton 
               active={activeSection === "health"}
               onClick={() => handleNavClick("health")}
-              label="Health Data"
+              label={t("health")}
               icon={<BarChart3 className="h-6 w-6" />}
             />
             
             <NavButton 
               active={activeSection === "devices"}
               onClick={() => handleNavClick("devices")}
-              label="Connected Devices"
+              label={t("devices")}
               icon={<Cpu className="h-6 w-6" />}
             />
             
             <NavButton 
               active={activeSection === "settings"}
               onClick={() => handleNavClick("settings")}
-              label="Settings"
+              label={t("settings")}
               icon={<Settings className="h-6 w-6" />}
             />
           </nav>

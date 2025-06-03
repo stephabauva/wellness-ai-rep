@@ -79,8 +79,14 @@ const SettingsSection: React.FC = () => {
     mutationFn: async (data: FormValues) => {
       return apiRequest('PATCH', '/api/settings', data);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      
+      // Update language context immediately when language changes
+      if (variables.language && variables.language !== language) {
+        setLanguage(variables.language);
+      }
+      
       toast({
         title: "Settings updated",
         description: "Your settings have been saved successfully.",

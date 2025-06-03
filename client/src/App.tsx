@@ -22,12 +22,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class">
-        <AppProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </AppProvider>
+        <LanguageProvider>
+          <AppProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </AppProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

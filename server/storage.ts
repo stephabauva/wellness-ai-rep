@@ -87,42 +87,14 @@ export class MemStorage implements IStorage {
     };
     this.users.set(1, defaultUser);
     
-    // Create initial messages
+    // Create welcome message
     const initialMessages: ChatMessage[] = [
       {
         id: this.messageId++,
         userId: 1,
-        content: "Hello Sarah! 👋 Welcome back to your Weight Loss coaching session. How are you feeling today?",
+        content: "Welcome to your AI wellness coach! I'm here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you're focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I'm ready to help. What would you like to work on today?",
         isUserMessage: false,
-        timestamp: new Date(Date.now() - 1000 * 60 * 10) // 10 minutes ago
-      },
-      {
-        id: this.messageId++,
-        userId: 1,
-        content: "I'm feeling pretty good! I managed to go for a run yesterday, but I'm a bit sore today.",
-        isUserMessage: true,
-        timestamp: new Date(Date.now() - 1000 * 60 * 9) // 9 minutes ago
-      },
-      {
-        id: this.messageId++,
-        userId: 1,
-        content: "Great job on the run, Sarah! 🏃‍♀️ Post-exercise soreness is completely normal, especially when you're getting back into your routine.\n\nI see from your connected fitness tracker that you completed a 25-minute run at a good pace. That's excellent progress!\n\nWould you like me to suggest some gentle recovery stretches for today? Or would you prefer to focus on nutrition planning to complement your workout?",
-        isUserMessage: false,
-        timestamp: new Date(Date.now() - 1000 * 60 * 8) // 8 minutes ago
-      },
-      {
-        id: this.messageId++,
-        userId: 1,
-        content: "I'd love some stretching suggestions, please!",
-        isUserMessage: true,
-        timestamp: new Date(Date.now() - 1000 * 60 * 7) // 7 minutes ago
-      },
-      {
-        id: this.messageId++,
-        userId: 1,
-        content: "Here are some gentle recovery stretches that will help with your soreness:\n\n- Standing quad stretch: 30 seconds each leg\n- Seated hamstring stretch: 30 seconds each leg\n- Calf stretch against wall: 30 seconds each leg\n- Child's pose: Hold for 1 minute\n- Gentle torso twists: 10 each side\n\nRemember to breathe deeply and never stretch to the point of pain. Would you like me to send a reminder to do these stretches later today?",
-        isUserMessage: false,
-        timestamp: new Date(Date.now() - 1000 * 60 * 6) // 6 minutes ago
+        timestamp: new Date()
       }
     ];
     this.messages.set(1, initialMessages);

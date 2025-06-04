@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Paperclip, Send, Upload, Camera } from "lucide-react";
+import { Paperclip, Send, Upload, Camera, X, FileText, Image, Video, File } from "lucide-react";
 import { CoachSelect } from "@/components/ui/coach-select";
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { TranscriptionProvider } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +28,18 @@ type Message = {
   timestamp: Date;
 };
 
+type AttachedFile = {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  url?: string;
+};
+
 const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -57,16 +67,23 @@ const ChatSection: React.FC = () => {
   
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, attachments }: { content: string; attachments: AttachedFile[] }) => {
       return apiRequest('POST', '/api/messages', { 
         content, 
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
-        aiModel: settings?.aiModel || "gpt-4o"
+        aiModel: settings?.aiModel || "gpt-4o",
+        attachments: attachments.map(file => ({
+          id: file.id,
+          fileName: file.fileName,
+          fileType: file.fileType,
+          fileSize: file.fileSize
+        }))
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      setAttachedFiles([]);
     }
   });
   
@@ -93,8 +110,11 @@ const ChatSection: React.FC = () => {
   });
   
   const handleSendMessage = () => {
-    if (inputMessage.trim()) {
-      sendMessageMutation.mutate(inputMessage);
+    if (inputMessage.trim() || attachedFiles.length > 0) {
+      sendMessageMutation.mutate({ 
+        content: inputMessage, 
+        attachments: attachedFiles 
+      });
       setInputMessage("");
     }
   };
@@ -134,8 +154,14 @@ const ChatSection: React.FC = () => {
       return await response.json();
     },
     onSuccess: (data, file) => {
-      const fileInfo = `[File: ${file.name} (${(file.size / 1024).toFixed(1)}KB)]`;
-      setInputMessage(prev => prev + (prev ? ' ' : '') + fileInfo);
+      const attachedFile: AttachedFile = {
+        id: data.file.id,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        url: data.file.url
+      };
+      setAttachedFiles(prev => [...prev, attachedFile]);
       toast({
         title: "File uploaded",
         description: `${file.name} has been uploaded successfully.`,
@@ -162,6 +188,19 @@ const ChatSection: React.FC = () => {
     if (file) {
       uploadFileMutation.mutate(file);
     }
+  };
+
+  const removeAttachedFile = (fileId: string) => {
+    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) return <Image className="h-4 w-4" />;
+    if (fileType.startsWith('video/')) return <Video className="h-4 w-4" />;
+    if (fileType.includes('pdf') || fileType.includes('document') || fileType.includes('text')) {
+      return <FileText className="h-4 w-4" />;
+    }
+    return <File className="h-4 w-4" />;
   };
 
   // Scroll to bottom when new messages arrive
@@ -215,6 +254,26 @@ const ChatSection: React.FC = () => {
 
       {/* Input */}
       <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        {/* Attached files display */}
+        {attachedFiles.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {attachedFiles.map((file) => (
+              <Badge key={file.id} variant="secondary" className="flex items-center gap-2 pr-1">
+                {getFileIcon(file.fileType)}
+                <span className="text-xs truncate max-w-32">{file.fileName}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => removeAttachedFile(file.id)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-2 items-end">
           <div className="flex-1 relative">
             <Input
@@ -279,7 +338,7 @@ const ChatSection: React.FC = () => {
 
           <Button 
             onClick={handleSendMessage} 
-            disabled={!inputMessage.trim() || sendMessageMutation.isPending}
+            disabled={(!inputMessage.trim() && attachedFiles.length === 0) || sendMessageMutation.isPending}
             size="icon"
           >
             <Send className="h-4 w-4" />

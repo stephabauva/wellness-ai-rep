@@ -99,15 +99,32 @@ export default function MemorySection() {
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const { data: memories = [], isLoading } = useQuery({
-    queryKey: ["memories", selectedCategory === "all" ? undefined : selectedCategory],
+  // Fetch all memories for overview counts
+  const { data: allMemories = [], isLoading: allMemoriesLoading } = useQuery({
+    queryKey: ["memories"],
     queryFn: async () => {
-      const params = selectedCategory !== "all" ? `?category=${selectedCategory}` : "";
-      const response = await fetch(`/api/memories${params}`);
+      const response = await fetch(`/api/memories`);
       if (!response.ok) throw new Error("Failed to fetch memories");
       return response.json();
     }
   });
+
+  // Fetch filtered memories for display
+  const { data: filteredMemories = [], isLoading: filteredLoading } = useQuery({
+    queryKey: ["memories", selectedCategory],
+    queryFn: async () => {
+      if (selectedCategory === "all") {
+        return allMemories;
+      }
+      const response = await fetch(`/api/memories?category=${selectedCategory}`);
+      if (!response.ok) throw new Error("Failed to fetch filtered memories");
+      return response.json();
+    },
+    enabled: selectedCategory !== "all" || allMemories.length > 0
+  });
+
+  const memories = selectedCategory === "all" ? allMemories : filteredMemories;
+  const isLoading = allMemoriesLoading || (selectedCategory !== "all" && filteredLoading);
 
   const deleteMemoryMutation = useMutation({
     mutationFn: (memoryId: string) => apiRequest(`/api/memories/${memoryId}`, "DELETE"),
@@ -178,24 +195,24 @@ export default function MemorySection() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{memories.length}</div>
+              <div className="text-2xl font-bold text-blue-600">{allMemories.length}</div>
               <div className="text-sm text-gray-600">Total Memories</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {memories.filter((m: MemoryEntry) => m.category === "preference").length}
+                {allMemories.filter((m: MemoryEntry) => m.category === "preference").length}
               </div>
               <div className="text-sm text-gray-600">Preferences</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {memories.filter((m: MemoryEntry) => m.category === "instruction").length}
+                {allMemories.filter((m: MemoryEntry) => m.category === "instruction").length}
               </div>
               <div className="text-sm text-gray-600">Instructions</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {memories.filter((m: MemoryEntry) => m.importanceScore >= 0.8).length}
+                {allMemories.filter((m: MemoryEntry) => m.importanceScore >= 0.8).length}
               </div>
               <div className="text-sm text-gray-600">High Priority</div>
             </div>

@@ -43,6 +43,7 @@ const formSchema = z.object({
   dataSharing: z.boolean(),
   aiProvider: z.enum(["openai", "google"]),
   aiModel: z.string(),
+  transcriptionProvider: z.enum(["webspeech", "openai", "google"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -108,6 +109,7 @@ const SettingsSection: React.FC = () => {
       dataSharing: settings?.dataSharing || false,
       aiProvider: settings?.aiProvider || "openai",
       aiModel: settings?.aiModel || "gpt-4o",
+      transcriptionProvider: settings?.transcriptionProvider || "webspeech",
     }
   });
   
@@ -547,6 +549,32 @@ const SettingsSection: React.FC = () => {
                           </Select>
                           <FormDescription>
                             Select the specific model for enhanced coaching capabilities
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="transcriptionProvider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Audio Transcription Provider</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select transcription provider" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="webspeech">Web Speech API (Browser-based, may work offline)</SelectItem>
+                              <SelectItem value="openai">OpenAI Whisper (High accuracy, requires internet)</SelectItem>
+                              <SelectItem value="google">Google Speech-to-Text (Fast processing, requires internet)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose your preferred method for converting speech to text in the chat
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

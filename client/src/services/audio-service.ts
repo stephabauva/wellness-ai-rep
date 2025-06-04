@@ -156,14 +156,16 @@ class AudioService {
     });
   }
 
+  private isUserStoppedWebSpeech = false;
+
   async transcribeWithWebSpeech(onResult: (text: string) => void, onError: (error: string) => void): Promise<void> {
     if (!this.recognition) {
       throw new Error('Web Speech API not supported in this browser');
     }
 
-    return new Promise((resolve, reject) => {
-      let isUserStopped = false;
+    this.isUserStoppedWebSpeech = false;
 
+    return new Promise((resolve, reject) => {
       this.recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         onResult(transcript);
@@ -172,7 +174,7 @@ class AudioService {
 
       this.recognition.onerror = (event: any) => {
         // Don't treat user-initiated stops as errors
-        if (event.error === 'aborted' && isUserStopped) {
+        if (event.error === 'aborted' && this.isUserStoppedWebSpeech) {
           resolve();
           return;
         }
@@ -186,15 +188,13 @@ class AudioService {
         resolve();
       };
 
-      // Store reference to track user-initiated stops
-      this.recognition._isUserStopped = false;
       this.recognition.start();
     });
   }
 
   stopWebSpeech(): void {
     if (this.recognition) {
-      this.recognition._isUserStopped = true;
+      this.isUserStoppedWebSpeech = true;
       this.recognition.stop();
     }
   }

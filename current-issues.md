@@ -8,3 +8,5 @@
 4. [fixed] When using the microphone with Web Speech API, when clicking back on the rotating ring, it says "speech recognition error: aborted", it should just stop the recording. 
 
 5. [fixed] When using the microphone, instead of a rotating ring, i would prefer to keep the mic symbol, blinking red.
+
+6. (Not really an issue) The data in Health Dashboard comes from a storage file, not from the database, although things are in place to use the database.

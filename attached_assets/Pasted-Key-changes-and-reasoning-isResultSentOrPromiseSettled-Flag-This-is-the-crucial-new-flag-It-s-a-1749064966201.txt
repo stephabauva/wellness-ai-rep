@@ -1,0 +1,23 @@
+Key changes and reasoning:
+
+_isResultSentOrPromiseSettled Flag:
+This is the crucial new flag. It's an instance variable.
+Reset: It's set to false at the very beginning of transcribeWithWebSpeech. This is vital for subsequent calls to transcribeWithWebSpeech on the same audioService instance.
+Guards:
+In onresult's main body and its setTimeout callback: if (this._isResultSentOrPromiseSettled) return;
+In onerror: if (this._isResultSentOrPromiseSettled) return;
+In onend: if (this._isResultSentOrPromiseSettled) { ... return; }
+Set to true: It's set to true immediately before onResult(), resolve(), or reject() is called, effectively ensuring these are called only once per transcribeWithWebSpeech invocation.
+stopWebSpeechInternal(): I renamed the internal stop method to stopWebSpeechInternal to make it clear that public stopWebSpeech() is the one that sets isUserStoppedWebSpeech. The internal method just handles the mechanics of stopping.
+onresult Iteration: Changed for (let i = lastProcessedResultIndex + 1; ...) to for (let i = event.resultIndex; i < event.results.length; ++i). event.resultIndex is the index of the first result in the results list that has changed. We then iterate from there. The lastProcessedResultIndex was a good idea to prevent re-adding the same final segment if the API sent it multiple times, but the primary duplication was at a higher level (calling onResult with the whole finalTranscript multiple times). I've kept lastProcessedResultIndex logic for appending to finalTranscript as it's still good for segment deduping within onresult.
+onend Simplification:
+onend now primarily checks _isResultSentOrPromiseSettled.
+If the promise is already settled (e.g., by the timeout or an error), onend does very little.
+If the promise is not settled, onend becomes the one to call onResult (if there's text) and resolve().
+Removed Restart Logic: The automatic restart logic in onend is often a source of complexity and bugs (like potential infinite loops or unexpected behavior). For a method that's supposed to "transcribe one utterance", restarting is usually not desired. If you need continuous listening, that should be a separate, more complex state machine.
+Error Handling in recognition.start(): Added a try-catch around this.recognition.start() because it can throw errors (e.g., InvalidStateError if already started).
+Cleanup:
+Split cleanup into cleanupRecordingResources (for MediaRecorder) and a more general public cleanup() for the whole service.
+The public cleanup() now also resets _isResultSentOrPromiseSettled.
+In transcribeWithWebSpeech, I added this.recognition.abort() at the start to ensure any lingering recognition from a previous, possibly messy, state is stopped before starting a new one.
+stopRecording() Robustness: Added a check in stopRecording to handle cases where it might be called when the recorder is already inactive.

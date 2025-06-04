@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   name: text("name"),
   email: text("email"),
   preferences: jsonb("preferences"),
+  transcriptionProvider: text("transcription_provider").default("webspeech"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -22,6 +23,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   email: true,
   preferences: true,
+  transcriptionProvider: true,
 });
 
 // Chat message schema
@@ -214,6 +216,10 @@ export type MemoryCategory = typeof memoryCategories[number];
 // Coaching types
 export const coachingModes = ['weight-loss', 'muscle-gain', 'fitness', 'mental-wellness', 'nutrition'] as const;
 export type CoachingMode = typeof coachingModes[number];
+
+// Transcription provider types
+export const transcriptionProviders = ['webspeech', 'openai', 'google'] as const;
+export type TranscriptionProvider = typeof transcriptionProviders[number];
 
 // Health data categories and types
 export const healthDataCategories = [

@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { chatService } from "./services/openai-service";
 import { memoryService } from "./services/memory-service";
 import { generatePDFReport } from "./services/pdf-service";
+import { transcriptionService } from "./services/transcription-service";
+import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";

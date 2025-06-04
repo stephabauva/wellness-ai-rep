@@ -24,9 +24,35 @@ class AudioService {
   private audioChunks: Blob[] = [];
   private stream: MediaStream | null = null;
   private recognition: any = null;
+  private supportedMimeType: string = '';
 
   constructor() {
     this.setupWebSpeechAPI();
+    this.detectSupportedMimeType();
+  }
+
+  private detectSupportedMimeType(): void {
+    // Try different MIME types in order of preference
+    const mimeTypes = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/ogg;codecs=opus',
+      'audio/wav'
+    ];
+
+    for (const mimeType of mimeTypes) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        this.supportedMimeType = mimeType;
+        console.log(`Audio recording will use MIME type: ${mimeType}`);
+        break;
+      }
+    }
+
+    if (!this.supportedMimeType) {
+      console.warn('No supported audio MIME type found, will use browser default');
+      this.supportedMimeType = '';
+    }
   }
 
   private setupWebSpeechAPI() {
@@ -54,6 +80,11 @@ class AudioService {
 
   async startRecording(): Promise<void> {
     try {
+      // Check if MediaRecorder is supported
+      if (!window.MediaRecorder) {
+        throw new Error('MediaRecorder is not supported in this browser');
+      }
+
       this.stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           sampleRate: 48000,
@@ -64,9 +95,20 @@ class AudioService {
       });
 
       this.audioChunks = [];
-      this.mediaRecorder = new MediaRecorder(this.stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      
+      // Create MediaRecorder with supported MIME type or let browser choose default
+      const options: MediaRecorderOptions = {};
+      if (this.supportedMimeType) {
+        options.mimeType = this.supportedMimeType;
+      }
+      
+      try {
+        this.mediaRecorder = new MediaRecorder(this.stream, options);
+      } catch (mimeError) {
+        // If MIME type fails, try without specifying one
+        console.warn('Failed to create MediaRecorder with specified MIME type, trying default');
+        this.mediaRecorder = new MediaRecorder(this.stream);
+      }
 
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -74,8 +116,13 @@ class AudioService {
         }
       };
 
+      this.mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+      };
+
       this.mediaRecorder.start();
     } catch (error) {
+      this.cleanup();
       throw new Error(`Failed to start recording: ${(error as Error).message}`);
     }
   }
@@ -88,7 +135,9 @@ class AudioService {
       }
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm;codecs=opus' });
+        // Use the actual MIME type from the MediaRecorder or fallback to detected type
+        const mimeType = this.mediaRecorder?.mimeType || this.supportedMimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
         this.cleanup();
         resolve(audioBlob);
       };

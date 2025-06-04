@@ -97,10 +97,21 @@ Respond with JSON:
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.1
+        temperature: 0.1,
+        response_format: { type: "json_object" }
       });
 
-      const result = JSON.parse(response.choices[0].message.content || '{}');
+      let content = response.choices[0].message.content || '{}';
+      // Clean up markdown formatting if present
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      
+      // Extract JSON from text if needed
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        content = jsonMatch[0];
+      }
+      
+      const result = JSON.parse(content);
       return {
         shouldRemember: result.shouldRemember || false,
         category: result.category || 'context',
@@ -221,18 +232,23 @@ Respond with JSON:
         if (!memory.embedding) continue;
 
         try {
-          const memoryEmbedding = JSON.parse(memory.embedding as string);
-          const similarity = this.cosineSimilarity(contextEmbedding, memoryEmbedding);
-          
-          if (similarity > 0.7) { // Threshold for relevance
-            relevantMemories.push({
-              ...memory,
-              relevanceScore: similarity * memory.importanceScore,
-              retrievalReason: 'semantic_similarity'
-            });
+          let embeddingStr = memory.embedding as string;
+          if (embeddingStr && embeddingStr.trim().length > 0) {
+            const memoryEmbedding = JSON.parse(embeddingStr);
+            if (Array.isArray(memoryEmbedding) && memoryEmbedding.length > 0) {
+              const similarity = this.cosineSimilarity(contextEmbedding, memoryEmbedding);
+              
+              if (similarity > 0.7) { // Threshold for relevance
+                relevantMemories.push({
+                  ...memory,
+                  relevanceScore: similarity * memory.importanceScore,
+                  retrievalReason: 'semantic_similarity'
+                });
+              }
+            }
           }
         } catch (error) {
-          console.error('Error parsing memory embedding:', error);
+          console.error('Error parsing memory embedding for memory', memory.id, ':', error);
         }
       }
 

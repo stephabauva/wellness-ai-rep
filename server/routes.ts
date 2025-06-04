@@ -138,10 +138,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health-data", async (req, res) => {
     try {
       const range = req.query.range || "7days";
+      const category = req.query.category as string;
       const healthData = await storage.getHealthData(1, String(range)); // Default user ID
-      res.json(healthData);
+      
+      // Filter by category if specified
+      const filteredData = category 
+        ? healthData.filter(item => item.category === category)
+        : healthData;
+      
+      res.json(filteredData);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch health data" });
+    }
+  });
+
+  // Get health data by category
+  app.get("/api/health-data/categories", async (req, res) => {
+    try {
+      const range = req.query.range || "7days";
+      const healthData = await storage.getHealthData(1, String(range));
+      
+      // Group data by category
+      const categorizedData = healthData.reduce((acc, item) => {
+        if (!item.category) return acc;
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+      }, {} as Record<string, typeof healthData>);
+      
+      res.json(categorizedData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch categorized health data" });
     }
   });
   

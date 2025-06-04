@@ -48,6 +48,8 @@ export const healthData = pgTable("health_data", {
   unit: text("unit"),
   timestamp: timestamp("timestamp").defaultNow(),
   source: text("source"), // device/manual input
+  category: text("category"), // body_composition, cardiovascular, lifestyle, medical, advanced
+  metadata: jsonb("metadata"), // Additional context like time of day, meal relation, etc.
 });
 
 export const insertHealthDataSchema = createInsertSchema(healthData).pick({
@@ -56,6 +58,8 @@ export const insertHealthDataSchema = createInsertSchema(healthData).pick({
   value: true,
   unit: true,
   source: true,
+  category: true,
+  metadata: true,
 });
 
 // Connected devices schema
@@ -210,3 +214,47 @@ export type MemoryCategory = typeof memoryCategories[number];
 // Coaching types
 export const coachingModes = ['weight-loss', 'muscle-gain', 'fitness', 'mental-wellness', 'nutrition'] as const;
 export type CoachingMode = typeof coachingModes[number];
+
+// Health data categories and types
+export const healthDataCategories = [
+  'body_composition', 
+  'cardiovascular', 
+  'lifestyle', 
+  'medical', 
+  'advanced'
+] as const;
+export type HealthDataCategory = typeof healthDataCategories[number];
+
+// Comprehensive health data types organized by category
+export const healthMetrics = {
+  body_composition: [
+    'weight', 'bmi', 'body_fat_percentage', 'subcutaneous_fat', 'visceral_fat',
+    'body_water_percentage', 'muscle_mass', 'bone_mass', 'bmr', 'metabolic_age'
+  ],
+  cardiovascular: [
+    'blood_pressure_systolic', 'blood_pressure_diastolic', 'heart_rate', 
+    'resting_heart_rate', 'hrv', 'cholesterol_ldl', 'cholesterol_hdl', 
+    'cholesterol_triglycerides', 'cholesterol_total', 'oxygen_saturation'
+  ],
+  lifestyle: [
+    'sleep_duration', 'sleep_quality', 'sleep_deep', 'sleep_light', 'sleep_rem',
+    'steps', 'daily_activity', 'exercise_duration', 'calories_burned', 
+    'calories_intake', 'hydration', 'stress_level', 'mood', 'menstrual_cycle'
+  ],
+  medical: [
+    'blood_glucose_fasting', 'blood_glucose_postprandial', 'blood_glucose_random',
+    'hba1c', 'insulin_dosage', 'carbohydrate_intake', 'ketone_levels',
+    'medication_adherence', 'body_temperature'
+  ],
+  advanced: [
+    'vo2_max', 'lactate_threshold', 'ecg_data', 'skin_temperature',
+    'glycemic_load', 'glycemic_index'
+  ]
+} as const;
+
+export type HealthMetricType = 
+  | typeof healthMetrics.body_composition[number]
+  | typeof healthMetrics.cardiovascular[number]
+  | typeof healthMetrics.lifestyle[number]
+  | typeof healthMetrics.medical[number]
+  | typeof healthMetrics.advanced[number];

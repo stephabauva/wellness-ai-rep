@@ -146,14 +146,13 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
   };
 
   const getButtonVariant = () => {
-    if (isRecording || isListening) return "destructive";
     if (isProcessing) return "secondary";
     return "outline";
   };
 
   const getButtonIcon = () => {
     if (isProcessing) return <Loader2 className="h-4 w-4 animate-spin" />;
-    if (isRecording || isListening) return <Square className="h-4 w-4" />;
+    if (isRecording || isListening) return <Mic className="h-4 w-4 text-red-500 animate-pulse" />;
     return <Mic className="h-4 w-4" />;
   };
 

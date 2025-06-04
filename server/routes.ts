@@ -267,6 +267,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch AI models" });
     }
   });
+
+  // Memory management endpoints
+  
+  // Get user's memories
+  app.get("/api/memories", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const category = req.query.category as string;
+      const memories = await memoryService.getUserMemories(userId, category as any);
+      res.json(memories);
+    } catch (error) {
+      console.error('Error fetching memories:', error);
+      res.status(500).json({ message: "Failed to fetch memories" });
+    }
+  });
+
+  // Delete a memory
+  app.delete("/api/memories/:id", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const memoryId = req.params.id;
+      
+      const success = await memoryService.deleteMemory(memoryId, userId);
+      if (success) {
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: "Memory not found" });
+      }
+    } catch (error) {
+      console.error('Error deleting memory:', error);
+      res.status(500).json({ message: "Failed to delete memory" });
+    }
+  });
+
+  // Get conversations
+  app.get("/api/conversations", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const userConversations = await db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.updatedAt))
+        .limit(20);
+      
+      res.json(userConversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
+  // Get conversation messages
+  app.get("/api/conversations/:id/messages", async (req, res) => {
+    try {
+      const conversationId = req.params.id;
+      const messages = await db
+        .select()
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, conversationId))
+        .orderBy(conversationMessages.createdAt);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching conversation messages:', error);
+      res.status(500).json({ message: "Failed to fetch conversation messages" });
+    }
+  });
   
   return httpServer;
 }

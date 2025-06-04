@@ -3,6 +3,7 @@ import {
   MessageSquare, 
   BarChart3, 
   Cpu, 
+  Brain,
   Settings, 
   Zap
 } from "lucide-react";
@@ -34,7 +35,7 @@ const NavButton: React.FC<{
 const Sidebar: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
 
-  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "settings") => {
+  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "settings") => {
     setActiveSection(section);
   }, [setActiveSection]);
 
@@ -70,6 +71,13 @@ const Sidebar: React.FC = () => {
               onClick={() => handleNavClick("devices")}
               label="Connected Devices"
               icon={<Cpu className="h-6 w-6" />}
+            />
+
+            <NavButton 
+              active={activeSection === "memory"}
+              onClick={() => handleNavClick("memory")}
+              label="AI Memory"
+              icon={<Brain className="h-6 w-6" />}
             />
             
             <NavButton 

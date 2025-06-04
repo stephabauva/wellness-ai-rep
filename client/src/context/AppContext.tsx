@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
 import { CoachingMode } from "@shared/schema";
 
-type ActiveSection = "chat" | "health" | "devices" | "settings";
+type ActiveSection = "chat" | "health" | "devices" | "memory" | "settings";
 
 interface AppContextType {
   activeSection: ActiveSection;

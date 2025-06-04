@@ -4,6 +4,7 @@ import MobileNav from "@/components/MobileNav";
 import ChatSection from "@/components/ChatSection";
 import HealthDataSection from "@/components/HealthDataSection";
 import ConnectedDevicesSection from "@/components/ConnectedDevicesSection";
+import MemorySection from "@/components/MemorySection";
 import SettingsSection from "@/components/SettingsSection";
 import { useAppContext } from "@/context/AppContext";
 

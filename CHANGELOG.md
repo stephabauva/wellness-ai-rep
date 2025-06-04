@@ -5,6 +5,7 @@ All notable changes to the AI Wellness Coach application will be documented in t
 ## [Latest] - 2025-06-04
 
 ### Added - ChatGPT-Style AI Memory System
+    (See ai-memory-system-implementation.md for a deep dive)
 - **Smart Memory Detection**: Automatic identification of important information during conversations
   - Explicit memory triggers: "remember this", "don't forget", "keep in mind"
   - AI-powered auto-detection using GPT-4o-mini for memory-worthy content analysis

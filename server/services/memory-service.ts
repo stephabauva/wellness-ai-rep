@@ -72,16 +72,22 @@ class MemoryService {
     const prompt = `Analyze this wellness coaching conversation message and determine if it contains information worth remembering for future coaching sessions.
 
 Look for:
-1. Personal health preferences (workout types, dietary restrictions, preferred activities)
-2. Important personal information (health conditions, goals, lifestyle)
-3. User instructions or coaching preferences
-4. Significant health context that might be referenced later
+1. Personal health preferences (workout types, dietary restrictions, preferred activities) - category: "preference"
+2. Important personal information (health conditions, goals, lifestyle) - category: "personal_info"
+3. Significant health context that might be referenced later - category: "context"
+4. User instructions or coaching preferences - category: "instruction"
 5. Corrections to previous information
 6. Progress milestones or achievements
 
 Message: "${message}"
 
 Previous context: ${conversationHistory.slice(-3).map(m => `${m.role}: ${m.content}`).join('\n')}
+
+IMPORTANT: Use these exact categories:
+- "preference" for likes, dislikes, workout preferences, food preferences
+- "personal_info" for health conditions, allergies, medical information
+- "context" for situational information, progress updates, life circumstances
+- "instruction" for specific coaching instructions and rules
 
 Respond with JSON:
 {

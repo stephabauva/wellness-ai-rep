@@ -368,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Configure multer for audio file uploads
-  const upload = multer({
+  const audioUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
       fileSize: 25 * 1024 * 1024, // 25MB limit
@@ -383,6 +383,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Configure multer for general file uploads
+  const fileUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB limit for general files
+    },
+    fileFilter: (req, file, cb) => {
+      // Accept various file types
+      const allowedTypes = [
+        'image/',
+        'video/',
+        'audio/',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'
+      ];
+      
+      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
+      if (isAllowed) {
+        cb(null, true);
+      } else {
+        cb(new Error('File type not supported'));
+      }
+    }
+  });
+
+  // File upload endpoint
+  app.post("/api/upload", fileUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+
+      // Store file info (in a real app, you'd save to cloud storage or file system)
+      const fileInfo = {
+        id: nanoid(),
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        uploadedAt: new Date().toISOString()
+      };
+
+      // For now, just return the file info
+      // In a production app, you'd save the file and return a URL
+      res.json({
+        success: true,
+        file: fileInfo,
+        message: `File "${req.file.originalname}" uploaded successfully`
+      });
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      res.status(500).json({ 
+        error: "File upload failed", 
+        details: error.message 
+      });
+    }
+  });
+
   // Get transcription provider capabilities
   app.get("/api/transcription/providers", async (req, res) => {
     try {
@@ -394,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // OpenAI Whisper transcription endpoint
-  app.post("/api/transcribe/openai", upload.single('audio'), async (req, res) => {
+  app.post("/api/transcribe/openai", audioUpload.single('audio'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file provided" });
@@ -422,7 +481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google Speech-to-Text transcription endpoint
-  app.post("/api/transcribe/google", upload.single('audio'), async (req, res) => {
+  app.post("/api/transcribe/google", audioUpload.single('audio'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file provided" });

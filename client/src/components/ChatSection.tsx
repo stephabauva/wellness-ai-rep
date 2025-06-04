@@ -266,7 +266,7 @@ const ChatSection: React.FC = () => {
             ref={cameraInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
+            capture="user"
             onChange={handleCameraChange}
             style={{ display: 'none' }}
           />

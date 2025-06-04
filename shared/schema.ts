@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   email: text("email"),
   preferences: jsonb("preferences"),
   transcriptionProvider: text("transcription_provider").default("webspeech"),
+  preferredLanguage: text("preferred_language").default("en"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -24,6 +25,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   preferences: true,
   transcriptionProvider: true,
+  preferredLanguage: true,
 });
 
 // Chat message schema
@@ -220,6 +222,23 @@ export type CoachingMode = typeof coachingModes[number];
 // Transcription provider types
 export const transcriptionProviders = ['webspeech', 'openai', 'google'] as const;
 export type TranscriptionProvider = typeof transcriptionProviders[number];
+
+// Language preferences for transcription
+export const supportedLanguages = [
+  { code: 'en', name: 'English', openaiCode: 'en', googleCode: 'en-US' },
+  { code: 'es', name: 'Spanish', openaiCode: 'es', googleCode: 'es-ES' },
+  { code: 'fr', name: 'French', openaiCode: 'fr', googleCode: 'fr-FR' },
+  { code: 'de', name: 'German', openaiCode: 'de', googleCode: 'de-DE' },
+  { code: 'it', name: 'Italian', openaiCode: 'it', googleCode: 'it-IT' },
+  { code: 'pt', name: 'Portuguese', openaiCode: 'pt', googleCode: 'pt-PT' },
+  { code: 'ru', name: 'Russian', openaiCode: 'ru', googleCode: 'ru-RU' },
+  { code: 'zh', name: 'Chinese', openaiCode: 'zh', googleCode: 'zh-CN' },
+  { code: 'ja', name: 'Japanese', openaiCode: 'ja', googleCode: 'ja-JP' },
+  { code: 'ko', name: 'Korean', openaiCode: 'ko', googleCode: 'ko-KR' },
+  { code: 'auto', name: 'Auto-detect', openaiCode: undefined, googleCode: 'en-US' }
+] as const;
+export const languageCodes = supportedLanguages.map(l => l.code);
+export type LanguageCode = typeof languageCodes[number];
 
 // Health data categories and types
 export const healthDataCategories = [

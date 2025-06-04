@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { TranscriptionProvider } from "@shared/schema";
+import { TranscriptionProvider, supportedLanguages, LanguageCode } from "@shared/schema";
 
 interface TranscriptionResult {
   text: string;
@@ -22,7 +22,7 @@ class TranscriptionService {
     });
   }
 
-  async transcribeWithOpenAI(audioBlob: Buffer, filename: string = "audio.wav"): Promise<TranscriptionResult> {
+  async transcribeWithOpenAI(audioBlob: Buffer, filename: string = "audio.wav", preferredLanguage: LanguageCode = 'en'): Promise<TranscriptionResult> {
     try {
       // Detect proper file extension and MIME type based on filename
       const { extension, mimeType } = this.getFileFormatInfo(filename);
@@ -31,15 +31,19 @@ class TranscriptionService {
       // Create a File-like object for OpenAI API with correct MIME type
       const file = new File([audioBlob], properFilename, { type: mimeType });
       
+      // Get the OpenAI language code for the preferred language
+      const languageConfig = supportedLanguages.find(lang => lang.code === preferredLanguage);
+      const openaiLanguage = languageConfig?.openaiCode;
+      
       const transcription = await this.openai.audio.transcriptions.create({
         file: file,
         model: "whisper-1",
-        language: undefined, // Auto-detect language
+        language: openaiLanguage, // Use preferred language or auto-detect if undefined
       });
 
       return {
         text: transcription.text,
-        language: "auto-detected"
+        language: preferredLanguage === 'auto' ? "auto-detected" : preferredLanguage
       };
     } catch (error: any) {
       throw new Error(`OpenAI transcription failed: ${error.message}`);
@@ -66,7 +70,7 @@ class TranscriptionService {
     return { extension: 'mp4', mimeType: 'audio/mp4' };
   }
 
-  async transcribeWithGoogle(audioBlob: Buffer): Promise<TranscriptionResult> {
+  async transcribeWithGoogle(audioBlob: Buffer, preferredLanguage: LanguageCode = 'en'): Promise<TranscriptionResult> {
     try {
       // Google Cloud Speech-to-Text API implementation
       // Note: This requires Google Cloud Speech-to-Text API key
@@ -79,6 +83,10 @@ class TranscriptionService {
       // Convert audio to base64 for Google API
       const base64Audio = audioBlob.toString('base64');
       
+      // Get the Google language code for the preferred language
+      const languageConfig = supportedLanguages.find(lang => lang.code === preferredLanguage);
+      const googleLanguageCode = languageConfig?.googleCode || 'en-US';
+      
       const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${googleApiKey}`, {
         method: 'POST',
         headers: {
@@ -88,7 +96,7 @@ class TranscriptionService {
           config: {
             encoding: 'WEBM_OPUS',
             sampleRateHertz: 48000,
-            languageCode: 'en-US',
+            languageCode: googleLanguageCode,
             enableAutomaticPunctuation: true,
             enableWordTimeOffsets: false,
           },
@@ -115,7 +123,7 @@ class TranscriptionService {
       return {
         text: transcript,
         confidence: confidence,
-        language: "auto-detected"
+        language: preferredLanguage
       };
     } catch (error: any) {
       throw new Error(`Google transcription failed: ${error.message}`);

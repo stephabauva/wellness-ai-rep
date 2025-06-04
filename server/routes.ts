@@ -41,7 +41,8 @@ const settingsUpdateSchema = z.object({
   dataSharing: z.boolean().optional(),
   aiProvider: z.enum(["openai", "google"]).optional(),
   aiModel: z.string().optional(),
-  transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional()
+  transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional(),
+  preferredLanguage: z.string().optional()
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {

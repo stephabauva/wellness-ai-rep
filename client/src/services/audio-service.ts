@@ -159,6 +159,7 @@ class AudioService {
   private isUserStoppedWebSpeech = false;
   private webSpeechTimeout: NodeJS.Timeout | null = null;
   private finalTranscript = '';
+  private hasReceivedAnySpeech = false;
 
   async transcribeWithWebSpeech(onResult: (text: string) => void, onError: (error: string) => void): Promise<void> {
     if (!this.recognition) {
@@ -167,6 +168,7 @@ class AudioService {
 
     this.isUserStoppedWebSpeech = false;
     this.finalTranscript = '';
+    this.hasReceivedAnySpeech = false; // Reset the persistent flag
     
     // Clear any existing timeout
     if (this.webSpeechTimeout) {
@@ -175,7 +177,6 @@ class AudioService {
     }
 
     return new Promise((resolve, reject) => {
-      let hasReceivedSpeech = false;
       let isRecognitionActive = false;
       let lastProcessedResultIndex = -1;
 
@@ -187,7 +188,7 @@ class AudioService {
       };
 
       this.recognition.onresult = (event: any) => {
-        hasReceivedSpeech = true;
+        this.hasReceivedAnySpeech = true; // Use persistent flag
         let interimTranscript = '';
         
         // Only process new results that we haven't seen before
@@ -258,7 +259,7 @@ class AudioService {
         }
 
         // If we have received ANY speech (final or interim), never restart
-        if (hasReceivedSpeech) {
+        if (this.hasReceivedAnySpeech) {
           if (this.finalTranscript.trim()) {
             onResult(this.finalTranscript.trim());
           }
@@ -267,10 +268,10 @@ class AudioService {
         }
 
         // Only restart if we haven't received any speech at all and user hasn't stopped
-        if (!this.isUserStoppedWebSpeech && !hasReceivedSpeech) {
+        if (!this.isUserStoppedWebSpeech && !this.hasReceivedAnySpeech) {
           // Recognition ended without any speech, try to restart after a short delay
           setTimeout(() => {
-            if (!this.isUserStoppedWebSpeech && !isRecognitionActive && !hasReceivedSpeech) {
+            if (!this.isUserStoppedWebSpeech && !isRecognitionActive && !this.hasReceivedAnySpeech) {
               try {
                 this.recognition.start();
               } catch (e) {
@@ -378,6 +379,7 @@ class AudioService {
     }
     this.isUserStoppedWebSpeech = false;
     this.finalTranscript = '';
+    this.hasReceivedAnySpeech = false;
   }
 
   isWebSpeechSupported(): boolean {

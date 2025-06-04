@@ -125,7 +125,7 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
         console.error('Recording error:', error);
         toast({
           title: "Recording failed",
-          description: (error as Error).message,
+          description: (error as Error).message || "Failed to start audio recording",
           variant: "destructive",
         });
       }

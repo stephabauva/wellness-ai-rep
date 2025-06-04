@@ -4,6 +4,38 @@ All notable changes to the AI Wellness Coach application will be documented in t
 
 ## [Latest] - 2025-06-04
 
+### Added - Advanced Audio-to-Text System
+
+#### Multi-Provider Transcription Support
+- **Three Transcription Providers**: Web Speech API (browser-based, offline capable), OpenAI Whisper (high accuracy), Google Speech-to-Text (fast processing)
+- **Smart Provider Selection**: User-configurable transcription provider in settings with real-time availability detection
+- **Automatic Language Detection**: All providers support automatic language detection for seamless multilingual support
+- **Online/Offline Awareness**: System automatically detects network status and adjusts provider availability accordingly
+
+#### Advanced Audio Recording Capabilities
+- **Dual Recording Modes**: Real-time transcription (Web Speech API) and file-based recording (OpenAI/Google)
+- **High-Quality Audio Capture**: MediaRecorder with optimized settings (48kHz, mono, noise suppression, echo cancellation)
+- **Microphone Permission Management**: Graceful permission handling with user-friendly prompts
+- **Recording State Management**: Visual feedback for recording, processing, and transcription states
+
+#### Comprehensive User Interface
+- **AudioRecorder Component**: Intelligent microphone button with provider-specific behavior and status indicators
+- **Settings Integration**: Transcription provider selection in user preferences with detailed descriptions
+- **Real-time Feedback**: Toast notifications for recording status, transcription completion, and error handling
+- **Network Status Indicators**: Visual cues for online/offline status and provider requirements
+
+#### Backend Infrastructure
+- **Transcription Service**: Unified backend service handling all three providers with proper error handling
+- **Secure API Endpoints**: Protected routes for OpenAI Whisper and Google Speech-to-Text transcription
+- **File Upload Support**: Multer integration for audio file handling with size limits and validation
+- **Provider Capabilities API**: Dynamic endpoint returning real-time provider availability and features
+
+#### Technical Implementation
+- **Enhanced Database Schema**: Added transcriptionProvider field to user preferences
+- **Service Layer Architecture**: Modular audio service with provider abstraction and fallback handling
+- **TypeScript Integration**: Complete type safety across frontend and backend components
+- **Error Handling**: Comprehensive error states with user-friendly messages and recovery options
+
 ### Added - Comprehensive Health Data System
 
 #### Database Schema Expansion

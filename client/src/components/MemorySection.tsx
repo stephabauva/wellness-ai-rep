@@ -223,12 +223,12 @@ export default function MemorySection() {
           </Card>
 
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="preference">Preferences</TabsTrigger>
-              <TabsTrigger value="personal_info">Personal</TabsTrigger>
-              <TabsTrigger value="context">Context</TabsTrigger>
-              <TabsTrigger value="instruction">Instructions</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1">
+              <TabsTrigger value="all" className="text-xs md:text-sm">All</TabsTrigger>
+              <TabsTrigger value="preference" className="text-xs md:text-sm">Preferences</TabsTrigger>
+              <TabsTrigger value="personal_info" className="text-xs md:text-sm">Personal</TabsTrigger>
+              <TabsTrigger value="context" className="text-xs md:text-sm">Context</TabsTrigger>
+              <TabsTrigger value="instruction" className="text-xs md:text-sm">Instructions</TabsTrigger>
             </TabsList>
 
             <TabsContent value={selectedCategory} className="space-y-4">

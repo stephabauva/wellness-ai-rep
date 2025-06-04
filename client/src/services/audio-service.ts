@@ -59,8 +59,8 @@ class AudioService {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         this.recognition = new SpeechRecognition();
-        this.recognition.continuous = false;
-        this.recognition.interimResults = false;
+        this.recognition.continuous = true;
+        this.recognition.interimResults = true;
         this.recognition.lang = 'en-US';
       }
     }
@@ -157,6 +157,8 @@ class AudioService {
   }
 
   private isUserStoppedWebSpeech = false;
+  private webSpeechTimeout: NodeJS.Timeout | null = null;
+  private finalTranscript = '';
 
   async transcribeWithWebSpeech(onResult: (text: string) => void, onError: (error: string) => void): Promise<void> {
     if (!this.recognition) {
@@ -164,17 +166,58 @@ class AudioService {
     }
 
     this.isUserStoppedWebSpeech = false;
+    this.finalTranscript = '';
+    
+    // Clear any existing timeout
+    if (this.webSpeechTimeout) {
+      clearTimeout(this.webSpeechTimeout);
+      this.webSpeechTimeout = null;
+    }
 
     return new Promise((resolve, reject) => {
+      let hasReceivedSpeech = false;
+
       this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        onResult(transcript);
-        resolve();
+        hasReceivedSpeech = true;
+        let interimTranscript = '';
+        
+        // Process all results
+        for (let i = 0; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            this.finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        // Clear existing timeout and set a new one
+        if (this.webSpeechTimeout) {
+          clearTimeout(this.webSpeechTimeout);
+        }
+
+        // Set timeout for 3 seconds of silence after speech
+        this.webSpeechTimeout = setTimeout(() => {
+          if (!this.isUserStoppedWebSpeech && this.finalTranscript.trim()) {
+            onResult(this.finalTranscript.trim());
+            this.stopWebSpeech();
+            resolve();
+          }
+        }, 3000);
       };
 
       this.recognition.onerror = (event: any) => {
+        // Clear timeout on error
+        if (this.webSpeechTimeout) {
+          clearTimeout(this.webSpeechTimeout);
+          this.webSpeechTimeout = null;
+        }
+
         // Don't treat user-initiated stops as errors
         if (event.error === 'aborted' && this.isUserStoppedWebSpeech) {
+          if (this.finalTranscript.trim()) {
+            onResult(this.finalTranscript.trim());
+          }
           resolve();
           return;
         }
@@ -185,7 +228,37 @@ class AudioService {
       };
 
       this.recognition.onend = () => {
-        resolve();
+        // Clear timeout when recognition ends
+        if (this.webSpeechTimeout) {
+          clearTimeout(this.webSpeechTimeout);
+          this.webSpeechTimeout = null;
+        }
+
+        // If user manually stopped and we have text, return it
+        if (this.isUserStoppedWebSpeech && this.finalTranscript.trim()) {
+          onResult(this.finalTranscript.trim());
+        }
+
+        // Restart recognition if it ended unexpectedly and user hasn't stopped manually
+        if (!this.isUserStoppedWebSpeech && hasReceivedSpeech && this.finalTranscript.trim()) {
+          // Speech ended naturally after receiving input, return the result
+          onResult(this.finalTranscript.trim());
+          resolve();
+        } else if (!this.isUserStoppedWebSpeech && !hasReceivedSpeech) {
+          // Recognition ended without any speech, try to restart
+          setTimeout(() => {
+            if (!this.isUserStoppedWebSpeech) {
+              try {
+                this.recognition.start();
+              } catch (e) {
+                // If restart fails, resolve gracefully
+                resolve();
+              }
+            }
+          }, 100);
+        } else {
+          resolve();
+        }
       };
 
       this.recognition.start();
@@ -195,6 +268,13 @@ class AudioService {
   stopWebSpeech(): void {
     if (this.recognition) {
       this.isUserStoppedWebSpeech = true;
+      
+      // Clear any pending timeout
+      if (this.webSpeechTimeout) {
+        clearTimeout(this.webSpeechTimeout);
+        this.webSpeechTimeout = null;
+      }
+      
       this.recognition.stop();
     }
   }
@@ -263,6 +343,14 @@ class AudioService {
     }
     this.mediaRecorder = null;
     this.audioChunks = [];
+    
+    // Clean up Web Speech API resources
+    if (this.webSpeechTimeout) {
+      clearTimeout(this.webSpeechTimeout);
+      this.webSpeechTimeout = null;
+    }
+    this.isUserStoppedWebSpeech = false;
+    this.finalTranscript = '';
   }
 
   isWebSpeechSupported(): boolean {

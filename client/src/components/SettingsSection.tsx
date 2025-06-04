@@ -29,6 +29,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/context/AppContext";
+import { supportedLanguages } from "@shared/schema";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -44,6 +45,7 @@ const formSchema = z.object({
   aiProvider: z.enum(["openai", "google"]),
   aiModel: z.string(),
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]),
+  preferredLanguage: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -110,6 +112,7 @@ const SettingsSection: React.FC = () => {
       aiProvider: settings?.aiProvider || "openai",
       aiModel: settings?.aiModel || "gpt-4o",
       transcriptionProvider: settings?.transcriptionProvider || "webspeech",
+      preferredLanguage: settings?.preferredLanguage || "en",
     }
   });
   
@@ -575,6 +578,34 @@ const SettingsSection: React.FC = () => {
                           </Select>
                           <FormDescription>
                             Choose your preferred method for converting speech to text in the chat
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="preferredLanguage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preferred Language for Audio Transcription</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select language" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {supportedLanguages.map((language) => (
+                                <SelectItem key={language.code} value={language.code}>
+                                  {language.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Select your preferred language for speech recognition to improve accuracy
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

@@ -83,6 +83,8 @@ export class MemStorage implements IStorage {
         emailSummaries: true,
         dataSharing: false
       },
+      transcriptionProvider: "webspeech",
+      preferredLanguage: "en",
       createdAt: new Date()
     };
     this.users.set(1, defaultUser);

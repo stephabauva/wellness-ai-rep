@@ -400,9 +400,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No audio file provided" });
       }
 
+      // Get user's preferred language (default to English if not set)
+      const user = await storage.getUser(1); // For now using user ID 1, in production this would come from authentication
+      const preferredLanguage = user?.preferredLanguage || 'en';
+
       const result = await transcriptionService.transcribeWithOpenAI(
         req.file.buffer,
-        req.file.originalname || "audio.wav"
+        req.file.originalname || "audio.wav",
+        preferredLanguage as any
       );
 
       res.json(result);
@@ -423,7 +428,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No audio file provided" });
       }
 
-      const result = await transcriptionService.transcribeWithGoogle(req.file.buffer);
+      // Get user's preferred language (default to English if not set)
+      const user = await storage.getUser(1); // For now using user ID 1, in production this would come from authentication
+      const preferredLanguage = user?.preferredLanguage || 'en';
+
+      const result = await transcriptionService.transcribeWithGoogle(
+        req.file.buffer,
+        preferredLanguage as any
+      );
 
       res.json(result);
     } catch (error: any) {

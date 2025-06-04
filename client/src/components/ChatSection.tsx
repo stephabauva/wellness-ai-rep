@@ -243,8 +243,8 @@ const ChatSection: React.FC = () => {
           messages?.map((message) => (
             <ChatMessage
               key={message.id}
-              content={message.content}
-              isUserMessage={message.isUserMessage}
+              message={message.content}
+              isUser={message.isUserMessage}
               timestamp={message.timestamp}
             />
           ))
@@ -305,6 +305,7 @@ const ChatSection: React.FC = () => {
               <DropdownMenuItem onClick={handleCameraCapture}>
                 <Camera className="h-4 w-4 mr-2" />
                 Take Picture
+                <span className="text-xs text-muted-foreground ml-2">(Mobile: Camera, Desktop: File)</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadPDF}>
                 <Paperclip className="h-4 w-4 mr-2" />

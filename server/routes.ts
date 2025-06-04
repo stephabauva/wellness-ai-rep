@@ -12,13 +12,22 @@ import { db } from "./db";
 import { conversations, conversationMessages, memoryEntries } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
+// Attachment schema for client
+const attachmentSchema = z.object({
+  id: z.string(),
+  fileName: z.string(),
+  fileType: z.string(),
+  fileSize: z.number()
+});
+
 // Message payload schema
 const messageSchema = z.object({
-  content: z.string().min(1),
+  content: z.string(),
   conversationId: z.string().optional(),
   coachingMode: z.string().optional().default("weight-loss"),
   aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
-  aiModel: z.string().optional().default("gpt-4o")
+  aiModel: z.string().optional().default("gpt-4o"),
+  attachments: z.array(attachmentSchema).optional()
 });
 
 // Device connect schema
@@ -61,30 +70,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send a new message with memory enhancement
   app.post("/api/messages", async (req, res) => {
     try {
-      const { content, conversationId, coachingMode, aiProvider, aiModel } = messageSchema.parse(req.body);
+      const { content, conversationId, coachingMode, aiProvider, aiModel, attachments } = messageSchema.parse(req.body);
       const userId = 1; // Default user ID
 
       // Get or create conversation
       let currentConversationId = conversationId;
       if (!currentConversationId) {
+        // Create title from content or attachments
+        let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
+        if (!title && attachments && attachments.length > 0) {
+          title = attachments.map(a => a.fileName).join(', ').slice(0, 50);
+        }
+        if (!title) title = "New Conversation";
+
         const [newConversation] = await db.insert(conversations).values({
           userId,
-          title: content.slice(0, 50) + (content.length > 50 ? '...' : '')
+          title
         }).returning();
         currentConversationId = newConversation.id;
       }
 
-      // Save user message to conversation
+      // Save user message to conversation with attachments
       const [userMessage] = await db.insert(conversationMessages).values({
         conversationId: currentConversationId,
         role: 'user',
-        content
+        content,
+        metadata: attachments && attachments.length > 0 ? { attachments } : undefined
       }).returning();
+
+      // Create legacy content including file info for compatibility
+      let legacyContent = content;
+      if (attachments && attachments.length > 0) {
+        const attachmentText = attachments.map(a => `[File: ${a.fileName}]`).join(' ');
+        legacyContent = content ? `${content} ${attachmentText}` : attachmentText;
+      }
 
       // Also save to legacy messages for compatibility
       const legacyUserMessage = await storage.createMessage({
         userId,
-        content,
+        content: legacyContent,
         isUserMessage: true
       });
 
@@ -96,10 +120,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(conversationMessages.createdAt))
         .limit(10);
 
+      // Prepare content for AI including attachment information
+      let contentForAI = content;
+      if (attachments && attachments.length > 0) {
+        const attachmentInfo = attachments.map(att => 
+          `The user has attached a file: ${att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
+        ).join("\n");
+        contentForAI = content ? `${content}\n\n${attachmentInfo}` : attachmentInfo;
+      }
+
       // Get AI response with memory enhancement
       const aiConfig = { provider: aiProvider, model: aiModel };
       const aiResult = await chatService.getChatResponse(
-        content,
+        contentForAI,
         userId,
         currentConversationId,
         legacyUserMessage.id,

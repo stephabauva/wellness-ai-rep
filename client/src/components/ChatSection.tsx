@@ -127,11 +127,10 @@ const ChatSection: React.FC = () => {
             <Button 
               onClick={handleDownloadPDF} 
               variant="outline" 
-              size="sm"
+              size="icon"
               disabled={downloadReportMutation.isPending}
             >
-              <Paperclip className="h-4 w-4 mr-2" />
-              {downloadReportMutation.isPending ? "Generating..." : "Health Report"}
+              <Paperclip className="h-4 w-4" />
             </Button>
           </div>
         </div>

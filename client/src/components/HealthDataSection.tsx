@@ -132,8 +132,8 @@ const HealthDataSection: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="p-4 md:p-6">
+    <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="p-4 md:p-6 pb-8 min-h-full">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
@@ -212,13 +212,13 @@ const HealthDataSection: React.FC = () => {
 
               {/* Comprehensive Health Categories */}
               <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="body_composition">Body</TabsTrigger>
-                  <TabsTrigger value="cardiovascular">Heart</TabsTrigger>
-                  <TabsTrigger value="lifestyle">Lifestyle</TabsTrigger>
-                  <TabsTrigger value="medical">Medical</TabsTrigger>
-                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto gap-1">
+                  <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
+                  <TabsTrigger value="body_composition" className="text-xs md:text-sm">Body</TabsTrigger>
+                  <TabsTrigger value="cardiovascular" className="text-xs md:text-sm">Heart</TabsTrigger>
+                  <TabsTrigger value="lifestyle" className="text-xs md:text-sm">Lifestyle</TabsTrigger>
+                  <TabsTrigger value="medical" className="text-xs md:text-sm">Medical</TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs md:text-sm">Advanced</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6 mt-6">
@@ -495,7 +495,7 @@ const HealthDataSection: React.FC = () => {
                 <CardTitle>Hydration</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <div className="w-40 h-40">
+                <div className="relative w-40 h-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -516,7 +516,7 @@ const HealthDataSection: React.FC = () => {
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-2xl font-bold">65%</span>
                     <span className="text-sm text-muted-foreground">1.3/2L</span>
                   </div>

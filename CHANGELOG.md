@@ -13,10 +13,13 @@ All notable changes to the AI Wellness Coach application will be documented in t
 - **Online/Offline Awareness**: System automatically detects network status and adjusts provider availability accordingly
 
 #### Advanced Audio Recording Capabilities
+- **Cross-Browser MIME Type Compatibility**: Automatic detection and fallback for supported audio formats (WebM, MP4, OGG, WAV)
+- **Intelligent Format Selection**: Dynamic MIME type detection with graceful fallbacks to ensure recording works on all browsers
 - **Dual Recording Modes**: Real-time transcription (Web Speech API) and file-based recording (OpenAI/Google)
 - **High-Quality Audio Capture**: MediaRecorder with optimized settings (48kHz, mono, noise suppression, echo cancellation)
 - **Microphone Permission Management**: Graceful permission handling with user-friendly prompts
 - **Recording State Management**: Visual feedback for recording, processing, and transcription states
+- **Robust Error Handling**: MediaRecorder initialization with fallback options and comprehensive error reporting
 
 #### Comprehensive User Interface
 - **AudioRecorder Component**: Intelligent microphone button with provider-specific behavior and status indicators
@@ -25,10 +28,12 @@ All notable changes to the AI Wellness Coach application will be documented in t
 - **Network Status Indicators**: Visual cues for online/offline status and provider requirements
 
 #### Backend Infrastructure
+- **Audio Format Detection**: Server-side MIME type and file extension detection for proper transcription API compatibility
 - **Transcription Service**: Unified backend service handling all three providers with proper error handling
 - **Secure API Endpoints**: Protected routes for OpenAI Whisper and Google Speech-to-Text transcription
 - **File Upload Support**: Multer integration for audio file handling with size limits and validation
 - **Provider Capabilities API**: Dynamic endpoint returning real-time provider availability and features
+- **Format Conversion**: Automatic filename and content-type matching for transcription API requirements
 
 #### Technical Implementation
 - **Enhanced Database Schema**: Added transcriptionProvider field to user preferences

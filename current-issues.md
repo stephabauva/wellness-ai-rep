@@ -5,6 +5,6 @@
 
 3. When using the microphone with Web Speech API, the microphone stops recording after a small pause in the speech, increase the duration.
 
-4. When using the microphone with Web Speech API, when clicking back on the rotating ring, it says "speech recognition error: aborted", it should just stop the recording. 
+4. [fixed] When using the microphone with Web Speech API, when clicking back on the rotating ring, it says "speech recognition error: aborted", it should just stop the recording. 
 
 5. [fixed] When using the microphone, instead of a rotating ring, i would prefer to keep the mic symbol, blinking red.

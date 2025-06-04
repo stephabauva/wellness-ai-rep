@@ -264,6 +264,13 @@ class AudioService {
           return;
         }
 
+        // If we have any speech (even interim), don't restart - just wait for timeout or user action
+        if (hasReceivedSpeech) {
+          // Don't restart if we've received any speech - let the timeout handle it
+          resolve();
+          return;
+        }
+
         // Only restart if we haven't received any speech yet and user hasn't stopped
         if (!this.isUserStoppedWebSpeech && !hasReceivedSpeech) {
           // Recognition ended without any speech, try to restart after a short delay

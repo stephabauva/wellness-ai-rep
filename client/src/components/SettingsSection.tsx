@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useTranslation } from "react-i18next";
 import { 
   Form, 
   FormControl, 
@@ -44,7 +43,6 @@ const formSchema = z.object({
   dataSharing: z.boolean(),
   aiProvider: z.enum(["openai", "google"]),
   aiModel: z.string(),
-  language: z.enum(["en", "fr"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,7 +50,6 @@ type FormValues = z.infer<typeof formSchema>;
 const SettingsSection: React.FC = () => {
   const { toast } = useToast();
   const { coachingMode, setCoachingMode } = useAppContext();
-  const { t, i18n } = useTranslation();
   
   // Fetch user settings
   const { data: settings, isLoading } = useQuery({
@@ -95,13 +92,6 @@ const SettingsSection: React.FC = () => {
     }
   });
   
-  // Initialize language from settings
-  React.useEffect(() => {
-    if (settings?.language && settings.language !== i18n.language) {
-      i18n.changeLanguage(settings.language);
-    }
-  }, [settings?.language, i18n]);
-
   // Set up form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -118,49 +108,15 @@ const SettingsSection: React.FC = () => {
       dataSharing: settings?.dataSharing || false,
       aiProvider: settings?.aiProvider || "google",
       aiModel: settings?.aiModel || "gemini-2.0-flash-exp",
-      language: settings?.language || "en",
     }
   });
-
-  // Update form when settings change
-  React.useEffect(() => {
-    if (settings) {
-      form.reset({
-        name: settings.name || "Jane Smith",
-        email: settings.email || "jane.smith@example.com",
-        primaryGoal: settings.primaryGoal || "weight-loss",
-        coachStyle: settings.coachStyle || "motivational",
-        reminderFrequency: settings.reminderFrequency || "daily",
-        focusAreas: settings.focusAreas || ["nutrition", "exercise", "sleep"],
-        darkMode: settings.darkMode || false,
-        pushNotifications: settings.pushNotifications || true,
-        emailSummaries: settings.emailSummaries || true,
-        dataSharing: settings.dataSharing || false,
-        aiProvider: settings.aiProvider || "google",
-        aiModel: settings.aiModel || "gemini-2.0-flash-exp",
-        language: settings.language || "en",
-      });
-    }
-  }, [settings, form]);
   
   const onSubmit = (data: FormValues) => {
-    // Check if language changed
-    const languageChanged = data.language !== i18n.language;
-    
     updateSettingsMutation.mutate(data);
     
     // Update coaching mode in context if primary goal changed
     if (data.primaryGoal !== coachingMode) {
       setCoachingMode(data.primaryGoal);
-    }
-    
-    // Handle language change after form submission
-    if (languageChanged) {
-      i18n.changeLanguage(data.language).then(() => {
-        localStorage.setItem('i18nextLng', data.language);
-        // Force reload to ensure all components update with new language
-        window.location.reload();
-      });
     }
   };
   
@@ -599,39 +555,6 @@ const SettingsSection: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Language Selection */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t("settings.language")}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="language"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("settings.language")}</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select language" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="en">{t("settings.english")}</SelectItem>
-                              <SelectItem value="fr">{t("settings.french")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Choose your preferred language for the interface
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
                 {/* Save Button */}
                 <div className="flex justify-end">
                   <Button 
@@ -639,7 +562,7 @@ const SettingsSection: React.FC = () => {
                     className="bg-primary hover:bg-primary/90"
                     disabled={updateSettingsMutation.isPending}
                   >
-                    {t("settings.saveChanges")}
+                    Save Changes
                   </Button>
                 </div>
               </form>

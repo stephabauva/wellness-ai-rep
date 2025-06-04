@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Paperclip, Send, Mic, MicOff } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { CoachSelect } from "@/components/ui/coach-select";
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
@@ -67,7 +66,6 @@ type Message = {
 
 const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
-  const { t } = useTranslation();
   const [inputMessage, setInputMessage] = useState("");
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);

@@ -33,8 +33,7 @@ const settingsUpdateSchema = z.object({
   emailSummaries: z.boolean().optional(),
   dataSharing: z.boolean().optional(),
   aiProvider: z.enum(["openai", "google"]).optional(),
-  aiModel: z.string().optional(),
-  language: z.enum(["en", "fr"]).optional()
+  aiModel: z.string().optional()
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {

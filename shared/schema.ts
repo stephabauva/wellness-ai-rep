@@ -92,6 +92,3 @@ export type InsertConnectedDevice = z.infer<typeof insertConnectedDeviceSchema>;
 // Coaching types
 export const coachingModes = ['weight-loss', 'muscle-gain', 'fitness', 'mental-wellness', 'nutrition'] as const;
 export type CoachingMode = typeof coachingModes[number];
-
-export const supportedLanguages = ['en', 'fr'] as const;
-export type SupportedLanguage = typeof supportedLanguages[number];

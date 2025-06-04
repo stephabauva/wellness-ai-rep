@@ -10,8 +10,8 @@ import { nanoid } from "nanoid";
 const messageSchema = z.object({
   content: z.string().min(1),
   coachingMode: z.string().optional().default("weight-loss"),
-  aiProvider: z.enum(["openai", "google"]).optional().default("google"),
-  aiModel: z.string().optional().default("gemini-2.0-flash-exp")
+  aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
+  aiModel: z.string().optional().default("gpt-4o")
 });
 
 // Device connect schema

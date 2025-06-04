@@ -42,7 +42,7 @@ class ChatService {
   async getChatResponse(
     userMessage: string, 
     coachingMode: string = "weight-loss",
-    aiConfig: AIConfig = { provider: "google", model: "gemini-2.0-flash-exp" }
+    aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" }
   ): Promise<string> {
     try {
       const mode = coachingModes.includes(coachingMode as CoachingMode) 
@@ -113,7 +113,7 @@ User: ${userMessage}`;
 
   async getHealthInsights(
     healthData: any,
-    aiConfig: AIConfig = { provider: "google", model: "gemini-2.0-flash-exp" }
+    aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" }
   ): Promise<string[]> {
     try {
       const prompt = `Based on this health data: ${JSON.stringify(healthData)}, provide 3-5 brief, actionable health insights. Focus on trends, achievements, and recommendations.`;

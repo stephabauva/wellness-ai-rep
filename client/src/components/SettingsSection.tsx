@@ -106,8 +106,8 @@ const SettingsSection: React.FC = () => {
       pushNotifications: settings?.pushNotifications || true,
       emailSummaries: settings?.emailSummaries || true,
       dataSharing: settings?.dataSharing || false,
-      aiProvider: settings?.aiProvider || "google",
-      aiModel: settings?.aiModel || "gemini-2.0-flash-exp",
+      aiProvider: settings?.aiProvider || "openai",
+      aiModel: settings?.aiModel || "gpt-4o",
     }
   });
   

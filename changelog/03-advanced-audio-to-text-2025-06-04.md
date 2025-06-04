@@ -42,3 +42,6 @@ User Experience Improvements
 
 Streamlined Web Speech API: Removed unnecessary notification when user manually stops speech recognition to provide cleaner UX
 Enhanced Error Handling: Fixed Web Speech API "aborted" error when user clicks to stop recording - now gracefully stops without error messages
+Fixed Text Duplication: Resolved critical issue where Web Speech API was duplicating transcribed text by implementing persistent result tracking flag
+Improved Recognition Lifecycle: Enhanced recognition start/stop handling with proper cleanup and state management to prevent restart loops
+Robust Promise Handling: Added safeguards to ensure transcription results are delivered exactly once per recording session

@@ -257,6 +257,13 @@ class AudioService {
           return;
         }
 
+        // If we have received speech and have a final transcript, return it and stop
+        if (hasReceivedSpeech && this.finalTranscript.trim()) {
+          onResult(this.finalTranscript.trim());
+          resolve();
+          return;
+        }
+
         // Only restart if we haven't received any speech yet and user hasn't stopped
         if (!this.isUserStoppedWebSpeech && !hasReceivedSpeech) {
           // Recognition ended without any speech, try to restart after a short delay
@@ -270,10 +277,6 @@ class AudioService {
               }
             }
           }, 100);
-        } else if (hasReceivedSpeech && this.finalTranscript.trim()) {
-          // We have received speech, return the result
-          onResult(this.finalTranscript.trim());
-          resolve();
         } else {
           resolve();
         }

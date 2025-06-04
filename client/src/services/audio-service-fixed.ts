@@ -67,33 +67,6 @@ class AudioService {
     }
   }
 
-  private getFilenameFromMimeType(mimeType: string): string {
-    if (mimeType.includes('webm')) {
-      return 'recording.webm';
-    } else if (mimeType.includes('mp4') || mimeType.includes('m4a')) {
-      return 'recording.mp4';
-    } else if (mimeType.includes('ogg')) {
-      return 'recording.ogg';
-    } else if (mimeType.includes('wav')) {
-      return 'recording.wav';
-    } else if (mimeType.includes('mp3')) {
-      return 'recording.mp3';
-    }
-    
-    // Default fallback based on detected supported MIME type
-    if (this.supportedMimeType.includes('mp4')) {
-      return 'recording.mp4';
-    } else if (this.supportedMimeType.includes('webm')) {
-      return 'recording.webm';
-    } else if (this.supportedMimeType.includes('ogg')) {
-      return 'recording.ogg';
-    } else if (this.supportedMimeType.includes('wav')) {
-      return 'recording.wav';
-    }
-    
-    return 'recording.mp4'; // Final fallback
-  }
-
   async requestMicrophonePermission(): Promise<boolean> {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

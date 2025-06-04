@@ -24,8 +24,12 @@ class TranscriptionService {
 
   async transcribeWithOpenAI(audioBlob: Buffer, filename: string = "audio.wav"): Promise<TranscriptionResult> {
     try {
-      // Create a File-like object for OpenAI API
-      const file = new File([audioBlob], filename, { type: 'audio/wav' });
+      // Detect proper file extension and MIME type based on filename
+      const { extension, mimeType } = this.getFileFormatInfo(filename);
+      const properFilename = `audio.${extension}`;
+      
+      // Create a File-like object for OpenAI API with correct MIME type
+      const file = new File([audioBlob], properFilename, { type: mimeType });
       
       const transcription = await this.openai.audio.transcriptions.create({
         file: file,
@@ -40,6 +44,26 @@ class TranscriptionService {
     } catch (error: any) {
       throw new Error(`OpenAI transcription failed: ${error.message}`);
     }
+  }
+
+  private getFileFormatInfo(filename: string): { extension: string; mimeType: string } {
+    // Extract file extension or detect from common patterns
+    const lowercaseFilename = filename.toLowerCase();
+    
+    if (lowercaseFilename.includes('webm') || lowercaseFilename.endsWith('.webm')) {
+      return { extension: 'webm', mimeType: 'audio/webm' };
+    } else if (lowercaseFilename.includes('mp4') || lowercaseFilename.endsWith('.mp4') || lowercaseFilename.endsWith('.m4a')) {
+      return { extension: 'mp4', mimeType: 'audio/mp4' };
+    } else if (lowercaseFilename.includes('ogg') || lowercaseFilename.endsWith('.ogg')) {
+      return { extension: 'ogg', mimeType: 'audio/ogg' };
+    } else if (lowercaseFilename.includes('wav') || lowercaseFilename.endsWith('.wav')) {
+      return { extension: 'wav', mimeType: 'audio/wav' };
+    } else if (lowercaseFilename.includes('mp3') || lowercaseFilename.endsWith('.mp3')) {
+      return { extension: 'mp3', mimeType: 'audio/mp3' };
+    }
+    
+    // Default fallback - use mp4 since that's what most modern browsers create
+    return { extension: 'mp4', mimeType: 'audio/mp4' };
   }
 
   async transcribeWithGoogle(audioBlob: Buffer): Promise<TranscriptionResult> {

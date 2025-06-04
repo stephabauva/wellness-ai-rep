@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Send, Upload, Camera } from "lucide-react";
 import { CoachSelect } from "@/components/ui/coach-select";
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,12 @@ import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { TranscriptionProvider } from "@shared/schema";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Message = {
   id: string;
@@ -25,6 +31,8 @@ const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
   // Get chat history
@@ -106,6 +114,40 @@ const ChatSection: React.FC = () => {
     setInputMessage(prev => prev + (prev ? ' ' : '') + text);
   };
 
+  const handleFileImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleCameraCapture = () => {
+    cameraInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Handle the selected file
+      const fileInfo = `[File: ${file.name} (${(file.size / 1024).toFixed(1)}KB)]`;
+      setInputMessage(prev => prev + (prev ? ' ' : '') + fileInfo);
+      toast({
+        title: "File attached",
+        description: `${file.name} has been attached to your message.`,
+      });
+    }
+  };
+
+  const handleCameraChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Handle the captured photo
+      const photoInfo = `[Photo: ${file.name} (${(file.size / 1024).toFixed(1)}KB)]`;
+      setInputMessage(prev => prev + (prev ? ' ' : '') + photoInfo);
+      toast({
+        title: "Photo captured",
+        description: "Your photo has been attached to the message.",
+      });
+    }
+  };
+
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -169,15 +211,49 @@ const ChatSection: React.FC = () => {
             />
           </div>
           
-          <Button 
-            onClick={handleDownloadPDF} 
-            variant="outline" 
-            size="icon"
-            disabled={downloadReportMutation.isPending}
-            title="Download Health Report"
-          >
-            <Paperclip className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon"
+                disabled={downloadReportMutation.isPending}
+                title="Attach file or capture photo"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleFileImport}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import File
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleCameraCapture}>
+                <Camera className="h-4 w-4 mr-2" />
+                Take Picture
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadPDF}>
+                <Paperclip className="h-4 w-4 mr-2" />
+                Download Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Hidden file inputs */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleCameraChange}
+            style={{ display: 'none' }}
+          />
 
           <AudioRecorder
             onTranscriptionComplete={handleTranscriptionComplete}

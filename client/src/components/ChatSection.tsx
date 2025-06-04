@@ -124,14 +124,6 @@ const ChatSection: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <CoachSelect value={coachingMode} onValueChange={setCoachingMode} />
-            <Button 
-              onClick={handleDownloadPDF} 
-              variant="outline" 
-              size="icon"
-              disabled={downloadReportMutation.isPending}
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>
@@ -177,6 +169,16 @@ const ChatSection: React.FC = () => {
             />
           </div>
           
+          <Button 
+            onClick={handleDownloadPDF} 
+            variant="outline" 
+            size="icon"
+            disabled={downloadReportMutation.isPending}
+            title="Download Health Report"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+
           <AudioRecorder
             onTranscriptionComplete={handleTranscriptionComplete}
             provider={(settings?.transcriptionProvider as TranscriptionProvider) || "webspeech"}

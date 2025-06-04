@@ -40,7 +40,8 @@ const settingsUpdateSchema = z.object({
   emailSummaries: z.boolean().optional(),
   dataSharing: z.boolean().optional(),
   aiProvider: z.enum(["openai", "google"]).optional(),
-  aiModel: z.string().optional()
+  aiModel: z.string().optional(),
+  transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional()
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -362,6 +363,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching conversation messages:', error);
       res.status(500).json({ message: "Failed to fetch conversation messages" });
+    }
+  });
+
+  // Configure multer for audio file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 25 * 1024 * 1024, // 25MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Accept audio files
+      if (file.mimetype.startsWith('audio/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only audio files are allowed'));
+      }
+    }
+  });
+
+  // Get transcription provider capabilities
+  app.get("/api/transcription/providers", async (req, res) => {
+    try {
+      const capabilities = transcriptionService.getProviderCapabilities();
+      res.json(capabilities);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch provider capabilities" });
+    }
+  });
+
+  // OpenAI Whisper transcription endpoint
+  app.post("/api/transcribe/openai", upload.single('audio'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No audio file provided" });
+      }
+
+      const result = await transcriptionService.transcribeWithOpenAI(
+        req.file.buffer,
+        req.file.originalname || "audio.wav"
+      );
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('OpenAI transcription error:', error);
+      res.status(500).json({ 
+        error: "Transcription failed", 
+        details: error.message,
+        provider: "openai"
+      });
+    }
+  });
+
+  // Google Speech-to-Text transcription endpoint
+  app.post("/api/transcribe/google", upload.single('audio'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No audio file provided" });
+      }
+
+      const result = await transcriptionService.transcribeWithGoogle(req.file.buffer);
+
+      res.json(result);
+    } catch (error: any) {
+      console.error('Google transcription error:', error);
+      res.status(500).json({ 
+        error: "Transcription failed", 
+        details: error.message,
+        provider: "google"
+      });
     }
   });
   

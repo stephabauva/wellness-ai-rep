@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Paperclip, Send, Mic, MicOff } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 import { CoachSelect } from "@/components/ui/coach-select";
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
@@ -11,51 +11,10 @@ import { useAppContext } from "@/context/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
+import { AudioRecorder } from "@/components/AudioRecorder";
+import { TranscriptionProvider } from "@shared/schema";
 
-// Add TypeScript definitions for SpeechRecognition
-interface SpeechRecognition {
-  new(): SpeechRecognition;
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onstart: () => void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: SpeechRecognitionErrorEvent) => void;
-  onend: () => void;
-  start: () => void;
-  stop: () => void;
-}
 
-declare global {
-  interface Window {
-    SpeechRecognition: SpeechRecognition;
-    webkitSpeechRecognition: SpeechRecognition;
-  }
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-}
-
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  [index: number]: SpeechRecognitionResult;
-  length: number;
-}
-
-interface SpeechRecognitionResult {
-  [index: number]: SpeechRecognitionAlternative;
-  isFinal: boolean;
-  length: number;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
 
 type Message = {
   id: string;

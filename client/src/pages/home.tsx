@@ -20,6 +20,8 @@ const Home: React.FC = () => {
         return <HealthDataSection />;
       case "devices":
         return <ConnectedDevicesSection />;
+      case "memory":
+        return <MemorySection />;
       case "settings":
         return <SettingsSection />;
       default:

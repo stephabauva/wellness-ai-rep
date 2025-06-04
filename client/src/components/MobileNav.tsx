@@ -4,6 +4,7 @@ import {
   MessageSquare, 
   BarChart3, 
   Cpu, 
+  Brain,
   Settings, 
   Zap 
 } from "lucide-react";
@@ -38,7 +39,7 @@ const MobileNav: React.FC = () => {
 
   const toggleNav = useCallback(() => setIsOpen(prev => !prev), []);
 
-  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "settings") => {
+  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "settings") => {
     setActiveSection(section);
     setIsOpen(false);
   }, [setActiveSection]);
@@ -67,7 +68,7 @@ const MobileNav: React.FC = () => {
         "bg-card absolute w-full left-0 p-4 border-b border-border shadow-lg",
         isOpen ? "block" : "hidden"
       )}>
-        <nav className="grid grid-cols-4 gap-2">
+        <nav className="grid grid-cols-5 gap-2">
           <NavButton 
             active={activeSection === "chat"}
             onClick={() => handleNavClick("chat")}
@@ -87,6 +88,13 @@ const MobileNav: React.FC = () => {
             onClick={() => handleNavClick("devices")}
             label="Devices"
             icon={<Cpu className="h-6 w-6" />}
+          />
+
+          <NavButton 
+            active={activeSection === "memory"}
+            onClick={() => handleNavClick("memory")}
+            label="Memory"
+            icon={<Brain className="h-6 w-6" />}
           />
           
           <NavButton 

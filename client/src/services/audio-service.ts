@@ -177,20 +177,25 @@ class AudioService {
     return new Promise((resolve, reject) => {
       let hasReceivedSpeech = false;
       let isRecognitionActive = false;
+      let lastProcessedResultIndex = -1;
 
       this.recognition.onstart = () => {
         isRecognitionActive = true;
+        // Reset tracking when recognition starts
+        lastProcessedResultIndex = -1;
+        this.finalTranscript = '';
       };
 
       this.recognition.onresult = (event: any) => {
         hasReceivedSpeech = true;
         let interimTranscript = '';
         
-        // Process all results
-        for (let i = 0; i < event.results.length; i++) {
+        // Only process new results that we haven't seen before
+        for (let i = lastProcessedResultIndex + 1; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             this.finalTranscript += transcript + ' ';
+            lastProcessedResultIndex = i;
           } else {
             interimTranscript += transcript;
           }

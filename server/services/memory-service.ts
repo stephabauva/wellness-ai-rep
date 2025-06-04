@@ -232,10 +232,15 @@ Respond with JSON:
         if (!memory.embedding) continue;
 
         try {
-          let embeddingStr = memory.embedding as string;
-          if (embeddingStr && embeddingStr.trim().length > 0) {
-            const memoryEmbedding = JSON.parse(embeddingStr);
-            if (Array.isArray(memoryEmbedding) && memoryEmbedding.length > 0) {
+          if (memory.embedding) {
+            let memoryEmbedding;
+            if (typeof memory.embedding === 'string') {
+              memoryEmbedding = JSON.parse(memory.embedding);
+            } else {
+              memoryEmbedding = memory.embedding;
+            }
+            
+            if (Array.isArray(memoryEmbedding) && memoryEmbedding.length > 0 && Array.isArray(contextEmbedding)) {
               const similarity = this.cosineSimilarity(contextEmbedding, memoryEmbedding);
               
               if (similarity > 0.7) { // Threshold for relevance

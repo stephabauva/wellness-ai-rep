@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { CoachingMode, coachingModes } from "@shared/schema";
+import { memoryService } from "./memory-service";
 
 type AIProvider = "openai" | "google";
 type OpenAIModel = "gpt-4o" | "gpt-4o-mini";
@@ -41,24 +42,65 @@ class ChatService {
 
   async getChatResponse(
     userMessage: string, 
+    userId: number,
+    conversationId: string,
+    messageId: number,
     coachingMode: string = "weight-loss",
+    conversationHistory: any[] = [],
     aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" }
-  ): Promise<string> {
+  ): Promise<{ response: string; memoryInfo?: any }> {
     try {
       const mode = coachingModes.includes(coachingMode as CoachingMode) 
         ? coachingMode 
         : "weight-loss";
       
-      const persona = this.getCoachingPersona(mode);
+      // Process message for memory extraction
+      const memoryProcessing = await memoryService.processMessageForMemory(
+        userId, 
+        userMessage, 
+        conversationId, 
+        messageId,
+        conversationHistory
+      );
+
+      // Retrieve relevant memories for context
+      const relevantMemories = await memoryService.getContextualMemories(
+        userId,
+        conversationHistory,
+        userMessage
+      );
+
+      // Build enhanced persona with memory context
+      const basePersona = this.getCoachingPersona(mode);
+      const enhancedPersona = memoryService.buildSystemPromptWithMemories(relevantMemories);
       
+      let response: string;
       if (aiConfig.provider === "openai") {
-        return await this.getOpenAIResponse(userMessage, persona, aiConfig.model as OpenAIModel);
+        response = await this.getOpenAIResponse(userMessage, enhancedPersona, aiConfig.model as OpenAIModel);
       } else {
-        return await this.getGoogleResponse(userMessage, persona, aiConfig.model as GoogleModel);
+        response = await this.getGoogleResponse(userMessage, enhancedPersona, aiConfig.model as GoogleModel);
       }
+
+      // Log memory usage
+      if (relevantMemories.length > 0) {
+        await memoryService.logMemoryUsage(relevantMemories, conversationId, true);
+      }
+
+      return {
+        response,
+        memoryInfo: {
+          memoriesUsed: relevantMemories.length,
+          newMemories: {
+            explicit: !!memoryProcessing.explicitMemory,
+            autoDetected: !!memoryProcessing.autoDetectedMemory
+          }
+        }
+      };
     } catch (error) {
       console.error(`${aiConfig.provider} API error:`, error);
-      return "I apologize, but I'm having trouble connecting to my coaching system right now. Please try again in a moment.";
+      return {
+        response: "I apologize, but I'm having trouble connecting to my coaching system right now. Please try again in a moment."
+      };
     }
   }
 

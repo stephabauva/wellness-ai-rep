@@ -2,13 +2,18 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { chatService } from "./services/openai-service";
+import { memoryService } from "./services/memory-service";
 import { generatePDFReport } from "./services/pdf-service";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { db } from "./db";
+import { conversations, conversationMessages, memoryEntries } from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
 
 // Message payload schema
 const messageSchema = z.object({
   content: z.string().min(1),
+  conversationId: z.string().optional(),
   coachingMode: z.string().optional().default("weight-loss"),
   aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
   aiModel: z.string().optional().default("gpt-4o")
@@ -49,31 +54,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Send a new message
+  // Send a new message with memory enhancement
   app.post("/api/messages", async (req, res) => {
     try {
-      const { content, coachingMode, aiProvider, aiModel } = messageSchema.parse(req.body);
+      const { content, conversationId, coachingMode, aiProvider, aiModel } = messageSchema.parse(req.body);
+      const userId = 1; // Default user ID
       
-      // Save user message
-      const userMessage = await storage.createMessage({
-        userId: 1, // Default user ID
+      // Get or create conversation
+      let currentConversationId = conversationId;
+      if (!currentConversationId) {
+        const [newConversation] = await db.insert(conversations).values({
+          userId,
+          title: content.slice(0, 50) + (content.length > 50 ? '...' : '')
+        }).returning();
+        currentConversationId = newConversation.id;
+      }
+
+      // Save user message to conversation
+      const [userMessage] = await db.insert(conversationMessages).values({
+        conversationId: currentConversationId,
+        role: 'user',
+        content
+      }).returning();
+
+      // Also save to legacy messages for compatibility
+      const legacyUserMessage = await storage.createMessage({
+        userId,
         content,
         isUserMessage: true
       });
-      
-      // Get AI response with provider configuration
+
+      // Get conversation history for context
+      const conversationHistory = await db
+        .select()
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, currentConversationId))
+        .orderBy(desc(conversationMessages.createdAt))
+        .limit(10);
+
+      // Get AI response with memory enhancement
       const aiConfig = { provider: aiProvider, model: aiModel };
-      const aiResponse = await chatService.getChatResponse(content, coachingMode, aiConfig);
+      const aiResult = await chatService.getChatResponse(
+        content,
+        userId,
+        currentConversationId,
+        legacyUserMessage.id,
+        coachingMode,
+        conversationHistory.reverse(),
+        aiConfig
+      );
       
-      // Save AI message
-      const aiMessage = await storage.createMessage({
-        userId: 1, // Default user ID
-        content: aiResponse,
+      // Save AI response to conversation
+      const [aiMessage] = await db.insert(conversationMessages).values({
+        conversationId: currentConversationId,
+        role: 'assistant',
+        content: aiResult.response
+      }).returning();
+
+      // Also save to legacy messages for compatibility
+      const legacyAiMessage = await storage.createMessage({
+        userId,
+        content: aiResult.response,
         isUserMessage: false
       });
       
-      res.status(201).json({ userMessage, aiMessage });
+      res.status(201).json({ 
+        userMessage: legacyUserMessage, 
+        aiMessage: legacyAiMessage,
+        conversationId: currentConversationId,
+        memoryInfo: aiResult.memoryInfo
+      });
     } catch (error) {
+      console.error('Chat error:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid request data", errors: error.errors });
       } else {

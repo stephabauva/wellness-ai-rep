@@ -14,8 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { TranscriptionProvider } from "@shared/schema";
 
-
-
 type Message = {
   id: string;
   content: string;
@@ -26,7 +24,6 @@ type Message = {
 const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
-  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -104,190 +101,106 @@ const ChatSection: React.FC = () => {
   const handleDownloadPDF = () => {
     downloadReportMutation.mutate();
   };
-  
-  // Handle voice input
-  const toggleVoiceInput = () => {
-    if (!isListening) {
-      startListening();
-    } else {
-      stopListening();
-    }
+
+  const handleTranscriptionComplete = (text: string) => {
+    setInputMessage(prev => prev + (prev ? ' ' : '') + text);
   };
-  
-  const startListening = () => {
-    if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-      toast({
-        title: "Not Supported",
-        description: "Voice input is not supported in your browser.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      // Use the SpeechRecognition API
-      // Use any type to work around TypeScript limitations with browser APIs
-      const SpeechRecognition = (window.SpeechRecognition || window.webkitSpeechRecognition) as any;
-      const recognition = new SpeechRecognition();
-      
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      
-      recognition.onstart = () => {
-        setIsListening(true);
-        toast({
-          title: "Listening...",
-          description: "Speak now to add your message.",
-        });
-      };
-      
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0][0].transcript;
-        setInputMessage(prev => prev + transcript);
-      };
-      
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error', event.error);
-        setIsListening(false);
-        toast({
-          title: "Error",
-          description: "There was a problem with voice recognition.",
-          variant: "destructive"
-        });
-      };
-      
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-      
-      recognition.start();
-    } catch (error) {
-      console.error('Failed to initialize speech recognition', error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize speech recognition.",
-        variant: "destructive"
-      });
-      setIsListening(false);
-    }
-  };
-  
-  const stopListening = () => {
-    setIsListening(false);
-    // The recognition will stop automatically due to onend event
-  };
-  
-  // Scroll to bottom when messages change
+
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    <div className="flex-1 flex flex-col relative overflow-hidden">
-      {/* Chat Mode Selector */}
-      <div className="p-4 border-b border-border bg-card sticky top-0 z-10 flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Wellness Coach</h1>
-        <div className="hidden md:flex items-center ml-4">
-          <CoachSelect value={coachingMode} onValueChange={setCoachingMode} />
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">AI Wellness Coach</h2>
+            <p className="text-sm text-muted-foreground">
+              Your personal health and wellness companion
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <CoachSelect value={coachingMode} onValueChange={setCoachingMode} />
+            <Button 
+              onClick={handleDownloadPDF} 
+              variant="outline" 
+              size="sm"
+              disabled={downloadReportMutation.isPending}
+            >
+              <Paperclip className="h-4 w-4 mr-2" />
+              {downloadReportMutation.isPending ? "Generating..." : "Health Report"}
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Chat Messages Area */}
-      <div className="flex-1 px-4 py-6 space-y-4 chat-container overflow-y-auto">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loadingMessages ? (
-          // Loading state
-          <>
-            <div className="flex items-start">
-              <Skeleton className="h-10 w-10 rounded-full mr-4" />
-              <Skeleton className="h-24 w-2/3 rounded-[18px]" />
-            </div>
-            <div className="flex items-start justify-end">
-              <Skeleton className="h-16 w-1/2 rounded-[18px]" />
-            </div>
-            <div className="flex items-start">
-              <Skeleton className="h-10 w-10 rounded-full mr-4" />
-              <Skeleton className="h-32 w-2/3 rounded-[18px]" />
-            </div>
-          </>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex gap-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
-          // Messages
           messages?.map((message) => (
             <ChatMessage
               key={message.id}
-              message={message.content}
-              isUser={message.isUserMessage}
-              timestamp={new Date(message.timestamp)}
+              content={message.content}
+              isUserMessage={message.isUserMessage}
+              timestamp={message.timestamp}
             />
           ))
-        )}
-        
-        {/* Typing indicator during send */}
-        {sendMessageMutation.isPending && (
-          <div className="flex items-start">
-            <div className="flex-shrink-0 mr-4">
-              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-            </div>
-            <div className="message-bubble ai-message p-3 shadow-sm">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 border-t border-border bg-card sticky bottom-0">
-        <div className="flex items-center rounded-lg bg-muted p-2">
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="Attach file">
-            <Paperclip className="h-5 w-5" />
-          </Button>
-          <Input
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Type your message..."
-            className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+      {/* Input */}
+      <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex gap-2 items-end">
+          <div className="flex-1 relative">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask about your health, fitness goals, or wellness plans..."
+              className="pr-12"
+              disabled={sendMessageMutation.isPending}
+            />
+          </div>
+          
+          <AudioRecorder
+            onTranscriptionComplete={handleTranscriptionComplete}
+            provider={(settings?.transcriptionProvider as TranscriptionProvider) || "webspeech"}
+            disabled={sendMessageMutation.isPending}
           />
-          <Button 
-            onClick={toggleVoiceInput}
-            variant="ghost" 
-            size="icon" 
-            className={`ml-1 text-muted-foreground hover:text-foreground ${isListening ? 'text-red-500 hover:text-red-600' : ''}`}
-            title={isListening ? "Stop voice input" : "Voice input"}
-            aria-label={isListening ? "Stop voice input" : "Voice input"}
-          >
-            {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          </Button>
+
           <Button 
             onClick={handleSendMessage} 
-            disabled={sendMessageMutation.isPending || !inputMessage.trim()} 
-            className="ml-2 rounded-full h-10 w-10 p-0"
-            aria-label="Send message"
+            disabled={!inputMessage.trim() || sendMessageMutation.isPending}
+            size="icon"
           >
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4" />
           </Button>
         </div>
-        <div className="mt-2 text-xs text-muted-foreground flex justify-between items-center">
-          <span>Powered by WellnessAI</span>
-          <Button 
-            variant="link" 
-            size="sm" 
-            className="text-primary hover:text-primary/80"
-            onClick={handleDownloadPDF}
-            disabled={downloadReportMutation.isPending}
-          >
-            Download Health Report (PDF)
-          </Button>
-        </div>
+        
+        {sendMessageMutation.isPending && (
+          <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+            <div className="h-1 w-1 rounded-full bg-current animate-pulse" />
+            <div className="h-1 w-1 rounded-full bg-current animate-pulse delay-75" />
+            <div className="h-1 w-1 rounded-full bg-current animate-pulse delay-150" />
+            <span>AI is thinking...</span>
+          </div>
+        )}
       </div>
     </div>
   );

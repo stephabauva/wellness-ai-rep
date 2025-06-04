@@ -31,7 +31,7 @@ class AudioService {
 
   private setupWebSpeechAPI() {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         this.recognition = new SpeechRecognition();
         this.recognition.continuous = false;
@@ -194,7 +194,7 @@ class AudioService {
   }
 
   isWebSpeechSupported(): boolean {
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    return !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
   }
 
   getProviderAvailability(isOnline: boolean) {

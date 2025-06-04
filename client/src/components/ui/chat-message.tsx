@@ -29,12 +29,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, times
         <div 
           className="prose prose-sm dark:prose-invert max-w-none" 
           dangerouslySetInnerHTML={{ 
-            __html: message.replace(/\n/g, '<br>') 
+            __html: (message || '').replace(/\n/g, '<br>') 
           }} 
         />
         
         {/* Buttons for AI suggestions */}
-        {!isUser && message.includes("stretching routine") && (
+        {!isUser && message && message.includes("stretching routine") && (
           <div className="mt-4 flex space-x-2">
             <button className="px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-primary/90 transition-colors">
               View demonstration

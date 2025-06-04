@@ -91,9 +91,9 @@ const HealthDataSection: React.FC = () => {
   const COLORS = ['#8B5CF6', '#60A5FA', '#10B981', '#F59E0B', '#EF4444'];
   
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto">
-      <div className="flex-1 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
             <div className="mt-4 md:mt-0 flex space-x-2">

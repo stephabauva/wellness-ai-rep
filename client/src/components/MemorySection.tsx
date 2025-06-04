@@ -179,154 +179,158 @@ export default function MemorySection() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Brain className="h-6 w-6 text-blue-600" />
-        <h2 className="text-2xl font-bold">AI Memory</h2>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Memory Overview</CardTitle>
-          <CardDescription>
-            Your AI coach remembers important information from your conversations to provide personalized guidance.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{allMemories.length}</div>
-              <div className="text-sm text-gray-600">Total Memories</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {allMemories.filter((m: MemoryEntry) => m.category === "preference").length}
-              </div>
-              <div className="text-sm text-gray-600">Preferences</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {allMemories.filter((m: MemoryEntry) => m.category === "instruction").length}
-              </div>
-              <div className="text-sm text-gray-600">Instructions</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {allMemories.filter((m: MemoryEntry) => m.importanceScore >= 0.8).length}
-              </div>
-              <div className="text-sm text-gray-600">High Priority</div>
-            </div>
+    <div className="flex-1 flex flex-col overflow-y-auto">
+      <div className="flex-1 p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex items-center gap-2">
+            <Brain className="h-6 w-6 text-blue-600" />
+            <h2 className="text-2xl font-bold">AI Memory</h2>
           </div>
-        </CardContent>
-      </Card>
 
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="preference">Preferences</TabsTrigger>
-          <TabsTrigger value="personal_info">Personal</TabsTrigger>
-          <TabsTrigger value="context">Context</TabsTrigger>
-          <TabsTrigger value="instruction">Instructions</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={selectedCategory} className="space-y-4">
-          {/* Explanation Card */}
-          <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
-            <Card className="border-blue-200 bg-blue-50">
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-blue-100 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Info className="h-5 w-5 text-blue-600" />
-                      <CardTitle className="text-blue-800">
-                        {explanationCards[selectedCategory as keyof typeof explanationCards]?.title}
-                      </CardTitle>
-                    </div>
-                    {isExplanationOpen ? (
-                      <ChevronUp className="h-4 w-4 text-blue-600" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-blue-600" />
-                    )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Memory Overview</CardTitle>
+              <CardDescription>
+                Your AI coach remembers important information from your conversations to provide personalized guidance.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{allMemories.length}</div>
+                  <div className="text-sm text-gray-600">Total Memories</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {allMemories.filter((m: MemoryEntry) => m.category === "preference").length}
                   </div>
-                  <CardDescription className="text-blue-700">
-                    {explanationCards[selectedCategory as keyof typeof explanationCards]?.description}
-                  </CardDescription>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <ul className="space-y-2">
-                    {explanationCards[selectedCategory as keyof typeof explanationCards]?.details.map((detail, index) => (
-                      <li key={index} className="flex items-start gap-2 text-blue-700">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                        <span className="text-sm">{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+                  <div className="text-sm text-gray-600">Preferences</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {allMemories.filter((m: MemoryEntry) => m.category === "instruction").length}
+                  </div>
+                  <div className="text-sm text-gray-600">Instructions</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {allMemories.filter((m: MemoryEntry) => m.importanceScore >= 0.8).length}
+                  </div>
+                  <div className="text-sm text-gray-600">High Priority</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {memories.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Brain className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">No memories yet</h3>
-                <p className="text-gray-500 text-center">
-                  Start chatting with your AI coach to build a personalized memory bank that helps provide better guidance.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {memories.map((memory: MemoryEntry) => (
-                <Card key={memory.id} className="relative">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        {categoryIcons[memory.category as keyof typeof categoryIcons]}
-                        <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
-                          {categoryLabels[memory.category as keyof typeof categoryLabels]}
-                        </Badge>
-                        <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
-                          {getImportanceLabel(memory.importanceScore)}
-                        </Badge>
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="preference">Preferences</TabsTrigger>
+              <TabsTrigger value="personal_info">Personal</TabsTrigger>
+              <TabsTrigger value="context">Context</TabsTrigger>
+              <TabsTrigger value="instruction">Instructions</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={selectedCategory} className="space-y-4">
+              {/* Explanation Card */}
+              <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
+                <Card className="border-blue-200 bg-blue-50">
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="cursor-pointer hover:bg-blue-100 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Info className="h-5 w-5 text-blue-600" />
+                          <CardTitle className="text-blue-800">
+                            {explanationCards[selectedCategory as keyof typeof explanationCards]?.title}
+                          </CardTitle>
+                        </div>
+                        {isExplanationOpen ? (
+                          <ChevronUp className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-blue-600" />
+                        )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteMemory(memory.id)}
-                        disabled={deleteMemoryMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 mb-3">{memory.content}</p>
-                    
-                    {memory.keywords && memory.keywords.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {memory.keywords.map((keyword: string, index: number) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {keyword}
-                          </Badge>
+                      <CardDescription className="text-blue-700">
+                        {explanationCards[selectedCategory as keyof typeof explanationCards]?.description}
+                      </CardDescription>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0">
+                      <ul className="space-y-2">
+                        {explanationCards[selectedCategory as keyof typeof explanationCards]?.details.map((detail, index) => (
+                          <li key={index} className="flex items-start gap-2 text-blue-700">
+                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                            <span className="text-sm">{detail}</span>
+                          </li>
                         ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Created: {new Date(memory.createdAt).toLocaleDateString()}</span>
-                      <span>Used {memory.accessCount} times</span>
-                    </div>
+                      </ul>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+
+              {memories.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-8">
+                    <Brain className="h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-600 mb-2">No memories yet</h3>
+                    <p className="text-gray-500 text-center">
+                      Start chatting with your AI coach to build a personalized memory bank that helps provide better guidance.
+                    </p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+              ) : (
+                <div className="grid gap-4">
+                  {memories.map((memory: MemoryEntry) => (
+                    <Card key={memory.id} className="relative">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            {categoryIcons[memory.category as keyof typeof categoryIcons]}
+                            <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
+                              {categoryLabels[memory.category as keyof typeof categoryLabels]}
+                            </Badge>
+                            <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
+                              {getImportanceLabel(memory.importanceScore)}
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteMemory(memory.id)}
+                            disabled={deleteMemoryMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-700 mb-3">{memory.content}</p>
+                        
+                        {memory.keywords && memory.keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {memory.keywords.map((keyword: string, index: number) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {keyword}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>Created: {new Date(memory.createdAt).toLocaleDateString()}</span>
+                          <span>Used {memory.accessCount} times</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

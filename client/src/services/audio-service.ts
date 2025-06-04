@@ -162,6 +162,8 @@ class AudioService {
     }
 
     return new Promise((resolve, reject) => {
+      let isUserStopped = false;
+
       this.recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         onResult(transcript);
@@ -169,6 +171,12 @@ class AudioService {
       };
 
       this.recognition.onerror = (event: any) => {
+        // Don't treat user-initiated stops as errors
+        if (event.error === 'aborted' && isUserStopped) {
+          resolve();
+          return;
+        }
+        
         const errorMessage = `Speech recognition error: ${event.error}`;
         onError(errorMessage);
         reject(new Error(errorMessage));
@@ -178,12 +186,15 @@ class AudioService {
         resolve();
       };
 
+      // Store reference to track user-initiated stops
+      this.recognition._isUserStopped = false;
       this.recognition.start();
     });
   }
 
   stopWebSpeech(): void {
     if (this.recognition) {
+      this.recognition._isUserStopped = true;
       this.recognition.stop();
     }
   }

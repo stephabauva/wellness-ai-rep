@@ -32,7 +32,6 @@ class AudioService {
   }
 
   private detectSupportedMimeType(): void {
-    // Try different MIME types in order of preference
     const mimeTypes = [
       'audio/webm;codecs=opus',
       'audio/webm',
@@ -68,30 +67,18 @@ class AudioService {
   }
 
   private getFilenameFromMimeType(mimeType: string): string {
-    if (mimeType.includes('webm')) {
-      return 'recording.webm';
-    } else if (mimeType.includes('mp4') || mimeType.includes('m4a')) {
-      return 'recording.mp4';
-    } else if (mimeType.includes('ogg')) {
-      return 'recording.ogg';
-    } else if (mimeType.includes('wav')) {
-      return 'recording.wav';
-    } else if (mimeType.includes('mp3')) {
-      return 'recording.mp3';
-    }
+    if (mimeType.includes('webm')) return 'recording.webm';
+    if (mimeType.includes('mp4') || mimeType.includes('m4a')) return 'recording.mp4';
+    if (mimeType.includes('ogg')) return 'recording.ogg';
+    if (mimeType.includes('wav')) return 'recording.wav';
+    if (mimeType.includes('mp3')) return 'recording.mp3';
     
-    // Default fallback based on detected supported MIME type
-    if (this.supportedMimeType.includes('mp4')) {
-      return 'recording.mp4';
-    } else if (this.supportedMimeType.includes('webm')) {
-      return 'recording.webm';
-    } else if (this.supportedMimeType.includes('ogg')) {
-      return 'recording.ogg';
-    } else if (this.supportedMimeType.includes('wav')) {
-      return 'recording.wav';
-    }
+    if (this.supportedMimeType.includes('mp4')) return 'recording.mp4';
+    if (this.supportedMimeType.includes('webm')) return 'recording.webm';
+    if (this.supportedMimeType.includes('ogg')) return 'recording.ogg';
+    if (this.supportedMimeType.includes('wav')) return 'recording.wav';
     
-    return 'recording.mp4'; // Final fallback
+    return 'recording.mp4';
   }
 
   async requestMicrophonePermission(): Promise<boolean> {
@@ -107,7 +94,6 @@ class AudioService {
 
   async startRecording(): Promise<void> {
     try {
-      // Check if MediaRecorder is supported
       if (!window.MediaRecorder) {
         throw new Error('MediaRecorder is not supported in this browser');
       }
@@ -123,7 +109,6 @@ class AudioService {
 
       this.audioChunks = [];
       
-      // Create MediaRecorder with supported MIME type or let browser choose default
       const options: MediaRecorderOptions = {};
       if (this.supportedMimeType) {
         options.mimeType = this.supportedMimeType;
@@ -132,7 +117,6 @@ class AudioService {
       try {
         this.mediaRecorder = new MediaRecorder(this.stream, options);
       } catch (mimeError) {
-        // If MIME type fails, try without specifying one
         console.warn('Failed to create MediaRecorder with specified MIME type, trying default');
         this.mediaRecorder = new MediaRecorder(this.stream);
       }
@@ -162,7 +146,6 @@ class AudioService {
       }
 
       this.mediaRecorder.onstop = () => {
-        // Use the actual MIME type from the MediaRecorder or fallback to detected type
         const mimeType = this.mediaRecorder?.mimeType || this.supportedMimeType || 'audio/webm';
         const audioBlob = new Blob(this.audioChunks, { type: mimeType });
         this.cleanup();
@@ -205,36 +188,8 @@ class AudioService {
     }
   }
 
-  private getFilenameFromMimeType(mimeType: string): string {
-    if (mimeType.includes('webm')) {
-      return 'recording.webm';
-    } else if (mimeType.includes('mp4') || mimeType.includes('m4a')) {
-      return 'recording.mp4';
-    } else if (mimeType.includes('ogg')) {
-      return 'recording.ogg';
-    } else if (mimeType.includes('wav')) {
-      return 'recording.wav';
-    } else if (mimeType.includes('mp3')) {
-      return 'recording.mp3';
-    }
-    
-    // Default fallback based on detected supported MIME type
-    if (this.supportedMimeType.includes('mp4')) {
-      return 'recording.mp4';
-    } else if (this.supportedMimeType.includes('webm')) {
-      return 'recording.webm';
-    } else if (this.supportedMimeType.includes('ogg')) {
-      return 'recording.ogg';
-    } else if (this.supportedMimeType.includes('wav')) {
-      return 'recording.wav';
-    }
-    
-    return 'recording.mp4'; // Final fallback
-  }
-
   async transcribeWithOpenAI(audioBlob: Blob): Promise<TranscriptionResult> {
     const formData = new FormData();
-    // Get proper filename based on the audio blob's MIME type
     const filename = this.getFilenameFromMimeType(audioBlob.type);
     formData.append('audio', audioBlob, filename);
 
@@ -257,7 +212,6 @@ class AudioService {
 
   async transcribeWithGoogle(audioBlob: Blob): Promise<TranscriptionResult> {
     const formData = new FormData();
-    // Get proper filename based on the audio blob's MIME type
     const filename = this.getFilenameFromMimeType(audioBlob.type);
     formData.append('audio', audioBlob, filename);
 

@@ -176,6 +176,11 @@ class AudioService {
 
     return new Promise((resolve, reject) => {
       let hasReceivedSpeech = false;
+      let isRecognitionActive = false;
+
+      this.recognition.onstart = () => {
+        isRecognitionActive = true;
+      };
 
       this.recognition.onresult = (event: any) => {
         hasReceivedSpeech = true;
@@ -185,28 +190,30 @@ class AudioService {
         for (let i = 0; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            this.finalTranscript += transcript;
+            this.finalTranscript += transcript + ' ';
           } else {
             interimTranscript += transcript;
           }
         }
 
-        // Clear existing timeout and set a new one
+        // Clear existing timeout and set a new one for 5 seconds of silence
         if (this.webSpeechTimeout) {
           clearTimeout(this.webSpeechTimeout);
         }
 
-        // Set timeout for 3 seconds of silence after speech
+        // Extended timeout for 5 seconds to handle longer pauses
         this.webSpeechTimeout = setTimeout(() => {
           if (!this.isUserStoppedWebSpeech && this.finalTranscript.trim()) {
             onResult(this.finalTranscript.trim());
             this.stopWebSpeech();
             resolve();
           }
-        }, 3000);
+        }, 5000);
       };
 
       this.recognition.onerror = (event: any) => {
+        isRecognitionActive = false;
+        
         // Clear timeout on error
         if (this.webSpeechTimeout) {
           clearTimeout(this.webSpeechTimeout);
@@ -228,6 +235,8 @@ class AudioService {
       };
 
       this.recognition.onend = () => {
+        isRecognitionActive = false;
+        
         // Clear timeout when recognition ends
         if (this.webSpeechTimeout) {
           clearTimeout(this.webSpeechTimeout);
@@ -235,19 +244,19 @@ class AudioService {
         }
 
         // If user manually stopped and we have text, return it
-        if (this.isUserStoppedWebSpeech && this.finalTranscript.trim()) {
-          onResult(this.finalTranscript.trim());
+        if (this.isUserStoppedWebSpeech) {
+          if (this.finalTranscript.trim()) {
+            onResult(this.finalTranscript.trim());
+          }
+          resolve();
+          return;
         }
 
-        // Restart recognition if it ended unexpectedly and user hasn't stopped manually
-        if (!this.isUserStoppedWebSpeech && hasReceivedSpeech && this.finalTranscript.trim()) {
-          // Speech ended naturally after receiving input, return the result
-          onResult(this.finalTranscript.trim());
-          resolve();
-        } else if (!this.isUserStoppedWebSpeech && !hasReceivedSpeech) {
-          // Recognition ended without any speech, try to restart
+        // Only restart if we haven't received any speech yet and user hasn't stopped
+        if (!this.isUserStoppedWebSpeech && !hasReceivedSpeech) {
+          // Recognition ended without any speech, try to restart after a short delay
           setTimeout(() => {
-            if (!this.isUserStoppedWebSpeech) {
+            if (!this.isUserStoppedWebSpeech && !isRecognitionActive) {
               try {
                 this.recognition.start();
               } catch (e) {
@@ -256,12 +265,20 @@ class AudioService {
               }
             }
           }, 100);
+        } else if (hasReceivedSpeech && this.finalTranscript.trim()) {
+          // We have received speech, return the result
+          onResult(this.finalTranscript.trim());
+          resolve();
         } else {
           resolve();
         }
       };
 
-      this.recognition.start();
+      try {
+        this.recognition.start();
+      } catch (e) {
+        reject(new Error('Failed to start speech recognition'));
+      }
     });
   }
 

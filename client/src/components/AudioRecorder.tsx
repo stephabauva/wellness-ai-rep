@@ -51,10 +51,6 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
       audioService.stopWebSpeech();
       setIsListening(false);
       setIsProcessing(false);
-      toast({
-        title: "Recording stopped",
-        description: "Speech recognition stopped by user",
-      });
       return;
     }
 

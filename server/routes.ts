@@ -47,7 +47,7 @@ const settingsUpdateSchema = z.object({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-  
+
   // Get chat messages
   app.get("/api/messages", async (req, res) => {
     try {
@@ -57,13 +57,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch messages" });
     }
   });
-  
+
   // Send a new message with memory enhancement
   app.post("/api/messages", async (req, res) => {
     try {
       const { content, conversationId, coachingMode, aiProvider, aiModel } = messageSchema.parse(req.body);
       const userId = 1; // Default user ID
-      
+
       // Get or create conversation
       let currentConversationId = conversationId;
       if (!currentConversationId) {
@@ -107,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         conversationHistory.reverse(),
         aiConfig
       );
-      
+
       // Save AI response to conversation
       const [aiMessage] = await db.insert(conversationMessages).values({
         conversationId: currentConversationId,
@@ -121,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: aiResult.response,
         isUserMessage: false
       });
-      
+
       res.status(201).json({ 
         userMessage: legacyUserMessage, 
         aiMessage: legacyAiMessage,
@@ -137,19 +137,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
+
   // Get health data
   app.get("/api/health-data", async (req, res) => {
     try {
       const range = req.query.range || "7days";
       const category = req.query.category as string;
       const healthData = await storage.getHealthData(1, String(range)); // Default user ID
-      
+
       // Filter by category if specified
       const filteredData = category 
         ? healthData.filter(item => item.category === category)
         : healthData;
-      
+
       res.json(filteredData);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch health data" });
@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const range = req.query.range || "7days";
       const healthData = await storage.getHealthData(1, String(range));
-      
+
       // Group data by category
       const categorizedData = healthData.reduce((acc, item) => {
         if (!item.category) return acc;
@@ -169,13 +169,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         acc[item.category].push(item);
         return acc;
       }, {} as Record<string, typeof healthData>);
-      
+
       res.json(categorizedData);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch categorized health data" });
     }
   });
-  
+
   // Get connected devices
   app.get("/api/devices", async (req, res) => {
     try {
@@ -185,12 +185,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch devices" });
     }
   });
-  
+
   // Connect a new device
   app.post("/api/devices", async (req, res) => {
     try {
       const { deviceName, deviceType } = deviceConnectSchema.parse(req.body);
-      
+
       const device = await storage.createDevice({
         userId: 1, // Default user ID
         deviceName,
@@ -201,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           features: getDeviceFeatures(deviceType)
         }
       });
-      
+
       res.status(201).json(device);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -211,7 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
+
   // Disconnect a device
   app.delete("/api/devices/:id", async (req, res) => {
     try {
@@ -219,14 +219,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(deviceId)) {
         return res.status(400).json({ message: "Invalid device ID" });
       }
-      
+
       await storage.removeDevice(deviceId);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to disconnect device" });
     }
   });
-  
+
   // Update device settings
   app.patch("/api/devices/:id", async (req, res) => {
     try {
@@ -234,14 +234,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(deviceId)) {
         return res.status(400).json({ message: "Invalid device ID" });
       }
-      
+
       const device = await storage.updateDevice(deviceId, req.body.settings);
       res.json(device);
     } catch (error) {
       res.status(500).json({ message: "Failed to update device settings" });
     }
   });
-  
+
   // Get user settings
   app.get("/api/settings", async (req, res) => {
     try {
@@ -249,19 +249,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       res.json(user.preferences || {});
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch settings" });
     }
   });
-  
+
   // Update user settings
   app.patch("/api/settings", async (req, res) => {
     try {
       const settings = settingsUpdateSchema.parse(req.body);
       const updatedUser = await storage.updateUserSettings(1, settings); // Default user ID
-      
+
       res.json(updatedUser.preferences);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -271,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
+
   // Generate and download health PDF report
   app.get("/api/reports/health-pdf", async (req, res) => {
     try {
@@ -279,10 +279,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       const healthData = await storage.getHealthData(1, "30days");
       const reportData = generatePDFReport(user, healthData);
-      
+
       res.json(reportData);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate health report" });
@@ -300,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Memory management endpoints
-  
+
   // Get user's memories
   app.get("/api/memories", async (req, res) => {
     try {
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = 1; // Default user ID
       const memoryId = req.params.id;
-      
+
       const success = await memoryService.deleteMemory(memoryId, userId);
       if (success) {
         res.status(204).send();
@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(conversations.userId, userId))
         .orderBy(desc(conversations.updatedAt))
         .limit(20);
-      
+
       res.json(userConversations);
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -359,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(conversationMessages)
         .where(eq(conversationMessages.conversationId, conversationId))
         .orderBy(conversationMessages.createdAt);
-      
+
       res.json(messages);
     } catch (error) {
       console.error('Error fetching conversation messages:', error);
@@ -447,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   return httpServer;
 }
 

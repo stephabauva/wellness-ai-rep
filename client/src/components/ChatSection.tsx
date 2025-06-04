@@ -122,29 +122,45 @@ const ChatSection: React.FC = () => {
     cameraInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Handle the selected file
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Failed to upload file');
+      return await response.json();
+    },
+    onSuccess: (data, file) => {
       const fileInfo = `[File: ${file.name} (${(file.size / 1024).toFixed(1)}KB)]`;
       setInputMessage(prev => prev + (prev ? ' ' : '') + fileInfo);
       toast({
-        title: "File attached",
-        description: `${file.name} has been attached to your message.`,
+        title: "File uploaded",
+        description: `${file.name} has been uploaded successfully.`,
       });
+    },
+    onError: (error) => {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload the file. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      uploadFileMutation.mutate(file);
     }
   };
 
   const handleCameraChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Handle the captured photo
-      const photoInfo = `[Photo: ${file.name} (${(file.size / 1024).toFixed(1)}KB)]`;
-      setInputMessage(prev => prev + (prev ? ' ' : '') + photoInfo);
-      toast({
-        title: "Photo captured",
-        description: "Your photo has been attached to the message.",
-      });
+      uploadFileMutation.mutate(file);
     }
   };
 

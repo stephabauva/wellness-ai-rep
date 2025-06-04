@@ -283,3 +283,28 @@ export type HealthMetricType =
   | typeof healthMetrics.lifestyle[number]
   | typeof healthMetrics.medical[number]
   | typeof healthMetrics.advanced[number];
+export const insertMessageSchema = createInsertSchema(chatMessages).pick({
+  userId: true,
+  content: true,
+  isUserMessage: true,
+});
+
+export const selectMessageSchema = createInsertSchema(chatMessages);
+
+// File attachment schema
+export const fileAttachmentSchema = z.object({
+  fileName: z.string(),
+  fileSize: z.number(),
+  fileType: z.string(),
+  fileUrl: z.string().optional(),
+  fileData: z.string().optional(), // base64 encoded for small files
+});
+
+export type FileAttachment = z.infer<typeof fileAttachmentSchema>;
+
+// Extended message schema with attachments
+export const messageWithAttachmentsSchema = selectMessageSchema.extend({
+  attachments: z.array(fileAttachmentSchema).optional(),
+});
+
+export type MessageWithAttachments = z.infer<typeof messageWithAttachmentsSchema>;

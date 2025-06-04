@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Calendar, Download } from "lucide-react";
+import { Calendar, Download, Activity, Heart, Brain, Stethoscope, Zap } from "lucide-react";
 import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
 import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import HealthMetricsCard from "@/components/HealthMetricsCard";
 import {
   BarChart,
   Bar,
@@ -23,18 +25,50 @@ import {
   Cell,
 } from "recharts";
 
+interface HealthMetric {
+  id: number;
+  userId: number;
+  dataType: string;
+  value: string;
+  unit: string | null;
+  timestamp: string;
+  source: string | null;
+  category: string | null;
+  metadata: any;
+}
+
+interface CategorizedHealthData {
+  body_composition: HealthMetric[];
+  cardiovascular: HealthMetric[];
+  lifestyle: HealthMetric[];
+  medical: HealthMetric[];
+  advanced: HealthMetric[];
+}
+
 const HealthDataSection: React.FC = () => {
   const [timeRange, setTimeRange] = useState("7days");
+  const [activeCategory, setActiveCategory] = useState("overview");
   const { toast } = useToast();
   
-  // Fetch health data
-  const { data: healthData, isLoading } = useQuery({
+  // Fetch categorized health data
+  const { data: categorizedData, isLoading } = useQuery({
+    queryKey: ['/api/health-data/categories', timeRange],
+    queryFn: async ({ queryKey }) => {
+      const [_, range] = queryKey;
+      const response = await fetch(`/api/health-data/categories?range=${range}`);
+      if (!response.ok) throw new Error('Failed to fetch health data');
+      return await response.json() as CategorizedHealthData;
+    }
+  });
+
+  // Fetch all health data for overview
+  const { data: allHealthData } = useQuery({
     queryKey: ['/api/health-data', timeRange],
     queryFn: async ({ queryKey }) => {
       const [_, range] = queryKey;
       const response = await fetch(`/api/health-data?range=${range}`);
       if (!response.ok) throw new Error('Failed to fetch health data');
-      return await response.json();
+      return await response.json() as HealthMetric[];
     }
   });
   
@@ -90,6 +124,13 @@ const HealthDataSection: React.FC = () => {
   
   const COLORS = ['#8B5CF6', '#60A5FA', '#10B981', '#F59E0B', '#EF4444'];
   
+  // Helper function to get the latest value for a metric type
+  const getLatestMetric = (metrics: HealthMetric[], dataType: string) => {
+    return metrics
+      .filter(m => m.dataType === dataType)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+  };
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="p-4 md:p-6">
@@ -118,58 +159,225 @@ const HealthDataSection: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {isLoading ? (
-              // Loading state
-              <>
-                <Skeleton className="h-[150px] w-full" />
-                <Skeleton className="h-[150px] w-full" />
-                <Skeleton className="h-[150px] w-full" />
-                <Skeleton className="h-[150px] w-full" />
-              </>
-            ) : (
-              // Health stat cards
-              <>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Skeleton className="h-[150px] w-full" />
+              <Skeleton className="h-[150px] w-full" />
+              <Skeleton className="h-[150px] w-full" />
+              <Skeleton className="h-[150px] w-full" />
+            </div>
+          ) : allHealthData && (
+            <>
+              {/* Key Metrics Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard 
-                  title="Daily Activity"
-                  value="7,242"
+                  title="Daily Steps"
+                  value={getLatestMetric(allHealthData, 'steps')?.value || "0"}
                   unit="steps"
                   change={12}
                   goalValue={10000}
                   progress={72}
-                  icon={<Calendar className="h-4 w-4" />}
+                  icon={<Activity className="h-4 w-4" />}
                 />
                 
                 <StatCard 
                   title="Sleep Duration"
-                  value="7h 12min"
+                  value={getLatestMetric(allHealthData, 'sleep_duration')?.value || "0"}
+                  unit="hours"
                   change={-5}
-                  goalValue={"8h 30min"}
+                  goalValue={"8"}
                   progress={85}
-                  icon={<Calendar className="h-4 w-4" />}
+                  icon={<Brain className="h-4 w-4" />}
                 />
                 
                 <StatCard 
-                  title="Avg. Heart Rate"
-                  value="72"
+                  title="Heart Rate"
+                  value={getLatestMetric(allHealthData, 'heart_rate')?.value || "0"}
                   unit="bpm"
                   status="Normal"
                   statusColor="green"
-                  icon={<Calendar className="h-4 w-4" />}
+                  icon={<Heart className="h-4 w-4" />}
                 />
                 
                 <StatCard 
                   title="Current Weight"
-                  value="165"
-                  unit="lbs"
+                  value={getLatestMetric(allHealthData, 'weight')?.value || "0"}
+                  unit={getLatestMetric(allHealthData, 'weight')?.unit || "lbs"}
                   change={-2.5}
                   startValue="167.5 lbs"
                   goalValue="150 lbs"
                   icon={<Calendar className="h-4 w-4" />}
                 />
-              </>
-            )}
-          </div>
+              </div>
+
+              {/* Comprehensive Health Categories */}
+              <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
+                <TabsList className="grid w-full grid-cols-6">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="body_composition">Body</TabsTrigger>
+                  <TabsTrigger value="cardiovascular">Heart</TabsTrigger>
+                  <TabsTrigger value="lifestyle">Lifestyle</TabsTrigger>
+                  <TabsTrigger value="medical">Medical</TabsTrigger>
+                  <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {categorizedData?.body_composition && (
+                      <HealthMetricsCard
+                        title="Body Composition"
+                        category="body_composition"
+                        metrics={categorizedData.body_composition}
+                        icon={<Activity className="h-5 w-5" />}
+                      />
+                    )}
+                    {categorizedData?.cardiovascular && (
+                      <HealthMetricsCard
+                        title="Cardiovascular Health"
+                        category="cardiovascular"
+                        metrics={categorizedData.cardiovascular}
+                        icon={<Heart className="h-5 w-5" />}
+                      />
+                    )}
+                    {categorizedData?.lifestyle && (
+                      <HealthMetricsCard
+                        title="Lifestyle & Wellness"
+                        category="lifestyle"
+                        metrics={categorizedData.lifestyle}
+                        icon={<Brain className="h-5 w-5" />}
+                      />
+                    )}
+                    {categorizedData?.medical && (
+                      <HealthMetricsCard
+                        title="Medical Metrics"
+                        category="medical"
+                        metrics={categorizedData.medical}
+                        icon={<Stethoscope className="h-5 w-5" />}
+                      />
+                    )}
+                    {categorizedData?.advanced && (
+                      <HealthMetricsCard
+                        title="Advanced Analytics"
+                        category="advanced"
+                        metrics={categorizedData.advanced}
+                        icon={<Zap className="h-5 w-5" />}
+                      />
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="body_composition" className="space-y-6 mt-6">
+                  {categorizedData?.body_composition && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <HealthMetricsCard
+                        title="Body Composition Analysis"
+                        category="body_composition"
+                        metrics={categorizedData.body_composition}
+                        icon={<Activity className="h-5 w-5" />}
+                      />
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Body Composition Trends</CardTitle>
+                          <CardDescription>Track changes in weight, BMI, and body fat percentage</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground">Trend analysis coming soon...</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="cardiovascular" className="space-y-6 mt-6">
+                  {categorizedData?.cardiovascular && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <HealthMetricsCard
+                        title="Cardiovascular Metrics"
+                        category="cardiovascular"
+                        metrics={categorizedData.cardiovascular}
+                        icon={<Heart className="h-5 w-5" />}
+                      />
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Heart Health Trends</CardTitle>
+                          <CardDescription>Monitor blood pressure, heart rate, and cholesterol levels</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground">Cardiovascular trend analysis coming soon...</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="lifestyle" className="space-y-6 mt-6">
+                  {categorizedData?.lifestyle && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <HealthMetricsCard
+                        title="Lifestyle Metrics"
+                        category="lifestyle"
+                        metrics={categorizedData.lifestyle}
+                        icon={<Brain className="h-5 w-5" />}
+                      />
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Activity & Sleep Patterns</CardTitle>
+                          <CardDescription>Daily activity, sleep quality, and wellness indicators</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground">Lifestyle trend analysis coming soon...</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="medical" className="space-y-6 mt-6">
+                  {categorizedData?.medical && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <HealthMetricsCard
+                        title="Medical Indicators"
+                        category="medical"
+                        metrics={categorizedData.medical}
+                        icon={<Stethoscope className="h-5 w-5" />}
+                      />
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Medical Monitoring</CardTitle>
+                          <CardDescription>Blood glucose, lab results, and health indicators</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground">Medical trend analysis coming soon...</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="advanced" className="space-y-6 mt-6">
+                  {categorizedData?.advanced && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <HealthMetricsCard
+                        title="Advanced Analytics"
+                        category="advanced"
+                        metrics={categorizedData.advanced}
+                        icon={<Zap className="h-5 w-5" />}
+                      />
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Performance Metrics</CardTitle>
+                          <CardDescription>VO2 max, lactate threshold, and advanced fitness indicators</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground">Advanced analytics coming soon...</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
 
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

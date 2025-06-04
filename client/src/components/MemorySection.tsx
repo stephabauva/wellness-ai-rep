@@ -223,13 +223,15 @@ export default function MemorySection() {
           </Card>
 
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1">
-              <TabsTrigger value="all" className="text-xs md:text-sm">All</TabsTrigger>
-              <TabsTrigger value="preference" className="text-xs md:text-sm">Preferences</TabsTrigger>
-              <TabsTrigger value="personal_info" className="text-xs md:text-sm">Personal</TabsTrigger>
-              <TabsTrigger value="context" className="text-xs md:text-sm">Context</TabsTrigger>
-              <TabsTrigger value="instruction" className="text-xs md:text-sm">Instructions</TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto">
+              <TabsList className="flex md:grid w-full md:grid-cols-5 gap-1 min-w-max md:min-w-0">
+                <TabsTrigger value="all" className="text-xs md:text-sm flex-shrink-0">All</TabsTrigger>
+                <TabsTrigger value="preference" className="text-xs md:text-sm flex-shrink-0">Preferences</TabsTrigger>
+                <TabsTrigger value="personal_info" className="text-xs md:text-sm flex-shrink-0">Personal</TabsTrigger>
+                <TabsTrigger value="context" className="text-xs md:text-sm flex-shrink-0">Context</TabsTrigger>
+                <TabsTrigger value="instruction" className="text-xs md:text-sm flex-shrink-0">Instructions</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value={selectedCategory} className="space-y-4">
               {/* Explanation Card */}

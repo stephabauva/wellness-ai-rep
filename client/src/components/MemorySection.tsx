@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Brain, User, Settings, Lightbulb } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,8 +41,62 @@ const categoryColors = {
   instruction: "bg-purple-100 text-purple-800"
 };
 
+const explanationCards = {
+  all: {
+    title: "All Memories",
+    description: "Complete collection of information your AI coach remembers about you",
+    details: [
+      "Combines all memory types in one view",
+      "Sorted by importance and recency",
+      "Shows how memories are categorized",
+      "Use this to get an overview of everything stored"
+    ]
+  },
+  preference: {
+    title: "Preferences",
+    description: "Your likes, dislikes, and personal choices for workouts and wellness",
+    details: [
+      "Exercise types you enjoy or avoid",
+      "Workout timing and environment preferences", 
+      "Equipment and activity preferences",
+      "Communication style and feedback preferences"
+    ]
+  },
+  personal_info: {
+    title: "Personal Information", 
+    description: "Important health details and personal circumstances",
+    details: [
+      "Health conditions, allergies, and medical information",
+      "Physical limitations or injury considerations",
+      "Dietary restrictions and nutritional needs",
+      "Goals, lifestyle factors, and demographics"
+    ]
+  },
+  context: {
+    title: "Context",
+    description: "Situational information that affects your wellness journey",
+    details: [
+      "Current fitness level and training phase",
+      "Life circumstances (travel, busy periods, stress)",
+      "Environmental factors (gym access, equipment)",
+      "Progress milestones and temporary situations"
+    ]
+  },
+  instruction: {
+    title: "Instructions",
+    description: "Specific coaching rules and guidance preferences",
+    details: [
+      "How you want to be coached and communicated with",
+      "Protocols for reminders and check-ins",
+      "Permission requirements for suggestions",
+      "Goal-setting and progress tracking preferences"
+    ]
+  }
+};
+
 export default function MemorySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
   const { toast } = useToast();
 
   const { data: memories = [], isLoading } = useQuery({
@@ -158,6 +213,44 @@ export default function MemorySection() {
         </TabsList>
 
         <TabsContent value={selectedCategory} className="space-y-4">
+          {/* Explanation Card */}
+          <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
+            <Card className="border-blue-200 bg-blue-50">
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-blue-100 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-5 w-5 text-blue-600" />
+                      <CardTitle className="text-blue-800">
+                        {explanationCards[selectedCategory as keyof typeof explanationCards]?.title}
+                      </CardTitle>
+                    </div>
+                    {isExplanationOpen ? (
+                      <ChevronUp className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-blue-600" />
+                    )}
+                  </div>
+                  <CardDescription className="text-blue-700">
+                    {explanationCards[selectedCategory as keyof typeof explanationCards]?.description}
+                  </CardDescription>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <ul className="space-y-2">
+                    {explanationCards[selectedCategory as keyof typeof explanationCards]?.details.map((detail, index) => (
+                      <li key={index} className="flex items-start gap-2 text-blue-700">
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                        <span className="text-sm">{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
           {memories.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">

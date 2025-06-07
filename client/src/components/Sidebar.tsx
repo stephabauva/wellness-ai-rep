@@ -5,8 +5,7 @@ import {
   Cpu, 
   Brain,
   Settings, 
-  Zap,
-  Plus
+  Zap
 } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
@@ -54,18 +53,6 @@ const Sidebar: React.FC = () => {
         {/* Navigation Icons */}
         <div className="flex-1 flex flex-col justify-between overflow-y-auto">
           <nav className="flex-1 px-2 py-4 space-y-2">
-            {/* New Chat Button */}
-            <button 
-              type="button"
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-                setActiveSection("chat");
-              }}
-              className="flex items-center justify-center h-12 w-12 rounded-lg mx-auto bg-primary text-white hover:bg-primary/90 transition-colors mb-4"
-              title="New Chat"
-            >
-              <Plus className="h-6 w-6" />
-            </button>
             <NavButton 
               active={activeSection === "chat"}
               onClick={() => handleNavClick("chat")}

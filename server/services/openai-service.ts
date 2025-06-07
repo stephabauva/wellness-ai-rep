@@ -88,9 +88,8 @@ class ChatService {
         content: this.getSystemPrompt(coachingMode, relevantMemories)
       });
 
-      // Process conversation history (limit to last 20 messages to stay within token limits)
-      const recentHistory = conversationHistory.slice(-20);
-      for (const msg of recentHistory) {
+      // Process conversation history in chronological order (already limited to 20 in routes.ts)
+      for (const msg of conversationHistory) {
         if (msg.role === 'user' || msg.role === 'assistant') {
           // Handle file attachments in message metadata
           if (msg.metadata?.attachments && msg.metadata.attachments.length > 0) {

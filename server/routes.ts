@@ -80,24 +80,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get or create conversation
       let currentConversationId = conversationId;
-      let conversationHistory: any[] = [];
 
-      // 1. If we have a conversationId, fetch its history FIRST.
-      if (currentConversationId) {
-        const historyFromDb = await db
-          .select()
-          .from(conversationMessages)
-          .where(eq(conversationMessages.conversationId, currentConversationId))
-          .orderBy(conversationMessages.createdAt)
-          .limit(20);
-        conversationHistory = historyFromDb;
-      }
-
-      // 2. If no conversationId, create a new one now.
+      // 1. If no conversationId, create a new one first.
       if (!currentConversationId) {
         let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
         if (!title && attachments && attachments.length > 0) {
-          title = attachments.map(a => a.displayName).join(', ').slice(0, 50);
+          title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
         }
         if (!title) title = "New Conversation";
 
@@ -107,6 +95,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }).returning();
         currentConversationId = newConversation.id;
       }
+
+      // 2. Fetch conversation history BEFORE saving the new message
+      // This ensures the current message is not included in the history
+      const conversationHistory = await db
+        .select()
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, currentConversationId))
+        .orderBy(conversationMessages.createdAt)
+        .limit(20);
 
       // 3. Save the new user message to the database.
       // This happens AFTER we've fetched the previous history.
@@ -125,18 +122,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUserMessage: true
       });
 
-      // 4. Call the AI service with raw, un-formatted data.
-      // The service will handle building the context.
+      // 4. Call the AI service with raw data
       const aiConfig = { provider: aiProvider, model: aiModel };
       const aiResult = await chatService.getChatResponse(
-        content, // Pass the original, raw message content
+        content,
         userId,
         currentConversationId,
         legacyUserMessage.id,
         coachingMode,
-        conversationHistory, // Pass the clean history (without the current message)
+        conversationHistory, // Clean history without current message
         aiConfig,
-        attachments || [], // Pass the raw attachments array
+        attachments || [],
         automaticModelSelection || false
       );
 

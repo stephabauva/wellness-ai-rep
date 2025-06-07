@@ -22,6 +22,9 @@ This directory contains detailed changelogs for major feature releases of the AI
 *   **[2025-01-08: Paperclip Button File Attachment Fix](./06-paperclip-attachment-fix-2025-01-08.md)**
     *   Critical fix for chat interface file attachment functionality. Files now properly attach as removable badges instead of text, enabling AI to receive file context for health documents and images.
 
+*   **[2025-01-09: Automatic AI Model Selection](./07-ai-model-auto-selector-2025-01-09.md)**
+    *   Implementation of intelligent automatic AI model selection system that chooses optimal models based on query type and attachments. Features context-aware detection, multi-provider support, fallback mechanisms, and user controls for enhanced AI performance.
+
 ## Feature Interconnections & Evolution
 
 The AI Wellness Coach has evolved through several key stages, with features often building upon or interacting with each other:
@@ -39,20 +42,28 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
 4.  **Smarter, Personalized Coaching (AI Memory):**
     *   The **AI Memory System** (`client/src/components/MemorySection.tsx`, `server/services/memory-service.ts`) leverages the chat interactions (potentially including those from audio-to-text) and user-provided information to build a persistent understanding of the user. This makes the AI's responses more contextual, personalized, and effective over time, directly enhancing the `ChatSection` and the overall coaching experience. It also interacts with the database (`shared/schema.ts` for memory tables).
 
+5.  **Intelligent Model Optimization (Automatic AI Model Selection):**
+    *   The **Automatic AI Model Selection** system (`server/services/openai-service.ts`) analyzes user queries and attachments to automatically choose the optimal AI model for each specific use case. This enhances the Multi-LLM support by intelligently routing simple text queries to fast models (Gemini 2.0 Flash), image analysis to vision-capable models (Gemini 1.5 Pro), and complex reasoning to advanced models. It works seamlessly with file attachments from the paperclip fix and integrates with user settings (`client/src/components/SettingsSection.tsx`) for manual override capabilities.
+
 **Key Component Interactions:**
 
 *   **`ChatSection.tsx`** is a central hub, benefiting from:
-    *   Multi-LLM choices.
+    *   Multi-LLM choices with automatic model selection.
     *   Text input from the `AudioRecorder.tsx`.
     *   Context and personalization from the `memory-service.ts`.
     *   Insights derived from data in `HealthDataSection.tsx`.
+    *   Intelligent model routing based on attachments and query complexity.
 *   **`shared/schema.ts`** is critical, defining data structures for:
-    *   User preferences (including LLM choice, transcription provider).
+    *   User preferences (including LLM choice, transcription provider, automatic model selection).
     *   Health data.
     *   AI memory.
     *   Conversations.
 *   **Backend Services** (`server/services/*`):
     *   `transcription-service.ts` processes audio.
-    *   `openai-service.ts` (and similar for Google) handles LLM calls.
+    *   `openai-service.ts` handles LLM calls with intelligent model selection logic.
     *   `memory-service.ts` manages AI memory.
     *   These services are orchestrated via `server/routes.ts`.
+*   **`SettingsSection.tsx`** provides user controls for:
+    *   AI provider and model selection.
+    *   Automatic model selection toggle.
+    *   Integration with all AI-powered features.

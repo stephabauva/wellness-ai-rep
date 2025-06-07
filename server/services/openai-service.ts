@@ -444,8 +444,15 @@ User: ${userMessage}`;
 
   getAvailableModels() {
     return {
-      openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
-      google: ["gemini-2.0-flash-exp", "gemini-1.5-pro"]
+      openai: [
+        { id: "gpt-4o", name: "GPT-4o", description: "Latest multimodal model with vision capabilities" },
+        { id: "gpt-4o-mini", name: "GPT-4o Mini", description: "Faster, cost-effective version of GPT-4o" },
+        { id: "gpt-4-turbo", name: "GPT-4 Turbo", description: "High-performance model for complex tasks" }
+      ],
+      google: [
+        { id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash", description: "Fast experimental model for quick responses" },
+        { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", description: "Advanced model with multimodal capabilities" }
+      ]
     };
   }
 

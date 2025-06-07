@@ -78,10 +78,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection } = messageSchema.parse(req.body);
       const userId = 1; // Default user ID
 
-      // Get or create conversation
       let currentConversationId = conversationId;
+      let conversationHistory: any[] = [];
 
-      // 1. If no conversationId, create a new one first.
+      // 1. If we have a conversationId, fetch its history FIRST.
+      if (currentConversationId) {
+        const historyFromDb = await db
+          .select()
+          .from(conversationMessages)
+          .where(eq(conversationMessages.conversationId, currentConversationId))
+          .orderBy(conversationMessages.createdAt)
+          .limit(20);
+        conversationHistory = historyFromDb;
+      }
+
+      // 2. If no conversationId, create a new one now.
       if (!currentConversationId) {
         let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
         if (!title && attachments && attachments.length > 0) {
@@ -96,15 +107,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentConversationId = newConversation.id;
       }
 
-      // 2. Fetch conversation history BEFORE saving the new message
-      // This ensures the current message is not included in the history
-      const conversationHistory = await db
-        .select()
-        .from(conversationMessages)
-        .where(eq(conversationMessages.conversationId, currentConversationId))
-        .orderBy(conversationMessages.createdAt)
-        .limit(20);
-
       // 3. Save the new user message to the database.
       // This happens AFTER we've fetched the previous history.
       await db.insert(conversationMessages).values({
@@ -117,27 +119,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Also save to legacy messages for compatibility
       const legacyUserMessage = await storage.createMessage({
         userId,
-        // The legacy content can still have the simple attachment text
         content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
         isUserMessage: true
       });
 
-      // 4. Call the AI service with raw data
+      // 4. Call the AI service with raw, un-formatted data.
+      // The service will handle building the context.
       const aiConfig = { provider: aiProvider, model: aiModel };
       const aiResult = await chatService.getChatResponse(
-        content,
+        content, // Pass the original, raw message content
         userId,
         currentConversationId,
         legacyUserMessage.id,
         coachingMode,
-        conversationHistory, // Clean history without current message
+        conversationHistory, // Pass the clean history (without the current message)
         aiConfig,
-        attachments || [],
+        attachments || [], // Pass the raw attachments array
         automaticModelSelection || false
       );
 
       // Save AI response to conversation
-      const [aiMessage] = await db.insert(conversationMessages).values({
+      await db.insert(conversationMessages).values({
         conversationId: currentConversationId,
         role: 'assistant',
         content: aiResult.response

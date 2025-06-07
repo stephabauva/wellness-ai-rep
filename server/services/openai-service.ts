@@ -136,15 +136,8 @@ class ChatService {
       }
 
       // Add current message with attachments
-      if (attachments.length > 0) {
-        const currentMessageContent = await this.processCurrentMessageWithAttachments(message, attachments);
-        conversationContext.push(currentMessageContent);
-      } else {
-        conversationContext.push({
-          role: 'user',
-          content: message
-        });
-      }
+      const currentMessage = await this.processCurrentMessageWithAttachments(message, attachments);
+      conversationContext.push(currentMessage);
 
       let response: string;
       if (aiConfig.provider === "openai") {

@@ -95,7 +95,7 @@ class ChatService {
           // Handle file attachments in message metadata
           if (msg.metadata?.attachments && msg.metadata.attachments.length > 0) {
             const hasImages = msg.metadata.attachments.some(att => att.fileType?.startsWith('image/'));
-            
+
             if (hasImages && msg.role === 'user') {
               // For user messages with images, maintain the vision format
               const processedAttachments = await this.processAttachmentsForHistory(msg.metadata.attachments);
@@ -103,7 +103,7 @@ class ChatService {
                 { type: "text", text: msg.content || "Please analyze this image." }
               ];
               content.push(...processedAttachments);
-              
+
               conversationContext.push({
                 role: msg.role,
                 content: content
@@ -114,14 +114,14 @@ class ChatService {
                 .filter(att => !att.fileType?.startsWith('image/'))
                 .map(att => `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`)
                 .join('\n');
-              
+
               const imageRefs = msg.metadata.attachments
                 .filter(att => att.fileType?.startsWith('image/'))
                 .map(att => `[Previously analyzed image: ${att.displayName || att.fileName}]`)
                 .join('\n');
-              
+
               const refs = [attachmentRefs, imageRefs].filter(Boolean).join('\n');
-              
+
               conversationContext.push({
                 role: msg.role,
                 content: refs ? `${msg.content}\n\n${refs}` : msg.content
@@ -373,14 +373,14 @@ User: ${userMessage}`;
 
   private async processAttachmentsForHistory(attachments: any[]): Promise<any[]> {
     const processedAttachments = [];
-    
+
     for (const att of attachments) {
       if (att.fileType?.startsWith('image/')) {
         try {
           const fs = await import('fs');
           const path = await import('path');
           const imagePath = path.join(process.cwd(), 'uploads', att.fileName);
-          
+
           if (fs.existsSync(imagePath)) {
             const imageBuffer = fs.readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
@@ -410,7 +410,7 @@ User: ${userMessage}`;
         });
       }
     }
-    
+
     return processedAttachments;
   }
 

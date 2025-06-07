@@ -93,7 +93,7 @@ IMPORTANT: You have full access to the conversation history. Each message includ
 
       // Process conversation history in chronological order
       console.log(`Processing conversation history: ${conversationHistory.length} messages`);
-      
+
       for (const msg of conversationHistory) {
         if (msg.role === 'user' || msg.role === 'assistant') {
           // Handle file attachments in message metadata
@@ -154,7 +154,7 @@ IMPORTANT: You have full access to the conversation history. Each message includ
       // Add current message with attachments
       const currentMessage = await this.processCurrentMessageWithAttachments(message, attachments);
       conversationContext.push(currentMessage);
-      
+
       console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
 
       let response: string;
@@ -381,47 +381,57 @@ User: ${userMessage}`;
     };
   }
 
+  // Process historical attachments for vision models
   private async processAttachmentsForHistory(attachments: any[]): Promise<any[]> {
-    const processedAttachments = [];
+    const content: any[] = [];
 
-    for (const att of attachments) {
-      if (att.fileType?.startsWith('image/')) {
+    for (const attachment of attachments) {
+      if (attachment.fileType?.startsWith('image/')) {
         try {
-          const fs = await import('fs');
-          const path = await import('path');
-          const imagePath = path.join(process.cwd(), 'uploads', att.fileName);
+          const { readFileSync, existsSync } = await import('fs');
+          const { join } = await import('path');
 
-          if (fs.existsSync(imagePath)) {
-            const imageBuffer = fs.readFileSync(imagePath);
-            const base64Image = imageBuffer.toString('base64');
-            processedAttachments.push({
-              type: "image_url",
-              image_url: {
-                url: `data:${att.fileType};base64,${base64Image}`
-              }
-            });
-          } else {
-            processedAttachments.push({
+          const filePath = join(process.cwd(), 'uploads', attachment.fileName);
+
+          if (!existsSync(filePath)) {
+            console.error(`Historical image file not found: ${filePath}`);
+            content.push({
               type: "text",
-              text: `[Previously shared image: ${att.displayName || att.fileName} - file no longer available]`
+              text: `[Image file: ${attachment.displayName || attachment.fileName} - file not found]`
             });
+            continue;
           }
+
+          const imageBuffer = readFileSync(filePath);
+          const base64Image = imageBuffer.toString('base64');
+
+          console.log(`Successfully loaded historical image: ${attachment.fileName} (${imageBuffer.length} bytes)`);
+
+          content.push({
+            type: "image_url",
+            image_url: {
+              url: `data:${attachment.fileType};base64,${base64Image}`,
+              detail: "high"
+            }
+          });
         } catch (error) {
-          console.error('Error processing historical image:', error);
-          processedAttachments.push({
+          console.error(`Failed to load historical image ${attachment.fileName}:`, error);
+          // Add text fallback for missing images
+          content.push({
             type: "text",
-            text: `[Previously shared image: ${att.displayName || att.fileName} - error loading]`
+            text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
           });
         }
       } else {
-        processedAttachments.push({
+        // For non-image attachments, add descriptive text
+        content.push({
           type: "text",
-          text: `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`
+          text: `[Attachment: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
         });
       }
     }
 
-    return processedAttachments;
+    return content;
   }
 
   private async processCurrentMessageWithAttachments(message: string, attachments: any[]) {

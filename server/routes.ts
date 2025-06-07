@@ -485,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const fileInfo = {
         id: fileId,
-        fileName: fileName,
+        fileName: fileName, // This is the generated filename that's actually saved
         originalName: req.file.originalname,
         fileType: req.file.mimetype,
         fileSize: req.file.size,

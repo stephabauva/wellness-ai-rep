@@ -11,6 +11,8 @@ import { nanoid } from "nanoid";
 import { db } from "./db";
 import { conversations, conversationMessages, memoryEntries } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 // Attachment schema for client
 const attachmentSchema = z.object({
@@ -461,17 +463,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file provided" });
       }
 
-      // Store file info (in a real app, you'd save to cloud storage or file system)
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = join(process.cwd(), 'uploads');
+      if (!existsSync(uploadsDir)) {
+        const { mkdirSync } = await import('fs');
+        mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const fileId = nanoid();
+      const fileExtension = req.file.originalname.split('.').pop() || '';
+      const fileName = `${fileId}.${fileExtension}`;
+      const filePath = join(uploadsDir, fileName);
+
+      // Save file to disk
+      const { writeFileSync } = await import('fs');
+      writeFileSync(filePath, req.file.buffer);
+
       const fileInfo = {
-        id: nanoid(),
+        id: fileId,
+        fileName: fileName,
         originalName: req.file.originalname,
-        mimeType: req.file.mimetype,
-        size: req.file.size,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
         uploadedAt: new Date().toISOString()
       };
 
-      // For now, just return the file info
-      // In a production app, you'd save the file and return a URL
       res.json({
         success: true,
         file: fileInfo,

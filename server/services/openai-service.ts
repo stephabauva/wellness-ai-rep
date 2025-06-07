@@ -2,6 +2,8 @@ import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { CoachingMode, coachingModes } from "@shared/schema";
 import { memoryService } from "./memory-service";
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 type AIProvider = "openai" | "google";
 type OpenAIModel = "gpt-4o" | "gpt-4o-mini";
@@ -118,12 +120,10 @@ class ChatService {
       for (const attachment of imageAttachments) {
         try {
           // Read the image file from the uploads directory
-          const fs = require('fs');
-          const path = require('path');
-          const imagePath = path.join(process.cwd(), 'uploads', attachment.fileName);
+          const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
           
-          if (fs.existsSync(imagePath)) {
-            const imageBuffer = fs.readFileSync(imagePath);
+          if (existsSync(imagePath)) {
+            const imageBuffer = readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
             
             content.push({
@@ -194,12 +194,10 @@ User: ${userMessage}`;
     if (imageAttachments.length > 0) {
       for (const attachment of imageAttachments) {
         try {
-          const fs = require('fs');
-          const path = require('path');
-          const imagePath = path.join(process.cwd(), 'uploads', attachment.fileName);
+          const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
           
-          if (fs.existsSync(imagePath)) {
-            const imageBuffer = fs.readFileSync(imagePath);
+          if (existsSync(imagePath)) {
+            const imageBuffer = readFileSync(imagePath);
             
             parts.push({
               inlineData: {

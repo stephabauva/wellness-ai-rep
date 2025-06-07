@@ -1,7 +1,13 @@
 import React, { useCallback } from "react";
-import { MessageSquare, BarChart3, Cpu, Brain, Settings, Zap } from "lucide-react";
+import { 
+  MessageSquare, 
+  BarChart3, 
+  Cpu, 
+  Brain,
+  Settings, 
+  Zap
+} from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const NavButton: React.FC<{
@@ -42,7 +48,7 @@ const Sidebar: React.FC = () => {
             <Zap className="h-6 w-6 text-white" />
           </div>
         </div>
-
+        
         {/* Navigation Icons */}
         <div className="flex-1 flex flex-col justify-between overflow-y-auto">
           <nav className="flex-1 px-2 py-4 space-y-2">
@@ -52,14 +58,14 @@ const Sidebar: React.FC = () => {
               label="Chat"
               icon={<MessageSquare className="h-6 w-6" />}
             />
-
+            
             <NavButton 
               active={activeSection === "health"}
               onClick={() => handleNavClick("health")}
               label="Health Data"
               icon={<BarChart3 className="h-6 w-6" />}
             />
-
+            
             <NavButton 
               active={activeSection === "devices"}
               onClick={() => handleNavClick("devices")}
@@ -73,7 +79,7 @@ const Sidebar: React.FC = () => {
               label="AI Memory"
               icon={<Brain className="h-6 w-6" />}
             />
-
+            
             <NavButton 
               active={activeSection === "settings"}
               onClick={() => handleNavClick("settings")}
@@ -81,7 +87,7 @@ const Sidebar: React.FC = () => {
               icon={<Settings className="h-6 w-6" />}
             />
           </nav>
-
+          
           {/* User Profile */}
           <div className="flex-shrink-0 px-2 py-4 space-y-1">
             <button 

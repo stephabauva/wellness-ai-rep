@@ -3,7 +3,7 @@
 2. when using speech-to-text using Goole, the API seems blocked, need to check permissions.
 (see perplexity history: google transcription error)
 
-3. When using the microphone with Web Speech API, the microphone stops recording after a small pause in the speech, increase the duration.
+3. [? fixed ?] When using the microphone with Web Speech API, the microphone stops recording after a small pause in the speech, increase the duration.
 
 4. [fixed] When using the microphone with Web Speech API, when clicking back on the rotating ring, it says "speech recognition error: aborted", it should just stop the recording. 
 
@@ -13,4 +13,12 @@
 
 7. What you write or add in the chat disappear if you go out in another tab and come back, it should persist, and it should have a button to clear the text input if needed
 
-8. i took pictures using both OpenAI and Google and they "cant process images"
+8. [fixed] i took pictures using both OpenAI and Google and they "cant process images"
+
+9. Dark mode toggle not working
+
+10. No persistence in the request, the ai must have the full context of the current chat
+
+11. add a 'New chat' button
+
+12. new to pass the app in French

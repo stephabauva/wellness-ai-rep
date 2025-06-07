@@ -94,11 +94,39 @@ class ChatService {
         if (msg.role === 'user' || msg.role === 'assistant') {
           // Handle file attachments in message metadata
           if (msg.metadata?.attachments && msg.metadata.attachments.length > 0) {
-            const attachmentContent = this.processAttachmentsForHistory(msg.metadata.attachments);
-            conversationContext.push({
-              role: msg.role,
-              content: attachmentContent ? `${msg.content}\n\n${attachmentContent}` : msg.content
-            });
+            const hasImages = msg.metadata.attachments.some(att => att.fileType?.startsWith('image/'));
+            
+            if (hasImages && msg.role === 'user') {
+              // For user messages with images, maintain the vision format
+              const processedAttachments = await this.processAttachmentsForHistory(msg.metadata.attachments);
+              const content = [
+                { type: "text", text: msg.content || "Please analyze this image." }
+              ];
+              content.push(...processedAttachments);
+              
+              conversationContext.push({
+                role: msg.role,
+                content: content
+              });
+            } else {
+              // For assistant messages or non-image attachments, use text format
+              const attachmentRefs = msg.metadata.attachments
+                .filter(att => !att.fileType?.startsWith('image/'))
+                .map(att => `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`)
+                .join('\n');
+              
+              const imageRefs = msg.metadata.attachments
+                .filter(att => att.fileType?.startsWith('image/'))
+                .map(att => `[Previously analyzed image: ${att.displayName || att.fileName}]`)
+                .join('\n');
+              
+              const refs = [attachmentRefs, imageRefs].filter(Boolean).join('\n');
+              
+              conversationContext.push({
+                role: msg.role,
+                content: refs ? `${msg.content}\n\n${refs}` : msg.content
+              });
+            }
           } else {
             conversationContext.push({
               role: msg.role,
@@ -343,14 +371,47 @@ User: ${userMessage}`;
     };
   }
 
-  private processAttachmentsForHistory(attachments: any[]): string {
-    return attachments.map(att => {
+  private async processAttachmentsForHistory(attachments: any[]): Promise<any[]> {
+    const processedAttachments = [];
+    
+    for (const att of attachments) {
       if (att.fileType?.startsWith('image/')) {
-        return `[Previously shared image: ${att.displayName || att.fileName}]`;
+        try {
+          const fs = await import('fs');
+          const path = await import('path');
+          const imagePath = path.join(process.cwd(), 'uploads', att.fileName);
+          
+          if (fs.existsSync(imagePath)) {
+            const imageBuffer = fs.readFileSync(imagePath);
+            const base64Image = imageBuffer.toString('base64');
+            processedAttachments.push({
+              type: "image_url",
+              image_url: {
+                url: `data:${att.fileType};base64,${base64Image}`
+              }
+            });
+          } else {
+            processedAttachments.push({
+              type: "text",
+              text: `[Previously shared image: ${att.displayName || att.fileName} - file no longer available]`
+            });
+          }
+        } catch (error) {
+          console.error('Error processing historical image:', error);
+          processedAttachments.push({
+            type: "text",
+            text: `[Previously shared image: ${att.displayName || att.fileName} - error loading]`
+          });
+        }
       } else {
-        return `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`;
+        processedAttachments.push({
+          type: "text",
+          text: `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`
+        });
       }
-    }).join('\n');
+    }
+    
+    return processedAttachments;
   }
 
   private async processCurrentMessageWithAttachments(message: string, attachments: any[]) {

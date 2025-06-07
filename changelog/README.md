@@ -25,6 +25,9 @@ This directory contains detailed changelogs for major feature releases of the AI
 *   **[2025-01-09: Automatic AI Model Selection](./07-ai-model-auto-selector-2025-01-09.md)**
     *   Implementation of intelligent automatic AI model selection system that chooses optimal models based on query type and attachments. Features context-aware detection, multi-provider support, fallback mechanisms, and user controls for enhanced AI performance.
 
+*   **[2025-01-11: Chat Context Persistence & Conversation History](./08-chat-context-persistence-2025-01-11.md)**
+    *   Complete implementation of ChatGPT-style conversation persistence with full visual context maintenance. Both OpenAI and Google Gemini models now maintain context across conversation turns, enabling follow-up questions about images and seamless multi-turn conversations with mixed content (text, images, files).
+
 ## Feature Interconnections & Evolution
 
 The AI Wellness Coach has evolved through several key stages, with features often building upon or interacting with each other:
@@ -45,6 +48,9 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
 5.  **Intelligent Model Optimization (Automatic AI Model Selection):**
     *   The **Automatic AI Model Selection** system (`server/services/openai-service.ts`) analyzes user queries and attachments to automatically choose the optimal AI model for each specific use case. This enhances the Multi-LLM support by intelligently routing simple text queries to fast models (Gemini 2.0 Flash), image analysis to vision-capable models (Gemini 1.5 Pro), and complex reasoning to advanced models. It works seamlessly with file attachments from the paperclip fix and integrates with user settings (`client/src/components/SettingsSection.tsx`) for manual override capabilities.
 
+6.  **ChatGPT-Style Conversation Persistence (Chat Context Persistence):**
+    *   The **Chat Context Persistence** system (`server/services/openai-service.ts`, conversation database in `shared/schema.ts`) provides complete conversation history maintenance including visual context. Users can now ask follow-up questions about images (e.g., "what are the yellow slices?") and receive accurate responses referencing previous visual content. This works for both OpenAI (using message history with `image_url`) and Google Gemini (using `startChat()` with `inlineData`), creating a seamless ChatGPT-like experience across all supported AI models.
+
 **Key Component Interactions:**
 
 *   **`ChatSection.tsx`** is a central hub, benefiting from:
@@ -53,16 +59,17 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
     *   Context and personalization from the `memory-service.ts`.
     *   Insights derived from data in `HealthDataSection.tsx`.
     *   Intelligent model routing based on attachments and query complexity.
+    *   Complete conversation history with visual context persistence.
 *   **`shared/schema.ts`** is critical, defining data structures for:
     *   User preferences (including LLM choice, transcription provider, automatic model selection).
     *   Health data.
     *   AI memory.
-    *   Conversations.
+    *   Conversations and conversation messages with full persistence support.
 *   **Backend Services** (`server/services/*`):
     *   `transcription-service.ts` processes audio.
-    *   `openai-service.ts` handles LLM calls with intelligent model selection logic.
+    *   `openai-service.ts` handles LLM calls with intelligent model selection logic and conversation context persistence.
     *   `memory-service.ts` manages AI memory.
-    *   These services are orchestrated via `server/routes.ts`.
+    *   These services are orchestrated via `server/routes.ts` with full conversation history support.
 *   **`SettingsSection.tsx`** provides user controls for:
     *   AI provider and model selection.
     *   Automatic model selection toggle.

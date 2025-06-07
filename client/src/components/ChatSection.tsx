@@ -71,7 +71,9 @@ const ChatSection: React.FC = () => {
           timestamp: new Date(msg.createdAt)
         }));
       }
-    }
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
   });
 
   // Get user settings for AI configuration
@@ -105,14 +107,23 @@ const ChatSection: React.FC = () => {
     },
     onSuccess: (data) => {
       // Update current conversation ID if we got one back
-      if (data.conversationId && !currentConversationId) {
-        setCurrentConversationId(data.conversationId);
+      if (data.conversationId) {
+        if (!currentConversationId) {
+          setCurrentConversationId(data.conversationId);
+        }
+        // Invalidate queries for the specific conversation
+        queryClient.invalidateQueries({ queryKey: ['/api/conversations', data.conversationId, 'messages'] });
       }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      if (currentConversationId) {
-        queryClient.invalidateQueries({ queryKey: ['/api/conversations', currentConversationId, 'messages'] });
+      
+      // Always invalidate the current conversation messages
+      if (currentConversationId || data.conversationId) {
+        const convId = data.conversationId || currentConversationId;
+        queryClient.invalidateQueries({ queryKey: ['/api/conversations', convId, 'messages'] });
       }
+      
       setAttachedFiles([]);
     }
   });

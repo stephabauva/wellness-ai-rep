@@ -18,6 +18,7 @@ import { existsSync } from 'fs';
 const attachmentSchema = z.object({
   id: z.string(),
   fileName: z.string(),
+  displayName: z.string().optional(),
   fileType: z.string(),
   fileSize: z.number()
 });
@@ -103,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create legacy content including file info for compatibility
       let legacyContent = content;
       if (attachments && attachments.length > 0) {
-        const attachmentText = attachments.map(a => `[File: ${a.fileName}]`).join(' ');
+        const attachmentText = attachments.map(a => `[File: ${a.displayName || a.fileName}]`).join(' ');
         legacyContent = content ? `${content} ${attachmentText}` : attachmentText;
       }
 
@@ -131,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (otherAttachments.length > 0) {
           textualAttachmentInfo = otherAttachments.map(att => 
-            `The user has attached a file: ${att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
+            `The user has attached a file: ${att.displayName || att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
           ).join("\n");
         }
       }
@@ -487,6 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: fileId,
         fileName: fileName, // This is the generated filename that's actually saved
         originalName: req.file.originalname,
+        displayName: req.file.originalname, // This is what users see
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         uploadedAt: new Date().toISOString()

@@ -30,7 +30,8 @@ type Message = {
 
 type AttachedFile = {
   id: string;
-  fileName: string;
+  fileName: string; // Backend storage filename
+  displayName?: string; // Original filename for display
   fileType: string;
   fileSize: number;
   url?: string;
@@ -75,7 +76,8 @@ const ChatSection: React.FC = () => {
         aiModel: settings?.aiModel || "gpt-4o",
         attachments: attachments.map(file => ({
           id: file.id,
-          fileName: file.fileName,
+          fileName: file.fileName, // Backend storage filename
+          displayName: file.displayName, // Original filename for display
           fileType: file.fileType,
           fileSize: file.fileSize
         }))
@@ -156,7 +158,8 @@ const ChatSection: React.FC = () => {
     onSuccess: (data, file) => {
       const attachedFile: AttachedFile = {
         id: data.file.id,
-        fileName: data.file.fileName, // Use the generated filename from server response
+        fileName: data.file.fileName, // Backend filename for storage
+        displayName: data.file.displayName || data.file.originalName, // Original name for display
         fileType: file.type,
         fileSize: file.size,
         url: data.file.url
@@ -260,7 +263,7 @@ const ChatSection: React.FC = () => {
             {attachedFiles.map((file) => (
               <Badge key={file.id} variant="secondary" className="flex items-center gap-2 pr-1">
                 {getFileIcon(file.fileType)}
-                <span className="text-xs truncate max-w-32">{file.fileName}</span>
+                <span className="text-xs truncate max-w-32">{file.displayName || file.fileName}</span>
                 <Button
                   size="sm"
                   variant="ghost"

@@ -13,6 +13,8 @@ import { conversations, conversationMessages, memoryEntries } from "@shared/sche
 import { eq, desc } from "drizzle-orm";
 import { join } from 'path';
 import { existsSync } from 'fs';
+import path from 'path';
+import fs from 'fs';
 
 // Attachment schema for client
 const attachmentSchema = z.object({
@@ -86,14 +88,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 1. If we have a conversationId, fetch its history FIRST.
       if (currentConversationId) {
         console.log(`Fetching history for conversation: ${currentConversationId}`);
-        
+
         // Validate that the conversation exists
         const existingConv = await db
           .select()
           .from(conversations)
           .where(eq(conversations.id, currentConversationId))
           .limit(1);
-        
+
         if (existingConv.length === 0) {
           console.warn(`Conversation ${currentConversationId} not found! Setting to null to create new one.`);
           currentConversationId = null;
@@ -106,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .limit(20);
           conversationHistory = historyFromDb;
           console.log(`Fetched conversation history: ${conversationHistory.length} messages for conversation ${currentConversationId}`);
-          
+
           // Debug: Log the conversation history details
           if (conversationHistory.length > 0) {
             console.log(`History preview: ${conversationHistory.map(m => `${m.role}: ${m.content?.substring(0, 50)}...`).join(' | ')}`);
@@ -139,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content,
         metadata: attachments && attachments.length > 0 ? { attachments } : undefined
       }).returning();
-      
+
       console.log(`Saved user message ${savedUserMessage.id} to conversation ${currentConversationId}`);
 
       // Also save to legacy messages for compatibility
@@ -170,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: 'assistant',
         content: aiResult.response
       }).returning();
-      
+
       console.log(`Saved AI message ${savedAiMessage.id} to conversation ${currentConversationId}`);
 
       // Also save to legacy messages for compatibility
@@ -186,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         conversationId: currentConversationId,
         memoryInfo: aiResult.memoryInfo
       };
-      
+
       console.log(`Sending response with conversation ID: ${currentConversationId}`);
       res.status(201).json(response);
     } catch (error) {
@@ -397,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversations", async (req, res) => {
     try {
       const userId = 1; // Default user ID
-      
+
       // Get conversations with message counts and attachment info
       const userConversations = await db
         .select({

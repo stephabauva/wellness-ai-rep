@@ -85,7 +85,7 @@ class ChatService {
       // Build enhanced system prompt with visual analysis taking priority
       const basePersona = this.getCoachingPersona(coachingMode);
       const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
-      
+
       conversationContext.push({
         role: 'system',
         content: `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
@@ -134,14 +134,14 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
               // For user messages with images, maintain the vision format with actual image data
               try {
                 const processedAttachments = await this.processAttachmentsForHistory(msg.metadata.attachments);
-                
+
                 // Enhanced content array with better context like ChatGPT
                 const content: any[] = [];
-                
+
                 // Add text content first (ChatGPT style)
                 const textContent = msg.content || "I shared an image.";
                 content.push({ type: "text", text: textContent });
-                
+
                 // Add all processed attachments (images will be properly formatted)
                 const imageAttachments = processedAttachments.filter(att => att.type === 'image_url');
                 content.push(...imageAttachments);
@@ -150,7 +150,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
                   role: msg.role,
                   content: content
                 });
-                
+
                 console.log(`✓ Added historical message with ${imageAttachments.length} image(s) to context`);
                 console.log(`  Text: "${textContent.substring(0, 50)}..."`);
               } catch (error) {
@@ -160,7 +160,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
                   .filter(att => att.fileType?.startsWith('image/'))
                   .map(att => att.displayName || att.fileName)
                   .join(', ');
-                
+
                 conversationContext.push({
                   role: msg.role,
                   content: `${msg.content}\n\n[Note: Previously shared images (${imageNames}) could not be loaded - please re-share if needed]`
@@ -200,7 +200,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       conversationContext.push(currentMessage);
 
       console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
-      
+
       // Enhanced debug logging like ChatGPT's internal validation
       console.log('=== CONVERSATION CONTEXT VALIDATION ===');
       let totalImages = 0;
@@ -212,7 +212,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
           const imageParts = msg.content.filter(c => c.type === 'image_url').length;
           totalImages += imageParts;
           console.log(`${index}: ${msg.role.toUpperCase()} - ${textParts} text parts, ${imageParts} image parts`);
-          
+
           // Log image URLs for validation (first 50 chars of base64)
           msg.content.filter(c => c.type === 'image_url').forEach((img, imgIndex) => {
             const urlPreview = img.image_url?.url ? img.image_url.url.substring(0, 50) : 'no-url';
@@ -502,64 +502,74 @@ User: ${userMessage}`;
     return content;
   }
 
-  private async processCurrentMessageWithAttachments(message: string, attachments: any[]) {
-    // If there are no attachments, the behavior is simple
+  async processCurrentMessageWithAttachments(message: string, attachments: any[] = []): Promise<any> {
     if (!attachments || attachments.length === 0) {
       return { role: 'user', content: message };
     }
 
-    const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
+    // Process images into text descriptions (ChatGPT approach)
+    let imageDescriptions = '';
+    const nonImageAttachments = [];
 
-    // If there are any images, we must use the vision-compatible format.
-    if (hasImages) {
-      const content: (OpenAI.Chat.Completions.ChatCompletionContentPartText | OpenAI.Chat.Completions.ChatCompletionContentPartImage)[] = [];
-
-      // Start with the main text message
-      let textContent = message || "Please analyze the attached content.";
-
-      // Append text references for non-image files
-      const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
-      if (otherAttachments.length > 0) {
-        const attachmentText = otherAttachments.map(att =>
-          `[The user has also attached a file: ${att.displayName || att.fileName} (${att.fileType})]`
-        ).join('\n');
-        textContent = `${textContent}\n\n${attachmentText}`;
-      }
-      content.push({ type: "text", text: textContent });
-
-      // Now, add the image data
-      const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
-      for (const imageAtt of imageAttachments) {
-        const imagePath = join(process.cwd(), 'uploads', imageAtt.fileName);
+    for (const attachment of attachments) {
+      if (attachment.fileType?.startsWith('image/')) {
         try {
+          const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
-            content.push({
-              type: "image_url",
-              image_url: {
-                url: `data:${imageAtt.fileType};base64,${base64Image}`
-              }
-            });
-          } else {
-             // If file not found, add a text note instead of failing silently
-             content[0].text += `\n[Note: Image ${imageAtt.displayName || imageAtt.fileName} could not be loaded.]`;
+
+            // Get image description from AI (one-time processing)
+            const imageDescription = await this.analyzeImageToText(base64Image, attachment.fileType);
+            imageDescriptions += `\n\n[Image uploaded: ${attachment.displayName || attachment.fileName}]\n${imageDescription}`;
           }
         } catch (error) {
-          console.error('Error reading image file:', error);
-          content[0].text += `\n[Note: An error occurred while loading image ${imageAtt.displayName || imageAtt.fileName}.]`;
+          console.error('Error processing image for description:', error);
+          imageDescriptions += `\n\n[Image uploaded: ${attachment.displayName || attachment.fileName} - could not process]`;
         }
+      } else {
+        nonImageAttachments.push(attachment);
       }
-      return { role: 'user', content };
+    }
 
-    } else {
-      // If there are no images, just append text references for all attachments.
-      let textContent = message;
-      const attachmentText = attachments.map(att =>
-        `[The user has attached a file: ${att.displayName || att.fileName} (${att.fileType})]`
-      ).join('\n');
-      textContent = message ? `${message}\n\n${attachmentText}` : attachmentText;
-      return { role: 'user', content: textContent };
+    // Handle non-image attachments
+    const attachmentDescriptions = nonImageAttachments
+      .map(att => `[Attached file: ${att.displayName || 'file'} (${att.fileType})]`)
+      .join('\n');
+
+    // Combine all content as text (ChatGPT style)
+    const fullContent = message + imageDescriptions + (attachmentDescriptions ? '\n\n' + attachmentDescriptions : '');
+    return { role: 'user', content: fullContent };
+  }
+
+  // New method to convert images to text descriptions
+  async analyzeImageToText(base64Image: string, mimeType: string): Promise<string> {
+    try {
+      const visionMessages = [
+        {
+          role: 'system',
+          content: 'You are an image analysis system. Describe what you see in this image in detail, focusing on objects, food items, colors, and other visual elements. Be specific and comprehensive.'
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Please describe this image in detail.' },
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Image}` } }
+          ]
+        }
+      ];
+
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: visionMessages,
+        max_tokens: 500,
+        temperature: 0.1
+      });
+
+      return response.choices[0]?.message?.content || 'Image could not be analyzed';
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      return 'Image analysis failed';
     }
   }
 }

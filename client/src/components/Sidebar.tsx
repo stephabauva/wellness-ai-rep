@@ -5,10 +5,12 @@ import {
   Cpu, 
   Brain,
   Settings, 
-  Zap
+  Zap,
+  Plus
 } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
+import { queryClient } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 
 const NavButton: React.FC<{
@@ -44,10 +46,21 @@ const Sidebar: React.FC = () => {
     <div className="hidden md:flex md:flex-shrink-0 z-50">
       <div className="flex flex-col w-20 border-r border-border bg-card">
         {/* App Logo */}
-        <div className="flex-shrink-0 flex items-center justify-center h-16 border-b border-border">
-          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-            <Zap className="h-6 w-6 text-white" />
+        <div className="flex-shrink-0 flex items-center justify-between px-2 h-16 border-b border-border">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+            <Zap className="h-4 w-4 text-white" />
           </div>
+          <button 
+            type="button"
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+              setActiveSection("chat");
+            }}
+            className="h-6 w-6 rounded bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
+            title="New Chat"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
         </div>
         
         {/* Navigation Icons */}

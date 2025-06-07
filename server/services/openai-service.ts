@@ -151,25 +151,42 @@ class ChatService {
     }
 
     console.log(`Making OpenAI request with model: ${visionModel}, has images: ${imageAttachments.length > 0}`);
+    
+    // Debug: Log the structure of userContent when images are present
+    if (imageAttachments.length > 0) {
+      console.log(`Image attachments processed: ${imageAttachments.length}`);
+      console.log(`UserContent structure:`, JSON.stringify(userContent, null, 2));
+    }
+
+    // Build system message based on whether images are present
+    let systemContent = `${persona}
+          
+Guidelines for your responses:
+1. Keep your tone friendly, supportive, and conversational.
+2. Provide specific, actionable advice when appropriate.
+3. Answer should be thorough but concise (no more than 3-4 paragraphs).
+4. When suggesting exercises or nutrition advice, provide specific examples.
+5. You may reference health data from connected devices if the user mentions them.
+6. Use emoji sparingly to add warmth to your responses.`;
+
+    if (imageAttachments.length > 0) {
+      systemContent += `
+7. CRITICAL: You are currently analyzing image(s) that the user has shared. You MUST describe what you see in the image(s) and provide specific advice based on the visual content.
+8. For food/meal images: Identify the foods, estimate portion sizes, analyze nutritional content, and provide dietary advice.
+9. For exercise/activity images: Comment on form, technique, equipment, and provide suggestions.
+10. For health data screenshots: Read and interpret the data shown and provide insights.
+11. Always start your response by describing what you can see in the image(s).`;
+    } else {
+      systemContent += `
+7. If users mention images but you don't see any, ask them to ensure the image was properly uploaded.`;
+    }
 
     const response = await this.openai.chat.completions.create({
       model: visionModel,
       messages: [
         {
           role: "system",
-          content: `${persona}
-          
-          Guidelines for your responses:
-          1. Keep your tone friendly, supportive, and conversational.
-          2. Provide specific, actionable advice when appropriate.
-          3. Answer should be thorough but concise (no more than 3-4 paragraphs).
-          4. When suggesting exercises or nutrition advice, provide specific examples.
-          5. You may reference health data from connected devices if the user mentions them.
-          6. Use emoji sparingly to add warmth to your responses.
-          7. IMPORTANT: You have vision capabilities and can see and analyze images. When the user shares images, describe what you see and provide relevant health, fitness, nutrition, or wellness coaching advice based on the image content. Always acknowledge that you can see the image(s) they've shared.
-          8. For food/meal images: analyze nutritional content, portion sizes, cooking methods, and provide dietary advice.
-          9. For exercise/activity images: comment on form, suggest modifications, or provide encouragement.
-          10. For health data screenshots: interpret the data and provide insights.`
+          content: systemContent
         },
         {
           role: "user",

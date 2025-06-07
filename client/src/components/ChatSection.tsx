@@ -106,9 +106,14 @@ const ChatSection: React.FC = () => {
       });
     },
     onSuccess: (data) => {
+      console.log('Message sent successfully:', data);
       // Update current conversation ID if we got one back
       if (data.conversationId) {
         if (!currentConversationId) {
+          console.log(`Setting new conversation ID: ${data.conversationId}`);
+          setCurrentConversationId(data.conversationId);
+        } else if (currentConversationId !== data.conversationId) {
+          console.warn(`Conversation ID mismatch: expected ${currentConversationId}, got ${data.conversationId}`);
           setCurrentConversationId(data.conversationId);
         }
         // Invalidate queries for the specific conversation

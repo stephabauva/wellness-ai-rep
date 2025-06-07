@@ -83,6 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // 1. If we have a conversationId, fetch its history FIRST.
       if (currentConversationId) {
+        console.log(`Fetching history for conversation: ${currentConversationId}`);
         const historyFromDb = await db
           .select()
           .from(conversationMessages)
@@ -91,6 +92,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .limit(20);
         conversationHistory = historyFromDb;
         console.log(`Fetched conversation history: ${conversationHistory.length} messages for conversation ${currentConversationId}`);
+        
+        // Debug: Log the conversation history details
+        if (conversationHistory.length > 0) {
+          console.log(`History preview: ${conversationHistory.map(m => `${m.role}: ${m.content?.substring(0, 50)}...`).join(' | ')}`);
+        }
       }
 
       // 2. If no conversationId, create a new one now.
@@ -106,16 +112,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title
         }).returning();
         currentConversationId = newConversation.id;
+        console.log(`Created new conversation: ${currentConversationId}`);
+      } else {
+        // Validate that the conversation exists
+        const existingConv = await db
+          .select()
+          .from(conversations)
+          .where(eq(conversations.id, currentConversationId))
+          .limit(1);
+        
+        if (existingConv.length === 0) {
+          console.warn(`Conversation ${currentConversationId} not found, creating new one`);
+          const [newConversation] = await db.insert(conversations).values({
+            userId,
+            title: content?.slice(0, 50) || "New Conversation"
+          }).returning();
+          currentConversationId = newConversation.id;
+          conversationHistory = []; // Reset history since we created a new conversation
+        }
       }
 
       // 3. Save the new user message to the database.
       // This happens AFTER we've fetched the previous history.
-      await db.insert(conversationMessages).values({
+      const [savedUserMessage] = await db.insert(conversationMessages).values({
         conversationId: currentConversationId,
         role: 'user',
         content,
         metadata: attachments && attachments.length > 0 ? { attachments } : undefined
       }).returning();
+      
+      console.log(`Saved user message ${savedUserMessage.id} to conversation ${currentConversationId}`);
 
       // Also save to legacy messages for compatibility
       const legacyUserMessage = await storage.createMessage({
@@ -140,11 +166,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Save AI response to conversation
-      await db.insert(conversationMessages).values({
+      const [savedAiMessage] = await db.insert(conversationMessages).values({
         conversationId: currentConversationId,
         role: 'assistant',
         content: aiResult.response
       }).returning();
+      
+      console.log(`Saved AI message ${savedAiMessage.id} to conversation ${currentConversationId}`);
 
       // Also save to legacy messages for compatibility
       const legacyAiMessage = await storage.createMessage({

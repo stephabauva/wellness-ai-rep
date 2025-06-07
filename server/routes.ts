@@ -80,11 +80,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get or create conversation
       let currentConversationId = conversationId;
-      if (!currentConversationId || currentConversationId === null) {
-        // Create title from content or attachments
+      let conversationHistory: any[] = [];
+
+      // 1. If we have a conversationId, fetch its history FIRST.
+      if (currentConversationId) {
+        const historyFromDb = await db
+          .select()
+          .from(conversationMessages)
+          .where(eq(conversationMessages.conversationId, currentConversationId))
+          .orderBy(conversationMessages.createdAt)
+          .limit(20);
+        conversationHistory = historyFromDb;
+      }
+
+      // 2. If no conversationId, create a new one now.
+      if (!currentConversationId) {
         let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
         if (!title && attachments && attachments.length > 0) {
-          title = attachments.map(a => a.fileName).join(', ').slice(0, 50);
+          title = attachments.map(a => a.displayName).join(', ').slice(0, 50);
         }
         if (!title) title = "New Conversation";
 
@@ -95,38 +108,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentConversationId = newConversation.id;
       }
 
-      // Save user message to conversation with attachments
-      const [userMessage] = await db.insert(conversationMessages).values({
+      // 3. Save the new user message to the database.
+      // This happens AFTER we've fetched the previous history.
+      await db.insert(conversationMessages).values({
         conversationId: currentConversationId,
         role: 'user',
         content,
         metadata: attachments && attachments.length > 0 ? { attachments } : undefined
       }).returning();
 
-      // Create legacy content including file info for compatibility
-      let legacyContent = content;
-      if (attachments && attachments.length > 0) {
-        const attachmentText = attachments.map(a => `[File: ${a.displayName || a.fileName}]`).join(' ');
-        legacyContent = content ? `${content} ${attachmentText}` : attachmentText;
-      }
-
-      // 1. First, get conversation history BEFORE saving the new message
-      const conversationHistory = await db
-        .select()
-        .from(conversationMessages)
-        .where(eq(conversationMessages.conversationId, currentConversationId))
-        .orderBy(conversationMessages.createdAt)
-        .limit(20);
-
-      // 2. Now save the new user message to the database
       // Also save to legacy messages for compatibility
       const legacyUserMessage = await storage.createMessage({
         userId,
-        content: legacyContent,
+        // The legacy content can still have the simple attachment text
+        content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
         isUserMessage: true
       });
 
-      // Get AI response with memory enhancement
+      // 4. Call the AI service with raw, un-formatted data.
+      // The service will handle building the context.
       const aiConfig = { provider: aiProvider, model: aiModel };
       const aiResult = await chatService.getChatResponse(
         content, // Pass the original, raw message content
@@ -136,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         coachingMode,
         conversationHistory, // Pass the clean history (without the current message)
         aiConfig,
-        attachments || [],
+        attachments || [], // Pass the raw attachments array
         automaticModelSelection || false
       );
 

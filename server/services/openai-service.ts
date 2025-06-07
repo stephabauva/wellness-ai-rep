@@ -415,48 +415,62 @@ User: ${userMessage}`;
   }
 
   private async processCurrentMessageWithAttachments(message: string, attachments: any[]) {
-    const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
-    const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
+    // If there are no attachments, the behavior is simple
+    if (!attachments || attachments.length === 0) {
+      return { role: 'user', content: message };
+    }
 
-    if (imageAttachments.length > 0) {
-      // For images, use vision API format
-      const content = [
-        { type: "text", text: message || "Please analyze this image." }
-      ];
+    const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
 
+    // If there are any images, we must use the vision-compatible format.
+    if (hasImages) {
+      const content: (OpenAI.Chat.Completions.ChatCompletionContentPartText | OpenAI.Chat.Completions.ChatCompletionContentPartImage)[] = [];
+
+      // Start with the main text message
+      let textContent = message || "Please analyze the attached content.";
+
+      // Append text references for non-image files
+      const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
+      if (otherAttachments.length > 0) {
+        const attachmentText = otherAttachments.map(att =>
+          `[The user has also attached a file: ${att.displayName || att.fileName} (${att.fileType})]`
+        ).join('\n');
+        textContent = `${textContent}\n\n${attachmentText}`;
+      }
+      content.push({ type: "text", text: textContent });
+
+      // Now, add the image data
+      const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
       for (const imageAtt of imageAttachments) {
-        const fs = await import('fs');
-        const path = await import('path');
-        const imagePath = path.join(process.cwd(), 'uploads', imageAtt.fileName);
-
+        const imagePath = join(process.cwd(), 'uploads', imageAtt.fileName);
         try {
-          const imageBuffer = fs.readFileSync(imagePath);
-          const base64Image = imageBuffer.toString('base64');
-          content.push({
-            type: "image_url",
-            image_url: {
-              url: `data:${imageAtt.fileType};base64,${base64Image}`
-            }
-          });
+          if (existsSync(imagePath)) {
+            const imageBuffer = readFileSync(imagePath);
+            const base64Image = imageBuffer.toString('base64');
+            content.push({
+              type: "image_url",
+              image_url: {
+                url: `data:${imageAtt.fileType};base64,${base64Image}`
+              }
+            });
+          } else {
+             // If file not found, add a text note instead of failing silently
+             content[0].text += `\n[Note: Image ${imageAtt.displayName || imageAtt.fileName} could not be loaded.]`;
+          }
         } catch (error) {
           console.error('Error reading image file:', error);
-          content.push({
-            type: "text",
-            text: `[Error loading image: ${imageAtt.displayName || imageAtt.fileName}]`
-          });
+          content[0].text += `\n[Note: An error occurred while loading image ${imageAtt.displayName || imageAtt.fileName}.]`;
         }
       }
-
       return { role: 'user', content };
+
     } else {
-      // Text-only message with file references
+      // If there are no images, just append text references for all attachments.
       let textContent = message;
-      if (otherAttachments.length > 0) {
-        const attachmentText = otherAttachments.map(att => 
-          `[Attached file: ${att.displayName || att.fileName} (${att.fileType})]`
-        ).join('\n');
-        textContent = message ? `${message}\n\n${attachmentText}` : attachmentText;
-      }
+      const attachmentText = attachments.map(att =>
+        `[The user has attached a file: ${att.displayName || att.fileName} (${att.fileType})]`
+      ).join('\n');
+      textContent = message ? `${message}\n\n${attachmentText}` : attachmentText;
       return { role: 'user', content: textContent };
     }
   }

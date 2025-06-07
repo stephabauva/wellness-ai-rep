@@ -156,7 +156,7 @@ const ChatSection: React.FC = () => {
     onSuccess: (data, file) => {
       const attachedFile: AttachedFile = {
         id: data.file.id,
-        fileName: file.name,
+        fileName: data.file.fileName, // Use the generated filename from server response
         fileType: file.type,
         fileSize: file.size,
         url: data.file.url

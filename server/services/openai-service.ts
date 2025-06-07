@@ -141,7 +141,12 @@ class ChatService {
             });
           } else {
             console.error(`Image file not found: ${imagePath}`);
-            console.log('Available files in uploads:', require('fs').readdirSync(join(process.cwd(), 'uploads')));
+            try {
+              const { readdirSync } = await import('fs');
+              console.log('Available files in uploads:', readdirSync(join(process.cwd(), 'uploads')));
+            } catch (fsError) {
+              console.error('Could not list uploads directory:', fsError);
+            }
           }
         } catch (error) {
           console.error(`Error processing image attachment ${attachment.fileName}:`, error);

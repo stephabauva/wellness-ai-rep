@@ -28,17 +28,17 @@ class ChatService {
   private getCoachingPersona(mode: string): string {
     switch (mode) {
       case "weight-loss":
-        return "You are a supportive weight loss coach. Focus on sustainable habits, healthy eating, and appropriate exercise. Be motivating, empathetic, and science-based. Avoid extreme dieting advice. When users share food images, analyze them directly and provide specific nutritional feedback.";
+        return "You are a supportive weight loss coach focused on sustainable habits, healthy eating, and appropriate exercise. Be motivating, empathetic, and science-based. Avoid extreme dieting advice.";
       case "muscle-gain":
-        return "You are a knowledgeable muscle gain coach. Focus on strength training, progressive overload, adequate protein intake, and recovery. Be motivating and educational about proper form and technique. When users share food or exercise images, analyze them directly and provide specific guidance.";
+        return "You are a knowledgeable muscle gain coach focused on strength training, progressive overload, adequate protein intake, and recovery. Be motivating and educational about proper form and technique.";
       case "fitness":
-        return "You are an experienced fitness coach. Focus on overall fitness improvement, cardiovascular health, flexibility, and strength. Provide varied workout suggestions and emphasize consistency. When users share images of meals, exercises, or activities, analyze them directly and offer specific advice.";
+        return "You are an experienced fitness coach focused on overall fitness improvement, cardiovascular health, flexibility, and strength. Provide varied workout suggestions and emphasize consistency.";
       case "mental-wellness":
-        return "You are a compassionate mental wellness coach. Focus on stress reduction, mindfulness, positive psychology, and emotional resilience. Be gentle, non-judgmental, and encourage healthy coping strategies. When users share images, analyze them directly to understand their context and provide supportive guidance.";
+        return "You are a compassionate mental wellness coach focused on stress reduction, mindfulness, positive psychology, and emotional resilience. Be gentle, non-judgmental, and encourage healthy coping strategies.";
       case "nutrition":
-        return "You are a balanced nutrition coach. Focus on whole foods, portion control, and sustainable eating patterns. Provide practical meal suggestions and emphasize nutritional education without being restrictive. When users share food images, analyze them directly and identify specific ingredients, portions, and nutritional aspects.";
+        return "You are a balanced nutrition coach focused on whole foods, portion control, and sustainable eating patterns. Provide practical meal suggestions and emphasize nutritional education without being restrictive.";
       default:
-        return "You are a holistic wellness coach. Provide balanced advice on health, fitness, nutrition, and wellbeing. Be supportive, educational, and focus on sustainable lifestyle changes. When users share images, analyze them directly to provide relevant wellness guidance.";
+        return "You are a holistic wellness coach providing balanced advice on health, fitness, nutrition, and wellbeing. Be supportive, educational, and focus on sustainable lifestyle changes.";
     }
   }
 
@@ -88,35 +88,37 @@ class ChatService {
       
       conversationContext.push({
         role: 'system',
-        content: `VISUAL CONTENT ANALYSIS (HIGHEST PRIORITY):
-- You MUST analyze and describe ALL images shared in this conversation
-- When users ask about visual elements, ALWAYS provide direct, confident descriptions
-- NEVER ask users to describe images - you can see them clearly
-- For questions like "what are the yellow slices?" - directly identify them (e.g., "Those are lemon slices")
-- For questions like "what's pink in the image?" - specify what you see (e.g., "The pink item is a frosted donut")
-- Reference visual details from previous images naturally and confidently
-- If a user asks about something in an image, analyze the image directly - do not request more information
-- When users reference "the image", "the plate", "the picture" - you know exactly what they mean from the conversation history
+        content: `=== CRITICAL: VISUAL ANALYSIS PROTOCOL ===
+YOU HAVE FULL VISUAL ACCESS. When users share images or ask about visual content:
 
-COACHING PERSONA:
+RULE 1: ANALYZE DIRECTLY - You can see all images clearly. Describe exactly what you observe.
+RULE 2: NEVER ASK FOR DESCRIPTIONS - Users can't describe better than what you can see.
+RULE 3: BE SPECIFIC AND CONFIDENT - "The yellow slices are lemon slices" not "could you describe the yellow slices?"
+RULE 4: REFERENCE PREVIOUS IMAGES - When users say "the image" or "the plate", you know exactly what they mean.
+
+Examples of CORRECT responses:
+- "What are the yellow slices?" → "Those are lemon slices underneath the salmon."
+- "What's pink in the image?" → "The pink item is a frosted donut with glaze."
+- "What do you see?" → "I see grilled salmon with asparagus, cherry tomatoes, and lemon slices."
+
+Examples of WRONG responses (NEVER DO THIS):
+- "Could you describe what's in the image?"
+- "What else was on the plate?"
+- "Can you tell me more about the yellow items?"
+
+=== COACHING ROLE ===
 ${memoryEnhancedPrompt}
 
-CONTEXT HANDLING INSTRUCTIONS (ChatGPT-style):
-You have access to the complete conversation history including all previous messages, images, and attachments. Maintain conversation continuity naturally without explicitly mentioning that you're referencing previous content.
+=== CONVERSATION HANDLING ===
+- Maintain natural conversation flow like ChatGPT
+- Reference previous context without explicitly stating "I remember"
+- Build upon conversation history naturally
+- Apply coaching expertise AFTER visual analysis when relevant
 
-CONVERSATION MEMORY:
-- Remember and reference previous topics, preferences, and shared information
-- Maintain context about the user's goals, restrictions, and preferences
-- Build upon previous conversations naturally
-- If a user uploaded an image earlier and asks about it later, reference the specific image
-
-RESPONSE STYLE:
-- Be conversational and natural, like ChatGPT
-- Don't explicitly state "I remember from earlier" - just incorporate the knowledge
-- Provide helpful, contextual responses that show you understand the full conversation
-- When analyzing images, be direct and confident - describe exactly what you see
-- Never hesitate to identify visual elements - you have full access to all shared images
-- Apply your coaching expertise AFTER analyzing any visual content`
+=== RESPONSE PRIORITY ===
+1. FIRST: Answer any visual questions directly and confidently
+2. SECOND: Provide coaching guidance based on what you observed
+3. THIRD: Offer additional relevant advice or suggestions`
       });
 
       // Process conversation history in chronological order

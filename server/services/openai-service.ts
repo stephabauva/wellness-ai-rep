@@ -110,19 +110,22 @@ class ChatService {
   private async getOpenAIResponse(userMessage: string, persona: string, model: OpenAIModel, attachments: any[] = []): Promise<string> {
     const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
     
-    let finalUserContentForOpenAI: string | any[];
-    let hasSuccessfullyProcessedImages = false;
-    
     if (imageAttachments.length > 0) {
       console.log(`Processing ${imageAttachments.length} image attachment(s) for model: ${model}`);
       
-      // The userMessage contains the user's original text
-      const textPart = { type: "text", text: userMessage };
-      const imageParts: any[] = [];
+      // Build content array with text and images
+      const content: any[] = [
+        {
+          type: "text",
+          text: userMessage || "What's in this image?"
+        }
+      ];
       
+      // Process each image attachment
       for (const attachment of imageAttachments) {
         try {
           const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
+          console.log(`Looking for image at: ${imagePath}`);
           
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
@@ -130,39 +133,59 @@ class ChatService {
             
             console.log(`Successfully read image: ${attachment.fileName}, type: ${attachment.fileType}, size: ${attachment.fileSize} bytes`);
             
-            const imageUrl = `data:${attachment.fileType};base64,${base64Image}`;
-            
-            imageParts.push({
+            content.push({
               type: "image_url",
               image_url: {
-                url: imageUrl,
-                detail: "high"
+                url: `data:${attachment.fileType};base64,${base64Image}`
               }
             });
           } else {
             console.error(`Image file not found: ${imagePath}`);
+            console.log('Available files in uploads:', require('fs').readdirSync(join(process.cwd(), 'uploads')));
           }
         } catch (error) {
           console.error(`Error processing image attachment ${attachment.fileName}:`, error);
         }
       }
       
-      if (imageParts.length > 0) {
-        finalUserContentForOpenAI = [textPart, ...imageParts];
-        hasSuccessfullyProcessedImages = true;
-        console.log(`UserContent for OpenAI includes ${imageParts.length} image(s). Text part: "${userMessage.substring(0,100)}..."`);
-      } else {
-        console.warn("Image attachments were specified, but none could be processed. Sending text-only message.");
-        finalUserContentForOpenAI = `${userMessage}\n\n(System Note: I was expecting an image with your message, but I encountered an issue processing it. Please ensure it was uploaded correctly if you intended to share one.)`;
-      }
+      // Enhanced system prompt for vision capabilities
+      const systemContent = `${persona}
+
+Guidelines for your responses:
+1. Keep your tone friendly, supportive, and conversational.
+2. Provide specific, actionable advice when appropriate.
+3. Answer should be thorough but concise (no more than 3-4 paragraphs).
+4. When suggesting exercises or nutrition advice, provide specific examples.
+5. You may reference health data from connected devices if the user mentions them.
+6. Use emoji sparingly to add warmth to your responses.
+7. CRITICAL: You HAVE VISION CAPABILITIES and can see the image(s) the user has shared. You MUST analyze and describe what you see in the image(s).
+8. For food/meal images: Identify specific foods, estimate portion sizes, analyze nutritional content, and provide dietary advice.
+9. For exercise/activity images: Comment on form, technique, equipment, and provide suggestions.
+10. For health data screenshots: Read and interpret the data shown and provide insights.
+11. MANDATORY: Begin your response by describing exactly what you can see in the image(s). Do not say you cannot see images.
+12. You are ${model} with full vision capabilities - act accordingly.`;
+
+      const response = await this.openai.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: "system",
+            content: systemContent
+          },
+          {
+            role: "user",
+            content: content
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024
+      });
+
+      return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
     } else {
-      finalUserContentForOpenAI = userMessage;
-    }
+      // Handle text-only messages
+      const systemContent = `${persona}
 
-    console.log(`Making OpenAI request to model: ${model}. Has successfully processed images: ${hasSuccessfullyProcessedImages}`);
-
-    let systemContent = `${persona}
-          
 Guidelines for your responses:
 1. Keep your tone friendly, supportive, and conversational.
 2. Provide specific, actionable advice when appropriate.
@@ -171,36 +194,24 @@ Guidelines for your responses:
 5. You may reference health data from connected devices if the user mentions them.
 6. Use emoji sparingly to add warmth to your responses.`;
 
-    if (hasSuccessfullyProcessedImages) {
-      systemContent += `
-7. CRITICAL: You HAVE VISION CAPABILITIES and can see the image(s) the user has shared. You MUST analyze and describe what you see in the image(s).
-8. For food/meal images: Identify specific foods, estimate portion sizes, analyze nutritional content, and provide dietary advice.
-9. For exercise/activity images: Comment on form, technique, equipment, and provide suggestions.
-10. For health data screenshots: Read and interpret the data shown and provide insights.
-11. MANDATORY: Begin your response by describing exactly what you can see in the image(s). Do not say you cannot see images.
-12. You are ${model} with full vision capabilities - act accordingly.`;
-    } else {
-      systemContent += `
-7. If users mention images (e.g., "see this picture") but no image data was processed with their message, inform them that you didn't receive an image and ask them to try uploading again.`;
+      const response = await this.openai.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: "system",
+            content: systemContent
+          },
+          {
+            role: "user",
+            content: userMessage
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024
+      });
+
+      return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
     }
-
-    const response = await this.openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: "system",
-          content: systemContent
-        },
-        {
-          role: "user",
-          content: finalUserContentForOpenAI
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 1024
-    });
-
-    return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
   }
 
   private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = []): Promise<string> {

@@ -123,9 +123,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prepare content for AI including attachment information
       let contentForAI = content;
       if (attachments && attachments.length > 0) {
-        const attachmentInfo = attachments.map(att => 
-          `The user has attached a file: ${att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
-        ).join("\n");
+        const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
+        const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
+        
+        let attachmentInfo = '';
+        if (imageAttachments.length > 0) {
+          attachmentInfo += `The user has shared ${imageAttachments.length} image(s). Please analyze the image(s) in the context of health, fitness, nutrition, or wellness coaching.\n`;
+        }
+        if (otherAttachments.length > 0) {
+          attachmentInfo += otherAttachments.map(att => 
+            `The user has attached a file: ${att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
+          ).join("\n");
+        }
+        
         contentForAI = content ? `${content}\n\n${attachmentInfo}` : attachmentInfo;
       }
 
@@ -138,7 +148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         legacyUserMessage.id,
         coachingMode,
         conversationHistory.reverse(),
-        aiConfig
+        aiConfig,
+        attachments || []
       );
 
       // Save AI response to conversation

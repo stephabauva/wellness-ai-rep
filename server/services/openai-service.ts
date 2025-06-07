@@ -47,7 +47,8 @@ class ChatService {
     messageId: number,
     coachingMode: string = "weight-loss",
     conversationHistory: any[] = [],
-    aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" }
+    aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" },
+    attachments: any[] = []
   ): Promise<{ response: string; memoryInfo?: any }> {
     try {
       const mode = coachingModes.includes(coachingMode as CoachingMode) 
@@ -76,9 +77,9 @@ class ChatService {
       
       let response: string;
       if (aiConfig.provider === "openai") {
-        response = await this.getOpenAIResponse(userMessage, enhancedPersona, aiConfig.model as OpenAIModel);
+        response = await this.getOpenAIResponse(userMessage, enhancedPersona, aiConfig.model as OpenAIModel, attachments);
       } else {
-        response = await this.getGoogleResponse(userMessage, enhancedPersona, aiConfig.model as GoogleModel);
+        response = await this.getGoogleResponse(userMessage, enhancedPersona, aiConfig.model as GoogleModel, attachments);
       }
 
       // Log memory usage
@@ -104,7 +105,44 @@ class ChatService {
     }
   }
 
-  private async getOpenAIResponse(userMessage: string, persona: string, model: OpenAIModel): Promise<string> {
+  private async getOpenAIResponse(userMessage: string, persona: string, model: OpenAIModel, attachments: any[] = []): Promise<string> {
+    // Check if there are image attachments
+    const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
+    
+    let userContent: any;
+    
+    if (imageAttachments.length > 0) {
+      // Handle images with vision capabilities
+      const content = [{ type: "text", text: userMessage }];
+      
+      for (const attachment of imageAttachments) {
+        try {
+          // Read the image file from the uploads directory
+          const fs = require('fs');
+          const path = require('path');
+          const imagePath = path.join(process.cwd(), 'uploads', attachment.fileName);
+          
+          if (fs.existsSync(imagePath)) {
+            const imageBuffer = fs.readFileSync(imagePath);
+            const base64Image = imageBuffer.toString('base64');
+            
+            content.push({
+              type: "image_url",
+              image_url: {
+                url: `data:${attachment.fileType};base64,${base64Image}`
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error processing image attachment:', error);
+        }
+      }
+      
+      userContent = content;
+    } else {
+      userContent = userMessage;
+    }
+
     const response = await this.openai.chat.completions.create({
       model: model,
       messages: [
@@ -118,11 +156,12 @@ class ChatService {
           3. Answer should be thorough but concise (no more than 3-4 paragraphs).
           4. When suggesting exercises or nutrition advice, provide specific examples.
           5. You may reference health data from connected devices if the user mentions them.
-          6. Use emoji sparingly to add warmth to your responses.`
+          6. Use emoji sparingly to add warmth to your responses.
+          7. If the user shares images, analyze them in the context of health, fitness, nutrition, or wellness coaching.`
         },
         {
           role: "user",
-          content: userMessage
+          content: userContent
         }
       ],
       temperature: 0.7,
@@ -132,8 +171,10 @@ class ChatService {
     return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
   }
 
-  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel): Promise<string> {
+  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = []): Promise<string> {
     const genModel = this.google.getGenerativeModel({ model });
+    
+    const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
     
     const prompt = `${persona}
 
@@ -144,10 +185,36 @@ Guidelines for your responses:
 4. When suggesting exercises or nutrition advice, provide specific examples.
 5. You may reference health data from connected devices if the user mentions them.
 6. Use emoji sparingly to add warmth to your responses.
+7. If the user shares images, analyze them in the context of health, fitness, nutrition, or wellness coaching.
 
 User: ${userMessage}`;
+
+    let parts = [prompt];
     
-    const result = await genModel.generateContent(prompt);
+    if (imageAttachments.length > 0) {
+      for (const attachment of imageAttachments) {
+        try {
+          const fs = require('fs');
+          const path = require('path');
+          const imagePath = path.join(process.cwd(), 'uploads', attachment.fileName);
+          
+          if (fs.existsSync(imagePath)) {
+            const imageBuffer = fs.readFileSync(imagePath);
+            
+            parts.push({
+              inlineData: {
+                data: imageBuffer.toString('base64'),
+                mimeType: attachment.fileType
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error processing image attachment for Google:', error);
+        }
+      }
+    }
+    
+    const result = await genModel.generateContent(parts);
     const response = await result.response;
     
     return response.text() || "I'm sorry, I couldn't generate a response right now. Please try again.";

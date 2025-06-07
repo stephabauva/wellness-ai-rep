@@ -21,4 +21,4 @@
 
 11. add a 'New chat' button
 
-12. new to pass the app in French
+12. need French version

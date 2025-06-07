@@ -214,6 +214,33 @@ const ChatSection: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">AI Wellness Coach</h2>
+            <p className="text-sm text-muted-foreground">
+              Your personal health and wellness companion
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Clear current chat by refreshing messages
+                queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+                // Clear input and attachments
+                setInputMessage("");
+                setAttachedFiles([]);
+              }}
+            >
+              + New Chat
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loadingMessages ? (

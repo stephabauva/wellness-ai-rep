@@ -46,6 +46,7 @@ const formSchema = z.object({
   aiModel: z.string(),
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]),
   preferredLanguage: z.string(),
+  automaticModelSelection: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -113,6 +114,7 @@ const SettingsSection: React.FC = () => {
       aiModel: settings?.aiModel || "gpt-4o",
       transcriptionProvider: settings?.transcriptionProvider || "webspeech",
       preferredLanguage: settings?.preferredLanguage || "en",
+      automaticModelSelection: settings?.automaticModelSelection ?? true,
     }
   });
   
@@ -611,6 +613,29 @@ const SettingsSection: React.FC = () => {
                         </FormItem>
                       )}
                     />
+
+                    <div className="flex justify-between items-center py-4 border-t border-border">
+                      <div>
+                        <h4 className="text-md font-medium">Automatic AI Model Selection</h4>
+                        <p className="text-sm text-muted-foreground">Automatically choose the best AI model based on your query type and attachments</p>
+                      </div>
+                      <div className="flex items-center">
+                        <FormField
+                          control={form.control}
+                          name="automaticModelSelection"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 

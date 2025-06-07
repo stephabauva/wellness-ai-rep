@@ -30,7 +30,8 @@ const messageSchema = z.object({
   coachingMode: z.string().optional().default("weight-loss"),
   aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
   aiModel: z.string().optional().default("gpt-4o"),
-  attachments: z.array(attachmentSchema).optional()
+  attachments: z.array(attachmentSchema).optional(),
+  automaticModelSelection: z.boolean().optional().default(false)
 });
 
 // Device connect schema
@@ -54,7 +55,8 @@ const settingsUpdateSchema = z.object({
   aiProvider: z.enum(["openai", "google"]).optional(),
   aiModel: z.string().optional(),
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional(),
-  preferredLanguage: z.string().optional()
+  preferredLanguage: z.string().optional(),
+  automaticModelSelection: z.boolean().optional()
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -73,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send a new message with memory enhancement
   app.post("/api/messages", async (req, res) => {
     try {
-      const { content, conversationId, coachingMode, aiProvider, aiModel, attachments } = messageSchema.parse(req.body);
+      const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection } = messageSchema.parse(req.body);
       const userId = 1; // Default user ID
 
       // Get or create conversation
@@ -129,14 +131,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let textualAttachmentInfo = "";
       if (attachments && attachments.length > 0) {
         const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
-        
+
         if (otherAttachments.length > 0) {
           textualAttachmentInfo = otherAttachments.map(att => 
             `The user has attached a file: ${att.displayName || att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
           ).join("\n");
         }
       }
-      
+
       // For AI service, pass original content with non-image attachment info
       let messageForAIService = content;
       if (textualAttachmentInfo) {
@@ -155,7 +157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         coachingMode,
         conversationHistory.reverse(),
         aiConfig,
-        attachments || []
+        attachments || [],
+        automaticModelSelection || false
       );
 
       // Save AI response to conversation
@@ -450,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'text/plain'
       ];
-      
+
       const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
       if (isAllowed) {
         cb(null, true);

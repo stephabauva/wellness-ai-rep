@@ -50,12 +50,18 @@ class ChatService {
     coachingMode: string = "weight-loss",
     conversationHistory: any[] = [],
     aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" },
-    attachments: any[] = []
+    attachments: any[] = [],
+    automaticModelSelection: boolean = false
   ): Promise<{ response: string; memoryInfo?: any }> {
     try {
       const mode = coachingModes.includes(coachingMode as CoachingMode) 
         ? coachingMode 
         : "weight-loss";
+
+      // Apply automatic model selection if enabled
+      if (automaticModelSelection) {
+        aiConfig = this.selectOptimalModel(userMessage, attachments, aiConfig);
+      }
       
       // Process message for memory extraction
       const memoryProcessing = await memoryService.processMessageForMemory(
@@ -321,6 +327,66 @@ User: ${userMessage}`;
         "Your heart rate readings are within a healthy range, indicating good cardiovascular health."
       ];
     }
+  }
+
+  private selectOptimalModel(userMessage: string, attachments: any[] = [], currentConfig: AIConfig): AIConfig {
+    const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
+    const hasPDFs = attachments.some(att => att.fileType === 'application/pdf');
+    const isComplexQuery = this.isComplexReasoningQuery(userMessage);
+
+    // 1. Simple Text Query - Default: Gemini Flash, Fallback: GPT-4o-mini
+    if (!hasImages && !hasPDFs && !isComplexQuery) {
+      try {
+        return { provider: "google", model: "gemini-2.0-flash-exp" };
+      } catch {
+        return { provider: "openai", model: "gpt-4o-mini" };
+      }
+    }
+
+    // 2. Image Upload - Default: Gemini Pro, Fallback: GPT-4o
+    if (hasImages) {
+      try {
+        return { provider: "google", model: "gemini-1.5-pro" };
+      } catch {
+        return { provider: "openai", model: "gpt-4o" };
+      }
+    }
+
+    // 3. PDF/Document Upload - Default: Gemini Pro, Fallback: GPT-4o
+    if (hasPDFs) {
+      try {
+        return { provider: "google", model: "gemini-1.5-pro" };
+      } catch {
+        return { provider: "openai", model: "gpt-4o" };
+      }
+    }
+
+    // 4. Complex Reasoning/Medical Queries - Default: Gemini Pro, Fallback: GPT-4o
+    if (isComplexQuery) {
+      try {
+        return { provider: "google", model: "gemini-1.5-pro" };
+      } catch {
+        return { provider: "openai", model: "gpt-4o" };
+      }
+    }
+
+    // Default fallback
+    return currentConfig;
+  }
+
+  private isComplexReasoningQuery(userMessage: string): boolean {
+    const complexKeywords = [
+      'medical', 'diagnosis', 'symptoms', 'treatment', 'medication', 'doctor',
+      'analyze', 'complex', 'reasoning', 'explain why', 'how does', 'compare',
+      'strategy', 'plan', 'calculate', 'determine', 'evaluate', 'assess',
+      'blood pressure', 'heart rate', 'cholesterol', 'diabetes', 'weight loss',
+      'muscle gain', 'nutrition plan', 'exercise program', 'diet analysis'
+    ];
+
+    const lowerMessage = userMessage.toLowerCase();
+    return complexKeywords.some(keyword => lowerMessage.includes(keyword)) ||
+           userMessage.length > 200 || // Long queries often need complex reasoning
+           userMessage.includes('?') && userMessage.split('?').length > 2; // Multiple questions
   }
 
   getAvailableModels(): Record<AIProvider, { id: string; name: string; description: string }[]> {

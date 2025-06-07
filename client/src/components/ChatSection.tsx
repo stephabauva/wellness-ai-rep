@@ -45,7 +45,7 @@ const ChatSection: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  
+
   // Get chat history
   const { data: messages, isLoading: loadingMessages } = useQuery({
     queryKey: ['/api/messages'],
@@ -65,7 +65,7 @@ const ChatSection: React.FC = () => {
       return await response.json();
     }
   });
-  
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ content, attachments }: { content: string; attachments: AttachedFile[] }) => {
@@ -80,7 +80,8 @@ const ChatSection: React.FC = () => {
           displayName: file.displayName, // Original filename for display
           fileType: file.fileType,
           fileSize: file.fileSize
-        }))
+        })),
+        automaticModelSelection: settings?.automaticModelSelection ?? true
       });
     },
     onSuccess: () => {
@@ -88,7 +89,7 @@ const ChatSection: React.FC = () => {
       setAttachedFiles([]);
     }
   });
-  
+
   // Download PDF report mutation
   const downloadReportMutation = useMutation({
     mutationFn: async () => {
@@ -110,7 +111,7 @@ const ChatSection: React.FC = () => {
       });
     }
   });
-  
+
   const handleSendMessage = () => {
     if (inputMessage.trim() || attachedFiles.length > 0) {
       sendMessageMutation.mutate({ 
@@ -120,14 +121,14 @@ const ChatSection: React.FC = () => {
       setInputMessage("");
     }
   };
-  
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-  
+
   const handleDownloadPDF = () => {
     downloadReportMutation.mutate();
   };
@@ -288,7 +289,7 @@ const ChatSection: React.FC = () => {
               disabled={sendMessageMutation.isPending}
             />
           </div>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -348,7 +349,7 @@ const ChatSection: React.FC = () => {
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        
+
         {sendMessageMutation.isPending && (
           <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
             <div className="h-1 w-1 rounded-full bg-current animate-pulse" />

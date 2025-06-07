@@ -1,24 +1,42 @@
-1. when using speech-to-text usign OpenAI, while saying "this is a test", it comes back as "thank you"
+Issues
+⸻
 
-2. when using speech-to-text using Goole, the API seems blocked, need to check permissions.
-(see perplexity history: google transcription error)
+🟥 High Priority (Critical to UX/Functionality)
 
-3. [? fixed ?] When using the microphone with Web Speech API, the microphone stops recording after a small pause in the speech, increase the duration.
+	•	❌ Implement “New chat” button functionality (UI exists, backend logic pending)
 
-4. [fixed] When using the microphone with Web Speech API, when clicking back on the rotating ring, it says "speech recognition error: aborted", it should just stop the recording. 
+	•	❌ Speech-to-text with OpenAI: saying “this is a test” returns “thank you” — major transcription issue
+  
+	•	❌ Speech-to-text with Google: API seems blocked — check API permissions (see Perplexity history: google transcription error)
+  
+	•	❌ Chat input disappears when switching tabs — should persist and offer a “clear” button
+  
+	•	❌ Refactor openai-service.ts: split OpenAI and Google algorithms into separate service files
+  
+	•	✅ AI now has full context of current chat
+	•	✅ “New chat” button added
 
-5. [fixed] When using the microphone, instead of a rotating ring, i would prefer to keep the mic symbol, blinking red.
+⸻
 
-6. (Not really an issue) The data in Health Dashboard comes from a storage file, not from the database, although things are in place to use the database
+🟨 Medium Priority (Important for UX/Polish)
 
-7. What you write or add in the chat disappear if you go out in another tab and come back, it should persist, and it should have a button to clear the text input if needed
+	•	❓ Web Speech API mic stops after short pause — increase pause duration (uncertain if fixed)
+  
+	•	❌ Dark mode toggle not working
+  
+	•	❌ French version needed
+  
+	•	✅ Mic error on click-back (“aborted”) now handled gracefully
 
-8. [fixed] i took pictures using both OpenAI and Google and they "cant process images"
+⸻
 
-9. Dark mode toggle not working
+🟩 Low Priority (Polish/Nice-to-Have)
 
-10. No persistence in the request, the ai must have the full context of the current chat
+	•	❌ Health Dashboard pulls from local storage file — should switch to DB when ready
 
-11. add a 'New chat' button
-
-12. need French version
+	•	❌ 
+	
+  
+	•	✅ Mic icon remains instead of rotating ring and blinks red while recording
+	•	✅ Image inputs (“can’t process images”) now handled properly
+	•	✅ No persistence in chat context — now resolved

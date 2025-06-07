@@ -9,4 +9,8 @@
 
 5. [fixed] When using the microphone, instead of a rotating ring, i would prefer to keep the mic symbol, blinking red.
 
-6. (Not really an issue) The data in Health Dashboard comes from a storage file, not from the database, although things are in place to use the database.
+6. (Not really an issue) The data in Health Dashboard comes from a storage file, not from the database, although things are in place to use the database
+
+7. What you write or add in the chat disappear if you go out in another tab and come back, it should persist, and it should have a button to clear the text input if needed
+
+8. i took pictures using both OpenAI and Google and they "cant process images"

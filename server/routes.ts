@@ -110,6 +110,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         legacyContent = content ? `${content} ${attachmentText}` : attachmentText;
       }
 
+      // 1. First, get conversation history BEFORE saving the new message
+      const conversationHistory = await db
+        .select()
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, currentConversationId))
+        .orderBy(conversationMessages.createdAt)
+        .limit(20);
+
+      // 2. Now save the new user message to the database
       // Also save to legacy messages for compatibility
       const legacyUserMessage = await storage.createMessage({
         userId,
@@ -117,45 +126,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUserMessage: true
       });
 
-      // Get conversation history for context
-      const conversationHistory = await db
-        .select()
-        .from(conversationMessages)
-        .where(eq(conversationMessages.conversationId, currentConversationId))
-        .orderBy(desc(conversationMessages.createdAt))
-        .limit(10);
-
-      // Prepare content for AI service
-      // For OpenAI vision, we pass the original user content and let the service handle image data directly
-      // Only add textual info for non-image attachments
-      let textualAttachmentInfo = "";
-      if (attachments && attachments.length > 0) {
-        const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
-
-        if (otherAttachments.length > 0) {
-          textualAttachmentInfo = otherAttachments.map(att => 
-            `The user has attached a file: ${att.displayName || att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
-          ).join("\n");
-        }
-      }
-
-      // For AI service, pass original content with non-image attachment info
-      let messageForAIService = content;
-      if (textualAttachmentInfo) {
-        messageForAIService = content 
-          ? `${content}\n\n${textualAttachmentInfo}` 
-          : textualAttachmentInfo;
-      }
-
       // Get AI response with memory enhancement
       const aiConfig = { provider: aiProvider, model: aiModel };
       const aiResult = await chatService.getChatResponse(
-        messageForAIService,
+        content, // Pass the original, raw message content
         userId,
         currentConversationId,
         legacyUserMessage.id,
         coachingMode,
-        conversationHistory.reverse(),
+        conversationHistory, // Pass the clean history (without the current message)
         aiConfig,
         attachments || [],
         automaticModelSelection || false

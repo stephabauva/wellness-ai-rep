@@ -26,7 +26,7 @@ const attachmentSchema = z.object({
 // Message payload schema
 const messageSchema = z.object({
   content: z.string(),
-  conversationId: z.string().optional(),
+  conversationId: z.string().nullable().optional(),
   coachingMode: z.string().optional().default("weight-loss"),
   aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
   aiModel: z.string().optional().default("gpt-4o"),
@@ -80,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get or create conversation
       let currentConversationId = conversationId;
-      if (!currentConversationId) {
+      if (!currentConversationId || currentConversationId === null) {
         // Create title from content or attachments
         let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
         if (!title && attachments && attachments.length > 0) {

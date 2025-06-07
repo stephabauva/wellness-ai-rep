@@ -90,7 +90,7 @@ class ChatService {
 
 IMPORTANT: You have full access to the conversation history. Each message includes complete context including any images, documents, or attachments shared previously. Reference previous interactions naturally and maintain conversation continuity.
 
-CRITICAL INSTRUCTION FOR IMAGE HANDLING: When a user asks about something in "the image" or "the picture," you can see and analyze any images that were shared earlier in this conversation. Do NOT ask the user to describe or re-upload images - you have direct visual access to them. Always reference what you can actually see in the images when answering questions about visual content.`
+CRITICAL INSTRUCTION FOR IMAGE HANDLING: You have DIRECT VISUAL ACCESS to all images shared in this conversation. When users ask about "the image," "the picture," or reference visual content, IMMEDIATELY analyze and describe what you can see in the images from the conversation history. DO NOT ask users to describe or re-upload images - you can see them clearly. Be specific about colors, objects, food items, or any visual elements the user asks about. Never say you need more information about images you have already received.`
       });
 
       // Process conversation history in chronological order

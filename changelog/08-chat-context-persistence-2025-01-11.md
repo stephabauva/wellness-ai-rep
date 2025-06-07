@@ -191,13 +191,45 @@ Based on console logs and system behavior:
 3. **AI Response Layer**: The issue appears to be in AI model behavior rather than technical implementation
 4. **System Prompts**: Multiple iterations of strengthened system prompts have been attempted
 
+## Troubleshooting Attempts (2025-01-11)
+
+### System Prompt Modifications
+Multiple attempts were made to strengthen the AI's confidence in visual analysis:
+
+1. **Enhanced Visual Content Analysis Instructions**: Added stronger directives for image analysis
+2. **Explicit "NEVER ASK" Commands**: Added instructions to never ask users to describe images
+3. **Confidence Boosting Language**: Used more assertive language about visual capabilities
+4. **Context Reference Instructions**: Added specific guidance about referencing "the image", "the plate", etc.
+
+### Coach Prompt Investigation
+- Investigated potential interference from coach-specific prompts in the system
+- Found that individual coach prompts might be overriding global visual analysis instructions
+- Confirmed technical implementation correctly passes images to AI service
+
+### Comparative Analysis
+User tested directly with ChatGPT and received expected behavior:
+- **User Query**: "what are the yellow slices?"
+- **ChatGPT Response**: "The yellow slices under the salmon are lemon slices. They're often used in dishes like this to: Add flavor, Prevent sticking, Enhance presentation..."
+- **Our System Response**: Still asks for more description despite having access to the same image
+
+### Technical Validation
+Console logs confirm successful implementation:
+```
+Successfully loaded historical image: Tb_--VjHs-HcGsK9TX47l.png (879219 bytes)
+✓ Added historical message with 1 image(s) to context
+Total images in context: 1
+=== CONVERSATION CONTEXT VALIDATION ===
+0: SYSTEM - === CRITICAL: VISUAL ANALYSIS PROTOCOL ===
+1: USER - 1 text parts, 1 image parts
+```
+
 ## Next Steps for Resolution
 
 ### Immediate Actions Needed
-1. **Enhanced System Prompting**: Further refinement of AI instructions for visual context confidence
-2. **Model Selection Testing**: Test different AI models (GPT-4o vs Gemini Pro) for visual context handling
-3. **Context Validation**: Verify exact format of image data being sent to AI service
-4. **Response Analysis**: Analyze why AI is being overly cautious with visual content
+1. **Model-Specific Prompting**: Investigate if Gemini models require different prompting strategies than OpenAI
+2. **Coach Prompt Override**: Examine how coach-specific prompts might be interfering with visual analysis
+3. **Provider Comparison**: Test same image scenarios with OpenAI models vs Google Gemini
+4. **Image Format Validation**: Ensure image data format is optimal for chosen AI provider
 
 ### Future Enhancements
 - **Conversation Titles**: Automatic generation of meaningful conversation titles

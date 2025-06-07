@@ -124,7 +124,7 @@ class ChatService {
       
       for (const attachment of imageAttachments) {
         try {
-          // Read the image file from the uploads directory
+          // Read the image file from the uploads directory  
           const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
           
           if (existsSync(imagePath)) {
@@ -132,13 +132,20 @@ class ChatService {
             const base64Image = imageBuffer.toString('base64');
             
             console.log(`Processing image: ${attachment.fileName}, size: ${attachment.fileSize} bytes`);
+            console.log(`Base64 image length: ${base64Image.length} characters`);
+            
+            const imageUrl = `data:${attachment.fileType};base64,${base64Image}`;
+            console.log(`Image URL format: ${imageUrl.substring(0, 50)}...`);
             
             content.push({
               type: "image_url",
               image_url: {
-                url: `data:${attachment.fileType};base64,${base64Image}`
+                url: imageUrl,
+                detail: "high"
               }
             });
+          } else {
+            console.error(`Image file not found: ${imagePath}`);
           }
         } catch (error) {
           console.error('Error processing image attachment:', error);
@@ -171,11 +178,12 @@ Guidelines for your responses:
 
     if (imageAttachments.length > 0) {
       systemContent += `
-7. CRITICAL: You are currently analyzing image(s) that the user has shared. You MUST describe what you see in the image(s) and provide specific advice based on the visual content.
-8. For food/meal images: Identify the foods, estimate portion sizes, analyze nutritional content, and provide dietary advice.
+7. CRITICAL: You HAVE VISION CAPABILITIES and can see the image(s) the user has shared. You MUST analyze and describe what you see in the image(s).
+8. For food/meal images: Identify specific foods, estimate portion sizes, analyze nutritional content, and provide dietary advice.
 9. For exercise/activity images: Comment on form, technique, equipment, and provide suggestions.
 10. For health data screenshots: Read and interpret the data shown and provide insights.
-11. Always start your response by describing what you can see in the image(s).`;
+11. MANDATORY: Begin your response by describing exactly what you can see in the image(s). Do not say you cannot see images.
+12. You are GPT-4o Mini with full vision capabilities - act accordingly.`;
     } else {
       systemContent += `
 7. If users mention images but you don't see any, ask them to ensure the image was properly uploaded.`;

@@ -104,16 +104,22 @@ IMPORTANT: You have full access to the conversation history. Each message includ
               // For user messages with images, maintain the vision format with actual image data
               try {
                 const processedAttachments = await this.processAttachmentsForHistory(msg.metadata.attachments);
-                const content = [
+                
+                // Create proper multi-part content array
+                const content: any[] = [
                   { type: "text", text: msg.content || "Please analyze this image." }
                 ];
+                
+                // Add all processed attachments (images will be properly formatted)
                 content.push(...processedAttachments);
 
                 conversationContext.push({
                   role: msg.role,
                   content: content
                 });
-                console.log(`Added user message with ${processedAttachments.length} image(s) to context`);
+                
+                const imageCount = processedAttachments.filter(att => att.type === 'image_url').length;
+                console.log(`Added user message with ${imageCount} image(s) to context`);
               } catch (error) {
                 console.error('Error processing historical images:', error);
                 // Fallback to text reference
@@ -156,6 +162,21 @@ IMPORTANT: You have full access to the conversation history. Each message includ
       conversationContext.push(currentMessage);
 
       console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
+      
+      // Debug: Log the actual conversation context being sent to OpenAI
+      console.log('=== CONVERSATION CONTEXT DEBUG ===');
+      conversationContext.forEach((msg, index) => {
+        if (msg.role === 'system') {
+          console.log(`${index}: SYSTEM - ${msg.content.substring(0, 100)}...`);
+        } else if (Array.isArray(msg.content)) {
+          const textParts = msg.content.filter(c => c.type === 'text').length;
+          const imageParts = msg.content.filter(c => c.type === 'image_url').length;
+          console.log(`${index}: ${msg.role.toUpperCase()} - ${textParts} text parts, ${imageParts} image parts`);
+        } else {
+          console.log(`${index}: ${msg.role.toUpperCase()} - ${msg.content.substring(0, 100)}...`);
+        }
+      });
+      console.log('=== END CONVERSATION CONTEXT DEBUG ===');
 
       let response: string;
       if (aiConfig.provider === "openai") {

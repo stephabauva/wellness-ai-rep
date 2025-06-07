@@ -104,6 +104,34 @@ Based on server logs, the implementation works correctly:
 - `server/routes.ts` - Enhanced message processing for attachments
 - Added imports for file icons and UI components
 
+## January 8, 2025 Update: Filename Display Enhancement
+
+### Additional Problem Fixed
+
+**Issue:** Users were seeing generated filenames (like `bt_lo94o41-KuaqLosNVm.jpg`) instead of their original filenames in the chat interface, causing confusion about what files they had uploaded.
+
+**Root Cause:** The system was correctly generating unique filenames for backend storage security but was displaying these generated names to users instead of preserving the original filenames for display purposes.
+
+**Solution Implemented:**
+
+### Backend Changes (routes.ts)
+- Updated `attachmentSchema` to include `displayName` field for original filename display
+- Modified upload response to return both `fileName` (generated) and `displayName` (original)
+- Enhanced message processing to use `displayName` for user-facing content while keeping `fileName` for file operations
+- Updated textual attachment info to show original filenames to users
+
+### Frontend Changes (ChatSection.tsx)
+- Enhanced `AttachedFile` type to include `displayName` field
+- Modified upload success handler to store both generated and display names
+- Updated UI components to show original filenames to users while sending backend filenames to API
+- File badges now display the original filename users expect to see
+
+### User Experience Enhancement
+- **Before:** Users saw confusing generated filenames like `bt_lo94o41-KuaqLosNVm.jpg`
+- **After:** Users see their original filenames like `my-health-report.pdf` while system maintains secure backend storage with unique names
+
+This enhancement maintains the security benefits of unique filename generation while providing users with the familiar, meaningful filenames they expect to see in the interface.
+
 ## Feature Integration
 
 This fix enhances the existing AI memory system and multi-LLM support:

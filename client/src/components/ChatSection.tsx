@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Paperclip, Send, Upload, Camera, X, FileText, Image, Video, File } from "lucide-react";
-import { CoachSelect } from "@/components/ui/coach-select";
+
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -224,7 +224,19 @@ const ChatSection: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <CoachSelect value={coachingMode} onValueChange={setCoachingMode} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Clear current chat by refreshing messages
+                queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+                // Clear input and attachments
+                setInputMessage("");
+                setAttachedFiles([]);
+              }}
+            >
+              + New Chat
+            </Button>
           </div>
         </div>
       </div>

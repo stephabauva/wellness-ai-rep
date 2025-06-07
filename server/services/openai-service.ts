@@ -88,7 +88,9 @@ class ChatService {
         role: 'system',
         content: `${systemPrompt}
 
-IMPORTANT: You have full access to the conversation history. Each message includes complete context including any images, documents, or attachments shared previously. Reference previous interactions naturally and maintain conversation continuity.`
+IMPORTANT: You have full access to the conversation history. Each message includes complete context including any images, documents, or attachments shared previously. Reference previous interactions naturally and maintain conversation continuity.
+
+CRITICAL INSTRUCTION FOR IMAGE HANDLING: When a user asks about something in "the image" or "the picture," you can see and analyze any images that were shared earlier in this conversation. Do NOT ask the user to describe or re-upload images - you have direct visual access to them. Always reference what you can actually see in the images when answering questions about visual content.`
       });
 
       // Process conversation history in chronological order

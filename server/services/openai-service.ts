@@ -108,36 +108,31 @@ class ChatService {
   }
 
   private async getOpenAIResponse(userMessage: string, persona: string, model: OpenAIModel, attachments: any[] = []): Promise<string> {
-    // Check if there are image attachments
     const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
     
-    let userContent: any;
-    let visionModel = model;
+    let finalUserContentForOpenAI: string | any[];
+    let hasSuccessfullyProcessedImages = false;
     
     if (imageAttachments.length > 0) {
-      // For image processing, ensure we use a vision-capable model
-      // Both gpt-4o and gpt-4o-mini support vision
-      console.log(`Using vision model: ${visionModel} for image processing`);
+      console.log(`Processing ${imageAttachments.length} image attachment(s) for model: ${model}`);
       
-      // Handle images with vision capabilities
-      const content = [{ type: "text", text: userMessage }];
+      // The userMessage contains the user's original text
+      const textPart = { type: "text", text: userMessage };
+      const imageParts: any[] = [];
       
       for (const attachment of imageAttachments) {
         try {
-          // Read the image file from the uploads directory  
           const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
           
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
             
-            console.log(`Processing image: ${attachment.fileName}, size: ${attachment.fileSize} bytes`);
-            console.log(`Base64 image length: ${base64Image.length} characters`);
+            console.log(`Successfully read image: ${attachment.fileName}, type: ${attachment.fileType}, size: ${attachment.fileSize} bytes`);
             
             const imageUrl = `data:${attachment.fileType};base64,${base64Image}`;
-            console.log(`Image URL format: ${imageUrl.substring(0, 50)}...`);
             
-            content.push({
+            imageParts.push({
               type: "image_url",
               image_url: {
                 url: imageUrl,
@@ -148,24 +143,24 @@ class ChatService {
             console.error(`Image file not found: ${imagePath}`);
           }
         } catch (error) {
-          console.error('Error processing image attachment:', error);
+          console.error(`Error processing image attachment ${attachment.fileName}:`, error);
         }
       }
       
-      userContent = content;
+      if (imageParts.length > 0) {
+        finalUserContentForOpenAI = [textPart, ...imageParts];
+        hasSuccessfullyProcessedImages = true;
+        console.log(`UserContent for OpenAI includes ${imageParts.length} image(s). Text part: "${userMessage.substring(0,100)}..."`);
+      } else {
+        console.warn("Image attachments were specified, but none could be processed. Sending text-only message.");
+        finalUserContentForOpenAI = `${userMessage}\n\n(System Note: I was expecting an image with your message, but I encountered an issue processing it. Please ensure it was uploaded correctly if you intended to share one.)`;
+      }
     } else {
-      userContent = userMessage;
+      finalUserContentForOpenAI = userMessage;
     }
 
-    console.log(`Making OpenAI request with model: ${visionModel}, has images: ${imageAttachments.length > 0}`);
-    
-    // Debug: Log the structure of userContent when images are present
-    if (imageAttachments.length > 0) {
-      console.log(`Image attachments processed: ${imageAttachments.length}`);
-      console.log(`UserContent structure:`, JSON.stringify(userContent, null, 2));
-    }
+    console.log(`Making OpenAI request to model: ${model}. Has successfully processed images: ${hasSuccessfullyProcessedImages}`);
 
-    // Build system message based on whether images are present
     let systemContent = `${persona}
           
 Guidelines for your responses:
@@ -176,21 +171,21 @@ Guidelines for your responses:
 5. You may reference health data from connected devices if the user mentions them.
 6. Use emoji sparingly to add warmth to your responses.`;
 
-    if (imageAttachments.length > 0) {
+    if (hasSuccessfullyProcessedImages) {
       systemContent += `
 7. CRITICAL: You HAVE VISION CAPABILITIES and can see the image(s) the user has shared. You MUST analyze and describe what you see in the image(s).
 8. For food/meal images: Identify specific foods, estimate portion sizes, analyze nutritional content, and provide dietary advice.
 9. For exercise/activity images: Comment on form, technique, equipment, and provide suggestions.
 10. For health data screenshots: Read and interpret the data shown and provide insights.
 11. MANDATORY: Begin your response by describing exactly what you can see in the image(s). Do not say you cannot see images.
-12. You are GPT-4o Mini with full vision capabilities - act accordingly.`;
+12. You are ${model} with full vision capabilities - act accordingly.`;
     } else {
       systemContent += `
-7. If users mention images but you don't see any, ask them to ensure the image was properly uploaded.`;
+7. If users mention images (e.g., "see this picture") but no image data was processed with their message, inform them that you didn't receive an image and ask them to try uploading again.`;
     }
 
     const response = await this.openai.chat.completions.create({
-      model: visionModel,
+      model: model,
       messages: [
         {
           role: "system",
@@ -198,11 +193,11 @@ Guidelines for your responses:
         },
         {
           role: "user",
-          content: userContent
+          content: finalUserContentForOpenAI
         }
       ],
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 1024
     });
 
     return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";

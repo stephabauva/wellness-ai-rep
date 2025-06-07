@@ -122,29 +122,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(conversationMessages.createdAt))
         .limit(10);
 
-      // Prepare content for AI including attachment information
-      let contentForAI = content;
+      // Prepare content for AI service
+      // For OpenAI vision, we pass the original user content and let the service handle image data directly
+      // Only add textual info for non-image attachments
+      let textualAttachmentInfo = "";
       if (attachments && attachments.length > 0) {
-        const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
         const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
         
-        let attachmentInfo = '';
-        if (imageAttachments.length > 0) {
-          attachmentInfo += `The user has shared ${imageAttachments.length} image(s). Please analyze the image(s) in the context of health, fitness, nutrition, or wellness coaching.\n`;
-        }
         if (otherAttachments.length > 0) {
-          attachmentInfo += otherAttachments.map(att => 
+          textualAttachmentInfo = otherAttachments.map(att => 
             `The user has attached a file: ${att.fileName} (Type: ${att.fileType}, Size: ${(att.fileSize / 1024).toFixed(1)}KB)`
           ).join("\n");
         }
-        
-        contentForAI = content ? `${content}\n\n${attachmentInfo}` : attachmentInfo;
+      }
+      
+      // For AI service, pass original content with non-image attachment info
+      let messageForAIService = content;
+      if (textualAttachmentInfo) {
+        messageForAIService = content 
+          ? `${content}\n\n${textualAttachmentInfo}` 
+          : textualAttachmentInfo;
       }
 
       // Get AI response with memory enhancement
       const aiConfig = { provider: aiProvider, model: aiModel };
       const aiResult = await chatService.getChatResponse(
-        contentForAI,
+        messageForAIService,
         userId,
         currentConversationId,
         legacyUserMessage.id,

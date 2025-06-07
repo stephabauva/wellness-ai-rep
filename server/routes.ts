@@ -81,21 +81,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let currentConversationId = conversationId;
       let conversationHistory: any[] = [];
 
+      console.log(`Received message with conversation ID: ${currentConversationId}`);
+
       // 1. If we have a conversationId, fetch its history FIRST.
       if (currentConversationId) {
         console.log(`Fetching history for conversation: ${currentConversationId}`);
-        const historyFromDb = await db
-          .select()
-          .from(conversationMessages)
-          .where(eq(conversationMessages.conversationId, currentConversationId))
-          .orderBy(conversationMessages.createdAt)
-          .limit(20);
-        conversationHistory = historyFromDb;
-        console.log(`Fetched conversation history: ${conversationHistory.length} messages for conversation ${currentConversationId}`);
         
-        // Debug: Log the conversation history details
-        if (conversationHistory.length > 0) {
-          console.log(`History preview: ${conversationHistory.map(m => `${m.role}: ${m.content?.substring(0, 50)}...`).join(' | ')}`);
+        // Validate that the conversation exists
+        const existingConv = await db
+          .select()
+          .from(conversations)
+          .where(eq(conversations.id, currentConversationId))
+          .limit(1);
+        
+        if (existingConv.length === 0) {
+          console.warn(`Conversation ${currentConversationId} not found! Setting to null to create new one.`);
+          currentConversationId = null;
+        } else {
+          const historyFromDb = await db
+            .select()
+            .from(conversationMessages)
+            .where(eq(conversationMessages.conversationId, currentConversationId))
+            .orderBy(conversationMessages.createdAt)
+            .limit(20);
+          conversationHistory = historyFromDb;
+          console.log(`Fetched conversation history: ${conversationHistory.length} messages for conversation ${currentConversationId}`);
+          
+          // Debug: Log the conversation history details
+          if (conversationHistory.length > 0) {
+            console.log(`History preview: ${conversationHistory.map(m => `${m.role}: ${m.content?.substring(0, 50)}...`).join(' | ')}`);
+          }
         }
       }
 
@@ -112,24 +127,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title
         }).returning();
         currentConversationId = newConversation.id;
-        console.log(`Created new conversation: ${currentConversationId}`);
-      } else {
-        // Validate that the conversation exists
-        const existingConv = await db
-          .select()
-          .from(conversations)
-          .where(eq(conversations.id, currentConversationId))
-          .limit(1);
-        
-        if (existingConv.length === 0) {
-          console.warn(`Conversation ${currentConversationId} not found, creating new one`);
-          const [newConversation] = await db.insert(conversations).values({
-            userId,
-            title: content?.slice(0, 50) || "New Conversation"
-          }).returning();
-          currentConversationId = newConversation.id;
-          conversationHistory = []; // Reset history since we created a new conversation
-        }
+        console.log(`Created new conversation: ${currentConversationId} with title: ${title}`);
+        conversationHistory = []; // Empty history for new conversation
       }
 
       // 3. Save the new user message to the database.

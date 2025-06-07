@@ -89,6 +89,7 @@ const ChatSection: React.FC = () => {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ content, attachments }: { content: string; attachments: AttachedFile[] }) => {
+      console.log(`Sending message with conversation ID: ${currentConversationId}`);
       return apiRequest('POST', '/api/messages', { 
         content, 
         conversationId: currentConversationId,
@@ -107,13 +108,13 @@ const ChatSection: React.FC = () => {
     },
     onSuccess: (data) => {
       console.log('Message sent successfully:', data);
-      // Update current conversation ID if we got one back
+      console.log(`Response conversation ID: ${data.conversationId}`);
+      console.log(`Current conversation ID: ${currentConversationId}`);
+      
+      // Always update conversation ID from response
       if (data.conversationId) {
-        if (!currentConversationId) {
-          console.log(`Setting new conversation ID: ${data.conversationId}`);
-          setCurrentConversationId(data.conversationId);
-        } else if (currentConversationId !== data.conversationId) {
-          console.warn(`Conversation ID mismatch: expected ${currentConversationId}, got ${data.conversationId}`);
+        if (currentConversationId !== data.conversationId) {
+          console.log(`Updating conversation ID from ${currentConversationId} to ${data.conversationId}`);
           setCurrentConversationId(data.conversationId);
         }
         // Invalidate queries for the specific conversation
@@ -122,12 +123,6 @@ const ChatSection: React.FC = () => {
       
       queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      
-      // Always invalidate the current conversation messages
-      if (currentConversationId || data.conversationId) {
-        const convId = data.conversationId || currentConversationId;
-        queryClient.invalidateQueries({ queryKey: ['/api/conversations', convId, 'messages'] });
-      }
       
       setAttachedFiles([]);
     }

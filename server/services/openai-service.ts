@@ -507,9 +507,11 @@ User: ${userMessage}`;
       return { role: 'user', content: message };
     }
 
-    // Process images into text descriptions (ChatGPT approach)
-    let imageDescriptions = '';
-    const nonImageAttachments = [];
+    // Use ChatGPT's approach: include actual image data in message content
+    const content: any[] = [];
+    
+    // Add text content first
+    content.push({ type: "text", text: message });
 
     for (const attachment of attachments) {
       if (attachment.fileType?.startsWith('image/')) {
@@ -519,59 +521,37 @@ User: ${userMessage}`;
             const imageBuffer = readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
 
-            // Get image description from AI (one-time processing)
-            const imageDescription = await this.analyzeImageToText(base64Image, attachment.fileType);
-            imageDescriptions += `\n\n[Image uploaded: ${attachment.displayName || attachment.fileName}]\n${imageDescription}`;
+            console.log(`Adding current image to message: ${attachment.fileName} (${imageBuffer.length} bytes)`);
+
+            // Include actual image data (ChatGPT approach)
+            content.push({
+              type: "image_url",
+              image_url: {
+                url: `data:${attachment.fileType};base64,${base64Image}`,
+                detail: "high"
+              }
+            });
           }
         } catch (error) {
-          console.error('Error processing image for description:', error);
-          imageDescriptions += `\n\n[Image uploaded: ${attachment.displayName || attachment.fileName} - could not process]`;
+          console.error('Error processing current image:', error);
+          content.push({
+            type: "text",
+            text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
+          });
         }
       } else {
-        nonImageAttachments.push(attachment);
+        // For non-image attachments, add descriptive text
+        content.push({
+          type: "text",
+          text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
+        });
       }
     }
 
-    // Handle non-image attachments
-    const attachmentDescriptions = nonImageAttachments
-      .map(att => `[Attached file: ${att.displayName || 'file'} (${att.fileType})]`)
-      .join('\n');
-
-    // Combine all content as text (ChatGPT style)
-    const fullContent = message + imageDescriptions + (attachmentDescriptions ? '\n\n' + attachmentDescriptions : '');
-    return { role: 'user', content: fullContent };
+    return { role: 'user', content: content };
   }
 
-  // New method to convert images to text descriptions
-  async analyzeImageToText(base64Image: string, mimeType: string): Promise<string> {
-    try {
-      const visionMessages = [
-        {
-          role: 'system',
-          content: 'You are an image analysis system. Describe what you see in this image in detail, focusing on objects, food items, colors, and other visual elements. Be specific and comprehensive.'
-        },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Please describe this image in detail.' },
-            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Image}` } }
-          ]
-        }
-      ];
-
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: visionMessages,
-        max_tokens: 500,
-        temperature: 0.1
-      });
-
-      return response.choices[0]?.message?.content || 'Image could not be analyzed';
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      return 'Image analysis failed';
-    }
-  }
+  
 }
 
 export const chatService = new ChatService();

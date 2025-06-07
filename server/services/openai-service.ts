@@ -112,8 +112,13 @@ class ChatService {
     const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
     
     let userContent: any;
+    let visionModel = model;
     
     if (imageAttachments.length > 0) {
+      // For image processing, ensure we use a vision-capable model
+      // Both gpt-4o and gpt-4o-mini support vision
+      console.log(`Using vision model: ${visionModel} for image processing`);
+      
       // Handle images with vision capabilities
       const content = [{ type: "text", text: userMessage }];
       
@@ -125,6 +130,8 @@ class ChatService {
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
+            
+            console.log(`Processing image: ${attachment.fileName}, size: ${attachment.fileSize} bytes`);
             
             content.push({
               type: "image_url",
@@ -143,8 +150,10 @@ class ChatService {
       userContent = userMessage;
     }
 
+    console.log(`Making OpenAI request with model: ${visionModel}, has images: ${imageAttachments.length > 0}`);
+
     const response = await this.openai.chat.completions.create({
-      model: model,
+      model: visionModel,
       messages: [
         {
           role: "system",
@@ -157,7 +166,10 @@ class ChatService {
           4. When suggesting exercises or nutrition advice, provide specific examples.
           5. You may reference health data from connected devices if the user mentions them.
           6. Use emoji sparingly to add warmth to your responses.
-          7. If the user shares images, analyze them in the context of health, fitness, nutrition, or wellness coaching.`
+          7. IMPORTANT: You have vision capabilities and can see and analyze images. When the user shares images, describe what you see and provide relevant health, fitness, nutrition, or wellness coaching advice based on the image content. Always acknowledge that you can see the image(s) they've shared.
+          8. For food/meal images: analyze nutritional content, portion sizes, cooking methods, and provide dietary advice.
+          9. For exercise/activity images: comment on form, suggest modifications, or provide encouragement.
+          10. For health data screenshots: interpret the data and provide insights.`
         },
         {
           role: "user",

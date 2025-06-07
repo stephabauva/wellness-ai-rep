@@ -11,7 +11,6 @@ import {
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 
 const NavButton: React.FC<{
   active: boolean;

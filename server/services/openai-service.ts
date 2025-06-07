@@ -82,22 +82,33 @@ class ChatService {
       // Build conversation context with proper message history
       const conversationContext = [];
 
-      // Add system message with enhanced context
+      // Add system message with enhanced context like ChatGPT
       const systemPrompt = this.getSystemPrompt(coachingMode, relevantMemories);
       conversationContext.push({
         role: 'system',
         content: `${systemPrompt}
 
-IMPORTANT: You have full access to the conversation history. Each message includes complete context including any images, documents, or attachments shared previously. Reference previous interactions naturally and maintain conversation continuity.
+CONTEXT HANDLING INSTRUCTIONS (ChatGPT-style):
+You have access to the complete conversation history including all previous messages, images, and attachments. Maintain conversation continuity naturally without explicitly mentioning that you're referencing previous content.
 
-CRITICAL VISUAL CONTEXT INSTRUCTIONS:
-- You can see ALL images that have been uploaded in this conversation
-- When users ask about visual elements (colors, objects, food items, etc.), DIRECTLY describe what you see
-- NEVER ask users to describe images or provide more details about visual content you already have access to
-- If a user asks "what are the yellow slices?" and you can see an image with yellow lemon slices, say "Those are lemon slices" 
-- If a user asks about something pink and you can see pink donuts in the image, say "That appears to be a pink-frosted donut"
-- Be confident and specific about visual details you can observe
-- The user expects you to remember and reference images from earlier in the conversation`
+VISUAL CONTENT ANALYSIS:
+- You can see and analyze ALL images shared in this conversation
+- When users ask about visual elements, provide direct, confident descriptions
+- Reference visual details from previous images when relevant
+- For questions like "what are the yellow slices?" - directly identify them (e.g., "Those are lemon slices")
+- For questions like "what's pink in the image?" - specify what you see (e.g., "The pink item is a frosted donut")
+- Never ask users to describe images you can already see
+
+CONVERSATION MEMORY:
+- Remember and reference previous topics, preferences, and shared information
+- Maintain context about the user's goals, restrictions, and preferences
+- Build upon previous conversations naturally
+- If a user uploaded an image earlier and asks about it later, reference the specific image
+
+RESPONSE STYLE:
+- Be conversational and natural, like ChatGPT
+- Don't explicitly state "I remember from earlier" - just incorporate the knowledge
+- Provide helpful, contextual responses that show you understand the full conversation`
       });
 
       // Process conversation history in chronological order
@@ -114,27 +125,35 @@ CRITICAL VISUAL CONTEXT INSTRUCTIONS:
               try {
                 const processedAttachments = await this.processAttachmentsForHistory(msg.metadata.attachments);
                 
-                // Create proper multi-part content array
-                const content: any[] = [
-                  { type: "text", text: msg.content || "Please analyze this image." }
-                ];
+                // Enhanced content array with better context like ChatGPT
+                const content: any[] = [];
+                
+                // Add text content first (ChatGPT style)
+                const textContent = msg.content || "I shared an image.";
+                content.push({ type: "text", text: textContent });
                 
                 // Add all processed attachments (images will be properly formatted)
-                content.push(...processedAttachments);
+                const imageAttachments = processedAttachments.filter(att => att.type === 'image_url');
+                content.push(...imageAttachments);
 
                 conversationContext.push({
                   role: msg.role,
                   content: content
                 });
                 
-                const imageCount = processedAttachments.filter(att => att.type === 'image_url').length;
-                console.log(`Added user message with ${imageCount} image(s) to context`);
+                console.log(`✓ Added historical message with ${imageAttachments.length} image(s) to context`);
+                console.log(`  Text: "${textContent.substring(0, 50)}..."`);
               } catch (error) {
-                console.error('Error processing historical images:', error);
-                // Fallback to text reference
+                console.error('✗ Error processing historical images:', error);
+                // Enhanced fallback with better context preservation
+                const imageNames = msg.metadata.attachments
+                  .filter(att => att.fileType?.startsWith('image/'))
+                  .map(att => att.displayName || att.fileName)
+                  .join(', ');
+                
                 conversationContext.push({
                   role: msg.role,
-                  content: `${msg.content}\n\n[Previously shared images: ${msg.metadata.attachments.filter(att => att.fileType?.startsWith('image/')).map(att => att.displayName || att.fileName).join(', ')}]`
+                  content: `${msg.content}\n\n[Note: Previously shared images (${imageNames}) could not be loaded - please re-share if needed]`
                 });
               }
             } else {
@@ -172,20 +191,29 @@ CRITICAL VISUAL CONTEXT INSTRUCTIONS:
 
       console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
       
-      // Debug: Log the actual conversation context being sent to OpenAI
-      console.log('=== CONVERSATION CONTEXT DEBUG ===');
+      // Enhanced debug logging like ChatGPT's internal validation
+      console.log('=== CONVERSATION CONTEXT VALIDATION ===');
+      let totalImages = 0;
       conversationContext.forEach((msg, index) => {
         if (msg.role === 'system') {
           console.log(`${index}: SYSTEM - ${msg.content.substring(0, 100)}...`);
         } else if (Array.isArray(msg.content)) {
           const textParts = msg.content.filter(c => c.type === 'text').length;
           const imageParts = msg.content.filter(c => c.type === 'image_url').length;
+          totalImages += imageParts;
           console.log(`${index}: ${msg.role.toUpperCase()} - ${textParts} text parts, ${imageParts} image parts`);
+          
+          // Log image URLs for validation (first 50 chars of base64)
+          msg.content.filter(c => c.type === 'image_url').forEach((img, imgIndex) => {
+            const urlPreview = img.image_url?.url ? img.image_url.url.substring(0, 50) : 'no-url';
+            console.log(`  Image ${imgIndex + 1}: ${urlPreview}...`);
+          });
         } else {
           console.log(`${index}: ${msg.role.toUpperCase()} - ${msg.content.substring(0, 100)}...`);
         }
       });
-      console.log('=== END CONVERSATION CONTEXT DEBUG ===');
+      console.log(`Total images in context: ${totalImages}`);
+      console.log('=== END CONVERSATION CONTEXT VALIDATION ===');
 
       let response: string;
       if (aiConfig.provider === "openai") {

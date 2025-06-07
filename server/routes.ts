@@ -180,12 +180,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUserMessage: false
       });
 
-      res.status(201).json({ 
+      const response = { 
         userMessage: legacyUserMessage, 
         aiMessage: legacyAiMessage,
         conversationId: currentConversationId,
         memoryInfo: aiResult.memoryInfo
-      });
+      };
+      
+      console.log(`Sending response with conversation ID: ${currentConversationId}`);
+      res.status(201).json(response);
     } catch (error) {
       console.error('Chat error:', error);
       if (error instanceof z.ZodError) {

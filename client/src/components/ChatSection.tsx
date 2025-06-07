@@ -108,17 +108,19 @@ const ChatSection: React.FC = () => {
     },
     onSuccess: (data) => {
       console.log('Message sent successfully:', data);
-      console.log(`Response conversation ID: ${data.conversationId}`);
+      console.log(`Response conversation ID: ${data?.conversationId}`);
       console.log(`Current conversation ID: ${currentConversationId}`);
       
       // Always update conversation ID from response
-      if (data.conversationId) {
+      if (data?.conversationId) {
         if (currentConversationId !== data.conversationId) {
           console.log(`Updating conversation ID from ${currentConversationId} to ${data.conversationId}`);
           setCurrentConversationId(data.conversationId);
         }
         // Invalidate queries for the specific conversation
         queryClient.invalidateQueries({ queryKey: ['/api/conversations', data.conversationId, 'messages'] });
+      } else {
+        console.error('No conversation ID returned from server!', data);
       }
       
       queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });

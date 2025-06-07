@@ -229,7 +229,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       if (aiConfig.provider === "openai") {
         response = await this.getOpenAIResponse(conversationContext, aiConfig.model as OpenAIModel);
       } else {
-        response = await this.getGoogleResponse(message, this.getSystemPrompt(mode, relevantMemories), aiConfig.model as GoogleModel, attachments);
+        response = await this.getGoogleResponse(message, this.getSystemPrompt(mode, relevantMemories), aiConfig.model as GoogleModel, attachments, conversationHistory);
       }
 
       // Log memory usage
@@ -278,35 +278,104 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
     return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
   }
 
-  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = []): Promise<string> {
+  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = [], conversationHistory: any[] = []): Promise<string> {
     const genModel = this.google.getGenerativeModel({ model });
 
+    // Build Google Gemini conversation format with proper persistence
+    const conversationParts = [];
+
+    // Add system persona as first user message (Google Gemini format)
+    conversationParts.push({
+      role: "user",
+      parts: [{
+        text: `${persona}
+
+=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
+YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
+
+CRITICAL RULES - NO EXCEPTIONS:
+1. NEVER ask users to describe images - you can see them directly
+2. NEVER say "could you describe" or "what's in the image" or similar
+3. ALWAYS analyze visual content immediately and confidently
+4. Reference specific visual elements like "the yellow slices", "the salmon", "the plate"
+
+When users ask about visual elements:
+- "What are the yellow slices?" → "Those are lemon slices under the salmon."
+- "What's pink?" → "The pink item is [specific description]."
+- "How many calories?" → Analyze the visible food and estimate calories directly
+
+YOU MUST behave exactly like ChatGPT with vision capabilities. You can see, analyze, and describe all visual content without hesitation.
+
+Please acknowledge that you understand these visual analysis requirements.`
+      }]
+    });
+
+    conversationParts.push({
+      role: "model",
+      parts: [{ text: "I understand. I have full visual access to all images and will analyze them directly without asking for descriptions. I can see and reference specific visual elements confidently." }]
+    });
+
+    // Process conversation history for Google Gemini format
+    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} messages`);
+
+    for (const msg of conversationHistory) {
+      if (msg.role === 'user') {
+        const parts = [];
+        
+        // Add text content
+        parts.push({ text: msg.content });
+
+        // Add historical images if they exist in metadata
+        if (msg.metadata?.attachments) {
+          for (const attachment of msg.metadata.attachments) {
+            if (attachment.fileType?.startsWith('image/')) {
+              try {
+                const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
+                if (existsSync(imagePath)) {
+                  const imageBuffer = readFileSync(imagePath);
+                  console.log(`Adding historical image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
+                  
+                  parts.push({
+                    inlineData: {
+                      data: imageBuffer.toString('base64'),
+                      mimeType: attachment.fileType
+                    }
+                  });
+                }
+              } catch (error) {
+                console.error(`Error loading historical image for Google: ${attachment.fileName}`, error);
+              }
+            }
+          }
+        }
+
+        conversationParts.push({
+          role: "user",
+          parts: parts
+        });
+      } else if (msg.role === 'assistant') {
+        conversationParts.push({
+          role: "model",
+          parts: [{ text: msg.content }]
+        });
+      }
+    }
+
+    // Add current message with attachments
+    const currentParts = [];
+    currentParts.push({ text: userMessage });
+
+    // Add current images
     const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
-
-    const prompt = `${persona}
-
-Guidelines for your responses:
-1. Keep your tone friendly, supportive, and conversational.
-2. Provide specific, actionable advice when appropriate.
-3. Answer should be thorough but concise (no more than 3-4 paragraphs).
-4. When suggesting exercises or nutrition advice, provide specific examples.
-5. You may reference health data from connected devices if the user mentions them.
-6. Use emoji sparingly to add warmth to your responses.
-7. If the user shares images, analyze them in the context of health, fitness, nutrition, or wellness coaching.
-
-User: ${userMessage}`;
-
-    let parts = [prompt];
-
     if (imageAttachments.length > 0) {
       for (const attachment of imageAttachments) {
         try {
           const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
-
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
+            console.log(`Adding current image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
 
-            parts.push({
+            currentParts.push({
               inlineData: {
                 data: imageBuffer.toString('base64'),
                 mimeType: attachment.fileType
@@ -314,12 +383,28 @@ User: ${userMessage}`;
             });
           }
         } catch (error) {
-          console.error('Error processing image attachment for Google:', error);
+          console.error('Error processing current image for Google:', error);
         }
       }
     }
 
-    const result = await genModel.generateContent(parts);
+    conversationParts.push({
+      role: "user",
+      parts: currentParts
+    });
+
+    console.log(`Google Gemini conversation context: ${conversationParts.length} turns`);
+    console.log('Google Gemini image count:', conversationParts.reduce((total, part) => {
+      return total + (part.parts?.filter(p => p.inlineData)?.length || 0);
+    }, 0));
+
+    // Start chat with conversation history (Google Gemini persistence approach)
+    const chat = genModel.startChat({
+      history: conversationParts.slice(0, -1), // All except the last message
+    });
+
+    // Send the current message
+    const result = await chat.sendMessage(currentParts);
     const response = await result.response;
 
     return response.text() || "I'm sorry, I couldn't generate a response right now. Please try again.";

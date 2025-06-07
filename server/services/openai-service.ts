@@ -43,13 +43,13 @@ class ChatService {
   }
 
   async getChatResponse(
-    userMessage: string, 
+    message: string,
     userId: number,
     conversationId: string,
     messageId: number,
     coachingMode: string = "weight-loss",
     conversationHistory: any[] = [],
-    aiConfig: AIConfig = { provider: "openai", model: "gpt-4o" },
+    aiConfig: { provider: string; model: string } = { provider: "openai", model: "gpt-4o" },
     attachments: any[] = [],
     automaticModelSelection: boolean = false
   ): Promise<{ response: string; memoryInfo?: any }> {
@@ -60,13 +60,13 @@ class ChatService {
 
       // Apply automatic model selection if enabled
       if (automaticModelSelection) {
-        aiConfig = this.selectOptimalModel(userMessage, attachments, aiConfig);
+        aiConfig = this.selectOptimalModel(message, attachments, aiConfig);
       }
-      
+
       // Process message for memory extraction
       const memoryProcessing = await memoryService.processMessageForMemory(
         userId, 
-        userMessage, 
+        message, 
         conversationId, 
         messageId,
         conversationHistory
@@ -76,18 +76,54 @@ class ChatService {
       const relevantMemories = await memoryService.getContextualMemories(
         userId,
         conversationHistory,
-        userMessage
+        message
       );
 
-      // Build enhanced persona with memory context
-      const basePersona = this.getCoachingPersona(mode);
-      const enhancedPersona = memoryService.buildSystemPromptWithMemories(relevantMemories);
-      
+      // Build conversation context with proper message history
+      const conversationContext = [];
+
+      // Add system message
+      conversationContext.push({
+        role: 'system',
+        content: this.getSystemPrompt(coachingMode, relevantMemories)
+      });
+
+      // Process conversation history (limit to last 20 messages to stay within token limits)
+      const recentHistory = conversationHistory.slice(-20);
+      for (const msg of recentHistory) {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          // Handle file attachments in message metadata
+          if (msg.metadata?.attachments && msg.metadata.attachments.length > 0) {
+            const attachmentContent = this.processAttachmentsForHistory(msg.metadata.attachments);
+            conversationContext.push({
+              role: msg.role,
+              content: attachmentContent ? `${msg.content}\n\n${attachmentContent}` : msg.content
+            });
+          } else {
+            conversationContext.push({
+              role: msg.role,
+              content: msg.content
+            });
+          }
+        }
+      }
+
+      // Add current message with attachments
+      if (attachments.length > 0) {
+        const currentMessageContent = await this.processCurrentMessageWithAttachments(message, attachments);
+        conversationContext.push(currentMessageContent);
+      } else {
+        conversationContext.push({
+          role: 'user',
+          content: message
+        });
+      }
+
       let response: string;
       if (aiConfig.provider === "openai") {
-        response = await this.getOpenAIResponse(userMessage, enhancedPersona, aiConfig.model as OpenAIModel, attachments);
+        response = await this.getOpenAIResponse(conversationContext, aiConfig.model as OpenAIModel);
       } else {
-        response = await this.getGoogleResponse(userMessage, enhancedPersona, aiConfig.model as GoogleModel, attachments);
+        response = await this.getGoogleResponse(message, this.getSystemPrompt(mode, relevantMemories), aiConfig.model as GoogleModel, attachments);
       }
 
       // Log memory usage
@@ -113,123 +149,34 @@ class ChatService {
     }
   }
 
-  private async getOpenAIResponse(userMessage: string, persona: string, model: OpenAIModel, attachments: any[] = []): Promise<string> {
-    const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
-    
-    if (imageAttachments.length > 0) {
-      console.log(`Processing ${imageAttachments.length} image attachment(s) for model: ${model}`);
-      
-      // Build content array with text and images
-      const content: any[] = [
-        {
-          type: "text",
-          text: userMessage || "What's in this image?"
-        }
-      ];
-      
-      // Process each image attachment
-      for (const attachment of imageAttachments) {
-        try {
-          const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
-          console.log(`Looking for image at: ${imagePath}`);
-          
-          if (existsSync(imagePath)) {
-            const imageBuffer = readFileSync(imagePath);
-            const base64Image = imageBuffer.toString('base64');
-            
-            console.log(`Successfully read image: ${attachment.fileName}, type: ${attachment.fileType}, size: ${attachment.fileSize} bytes`);
-            
-            content.push({
-              type: "image_url",
-              image_url: {
-                url: `data:${attachment.fileType};base64,${base64Image}`
-              }
-            });
-          } else {
-            console.error(`Image file not found: ${imagePath}`);
-            try {
-              const { readdirSync } = await import('fs');
-              console.log('Available files in uploads:', readdirSync(join(process.cwd(), 'uploads')));
-            } catch (fsError) {
-              console.error('Could not list uploads directory:', fsError);
-            }
-          }
-        } catch (error) {
-          console.error(`Error processing image attachment ${attachment.fileName}:`, error);
-        }
-      }
-      
-      // Enhanced system prompt for vision capabilities
-      const systemContent = `${persona}
+  private getSystemPrompt(mode: string, relevantMemories: any[]): string {
+      const basePersona = this.getCoachingPersona(mode);
+      return memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
+  }
 
-Guidelines for your responses:
-1. Keep your tone friendly, supportive, and conversational.
-2. Provide specific, actionable advice when appropriate.
-3. Answer should be thorough but concise (no more than 3-4 paragraphs).
-4. When suggesting exercises or nutrition advice, provide specific examples.
-5. You may reference health data from connected devices if the user mentions them.
-6. Use emoji sparingly to add warmth to your responses.
-7. CRITICAL: You HAVE VISION CAPABILITIES and can see the image(s) the user has shared. You MUST analyze and describe what you see in the image(s).
-8. For food/meal images: Identify specific foods, estimate portion sizes, analyze nutritional content, and provide dietary advice.
-9. For exercise/activity images: Comment on form, technique, equipment, and provide suggestions.
-10. For health data screenshots: Read and interpret the data shown and provide insights.
-11. MANDATORY: Begin your response by describing exactly what you can see in the image(s). Do not say you cannot see images.
-12. You are ${model} with full vision capabilities - act accordingly.`;
+  private async getOpenAIResponse(messages: any[], model: OpenAIModel): Promise<string> {
+    const lastMessage = messages[messages.length - 1];
+    const imageAttachments = Array.isArray(lastMessage.content) && lastMessage.content.some(item => item.type === 'image_url');
 
-      const response = await this.openai.chat.completions.create({
-        model: model,
-        messages: [
-          {
-            role: "system",
-            content: systemContent
-          },
-          {
-            role: "user",
-            content: content
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1024
-      });
-
-      return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
-    } else {
-      // Handle text-only messages
-      const systemContent = `${persona}
-
-Guidelines for your responses:
-1. Keep your tone friendly, supportive, and conversational.
-2. Provide specific, actionable advice when appropriate.
-3. Answer should be thorough but concise (no more than 3-4 paragraphs).
-4. When suggesting exercises or nutrition advice, provide specific examples.
-5. You may reference health data from connected devices if the user mentions them.
-6. Use emoji sparingly to add warmth to your responses.`;
-
-      const response = await this.openai.chat.completions.create({
-        model: model,
-        messages: [
-          {
-            role: "system",
-            content: systemContent
-          },
-          {
-            role: "user",
-            content: userMessage
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1024
-      });
-
-      return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
+    if (imageAttachments) {
+      console.log(`Processing image attachment(s) for model: ${model}`);
     }
+
+    const response = await this.openai.chat.completions.create({
+      model: model,
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 1024
+    });
+
+    return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
   }
 
   private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = []): Promise<string> {
     const genModel = this.google.getGenerativeModel({ model });
-    
+
     const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
-    
+
     const prompt = `${persona}
 
 Guidelines for your responses:
@@ -244,15 +191,15 @@ Guidelines for your responses:
 User: ${userMessage}`;
 
     let parts = [prompt];
-    
+
     if (imageAttachments.length > 0) {
       for (const attachment of imageAttachments) {
         try {
           const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
-          
+
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
-            
+
             parts.push({
               inlineData: {
                 data: imageBuffer.toString('base64'),
@@ -265,10 +212,10 @@ User: ${userMessage}`;
         }
       }
     }
-    
+
     const result = await genModel.generateContent(parts);
     const response = await result.response;
-    
+
     return response.text() || "I'm sorry, I couldn't generate a response right now. Please try again.";
   }
 
@@ -278,7 +225,7 @@ User: ${userMessage}`;
   ): Promise<string[]> {
     try {
       const prompt = `Based on this health data: ${JSON.stringify(healthData)}, provide 3-5 brief, actionable health insights. Focus on trends, achievements, and recommendations.`;
-      
+
       if (aiConfig.provider === "openai") {
         const response = await this.openai.chat.completions.create({
           model: aiConfig.model as OpenAIModel,
@@ -313,7 +260,7 @@ User: ${userMessage}`;
         const result = await genModel.generateContent(prompt + " Respond with 3-5 brief bullet points.");
         const response = await result.response;
         const text = response.text();
-        
+
         return text.split('\n')
           .filter(line => line.trim() && (line.includes('•') || line.includes('-') || line.includes('*')))
           .map(line => line.replace(/^[•\-*]\s*/, '').trim())
@@ -389,17 +336,68 @@ User: ${userMessage}`;
            userMessage.includes('?') && userMessage.split('?').length > 2; // Multiple questions
   }
 
-  getAvailableModels(): Record<AIProvider, { id: string; name: string; description: string }[]> {
+  getAvailableModels() {
     return {
-      openai: [
-        { id: "gpt-4o", name: "GPT-4o", description: "Most capable OpenAI model with advanced reasoning" },
-        { id: "gpt-4o-mini", name: "GPT-4o Mini", description: "Fast and cost-effective OpenAI model" }
-      ],
-      google: [
-        { id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash", description: "Latest experimental Gemini model with fast responses" },
-        { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", description: "Advanced Google model with large context window" }
-      ]
+      openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
+      google: ["gemini-2.0-flash-exp", "gemini-1.5-pro"]
     };
+  }
+
+  private processAttachmentsForHistory(attachments: any[]): string {
+    return attachments.map(att => {
+      if (att.fileType?.startsWith('image/')) {
+        return `[Previously shared image: ${att.displayName || att.fileName}]`;
+      } else {
+        return `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`;
+      }
+    }).join('\n');
+  }
+
+  private async processCurrentMessageWithAttachments(message: string, attachments: any[]) {
+    const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
+    const otherAttachments = attachments.filter(att => !att.fileType?.startsWith('image/'));
+
+    if (imageAttachments.length > 0) {
+      // For images, use vision API format
+      const content = [
+        { type: "text", text: message || "Please analyze this image." }
+      ];
+
+      for (const imageAtt of imageAttachments) {
+        const fs = await import('fs');
+        const path = await import('path');
+        const imagePath = path.join(process.cwd(), 'uploads', imageAtt.fileName);
+
+        try {
+          const imageBuffer = fs.readFileSync(imagePath);
+          const base64Image = imageBuffer.toString('base64');
+          content.push({
+            type: "image_url",
+            image_url: {
+              url: `data:${imageAtt.fileType};base64,${base64Image}`
+            }
+          });
+        } catch (error) {
+          console.error('Error reading image file:', error);
+          content.push({
+            type: "text",
+            text: `[Error loading image: ${imageAtt.displayName || imageAtt.fileName}]`
+          });
+        }
+      }
+
+      return { role: 'user', content };
+    } else {
+      // Text-only message with file references
+      let textContent = message;
+      if (otherAttachments.length > 0) {
+        const attachmentText = otherAttachments.map(att => 
+          `[Attached file: ${att.displayName || att.fileName} (${att.fileType})]`
+        ).join('\n');
+        textContent = message ? `${message}\n\n${attachmentText}` : attachmentText;
+      }
+      return { role: 'user', content: textContent };
+    }
   }
 }
 

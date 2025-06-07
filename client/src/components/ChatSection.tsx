@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Paperclip, Send, Upload, Camera, X, FileText, Image, Video, File } from "lucide-react";
+import { Paperclip, Send, Upload, Camera, X, FileText, Image, Video, File, History } from "lucide-react";
 
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { generatePDF } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
 import { AudioRecorder } from "@/components/AudioRecorder";
+import { ConversationHistory } from "@/components/ConversationHistory";
 import { TranscriptionProvider } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,18 +42,35 @@ const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Get chat history
+  // Get chat history for current conversation
   const { data: messages, isLoading: loadingMessages } = useQuery({
-    queryKey: ['/api/messages'],
+    queryKey: ['/api/conversations', currentConversationId, 'messages'],
     queryFn: async () => {
-      const response = await fetch('/api/messages');
-      if (!response.ok) throw new Error('Failed to fetch messages');
-      return await response.json() as Message[];
+      if (!currentConversationId) {
+        // If no conversation selected, get legacy messages
+        const response = await fetch('/api/messages');
+        if (!response.ok) throw new Error('Failed to fetch messages');
+        return await response.json() as Message[];
+      } else {
+        // Get conversation messages
+        const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
+        if (!response.ok) throw new Error('Failed to fetch conversation messages');
+        const convMessages = await response.json();
+        // Convert to legacy format for compatibility
+        return convMessages.map((msg: any) => ({
+          id: msg.id,
+          content: msg.content,
+          isUserMessage: msg.role === 'user',
+          timestamp: new Date(msg.createdAt)
+        }));
+      }
     }
   });
 
@@ -71,6 +89,7 @@ const ChatSection: React.FC = () => {
     mutationFn: async ({ content, attachments }: { content: string; attachments: AttachedFile[] }) => {
       return apiRequest('POST', '/api/messages', { 
         content, 
+        conversationId: currentConversationId,
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
         aiModel: settings?.aiModel || "gpt-4o",
@@ -84,8 +103,16 @@ const ChatSection: React.FC = () => {
         automaticModelSelection: settings?.automaticModelSelection ?? true
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Update current conversation ID if we got one back
+      if (data.conversationId && !currentConversationId) {
+        setCurrentConversationId(data.conversationId);
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      if (currentConversationId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/conversations', currentConversationId, 'messages'] });
+      }
       setAttachedFiles([]);
     }
   });
@@ -198,6 +225,19 @@ const ChatSection: React.FC = () => {
     setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
+  const handleSelectConversation = (conversationId: string) => {
+    setCurrentConversationId(conversationId);
+    setInputMessage("");
+    setAttachedFiles([]);
+  };
+
+  const handleNewChat = () => {
+    setCurrentConversationId(null);
+    setInputMessage("");
+    setAttachedFiles([]);
+    queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+  };
+
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) return <Image className="h-4 w-4" />;
     if (fileType.startsWith('video/')) return <Video className="h-4 w-4" />;
@@ -227,13 +267,15 @@ const ChatSection: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                // Clear current chat by refreshing messages
-                queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-                // Clear input and attachments
-                setInputMessage("");
-                setAttachedFiles([]);
-              }}
+              onClick={() => setShowHistory(true)}
+            >
+              <History className="h-4 w-4 mr-2" />
+              History
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNewChat}
             >
               + New Chat
             </Button>
@@ -371,6 +413,13 @@ const ChatSection: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ConversationHistory
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        onSelectConversation={handleSelectConversation}
+        currentConversationId={currentConversationId || undefined}
+      />
     </div>
   );
 };

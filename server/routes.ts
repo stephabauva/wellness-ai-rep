@@ -385,18 +385,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get conversations
+  // Get conversations with metadata
   app.get("/api/conversations", async (req, res) => {
     try {
       const userId = 1; // Default user ID
+      
+      // Get conversations with message counts and attachment info
       const userConversations = await db
-        .select()
+        .select({
+          id: conversations.id,
+          userId: conversations.userId,
+          title: conversations.title,
+          createdAt: conversations.createdAt,
+          updatedAt: conversations.updatedAt
+        })
         .from(conversations)
         .where(eq(conversations.userId, userId))
         .orderBy(desc(conversations.updatedAt))
         .limit(20);
 
-      res.json(userConversations);
+      // Enhance with metadata
+      const enhancedConversations = await Promise.all(
+        userConversations.map(async (conv) => {
+          const messages = await db
+            .select()
+            .from(conversationMessages)
+            .where(eq(conversationMessages.conversationId, conv.id));
+
+          const hasAttachments = messages.some(msg => 
+            msg.metadata && 
+            typeof msg.metadata === 'object' && 
+            'attachments' in msg.metadata &&
+            Array.isArray(msg.metadata.attachments) &&
+            msg.metadata.attachments.length > 0
+          );
+
+          return {
+            ...conv,
+            messageCount: messages.length,
+            hasAttachments
+          };
+        })
+      );
+
+      res.json(enhancedConversations);
     } catch (error) {
       console.error('Error fetching conversations:', error);
       res.status(500).json({ message: "Failed to fetch conversations" });

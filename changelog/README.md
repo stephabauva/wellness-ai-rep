@@ -19,6 +19,9 @@ This directory contains detailed changelogs for major feature releases of the AI
 *   **[2025-06-04: ChatGPT-Style AI Memory System](./05-ai-memory-system-2025-06-04.md)**
     *   Addition of a sophisticated AI memory system for personalized and context-aware conversations, including smart memory detection, semantic retrieval, and user management interface. (See also: `../../ai-memory-system-implementation.md`)
 
+*   **[2025-01-08: Paperclip Button File Attachment Fix](./06-paperclip-attachment-fix-2025-01-08.md)**
+    *   Critical fix for chat interface file attachment functionality. Files now properly attach as removable badges instead of text, enabling AI to receive file context for health documents and images.
+
 ## Feature Interconnections & Evolution
 
 The AI Wellness Coach has evolved through several key stages, with features often building upon or interacting with each other:

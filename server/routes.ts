@@ -90,6 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .orderBy(conversationMessages.createdAt)
           .limit(20);
         conversationHistory = historyFromDb;
+        console.log(`Fetched conversation history: ${conversationHistory.length} messages for conversation ${currentConversationId}`);
       }
 
       // 2. If no conversationId, create a new one now.

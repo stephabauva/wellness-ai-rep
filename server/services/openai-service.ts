@@ -82,13 +82,18 @@ class ChatService {
       // Build conversation context with proper message history
       const conversationContext = [];
 
-      // Add system message
+      // Add system message with enhanced context
+      const systemPrompt = this.getSystemPrompt(coachingMode, relevantMemories);
       conversationContext.push({
         role: 'system',
-        content: this.getSystemPrompt(coachingMode, relevantMemories)
+        content: `${systemPrompt}
+
+IMPORTANT: You have full access to the conversation history. Each message includes complete context including any images, documents, or attachments shared previously. Reference previous interactions naturally and maintain conversation continuity.`
       });
 
-      // Process conversation history in chronological order (already limited to 20 in routes.ts)
+      // Process conversation history in chronological order
+      console.log(`Processing conversation history: ${conversationHistory.length} messages`);
+      
       for (const msg of conversationHistory) {
         if (msg.role === 'user' || msg.role === 'assistant') {
           // Handle file attachments in message metadata
@@ -96,17 +101,27 @@ class ChatService {
             const hasImages = msg.metadata.attachments.some(att => att.fileType?.startsWith('image/'));
 
             if (hasImages && msg.role === 'user') {
-              // For user messages with images, maintain the vision format
-              const processedAttachments = await this.processAttachmentsForHistory(msg.metadata.attachments);
-              const content = [
-                { type: "text", text: msg.content || "Please analyze this image." }
-              ];
-              content.push(...processedAttachments);
+              // For user messages with images, maintain the vision format with actual image data
+              try {
+                const processedAttachments = await this.processAttachmentsForHistory(msg.metadata.attachments);
+                const content = [
+                  { type: "text", text: msg.content || "Please analyze this image." }
+                ];
+                content.push(...processedAttachments);
 
-              conversationContext.push({
-                role: msg.role,
-                content: content
-              });
+                conversationContext.push({
+                  role: msg.role,
+                  content: content
+                });
+                console.log(`Added user message with ${processedAttachments.length} image(s) to context`);
+              } catch (error) {
+                console.error('Error processing historical images:', error);
+                // Fallback to text reference
+                conversationContext.push({
+                  role: msg.role,
+                  content: `${msg.content}\n\n[Previously shared images: ${msg.metadata.attachments.filter(att => att.fileType?.startsWith('image/')).map(att => att.displayName || att.fileName).join(', ')}]`
+                });
+              }
             } else {
               // For assistant messages or non-image attachments, use text format
               const attachmentRefs = msg.metadata.attachments
@@ -127,6 +142,7 @@ class ChatService {
               });
             }
           } else {
+            // Regular message without attachments
             conversationContext.push({
               role: msg.role,
               content: msg.content
@@ -138,6 +154,8 @@ class ChatService {
       // Add current message with attachments
       const currentMessage = await this.processCurrentMessageWithAttachments(message, attachments);
       conversationContext.push(currentMessage);
+      
+      console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
 
       let response: string;
       if (aiConfig.provider === "openai") {

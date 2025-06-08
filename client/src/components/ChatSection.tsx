@@ -94,10 +94,10 @@ const ChatSection: React.FC = () => {
         content: msg.content,
         isUserMessage: msg.role === "user",
         timestamp: new Date(msg.createdAt),
-        attachments: msg.metadata?.attachments?.map((att: any) => ({
-          name: att.fileName,
-          type: att.fileType
-        })) || undefined
+        attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
+          name: att.fileName || att.name,
+          type: att.fileType || att.type
+        })) : undefined
       }));
     },
     refetchOnWindowFocus: false,
@@ -178,7 +178,10 @@ const ChatSection: React.FC = () => {
             content: data.userMessage.content,
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
-            attachments: data.userMessage.attachments || undefined
+            attachments: data.userMessage.metadata?.attachments ? data.userMessage.metadata.attachments.map((att: any) => ({
+              name: att.fileName || att.name,
+              type: att.fileType || att.type
+            })) : undefined
           },
           {
             id: data.aiMessage.id,

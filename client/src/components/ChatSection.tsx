@@ -325,7 +325,7 @@ const ChatSection: React.FC = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
 
   let welcomeMessages = [welcomeMessage];
   let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;

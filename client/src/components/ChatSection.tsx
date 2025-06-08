@@ -123,11 +123,10 @@ const ChatSection: React.FC = () => {
       attachments: AttachedFile[];
       conversationId: string | null;
     }) => {
-      const conversationIdToSend = conversationId;
-      console.log("Sending message with conversation ID:", conversationIdToSend);
+      console.log("Sending message with conversation ID:", conversationId);
       const response = await apiRequest("POST", "/api/messages", {
         content,
-        conversationId: conversationIdToSend,
+        conversationId: conversationId,
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
         aiModel: settings?.aiModel || "gpt-4o",
@@ -164,7 +163,10 @@ const ChatSection: React.FC = () => {
       setPendingUserMessage(null);
 
       // Update conversation ID immediately and synchronously
-      if (!currentConversationId || currentConversationId !== finalConversationId) {
+      if (!currentConversationId) {
+        console.log("Setting conversation ID to:", finalConversationId);
+        setCurrentConversationId(finalConversationId);
+      } else if (currentConversationId !== finalConversationId) {
         console.log("Updating conversation ID from", currentConversationId, "to", finalConversationId);
         setCurrentConversationId(finalConversationId);
       }

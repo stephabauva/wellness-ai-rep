@@ -126,20 +126,31 @@ REQUIRED RESPONSES:
 ${memoryEnhancedPrompt}
 
 IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`;
-      } else if (currentHasPDFs) {
+      } else if (currentHasPDFs && !currentHasImages) {
         systemPrompt = `=== DOCUMENT ASSISTANCE MODE ===
-The user has shared PDF documents. You cannot directly read PDF content, but you can:
-1. Acknowledge the document attachment
-2. Ask specific questions about what information they need help with
-3. Provide guidance on how to extract or use information from the document
-4. Offer to help analyze text they copy/paste from the document
+IMPORTANT: The user has shared a PDF document ONLY. There are NO IMAGES in this conversation.
 
-BE CLEAR: You cannot see the PDF content directly and need the user to describe or share text from it.
+You cannot directly read PDF content, but you can:
+1. Acknowledge the PDF document attachment
+2. Ask specific questions about what information they need help with from the PDF
+3. Provide guidance on how to extract or use information from the document
+4. Offer to help analyze text they copy/paste from the PDF
+
+CRITICAL: Do NOT mention images or visual content. The user has shared a PDF document, not an image.
+
+CORRECT RESPONSES:
+✅ "I can see you've shared a PDF document. What specific information would you like help with from this document?"
+✅ "I notice you've attached a PDF file. What would you like me to help you with regarding this document?"
+✅ "I can see the PDF attachment. Could you tell me what specific information you're looking for from this document?"
+
+FORBIDDEN RESPONSES:
+❌ "It appears you haven't provided an image yet"
+❌ Any mention of images, photos, or visual content
 
 === COACHING PERSONA ===
 ${memoryEnhancedPrompt}
 
-Focus on helping the user get the most value from their document by guiding them on what information to share.`;
+Focus on helping the user get the most value from their PDF document by guiding them on what information to share or extract.`;
       }
 
       conversationContext.push({
@@ -645,10 +656,13 @@ Please acknowledge that you understand these visual analysis requirements.`
     // Add text content first - modify message based on actual attachments
     let messageText = message;
     if (!hasImages && hasPDFs) {
-      // If only PDFs, make it clear no images are present
+      // If only PDFs, clean up the message and make context clear
       messageText = message.replace(/\[.*?attachment.*?\]/gi, '').trim();
       if (!messageText) {
-        messageText = "I have attached a PDF document. Please help me understand what information you need from this document.";
+        messageText = "I have attached a PDF document. What specific information would you like me to help you with from this document?";
+      } else {
+        // Add clarification that this is about a PDF, not an image
+        messageText = `${messageText} (Note: I have attached a PDF document, not an image)`;
       }
     }
     

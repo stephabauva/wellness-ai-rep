@@ -126,7 +126,8 @@ const ChatSection: React.FC = () => {
       };
 
       queryClient.setQueryData(queryKey, (old: Message[] | undefined) => {
-        return [...(old || []), optimisticUserMessage];
+        const existingMessages = old || [];
+        return [...existingMessages, optimisticUserMessage];
       });
 
       // Return a context object with the snapshotted value
@@ -149,14 +150,36 @@ const ChatSection: React.FC = () => {
           console.log(`Updating conversation ID from ${currentConversationId} to ${data.conversationId}`);
           setCurrentConversationId(data.conversationId);
         }
-        // Invalidate queries for the specific conversation
-        queryClient.invalidateQueries({ queryKey: ['/api/conversations', data.conversationId, 'messages'] });
+        
+        // Set the query data directly instead of invalidating to prevent message loss
+        const newQueryKey = ['/api/conversations', data.conversationId, 'messages'];
+        queryClient.setQueryData(newQueryKey, (old: Message[] | undefined) => {
+          // Replace optimistic message with real messages from server
+          const existingMessages = (old || []).filter(msg => !msg.id.startsWith('temp-'));
+          const newMessages = [
+            ...existingMessages,
+            {
+              id: data.userMessage.id,
+              content: data.userMessage.content,
+              isUserMessage: true,
+              timestamp: new Date(data.userMessage.timestamp)
+            },
+            {
+              id: data.aiMessage.id,
+              content: data.aiMessage.content,
+              isUserMessage: false,
+              timestamp: new Date(data.aiMessage.timestamp)
+            }
+          ];
+          return newMessages;
+        });
       } else {
         console.error('No conversation ID returned from server!', data);
+        // Fallback to invalidation if no conversation ID
+        queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       }
       
       queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       
       setAttachedFiles([]);
     }

@@ -107,26 +107,18 @@ const ChatSection: React.FC = () => {
       });
     },
     onMutate: async ({ content, attachments }) => {
-      // For the first message, we'll use the legacy messages endpoint for optimistic update
-      // but we know the server will create a conversation, so we handle both
-      const legacyQueryKey = ['/api/messages'];
-      const conversationQueryKey = currentConversationId 
+      // Get the current query key that the component is actually using
+      const activeQueryKey = currentConversationId 
         ? ['/api/conversations', currentConversationId, 'messages']
-        : null;
+        : ['/api/messages'];
 
-      // Cancel queries for both potential locations
-      await queryClient.cancelQueries({ queryKey: legacyQueryKey });
-      if (conversationQueryKey) {
-        await queryClient.cancelQueries({ queryKey: conversationQueryKey });
-      }
+      // Cancel the active query
+      await queryClient.cancelQueries({ queryKey: activeQueryKey });
 
-      // Snapshot the previous values
-      const previousLegacyMessages = queryClient.getQueryData(legacyQueryKey);
-      const previousConversationMessages = conversationQueryKey 
-        ? queryClient.getQueryData(conversationQueryKey)
-        : null;
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(activeQueryKey);
 
-      // Optimistically update to the new value
+      // Create optimistic user message
       const optimisticUserMessage: Message = {
         id: `temp-${Date.now()}`, // Temporary ID
         content,
@@ -134,39 +126,23 @@ const ChatSection: React.FC = () => {
         timestamp: new Date()
       };
 
-      // Update the appropriate query based on current state
-      if (currentConversationId) {
-        // We have a conversation, update conversation messages
-        queryClient.setQueryData(conversationQueryKey!, (old: Message[] | undefined) => {
-          const existingMessages = old || [];
-          return [...existingMessages, optimisticUserMessage];
-        });
-      } else {
-        // First message, update legacy messages (this will be where we see the optimistic update)
-        queryClient.setQueryData(legacyQueryKey, (old: Message[] | undefined) => {
-          const existingMessages = old || [];
-          return [...existingMessages, optimisticUserMessage];
-        });
-      }
+      // Update the currently active query
+      queryClient.setQueryData(activeQueryKey, (old: Message[] | undefined) => {
+        const existingMessages = old || [];
+        return [...existingMessages, optimisticUserMessage];
+      });
 
       // Return context for rollback
       return { 
-        previousLegacyMessages, 
-        previousConversationMessages,
-        conversationQueryKey,
-        legacyQueryKey,
+        previousMessages,
+        activeQueryKey,
         isFirstMessage: !currentConversationId
       };
     },
     onError: (err, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      if (context) {
-        if (context.previousLegacyMessages !== undefined) {
-          queryClient.setQueryData(context.legacyQueryKey, context.previousLegacyMessages);
-        }
-        if (context.conversationQueryKey && context.previousConversationMessages !== undefined) {
-          queryClient.setQueryData(context.conversationQueryKey, context.previousConversationMessages);
-        }
+      if (context?.previousMessages !== undefined) {
+        queryClient.setQueryData(context.activeQueryKey, context.previousMessages);
       }
     },
     onSuccess: (data) => {

@@ -580,9 +580,26 @@ Please acknowledge that you understand these visual analysis requirements.`
            userMessage.includes('?') && userMessage.split('?').length > 2; // Multiple questions
   }
 
-  // Simple fallback for PDF files without text extraction
+  // Extract text from PDF using node-poppler
   private async extractPDFText(filePath: string): Promise<string> {
-    return '[PDF file attached - please describe the document contents or key information you need help with]';
+    try {
+      const poppler = await import('node-poppler');
+      const popplerInstance = new poppler.default();
+      
+      console.log(`Attempting to extract text from PDF: ${filePath}`);
+      const text = await popplerInstance.pdfToText(filePath);
+      
+      if (text && text.trim().length > 0) {
+        console.log(`Successfully extracted ${text.length} characters from PDF using node-poppler`);
+        return text.trim();
+      } else {
+        console.warn('PDF text extraction returned empty result');
+        return '[PDF appears to be empty or contains only images - please describe the document contents]';
+      }
+    } catch (error) {
+      console.error('node-poppler PDF extraction failed:', error);
+      return '[PDF content could not be extracted - please describe the document contents]';
+    }
   }
 
   getAvailableModels() {

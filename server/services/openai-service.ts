@@ -320,9 +320,8 @@ Please acknowledge that you understand these visual analysis requirements.`
     });
 
     // Filter conversation history to current session only for Google Gemini
-    const currentSessionHistory = conversationHistory.filter(msg => 
-      msg.conversationId === conversationId
-    );
+    // Note: conversationHistory should already be filtered to current session by the caller
+    const currentSessionHistory = conversationHistory;
 
     console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
 

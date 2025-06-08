@@ -130,10 +130,9 @@ const ChatSection: React.FC = () => {
       });
     },
     onMutate: async ({ content, conversationId }) => {
-      const queryKey = ["messages", conversationId || "new"];
-      await queryClient.cancelQueries({ queryKey });
-      const previousMessages = queryClient.getQueryData<Message[]>(queryKey);
-
+      // Add optimistic user message to current view
+      const currentQueryKey = ["messages", conversationId || "new"];
+      
       const optimisticUserMessage: Message = {
         id: `temp-${Date.now()}`,
         content,
@@ -141,86 +140,54 @@ const ChatSection: React.FC = () => {
         timestamp: new Date(),
       };
 
-      queryClient.setQueryData<Message[]>(queryKey, (old = []) => [
+      queryClient.setQueryData<Message[]>(currentQueryKey, (old = []) => [
         ...old,
         optimisticUserMessage,
       ]);
 
-      return { previousMessages, queryKey, conversationId };
+      return { currentQueryKey, conversationId };
     },
-    onError: (err, variables, context) => {
-      if (context?.previousMessages && context?.queryKey) {
-        queryClient.setQueryData(context.queryKey, context.previousMessages);
+    onSuccess: (data, variables, context) => {
+      // Always handle as a simple replacement
+      const finalConversationId = data.conversationId;
+      const finalQueryKey = ["messages", finalConversationId];
+      
+      // Build complete message list from server response
+      const messages: Message[] = [
+        welcomeMessage,
+        {
+          id: data.userMessage.id,
+          content: data.userMessage.content,
+          isUserMessage: true,
+          timestamp: new Date(data.userMessage.timestamp),
+        },
+        {
+          id: data.aiMessage.id,
+          content: data.aiMessage.content,
+          isUserMessage: false,
+          timestamp: new Date(data.aiMessage.timestamp),
+        },
+      ];
+
+      // Set the final state
+      queryClient.setQueryData(finalQueryKey, messages);
+      
+      // Clean up any old cache
+      if (!context?.conversationId) {
+        queryClient.removeQueries({ queryKey: ["messages", "new"] });
       }
+
+      // Update to final conversation ID
+      setCurrentConversationId(finalConversationId);
+      setAttachedFiles([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to send message.",
         variant: "destructive",
       });
-    },
-    onSuccess: (data, variables, context) => {
-      const isFirstMessage = !context?.conversationId;
-
-      if (isFirstMessage && data?.conversationId) {
-        // First message: transition from "new" to actual conversation
-        const newConversationId = data.conversationId;
-        const newQueryKey = ["messages", newConversationId];
-        const oldQueryKey = ["messages", "new"];
-        
-        // Get the current optimistic messages from the "new" cache
-        const optimisticMessages = queryClient.getQueryData<Message[]>(oldQueryKey) || [];
-        
-        // Build the complete message list preserving the optimistic user message
-        const messages: Message[] = [
-          welcomeMessage,
-          {
-            id: data.userMessage.id,
-            content: data.userMessage.content,
-            isUserMessage: true,
-            timestamp: new Date(data.userMessage.timestamp),
-          },
-          {
-            id: data.aiMessage.id,
-            content: data.aiMessage.content,
-            isUserMessage: false,
-            timestamp: new Date(data.aiMessage.timestamp),
-          },
-        ];
-
-        // Set the new conversation's cache
-        queryClient.setQueryData(newQueryKey, messages);
-        
-        // Remove the old "new" cache
-        queryClient.removeQueries({ queryKey: oldQueryKey });
-
-        // Update component state to switch to the new conversation
-        setCurrentConversationId(newConversationId);
-      } else {
-        // Subsequent messages: update existing conversation
-        const queryKey = context?.queryKey || ["messages", variables.conversationId];
-        
-        queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
-          const withoutTemp = old.filter((msg) => !msg.id.startsWith("temp-"));
-          return [
-            ...withoutTemp,
-            {
-              id: data.userMessage.id,
-              content: data.userMessage.content,
-              isUserMessage: true,
-              timestamp: new Date(data.userMessage.timestamp),
-            },
-            {
-              id: data.aiMessage.id,
-              content: data.aiMessage.content,
-              isUserMessage: false,
-              timestamp: new Date(data.aiMessage.timestamp),
-            },
-          ];
-        });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      setAttachedFiles([]);
     },
   });
 

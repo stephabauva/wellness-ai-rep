@@ -58,7 +58,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, times
                     <img
                       src={`/uploads/${attachment.name}`}
                       alt={attachment.name}
-                      className="max-w-sm h-auto rounded border"
+                      className="w-32 h-32 object-cover rounded border"
                       onError={(e) => {
                         // If image fails to load, hide it
                         e.currentTarget.style.display = 'none';

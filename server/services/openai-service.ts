@@ -4,7 +4,6 @@ import { CoachingMode, coachingModes } from "@shared/schema";
 import { memoryService } from "./memory-service";
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import poppler from 'node-poppler';
 
 type AIProvider = "openai" | "google";
 type OpenAIModel = "gpt-4o" | "gpt-4o-mini";
@@ -581,23 +580,9 @@ Please acknowledge that you understand these visual analysis requirements.`
            userMessage.includes('?') && userMessage.split('?').length > 2; // Multiple questions
   }
 
-  // Extract text from PDF using node-poppler
+  // Simple fallback for PDF files without text extraction
   private async extractPDFText(filePath: string): Promise<string> {
-    try {
-      const popplerInstance = new poppler();
-      const text = await popplerInstance.pdfToText(filePath);
-      
-      if (text && text.trim().length > 0) {
-        console.log(`Successfully extracted ${text.length} characters from PDF using node-poppler`);
-        return text.trim();
-      } else {
-        console.warn('PDF text extraction returned empty result');
-        return '[PDF appears to be empty or contains only images - please describe the document contents]';
-      }
-    } catch (error) {
-      console.error('node-poppler PDF extraction failed:', error);
-      return '[PDF content could not be extracted - please describe the document contents]';
-    }
+    return '[PDF file attached - please describe the document contents or key information you need help with]';
   }
 
   getAvailableModels() {

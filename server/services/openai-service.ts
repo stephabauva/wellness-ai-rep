@@ -63,19 +63,15 @@ class ChatService {
         aiConfig = this.selectOptimalModel(message, attachments, aiConfig);
       }
 
-      // Determine if this is a current session attachment-focused query
-      const isCurrentAttachmentQuery = attachments.length > 0 && conversationHistory.length === 0;
-      const isFileAnalysisQuery = message.toLowerCase().includes('what') || 
-                                  message.toLowerCase().includes('this') || 
-                                  message.toLowerCase().includes('about') ||
-                                  message.toLowerCase().includes('contain');
-
-      // Skip memory retrieval for fresh conversations with attachments
+      // Determine if this is a fresh conversation with new attachments
+      const isNewConversationWithAttachments = attachments.length > 0 && conversationHistory.length === 0;
+      
+      // Skip memory retrieval completely for fresh conversations with attachments
       let memoryProcessing = { triggers: [] };
       let relevantMemories = [];
 
-      if (!isCurrentAttachmentQuery || !isFileAnalysisQuery) {
-        // Process message for memory extraction only for ongoing conversations
+      if (!isNewConversationWithAttachments) {
+        // Only process memory for ongoing conversations (not fresh attachment uploads)
         memoryProcessing = await memoryService.processMessageForMemory(
           userId, 
           message, 
@@ -84,7 +80,7 @@ class ChatService {
           conversationHistory
         );
 
-        // Retrieve relevant memories for context only when appropriate
+        // Only retrieve memories for ongoing conversations
         relevantMemories = await memoryService.getContextualMemories(
           userId,
           conversationHistory,
@@ -92,7 +88,7 @@ class ChatService {
         );
       }
 
-      console.log(`Memory retrieval: ${isCurrentAttachmentQuery && isFileAnalysisQuery ? 'SKIPPED (current file query)' : 'ACTIVE'} - ${relevantMemories.length} memories used`);
+      console.log(`Memory retrieval: ${isNewConversationWithAttachments ? 'SKIPPED (fresh attachment upload)' : 'ACTIVE'} - ${relevantMemories.length} memories used`);
 
       // Build conversation context with proper message history
       const conversationContext = [];
@@ -101,7 +97,7 @@ class ChatService {
       const basePersona = this.getCoachingPersona(coachingMode);
       let systemPrompt;
 
-      if (isCurrentAttachmentQuery && isFileAnalysisQuery) {
+      if (isNewConversationWithAttachments) {
         // For fresh attachment queries, focus ONLY on current content
         const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
         const hasPDFs = attachments.some(att => att.fileType === 'application/pdf');

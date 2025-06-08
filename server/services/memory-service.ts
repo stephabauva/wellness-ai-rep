@@ -212,6 +212,12 @@ Respond with JSON:
     currentMessage: string
   ): Promise<RelevantMemory[]> {
     try {
+      // Skip memory retrieval for fresh conversations (no history)
+      if (conversationHistory.length === 0) {
+        console.log('Skipping memory retrieval: fresh conversation detected');
+        return [];
+      }
+
       // Combine recent conversation + current message for context
       const context = [
         ...conversationHistory.slice(-3),

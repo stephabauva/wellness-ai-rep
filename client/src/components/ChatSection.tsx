@@ -94,6 +94,10 @@ const ChatSection: React.FC = () => {
         content: msg.content,
         isUserMessage: msg.role === "user",
         timestamp: new Date(msg.createdAt),
+        attachments: msg.metadata?.attachments?.map((att: any) => ({
+          name: att.fileName,
+          type: att.fileType
+        })) || undefined
       }));
     },
     refetchOnWindowFocus: false,
@@ -158,12 +162,14 @@ const ChatSection: React.FC = () => {
 
       setPendingUserMessage(null);
 
-      if (!currentConversationId) {
-        console.log("Updating conversation ID from null to", finalConversationId);
-        setCurrentConversationId(finalConversationId);
-      }
+      // Always update conversation ID to ensure continuity
+      setCurrentConversationId(finalConversationId);
+      console.log("Setting conversation ID to:", finalConversationId);
 
-      queryClient.setQueryData<Message[]>(["messages", finalConversationId], (old = []) => {
+      // Use the final conversation ID for cache updates
+      const targetQueryKey = ["messages", finalConversationId];
+      
+      queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
         const existingMessages = old || [];
         return [
           ...existingMessages,
@@ -172,10 +178,7 @@ const ChatSection: React.FC = () => {
             content: data.userMessage.content,
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
-            attachments: attachedFiles.length > 0 ? attachedFiles.map(f => ({ 
-              name: f.fileName, 
-              type: f.fileType 
-            })) : undefined
+            attachments: data.userMessage.attachments || undefined
           },
           {
             id: data.aiMessage.id,

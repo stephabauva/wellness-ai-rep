@@ -172,7 +172,7 @@ const ChatSection: React.FC = () => {
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
             attachments: attachments.length > 0 ? attachments.map(f => ({ 
-              name: f.fileName, 
+              name: f.displayName || f.fileName, 
               type: f.fileType 
             })) : undefined
           },
@@ -186,6 +186,7 @@ const ChatSection: React.FC = () => {
       });
 
       setAttachedFiles([]);
+      setInputMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
     onError: (error) => {

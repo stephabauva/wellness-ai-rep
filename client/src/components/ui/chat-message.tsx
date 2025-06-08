@@ -56,7 +56,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, times
                       <span className="text-xs font-medium">{attachment.name}</span>
                     </div>
                     <img
-                      src={`/uploads/${attachment.name.split(' ')[0]}`}
+                      src={`/uploads/${attachment.name}`}
                       alt={attachment.name}
                       className="max-w-sm h-auto rounded border"
                       onError={(e) => {

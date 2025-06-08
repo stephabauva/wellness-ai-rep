@@ -144,7 +144,7 @@ const ChatSection: React.FC = () => {
         content,
         timestamp: new Date(),
         attachments: attachments.length > 0 ? attachments.map(f => ({ 
-          name: f.displayName || f.fileName, 
+          name: f.fileName, 
           type: f.fileType 
         })) : undefined
       });
@@ -171,8 +171,8 @@ const ChatSection: React.FC = () => {
             content: data.userMessage.content,
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
-            attachments: attachments.length > 0 ? attachments.map(f => ({ 
-              name: f.displayName || f.fileName, 
+            attachments: attachedFiles.length > 0 ? attachedFiles.map(f => ({ 
+              name: f.fileName, 
               type: f.fileType 
             })) : undefined
           },

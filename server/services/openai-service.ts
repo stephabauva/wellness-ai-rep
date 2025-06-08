@@ -588,10 +588,10 @@ Please acknowledge that you understand these visual analysis requirements.`
           });
         }
       } else {
-        // For non-image attachments, add descriptive text
+        // Simplified non-image attachment handling
         content.push({
           type: "text",
-          text: `[Attachment: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
+          text: `[File: ${attachment.displayName || attachment.fileName}]`
         });
       }
     }
@@ -634,17 +634,13 @@ Please acknowledge that you understand these visual analysis requirements.`
             text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
           });
         }
-      } else if (attachment.fileType === 'application/pdf') {
-        content.push({
-          type: "text",
-          text: `[PDF Document attached: ${attachment.displayName || attachment.fileName}. The content of this document is not yet readable by the AI.]`
-        });
       } else {
-        content.push({
-          type: "text",
-          text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
-        });
-      }
+          // Simplified handling for all non-image files (PDFs, documents, etc.)
+          content.push({
+            type: "text",
+            text: `[File: ${attachment.displayName || attachment.fileName}]`
+          });
+        }
     }
 
     return { role: 'user', content: content };

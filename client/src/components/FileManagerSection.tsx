@@ -14,7 +14,8 @@ import {
   QrCode,
   X,
   Grid3X3,
-  List
+  List,
+  Eye
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,10 +77,13 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+type ViewMode = 'list' | 'list-icons' | 'grid';
+
 const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode = false, onFileSelect }) => {
   const [files, setFiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('list-icons');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -185,6 +189,157 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
     }, 1000);
   };
 
+  const renderFileView = () => {
+    if (!selectionMode) {
+      // Default grid view for non-selection mode
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {files.map(file => (
+            <div key={file.name} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getFileIcon(file.type)}
+                  <div>
+                    <p className="font-medium">{file.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatFileSize(file.size)} • {format(new Date(file.lastModified), 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownload(file.name)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleShare([file])}
+                  >
+                    <Share className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(file.name)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Selection mode with different view modes
+    switch (viewMode) {
+      case 'list':
+        return (
+          <div className="space-y-2">
+            {files.map(file => (
+              <div 
+                key={file.name} 
+                className={`border rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-accent ${
+                  selectedFiles.has(file.name) ? 'bg-accent border-primary' : ''
+                }`}
+                onClick={() => handleFileSelection(file.name)}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={selectedFiles.has(file.name)}
+                  onChange={() => handleFileSelection(file.name)}
+                  className="rounded"
+                />
+                <div className="flex-1">
+                  <p className="font-medium">{file.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatFileSize(file.size)} • {format(new Date(file.lastModified), 'MMM d, yyyy')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'list-icons':
+        return (
+          <div className="space-y-2">
+            {files.map(file => (
+              <div 
+                key={file.name} 
+                className={`border rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-accent ${
+                  selectedFiles.has(file.name) ? 'bg-accent border-primary' : ''
+                }`}
+                onClick={() => handleFileSelection(file.name)}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={selectedFiles.has(file.name)}
+                  onChange={() => handleFileSelection(file.name)}
+                  className="rounded"
+                />
+                {getFileIcon(file.type)}
+                <div className="flex-1">
+                  <p className="font-medium">{file.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatFileSize(file.size)} • {format(new Date(file.lastModified), 'MMM d, yyyy')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'grid':
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {files.map(file => (
+              <div 
+                key={file.name} 
+                className={`border rounded-lg p-4 cursor-pointer hover:bg-accent ${
+                  selectedFiles.has(file.name) ? 'bg-accent border-primary' : ''
+                }`}
+                onClick={() => handleFileSelection(file.name)}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedFiles.has(file.name)}
+                    onChange={() => handleFileSelection(file.name)}
+                    className="rounded"
+                  />
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="flex justify-center">
+                    <div className="p-3 rounded-lg bg-muted">
+                      {getFileIcon(file.type)}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatFileSize(file.size)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(file.lastModified), 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -201,97 +356,65 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
       <div className="p-4 md:p-6 border-b">
         <div className="space-y-4">
           
-<div className="flex items-center gap-4 mb-4">
+<div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold">
               {selectionMode ? "Select Files" : "File Manager"}
             </h2>
-            {selectionMode ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {selectedFiles.size} selected
-                </span>
-                <Button 
-                  onClick={handleConfirmSelection}
-                  size="sm"
-                  disabled={selectedFiles.size === 0}
-                >
-                  Select Files ({selectedFiles.size})
+            <div className="flex items-center gap-4">
+              {selectionMode && (
+                <div className="flex items-center gap-2 border rounded-lg p-1">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="px-2"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list-icons' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list-icons')}
+                    className="px-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="px-2"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              {selectionMode ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    {selectedFiles.size} selected
+                  </span>
+                  <Button 
+                    onClick={handleConfirmSelection}
+                    size="sm"
+                    disabled={selectedFiles.size === 0}
+                  >
+                    Select Files ({selectedFiles.size})
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={handleUpload} size="sm">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Files
                 </Button>
-              </div>
-            ) : (
-              <Button onClick={handleUpload} size="sm">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Files
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="flex-1 p-4 md:p-6 overflow-auto">
-        
-          
-
-          
-            
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {files.map(file => (
-            <div 
-              key={file.name} 
-              className={`border rounded-lg p-4 ${
-                selectionMode ? 'cursor-pointer hover:bg-accent' : ''
-              } ${
-                selectedFiles.has(file.name) ? 'bg-accent border-primary' : ''
-              }`}
-              onClick={() => selectionMode && handleFileSelection(file.name)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {selectionMode && (
-                    <input 
-                      type="checkbox" 
-                      checked={selectedFiles.has(file.name)}
-                      onChange={() => handleFileSelection(file.name)}
-                      className="rounded"
-                    />
-                  )}
-                  {getFileIcon(file.type)}
-                  <div>
-                    <p className="font-medium">{file.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatFileSize(file.size)} • {format(new Date(file.lastModified), 'MMM d, yyyy')}
-                    </p>
-                  </div>
-                </div>
-                {!selectionMode && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(file.name)}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleShare([file])}
-                    >
-                      <Share className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(file.name)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        {renderFileView()}
       </div>
     </div>
   );

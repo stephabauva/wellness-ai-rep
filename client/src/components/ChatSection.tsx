@@ -151,36 +151,62 @@ const ChatSection: React.FC = () => {
       const finalConversationId = data.conversationId;
       const finalQueryKey = ["messages", finalConversationId];
       
-      // Update the cache with new messages, preserving existing ones
-      queryClient.setQueryData<Message[]>(finalQueryKey, (old = []) => {
-        // Filter out any temporary optimistic messages
-        const existingMessages = old.filter(msg => !msg.id.startsWith("temp-"));
+      if (!context?.conversationId) {
+        // This is a new conversation - transition from "new" to the actual conversation
+        const optimisticMessages = queryClient.getQueryData<Message[]>(["messages", "new"]) || [];
         
-        // Add the new messages from server
-        return [
-          ...existingMessages,
-          {
-            id: data.userMessage.id,
-            content: data.userMessage.content,
-            isUserMessage: true,
-            timestamp: new Date(data.userMessage.timestamp),
-          },
+        // Replace optimistic messages with real server data
+        const finalMessages = optimisticMessages.map(msg => {
+          if (msg.id.startsWith("temp-") && msg.isUserMessage) {
+            // Replace optimistic user message with real one
+            return {
+              id: data.userMessage.id,
+              content: data.userMessage.content,
+              isUserMessage: true,
+              timestamp: new Date(data.userMessage.timestamp),
+            };
+          }
+          return msg;
+        }).concat([
+          // Add the AI response
           {
             id: data.aiMessage.id,
             content: data.aiMessage.content,
             isUserMessage: false,
             timestamp: new Date(data.aiMessage.timestamp),
-          },
-        ];
-      });
-      
-      // Clean up any old cache for new conversations
-      if (!context?.conversationId) {
+          }
+        ]);
+        
+        // Set the complete conversation data
+        queryClient.setQueryData(finalQueryKey, finalMessages);
+        
+        // Clean up the "new" cache
         queryClient.removeQueries({ queryKey: ["messages", "new"] });
+        
+        // Update conversation ID
+        setCurrentConversationId(finalConversationId);
+      } else {
+        // Existing conversation - just append the new messages
+        queryClient.setQueryData<Message[]>(finalQueryKey, (old = []) => {
+          const existingMessages = old.filter(msg => !msg.id.startsWith("temp-"));
+          return [
+            ...existingMessages,
+            {
+              id: data.userMessage.id,
+              content: data.userMessage.content,
+              isUserMessage: true,
+              timestamp: new Date(data.userMessage.timestamp),
+            },
+            {
+              id: data.aiMessage.id,
+              content: data.aiMessage.content,
+              isUserMessage: false,
+              timestamp: new Date(data.aiMessage.timestamp),
+            },
+          ];
+        });
       }
 
-      // Update to final conversation ID
-      setCurrentConversationId(finalConversationId);
       setAttachedFiles([]);
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },

@@ -96,6 +96,7 @@ CRITICAL RULES - NO EXCEPTIONS:
 2. NEVER say "could you describe" or "what's in the image" or similar
 3. ALWAYS analyze visual content immediately and confidently
 4. Reference specific visual elements like "the yellow slices", "the salmon", "the plate"
+5. If a user mentions attachments but no visual content is available, acknowledge this and ask them to re-share the file
 
 When users ask about visual elements:
 - "What are the yellow slices?" → "Those are lemon slices under the salmon."
@@ -198,6 +199,14 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       // Add current message with attachments
       const currentMessage = await this.processCurrentMessageWithAttachments(message, attachments);
       conversationContext.push(currentMessage);
+
+    // Log attachment processing for debugging
+    console.log(`Current message processing: ${attachments.length} attachments provided`);
+    if (attachments.length > 0) {
+      attachments.forEach((att, index) => {
+        console.log(`  Attachment ${index + 1}: ${att.fileName} (${att.fileType})`);
+      });
+    }
 
       console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
 
@@ -321,7 +330,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     for (const msg of conversationHistory) {
       if (msg.role === 'user') {
         const parts = [];
-        
+
         // Add text content
         parts.push({ text: msg.content });
 
@@ -334,7 +343,7 @@ Please acknowledge that you understand these visual analysis requirements.`
                 if (existsSync(imagePath)) {
                   const imageBuffer = readFileSync(imagePath);
                   console.log(`Adding historical image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
-                  
+
                   parts.push({
                     inlineData: {
                       data: imageBuffer.toString('base64'),
@@ -583,10 +592,10 @@ Please acknowledge that you understand these visual analysis requirements.`
           });
         }
       } else {
-        // For non-image attachments, add descriptive text
+        // For non-image attachments like PDFs, add more detailed context
         content.push({
           type: "text",
-          text: `[Attachment: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
+          text: `[PDF/Document attached: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - Note: I can see this file attachment but cannot directly analyze PDF content. Please describe what specific information you'd like me to help you with regarding this document.]`
         });
       }
     }
@@ -601,7 +610,7 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
-    
+
     // Add text content first
     content.push({ type: "text", text: message });
 
@@ -632,10 +641,10 @@ Please acknowledge that you understand these visual analysis requirements.`
           });
         }
       } else {
-        // For non-image attachments, add descriptive text
+        // For non-image attachments like PDFs, add more detailed context
         content.push({
           type: "text",
-          text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
+          text: `[PDF/Document attached: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - Note: I can see this file attachment but cannot directly analyze PDF content. Please describe what specific information you'd like me to help you with regarding this document.]`
         });
       }
     }
@@ -643,7 +652,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     return { role: 'user', content: content };
   }
 
-  
+
 }
 
 export const chatService = new ChatService();

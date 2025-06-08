@@ -165,10 +165,13 @@ const ChatSection: React.FC = () => {
         // First message: transition from "new" to actual conversation
         const newConversationId = data.conversationId;
         const newQueryKey = ["messages", newConversationId];
+        const oldQueryKey = ["messages", "new"];
         
-        // Build the complete message list with actual server data
+        // Get the current optimistic messages from the "new" cache
+        const optimisticMessages = queryClient.getQueryData<Message[]>(oldQueryKey) || [];
+        
+        // Build the complete message list preserving the optimistic user message
         const messages: Message[] = [
-          // Keep the welcome message for first conversations
           welcomeMessage,
           {
             id: data.userMessage.id,
@@ -188,7 +191,7 @@ const ChatSection: React.FC = () => {
         queryClient.setQueryData(newQueryKey, messages);
         
         // Remove the old "new" cache
-        queryClient.removeQueries({ queryKey: ["messages", "new"] });
+        queryClient.removeQueries({ queryKey: oldQueryKey });
 
         // Update component state to switch to the new conversation
         setCurrentConversationId(newConversationId);

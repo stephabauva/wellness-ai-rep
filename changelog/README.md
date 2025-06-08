@@ -28,6 +28,9 @@ This directory contains detailed changelogs for major feature releases of the AI
 *   **[2025-01-11: Chat Context Persistence & Conversation History](./08-chat-context-persistence-2025-01-11.md)**
     *   Complete implementation of ChatGPT-style conversation persistence with full visual context maintenance. Both OpenAI and Google Gemini models now maintain context across conversation turns, enabling follow-up questions about images and seamless multi-turn conversations with mixed content (text, images, files).
 
+*   **[2025-01-12: First Message Visibility Issue Resolution](./09-first-message-visibility-issue-2025-01-12.md)**
+    *   Critical bug fix for first message visibility in new conversations. Implemented a simplified pending message strategy using local React state instead of complex React Query cache transitions. Messages now appear immediately upon sending, providing seamless ChatGPT-like user experience with enhanced auto-scroll functionality.
+
 ## Feature Interconnections & Evolution
 
 The AI Wellness Coach has evolved through several key stages, with features often building upon or interacting with each other:

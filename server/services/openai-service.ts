@@ -638,6 +638,12 @@ Please acknowledge that you understand these visual analysis requirements.`
             text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
           });
         }
+      } else if (attachment.fileType === 'application/pdf') {
+        // Simple reference for PDF documents
+        content.push({
+          type: "text",
+          text: `[PDF Document: ${attachment.displayName || attachment.fileName} - Please describe the document content in your message for analysis]`
+        });
       } else {
         // For non-image attachments, add descriptive text
         content.push({

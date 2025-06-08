@@ -106,6 +106,38 @@ const ChatSection: React.FC = () => {
         automaticModelSelection: settings?.automaticModelSelection ?? true
       });
     },
+    onMutate: async ({ content, attachments }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      const queryKey = currentConversationId 
+        ? ['/api/conversations', currentConversationId, 'messages']
+        : ['/api/messages'];
+      
+      await queryClient.cancelQueries({ queryKey });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(queryKey);
+
+      // Optimistically update to the new value
+      const optimisticUserMessage: Message = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        content,
+        isUserMessage: true,
+        timestamp: new Date()
+      };
+
+      queryClient.setQueryData(queryKey, (old: Message[] | undefined) => {
+        return [...(old || []), optimisticUserMessage];
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousMessages, queryKey };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousMessages) {
+        queryClient.setQueryData(context.queryKey, context.previousMessages);
+      }
+    },
     onSuccess: (data) => {
       console.log('Message sent successfully:', data);
       console.log(`Response conversation ID: ${data?.conversationId}`);

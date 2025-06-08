@@ -327,8 +327,8 @@ Please acknowledge that you understand these visual analysis requirements.`
       if (msg.role === 'user') {
         const parts = [];
 
-        // Add text content
-        parts.push({ text: msg.content });
+        // Add text content - **CRITICAL FIX**: Add null safety
+        parts.push({ text: msg.content || '' });
 
         // Add historical images if they exist in metadata
         if (msg.metadata?.attachments) {
@@ -361,7 +361,7 @@ Please acknowledge that you understand these visual analysis requirements.`
       } else if (msg.role === 'assistant') {
         conversationParts.push({
           role: "model",
-          parts: [{ text: msg.content }]
+          parts: [{ text: msg.content || '' }]
         });
       }
     }

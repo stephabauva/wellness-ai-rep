@@ -125,7 +125,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       const currentSessionHistory = conversationHistory.filter(msg => 
         msg.conversationId === conversationId
       );
-      
+
       console.log(`Processing conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
 
       for (const msg of currentSessionHistory) {
@@ -323,13 +323,13 @@ Please acknowledge that you understand these visual analysis requirements.`
     const currentSessionHistory = conversationHistory.filter(msg => 
       msg.conversationId === conversationId
     );
-    
+
     console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
 
-    for (const msg of currentSessionHistory) {</old_str>
+    for (const msg of currentSessionHistory) {
       if (msg.role === 'user') {
         const parts = [];
-        
+
         // Add text content
         parts.push({ text: msg.content });
 
@@ -342,7 +342,7 @@ Please acknowledge that you understand these visual analysis requirements.`
                 if (existsSync(imagePath)) {
                   const imageBuffer = readFileSync(imagePath);
                   console.log(`Adding historical image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
-                  
+
                   parts.push({
                     inlineData: {
                       data: imageBuffer.toString('base64'),
@@ -609,7 +609,7 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
-    
+
     // Add text content first
     content.push({ type: "text", text: message });
 
@@ -651,7 +651,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     return { role: 'user', content: content };
   }
 
-  
+
 }
 
 export const chatService = new ChatService();

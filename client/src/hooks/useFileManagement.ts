@@ -77,6 +77,15 @@ export const useFileManagement = () => {
     }
   };
 
+  const updateAttachedFiles = (filesToAdd: AttachedFile[]) => {
+    setAttachedFiles((prev) => {
+      const newFiles = filesToAdd.filter(newFile => 
+        !prev.some(existingFile => existingFile.id === newFile.id)
+      );
+      return [...prev, ...newFiles];
+    });
+  };
+
   return {
     attachedFiles,
     setAttachedFiles,

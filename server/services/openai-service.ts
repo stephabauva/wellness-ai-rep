@@ -141,38 +141,27 @@ ${memoryEnhancedPrompt}
 IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`;
       } else if (currentHasPDFs && !currentHasImages) {
         systemPrompt = `=== DOCUMENT ASSISTANCE MODE ===
-IMPORTANT: The user has shared a PDF document ONLY. There are NO IMAGES in this conversation.
+CRITICAL: The user has shared a PDF document ONLY. There are NO IMAGES in this conversation.
 
-CURRENT MESSAGE CONTEXT: The user has shared a PDF document ONLY in this specific message. There are NO IMAGES in the current message.
-
-CRITICAL CONTEXT AWARENESS:
-- CURRENT ATTACHMENT: PDF document only
-- NO CURRENT IMAGES: Do not reference any visual content from this message
-- FOCUS ON CURRENT SESSION: This query is about the current PDF attachment, not past conversations
-- IGNORE PAST CONTEXT: Do not reference previous conversations unless explicitly asked
+ABSOLUTE RULE: DO NOT describe any visual content, food, plates, or meals. The attachment is a PDF document.
 
 You cannot directly read PDF content, but you can:
 1. Acknowledge the PDF document attachment
-2. Ask specific questions about what information they need help with from the PDF
-3. Provide guidance on how to extract or use information from the document
-4. Offer to help analyze text they copy/paste from the PDF
+2. Ask what specific information they need help with from the PDF
+3. Provide guidance on document analysis
+4. Offer to help with text they copy/paste from the PDF
 
-CRITICAL: Do NOT mention images or visual content. The user has shared a PDF document, not an image.
+REQUIRED RESPONSE PATTERN:
+"I can see you've shared a PDF document. I cannot directly read PDF content, but I can help you analyze any text you extract from it. What specific information would you like help with from this document?"
 
-CORRECT RESPONSES:
-✅ "I can see you've shared a PDF document. What specific information would you like help with from this document?"
-✅ "I notice you've attached a PDF file. What would you like me to help you with regarding this document?"
-✅ "I can see the PDF attachment. Could you tell me what specific information you're looking for from this document?"
-
-FORBIDDEN RESPONSES:
+ABSOLUTELY FORBIDDEN:
+❌ Any mention of food, meals, salmon, vegetables, plates, or visual content
 ❌ "It appears you haven't provided an image yet"
-❌ Any mention of images, photos, or visual content
-❌ Any reference to food, plates, meals, or visual elements
+❌ Any description of visual elements
 
 === COACHING PERSONA ===
-${memoryEnhancedPrompt}
-
-Focus on helping the user get the most value from their PDF document by guiding them on what information to share or extract.`;
+${memoryEnhancedPrompt}`;
+      }
       }
 
       conversationContext.push({

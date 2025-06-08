@@ -70,13 +70,9 @@ const ChatSection: React.FC = () => {
     setAttachedFiles,
     handleFileUpload,
     removeAttachedFile,
-    updateAttachedFiles,
+    clearAttachedFiles,
+    handleFileChange,
   } = useFileManagement();
-
-  // Ensure setAttachedFiles is available for file import
-  const updateAttachedFiles = (updater: (prev: FileManagerFile[]) => FileManagerFile[]) => {
-    setAttachedFiles(updater);
-  };
 
   const {
     messages,
@@ -180,7 +176,7 @@ const ChatSection: React.FC = () => {
         fileType: file.fileType,
         fileSize: file.fileSize,
       };
-      updateAttachedFiles((prev) => {
+      setAttachedFiles((prev) => {
           if (prev.find((f) => f.id === file.id)) return prev;
           return [...prev, attachedFile];
         });

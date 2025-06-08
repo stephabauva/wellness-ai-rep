@@ -39,6 +39,7 @@ type Message = {
   content: string;
   isUserMessage: boolean;
   timestamp: Date;
+  attachments?: { name: string; type: string }[];
 };
 
 type AttachedFile = {
@@ -338,6 +339,7 @@ const ChatSection: React.FC = () => {
           content: pendingUserMessage.content,
           isUserMessage: true,
           timestamp: pendingUserMessage.timestamp,
+          attachments: pendingUserMessage.attachments,
         }
       ];
     } else {
@@ -348,6 +350,7 @@ const ChatSection: React.FC = () => {
           content: pendingUserMessage.content,
           isUserMessage: true,
           timestamp: pendingUserMessage.timestamp,
+          attachments: pendingUserMessage.attachments,
         }
       ];
     }
@@ -399,6 +402,7 @@ const ChatSection: React.FC = () => {
               message={message.content}
               isUser={message.isUserMessage}
               timestamp={message.timestamp}
+              attachments={message.attachments}
             />
           ))
         )}
@@ -409,24 +413,48 @@ const ChatSection: React.FC = () => {
         {attachedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachedFiles.map((file) => (
-              <Badge
+              <div
                 key={file.id}
-                variant="secondary"
-                className="flex items-center gap-2 pr-1"
+                className="relative bg-secondary rounded-lg p-2 max-w-48"
               >
-                {getFileIcon(file.fileType)}
-                <span className="text-xs truncate max-w-32">
-                  {file.displayName || file.fileName}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                  onClick={() => removeAttachedFile(file.id)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
+                {file.fileType.startsWith("image/") ? (
+                  <div className="space-y-2">
+                    <img
+                      src={`/uploads/${file.fileName}`}
+                      alt={file.displayName || file.fileName}
+                      className="w-full h-20 object-cover rounded"
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs truncate flex-1">
+                        {file.displayName || file.fileName}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground ml-1"
+                        onClick={() => removeAttachedFile(file.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {getFileIcon(file.fileType)}
+                    <span className="text-xs truncate max-w-32">
+                      {file.displayName || file.fileName}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => removeAttachedFile(file.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}

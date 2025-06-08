@@ -3,13 +3,32 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Zap } from "lucide-react";
 
+interface Attachment {
+  name: string;
+  type: string;
+}
+
 interface ChatMessageProps {
   message: string;
   isUser: boolean;
   timestamp: Date;
+  attachments?: Attachment[];
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, timestamp }) => {
+const getFileIcon = (fileType: string) => {
+  if (fileType.startsWith("image/")) return <Zap className="h-4 w-4" />;
+  if (fileType.startsWith("video/")) return <Zap className="h-4 w-4" />;
+  if (
+    fileType.includes("pdf") ||
+    fileType.includes("document") ||
+    fileType.includes("text")
+  ) {
+    return <Zap className="h-4 w-4" />;
+  }
+  return <Zap className="h-4 w-4" />;
+};
+
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, timestamp, attachments }) => {
   return (
     <div className={cn(
       "flex items-start",
@@ -26,13 +45,34 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, times
         "message-bubble p-4 shadow-sm",
         isUser ? "user-message" : "ai-message"
       )}>
+        {attachments && attachments.length > 0 && (
+          <div className="mb-3 space-y-2">
+            {attachments.map((attachment, index) => (
+              <div key={index} className="rounded border p-2 bg-background/10">
+                {attachment.type.startsWith("image/") ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      {getFileIcon(attachment.type)}
+                      <span className="text-xs font-medium">{attachment.name}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {getFileIcon(attachment.type)}
+                    <span className="text-xs">{attachment.name}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         <div 
           className="prose prose-sm dark:prose-invert max-w-none" 
           dangerouslySetInnerHTML={{ 
             __html: (message || '').replace(/\n/g, '<br>') 
           }} 
         />
-        
+
         {/* Buttons for AI suggestions */}
         {!isUser && message && message.includes("stretching routine") && (
           <div className="mt-4 flex space-x-2">
@@ -44,7 +84,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, times
             </button>
           </div>
         )}
-        
+
         <div className="text-xs text-muted-foreground mt-2">
           {format(timestamp, 'h:mm a')}
         </div>

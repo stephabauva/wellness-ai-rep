@@ -64,6 +64,16 @@ const settingsUpdateSchema = z.object({
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
+  // Serve uploaded files
+  app.use('/uploads', (req, res, next) => {
+    const filePath = join(process.cwd(), 'uploads', req.path);
+    if (existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).send('File not found');
+    }
+  });
+
   // Get chat messages
   app.get("/api/messages", async (req, res) => {
     try {

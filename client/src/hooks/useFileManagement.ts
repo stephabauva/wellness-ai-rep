@@ -10,6 +10,11 @@ export type AttachedFile = {
   fileType: string;
   fileSize: number;
   url?: string;
+  retentionInfo?: {
+    category: 'high' | 'medium' | 'low';
+    retentionDays: number;
+    reason: string;
+  };
 };
 
 export const useFileManagement = () => {
@@ -35,11 +40,17 @@ export const useFileManagement = () => {
         fileType: file.type,
         fileSize: file.size,
         url: data.file.url,
+        retentionInfo: data.file.retentionInfo,
       };
       setAttachedFiles((prev) => [...prev, attachedFile]);
+      
+      const retentionMessage = data.file.retentionInfo?.retentionDays === -1 
+        ? "This file will be kept permanently as it appears to be medical data."
+        : `This file will be kept for ${data.file.retentionInfo?.retentionDays} days.`;
+      
       toast({
         title: "File uploaded",
-        description: `${file.name} has been uploaded successfully.`,
+        description: `${file.name} has been uploaded successfully. ${retentionMessage}`,
       });
     },
     onError: (error) => {

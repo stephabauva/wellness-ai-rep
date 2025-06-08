@@ -15,6 +15,7 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import path from 'path';
 import fs from 'fs';
+import { attachmentRetentionService } from "./services/attachment-retention-service";
 
 // Attachment schema for client
 const attachmentSchema = z.object({
@@ -539,20 +540,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { writeFileSync } = await import('fs');
       writeFileSync(filePath, req.file.buffer);
 
-      const fileInfo = {
-        id: fileId,
-        fileName: fileName, // This is the generated filename that's actually saved
-        originalName: req.file.originalname,
-        displayName: req.file.originalname, // This is what users see
-        fileType: req.file.mimetype,
-        fileSize: req.file.size,
-        uploadedAt: new Date().toISOString()
-      };
+      const originalFileName = req.file.originalname;
+      const uniqueFileName = fileName;
+
+      // Get retention information for the uploaded file
+      const retentionInfo = attachmentRetentionService.getRetentionInfo(
+        originalFileName,
+        req.file.mimetype
+      );
 
       res.json({
         success: true,
-        file: fileInfo,
-        message: `File "${req.file.originalname}" uploaded successfully`
+        file: {
+          id: fileId,
+          fileName: uniqueFileName,
+          displayName: originalFileName,
+          originalName: originalFileName,
+          fileType: req.file.mimetype,
+          fileSize: req.file.size,
+          url: `/uploads/${uniqueFileName}`,
+          retentionInfo
+        }
       });
     } catch (error: any) {
       console.error('File upload error:', error);

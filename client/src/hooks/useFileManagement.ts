@@ -80,6 +80,7 @@ export const useFileManagement = () => {
 
   return {
     attachedFiles,
+    setAttachedFiles,
     uploadFileMutation,
     removeAttachedFile,
     clearAttachedFiles,

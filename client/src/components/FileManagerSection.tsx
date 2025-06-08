@@ -444,20 +444,21 @@ interface FileListProps {
   onSelectAll: () => void;
 }
 
+const getRetentionBadgeColor = (category: string) => {
+  switch (category) {
+    case 'high': return 'bg-green-100 text-green-800';
+    case 'medium': return 'bg-yellow-100 text-yellow-800';
+    case 'low': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
+
 const FileList: React.FC<FileListProps> = ({ 
   files, 
   selectedFiles, 
   onSelectFile, 
   onSelectAll 
 }) => {
-  const getRetentionBadgeColor = (category: string) => {
-    switch (category) {
-      case 'high': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
   if (files.length === 0) {
     return (
       <Card>

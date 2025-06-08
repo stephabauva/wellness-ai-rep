@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -42,11 +43,11 @@ export const useFileManagement = () => {
         retentionInfo: data.file.retentionInfo,
       };
       setAttachedFiles((prev) => [...prev, attachedFile]);
-
+      
       const retentionMessage = data.file.retentionInfo?.retentionDays === -1 
         ? "This file will be kept permanently as it appears to be medical data."
         : `This file will be kept for ${data.file.retentionInfo?.retentionDays} days.`;
-
+      
       toast({
         title: "File uploaded",
         description: `${file.name} has been uploaded successfully. ${retentionMessage}`,
@@ -77,23 +78,11 @@ export const useFileManagement = () => {
     }
   };
 
-  const updateAttachedFiles = (filesToAdd: AttachedFile[]) => {
-    setAttachedFiles((prev) => {
-      const newFiles = filesToAdd.filter(newFile => 
-        !prev.some(existingFile => existingFile.id === newFile.id)
-      );
-      return [...prev, ...newFiles];
-    });
-  };
-
   return {
     attachedFiles,
-    setAttachedFiles,
     uploadFileMutation,
-    handleFileUpload: (file: File) => uploadFileMutation.mutate(file),
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
-    updateAttachedFiles,
   };
 };

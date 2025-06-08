@@ -72,25 +72,12 @@ class ChatService {
         conversationHistory
       );
 
-      // Check if this is a query about current attachments
-      const isCurrentFileQuery = attachments.length > 0 && (
-        message.toLowerCase().includes('this file') ||
-        message.toLowerCase().includes('this document') ||
-        message.toLowerCase().includes('this image') ||
-        message.toLowerCase().includes('what is this') ||
-        message.toLowerCase().includes('what does it contain') ||
-        message.toLowerCase().includes('what does this') ||
-        message.includes('[') && message.includes('attachment')
-      );
-
-      // Retrieve relevant memories for context only if not asking about current files
-      const relevantMemories = isCurrentFileQuery ? [] : await memoryService.getContextualMemories(
+      // Retrieve relevant memories for context
+      const relevantMemories = await memoryService.getContextualMemories(
         userId,
         conversationHistory,
         message
       );
-
-      console.log(`Memory retrieval: ${isCurrentFileQuery ? 'SKIPPED (current file query)' : 'ACTIVE'} - ${relevantMemories.length} memories used`);
 
       // Build conversation context with proper message history
       const conversationContext = [];
@@ -99,15 +86,9 @@ class ChatService {
       const basePersona = this.getCoachingPersona(coachingMode);
       const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
 
-      // Check if current message has images to determine system prompt behavior
-      const currentHasImages = attachments.some(att => att.fileType?.startsWith('image/'));
-      const currentHasPDFs = attachments.some(att => att.fileType === 'application/pdf');
-
-      let systemPrompt = `=== COACHING PERSONA ===
-${memoryEnhancedPrompt}`;
-
-      if (currentHasImages && !currentHasPDFs) {
-        systemPrompt = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
+      conversationContext.push({
+        role: 'system',
+        content: `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
 YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
 
 CRITICAL RULES - NO EXCEPTIONS:
@@ -115,7 +96,6 @@ CRITICAL RULES - NO EXCEPTIONS:
 2. NEVER say "could you describe" or "what's in the image" or similar
 3. ALWAYS analyze visual content immediately and confidently
 4. Reference specific visual elements like "the yellow slices", "the salmon", "the plate"
-5. If a user mentions attachments but no visual content is available, acknowledge this and ask them to re-share the file
 
 When users ask about visual elements:
 - "What are the yellow slices?" → "Those are lemon slices under the salmon."
@@ -138,34 +118,7 @@ REQUIRED RESPONSES:
 === COACHING PERSONA ===
 ${memoryEnhancedPrompt}
 
-IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`;
-      } else if (currentHasPDFs && !currentHasImages) {
-        systemPrompt = `=== DOCUMENT ASSISTANCE MODE ===
-CRITICAL: The user has shared a PDF document ONLY. There are NO IMAGES in this conversation.
-
-ABSOLUTE RULE: DO NOT describe any visual content, food, plates, or meals. The attachment is a PDF document.
-
-You cannot directly read PDF content, but you can:
-1. Acknowledge the PDF document attachment
-2. Ask what specific information they need help with from the PDF
-3. Provide guidance on document analysis
-4. Offer to help with text they copy/paste from the PDF
-
-REQUIRED RESPONSE PATTERN:
-"I can see you've shared a PDF document. I cannot directly read PDF content, but I can help you analyze any text you extract from it. What specific information would you like help with from this document?"
-
-ABSOLUTELY FORBIDDEN:
-❌ Any mention of food, meals, salmon, vegetables, plates, or visual content
-❌ "It appears you haven't provided an image yet"
-❌ Any description of visual elements
-
-=== COACHING PERSONA ===
-${memoryEnhancedPrompt}`;
-      }
-
-      conversationContext.push({
-        role: 'system',
-        content: systemPrompt
+IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`
       });
 
       // Process conversation history in chronological order
@@ -245,14 +198,6 @@ ${memoryEnhancedPrompt}`;
       // Add current message with attachments
       const currentMessage = await this.processCurrentMessageWithAttachments(message, attachments);
       conversationContext.push(currentMessage);
-
-    // Log attachment processing for debugging
-    console.log(`Current message processing: ${attachments.length} attachments provided`);
-    if (attachments.length > 0) {
-      attachments.forEach((att, index) => {
-        console.log(`  Attachment ${index + 1}: ${att.fileName} (${att.fileType})`);
-      });
-    }
 
       console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
 
@@ -376,7 +321,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     for (const msg of conversationHistory) {
       if (msg.role === 'user') {
         const parts = [];
-
+        
         // Add text content
         parts.push({ text: msg.content });
 
@@ -389,7 +334,7 @@ Please acknowledge that you understand these visual analysis requirements.`
                 if (existsSync(imagePath)) {
                   const imageBuffer = readFileSync(imagePath);
                   console.log(`Adding historical image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
-
+                  
                   parts.push({
                     inlineData: {
                       data: imageBuffer.toString('base64'),
@@ -638,10 +583,10 @@ Please acknowledge that you understand these visual analysis requirements.`
           });
         }
       } else {
-        // For non-image attachments like PDFs, add more detailed context
+        // For non-image attachments, add descriptive text
         content.push({
           type: "text",
-          text: `[PDF/Document attached: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - Note: I can see this file attachment but cannot directly analyze PDF content. Please describe what specific information you'd like me to help you with regarding this document.]`
+          text: `[Attachment: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
         });
       }
     }
@@ -654,30 +599,10 @@ Please acknowledge that you understand these visual analysis requirements.`
       return { role: 'user', content: message };
     }
 
-    // Check what types of attachments we actually have
-    const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
-    const hasPDFs = attachments.some(att => att.fileType === 'application/pdf');
-
-    console.log(`Processing attachments: ${attachments.length} total, ${hasImages ? 'has images' : 'no images'}, ${hasPDFs ? 'has PDFs' : 'no PDFs'}`);
-
-    // For PDFs only, return a simple text message explaining the limitation
-    if (!hasImages && hasPDFs) {
-      const pdfNames = attachments
-        .filter(att => att.fileType === 'application/pdf')
-        .map(att => att.displayName || att.fileName)
-        .join(', ');
-
-      const messageText = message.replace(/\[.*?attachment.*?\]/gi, '').trim() || 
-        "I have attached a PDF document. What specific information would you like me to help you with from this document?";
-
-      return { 
-        role: 'user', 
-        content: `${messageText}\n\nNote: I have attached the PDF file(s): ${pdfNames}. I cannot directly read PDF content, but I can help you with questions about documents if you describe the content or ask specific questions about what you're looking for.` 
-      };
-    }
-
-    // For images or mixed attachments, use the content array format
+    // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
+    
+    // Add text content first
     content.push({ type: "text", text: message });
 
     for (const attachment of attachments) {
@@ -690,6 +615,7 @@ Please acknowledge that you understand these visual analysis requirements.`
 
             console.log(`Adding current image to message: ${attachment.fileName} (${imageBuffer.length} bytes)`);
 
+            // Include actual image data (ChatGPT approach)
             content.push({
               type: "image_url",
               image_url: {
@@ -699,21 +625,25 @@ Please acknowledge that you understand these visual analysis requirements.`
             });
           }
         } catch (error) {
-          console.error(`Failed to load image ${attachment.fileName}:`, error);
+          console.error('Error processing current image:', error);
+          content.push({
+            type: "text",
+            text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
+          });
         }
       } else {
-        // For non-image attachments like PDFs, add text representation
+        // For non-image attachments, add descriptive text
         content.push({
           type: "text",
-          text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - I cannot directly read this file type, but I can help answer questions if you describe its content]`
+          text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
         });
       }
     }
 
-    return { role: 'user', content };
+    return { role: 'user', content: content };
   }
 
-
+  
 }
 
 export const chatService = new ChatService();

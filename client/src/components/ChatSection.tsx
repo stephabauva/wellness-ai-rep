@@ -21,11 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { FolderOpen, Grid3X3, List, Image as ImageIcon } from "lucide-react";
 
 // Custom hooks
 import { useFileManagement } from "@/hooks/useFileManagement";
@@ -43,23 +38,9 @@ const welcomeMessage = {
   timestamp: new Date(),
 };
 
-interface FileManagerFile {
-  id: string;
-  fileName: string;
-  displayName: string;
-  fileType: string;
-  fileSize: number;
-  uploadDate: string;
-}
-
 const ChatSection: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [showHistory, setShowHistory] = useState(false);
-  const [showFileManager, setShowFileManager] = useState(false);
-  const [fileManagerViewMode, setFileManagerViewMode] = useState<'list' | 'list-with-icons' | 'grid'>('list');
-  const [selectedManagerFiles, setSelectedManagerFiles] = useState<Set<string>>(new Set());
-  const [managerFiles, setManagerFiles] = useState<FileManagerFile[]>([]);
-  const [loadingManagerFiles, setLoadingManagerFiles] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -67,12 +48,10 @@ const ChatSection: React.FC = () => {
   // Custom hooks
   const {
     attachedFiles,
-    setAttachedFiles,
     uploadFileMutation,
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
-    updateAttachedFiles,
   } = useFileManagement();
 
   const {
@@ -128,75 +107,6 @@ const ChatSection: React.FC = () => {
     if (file) {
       uploadFileMutation.mutate(file);
     }
-  };
-
-  const handleOpenFileManager = async () => {
-    setShowFileManager(true);
-    setLoadingManagerFiles(true);
-    setSelectedManagerFiles(new Set());
-
-    try {
-      const response = await fetch('/api/files');
-      if (response.ok) {
-        const files = await response.json();
-        setManagerFiles(files);
-      }
-    } catch (error) {
-      console.error('Failed to fetch files:', error);
-    } finally {
-      setLoadingManagerFiles(false);
-    }
-  };
-
-  const handleSelectManagerFile = (fileId: string) => {
-    const newSelected = new Set(selectedManagerFiles);
-    if (newSelected.has(fileId)) {
-      newSelected.delete(fileId);
-    } else {
-      newSelected.add(fileId);
-    }
-    setSelectedManagerFiles(newSelected);
-  };
-
-  const handleSelectAllManagerFiles = () => {
-    if (selectedManagerFiles.size === managerFiles.length) {
-      setSelectedManagerFiles(new Set());
-    } else {
-      setSelectedManagerFiles(new Set(managerFiles.map(f => f.id)));
-    }
-  };
-
-  const handleImportSelectedFiles = () => {
-    const filesToImport = managerFiles.filter(f => selectedManagerFiles.has(f.id));
-
-    if (updateAttachedFiles) {
-      updateAttachedFiles(filesToImport.map(file => ({
-        id: file.id,
-        fileName: file.fileName,
-        displayName: file.displayName,
-        fileType: file.fileType,
-        fileSize: file.fileSize,
-      })));
-    }
-
-    setShowFileManager(false);
-    setSelectedManagerFiles(new Set());
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
   };
 
   const handleNewChatWithCleanup = () => {
@@ -356,13 +266,9 @@ const ChatSection: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleOpenFileManager}>
-                <FolderOpen className="h-4 w-4 mr-2" />
-                Import from File Manager
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleFileImport}>
                 <Upload className="h-4 w-4 mr-2" />
-                Upload New File
+                Import File
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleCameraCapture}>
                 <Camera className="h-4 w-4 mr-2" />
@@ -423,202 +329,6 @@ const ChatSection: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* File Manager Modal */}
-      <Dialog open={showFileManager} onOpenChange={setShowFileManager}>
-        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5" />
-              Import Files from File Manager
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-hidden flex flex-col space-y-4">
-            {/* Controls */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={managerFiles.length > 0 && selectedManagerFiles.size === managerFiles.length}
-                  ref={(el) => {
-                    if (el) el.indeterminate = selectedManagerFiles.size > 0 && selectedManagerFiles.size < managerFiles.length;
-                  }}
-                  onCheckedChange={handleSelectAllManagerFiles}
-                  disabled={loadingManagerFiles}
-                />
-                <span className="text-sm font-medium">
-                  {selectedManagerFiles.size > 0 ? `${selectedManagerFiles.size} selected` : 'Select all'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {/* View Mode Toggle */}
-                <div className="flex gap-1 border rounded-md p-1">
-                  <Button
-                    variant={fileManagerViewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFileManagerViewMode('list')}
-                    className="h-7 w-7 p-0"
-                    title="List view"
-                  >
-                    <List className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant={fileManagerViewMode === 'list-with-icons' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFileManagerViewMode('list-with-icons')}
-                    className="h-7 w-7 p-0"
-                    title="List with icons"
-                  >
-                    <ImageIcon className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant={fileManagerViewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFileManagerViewMode('grid')}
-                    className="h-7 w-7 p-0"
-                    title="Grid view"
-                  >
-                    <Grid3X3 className="h-3 w-3" />
-                  </Button>
-                </div>
-
-                <Button 
-                  onClick={handleImportSelectedFiles}
-                  disabled={selectedManagerFiles.size === 0}
-                  size="sm"
-                >
-                  Import {selectedManagerFiles.size > 0 ? selectedManagerFiles.size : ''} Files
-                </Button>
-              </div>
-            </div>
-
-            {/* Files List */}
-            <div className="flex-1 overflow-auto">
-              {loadingManagerFiles ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-center space-y-2">
-                    <div className="h-8 w-8 animate-spin mx-auto text-muted-foreground">⚪</div>
-                    <p className="text-muted-foreground">Loading files...</p>
-                  </div>
-                </div>
-              ) : managerFiles.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No files found</h3>
-                    <p className="text-muted-foreground text-center">
-                      Upload some files to see them here.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : fileManagerViewMode === 'grid' ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {managerFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className={`relative border rounded-lg p-3 transition-colors cursor-pointer ${
-                        selectedManagerFiles.has(file.id) ? "bg-accent border-primary" : "hover:bg-muted/50"
-                      }`}
-                      onClick={() => handleSelectManagerFile(file.id)}
-                    >
-                      <div className="absolute top-2 left-2 z-10">
-                        <Checkbox
-                          checked={selectedManagerFiles.has(file.id)}
-                          onCheckedChange={() => handleSelectManagerFile(file.id)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-
-                      <div className="flex flex-col items-center space-y-2 mt-6">
-                        <div className="w-16 h-16 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
-                          {file.fileType.startsWith('image/') ? (
-                            <img
-                              src={`/uploads/${file.fileName}`}
-                              alt={file.displayName}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                              }}
-                            />
-                          ) : null}
-                          <div className={`flex items-center justify-center w-full h-full ${file.fileType.startsWith('image/') ? 'hidden' : ''}`}>
-                            {getFileIcon(file.fileType)}
-                          </div>
-                        </div>
-
-                        <div className="text-center space-y-1 w-full">
-                          <h4 className="text-xs font-medium truncate" title={file.displayName}>
-                            {file.displayName}
-                          </h4>
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-xs text-muted-foreground">
-                              {formatFileSize(file.fileSize)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(file.uploadDate)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="space-y-2 p-4">
-                    {managerFiles.map((file) => (
-                      <div
-                        key={file.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                          selectedManagerFiles.has(file.id) ? "bg-accent" : "hover:bg-muted/50"
-                        }`}
-                        onClick={() => handleSelectManagerFile(file.id)}
-                      >
-                        <Checkbox
-                          checked={selectedManagerFiles.has(file.id)}
-                          onCheckedChange={() => handleSelectManagerFile(file.id)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-
-                        {fileManagerViewMode === 'list-with-icons' && (
-                          <div className="flex-shrink-0 w-10 h-10 bg-muted rounded overflow-hidden flex items-center justify-center">
-                            {file.fileType.startsWith('image/') ? (
-                              <img
-                                src={`/uploads/${file.fileName}`}
-                                alt={file.displayName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : null}
-                            <div className={`flex items-center justify-center w-full h-full ${file.fileType.startsWith('image/') ? 'hidden' : ''}`}>
-                              {getFileIcon(file.fileType)}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium truncate">
-                            {file.displayName}
-                          </h4>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>{formatFileSize(file.fileSize)}</span>
-                            <span>{formatDate(file.uploadDate)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Conversation History Modal */}
       <ConversationHistory

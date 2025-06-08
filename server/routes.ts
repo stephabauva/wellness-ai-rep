@@ -59,7 +59,18 @@ const settingsUpdateSchema = z.object({
   aiModel: z.string().optional(),
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional(),
   preferredLanguage: z.string().optional(),
-  automaticModelSelection: z.boolean().optional()
+  automaticModelSelection: z.boolean().optional(),
+  // Attachment retention settings
+  highValueRetentionDays: z.number().optional(),
+  mediumValueRetentionDays: z.number().optional(),
+  lowValueRetentionDays: z.number().optional()
+});
+
+// Retention settings schema
+const retentionSettingsSchema = z.object({
+  highValueRetentionDays: z.number().min(-1),
+  mediumValueRetentionDays: z.number().min(1),
+  lowValueRetentionDays: z.number().min(1)
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -334,6 +345,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/settings", async (req, res) => {
     try {
       const settings = settingsUpdateSchema.parse(req.body);
+      
+      // Update attachment retention settings if provided
+      if (settings.highValueRetentionDays !== undefined || 
+          settings.mediumValueRetentionDays !== undefined || 
+          settings.lowValueRetentionDays !== undefined) {
+        const retentionUpdates: Partial<any> = {};
+        if (settings.highValueRetentionDays !== undefined) retentionUpdates.highValueRetentionDays = settings.highValueRetentionDays;
+        if (settings.mediumValueRetentionDays !== undefined) retentionUpdates.mediumValueRetentionDays = settings.mediumValueRetentionDays;
+        if (settings.lowValueRetentionDays !== undefined) retentionUpdates.lowValueRetentionDays = settings.lowValueRetentionDays;
+        
+        attachmentRetentionService.updateRetentionDurations(retentionUpdates);
+      }
+
       const updatedUser = await storage.updateUserSettings(1, settings); // Default user ID
 
       res.json(updatedUser.preferences);
@@ -370,6 +394,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(models);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch AI models" });
+    }
+  });
+
+  // Get attachment retention settings
+  app.get("/api/retention-settings", async (req, res) => {
+    try {
+      const settings = attachmentRetentionService.getRetentionDurations();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch retention settings" });
+    }
+  });
+
+  // Update attachment retention settings
+  app.patch("/api/retention-settings", async (req, res) => {
+    try {
+      const settings = retentionSettingsSchema.parse(req.body);
+      attachmentRetentionService.updateRetentionDurations(settings);
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid retention settings", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update retention settings" });
+      }
     }
   });
 

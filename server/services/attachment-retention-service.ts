@@ -21,6 +21,12 @@ export interface AttachmentRetentionConfig {
   temporary: string[];
 }
 
+export interface RetentionDurations {
+  highValueRetentionDays: number;    // -1 for indefinite
+  mediumValueRetentionDays: number;  // default 90
+  lowValueRetentionDays: number;     // default 30
+}
+
 const DEFAULT_RETENTION_CONFIG: AttachmentRetentionConfig = {
   medicalDocuments: ['pdf', 'doc', 'docx'],
   labResults: ['pdf', 'jpg', 'jpeg', 'png'],
@@ -34,9 +40,18 @@ const DEFAULT_RETENTION_CONFIG: AttachmentRetentionConfig = {
 
 export class AttachmentRetentionService {
   private config: AttachmentRetentionConfig;
+  private durations: RetentionDurations;
 
-  constructor(config: AttachmentRetentionConfig = DEFAULT_RETENTION_CONFIG) {
+  constructor(
+    config: AttachmentRetentionConfig = DEFAULT_RETENTION_CONFIG,
+    durations: RetentionDurations = {
+      highValueRetentionDays: -1,
+      mediumValueRetentionDays: 90,
+      lowValueRetentionDays: 30
+    }
+  ) {
     this.config = config;
+    this.durations = durations;
   }
 
   /**
@@ -64,7 +79,7 @@ export class AttachmentRetentionService {
     ) {
       return {
         category: 'high',
-        retentionDays: -1, // Keep indefinitely
+        retentionDays: this.durations.highValueRetentionDays,
         reason: 'Medical/health document detected'
       };
     }
@@ -79,7 +94,7 @@ export class AttachmentRetentionService {
     ) {
       return {
         category: 'medium',
-        retentionDays: 90,
+        retentionDays: this.durations.mediumValueRetentionDays,
         reason: 'Health plan or routine document'
       };
     }
@@ -87,7 +102,7 @@ export class AttachmentRetentionService {
     // Low-value (default for photos and temporary files)
     return {
       category: 'low',
-      retentionDays: 30,
+      retentionDays: this.durations.lowValueRetentionDays,
       reason: 'Temporary or reference file'
     };
   }
@@ -169,6 +184,20 @@ export class AttachmentRetentionService {
    */
   getRetentionInfo(fileName: string, fileType: string, context?: string) {
     return this.categorizeAttachment(fileName, fileType, context);
+  }
+
+  /**
+   * Update retention durations
+   */
+  updateRetentionDurations(durations: Partial<RetentionDurations>) {
+    this.durations = { ...this.durations, ...durations };
+  }
+
+  /**
+   * Get current retention durations
+   */
+  getRetentionDurations(): RetentionDurations {
+    return { ...this.durations };
   }
 }
 

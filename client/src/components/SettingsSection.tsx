@@ -47,6 +47,9 @@ const formSchema = z.object({
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]),
   preferredLanguage: z.string(),
   automaticModelSelection: z.boolean(),
+  highValueRetentionDays: z.number(),
+  mediumValueRetentionDays: z.number(),
+  lowValueRetentionDays: z.number(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -71,6 +74,16 @@ const SettingsSection: React.FC = () => {
     queryFn: async () => {
       const response = await fetch('/api/ai-models');
       if (!response.ok) throw new Error('Failed to fetch AI models');
+      return await response.json();
+    }
+  });
+
+  // Fetch retention settings
+  const { data: retentionSettings } = useQuery({
+    queryKey: ['/api/retention-settings'],
+    queryFn: async () => {
+      const response = await fetch('/api/retention-settings');
+      if (!response.ok) throw new Error('Failed to fetch retention settings');
       return await response.json();
     }
   });
@@ -115,6 +128,9 @@ const SettingsSection: React.FC = () => {
       transcriptionProvider: settings?.transcriptionProvider || "webspeech",
       preferredLanguage: settings?.preferredLanguage || "en",
       automaticModelSelection: settings?.automaticModelSelection ?? true,
+      highValueRetentionDays: retentionSettings?.highValueRetentionDays ?? -1,
+      mediumValueRetentionDays: retentionSettings?.mediumValueRetentionDays ?? 90,
+      lowValueRetentionDays: retentionSettings?.lowValueRetentionDays ?? 30,
     }
   });
   
@@ -486,6 +502,108 @@ const SettingsSection: React.FC = () => {
                         />
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* File Management */}
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle>File Management</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="text-sm text-muted-foreground mb-4">
+                      Configure how long uploaded files are kept on the system. Medical documents are typically kept longer than photos or temporary files.
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="highValueRetentionDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Medical Documents Retention</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(parseInt(value))} 
+                            defaultValue={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select retention period" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="-1">Keep indefinitely</SelectItem>
+                              <SelectItem value="365">1 year</SelectItem>
+                              <SelectItem value="180">6 months</SelectItem>
+                              <SelectItem value="90">3 months</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            How long to keep medical documents, lab results, and prescriptions
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="mediumValueRetentionDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Health Plans & Routines Retention</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(parseInt(value))} 
+                            defaultValue={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select retention period" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="180">6 months</SelectItem>
+                              <SelectItem value="90">3 months</SelectItem>
+                              <SelectItem value="60">2 months</SelectItem>
+                              <SelectItem value="30">1 month</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            How long to keep nutrition plans and exercise routines
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="lowValueRetentionDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Photos & Temporary Files Retention</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(parseInt(value))} 
+                            defaultValue={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select retention period" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="60">2 months</SelectItem>
+                              <SelectItem value="30">1 month</SelectItem>
+                              <SelectItem value="14">2 weeks</SelectItem>
+                              <SelectItem value="7">1 week</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            How long to keep food photos, screenshots, and temporary files
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 

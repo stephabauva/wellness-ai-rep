@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConversationHistory } from "@/components/ConversationHistory";
+import { FileManagerSection } from "@/components/FileManagerSection";
 import { TranscriptionProvider } from "@shared/schema";
 import {
   DropdownMenu,
@@ -41,6 +42,7 @@ const welcomeMessage = {
 const ChatSection: React.FC = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [showFileManager, setShowFileManager] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +54,7 @@ const ChatSection: React.FC = () => {
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
+    addExistingFiles,
   } = useFileManagement();
 
   const {
@@ -119,6 +122,20 @@ const ChatSection: React.FC = () => {
     handleSelectConversation(conversationId);
     setInputMessage("");
     clearAttachedFiles();
+  };
+
+  const handleFileManagerSelection = (selectedFiles: any[]) => {
+    const attachedFilesList = selectedFiles.map(file => ({
+      id: file.id || file.name,
+      fileName: file.name,
+      displayName: file.name,
+      fileType: file.type || 'application/octet-stream',
+      fileSize: file.size || 0,
+      url: `/uploads/${file.name}`
+    }));
+    
+    addExistingFiles(attachedFilesList);
+    setShowFileManager(false);
   };
 
   // Auto-scroll effect
@@ -277,6 +294,10 @@ const ChatSection: React.FC = () => {
                   (Mobile: Camera, Desktop: File)
                 </span>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowFileManager(true)}>
+                <Paperclip className="h-4 w-4 mr-2" />
+                Select from File Manager
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadPDF}>
                 <Paperclip className="h-4 w-4 mr-2" />
                 Download Report
@@ -337,6 +358,30 @@ const ChatSection: React.FC = () => {
         onSelectConversation={handleSelectConversationWithCleanup}
         currentConversationId={currentConversationId || undefined}
       />
+
+      {/* File Manager Modal */}
+      {showFileManager && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg w-full max-w-4xl h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">Select Files from File Manager</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowFileManager(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <FileManagerSection 
+                onFileSelect={handleFileManagerSelection}
+                selectionMode={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -17,7 +17,9 @@
 
   ❌ history shows each message instead of title and date  
 
-  ❌ New message is not immediatly visible in the chat after beign sent
+  ✅ New message is not immediatly visible in the chat after being sent
+
+  ✅ Chat does not autoscroll
 
 <br>
 

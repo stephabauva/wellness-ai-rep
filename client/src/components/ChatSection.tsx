@@ -121,26 +121,58 @@ const ChatSection: React.FC = () => {
     clearAttachedFiles();
   };
 
-  // Auto-scroll effect
+  // Aggressive auto-scroll to ensure messages are always visible
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end",
+        inline: "nearest"
+      });
+    };
 
-  // Force scroll on conversation change
+    // Immediate scroll
+    scrollToBottom();
+    
+    // Also scroll after a short delay to ensure rendering is complete
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [messages, pendingUserMessage, sendMessageMutation.isPending, messagesToDisplay]);
+
+  // Force scroll on conversation change with multiple attempts
   useEffect(() => {
     if (currentConversationId) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      const scrollAttempts = [0, 100, 300, 500];
+      const timeouts = scrollAttempts.map(delay => 
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ 
+            behavior: "smooth",
+            block: "end",
+            inline: "nearest"
+          });
+        }, delay)
+      );
+      
+      return () => timeouts.forEach(timeout => clearTimeout(timeout));
     }
   }, [currentConversationId]);
 
   // Force scroll when loading finishes
   useEffect(() => {
     if (!loadingMessages && messages && messages.length > 0) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 200);
+      const scrollAttempts = [0, 100, 300];
+      const timeouts = scrollAttempts.map(delay => 
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ 
+            behavior: "smooth",
+            block: "end",
+            inline: "nearest"
+          });
+        }, delay)
+      );
+      
+      return () => timeouts.forEach(timeout => clearTimeout(timeout));
     }
   }, [loadingMessages, messages]);
 
@@ -181,6 +213,14 @@ const ChatSection: React.FC = () => {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Debug info - remove this after confirming it works */}
+        <div className="text-xs text-muted-foreground bg-gray-100 dark:bg-gray-800 p-2 rounded mb-2">
+          📊 Messages: {messagesToDisplay?.length || 0} | 
+          Conversation: {currentConversationId ? 'Active' : 'New'} | 
+          Loading: {loadingMessages ? 'Yes' : 'No'} | 
+          Pending: {pendingUserMessage ? 'Yes' : 'No'}
+        </div>
+        
         {loadingMessages ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (

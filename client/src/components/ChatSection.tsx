@@ -339,10 +339,25 @@ const ChatSection: React.FC = () => {
   };
 
   const handleNewChat = () => {
+    console.log('Starting new chat - resetting state');
     setCurrentConversationId(null);
     setInputMessage("");
     setAttachedFiles([]);
-    queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+    
+    // Clear any existing conversation queries
+    queryClient.removeQueries({ queryKey: ['/api/conversations'] });
+    
+    // Reset the legacy messages to show welcome message
+    queryClient.setQueryData(['/api/messages'], [
+      {
+        id: '1',
+        content: 'Welcome to your AI wellness coach! I\'m here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you\'re focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I\'m ready to help. What would you like to work on today?',
+        isUserMessage: false,
+        timestamp: new Date()
+      }
+    ]);
+    
+    console.log('New chat initialized with welcome message');
   };
 
   const getFileIcon = (fileType: string) => {

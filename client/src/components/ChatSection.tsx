@@ -141,7 +141,7 @@ const ChatSection: React.FC = () => {
       setPendingUserMessage({
         content,
         timestamp: new Date(),
-        attachments: attachments.length > 0 ? attachments.map(f => ({ name: f.name, type: f.type })) : undefined
+        attachments: attachments.length > 0 ? attachments.map(f => ({ name: f.displayName || f.fileName, type: f.fileType })) : undefined
       });
     },
     onSuccess: (data) => {
@@ -335,15 +335,29 @@ const ChatSection: React.FC = () => {
   let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
 
   // Add pending user message for immediate visibility
-  if (pendingUserMessage && (!messages || messages.length === 0)) {
-    messagesToDisplay = [
-      {
-        id: "temp-pending",
-        content: pendingUserMessage.content,
-        isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp,
-      }
-    ];
+  if (pendingUserMessage) {
+    if (!currentConversationId) {
+      // New conversation - replace welcome message with pending message
+      messagesToDisplay = [
+        {
+          id: "temp-pending",
+          content: pendingUserMessage.content,
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp,
+        }
+      ];
+    } else {
+      // Existing conversation - append pending message
+      messagesToDisplay = [
+        ...messagesToDisplay,
+        {
+          id: "temp-pending",
+          content: pendingUserMessage.content,
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp,
+        }
+      ];
+    }
   }
 
   return (

@@ -138,63 +138,61 @@ const ChatSection: React.FC = () => {
         timestamp: new Date(),
       };
 
-      // For new conversations, add to "new" cache
-      // For existing conversations, add to their specific cache
+      // Use current conversation state for the query key
       const queryKey = ["messages", conversationId || "new"];
       
       queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
-        // Remove welcome message when adding first user message
+        // Remove welcome message when adding first user message to new conversation
         const filteredOld = conversationId ? old : old.filter(msg => msg.id !== "welcome-message");
         return [...filteredOld, optimisticUserMessage];
       });
 
-      return { queryKey, conversationId };
+      return { queryKey, conversationId, optimisticUserMessage };
     },
     onSuccess: (data, variables, context) => {
       const finalConversationId = data.conversationId;
       
       if (!context?.conversationId) {
-        // New conversation: Move from "new" to actual conversation ID
+        // NEW CONVERSATION: Transition from "new" to actual conversation ID
         const tempMessages = queryClient.getQueryData<Message[]>(["messages", "new"]) || [];
         
-        // Replace temp message with real data and add AI response
-        const finalMessages = tempMessages.map(msg => {
-          if (msg.id.startsWith("temp-")) {
-            return {
+        // Build final messages array with real data
+        const finalMessages = tempMessages
+          .filter(msg => !msg.id.startsWith("temp-"))
+          .concat([
+            {
               id: data.userMessage.id,
               content: data.userMessage.content,
               isUserMessage: true,
               timestamp: new Date(data.userMessage.timestamp),
-            };
-          }
-          return msg;
-        });
+            },
+            {
+              id: data.aiMessage.id,
+              content: data.aiMessage.content,
+              isUserMessage: false,
+              timestamp: new Date(data.aiMessage.timestamp),
+            }
+          ]);
         
-        // Add AI response
-        finalMessages.push({
-          id: data.aiMessage.id,
-          content: data.aiMessage.content,
-          isUserMessage: false,
-          timestamp: new Date(data.aiMessage.timestamp),
-        });
-        
-        // Set final conversation data
+        // Set data for the new conversation
         queryClient.setQueryData(["messages", finalConversationId], finalMessages);
         
-        // Update conversation ID first to switch the UI view
+        // Update UI state
         setCurrentConversationId(finalConversationId);
         
-        // Clean up temp cache after state update
-        setTimeout(() => {
-          queryClient.removeQueries({ queryKey: ["messages", "new"] });
-        }, 100);
+        // Clean up the temporary cache
+        queryClient.removeQueries({ queryKey: ["messages", "new"] });
         
       } else {
-        // Existing conversation: Replace temp message and add AI response
-        queryClient.setQueryData<Message[]>(["messages", finalConversationId], (old = []) => {
-          const withoutTemp = old.filter(msg => !msg.id.startsWith("temp-"));
+        // EXISTING CONVERSATION: Update the existing conversation cache
+        const currentQueryKey = ["messages", finalConversationId];
+        
+        queryClient.setQueryData<Message[]>(currentQueryKey, (old = []) => {
+          // Remove the optimistic message and add real messages
+          const withoutOptimistic = old.filter(msg => !msg.id.startsWith("temp-"));
+          
           return [
-            ...withoutTemp,
+            ...withoutOptimistic,
             {
               id: data.userMessage.id,
               content: data.userMessage.content,
@@ -215,6 +213,8 @@ const ChatSection: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
     onError: (error, variables, context) => {
+      console.error("Message send error:", error);
+      
       // Remove optimistic message on error
       if (context?.queryKey) {
         queryClient.setQueryData<Message[]>(context.queryKey, (old = []) => 

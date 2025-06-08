@@ -78,16 +78,11 @@ export const useFileManagement = () => {
     }
   };
 
-  const addExistingFiles = (files: AttachedFile[]) => {
-    setAttachedFiles(prev => [...prev, ...files]);
-  };
-
   return {
     attachedFiles,
     uploadFileMutation,
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
-    addExistingFiles,
   };
 };

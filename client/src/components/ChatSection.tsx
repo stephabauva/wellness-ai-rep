@@ -183,11 +183,15 @@ const ChatSection: React.FC = () => {
         queryClient.removeQueries({ queryKey: ['messages', 'new'] });
 
         // 6. NOW update the state to switch to the new conversation
+        console.log(`Updating conversation ID from ${currentConversationId} to ${newConversationId}`);
         setCurrentConversationId(newConversationId);
 
       } else {
         // This is for subsequent messages in an existing conversation
-        queryClient.setQueryData<Message[]>(context.messagesQueryKey, (old = []) => {
+        // Use the current conversation ID to build the correct query key
+        const currentQueryKey = data?.conversationId ? ['messages', data.conversationId] : ['messages', currentConversationId];
+        
+        queryClient.setQueryData<Message[]>(currentQueryKey, (old = []) => {
           // Replace optimistic message with real messages
           const existingMessages = old.filter(msg => !msg.id.startsWith('temp-'));
           return [

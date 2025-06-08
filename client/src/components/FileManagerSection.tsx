@@ -102,9 +102,21 @@ const FileManagerSection: React.FC = () => {
     onSuccess: (data) => {
       setSelectedFiles(new Set());
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      
+      const { deletedCount, actuallyDeleted, notFound, freedSpace } = data;
+      let description = `Successfully processed ${deletedCount} file(s)`;
+      
+      if (actuallyDeleted > 0) {
+        description += `, deleted ${actuallyDeleted} file(s) and freed ${formatFileSize(freedSpace)}`;
+      }
+      
+      if (notFound > 0) {
+        description += `, ${notFound} file(s) were already removed`;
+      }
+      
       toast({
-        title: "Files deleted",
-        description: `Successfully deleted ${data.deletedCount} file(s) and freed ${formatFileSize(data.freedSpace)}`,
+        title: "Files processed",
+        description,
       });
     },
     onError: () => {

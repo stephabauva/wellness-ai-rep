@@ -451,6 +451,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (processedFiles.has(attachment.fileName)) continue;
           processedFiles.add(attachment.fileName);
 
+          // Check if file actually exists on disk
+          const filePath = join(process.cwd(), 'uploads', attachment.fileName);
+          if (!existsSync(filePath)) {
+            console.log(`Skipping non-existent file in listing: ${attachment.fileName}`);
+            continue;
+          }
+
           // Get retention info for this file
           const retentionInfo = attachmentRetentionService.getRetentionInfo(
             attachment.displayName || attachment.fileName,
@@ -491,6 +498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let deletedCount = 0;
       let freedSpace = 0;
+      let notFoundCount = 0;
 
       for (const fileId of fileIds) {
         try {
@@ -505,15 +513,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             freedSpace += stats.size;
             console.log(`Successfully deleted file: ${fileId}, size: ${stats.size} bytes`);
           } else {
-            console.log(`File not found: ${filePath}`);
+            notFoundCount++;
+            console.log(`File not found (already deleted or missing): ${filePath}`);
           }
         } catch (error) {
           console.error(`Failed to delete file ${fileId}:`, error);
         }
       }
 
-      console.log(`Deletion summary: ${deletedCount} files deleted, ${freedSpace} bytes freed`);
-      res.json({ deletedCount, freedSpace });
+      console.log(`Deletion summary: ${deletedCount} files deleted, ${notFoundCount} files not found, ${freedSpace} bytes freed`);
+      
+      // Return success even if files were not found (they're effectively "deleted")
+      const totalProcessed = deletedCount + notFoundCount;
+      res.json({ 
+        deletedCount: totalProcessed, 
+        actuallyDeleted: deletedCount,
+        notFound: notFoundCount,
+        freedSpace 
+      });
     } catch (error) {
       console.error('Error deleting files:', error);
       res.status(500).json({ error: 'Failed to delete files' });

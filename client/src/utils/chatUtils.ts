@@ -1,4 +1,5 @@
 
+import React from "react";
 import { FileText, Image, Video, File } from "lucide-react";
 
 export const getFileIcon = (fileType: string) => {

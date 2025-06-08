@@ -4,6 +4,8 @@ import { CoachingMode, coachingModes } from "@shared/schema";
 import { memoryService } from "./memory-service";
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { spawn } from 'child_process';
+import { promisify } from 'util';
 
 type AIProvider = "openai" | "google";
 type OpenAIModel = "gpt-4o" | "gpt-4o-mini";
@@ -132,12 +134,17 @@ REQUIRED RESPONSES:
 
 Focus ONLY on analyzing the current image(s). Do not reference any past conversations or context.`;
         } else if (hasPDFs) {
-          systemPrompt = `=== DOCUMENT ASSISTANCE MODE ===
-CRITICAL: The user has shared a PDF document ONLY. There are NO IMAGES in this conversation.
+          systemPrompt = `=== DOCUMENT ANALYSIS MODE ===
+You are analyzing a PDF document. You have access to the extracted text content from the PDF.
 
-You are a helpful assistant focused on document analysis. Analyze only the current document without referencing any past conversations or context.
+CRITICAL RULES:
+1. Analyze the document content thoroughly and professionally
+2. Provide insights based on the actual text content
+3. Focus ONLY on the current document without referencing past conversations
+4. If asked about specific content, reference the actual text from the document
+5. Summarize key points, themes, or important information as requested
 
-IMPORTANT: Since you cannot directly read PDF content, acknowledge this limitation and provide helpful guidance about what information you would need to assist effectively.`;
+Be helpful and detailed in your analysis of the document content.`;
         } else {
           systemPrompt = basePersona;
         }
@@ -570,6 +577,38 @@ Please acknowledge that you understand these visual analysis requirements.`
            userMessage.includes('?') && userMessage.split('?').length > 2; // Multiple questions
   }
 
+  // Extract text from PDF using pdftotext
+  private async extractPDFText(filePath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const pdftotext = spawn('pdftotext', [filePath, '-']);
+      let text = '';
+      let error = '';
+
+      pdftotext.stdout.on('data', (data) => {
+        text += data.toString();
+      });
+
+      pdftotext.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+
+      pdftotext.on('close', (code) => {
+        if (code === 0) {
+          resolve(text.trim());
+        } else {
+          console.warn('pdftotext failed, trying fallback method');
+          // Fallback: return a message indicating PDF content couldn't be extracted
+          resolve('[PDF content could not be extracted - please describe the document contents]');
+        }
+      });
+
+      pdftotext.on('error', (err) => {
+        console.warn('pdftotext not available, using fallback');
+        resolve('[PDF content could not be extracted - please describe the document contents]');
+      });
+    });
+  }
+
   getAvailableModels() {
     return {
       openai: [
@@ -674,8 +713,30 @@ Please acknowledge that you understand these visual analysis requirements.`
             text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
           });
         }
+      } else if (attachment.fileType === 'application/pdf') {
+        // Extract and include PDF text content
+        try {
+          const pdfPath = join(process.cwd(), 'uploads', attachment.fileName);
+          if (existsSync(pdfPath)) {
+            console.log(`Extracting text from PDF: ${attachment.fileName}`);
+            const pdfText = await this.extractPDFText(pdfPath);
+            
+            content.push({
+              type: "text",
+              text: `\n\n=== PDF DOCUMENT CONTENT ===\nFile: ${attachment.displayName || attachment.fileName}\n\n${pdfText}\n\n=== END PDF CONTENT ===\n`
+            });
+            
+            console.log(`Successfully extracted ${pdfText.length} characters from PDF`);
+          }
+        } catch (error) {
+          console.error('Error processing PDF:', error);
+          content.push({
+            type: "text",
+            text: `[PDF file: ${attachment.displayName || attachment.fileName} - error extracting text content]`
+          });
+        }
       } else {
-        // For non-image attachments, add descriptive text
+        // For other non-image attachments, add descriptive text
         content.push({
           type: "text",
           text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`

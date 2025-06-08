@@ -107,15 +107,24 @@ const ChatSection: React.FC = () => {
       });
     },
     onMutate: async ({ content, attachments }) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      const queryKey = currentConversationId 
+      // For the first message, we'll use the legacy messages endpoint for optimistic update
+      // but we know the server will create a conversation, so we handle both
+      const legacyQueryKey = ['/api/messages'];
+      const conversationQueryKey = currentConversationId 
         ? ['/api/conversations', currentConversationId, 'messages']
-        : ['/api/messages'];
-      
-      await queryClient.cancelQueries({ queryKey });
+        : null;
 
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData(queryKey);
+      // Cancel queries for both potential locations
+      await queryClient.cancelQueries({ queryKey: legacyQueryKey });
+      if (conversationQueryKey) {
+        await queryClient.cancelQueries({ queryKey: conversationQueryKey });
+      }
+
+      // Snapshot the previous values
+      const previousLegacyMessages = queryClient.getQueryData(legacyQueryKey);
+      const previousConversationMessages = conversationQueryKey 
+        ? queryClient.getQueryData(conversationQueryKey)
+        : null;
 
       // Optimistically update to the new value
       const optimisticUserMessage: Message = {
@@ -125,18 +134,39 @@ const ChatSection: React.FC = () => {
         timestamp: new Date()
       };
 
-      queryClient.setQueryData(queryKey, (old: Message[] | undefined) => {
-        const existingMessages = old || [];
-        return [...existingMessages, optimisticUserMessage];
-      });
+      // Update the appropriate query based on current state
+      if (currentConversationId) {
+        // We have a conversation, update conversation messages
+        queryClient.setQueryData(conversationQueryKey!, (old: Message[] | undefined) => {
+          const existingMessages = old || [];
+          return [...existingMessages, optimisticUserMessage];
+        });
+      } else {
+        // First message, update legacy messages (this will be where we see the optimistic update)
+        queryClient.setQueryData(legacyQueryKey, (old: Message[] | undefined) => {
+          const existingMessages = old || [];
+          return [...existingMessages, optimisticUserMessage];
+        });
+      }
 
-      // Return a context object with the snapshotted value
-      return { previousMessages, queryKey };
+      // Return context for rollback
+      return { 
+        previousLegacyMessages, 
+        previousConversationMessages,
+        conversationQueryKey,
+        legacyQueryKey,
+        isFirstMessage: !currentConversationId
+      };
     },
     onError: (err, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousMessages) {
-        queryClient.setQueryData(context.queryKey, context.previousMessages);
+      if (context) {
+        if (context.previousLegacyMessages !== undefined) {
+          queryClient.setQueryData(context.legacyQueryKey, context.previousLegacyMessages);
+        }
+        if (context.conversationQueryKey && context.previousConversationMessages !== undefined) {
+          queryClient.setQueryData(context.conversationQueryKey, context.previousConversationMessages);
+        }
       }
     },
     onSuccess: (data) => {
@@ -153,11 +183,22 @@ const ChatSection: React.FC = () => {
         
         // Set the query data directly instead of invalidating to prevent message loss
         const newQueryKey = ['/api/conversations', data.conversationId, 'messages'];
-        queryClient.setQueryData(newQueryKey, (old: Message[] | undefined) => {
-          // Replace optimistic message with real messages from server
-          const existingMessages = (old || []).filter(msg => !msg.id.startsWith('temp-'));
+        
+        // If this was the first message, we need to clear the optimistic update from legacy messages
+        // and move everything to the new conversation
+        const wasFirstMessage = currentConversationId !== data.conversationId;
+        
+        if (wasFirstMessage) {
+          // Get the current legacy messages (including our optimistic update)
+          const legacyMessages = queryClient.getQueryData(['/api/messages']) as Message[] || [];
+          const welcomeMessage = legacyMessages.find(msg => msg.content.includes('Welcome to your AI Wellness Coach'));
+          
+          // Clear the legacy messages since we're moving to conversation-based
+          queryClient.setQueryData(['/api/messages'], welcomeMessage ? [welcomeMessage] : []);
+          
+          // Set up the new conversation with all messages (including welcome if it exists)
           const newMessages = [
-            ...existingMessages,
+            ...(welcomeMessage ? [welcomeMessage] : []),
             {
               id: data.userMessage.id,
               content: data.userMessage.content,
@@ -171,8 +212,30 @@ const ChatSection: React.FC = () => {
               timestamp: new Date(data.aiMessage.timestamp)
             }
           ];
-          return newMessages;
-        });
+          queryClient.setQueryData(newQueryKey, newMessages);
+        } else {
+          // Normal case - just update the conversation messages
+          queryClient.setQueryData(newQueryKey, (old: Message[] | undefined) => {
+            // Replace optimistic message with real messages from server
+            const existingMessages = (old || []).filter(msg => !msg.id.startsWith('temp-'));
+            const newMessages = [
+              ...existingMessages,
+              {
+                id: data.userMessage.id,
+                content: data.userMessage.content,
+                isUserMessage: true,
+                timestamp: new Date(data.userMessage.timestamp)
+              },
+              {
+                id: data.aiMessage.id,
+                content: data.aiMessage.content,
+                isUserMessage: false,
+                timestamp: new Date(data.aiMessage.timestamp)
+              }
+            ];
+            return newMessages;
+          });
+        }
       } else {
         console.error('No conversation ID returned from server!', data);
         // Fallback to invalidation if no conversation ID

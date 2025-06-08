@@ -99,11 +99,11 @@ const ChatSection: React.FC = () => {
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ content, attachments }: { content: string; attachments: AttachedFile[] }) => {
-      console.log(`Sending message with conversation ID: ${currentConversationId}`);
+    mutationFn: async ({ content, attachments, conversationId }: { content: string; attachments: AttachedFile[]; conversationId: string | null }) => {
+      console.log(`Sending message with conversation ID: ${conversationId}`);
       return apiRequest('POST', '/api/messages', { 
         content, 
-        conversationId: currentConversationId, // Will be null for the first message
+        conversationId, // Use the passed conversation ID
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
         aiModel: settings?.aiModel || "gpt-4o",
@@ -117,10 +117,12 @@ const ChatSection: React.FC = () => {
         automaticModelSelection: settings?.automaticModelSelection ?? true
       });
     },
-    onMutate: async ({ content }) => {
-      // Use the consistent query key from above
-      await queryClient.cancelQueries({ queryKey: messagesQueryKey });
-      const previousMessages = queryClient.getQueryData<Message[]>(messagesQueryKey);
+    onMutate: async ({ content, conversationId }) => {
+      // Use the conversation ID passed to the mutation to determine the correct query key
+      const queryKey = conversationId ? ['messages', conversationId] : ['messages', 'new'];
+      
+      await queryClient.cancelQueries({ queryKey });
+      const previousMessages = queryClient.getQueryData<Message[]>(queryKey);
 
       const optimisticUserMessage: Message = {
         id: `temp-${Date.now()}`,
@@ -130,12 +132,12 @@ const ChatSection: React.FC = () => {
       };
 
       // Update the currently active query optimistically
-      queryClient.setQueryData<Message[]>(messagesQueryKey, (old = []) => [
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) => [
         ...old,
         optimisticUserMessage
       ]);
 
-      return { previousMessages, messagesQueryKey };
+      return { previousMessages, messagesQueryKey: queryKey };
     },
     onError: (err, variables, context) => {
       // Rollback on error
@@ -245,7 +247,8 @@ const ChatSection: React.FC = () => {
     if (inputMessage.trim() || attachedFiles.length > 0) {
       sendMessageMutation.mutate({ 
         content: inputMessage, 
-        attachments: attachedFiles 
+        attachments: attachedFiles,
+        conversationId: currentConversationId
       });
       setInputMessage("");
     }

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   Paperclip,
@@ -148,6 +147,8 @@ const ChatSection: React.FC = () => {
           type: f.fileType 
         })) : undefined
       });
+      setInputMessage("");
+      setAttachedFiles([]);
     },
     onSuccess: (data) => {
       console.log("Message sent successfully:", data);
@@ -184,9 +185,6 @@ const ChatSection: React.FC = () => {
           },
         ];
       });
-
-      setAttachedFiles([]);
-      setInputMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
     onError: (error) => {

@@ -35,6 +35,9 @@ This directory contains detailed changelogs for major feature releases of the AI
 *   **[2025-01-12: Attachment Persistence Issue Resolution](./10-attachment-persistence-issue-2025-01-12.md)**
     *   **✅ RESOLVED**: Critical fix for attachment persistence in conversations. Fixed React state closure issue where conversation IDs weren't properly maintained across message turns. Images and files now remain visible throughout entire conversations, enabling proper follow-up questions about visual content. Complete ChatGPT-like visual conversation experience restored.
 
+*   **[2025-01-14: ChatSection Refactoring](./11-chat-section-refactoring-2025-01-14.md)**
+    *   **✅ COMPLETE**: Major code organization improvement that reduced the main ChatSection component from 500+ to ~280 lines. Extracted custom hooks for file management, chat messages, and report generation. Created utility functions for better code reusability. **Zero breaking changes** - all functionality preserved and enhanced through better separation of concerns.
+
 ## Feature Interconnections & Evolution
 
 The AI Wellness Coach has evolved through several key stages, with features often building upon or interacting with each other:
@@ -64,7 +67,7 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
 
 **Key Component Interactions:**
 
-*   **`ChatSection.tsx`** is a central hub, benefiting from:
+*   **`ChatSection.tsx`** is a central hub (refactored January 2025), benefiting from:
     *   Multi-LLM choices with automatic model selection.
     *   Text input from the `AudioRecorder.tsx`.
     *   Context and personalization from the `memory-service.ts`.
@@ -72,6 +75,7 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
     *   Intelligent model routing based on attachments and query complexity.
     *   Complete conversation history with visual context persistence.
     *   **Robust conversation management** with proper state handling and attachment persistence.
+    *   **Modular architecture** with custom hooks (`useChatMessages.ts`, `useFileManagement.ts`, `useReportGeneration.ts`) and utilities (`chatUtils.tsx`).
 *   **`shared/schema.ts`** is critical, defining data structures for:
     *   User preferences (including LLM choice, transcription provider, automatic model selection).
     *   Health data.
@@ -96,3 +100,4 @@ The AI Wellness Coach now provides a complete, ChatGPT-like conversational exper
 - **Multi-modal Interactions**: Text, voice, images, and files all work seamlessly together
 - **Personalized Coaching**: AI memory system provides contextual, personalized responses
 - **Cross-Platform Compatibility**: Works across all supported AI providers (OpenAI, Google Gemini)
+- **Enhanced Code Architecture**: Clean, maintainable codebase with proper separation of concerns (January 2025 refactoring)

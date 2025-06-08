@@ -124,7 +124,13 @@ useEffect(() => {
 ## Technical Implementation Summary
 
 ### Files Modified:
-- `client/src/components/ChatSection.tsx` - Complete redesign of message display logic
+- `client/src/components/ChatSection.tsx` - Complete redesign of message display logic (later refactored in changelog 11)
+
+### Post-Refactoring Status (January 14, 2025):
+The first message visibility fix has been preserved through the ChatSection refactoring:
+- Pending message logic moved to `client/src/hooks/useChatMessages.ts`
+- Message display utilities moved to `client/src/utils/chatUtils.tsx`
+- All functionality remains intact with the refactored architecture
 
 ### Key Architectural Changes:
 

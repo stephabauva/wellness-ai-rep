@@ -79,6 +79,8 @@ Successfully implemented a comprehensive conversation management system that mai
 - **Message Loading**: Proper loading of conversation-specific messages
 - **State Management**: Enhanced state management for conversation context
 
+**Post-Refactoring Update (January 14, 2025)**: Following the ChatSection refactoring (changelog 11), conversation management logic has been moved to `client/src/hooks/useChatMessages.ts` while maintaining all functionality.
+
 ## Problem Resolution
 
 ### Issues Fixed

@@ -81,8 +81,10 @@ export const useFileManagement = () => {
     attachedFiles,
     setAttachedFiles,
     uploadFileMutation,
+    handleFileUpload: (file: File) => uploadFileMutation.mutate(file),
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
+    updateAttachedFiles,
   };
 };

@@ -106,7 +106,7 @@ class ChatService {
       let systemPrompt = `=== COACHING PERSONA ===
 ${memoryEnhancedPrompt}`;
 
-      if (currentHasImages) {
+      if (currentHasImages && !currentHasPDFs) {
         systemPrompt = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
 YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
 
@@ -167,6 +167,7 @@ CORRECT RESPONSES:
 FORBIDDEN RESPONSES:
 ❌ "It appears you haven't provided an image yet"
 ❌ Any mention of images, photos, or visual content
+❌ Any reference to food, plates, meals, or visual elements
 
 === COACHING PERSONA ===
 ${memoryEnhancedPrompt}

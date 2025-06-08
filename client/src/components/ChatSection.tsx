@@ -68,10 +68,11 @@ const ChatSection: React.FC = () => {
   const {
     attachedFiles,
     setAttachedFiles,
-    handleFileUpload,
+    uploadFileMutation,
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
+    updateAttachedFiles,
   } = useFileManagement();
 
   const {
@@ -168,19 +169,15 @@ const ChatSection: React.FC = () => {
   const handleImportSelectedFiles = () => {
     const filesToImport = managerFiles.filter(f => selectedManagerFiles.has(f.id));
 
-    filesToImport.forEach(file => {
-      const attachedFile = {
+    if (updateAttachedFiles) {
+      updateAttachedFiles(filesToImport.map(file => ({
         id: file.id,
         fileName: file.fileName,
         displayName: file.displayName,
         fileType: file.fileType,
         fileSize: file.fileSize,
-      };
-      setAttachedFiles((prev) => {
-          if (prev.find((f) => f.id === file.id)) return prev;
-          return [...prev, attachedFile];
-        });
-    });
+      })));
+    }
 
     setShowFileManager(false);
     setSelectedManagerFiles(new Set());

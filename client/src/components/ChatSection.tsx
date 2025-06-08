@@ -71,8 +71,14 @@ const ChatSection: React.FC = () => {
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
-    setAttachedFiles,
   } = useFileManagement();
+
+  const [attachedFiles, setAttachedFiles] = useState<FileManagerFile[]>([]);
+
+  // Ensure setAttachedFiles is available for file import
+  const updateAttachedFiles = (updater: (prev: FileManagerFile[]) => FileManagerFile[]) => {
+    setAttachedFiles(updater);
+  };
 
   const {
     messages,
@@ -133,7 +139,7 @@ const ChatSection: React.FC = () => {
     setShowFileManager(true);
     setLoadingManagerFiles(true);
     setSelectedManagerFiles(new Set());
-    
+
     try {
       const response = await fetch('/api/files');
       if (response.ok) {
@@ -167,7 +173,7 @@ const ChatSection: React.FC = () => {
 
   const handleImportSelectedFiles = () => {
     const filesToImport = managerFiles.filter(f => selectedManagerFiles.has(f.id));
-    
+
     filesToImport.forEach(file => {
       const attachedFile = {
         id: file.id,
@@ -176,13 +182,12 @@ const ChatSection: React.FC = () => {
         fileType: file.fileType,
         fileSize: file.fileSize,
       };
-      setAttachedFiles(prev => {
-        // Avoid duplicates
-        if (prev.find(f => f.id === file.id)) return prev;
-        return [...prev, attachedFile];
-      });
+      updateAttachedFiles((prev) => {
+          if (prev.find((f) => f.id === file.id)) return prev;
+          return [...prev, attachedFile];
+        });
     });
-    
+
     setShowFileManager(false);
     setSelectedManagerFiles(new Set());
   };
@@ -437,7 +442,7 @@ const ChatSection: React.FC = () => {
               Import Files from File Manager
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex-1 overflow-hidden flex flex-col space-y-4">
             {/* Controls */}
             <div className="flex items-center justify-between gap-4">
@@ -454,7 +459,7 @@ const ChatSection: React.FC = () => {
                   {selectedManagerFiles.size > 0 ? `${selectedManagerFiles.size} selected` : 'Select all'}
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 {/* View Mode Toggle */}
                 <div className="flex gap-1 border rounded-md p-1">
@@ -486,7 +491,7 @@ const ChatSection: React.FC = () => {
                     <Grid3X3 className="h-3 w-3" />
                   </Button>
                 </div>
-                
+
                 <Button 
                   onClick={handleImportSelectedFiles}
                   disabled={selectedManagerFiles.size === 0}
@@ -585,7 +590,7 @@ const ChatSection: React.FC = () => {
                           onCheckedChange={() => handleSelectManagerFile(file.id)}
                           onClick={(e) => e.stopPropagation()}
                         />
-                        
+
                         {fileManagerViewMode === 'list-with-icons' && (
                           <div className="flex-shrink-0 w-10 h-10 bg-muted rounded overflow-hidden flex items-center justify-center">
                             {file.fileType.startsWith('image/') ? (
@@ -604,7 +609,7 @@ const ChatSection: React.FC = () => {
                             </div>
                           </div>
                         )}
-                        
+
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-medium truncate">
                             {file.displayName}

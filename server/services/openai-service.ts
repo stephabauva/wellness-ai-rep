@@ -72,12 +72,25 @@ class ChatService {
         conversationHistory
       );
 
-      // Retrieve relevant memories for context
-      const relevantMemories = await memoryService.getContextualMemories(
+      // Check if this is a query about current attachments
+      const isCurrentFileQuery = attachments.length > 0 && (
+        message.toLowerCase().includes('this file') ||
+        message.toLowerCase().includes('this document') ||
+        message.toLowerCase().includes('this image') ||
+        message.toLowerCase().includes('what is this') ||
+        message.toLowerCase().includes('what does it contain') ||
+        message.toLowerCase().includes('what does this') ||
+        message.includes('[') && message.includes('attachment')
+      );
+
+      // Retrieve relevant memories for context only if not asking about current files
+      const relevantMemories = isCurrentFileQuery ? [] : await memoryService.getContextualMemories(
         userId,
         conversationHistory,
         message
       );
+
+      console.log(`Memory retrieval: ${isCurrentFileQuery ? 'SKIPPED (current file query)' : 'ACTIVE'} - ${relevantMemories.length} memories used`);
 
       // Build conversation context with proper message history
       const conversationContext = [];

@@ -319,13 +319,9 @@ Please acknowledge that you understand these visual analysis requirements.`
       parts: [{ text: "I understand. I have full visual access to all images and will analyze them directly without asking for descriptions. I can see and reference specific visual elements confidently." }]
     });
 
-    // Filter conversation history to current session only for Google Gemini
-    // Note: conversationHistory should already be filtered to current session by the caller
-    const currentSessionHistory = conversationHistory;
+    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} current session messages`);
 
-    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
-
-    for (const msg of currentSessionHistory) {
+    for (const msg of conversationHistory) {
       if (msg.role === 'user') {
         const parts = [];
 

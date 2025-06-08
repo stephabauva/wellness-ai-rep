@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Paperclip,
@@ -42,8 +43,8 @@ type Message = {
 
 type AttachedFile = {
   id: string;
-  fileName: string; // Backend storage filename
-  displayName?: string; // Original filename for display
+  fileName: string;
+  displayName?: string;
   fileType: string;
   fileSize: number;
   url?: string;
@@ -70,7 +71,6 @@ const ChatSection: React.FC = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Local state for immediate user message visibility
   const [pendingUserMessage, setPendingUserMessage] = useState<{
     content: string;
     timestamp: Date;
@@ -78,7 +78,6 @@ const ChatSection: React.FC = () => {
   } | null>(null);
 
   const { data: messages, isLoading: loadingMessages } = useQuery({
-    // FIX 1: The query key is derived directly here. This is cleaner.
     queryKey: ["messages", currentConversationId || "new"],
     queryFn: async () => {
       if (!currentConversationId) {
@@ -120,7 +119,8 @@ const ChatSection: React.FC = () => {
       attachments: AttachedFile[];
       conversationId: string | null;
     }) => {
-      return apiRequest("POST", "/api/messages", {
+      console.log("Sending message with conversation ID:", conversationId);
+      const response = await apiRequest("POST", "/api/messages", {
         content,
         conversationId,
         coachingMode,
@@ -135,31 +135,34 @@ const ChatSection: React.FC = () => {
         })),
         automaticModelSelection: settings?.automaticModelSelection ?? true,
       });
+      console.log("API Response data:", response);
+      return response;
     },
     onMutate: async ({ content, attachments }) => {
-      // Immediately show user message in local state
       setPendingUserMessage({
         content,
         timestamp: new Date(),
-        attachments: attachments.length > 0 ? attachments.map(f => ({ name: f.displayName || f.fileName, type: f.fileType })) : undefined
+        attachments: attachments.length > 0 ? attachments.map(f => ({ 
+          name: f.displayName || f.fileName, 
+          type: f.fileType 
+        })) : undefined
       });
     },
     onSuccess: (data) => {
+      console.log("Message sent successfully:", data);
       const finalConversationId = data.conversationId;
+      console.log("Response conversation ID:", finalConversationId);
+      console.log("Current conversation ID:", currentConversationId);
 
-      // Clear pending message since real messages are now available
       setPendingUserMessage(null);
 
-      // Update conversation ID if this was a new conversation
       if (!currentConversationId) {
+        console.log("Updating conversation ID from null to", finalConversationId);
         setCurrentConversationId(finalConversationId);
       }
 
-      // Directly set the messages for this conversation
       queryClient.setQueryData<Message[]>(["messages", finalConversationId], (old = []) => {
         const existingMessages = old || [];
-
-        // Add the new messages from server
         return [
           ...existingMessages,
           {
@@ -180,10 +183,8 @@ const ChatSection: React.FC = () => {
       setAttachedFiles([]);
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
-    onError: (error, variables, context) => {
+    onError: (error) => {
       console.error("Message send error:", error);
-
-      // Clear pending message on error
       setPendingUserMessage(null);
     },
   });
@@ -193,14 +194,11 @@ const ChatSection: React.FC = () => {
       sendMessageMutation.mutate({
         content: inputMessage,
         attachments: attachedFiles,
-        // Pass the current state at the time of the click.
         conversationId: currentConversationId,
       });
       setInputMessage("");
     }
   };
-
-  // ... rest of the component is unchanged ...
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -330,14 +328,10 @@ const ChatSection: React.FC = () => {
   }, [messages]);
 
   let welcomeMessages = [welcomeMessage];
-
-  // Combine actual messages with pending user message
   let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
 
-  // Add pending user message for immediate visibility
   if (pendingUserMessage) {
     if (!currentConversationId) {
-      // New conversation - replace welcome message with pending message
       messagesToDisplay = [
         {
           id: "temp-pending",
@@ -347,7 +341,6 @@ const ChatSection: React.FC = () => {
         }
       ];
     } else {
-      // Existing conversation - append pending message
       messagesToDisplay = [
         ...messagesToDisplay,
         {
@@ -362,7 +355,6 @@ const ChatSection: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
       <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between">
           <div>
@@ -387,7 +379,6 @@ const ChatSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loadingMessages ? (
           <div className="space-y-4">
@@ -414,7 +405,6 @@ const ChatSection: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {attachedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">

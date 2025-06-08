@@ -13,7 +13,9 @@ import {
   RotateCcw,
   Share2,
   QrCode,
-  X
+  X,
+  Grid3X3,
+  List
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,6 +83,7 @@ const FileManagerSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeData, setQRCodeData] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -354,11 +357,34 @@ const FileManagerSection: React.FC = () => {
                 </div>
               </>
             )}
+            
+            {/* View Mode Toggle */}
+            <div className="flex gap-1 border rounded-md p-1">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-7 w-7 p-0"
+                title="List view"
+              >
+                <List className="h-3 w-3" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-7 w-7 p-0"
+                title="Grid view"
+              >
+                <Grid3X3 className="h-3 w-3" />
+              </Button>
+            </div>
+            
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => refetch()}
-              className={selectedFiles.size > 0 ? "w-full sm:w-auto" : "ml-auto"}
+              className={selectedFiles.size > 0 ? "w-full sm:w-auto" : ""}
             >
               <RotateCcw className="h-4 w-4 sm:mr-2" />
               <span className="sm:inline">Refresh</span>
@@ -394,6 +420,7 @@ const FileManagerSection: React.FC = () => {
               selectedFiles={selectedFiles}
               onSelectFile={handleSelectFile}
               onSelectAll={handleSelectAll}
+              viewMode={viewMode}
             />
           </TabsContent>
 
@@ -415,6 +442,7 @@ const FileManagerSection: React.FC = () => {
                 selectedFiles={selectedFiles}
                 onSelectFile={handleSelectFile}
                 onSelectAll={handleSelectAll}
+                viewMode={viewMode}
               />
             </TabsContent>
           ))}
@@ -466,6 +494,7 @@ interface FileListProps {
   selectedFiles: Set<string>;
   onSelectFile: (fileId: string) => void;
   onSelectAll: () => void;
+  viewMode: 'list' | 'grid';
 }
 
 const getRetentionBadgeColor = (category: string) => {
@@ -481,7 +510,8 @@ const FileList: React.FC<FileListProps> = ({
   files, 
   selectedFiles, 
   onSelectFile, 
-  onSelectAll 
+  onSelectAll,
+  viewMode 
 }) => {
   if (files.length === 0) {
     return (
@@ -500,6 +530,117 @@ const FileList: React.FC<FileListProps> = ({
   const allSelected = files.length > 0 && selectedFiles.size === files.length;
   const someSelected = selectedFiles.size > 0 && selectedFiles.size < files.length;
 
+  if (viewMode === 'grid') {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected;
+                }}
+                onCheckedChange={onSelectAll}
+              />
+              <span className="text-sm font-medium">
+                {selectedFiles.size > 0 ? `${selectedFiles.size} selected` : 'Select all'}
+              </span>
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {files.length} file{files.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {files.map((file) => (
+              <div
+                key={file.id}
+                className={cn(
+                  "relative border rounded-lg p-3 transition-colors cursor-pointer",
+                  selectedFiles.has(file.id) ? "bg-accent border-primary" : "hover:bg-muted/50"
+                )}
+                onClick={() => onSelectFile(file.id)}
+              >
+                <div className="absolute top-2 left-2 z-10">
+                  <Checkbox
+                    checked={selectedFiles.has(file.id)}
+                    onCheckedChange={() => onSelectFile(file.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+                
+                <div className="absolute top-2 right-2 z-10">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-background/80"
+                    asChild
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <a 
+                      href={`/uploads/${file.fileName}`} 
+                      download={file.displayName}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Download file"
+                    >
+                      <Download className="h-3 w-3" />
+                    </a>
+                  </Button>
+                </div>
+
+                <div className="flex flex-col items-center space-y-2 mt-6">
+                  {/* File Preview */}
+                  <div className="w-16 h-16 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+                    {file.fileType.startsWith('image/') ? (
+                      <img
+                        src={`/uploads/${file.fileName}`}
+                        alt={file.displayName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={cn("flex items-center justify-center w-full h-full", file.fileType.startsWith('image/') ? 'hidden' : '')}>
+                      {getFileIcon(file.fileType, file.fileName)}
+                    </div>
+                  </div>
+
+                  {/* File Info */}
+                  <div className="text-center space-y-1 w-full">
+                    <h4 className="text-xs font-medium truncate" title={file.displayName}>
+                      {file.displayName}
+                    </h4>
+                    <div className="flex flex-col items-center gap-1">
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          getRetentionBadgeColor(file.retentionInfo.category),
+                          "text-xs"
+                        )}
+                      >
+                        {file.retentionInfo.category === 'high' ? 'Permanent' : 
+                         `${file.retentionInfo.retentionDays}d`}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatFileSize(file.fileSize)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // List view (default)
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -535,8 +676,22 @@ const FileList: React.FC<FileListProps> = ({
               onCheckedChange={() => onSelectFile(file.id)}
             />
             
-            <div className="flex-shrink-0">
-              {getFileIcon(file.fileType, file.fileName)}
+            {/* File Preview */}
+            <div className="flex-shrink-0 w-10 h-10 bg-muted rounded overflow-hidden flex items-center justify-center">
+              {file.fileType.startsWith('image/') ? (
+                <img
+                  src={`/uploads/${file.fileName}`}
+                  alt={file.displayName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <div className={cn("flex items-center justify-center w-full h-full", file.fileType.startsWith('image/') ? 'hidden' : '')}>
+                {getFileIcon(file.fileType, file.fileName)}
+              </div>
             </div>
             
             <div className="flex-1 min-w-0">

@@ -391,17 +391,20 @@ const FileList: React.FC<FileListProps> = ({
             </div>
             
             <div className="flex items-center gap-1">
-              {file.url && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+              >
+                <a 
+                  href={`/uploads/${file.fileName}`} 
+                  download={file.displayName}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <a href={file.url} download>
-                    <Download className="h-4 w-4" />
-                  </a>
-                </Button>
-              )}
+                  <Download className="h-4 w-4" />
+                </a>
+              </Button>
             </div>
           </div>
         ))}

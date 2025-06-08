@@ -494,18 +494,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const fileId of fileIds) {
         try {
+          // fileId is the fileName from the frontend
           const filePath = join(process.cwd(), 'uploads', fileId);
+          console.log(`Attempting to delete file: ${filePath}`);
+          
           if (existsSync(filePath)) {
             const stats = statSync(filePath);
             unlinkSync(filePath);
             deletedCount++;
             freedSpace += stats.size;
+            console.log(`Successfully deleted file: ${fileId}, size: ${stats.size} bytes`);
+          } else {
+            console.log(`File not found: ${filePath}`);
           }
         } catch (error) {
           console.error(`Failed to delete file ${fileId}:`, error);
         }
       }
 
+      console.log(`Deletion summary: ${deletedCount} files deleted, ${freedSpace} bytes freed`);
       res.json({ deletedCount, freedSpace });
     } catch (error) {
       console.error('Error deleting files:', error);

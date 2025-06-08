@@ -67,13 +67,12 @@ const ChatSection: React.FC = () => {
   // Custom hooks
   const {
     attachedFiles,
+    setAttachedFiles,
     uploadFileMutation,
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
   } = useFileManagement();
-
-  const [attachedFiles, setAttachedFiles] = useState<FileManagerFile[]>([]);
 
   // Ensure setAttachedFiles is available for file import
   const updateAttachedFiles = (updater: (prev: FileManagerFile[]) => FileManagerFile[]) => {

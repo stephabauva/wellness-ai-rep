@@ -671,23 +671,25 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     console.log(`Processing attachments: ${attachments.length} total, ${hasImages ? 'has images' : 'no images'}, ${hasPDFs ? 'has PDFs' : 'no PDFs'}`);
 
-    // Use ChatGPT's approach: include actual image data in message content
-    const content: any[] = [];
-
-    // Add text content first - modify message based on actual attachments
-    let messageText = message;
+    // For PDFs only, return a simple text message explaining the limitation
     if (!hasImages && hasPDFs) {
-      // If only PDFs, clean up the message and make context clear
-      messageText = message.replace(/\[.*?attachment.*?\]/gi, '').trim();
-      if (!messageText) {
-        messageText = "I have attached a PDF document. What specific information would you like me to help you with from this document?";
-      } else {
-        // Add clarification that this is about a PDF, not an image
-        messageText = `${messageText} (Note: I have attached a PDF document, not an image)`;
-      }
+      const pdfNames = attachments
+        .filter(att => att.fileType === 'application/pdf')
+        .map(att => att.displayName || att.fileName)
+        .join(', ');
+
+      const messageText = message.replace(/\[.*?attachment.*?\]/gi, '').trim() || 
+        "I have attached a PDF document. What specific information would you like me to help you with from this document?";
+
+      return { 
+        role: 'user', 
+        content: `${messageText}\n\nNote: I have attached the PDF file(s): ${pdfNames}. I cannot directly read PDF content, but I can help you with questions about documents if you describe the content or ask specific questions about what you're looking for.` 
+      };
     }
 
-    content.push({ type: "text", text: messageText });
+    // For images or mixed attachments, use the content array format
+    const content: any[] = [];
+    content.push({ type: "text", text: message });
 
     for (const attachment of attachments) {
       if (attachment.fileType?.startsWith('image/')) {
@@ -699,7 +701,6 @@ Please acknowledge that you understand these visual analysis requirements.`
 
             console.log(`Adding current image to message: ${attachment.fileName} (${imageBuffer.length} bytes)`);
 
-            // Include actual image data (ChatGPT approach)
             content.push({
               type: "image_url",
               image_url: {
@@ -709,28 +710,18 @@ Please acknowledge that you understand these visual analysis requirements.`
             });
           }
         } catch (error) {
-          console.error('Error processing current image:', error);
-          content.push({
-            type: "text",
-            text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
-          });
+          console.error(`Failed to load image ${attachment.fileName}:`, error);
         }
-      } else if (attachment.fileType === 'application/pdf') {
-        // For PDF attachments, be more specific about the limitation
-        content.push({
-          type: "text",
-          text: `[PDF Document: ${attachment.displayName || attachment.fileName} - I can see you've attached this PDF file. While I cannot directly read PDF content, I can help you with questions about the document if you describe what specific information you're looking for or copy/paste relevant text from the PDF.]`
-        });
       } else {
-        // For other non-image attachments
+        // For non-image attachments like PDFs, add text representation
         content.push({
           type: "text",
-          text: `[Document attached: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - I can see this file attachment but cannot directly analyze its content. Please describe what specific information you'd like me to help you with regarding this document.]`
+          text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - I cannot directly read this file type, but I can help answer questions if you describe its content]`
         });
       }
     }
 
-    return { role: 'user', content: content };
+    return { role: 'user', content };
   }
 
 

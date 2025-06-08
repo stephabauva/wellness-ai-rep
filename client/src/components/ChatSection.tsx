@@ -147,12 +147,17 @@ const ChatSection: React.FC = () => {
         return [...filteredOld, optimisticUserMessage];
       });
 
-      return { queryKey, conversationId, optimisticUserMessage };
+      return { 
+        queryKey, 
+        conversationId, 
+        optimisticUserMessage,
+        isNewConversation: !conversationId 
+      };
     },
     onSuccess: (data, variables, context) => {
       const finalConversationId = data.conversationId;
       
-      if (!context?.conversationId) {
+      if (context?.isNewConversation) {
         // NEW CONVERSATION: Transition from "new" to actual conversation ID
         const tempMessages = queryClient.getQueryData<Message[]>(["messages", "new"]) || [];
         

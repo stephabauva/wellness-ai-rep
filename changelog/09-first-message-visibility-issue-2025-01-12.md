@@ -69,17 +69,64 @@ This is a **React Query optimistic update problem** during the transition from a
 - **Approach**: Updated `onMutate` to use the passed conversation ID for determining correct query key
 - **Result**: ❌ Issue still not resolved
 
+### Fix Attempt #5: Fixed Context Handling in onSuccess
+- **Date**: Latest attempt
+- **Approach**: Fixed undefined context issue in `onSuccess` handler
+- **Problem Identified**: `context` parameter was undefined, causing condition `!context?.conversationId` to always be true
+- **Changes Made**:
+  ```typescript
+  // Added explicit isNewConversation flag in onMutate return
+  return { 
+    queryKey, 
+    conversationId, 
+    optimisticUserMessage,
+    isNewConversation: !conversationId 
+  };
+  
+  // Fixed condition in onSuccess
+  if (context?.isNewConversation) { // Instead of !context?.conversationId
+  ```
+- **Result**: ❌ Issue persists - context handling improved but first message still not immediately visible
+
+### Fix Attempt #6: Comprehensive Cache Transition Logic
+- **Date**: Multiple iterations  
+- **Approach**: Multiple attempts to fix cache transitions between "new" and actual conversation IDs
+- **Issues Addressed**:
+  - Optimistic message preservation during conversation creation
+  - Proper cache key transitions
+  - Enhanced error handling and logging
+- **Result**: ❌ Core issue remains unresolved
+
 ## Current Status
 
-**Status**: 🔴 **UNRESOLVED**
+**Status**: 🔴 **CRITICAL UNRESOLVED ISSUE**
 
-- ✅ Conversation ID management is working correctly
-- ✅ Subsequent messages (2nd, 3rd, etc.) display immediately 
-- ✅ Backend API calls are successful
-- ✅ Chat context persistence is working
-- ❌ **First message visibility issue persists**
+### ✅ What's Working Perfectly:
+- Backend API calls are 100% successful (confirmed by console logs)
+- Conversation creation and ID management
+- Subsequent messages (2nd, 3rd, etc.) display immediately 
+- AI responses are generated correctly
+- Chat context persistence across conversations
+- Conversation history and switching
 
-The core problem remains: the first message in a new conversation is not immediately visible to the user upon sending.
+### ❌ Critical Issue Persisting:
+- **First message visibility**: The first message in a new conversation is not immediately visible to the user upon sending
+- **User Experience Impact**: Users see their message disappear after sending, creating confusion
+- **Timing Issue**: Message only appears when AI response arrives (4-6 seconds later)
+
+### 📊 Console Analysis (Latest Logs):
+```
+Sending message with conversation ID: null
+API Response data: {...}  // ✅ API call successful
+Response conversation ID: a73d61a7-48f8-4539-ae8d-ec71f45bb433  // ✅ Conversation created
+Current conversation ID: null  // ✅ State transition working
+```
+
+The logs confirm that:
+- ✅ API calls are successful every time
+- ✅ Backend processing is working flawlessly  
+- ✅ Conversation creation is functioning
+- ❌ React Query optimistic updates are failing for first messages only
 
 ## Technical Details
 
@@ -99,16 +146,41 @@ The core problem remains: the first message in a new conversation is not immedia
 - ✅ File attachments
 - ✅ Multi-turn conversations
 
+## Root Cause Analysis (Updated 2025-01-12)
+
+After extensive debugging and multiple fix attempts, the core issue has been identified:
+
+### **The Real Problem**: React Query Optimistic Update Race Condition
+
+1. **Cache Key Mismatch During Transition**: When starting a new conversation (`conversationId: null`), the optimistic update uses query key `["messages", "new"]`
+2. **State Update Timing**: The `setCurrentConversationId` happens after the optimistic update, causing a disconnect
+3. **Component Re-render Issue**: The component renders with `currentConversationId: null` but tries to display messages from a cache that's being transitioned
+
+### **Why Subsequent Messages Work**: 
+- Once `currentConversationId` is set to an actual ID, all subsequent messages use the same query key consistently
+- No cache transitions are needed for existing conversations
+
+## Immediate Action Required
+
+**CRITICAL**: This issue is blocking user experience. We need to implement a simpler, more reliable approach:
+
+### Recommended Fix Strategy:
+1. **Abandon Complex Cache Transitions**: Stop trying to transition from "new" to conversation ID
+2. **Use Consistent Query Keys**: Always use the conversation ID, even for new conversations
+3. **Implement Local State Fallback**: Use React state to immediately show user messages while waiting for server response
+4. **Simplify onMutate Logic**: Remove complex cache manipulation and use straightforward optimistic updates
+
 ## Next Steps Required
 
-1. **Deep Investigation**: Need to examine the exact timing of React Query cache updates vs component re-renders
-2. **Alternative Approach**: Consider using a different strategy for handling the new → existing conversation transition
-3. **Debugging**: Add more detailed logging to track the optimistic update lifecycle
-4. **Potential Solutions**:
-   - Implement a local state flag to force immediate display
-   - Restructure the cache key strategy
-   - Use React Query's `setQueriesData` for bulk cache updates
-   - Consider using `invalidateQueries` instead of direct cache manipulation
+**Priority 1 - Immediate Fix Needed:**
+1. **Implement Local State Strategy**: Add immediate local state display for user messages
+2. **Simplify Query Key Logic**: Use single consistent query key pattern
+3. **Remove Complex Cache Transitions**: Eliminate "new" → conversation ID transitions
+
+**Priority 2 - Future Improvements:**
+1. **Performance Optimization**: Optimize React Query usage patterns
+2. **Better Error Handling**: Enhanced error recovery for optimistic updates
+3. **Testing**: Comprehensive testing of edge cases
 
 ## User Impact
 

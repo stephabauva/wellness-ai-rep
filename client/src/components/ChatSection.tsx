@@ -70,6 +70,13 @@ const ChatSection: React.FC = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // Local state for immediate user message visibility
+  const [pendingUserMessage, setPendingUserMessage] = useState<{
+    content: string;
+    timestamp: Date;
+    attachments?: any[];
+  } | null>(null);
+
   const { data: messages, isLoading: loadingMessages } = useQuery({
     // FIX 1: The query key is derived directly here. This is cleaner.
     queryKey: ["messages", currentConversationId || "new"],
@@ -129,109 +136,55 @@ const ChatSection: React.FC = () => {
         automaticModelSelection: settings?.automaticModelSelection ?? true,
       });
     },
-    onMutate: async ({ content, conversationId }) => {
-      // ChatGPT/Google AI Studio approach: Always show the message immediately
-      const optimisticUserMessage: Message = {
-        id: `temp-${Date.now()}`,
+    onMutate: async ({ content, attachments }) => {
+      // Immediately show user message in local state
+      setPendingUserMessage({
         content,
-        isUserMessage: true,
         timestamp: new Date(),
-      };
-
-      // Use current conversation state for the query key
-      const queryKey = ["messages", conversationId || "new"];
-      
-      queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
-        // Remove welcome message when adding first user message to new conversation
-        const filteredOld = conversationId ? old : old.filter(msg => msg.id !== "welcome-message");
-        return [...filteredOld, optimisticUserMessage];
+        attachments: attachments.length > 0 ? attachments.map(f => ({ name: f.name, type: f.type })) : undefined
       });
-
-      return { 
-        queryKey, 
-        conversationId, 
-        optimisticUserMessage,
-        isNewConversation: !conversationId 
-      };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data) => {
       const finalConversationId = data.conversationId;
-      
-      if (context?.isNewConversation) {
-        // NEW CONVERSATION: Transition from "new" to actual conversation ID
-        const tempMessages = queryClient.getQueryData<Message[]>(["messages", "new"]) || [];
-        
-        // Build final messages array with real data
-        const finalMessages = tempMessages
-          .filter(msg => !msg.id.startsWith("temp-"))
-          .concat([
-            {
-              id: data.userMessage.id,
-              content: data.userMessage.content,
-              isUserMessage: true,
-              timestamp: new Date(data.userMessage.timestamp),
-            },
-            {
-              id: data.aiMessage.id,
-              content: data.aiMessage.content,
-              isUserMessage: false,
-              timestamp: new Date(data.aiMessage.timestamp),
-            }
-          ]);
-        
-        // Set data for the new conversation
-        queryClient.setQueryData(["messages", finalConversationId], finalMessages);
-        
-        // Update UI state
+
+      // Clear pending message since real messages are now available
+      setPendingUserMessage(null);
+
+      // Update conversation ID if this was a new conversation
+      if (!currentConversationId) {
         setCurrentConversationId(finalConversationId);
-        
-        // Clean up the temporary cache
-        queryClient.removeQueries({ queryKey: ["messages", "new"] });
-        
-      } else {
-        // EXISTING CONVERSATION: Update the existing conversation cache
-        const currentQueryKey = ["messages", finalConversationId];
-        
-        queryClient.setQueryData<Message[]>(currentQueryKey, (old = []) => {
-          // Remove the optimistic message and add real messages
-          const withoutOptimistic = old.filter(msg => !msg.id.startsWith("temp-"));
-          
-          return [
-            ...withoutOptimistic,
-            {
-              id: data.userMessage.id,
-              content: data.userMessage.content,
-              isUserMessage: true,
-              timestamp: new Date(data.userMessage.timestamp),
-            },
-            {
-              id: data.aiMessage.id,
-              content: data.aiMessage.content,
-              isUserMessage: false,
-              timestamp: new Date(data.aiMessage.timestamp),
-            },
-          ];
-        });
       }
+
+      // Directly set the messages for this conversation
+      queryClient.setQueryData<Message[]>(["messages", finalConversationId], (old = []) => {
+        const existingMessages = old || [];
+
+        // Add the new messages from server
+        return [
+          ...existingMessages,
+          {
+            id: data.userMessage.id,
+            content: data.userMessage.content,
+            isUserMessage: true,
+            timestamp: new Date(data.userMessage.timestamp),
+          },
+          {
+            id: data.aiMessage.id,
+            content: data.aiMessage.content,
+            isUserMessage: false,
+            timestamp: new Date(data.aiMessage.timestamp),
+          },
+        ];
+      });
 
       setAttachedFiles([]);
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
     onError: (error, variables, context) => {
       console.error("Message send error:", error);
-      
-      // Remove optimistic message on error
-      if (context?.queryKey) {
-        queryClient.setQueryData<Message[]>(context.queryKey, (old = []) => 
-          old.filter(msg => !msg.id.startsWith("temp-"))
-        );
-      }
-      
-      toast({
-        title: "Error",
-        description: "Failed to send message.",
-        variant: "destructive",
-      });
+
+      // Clear pending message on error
+      setPendingUserMessage(null);
     },
   });
 
@@ -376,6 +329,23 @@ const ChatSection: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  let welcomeMessages = [welcomeMessage];
+
+  // Combine actual messages with pending user message
+  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
+
+  // Add pending user message for immediate visibility
+  if (pendingUserMessage && (!messages || messages.length === 0)) {
+    messagesToDisplay = [
+      {
+        id: "temp-pending",
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+      }
+    ];
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -418,7 +388,7 @@ const ChatSection: React.FC = () => {
             ))}
           </div>
         ) : (
-          messages?.map((message) => (
+          messagesToDisplay?.map((message) => (
             <ChatMessage
               key={message.id}
               message={message.content}

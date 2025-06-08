@@ -191,10 +191,11 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
               });
             }
           } else {
-            // Regular message without attachments
+            // **CRITICAL FIX**: Regular message without attachments
+            // MUST be wrapped in the array format for consistency.
             conversationContext.push({
               role: msg.role,
-              content: msg.content
+              content: [{ type: 'text', text: msg.content || '' }]
             });
           }
         }

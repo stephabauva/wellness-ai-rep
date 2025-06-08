@@ -68,6 +68,11 @@
 
   ❌ Need to optimize coach and system prompts  
 
+  ❌ Implement automated scheduling mechanism (cron job) to trigger `cleanupExpiredAttachments()` method (ref: changelog #12)
+
+  ❌ Verify attachment metadata structure in database for retention system compatibility (ref: changelog #12)
+
+  ❌ Implement comprehensive logging for cleanup process (files deleted, space freed, errors) (ref: changelog #12)
 
 <br>
 
@@ -83,4 +88,4 @@
 
   ✅ Image inputs (“can’t process images”) now handled properly  
 
-  ✅ No persistence in chat context — now resolved  
+  ✅ No persistence in chat context — now resolved

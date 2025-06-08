@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Paperclip, Send, Upload, Camera, X, FileText, Image, Video, File, History } from "lucide-react";
 
@@ -38,6 +39,14 @@ type AttachedFile = {
   url?: string;
 };
 
+// Define a static welcome message to be reused
+const welcomeMessage: Message = {
+  id: 'welcome-message',
+  content: 'Welcome to your AI wellness coach! I\'m here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you\'re focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I\'m ready to help. What would you like to work on today?',
+  isUserMessage: false,
+  timestamp: new Date()
+};
+
 const ChatSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
@@ -49,28 +58,30 @@ const ChatSection: React.FC = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // Create a consistent query key based on the conversation ID
+  const messagesQueryKey = currentConversationId ? ['messages', currentConversationId] : ['messages', 'new'];
+
   // Get chat history for current conversation
   const { data: messages, isLoading: loadingMessages } = useQuery({
-    queryKey: ['/api/conversations', currentConversationId, 'messages'],
+    queryKey: messagesQueryKey,
     queryFn: async () => {
+      // Handle the "new chat" case directly instead of a separate API call
       if (!currentConversationId) {
-        // If no conversation selected, get legacy messages
-        const response = await fetch('/api/messages');
-        if (!response.ok) throw new Error('Failed to fetch messages');
-        return await response.json() as Message[];
-      } else {
-        // Get conversation messages
-        const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
-        if (!response.ok) throw new Error('Failed to fetch conversation messages');
-        const convMessages = await response.json();
-        // Convert to legacy format for compatibility
-        return convMessages.map((msg: any) => ({
-          id: msg.id,
-          content: msg.content,
-          isUserMessage: msg.role === 'user',
-          timestamp: new Date(msg.createdAt)
-        }));
+        return [welcomeMessage];
       }
+
+      // Get conversation messages
+      const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
+      if (!response.ok) throw new Error('Failed to fetch conversation messages');
+      const convMessages = await response.json();
+
+      // Convert to a consistent format
+      return convMessages.map((msg: any) => ({
+        id: msg.id,
+        content: msg.content,
+        isUserMessage: msg.role === 'user',
+        timestamp: new Date(msg.createdAt)
+      }));
     },
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000 // Cache for 5 minutes
@@ -92,89 +103,95 @@ const ChatSection: React.FC = () => {
       console.log(`Sending message with conversation ID: ${currentConversationId}`);
       return apiRequest('POST', '/api/messages', { 
         content, 
-        conversationId: currentConversationId,
+        conversationId: currentConversationId, // Will be null for the first message
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
         aiModel: settings?.aiModel || "gpt-4o",
         attachments: attachments.map(file => ({
           id: file.id,
-          fileName: file.fileName, // Backend storage filename
-          displayName: file.displayName, // Original filename for display
+          fileName: file.fileName,
+          displayName: file.displayName,
           fileType: file.fileType,
           fileSize: file.fileSize
         })),
         automaticModelSelection: settings?.automaticModelSelection ?? true
       });
     },
-    onMutate: async ({ content, attachments }) => {
-      // Get the current query key that the component is actually using
-      const activeQueryKey = currentConversationId 
-        ? ['/api/conversations', currentConversationId, 'messages']
-        : ['/api/messages'];
+    onMutate: async ({ content }) => {
+      // Use the consistent query key from above
+      await queryClient.cancelQueries({ queryKey: messagesQueryKey });
+      const previousMessages = queryClient.getQueryData<Message[]>(messagesQueryKey);
 
-      // Cancel the active query
-      await queryClient.cancelQueries({ queryKey: activeQueryKey });
-
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData(activeQueryKey);
-
-      // Create optimistic user message
       const optimisticUserMessage: Message = {
-        id: `temp-${Date.now()}`, // Temporary ID
+        id: `temp-${Date.now()}`,
         content,
         isUserMessage: true,
         timestamp: new Date()
       };
 
-      // Update the currently active query
-      queryClient.setQueryData(activeQueryKey, (old: Message[] | undefined) => {
-        const existingMessages = old || [];
-        return [...existingMessages, optimisticUserMessage];
-      });
+      // Update the currently active query optimistically
+      queryClient.setQueryData<Message[]>(messagesQueryKey, (old = []) => [
+        ...old,
+        optimisticUserMessage
+      ]);
 
-      // Return context for rollback
-      return { 
-        previousMessages,
-        activeQueryKey,
-        isFirstMessage: !currentConversationId
-      };
+      return { previousMessages, messagesQueryKey };
     },
     onError: (err, variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousMessages !== undefined) {
-        queryClient.setQueryData(context.activeQueryKey, context.previousMessages);
+      // Rollback on error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(context.messagesQueryKey, context.previousMessages);
       }
+      toast({ title: "Error", description: "Failed to send message.", variant: "destructive" });
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables, context) => {
       console.log('Message sent successfully:', data);
       console.log(`Response conversation ID: ${data?.conversationId}`);
       console.log(`Current conversation ID: ${currentConversationId}`);
       
-      // Always update conversation ID from response
-      if (data?.conversationId) {
-        if (currentConversationId !== data.conversationId) {
-          console.log(`Updating conversation ID from ${currentConversationId} to ${data.conversationId}`);
-          setCurrentConversationId(data.conversationId);
-        }
-        
-        // Set the query data directly instead of invalidating to prevent message loss
-        const newQueryKey = ['/api/conversations', data.conversationId, 'messages'];
-        
-        // If this was the first message, we need to clear the optimistic update from legacy messages
-        // and move everything to the new conversation
-        const wasFirstMessage = currentConversationId !== data.conversationId;
-        
-        if (wasFirstMessage) {
-          // Get the current legacy messages (including our optimistic update)
-          const legacyMessages = queryClient.getQueryData(['/api/messages']) as Message[] || [];
-          const welcomeMessage = legacyMessages.find(msg => msg.content.includes('Welcome to your AI Wellness Coach'));
-          
-          // Clear the legacy messages since we're moving to conversation-based
-          queryClient.setQueryData(['/api/messages'], welcomeMessage ? [welcomeMessage] : []);
-          
-          // Set up the new conversation with all messages (including welcome if it exists)
-          const newMessages = [
-            ...(welcomeMessage ? [welcomeMessage] : []),
+      // This is the core fix for the first message display
+      const isFirstMessage = !currentConversationId;
+
+      if (isFirstMessage && data?.conversationId) {
+        const newConversationId = data.conversationId;
+        const newConversationQueryKey = ['messages', newConversationId];
+
+        // 1. Get the current optimistic state from the 'new' chat cache
+        const optimisticMessages = queryClient.getQueryData<Message[]>(['messages', 'new']) || [];
+
+        // 2. Remove the temporary optimistic message
+        const finalMessages = optimisticMessages.filter(msg => !msg.id.startsWith('temp-'));
+
+        // 3. Add the real messages from the server response
+        finalMessages.push({
+          id: data.userMessage.id,
+          content: data.userMessage.content,
+          isUserMessage: true,
+          timestamp: new Date(data.userMessage.timestamp)
+        });
+        finalMessages.push({
+          id: data.aiMessage.id,
+          content: data.aiMessage.content,
+          isUserMessage: false,
+          timestamp: new Date(data.aiMessage.timestamp)
+        });
+
+        // 4. Pre-populate the cache for the new conversation ID
+        queryClient.setQueryData(newConversationQueryKey, finalMessages);
+
+        // 5. Remove the 'new' chat query from cache to ensure it's fresh next time
+        queryClient.removeQueries({ queryKey: ['messages', 'new'] });
+
+        // 6. NOW update the state to switch to the new conversation
+        setCurrentConversationId(newConversationId);
+
+      } else {
+        // This is for subsequent messages in an existing conversation
+        queryClient.setQueryData<Message[]>(context.messagesQueryKey, (old = []) => {
+          // Replace optimistic message with real messages
+          const existingMessages = old.filter(msg => !msg.id.startsWith('temp-'));
+          return [
+            ...existingMessages,
             {
               id: data.userMessage.id,
               content: data.userMessage.content,
@@ -188,38 +205,12 @@ const ChatSection: React.FC = () => {
               timestamp: new Date(data.aiMessage.timestamp)
             }
           ];
-          queryClient.setQueryData(newQueryKey, newMessages);
-        } else {
-          // Normal case - just update the conversation messages
-          queryClient.setQueryData(newQueryKey, (old: Message[] | undefined) => {
-            // Replace optimistic message with real messages from server
-            const existingMessages = (old || []).filter(msg => !msg.id.startsWith('temp-'));
-            const newMessages = [
-              ...existingMessages,
-              {
-                id: data.userMessage.id,
-                content: data.userMessage.content,
-                isUserMessage: true,
-                timestamp: new Date(data.userMessage.timestamp)
-              },
-              {
-                id: data.aiMessage.id,
-                content: data.aiMessage.content,
-                isUserMessage: false,
-                timestamp: new Date(data.aiMessage.timestamp)
-              }
-            ];
-            return newMessages;
-          });
-        }
-      } else {
-        console.error('No conversation ID returned from server!', data);
-        // Fallback to invalidation if no conversation ID
-        queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+        });
       }
-      
+
+      // Invalidate the list of conversations so the history panel updates
       queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
-      
+
       setAttachedFiles([]);
     }
   });
@@ -293,8 +284,8 @@ const ChatSection: React.FC = () => {
     onSuccess: (data, file) => {
       const attachedFile: AttachedFile = {
         id: data.file.id,
-        fileName: data.file.fileName, // Backend filename for storage
-        displayName: data.file.displayName || data.file.originalName, // Original name for display
+        fileName: data.file.fileName,
+        displayName: data.file.displayName || data.file.originalName,
         fileType: file.type,
         fileSize: file.size,
         url: data.file.url
@@ -338,26 +329,15 @@ const ChatSection: React.FC = () => {
     setAttachedFiles([]);
   };
 
+  // Simplified and corrected "New Chat" handler
   const handleNewChat = () => {
     console.log('Starting new chat - resetting state');
-    setCurrentConversationId(null);
+    setCurrentConversationId(null); // This will trigger useQuery to use ['messages', 'new']
     setInputMessage("");
     setAttachedFiles([]);
-    
-    // Clear any existing conversation queries
-    queryClient.removeQueries({ queryKey: ['/api/conversations'] });
-    
-    // Reset the legacy messages to show welcome message
-    queryClient.setQueryData(['/api/messages'], [
-      {
-        id: '1',
-        content: 'Welcome to your AI wellness coach! I\'m here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you\'re focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I\'m ready to help. What would you like to work on today?',
-        isUserMessage: false,
-        timestamp: new Date()
-      }
-    ]);
-    
-    console.log('New chat initialized with welcome message');
+    // Optionally, invalidate the query to be certain it re-fetches
+    queryClient.invalidateQueries({ queryKey: ['messages', 'new'] });
+    console.log('New chat initialized');
   };
 
   const getFileIcon = (fileType: string) => {

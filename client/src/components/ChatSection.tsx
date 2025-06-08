@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   Paperclip,
@@ -43,8 +42,8 @@ type Message = {
 
 type AttachedFile = {
   id: string;
-  fileName: string;
-  displayName?: string;
+  fileName: string; // Backend storage filename
+  displayName?: string; // Original filename for display
   fileType: string;
   fileSize: number;
   url?: string;
@@ -71,13 +70,8 @@ const ChatSection: React.FC = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const [pendingUserMessage, setPendingUserMessage] = useState<{
-    content: string;
-    timestamp: Date;
-    attachments?: any[];
-  } | null>(null);
-
   const { data: messages, isLoading: loadingMessages } = useQuery({
+    // FIX 1: The query key is derived directly here. This is cleaner.
     queryKey: ["messages", currentConversationId || "new"],
     queryFn: async () => {
       if (!currentConversationId) {
@@ -119,8 +113,7 @@ const ChatSection: React.FC = () => {
       attachments: AttachedFile[];
       conversationId: string | null;
     }) => {
-      console.log("Sending message with conversation ID:", conversationId);
-      const response = await apiRequest("POST", "/api/messages", {
+      return apiRequest("POST", "/api/messages", {
         content,
         conversationId,
         coachingMode,
@@ -135,57 +128,110 @@ const ChatSection: React.FC = () => {
         })),
         automaticModelSelection: settings?.automaticModelSelection ?? true,
       });
-      console.log("API Response data:", response);
-      return response;
     },
-    onMutate: async ({ content, attachments }) => {
-      setPendingUserMessage({
+    onMutate: async ({ content, conversationId }) => {
+      // ChatGPT/Google AI Studio approach: Always show the message immediately
+      const optimisticUserMessage: Message = {
+        id: `temp-${Date.now()}`,
         content,
+        isUserMessage: true,
         timestamp: new Date(),
-        attachments: attachments.length > 0 ? attachments.map(f => ({ 
-          name: f.displayName || f.fileName, 
-          type: f.fileType 
-        })) : undefined
+      };
+
+      // Use current conversation state for the query key
+      const queryKey = ["messages", conversationId || "new"];
+      
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
+        // Remove welcome message when adding first user message to new conversation
+        const filteredOld = conversationId ? old : old.filter(msg => msg.id !== "welcome-message");
+        return [...filteredOld, optimisticUserMessage];
       });
+
+      return { 
+        queryKey, 
+        conversationId, 
+        optimisticUserMessage,
+        isNewConversation: !conversationId 
+      };
     },
-    onSuccess: (data) => {
-      console.log("Message sent successfully:", data);
+    onSuccess: (data, variables, context) => {
       const finalConversationId = data.conversationId;
-      console.log("Response conversation ID:", finalConversationId);
-      console.log("Current conversation ID:", currentConversationId);
-
-      setPendingUserMessage(null);
-
-      if (!currentConversationId) {
-        console.log("Updating conversation ID from null to", finalConversationId);
+      
+      if (context?.isNewConversation) {
+        // NEW CONVERSATION: Transition from "new" to actual conversation ID
+        const tempMessages = queryClient.getQueryData<Message[]>(["messages", "new"]) || [];
+        
+        // Build final messages array with real data
+        const finalMessages = tempMessages
+          .filter(msg => !msg.id.startsWith("temp-"))
+          .concat([
+            {
+              id: data.userMessage.id,
+              content: data.userMessage.content,
+              isUserMessage: true,
+              timestamp: new Date(data.userMessage.timestamp),
+            },
+            {
+              id: data.aiMessage.id,
+              content: data.aiMessage.content,
+              isUserMessage: false,
+              timestamp: new Date(data.aiMessage.timestamp),
+            }
+          ]);
+        
+        // Set data for the new conversation
+        queryClient.setQueryData(["messages", finalConversationId], finalMessages);
+        
+        // Update UI state
         setCurrentConversationId(finalConversationId);
+        
+        // Clean up the temporary cache
+        queryClient.removeQueries({ queryKey: ["messages", "new"] });
+        
+      } else {
+        // EXISTING CONVERSATION: Update the existing conversation cache
+        const currentQueryKey = ["messages", finalConversationId];
+        
+        queryClient.setQueryData<Message[]>(currentQueryKey, (old = []) => {
+          // Remove the optimistic message and add real messages
+          const withoutOptimistic = old.filter(msg => !msg.id.startsWith("temp-"));
+          
+          return [
+            ...withoutOptimistic,
+            {
+              id: data.userMessage.id,
+              content: data.userMessage.content,
+              isUserMessage: true,
+              timestamp: new Date(data.userMessage.timestamp),
+            },
+            {
+              id: data.aiMessage.id,
+              content: data.aiMessage.content,
+              isUserMessage: false,
+              timestamp: new Date(data.aiMessage.timestamp),
+            },
+          ];
+        });
       }
-
-      queryClient.setQueryData<Message[]>(["messages", finalConversationId], (old = []) => {
-        const existingMessages = old || [];
-        return [
-          ...existingMessages,
-          {
-            id: data.userMessage.id,
-            content: data.userMessage.content,
-            isUserMessage: true,
-            timestamp: new Date(data.userMessage.timestamp),
-          },
-          {
-            id: data.aiMessage.id,
-            content: data.aiMessage.content,
-            isUserMessage: false,
-            timestamp: new Date(data.aiMessage.timestamp),
-          },
-        ];
-      });
 
       setAttachedFiles([]);
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error("Message send error:", error);
-      setPendingUserMessage(null);
+      
+      // Remove optimistic message on error
+      if (context?.queryKey) {
+        queryClient.setQueryData<Message[]>(context.queryKey, (old = []) => 
+          old.filter(msg => !msg.id.startsWith("temp-"))
+        );
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to send message.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -194,11 +240,14 @@ const ChatSection: React.FC = () => {
       sendMessageMutation.mutate({
         content: inputMessage,
         attachments: attachedFiles,
+        // Pass the current state at the time of the click.
         conversationId: currentConversationId,
       });
       setInputMessage("");
     }
   };
+
+  // ... rest of the component is unchanged ...
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -327,34 +376,9 @@ const ChatSection: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  let welcomeMessages = [welcomeMessage];
-  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
-
-  if (pendingUserMessage) {
-    if (!currentConversationId) {
-      messagesToDisplay = [
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-        }
-      ];
-    } else {
-      messagesToDisplay = [
-        ...messagesToDisplay,
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-        }
-      ];
-    }
-  }
-
   return (
     <div className="flex flex-col h-full">
+      {/* Header */}
       <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between">
           <div>
@@ -379,6 +403,7 @@ const ChatSection: React.FC = () => {
         </div>
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loadingMessages ? (
           <div className="space-y-4">
@@ -393,7 +418,7 @@ const ChatSection: React.FC = () => {
             ))}
           </div>
         ) : (
-          messagesToDisplay?.map((message) => (
+          messages?.map((message) => (
             <ChatMessage
               key={message.id}
               message={message.content}
@@ -405,6 +430,7 @@ const ChatSection: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input */}
       <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {attachedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">

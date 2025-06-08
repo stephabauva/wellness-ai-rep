@@ -298,3 +298,4 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
 };
 
 export default FileManagerSection;
+export { FileManagerSection };

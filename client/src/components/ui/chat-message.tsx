@@ -50,11 +50,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, times
             {attachments.map((attachment, index) => (
               <div key={index} className="rounded border p-2 bg-background/10">
                 {attachment.type.startsWith("image/") ? (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       {getFileIcon(attachment.type)}
                       <span className="text-xs font-medium">{attachment.name}</span>
                     </div>
+                    <img
+                      src={`/uploads/${attachment.name.split(' ')[0]}`}
+                      alt={attachment.name}
+                      className="max-w-sm h-auto rounded border"
+                      onError={(e) => {
+                        // If image fails to load, hide it
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

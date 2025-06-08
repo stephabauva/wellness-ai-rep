@@ -171,6 +171,10 @@ const ChatSection: React.FC = () => {
             content: data.userMessage.content,
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
+            attachments: attachments.length > 0 ? attachments.map(f => ({ 
+              name: f.fileName, 
+              type: f.fileType 
+            })) : undefined
           },
           {
             id: data.aiMessage.id,
@@ -281,9 +285,11 @@ const ChatSection: React.FC = () => {
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      uploadFileMutation.mutate(file);
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        uploadFileMutation.mutate(file);
+      });
     }
   };
 
@@ -505,6 +511,7 @@ const ChatSection: React.FC = () => {
             ref={fileInputRef}
             type="file"
             accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+            multiple
             onChange={handleFileChange}
             style={{ display: "none" }}
           />

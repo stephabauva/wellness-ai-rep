@@ -5,27 +5,16 @@ import {
   Upload,
   Camera,
   X,
-  FileText,
-  Image,
-  Video,
-  File,
   History,
 } from "lucide-react";
 
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
-import { useAppContext } from "@/context/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import { generatePDF } from "@/lib/pdf-generator";
-import { useToast } from "@/hooks/use-toast";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConversationHistory } from "@/components/ConversationHistory";
 import { TranscriptionProvider } from "@shared/schema";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,24 +22,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type Message = {
-  id: string;
-  content: string;
-  isUserMessage: boolean;
-  timestamp: Date;
-  attachments?: { name: string; type: string }[];
-};
+// Custom hooks
+import { useFileManagement } from "@/hooks/useFileManagement";
+import { useChatMessages } from "@/hooks/useChatMessages";
+import { useReportGeneration } from "@/hooks/useReportGeneration";
 
-type AttachedFile = {
-  id: string;
-  fileName: string;
-  displayName?: string;
-  fileType: string;
-  fileSize: number;
-  url?: string;
-};
+// Utilities
+import { getFileIcon, generateMessagesToDisplay } from "@/utils/chatUtils";
 
-const welcomeMessage: Message = {
+const welcomeMessage = {
   id: "welcome-message",
   content:
     "Welcome to your AI wellness coach! I'm here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you're focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I'm ready to help. What would you like to work on today?",
@@ -59,152 +39,34 @@ const welcomeMessage: Message = {
 };
 
 const ChatSection: React.FC = () => {
-  const { coachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
-  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<
-    string | null
-  >(null);
   const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
-  const [pendingUserMessage, setPendingUserMessage] = useState<{
-    content: string;
-    timestamp: Date;
-    attachments?: any[];
-  } | null>(null);
+  // Custom hooks
+  const {
+    attachedFiles,
+    uploadFileMutation,
+    removeAttachedFile,
+    clearAttachedFiles,
+    handleFileChange,
+  } = useFileManagement();
 
-  const { data: messages, isLoading: loadingMessages } = useQuery({
-    queryKey: ["messages", currentConversationId || "new"],
-    queryFn: async () => {
-      if (!currentConversationId) {
-        return [welcomeMessage];
-      }
-      const response = await fetch(
-        `/api/conversations/${currentConversationId}/messages`,
-      );
-      if (!response.ok)
-        throw new Error("Failed to fetch conversation messages");
-      const convMessages = await response.json();
-      return convMessages.map((msg: any) => ({
-        id: msg.id,
-        content: msg.content,
-        isUserMessage: msg.role === "user",
-        timestamp: new Date(msg.createdAt),
-        attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-          name: att.fileName || att.name,
-          type: att.fileType || att.type
-        })) : undefined
-      }));
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
-  });
+  const {
+    messages,
+    loadingMessages,
+    currentConversationId,
+    pendingUserMessage,
+    sendMessageMutation,
+    handleSelectConversation,
+    handleNewChat,
+  } = useChatMessages();
 
-  const { data: settings } = useQuery({
-    queryKey: ["/api/settings"],
-    queryFn: async () => {
-      const response = await fetch("/api/settings");
-      if (!response.ok) throw new Error("Failed to fetch settings");
-      return await response.json();
-    },
-  });
+  const { downloadReportMutation, handleDownloadPDF } = useReportGeneration();
 
-  const sendMessageMutation = useMutation({
-    mutationFn: async ({
-      content,
-      attachments,
-      conversationId,
-    }: {
-      content: string;
-      attachments: AttachedFile[];
-      conversationId: string | null;
-    }) => {
-      console.log("Sending message with conversation ID:", conversationId);
-      const response = await apiRequest("POST", "/api/messages", {
-        content,
-        conversationId,
-        coachingMode,
-        aiProvider: settings?.aiProvider || "openai",
-        aiModel: settings?.aiModel || "gpt-4o",
-        attachments: attachments.map((file) => ({
-          id: file.id,
-          fileName: file.fileName,
-          displayName: file.displayName,
-          fileType: file.fileType,
-          fileSize: file.fileSize,
-        })),
-        automaticModelSelection: settings?.automaticModelSelection ?? true,
-      });
-      console.log("API Response data:", response);
-      return response;
-    },
-    onMutate: async ({ content, attachments }) => {
-      setPendingUserMessage({
-        content,
-        timestamp: new Date(),
-        attachments: attachments.length > 0 ? attachments.map(f => ({ 
-          name: f.fileName, 
-          type: f.fileType 
-        })) : undefined
-      });
-      setInputMessage("");
-      setAttachedFiles([]);
-    },
-    onSuccess: (data) => {
-      console.log("Message sent successfully:", data);
-      const finalConversationId = data.conversationId;
-      console.log("Response conversation ID:", finalConversationId);
-      console.log("Current conversation ID:", currentConversationId);
-
-      setPendingUserMessage(null);
-
-      // Update conversation ID immediately and synchronously
-      if (!currentConversationId) {
-        console.log("Setting conversation ID to:", finalConversationId);
-        setCurrentConversationId(finalConversationId);
-      } else if (currentConversationId !== finalConversationId) {
-        console.log("Updating conversation ID from", currentConversationId, "to", finalConversationId);
-        setCurrentConversationId(finalConversationId);
-      }
-
-      // Use the final conversation ID for cache updates
-      const targetQueryKey = ["messages", finalConversationId];
-
-      queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
-        const existingMessages = old || [];
-        return [
-          ...existingMessages,
-          {
-            id: data.userMessage.id,
-            content: data.userMessage.content,
-            isUserMessage: true,
-            timestamp: new Date(data.userMessage.timestamp),
-            attachments: data.userMessage.metadata?.attachments ? data.userMessage.metadata.attachments.map((att: any) => ({
-              name: att.fileName || att.name,
-              type: att.fileType || att.type
-            })) : undefined
-          },
-          {
-            id: data.aiMessage.id,
-            content: data.aiMessage.content,
-            isUserMessage: false,
-            timestamp: new Date(data.aiMessage.timestamp),
-          },
-        ];
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
-    },
-    onError: (error) => {
-      console.error("Message send error:", error);
-      setPendingUserMessage(null);
-    },
-  });
-
+  // Event handlers
   const handleSendMessage = () => {
     if (inputMessage.trim() || attachedFiles.length > 0) {
       sendMessageMutation.mutate({
@@ -212,6 +74,8 @@ const ChatSection: React.FC = () => {
         attachments: attachedFiles,
         conversationId: currentConversationId,
       });
+      setInputMessage("");
+      clearAttachedFiles();
     }
   };
 
@@ -220,10 +84,6 @@ const ChatSection: React.FC = () => {
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const handleDownloadPDF = () => {
-    downloadReportMutation.mutate();
   };
 
   const handleTranscriptionComplete = (text: string) => {
@@ -238,69 +98,8 @@ const ChatSection: React.FC = () => {
     cameraInputRef.current?.click();
   };
 
-  const uploadFileMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) throw new Error("Failed to upload file");
-      return await response.json();
-    },
-    onSuccess: (data, file) => {
-      const attachedFile: AttachedFile = {
-        id: data.file.id,
-        fileName: data.file.fileName,
-        displayName: data.file.displayName || data.file.originalName,
-        fileType: file.type,
-        fileSize: file.size,
-        url: data.file.url,
-      };
-      setAttachedFiles((prev) => [...prev, attachedFile]);
-      toast({
-        title: "File uploaded",
-        description: `${file.name} has been uploaded successfully.`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Upload failed",
-        description: "Failed to upload the file. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const downloadReportMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("GET", "/api/reports/health-pdf", {});
-      return response.json();
-    },
-    onSuccess: (data) => {
-      generatePDF(data);
-      toast({
-        title: "Report downloaded",
-        description: "Your health report has been downloaded successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to download the health report. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files) {
-      Array.from(files).forEach(file => {
-        uploadFileMutation.mutate(file);
-      });
-    }
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileChange(event.target.files);
   };
 
   const handleCameraChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -310,70 +109,34 @@ const ChatSection: React.FC = () => {
     }
   };
 
-  const removeAttachedFile = (fileId: string) => {
-    setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
-  };
-
-  const handleSelectConversation = (conversationId: string) => {
-    setCurrentConversationId(conversationId);
+  const handleNewChatWithCleanup = () => {
+    handleNewChat();
     setInputMessage("");
-    setAttachedFiles([]);
+    clearAttachedFiles();
   };
 
-  const handleNewChat = () => {
-    setCurrentConversationId(null);
+  const handleSelectConversationWithCleanup = (conversationId: string) => {
+    handleSelectConversation(conversationId);
     setInputMessage("");
-    setAttachedFiles([]);
-    queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
+    clearAttachedFiles();
   };
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith("image/")) return <Image className="h-4 w-4" />;
-    if (fileType.startsWith("video/")) return <Video className="h-4 w-4" />;
-    if (
-      fileType.includes("pdf") ||
-      fileType.includes("document") ||
-      fileType.includes("text")
-    ) {
-      return <FileText className="h-4 w-4" />;
-    }
-    return <File className="h-4 w-4" />;
-  };
-
+  // Auto-scroll effect
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
 
-  let welcomeMessages = [welcomeMessage];
-  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
-
-  if (pendingUserMessage) {
-    if (!currentConversationId) {
-      messagesToDisplay = [
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    } else {
-      messagesToDisplay = [
-        ...messagesToDisplay,
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    }
-  }
+  // Generate messages to display
+  const messagesToDisplay = generateMessagesToDisplay(
+    messages,
+    pendingUserMessage,
+    currentConversationId,
+    welcomeMessage
+  );
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header */}
       <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between">
           <div>
@@ -391,13 +154,14 @@ const ChatSection: React.FC = () => {
               <History className="h-4 w-4 mr-2" />
               History
             </Button>
-            <Button variant="outline" size="sm" onClick={handleNewChat}>
+            <Button variant="outline" size="sm" onClick={handleNewChatWithCleanup}>
               + New Chat
             </Button>
           </div>
         </div>
       </div>
 
+      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loadingMessages ? (
           <div className="space-y-4">
@@ -425,7 +189,9 @@ const ChatSection: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input Area */}
       <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        {/* Attached Files Preview */}
         {attachedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachedFiles.map((file) => (
@@ -475,6 +241,7 @@ const ChatSection: React.FC = () => {
           </div>
         )}
 
+        {/* Input Controls */}
         <div className="flex gap-2 items-end">
           <div className="flex-1 relative">
             <Input
@@ -522,7 +289,7 @@ const ChatSection: React.FC = () => {
             type="file"
             accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
             multiple
-            onChange={handleFileChange}
+            onChange={handleFileInputChange}
             style={{ display: "none" }}
           />
           <input
@@ -536,10 +303,7 @@ const ChatSection: React.FC = () => {
 
           <AudioRecorder
             onTranscriptionComplete={handleTranscriptionComplete}
-            provider={
-              (settings?.transcriptionProvider as TranscriptionProvider) ||
-              "webspeech"
-            }
+            provider="webspeech"
             disabled={sendMessageMutation.isPending}
           />
 
@@ -555,6 +319,7 @@ const ChatSection: React.FC = () => {
           </Button>
         </div>
 
+        {/* Loading Indicator */}
         {sendMessageMutation.isPending && (
           <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
             <div className="h-1 w-1 rounded-full bg-current animate-pulse" />
@@ -565,10 +330,11 @@ const ChatSection: React.FC = () => {
         )}
       </div>
 
+      {/* Conversation History Modal */}
       <ConversationHistory
         isOpen={showHistory}
         onClose={() => setShowHistory(false)}
-        onSelectConversation={handleSelectConversation}
+        onSelectConversation={handleSelectConversationWithCleanup}
         currentConversationId={currentConversationId || undefined}
       />
     </div>

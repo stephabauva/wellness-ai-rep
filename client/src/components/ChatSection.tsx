@@ -209,7 +209,6 @@ const ChatSection: React.FC = () => {
         attachments: attachedFiles,
         conversationId: currentConversationId,
       });
-      setInputMessage("");
     }
   };
 
@@ -322,7 +321,7 @@ const ChatSection: React.FC = () => {
     setCurrentConversationId(null);
     setInputMessage("");
     setAttachedFiles([]);
-    queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
+    queryClient.invalidateQueries({ queryKey: ["messages", currentConversationId || "new"] });
   };
 
   const getFileIcon = (fileType: string) => {

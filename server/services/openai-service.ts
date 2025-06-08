@@ -4,8 +4,7 @@ import { CoachingMode, coachingModes } from "@shared/schema";
 import { memoryService } from "./memory-service";
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { spawn } from 'child_process';
-import { promisify } from 'util';
+import poppler from 'node-poppler';
 
 type AIProvider = "openai" | "google";
 type OpenAIModel = "gpt-4o" | "gpt-4o-mini";
@@ -582,36 +581,23 @@ Please acknowledge that you understand these visual analysis requirements.`
            userMessage.includes('?') && userMessage.split('?').length > 2; // Multiple questions
   }
 
-  // Extract text from PDF using pdftotext
+  // Extract text from PDF using node-poppler
   private async extractPDFText(filePath: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const pdftotext = spawn('pdftotext', [filePath, '-']);
-      let text = '';
-      let error = '';
-
-      pdftotext.stdout.on('data', (data) => {
-        text += data.toString();
-      });
-
-      pdftotext.stderr.on('data', (data) => {
-        error += data.toString();
-      });
-
-      pdftotext.on('close', (code) => {
-        if (code === 0) {
-          resolve(text.trim());
-        } else {
-          console.warn('pdftotext failed, trying fallback method');
-          // Fallback: return a message indicating PDF content couldn't be extracted
-          resolve('[PDF content could not be extracted - please describe the document contents]');
-        }
-      });
-
-      pdftotext.on('error', (err) => {
-        console.warn('pdftotext not available, using fallback');
-        resolve('[PDF content could not be extracted - please describe the document contents]');
-      });
-    });
+    try {
+      const popplerInstance = new poppler();
+      const text = await popplerInstance.pdfToText(filePath);
+      
+      if (text && text.trim().length > 0) {
+        console.log(`Successfully extracted ${text.length} characters from PDF using node-poppler`);
+        return text.trim();
+      } else {
+        console.warn('PDF text extraction returned empty result');
+        return '[PDF appears to be empty or contains only images - please describe the document contents]';
+      }
+    } catch (error) {
+      console.error('node-poppler PDF extraction failed:', error);
+      return '[PDF content could not be extracted - please describe the document contents]';
+    }
   }
 
   getAvailableModels() {

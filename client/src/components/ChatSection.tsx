@@ -130,9 +130,7 @@ const ChatSection: React.FC = () => {
       });
     },
     onMutate: async ({ content, conversationId }) => {
-      // Add optimistic user message to current view
-      const currentQueryKey = ["messages", conversationId || "new"];
-      
+      // ChatGPT/Google AI Studio approach: Always show the message immediately
       const optimisticUserMessage: Message = {
         id: `temp-${Date.now()}`,
         content,
@@ -140,25 +138,28 @@ const ChatSection: React.FC = () => {
         timestamp: new Date(),
       };
 
-      queryClient.setQueryData<Message[]>(currentQueryKey, (old = []) => [
-        ...old,
-        optimisticUserMessage,
-      ]);
+      // For new conversations, add to "new" cache
+      // For existing conversations, add to their specific cache
+      const queryKey = ["messages", conversationId || "new"];
+      
+      queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
+        // Remove welcome message when adding first user message
+        const filteredOld = conversationId ? old : old.filter(msg => msg.id !== "welcome-message");
+        return [...filteredOld, optimisticUserMessage];
+      });
 
-      return { currentQueryKey, conversationId };
+      return { queryKey, conversationId };
     },
     onSuccess: (data, variables, context) => {
       const finalConversationId = data.conversationId;
-      const finalQueryKey = ["messages", finalConversationId];
       
       if (!context?.conversationId) {
-        // This is a new conversation - transition from "new" to the actual conversation
-        const optimisticMessages = queryClient.getQueryData<Message[]>(["messages", "new"]) || [];
+        // New conversation: Move from "new" to actual conversation ID
+        const tempMessages = queryClient.getQueryData<Message[]>(["messages", "new"]) || [];
         
-        // Replace optimistic messages with real server data
-        const finalMessages = optimisticMessages.map(msg => {
-          if (msg.id.startsWith("temp-") && msg.isUserMessage) {
-            // Replace optimistic user message with real one
+        // Replace temp message with real data and add AI response
+        const finalMessages = tempMessages.map(msg => {
+          if (msg.id.startsWith("temp-")) {
             return {
               id: data.userMessage.id,
               content: data.userMessage.content,
@@ -167,30 +168,33 @@ const ChatSection: React.FC = () => {
             };
           }
           return msg;
-        }).concat([
-          // Add the AI response
-          {
-            id: data.aiMessage.id,
-            content: data.aiMessage.content,
-            isUserMessage: false,
-            timestamp: new Date(data.aiMessage.timestamp),
-          }
-        ]);
+        });
         
-        // Set the complete conversation data
-        queryClient.setQueryData(finalQueryKey, finalMessages);
+        // Add AI response
+        finalMessages.push({
+          id: data.aiMessage.id,
+          content: data.aiMessage.content,
+          isUserMessage: false,
+          timestamp: new Date(data.aiMessage.timestamp),
+        });
         
-        // Clean up the "new" cache
-        queryClient.removeQueries({ queryKey: ["messages", "new"] });
+        // Set final conversation data
+        queryClient.setQueryData(["messages", finalConversationId], finalMessages);
         
-        // Update conversation ID
+        // Update conversation ID first to switch the UI view
         setCurrentConversationId(finalConversationId);
+        
+        // Clean up temp cache after state update
+        setTimeout(() => {
+          queryClient.removeQueries({ queryKey: ["messages", "new"] });
+        }, 100);
+        
       } else {
-        // Existing conversation - just append the new messages
-        queryClient.setQueryData<Message[]>(finalQueryKey, (old = []) => {
-          const existingMessages = old.filter(msg => !msg.id.startsWith("temp-"));
+        // Existing conversation: Replace temp message and add AI response
+        queryClient.setQueryData<Message[]>(["messages", finalConversationId], (old = []) => {
+          const withoutTemp = old.filter(msg => !msg.id.startsWith("temp-"));
           return [
-            ...existingMessages,
+            ...withoutTemp,
             {
               id: data.userMessage.id,
               content: data.userMessage.content,
@@ -210,7 +214,14 @@ const ChatSection: React.FC = () => {
       setAttachedFiles([]);
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
-    onError: () => {
+    onError: (error, variables, context) => {
+      // Remove optimistic message on error
+      if (context?.queryKey) {
+        queryClient.setQueryData<Message[]>(context.queryKey, (old = []) => 
+          old.filter(msg => !msg.id.startsWith("temp-"))
+        );
+      }
+      
       toast({
         title: "Error",
         description: "Failed to send message.",

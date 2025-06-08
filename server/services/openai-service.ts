@@ -599,15 +599,15 @@ Please acknowledge that you understand these visual analysis requirements.`
   }
 
   async processCurrentMessageWithAttachments(message: string, attachments: any[] = []): Promise<any> {
-    if (!attachments || attachments.length === 0) {
-      return { role: 'user', content: message };
-    }
-
-    // Use ChatGPT's approach: include actual image data in message content
+    // **CRITICAL FIX**: Always use the array format for content
     const content: any[] = [];
 
     // Add text content first
     content.push({ type: "text", text: message });
+
+    if (!attachments || attachments.length === 0) {
+      return { role: 'user', content: content };
+    }
 
     // Your existing attachment processing logic follows...
     for (const attachment of attachments) {

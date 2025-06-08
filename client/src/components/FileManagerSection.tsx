@@ -305,60 +305,84 @@ const FileManagerSection: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <div className="p-6 border-b">
-        <div className="flex items-center justify-between">
+      <div className="p-4 md:p-6 border-b">
+        <div className="space-y-4">
           <div>
-            <h1 className="text-2xl font-semibold">File Manager</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl md:text-2xl font-semibold">File Manager</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Manage your uploaded documents and photos
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          
+          {/* Mobile: Stack buttons vertically when files are selected */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             {selectedFiles.size > 0 && (
               <>
-                <Button 
-                  variant="outline" 
-                  onClick={handleWebShare}
-                  title="Share via native sharing (AirDrop, Messages, etc.)"
-                >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={generateQRCode}
-                  title="Generate QR code for sharing"
-                >
-                  <QrCode className="h-4 w-4 mr-2" />
-                  QR Code
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDeleteSelected}
-                  disabled={deleteFilesMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete {selectedFiles.size} file{selectedFiles.size > 1 ? 's' : ''}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleWebShare}
+                      title="Share via native sharing (AirDrop, Messages, etc.)"
+                      className="flex-1 sm:flex-none"
+                    >
+                      <Share2 className="h-4 w-4 sm:mr-2" />
+                      <span className="sm:inline">Share</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={generateQRCode}
+                      title="Generate QR code for sharing"
+                      className="flex-1 sm:flex-none"
+                    >
+                      <QrCode className="h-4 w-4 sm:mr-2" />
+                      <span className="sm:inline">QR</span>
+                    </Button>
+                  </div>
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    disabled={deleteFilesMutation.isPending}
+                    className="w-full sm:w-auto"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete {selectedFiles.size}
+                  </Button>
+                </div>
               </>
             )}
-            <Button variant="outline" onClick={() => refetch()}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Refresh
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => refetch()}
+              className={selectedFiles.size > 0 ? "w-full sm:w-auto" : "ml-auto"}
+            >
+              <RotateCcw className="h-4 w-4 sm:mr-2" />
+              <span className="sm:inline">Refresh</span>
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all">All Files ({files.length})</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto">
+            <TabsTrigger value="all" className="text-xs sm:text-sm p-2 sm:p-3">
+              <span className="flex flex-col sm:flex-row items-center gap-1">
+                <span className="sm:hidden">All</span>
+                <span className="hidden sm:inline">All Files</span>
+                <span className="text-xs">({files.length})</span>
+              </span>
+            </TabsTrigger>
             {categories.map(category => (
-              <TabsTrigger key={category.id} value={category.id}>
-                <span className="flex items-center gap-1">
+              <TabsTrigger key={category.id} value={category.id} className="text-xs sm:text-sm p-2 sm:p-3">
+                <span className="flex flex-col sm:flex-row items-center gap-1">
                   {category.icon}
-                  {category.name} ({category.files.length})
+                  <span className="truncate">{category.name}</span>
+                  <span className="text-xs">({category.files.length})</span>
                 </span>
               </TabsTrigger>
             ))}
@@ -502,7 +526,7 @@ const FileList: React.FC<FileListProps> = ({
           <div
             key={file.id}
             className={cn(
-              "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+              "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border transition-colors",
               selectedFiles.has(file.id) ? "bg-accent" : "hover:bg-muted/50"
             )}
           >
@@ -516,22 +540,26 @@ const FileList: React.FC<FileListProps> = ({
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
                 <h4 className="text-sm font-medium truncate">
                   {file.displayName}
                 </h4>
                 <Badge 
                   variant="secondary" 
-                  className={getRetentionBadgeColor(file.retentionInfo.category)}
+                  className={cn(
+                    getRetentionBadgeColor(file.retentionInfo.category),
+                    "text-xs self-start sm:self-auto"
+                  )}
                 >
                   {file.retentionInfo.category === 'high' ? 'Permanent' : 
-                   `${file.retentionInfo.retentionDays} days`}
+                   `${file.retentionInfo.retentionDays}d`}
                 </Badge>
               </div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-muted-foreground">
                 <span>{formatFileSize(file.fileSize)}</span>
-                <span>{formatDate(file.uploadDate)}</span>
-                <span>{file.retentionInfo.reason}</span>
+                <span className="hidden sm:inline">{formatDate(file.uploadDate)}</span>
+                <span className="sm:hidden">{new Date(file.uploadDate).toLocaleDateString()}</span>
+                <span className="truncate">{file.retentionInfo.reason}</span>
               </div>
             </div>
             
@@ -546,6 +574,7 @@ const FileList: React.FC<FileListProps> = ({
                   download={file.displayName}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title="Download file"
                 >
                   <Download className="h-4 w-4" />
                 </a>

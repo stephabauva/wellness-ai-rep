@@ -37,9 +37,10 @@ export const generateMessagesToDisplay = (
     return [welcomeMessage];
   }
 
-  // For existing conversations, always show messages (even if empty array while loading)
-  // This ensures the UI doesn't fall back to welcome message for existing conversations
-  let messagesToDisplay = messages && Array.isArray(messages) ? [...messages] : [];
+  // For existing conversations, always show messages
+  // If messages is undefined (loading), show empty array to prevent flicker
+  // If messages is an array (loaded), show all messages
+  let messagesToDisplay = Array.isArray(messages) ? [...messages] : [];
 
   // Add pending message if exists
   if (pendingUserMessage) {

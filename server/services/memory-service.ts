@@ -209,16 +209,9 @@ Respond with JSON:
   async getContextualMemories(
     userId: number, 
     conversationHistory: any[], 
-    currentMessage: string,
-    isAttachmentUpload: boolean = false
+    currentMessage: string
   ): Promise<RelevantMemory[]> {
     try {
-      // Skip memory retrieval for fresh conversations (no history) or fresh attachment uploads
-      if (conversationHistory.length === 0 || isAttachmentUpload) {
-        console.log('Skipping memory retrieval: fresh conversation or new attachment upload detected');
-        return [];
-      }
-
       // Combine recent conversation + current message for context
       const context = [
         ...conversationHistory.slice(-3),
@@ -428,18 +421,16 @@ Respond with JSON:
   }
 
   // Build system prompt with relevant memories
-  buildSystemPromptWithMemories(memories: RelevantMemory[], basePersona?: string): string {
-    const persona = basePersona || "You are a helpful AI wellness coach. Provide personalized advice based on the conversation.";
-    
+  buildSystemPromptWithMemories(memories: RelevantMemory[]): string {
     if (memories.length === 0) {
-      return persona;
+      return "You are a helpful AI wellness coach. Provide personalized advice based on the conversation.";
     }
 
     const memoryContext = memories.map(memory => 
       `- ${memory.content} (${memory.category}, importance: ${memory.importanceScore})`
     ).join('\n');
 
-    return `${persona}
+    return `You are a helpful AI wellness coach. Use the following information about the user to provide personalized advice:
 
 REMEMBERED INFORMATION:
 ${memoryContext}

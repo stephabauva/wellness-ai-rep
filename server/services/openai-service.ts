@@ -63,52 +63,32 @@ class ChatService {
         aiConfig = this.selectOptimalModel(message, attachments, aiConfig);
       }
 
-      // Determine if this is a fresh conversation with new attachments
-      const isNewConversationWithAttachments = attachments.length > 0 && conversationHistory.length === 0;
+      // Process message for memory extraction
+      const memoryProcessing = await memoryService.processMessageForMemory(
+        userId, 
+        message, 
+        conversationId, 
+        messageId,
+        conversationHistory
+      );
 
-      // Skip memory retrieval completely for fresh conversations with attachments
-      let memoryProcessing = { triggers: [] };
-      let relevantMemories = [];
-
-      if (!isNewConversationWithAttachments) {
-        // Only process memory for ongoing conversations (not fresh attachment uploads)
-        memoryProcessing = await memoryService.processMessageForMemory(
-          userId, 
-          message, 
-          conversationId, 
-          messageId,
-          conversationHistory
-        );
-
-        // Get relevant memories for this user and context
-        // Skip memories for fresh attachment uploads to prevent contamination
-        const imageFiles = attachments.filter(att => att.fileType?.startsWith('image/'));
-        const attachedFileContents = attachments.filter(att => att.fileType === 'application/pdf');
-        const isAttachmentUpload = conversationHistory.length === 0 && (imageFiles.length > 0 || attachedFileContents.length > 0);
-        const relevantMemories = await memoryService.getContextualMemories(
-          userId,
-          conversationHistory,
-          message,
-          isAttachmentUpload
-        );
-      }
-
-      console.log(`Memory retrieval: ${isNewConversationWithAttachments ? 'SKIPPED (fresh attachment upload)' : 'ACTIVE'} - ${relevantMemories.length} memories used`);
+      // Retrieve relevant memories for context
+      const relevantMemories = await memoryService.getContextualMemories(
+        userId,
+        conversationHistory,
+        message
+      );
 
       // Build conversation context with proper message history
       const conversationContext = [];
 
-      // Build system prompt based on context
+      // Build enhanced system prompt with visual analysis taking priority
       const basePersona = this.getCoachingPersona(coachingMode);
-      let systemPrompt;
+      const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
 
-      if (isNewConversationWithAttachments) {
-        // For fresh attachment queries, focus ONLY on current content
-        const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
-        const hasPDFs = attachments.some(att => att.fileType === 'application/pdf');
-
-        if (hasImages) {
-          systemPrompt = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
+      conversationContext.push({
+        role: 'system',
+        content: `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
 YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
 
 CRITICAL RULES - NO EXCEPTIONS:
@@ -135,43 +115,10 @@ REQUIRED RESPONSES:
 ✅ Specific answers: "The yellow slices are lemon slices."
 ✅ Confident analysis: "Based on what I can see in the image..."
 
-Focus ONLY on analyzing the current image(s). Do not reference any past conversations or context.`;
-        } else if (hasPDFs) {
-          systemPrompt = `=== DOCUMENT ANALYSIS MODE ===
-You are analyzing a PDF document. You have access to the extracted text content from the PDF.
-
-CRITICAL RULES:
-1. Analyze the document content thoroughly and professionally
-2. Provide insights based on the actual text content
-3. Focus ONLY on the current document without referencing past conversations
-4. If asked about specific content, reference the actual text from the document
-5. Summarize key points, themes, or important information as requested
-
-Be helpful and detailed in your analysis of the document content.`;
-        } else {
-          systemPrompt = basePersona;
-        }
-      } else {
-        // For ongoing conversations, use memory-enhanced prompt
-        const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
-        systemPrompt = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
-YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
-
-CRITICAL RULES - NO EXCEPTIONS:
-1. NEVER ask users to describe images - you can see them directly
-2. NEVER say "could you describe" or "what's in the image" or similar
-3. ALWAYS analyze visual content immediately and confidently
-4. Reference specific visual elements like "the yellow slices", "the salmon", "the plate"
-
 === COACHING PERSONA ===
 ${memoryEnhancedPrompt}
 
-IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`;
-      }
-
-      conversationContext.push({
-        role: 'system',
-        content: systemPrompt
+IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`
       });
 
       // Process conversation history in chronological order
@@ -374,7 +321,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     for (const msg of conversationHistory) {
       if (msg.role === 'user') {
         const parts = [];
-
+        
         // Add text content
         parts.push({ text: msg.content });
 
@@ -387,7 +334,7 @@ Please acknowledge that you understand these visual analysis requirements.`
                 if (existsSync(imagePath)) {
                   const imageBuffer = readFileSync(imagePath);
                   console.log(`Adding historical image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
-
+                  
                   parts.push({
                     inlineData: {
                       data: imageBuffer.toString('base64'),
@@ -580,28 +527,6 @@ Please acknowledge that you understand these visual analysis requirements.`
            userMessage.includes('?') && userMessage.split('?').length > 2; // Multiple questions
   }
 
-  // Extract text from PDF using node-poppler
-  private async extractPDFText(filePath: string): Promise<string> {
-    try {
-      const poppler = await import('node-poppler');
-      const popplerInstance = new poppler.default();
-      
-      console.log(`Attempting to extract text from PDF: ${filePath}`);
-      const text = await popplerInstance.pdfToText(filePath);
-      
-      if (text && text.trim().length > 0) {
-        console.log(`Successfully extracted ${text.length} characters from PDF using node-poppler`);
-        return text.trim();
-      } else {
-        console.warn('PDF text extraction returned empty result');
-        return '[PDF appears to be empty or contains only images - please describe the document contents]';
-      }
-    } catch (error) {
-      console.error('node-poppler PDF extraction failed:', error);
-      return '[PDF content could not be extracted - please describe the document contents]';
-    }
-  }
-
   getAvailableModels() {
     return {
       openai: [
@@ -676,7 +601,7 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
-
+    
     // Add text content first
     content.push({ type: "text", text: message });
 
@@ -706,30 +631,8 @@ Please acknowledge that you understand these visual analysis requirements.`
             text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
           });
         }
-      } else if (attachment.fileType === 'application/pdf') {
-        // Extract and include PDF text content
-        try {
-          const pdfPath = join(process.cwd(), 'uploads', attachment.fileName);
-          if (existsSync(pdfPath)) {
-            console.log(`Extracting text from PDF: ${attachment.fileName}`);
-            const pdfText = await this.extractPDFText(pdfPath);
-
-            content.push({
-              type: "text",
-              text: `\n\n=== PDF DOCUMENT CONTENT ===\nFile: ${attachment.displayName || attachment.fileName}\n\n${pdfText}\n\n=== END PDF CONTENT ===\n`
-            });
-
-            console.log(`Successfully extracted ${pdfText.length} characters from PDF`);
-          }
-        } catch (error) {
-          console.error('Error processing PDF:', error);
-          content.push({
-            type: "text",
-            text: `[PDF file: ${attachment.displayName || attachment.fileName} - error extracting text content]`
-          });
-        }
       } else {
-        // For other non-image attachments, add descriptive text
+        // For non-image attachments, add descriptive text
         content.push({
           type: "text",
           text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
@@ -740,7 +643,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     return { role: 'user', content: content };
   }
 
-
+  
 }
 
 export const chatService = new ChatService();

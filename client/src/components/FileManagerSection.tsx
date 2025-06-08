@@ -293,7 +293,7 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
           ))}
         </div>
       </div>
-    
+    </div>
   );
 };
 

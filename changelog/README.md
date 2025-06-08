@@ -38,6 +38,9 @@ This directory contains detailed changelogs for major feature releases of the AI
 *   **[2025-01-14: ChatSection Refactoring](./11-chat-section-refactoring-2025-01-14.md)**
     *   **✅ COMPLETE**: Major code organization improvement that reduced the main ChatSection component from 500+ to ~280 lines. Extracted custom hooks for file management, chat messages, and report generation. Created utility functions for better code reusability. **Zero breaking changes** - all functionality preserved and enhanced through better separation of concerns.
 
+*   **[2025-01-15: Smart Attachment Retention System](./12-attachment-retention-system-2025-01-15.md)**
+    *   **✅ COMPLETE**: Implementation of intelligent attachment retention system with automatic file categorization, customizable retention periods, and automated cleanup. Features three-tier classification (high/medium/low value), user-customizable settings, and smart context-aware detection. Medical documents kept indefinitely by default, while temporary files are cleaned up automatically. Seamlessly integrated with existing file attachment and settings systems.
+
 ## Feature Interconnections & Evolution
 
 The AI Wellness Coach has evolved through several key stages, with features often building upon or interacting with each other:
@@ -65,6 +68,11 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
     *   **Message Visibility Fix**: Resolved first message visibility issues in new conversations using simplified React state management.
     *   **Attachment Persistence**: Fixed critical React state closure issues that prevented proper conversation ID management. The system now maintains complete visual context across all conversation turns, allowing users to upload images and ask follow-up questions while keeping all attachments visible throughout the conversation.
 
+8.  **Smart File Management (Attachment Retention System):**
+    *   **Intelligent Categorization**: Automatic classification of uploaded files into high-value (medical documents), medium-value (health plans), and low-value (photos, temporary files) categories based on content analysis and context.
+    *   **Customizable Retention**: User-configurable retention periods with sensible defaults - medical documents kept indefinitely, health plans for 90 days, and temporary files for 30 days.
+    *   **Automated Cleanup**: Background processing that safely removes expired files while preserving important health information, optimizing storage and privacy.
+
 **Key Component Interactions:**
 
 *   **`ChatSection.tsx`** is a central hub (refactored January 2025), benefiting from:
@@ -75,6 +83,7 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
     *   Intelligent model routing based on attachments and query complexity.
     *   Complete conversation history with visual context persistence.
     *   **Robust conversation management** with proper state handling and attachment persistence.
+    *   **Smart file retention** with automatic categorization and retention management.
     *   **Modular architecture** with custom hooks (`useChatMessages.ts`, `useFileManagement.ts`, `useReportGeneration.ts`) and utilities (`chatUtils.tsx`).
 *   **`shared/schema.ts`** is critical, defining data structures for:
     *   User preferences (including LLM choice, transcription provider, automatic model selection).
@@ -85,11 +94,13 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
     *   `transcription-service.ts` processes audio.
     *   `openai-service.ts` handles LLM calls with intelligent model selection logic and conversation context persistence.
     *   `memory-service.ts` manages AI memory.
+    *   `attachment-retention-service.ts` provides intelligent file categorization and automated cleanup.
     *   These services are orchestrated via `server/routes.ts` with full conversation history support.
 *   **`SettingsSection.tsx`** provides user controls for:
     *   AI provider and model selection.
     *   Automatic model selection toggle.
-    *   Integration with all AI-powered features.
+    *   File retention periods and policies.
+    *   Integration with all AI-powered features and file management.
 
 ## Current System Status: ✅ **FULLY OPERATIONAL**
 
@@ -99,5 +110,6 @@ The AI Wellness Coach now provides a complete, ChatGPT-like conversational exper
 - **Robust State Management**: Proper conversation threading and message visibility
 - **Multi-modal Interactions**: Text, voice, images, and files all work seamlessly together
 - **Personalized Coaching**: AI memory system provides contextual, personalized responses
+- **Smart File Management**: Intelligent attachment retention with automated cleanup and user-customizable policies
 - **Cross-Platform Compatibility**: Works across all supported AI providers (OpenAI, Google Gemini)
 - **Enhanced Code Architecture**: Clean, maintainable codebase with proper separation of concerns (January 2025 refactoring)

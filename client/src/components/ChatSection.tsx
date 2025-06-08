@@ -148,31 +148,33 @@ const ChatSection: React.FC = () => {
       return { currentQueryKey, conversationId };
     },
     onSuccess: (data, variables, context) => {
-      // Always handle as a simple replacement
       const finalConversationId = data.conversationId;
       const finalQueryKey = ["messages", finalConversationId];
       
-      // Build complete message list from server response
-      const messages: Message[] = [
-        welcomeMessage,
-        {
-          id: data.userMessage.id,
-          content: data.userMessage.content,
-          isUserMessage: true,
-          timestamp: new Date(data.userMessage.timestamp),
-        },
-        {
-          id: data.aiMessage.id,
-          content: data.aiMessage.content,
-          isUserMessage: false,
-          timestamp: new Date(data.aiMessage.timestamp),
-        },
-      ];
-
-      // Set the final state
-      queryClient.setQueryData(finalQueryKey, messages);
+      // Update the cache with new messages, preserving existing ones
+      queryClient.setQueryData<Message[]>(finalQueryKey, (old = []) => {
+        // Filter out any temporary optimistic messages
+        const existingMessages = old.filter(msg => !msg.id.startsWith("temp-"));
+        
+        // Add the new messages from server
+        return [
+          ...existingMessages,
+          {
+            id: data.userMessage.id,
+            content: data.userMessage.content,
+            isUserMessage: true,
+            timestamp: new Date(data.userMessage.timestamp),
+          },
+          {
+            id: data.aiMessage.id,
+            content: data.aiMessage.content,
+            isUserMessage: false,
+            timestamp: new Date(data.aiMessage.timestamp),
+          },
+        ];
+      });
       
-      // Clean up any old cache
+      // Clean up any old cache for new conversations
       if (!context?.conversationId) {
         queryClient.removeQueries({ queryKey: ["messages", "new"] });
       }

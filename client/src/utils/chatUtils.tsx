@@ -20,41 +20,43 @@ export const generateMessagesToDisplay = (
   currentConversationId: string | null,
   welcomeMessage: Message
 ) => {
-  // If no conversation is selected (new chat), show welcome message
-  if (!currentConversationId) {
+  // If we have a conversation ID, we're in an active conversation
+  if (currentConversationId) {
+    // Start with existing messages (or empty array if still loading)
+    const conversationMessages = messages ? [...messages] : [];
+
+    // Add pending message if it exists
     if (pendingUserMessage) {
-      // User has sent a message in new chat - show pending message instead of welcome
-      return [
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments
-        }
-      ];
-    }
-    return [welcomeMessage];
-  }
-
-  // For existing conversations, always show messages
-  // If messages is undefined (loading), show empty array to prevent flicker
-  // If messages is an array (loaded), show all messages
-  let messagesToDisplay = Array.isArray(messages) ? [...messages] : [];
-
-  // Add pending message if exists
-  if (pendingUserMessage) {
-    messagesToDisplay = [
-      ...messagesToDisplay,
-      {
-        id: "temp-pending",
+      conversationMessages.push({
+        id: "pending-user",
         content: pendingUserMessage.content,
         isUserMessage: true,
         timestamp: pendingUserMessage.timestamp,
-        attachments: pendingUserMessage.attachments
-      }
-    ];
+        attachments: pendingUserMessage.attachments?.map(att => ({
+          name: att.name,
+          type: att.type
+        }))
+      });
+    }
+
+    return conversationMessages;
   }
 
-  return messagesToDisplay;
+  // For new conversations (no ID), show welcome message and any pending
+  const newConversationMessages = [welcomeMessage];
+
+  if (pendingUserMessage) {
+    newConversationMessages.push({
+      id: "pending-user",
+      content: pendingUserMessage.content,
+      isUserMessage: true,
+      timestamp: pendingUserMessage.timestamp,
+      attachments: pendingUserMessage.attachments?.map(att => ({
+        name: att.name,
+        type: att.type
+      }))
+    });
+  }
+
+  return newConversationMessages;
 };

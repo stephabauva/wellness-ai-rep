@@ -121,10 +121,14 @@ ${memoryEnhancedPrompt}
 IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`
       });
 
-      // Process conversation history in chronological order
-      console.log(`Processing conversation history: ${conversationHistory.length} messages`);
+      // Filter conversation history to current session only (exclude cross-session history)
+      const currentSessionHistory = conversationHistory.filter(msg => 
+        msg.conversationId === conversationId
+      );
+      
+      console.log(`Processing conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
 
-      for (const msg of conversationHistory) {
+      for (const msg of currentSessionHistory) {
         if (msg.role === 'user' || msg.role === 'assistant') {
           // Handle file attachments in message metadata
           if (msg.metadata?.attachments && msg.metadata.attachments.length > 0) {
@@ -199,7 +203,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       const currentMessage = await this.processCurrentMessageWithAttachments(message, attachments);
       conversationContext.push(currentMessage);
 
-      console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
+      console.log(`Final conversation context: ${conversationContext.length} messages (current session only + system prompt)`);
 
       // Enhanced debug logging like ChatGPT's internal validation
       console.log('=== CONVERSATION CONTEXT VALIDATION ===');
@@ -315,10 +319,14 @@ Please acknowledge that you understand these visual analysis requirements.`
       parts: [{ text: "I understand. I have full visual access to all images and will analyze them directly without asking for descriptions. I can see and reference specific visual elements confidently." }]
     });
 
-    // Process conversation history for Google Gemini format
-    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} messages`);
+    // Filter conversation history to current session only for Google Gemini
+    const currentSessionHistory = conversationHistory.filter(msg => 
+      msg.conversationId === conversationId
+    );
+    
+    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
 
-    for (const msg of conversationHistory) {
+    for (const msg of currentSessionHistory) {</old_str>
       if (msg.role === 'user') {
         const parts = [];
         
@@ -393,7 +401,7 @@ Please acknowledge that you understand these visual analysis requirements.`
       parts: currentParts
     });
 
-    console.log(`Google Gemini conversation context: ${conversationParts.length} turns`);
+    console.log(`Google Gemini conversation context: ${conversationParts.length} turns (current session only)`);
     console.log('Google Gemini image count:', conversationParts.reduce((total, part) => {
       return total + (part.parts?.filter(p => p.inlineData)?.length || 0);
     }, 0));

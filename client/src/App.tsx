@@ -1,33 +1,27 @@
-import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import NotFound from "@/pages/not-found";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@/context/AppContext";
-import { ThemeProvider } from "next-themes";
 
-function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class">
-        <AppProvider>
-          <TooltipProvider>
+      <AppProvider>
+        <TooltipProvider>
+          <div className="min-h-screen bg-background">
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route component={NotFound} />
+            </Switch>
             <Toaster />
-            <Router />
-          </TooltipProvider>
-        </AppProvider>
-      </ThemeProvider>
+          </div>
+        </TooltipProvider>
+      </AppProvider>
     </QueryClientProvider>
   );
 }

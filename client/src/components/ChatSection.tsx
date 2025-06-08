@@ -126,6 +126,15 @@ const ChatSection: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
 
+  // Force scroll on conversation change
+  useEffect(() => {
+    if (currentConversationId) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [currentConversationId]);
+
   // Generate messages to display
   const messagesToDisplay = generateMessagesToDisplay(
     messages,

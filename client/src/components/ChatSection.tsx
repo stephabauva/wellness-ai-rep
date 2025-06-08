@@ -144,6 +144,25 @@ const ChatSection: React.FC = () => {
     }
   }, [loadingMessages, messages]);
 
+  // Aggressive auto-scroll to ensure messages are always visible
+  useEffect(() => {
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end",
+        inline: "nearest"
+      });
+    };
+
+    // Immediate scroll
+    scrollToBottom();
+
+    // Also scroll after a short delay to ensure rendering is complete
+    const timeoutId = setTimeout(scrollToBottom, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
+
   // Generate messages to display
   const messagesToDisplay = generateMessagesToDisplay(
     messages,

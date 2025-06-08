@@ -126,7 +126,7 @@ const ChatSection: React.FC = () => {
       console.log("Sending message with conversation ID:", conversationId);
       const response = await apiRequest("POST", "/api/messages", {
         content,
-        conversationId: conversationId,
+        conversationId,
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
         aiModel: settings?.aiModel || "gpt-4o",
@@ -142,7 +142,7 @@ const ChatSection: React.FC = () => {
       console.log("API Response data:", response);
       return response;
     },
-    onMutate: async ({ content, attachments, conversationId }) => {
+    onMutate: async ({ content, attachments }) => {
       setPendingUserMessage({
         content,
         timestamp: new Date(),
@@ -197,6 +197,7 @@ const ChatSection: React.FC = () => {
         ];
       });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
     },
     onError: (error) => {
       console.error("Message send error:", error);
@@ -323,7 +324,7 @@ const ChatSection: React.FC = () => {
     setCurrentConversationId(null);
     setInputMessage("");
     setAttachedFiles([]);
-    queryClient.invalidateQueries({ queryKey: ["messages", currentConversationId || "new"] });
+    queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
   };
 
   const getFileIcon = (fileType: string) => {

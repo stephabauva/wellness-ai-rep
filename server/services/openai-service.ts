@@ -67,7 +67,7 @@ class ChatService {
 
       // Determine if this is a fresh conversation with new attachments
       const isNewConversationWithAttachments = attachments.length > 0 && conversationHistory.length === 0;
-      
+
       // Skip memory retrieval completely for fresh conversations with attachments
       let memoryProcessing = { triggers: [] };
       let relevantMemories = [];
@@ -82,11 +82,16 @@ class ChatService {
           conversationHistory
         );
 
-        // Only retrieve memories for ongoing conversations
-        relevantMemories = await memoryService.getContextualMemories(
+        // Get relevant memories for this user and context
+        // Skip memories for fresh attachment uploads to prevent contamination
+        const imageFiles = attachments.filter(att => att.fileType?.startsWith('image/'));
+        const attachedFileContents = attachments.filter(att => att.fileType === 'application/pdf');
+        const isAttachmentUpload = conversationHistory.length === 0 && (imageFiles.length > 0 || attachedFileContents.length > 0);
+        const relevantMemories = await memoryService.getContextualMemories(
           userId,
           conversationHistory,
-          message
+          message,
+          isAttachmentUpload
         );
       }
 
@@ -371,7 +376,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     for (const msg of conversationHistory) {
       if (msg.role === 'user') {
         const parts = [];
-        
+
         // Add text content
         parts.push({ text: msg.content });
 
@@ -384,7 +389,7 @@ Please acknowledge that you understand these visual analysis requirements.`
                 if (existsSync(imagePath)) {
                   const imageBuffer = readFileSync(imagePath);
                   console.log(`Adding historical image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
-                  
+
                   parts.push({
                     inlineData: {
                       data: imageBuffer.toString('base64'),
@@ -683,7 +688,7 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
-    
+
     // Add text content first
     content.push({ type: "text", text: message });
 
@@ -720,12 +725,12 @@ Please acknowledge that you understand these visual analysis requirements.`
           if (existsSync(pdfPath)) {
             console.log(`Extracting text from PDF: ${attachment.fileName}`);
             const pdfText = await this.extractPDFText(pdfPath);
-            
+
             content.push({
               type: "text",
               text: `\n\n=== PDF DOCUMENT CONTENT ===\nFile: ${attachment.displayName || attachment.fileName}\n\n${pdfText}\n\n=== END PDF CONTENT ===\n`
             });
-            
+
             console.log(`Successfully extracted ${pdfText.length} characters from PDF`);
           }
         } catch (error) {
@@ -747,7 +752,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     return { role: 'user', content: content };
   }
 
-  
+
 }
 
 export const chatService = new ChatService();

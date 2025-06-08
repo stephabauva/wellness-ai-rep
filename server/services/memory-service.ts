@@ -209,12 +209,13 @@ Respond with JSON:
   async getContextualMemories(
     userId: number, 
     conversationHistory: any[], 
-    currentMessage: string
+    currentMessage: string,
+    isAttachmentUpload: boolean = false
   ): Promise<RelevantMemory[]> {
     try {
-      // Skip memory retrieval for fresh conversations (no history)
-      if (conversationHistory.length === 0) {
-        console.log('Skipping memory retrieval: fresh conversation detected');
+      // Skip memory retrieval for fresh conversations (no history) or fresh attachment uploads
+      if (conversationHistory.length === 0 || isAttachmentUpload) {
+        console.log('Skipping memory retrieval: fresh conversation or new attachment upload detected');
         return [];
       }
 

@@ -135,6 +135,15 @@ const ChatSection: React.FC = () => {
     }
   }, [currentConversationId]);
 
+  // Force scroll when loading finishes
+  useEffect(() => {
+    if (!loadingMessages && messages && messages.length > 0) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 200);
+    }
+  }, [loadingMessages, messages]);
+
   // Generate messages to display
   const messagesToDisplay = generateMessagesToDisplay(
     messages,
@@ -330,11 +339,15 @@ const ChatSection: React.FC = () => {
 
         {/* Loading Indicator */}
         {sendMessageMutation.isPending && (
-          <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-            <div className="h-1 w-1 rounded-full bg-current animate-pulse" />
-            <div className="h-1 w-1 rounded-full bg-current animate-pulse delay-75" />
-            <div className="h-1 w-1 rounded-full bg-current animate-pulse delay-150" />
-            <span>AI is thinking...</span>
+          <div className="flex items-center gap-2 mt-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-4 border-blue-500">
+            <div className="flex gap-1">
+              <div className="h-2 w-2 rounded-full bg-blue-500 animate-bounce" />
+              <div className="h-2 w-2 rounded-full bg-blue-500 animate-bounce delay-100" />
+              <div className="h-2 w-2 rounded-full bg-blue-500 animate-bounce delay-200" />
+            </div>
+            <span className="text-blue-700 dark:text-blue-300 font-medium">
+              🤖 AI is processing your message...
+            </span>
           </div>
         )}
       </div>

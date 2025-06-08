@@ -1,6 +1,16 @@
-
 import React, { useState, useRef, useEffect } from "react";
-import { Paperclip, Send, Upload, Camera, X, FileText, Image, Video, File, History } from "lucide-react";
+import {
+  Paperclip,
+  Send,
+  Upload,
+  Camera,
+  X,
+  FileText,
+  Image,
+  Video,
+  File,
+  History,
+} from "lucide-react";
 
 import { ChatMessage } from "@/components/ui/chat-message";
 import { Button } from "@/components/ui/button";
@@ -39,88 +49,89 @@ type AttachedFile = {
   url?: string;
 };
 
-// Define a static welcome message to be reused
 const welcomeMessage: Message = {
-  id: 'welcome-message',
-  content: 'Welcome to your AI wellness coach! I\'m here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you\'re focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I\'m ready to help. What would you like to work on today?',
+  id: "welcome-message",
+  content:
+    "Welcome to your AI wellness coach! I'm here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you're focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I'm ready to help. What would you like to work on today?",
   isUserMessage: false,
-  timestamp: new Date()
+  timestamp: new Date(),
 };
 
 const ChatSection: React.FC = () => {
-  const { coachingMode, setCoachingMode } = useAppContext();
+  const { coachingMode } = useAppContext();
   const [inputMessage, setInputMessage] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | null
+  >(null);
   const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Create a consistent query key based on the conversation ID
-  const messagesQueryKey = currentConversationId ? ['messages', currentConversationId] : ['messages', 'new'];
-
-  // Get chat history for current conversation
   const { data: messages, isLoading: loadingMessages } = useQuery({
-    queryKey: messagesQueryKey,
+    // FIX 1: The query key is derived directly here. This is cleaner.
+    queryKey: ["messages", currentConversationId || "new"],
     queryFn: async () => {
-      // Handle the "new chat" case directly instead of a separate API call
       if (!currentConversationId) {
         return [welcomeMessage];
       }
-
-      // Get conversation messages
-      const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
-      if (!response.ok) throw new Error('Failed to fetch conversation messages');
+      const response = await fetch(
+        `/api/conversations/${currentConversationId}/messages`,
+      );
+      if (!response.ok)
+        throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
-
-      // Convert to a consistent format
       return convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
-        isUserMessage: msg.role === 'user',
-        timestamp: new Date(msg.createdAt)
+        isUserMessage: msg.role === "user",
+        timestamp: new Date(msg.createdAt),
       }));
     },
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Get user settings for AI configuration
   const { data: settings } = useQuery({
-    queryKey: ['/api/settings'],
+    queryKey: ["/api/settings"],
     queryFn: async () => {
-      const response = await fetch('/api/settings');
-      if (!response.ok) throw new Error('Failed to fetch settings');
+      const response = await fetch("/api/settings");
+      if (!response.ok) throw new Error("Failed to fetch settings");
       return await response.json();
-    }
+    },
   });
 
-  // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ content, attachments, conversationId }: { content: string; attachments: AttachedFile[]; conversationId: string | null }) => {
-      console.log(`Sending message with conversation ID: ${conversationId}`);
-      return apiRequest('POST', '/api/messages', { 
-        content, 
-        conversationId, // Use the passed conversation ID
+    mutationFn: async ({
+      content,
+      attachments,
+      conversationId,
+    }: {
+      content: string;
+      attachments: AttachedFile[];
+      conversationId: string | null;
+    }) => {
+      return apiRequest("POST", "/api/messages", {
+        content,
+        conversationId,
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
         aiModel: settings?.aiModel || "gpt-4o",
-        attachments: attachments.map(file => ({
+        attachments: attachments.map((file) => ({
           id: file.id,
           fileName: file.fileName,
           displayName: file.displayName,
           fileType: file.fileType,
-          fileSize: file.fileSize
+          fileSize: file.fileSize,
         })),
-        automaticModelSelection: settings?.automaticModelSelection ?? true
+        automaticModelSelection: settings?.automaticModelSelection ?? true,
       });
     },
     onMutate: async ({ content, conversationId }) => {
-      // Use the conversation ID passed to the mutation to determine the correct query key
-      const queryKey = conversationId ? ['messages', conversationId] : ['messages', 'new'];
-      
+      // The query key for the optimistic update is derived from the mutation's variables.
+      const queryKey = ["messages", conversationId || "new"];
       await queryClient.cancelQueries({ queryKey });
       const previousMessages = queryClient.getQueryData<Message[]>(queryKey);
 
@@ -128,134 +139,109 @@ const ChatSection: React.FC = () => {
         id: `temp-${Date.now()}`,
         content,
         isUserMessage: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      // Update the currently active query optimistically
       queryClient.setQueryData<Message[]>(queryKey, (old = []) => [
         ...old,
-        optimisticUserMessage
+        optimisticUserMessage,
       ]);
 
-      return { previousMessages, messagesQueryKey: queryKey };
+      // Pass the key we used in the context for robust onSuccess/onError handling.
+      return { previousMessages, queryKey };
     },
     onError: (err, variables, context) => {
-      // Rollback on error
       if (context?.previousMessages) {
-        queryClient.setQueryData(context.messagesQueryKey, context.previousMessages);
+        // Use the key from context to guarantee we roll back the correct query.
+        queryClient.setQueryData(context.queryKey, context.previousMessages);
       }
-      toast({ title: "Error", description: "Failed to send message.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to send message.",
+        variant: "destructive",
+      });
     },
     onSuccess: (data, variables, context) => {
-      console.log('Message sent successfully:', data);
-      console.log(`Response conversation ID: ${data?.conversationId}`);
-      console.log(`Current conversation ID: ${currentConversationId}`);
-      
-      // This is the core fix for the first message display
-      const isFirstMessage = !currentConversationId;
+      // FIX 2: Determine if it was the first message based on the variables passed to *this* mutation,
+      // not the component's (potentially stale) state.
+      const isFirstMessage = !variables.conversationId;
 
       if (isFirstMessage && data?.conversationId) {
         const newConversationId = data.conversationId;
-        const newConversationQueryKey = ['messages', newConversationId];
+        const newConversationQueryKey = ["messages", newConversationId];
+        const oldQueryKey = ["messages", "new"];
 
-        // 1. Get the current optimistic state from the 'new' chat cache
-        const optimisticMessages = queryClient.getQueryData<Message[]>(['messages', 'new']) || [];
+        const optimisticMessages =
+          queryClient.getQueryData<Message[]>(oldQueryKey) || [];
+        const finalMessages = optimisticMessages.filter(
+          (msg) => !msg.id.startsWith("temp-"),
+        );
 
-        // 2. Remove the temporary optimistic message
-        const finalMessages = optimisticMessages.filter(msg => !msg.id.startsWith('temp-'));
-
-        // 3. Add the real messages from the server response
         finalMessages.push({
           id: data.userMessage.id,
           content: data.userMessage.content,
           isUserMessage: true,
-          timestamp: new Date(data.userMessage.timestamp)
+          timestamp: new Date(data.userMessage.timestamp),
         });
         finalMessages.push({
           id: data.aiMessage.id,
           content: data.aiMessage.content,
           isUserMessage: false,
-          timestamp: new Date(data.aiMessage.timestamp)
+          timestamp: new Date(data.aiMessage.timestamp),
         });
 
-        // 4. Pre-populate the cache for the new conversation ID
         queryClient.setQueryData(newConversationQueryKey, finalMessages);
+        queryClient.removeQueries({ queryKey: oldQueryKey });
 
-        // 5. Remove the 'new' chat query from cache to ensure it's fresh next time
-        queryClient.removeQueries({ queryKey: ['messages', 'new'] });
-
-        // 6. NOW update the state to switch to the new conversation
-        console.log(`Updating conversation ID from ${currentConversationId} to ${newConversationId}`);
+        // This is the only place state is updated, after all cache manipulation is complete.
         setCurrentConversationId(newConversationId);
-
       } else {
-        // This is for subsequent messages in an existing conversation
-        // Use the current conversation ID to build the correct query key
-        const currentQueryKey = data?.conversationId ? ['messages', data.conversationId] : ['messages', currentConversationId];
-        
-        queryClient.setQueryData<Message[]>(currentQueryKey, (old = []) => {
-          // Replace optimistic message with real messages
-          const existingMessages = old.filter(msg => !msg.id.startsWith('temp-'));
+        // FIX 3: This is the critical fix for subsequent messages.
+        // Use the queryKey from context, which is guaranteed to be the one we
+        // optimistically updated in onMutate, avoiding any race conditions.
+        queryClient.setQueryData<Message[]>(context.queryKey, (old = []) => {
+          const existingMessages = old.filter(
+            (msg) => !msg.id.startsWith("temp-"),
+          );
           return [
             ...existingMessages,
             {
               id: data.userMessage.id,
               content: data.userMessage.content,
               isUserMessage: true,
-              timestamp: new Date(data.userMessage.timestamp)
+              timestamp: new Date(data.userMessage.timestamp),
             },
             {
               id: data.aiMessage.id,
               content: data.aiMessage.content,
               isUserMessage: false,
-              timestamp: new Date(data.aiMessage.timestamp)
-            }
+              timestamp: new Date(data.aiMessage.timestamp),
+            },
           ];
         });
       }
 
-      // Invalidate the list of conversations so the history panel updates
-      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
-
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       setAttachedFiles([]);
-    }
-  });
-
-  // Download PDF report mutation
-  const downloadReportMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('GET', '/api/reports/health-pdf', {});
-      return response.json();
     },
-    onSuccess: (data) => {
-      generatePDF(data);
-      toast({
-        title: "Report downloaded",
-        description: "Your health report has been downloaded successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to download the health report. Please try again.",
-        variant: "destructive"
-      });
-    }
   });
 
   const handleSendMessage = () => {
     if (inputMessage.trim() || attachedFiles.length > 0) {
-      sendMessageMutation.mutate({ 
-        content: inputMessage, 
+      sendMessageMutation.mutate({
+        content: inputMessage,
         attachments: attachedFiles,
-        conversationId: currentConversationId
+        // Pass the current state at the time of the click.
+        conversationId: currentConversationId,
       });
       setInputMessage("");
     }
   };
 
+  // ... rest of the component is unchanged ...
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -266,7 +252,7 @@ const ChatSection: React.FC = () => {
   };
 
   const handleTranscriptionComplete = (text: string) => {
-    setInputMessage(prev => prev + (prev ? ' ' : '') + text);
+    setInputMessage((prev) => prev + (prev ? " " : "") + text);
   };
 
   const handleFileImport = () => {
@@ -280,12 +266,12 @@ const ChatSection: React.FC = () => {
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      formData.append("file", file);
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
-      if (!response.ok) throw new Error('Failed to upload file');
+      if (!response.ok) throw new Error("Failed to upload file");
       return await response.json();
     },
     onSuccess: (data, file) => {
@@ -295,9 +281,9 @@ const ChatSection: React.FC = () => {
         displayName: data.file.displayName || data.file.originalName,
         fileType: file.type,
         fileSize: file.size,
-        url: data.file.url
+        url: data.file.url,
       };
-      setAttachedFiles(prev => [...prev, attachedFile]);
+      setAttachedFiles((prev) => [...prev, attachedFile]);
       toast({
         title: "File uploaded",
         description: `${file.name} has been uploaded successfully.`,
@@ -307,9 +293,30 @@ const ChatSection: React.FC = () => {
       toast({
         title: "Upload failed",
         description: "Failed to upload the file. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
+  });
+
+  const downloadReportMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("GET", "/api/reports/health-pdf", {});
+      return response.json();
+    },
+    onSuccess: (data) => {
+      generatePDF(data);
+      toast({
+        title: "Report downloaded",
+        description: "Your health report has been downloaded successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to download the health report. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,7 +334,7 @@ const ChatSection: React.FC = () => {
   };
 
   const removeAttachedFile = (fileId: string) => {
-    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
+    setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
   };
 
   const handleSelectConversation = (conversationId: string) => {
@@ -336,27 +343,26 @@ const ChatSection: React.FC = () => {
     setAttachedFiles([]);
   };
 
-  // Simplified and corrected "New Chat" handler
   const handleNewChat = () => {
-    console.log('Starting new chat - resetting state');
-    setCurrentConversationId(null); // This will trigger useQuery to use ['messages', 'new']
+    setCurrentConversationId(null);
     setInputMessage("");
     setAttachedFiles([]);
-    // Optionally, invalidate the query to be certain it re-fetches
-    queryClient.invalidateQueries({ queryKey: ['messages', 'new'] });
-    console.log('New chat initialized');
+    queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith('image/')) return <Image className="h-4 w-4" />;
-    if (fileType.startsWith('video/')) return <Video className="h-4 w-4" />;
-    if (fileType.includes('pdf') || fileType.includes('document') || fileType.includes('text')) {
+    if (fileType.startsWith("image/")) return <Image className="h-4 w-4" />;
+    if (fileType.startsWith("video/")) return <Video className="h-4 w-4" />;
+    if (
+      fileType.includes("pdf") ||
+      fileType.includes("document") ||
+      fileType.includes("text")
+    ) {
       return <FileText className="h-4 w-4" />;
     }
     return <File className="h-4 w-4" />;
   };
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -381,11 +387,7 @@ const ChatSection: React.FC = () => {
               <History className="h-4 w-4 mr-2" />
               History
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNewChat}
-            >
+            <Button variant="outline" size="sm" onClick={handleNewChat}>
               + New Chat
             </Button>
           </div>
@@ -421,13 +423,18 @@ const ChatSection: React.FC = () => {
 
       {/* Input */}
       <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        {/* Attached files display */}
         {attachedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachedFiles.map((file) => (
-              <Badge key={file.id} variant="secondary" className="flex items-center gap-2 pr-1">
+              <Badge
+                key={file.id}
+                variant="secondary"
+                className="flex items-center gap-2 pr-1"
+              >
                 {getFileIcon(file.fileType)}
-                <span className="text-xs truncate max-w-32">{file.displayName || file.fileName}</span>
+                <span className="text-xs truncate max-w-32">
+                  {file.displayName || file.fileName}
+                </span>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -455,8 +462,8 @@ const ChatSection: React.FC = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="icon"
                 disabled={downloadReportMutation.isPending}
                 title="Attach file or capture photo"
@@ -472,7 +479,9 @@ const ChatSection: React.FC = () => {
               <DropdownMenuItem onClick={handleCameraCapture}>
                 <Camera className="h-4 w-4 mr-2" />
                 Take Picture
-                <span className="text-xs text-muted-foreground ml-2">(Mobile: Camera, Desktop: File)</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  (Mobile: Camera, Desktop: File)
+                </span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownloadPDF}>
                 <Paperclip className="h-4 w-4 mr-2" />
@@ -481,13 +490,12 @@ const ChatSection: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Hidden file inputs */}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
             onChange={handleFileChange}
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
           />
           <input
             ref={cameraInputRef}
@@ -495,18 +503,24 @@ const ChatSection: React.FC = () => {
             accept="image/*"
             capture="user"
             onChange={handleCameraChange}
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
           />
 
           <AudioRecorder
             onTranscriptionComplete={handleTranscriptionComplete}
-            provider={(settings?.transcriptionProvider as TranscriptionProvider) || "webspeech"}
+            provider={
+              (settings?.transcriptionProvider as TranscriptionProvider) ||
+              "webspeech"
+            }
             disabled={sendMessageMutation.isPending}
           />
 
-          <Button 
-            onClick={handleSendMessage} 
-            disabled={(!inputMessage.trim() && attachedFiles.length === 0) || sendMessageMutation.isPending}
+          <Button
+            onClick={handleSendMessage}
+            disabled={
+              (!inputMessage.trim() && attachedFiles.length === 0) ||
+              sendMessageMutation.isPending
+            }
             size="icon"
           >
             <Send className="h-4 w-4" />

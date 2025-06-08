@@ -69,6 +69,33 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
+const getFileThumbnail = (file: any, size: 'small' | 'medium' = 'small') => {
+  const isImage = file.type?.startsWith('image/');
+  const sizeClass = size === 'small' ? 'h-8 w-8' : 'h-12 w-12';
+  
+  if (isImage && file.url) {
+    return (
+      <img 
+        src={file.url} 
+        alt={file.name}
+        className={`${sizeClass} object-cover rounded border`}
+        onError={(e) => {
+          // Fallback to icon if image fails to load
+          e.currentTarget.style.display = 'none';
+          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+        }}
+      />
+    );
+  }
+  
+  // For non-images or when URL is not available, show file type icon
+  return (
+    <div className={`${sizeClass} flex items-center justify-center bg-muted rounded border`}>
+      {getFileIcon(file.type)}
+    </div>
+  );
+};
+
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -94,7 +121,20 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
         // Simulate loading files from a server or storage
         const loadedFiles = [
           { name: 'Document 1.pdf', size: 2048, type: 'application/pdf', lastModified: Date.now() },
-          { name: 'Image 1.jpg', size: 4096, type: 'image/jpeg', lastModified: Date.now() },
+          { 
+            name: 'Image 1.jpg', 
+            size: 4096, 
+            type: 'image/jpeg', 
+            lastModified: Date.now(),
+            url: '/uploads/7El4tBT-TpzSU3mBmzet6.jpg' // Example URL from your uploads folder
+          },
+          { 
+            name: 'Profile Photo.jpg', 
+            size: 3580, 
+            type: 'image/jpeg', 
+            lastModified: Date.now() - 86400000,
+            url: '/uploads/WfVADXrOsYagIrSh2wsZ4.jpg' // Another example
+          },
           { name: 'Spreadsheet 1.xlsx', size: 3072, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', lastModified: Date.now() },
         ];
         setFiles(loadedFiles);
@@ -283,7 +323,12 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
                   onChange={() => handleFileSelection(file.name)}
                   className="rounded"
                 />
-                {getFileIcon(file.type)}
+                <div className="relative">
+                  {getFileThumbnail(file, 'small')}
+                  <div className={`${file.type?.startsWith('image/') && file.url ? 'hidden' : ''}`}>
+                    {getFileIcon(file.type)}
+                  </div>
+                </div>
                 <div className="flex-1">
                   <p className="font-medium">{file.name}</p>
                   <p className="text-sm text-muted-foreground">
@@ -316,8 +361,11 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
                 </div>
                 <div className="text-center space-y-2">
                   <div className="flex justify-center">
-                    <div className="p-3 rounded-lg bg-muted">
-                      {getFileIcon(file.type)}
+                    <div className="relative">
+                      {getFileThumbnail(file, 'medium')}
+                      <div className={`${file.type?.startsWith('image/') && file.url ? 'hidden' : ''} p-3 rounded-lg bg-muted`}>
+                        {getFileIcon(file.type)}
+                      </div>
                     </div>
                   </div>
                   <div>

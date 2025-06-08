@@ -10,13 +10,17 @@ import {
   Stethoscope,
   CheckSquare,
   Square,
-  RotateCcw
+  RotateCcw,
+  Share2,
+  QrCode,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +79,8 @@ const formatDate = (dateString: string): string => {
 const FileManagerSection: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('all');
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrCodeData, setQRCodeData] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -213,6 +219,77 @@ const FileManagerSection: React.FC = () => {
     deleteFilesMutation.mutate(Array.from(selectedFiles));
   };
 
+  const handleWebShare = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    const selectedFileItems = activeFiles.filter(f => selectedFiles.has(f.id));
+    
+    // Check if Web Share API is supported
+    if (navigator.share) {
+      try {
+        // For multiple files, we'll share download links
+        const fileNames = selectedFileItems.map(f => f.displayName).join(', ');
+        const downloadLinks = selectedFileItems.map(f => 
+          `${window.location.origin}/uploads/${f.fileName}`
+        ).join('\n');
+        
+        await navigator.share({
+          title: `Shared Files: ${fileNames}`,
+          text: `Download these files:\n${downloadLinks}`,
+          url: downloadLinks.split('\n')[0] // First file URL as primary
+        });
+        
+        toast({
+          title: "Files shared",
+          description: "Files have been shared successfully",
+        });
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          toast({
+            title: "Sharing failed",
+            description: "Could not share files. Try the QR code option.",
+            variant: "destructive",
+          });
+        }
+      }
+    } else {
+      toast({
+        title: "Sharing not supported",
+        description: "Web Share API not supported. Use QR code instead.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateQRCode = () => {
+    if (selectedFiles.size === 0) return;
+    
+    const selectedFileItems = activeFiles.filter(f => selectedFiles.has(f.id));
+    const downloadLinks = selectedFileItems.map(f => 
+      `${window.location.origin}/uploads/${f.fileName}`
+    );
+    
+    // For single file, use direct link. For multiple files, create a JSON structure
+    let qrData: string;
+    if (downloadLinks.length === 1) {
+      qrData = downloadLinks[0];
+    } else {
+      qrData = JSON.stringify({
+        type: 'multiple_files',
+        files: selectedFileItems.map((f, index) => ({
+          name: f.displayName,
+          url: downloadLinks[index],
+          size: f.fileSize
+        }))
+      });
+    }
+    
+    // Use a QR code generation service (you could also use a local library)
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
+    setQRCodeData(qrCodeUrl);
+    setShowQRCode(true);
+  };
+
   
 
   if (isLoading) {
@@ -238,14 +315,32 @@ const FileManagerSection: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             {selectedFiles.size > 0 && (
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteSelected}
-                disabled={deleteFilesMutation.isPending}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete {selectedFiles.size} file{selectedFiles.size > 1 ? 's' : ''}
-              </Button>
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={handleWebShare}
+                  title="Share via native sharing (AirDrop, Messages, etc.)"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={generateQRCode}
+                  title="Generate QR code for sharing"
+                >
+                  <QrCode className="h-4 w-4 mr-2" />
+                  QR Code
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDeleteSelected}
+                  disabled={deleteFilesMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete {selectedFiles.size} file{selectedFiles.size > 1 ? 's' : ''}
+                </Button>
+              </>
             )}
             <Button variant="outline" onClick={() => refetch()}>
               <RotateCcw className="h-4 w-4 mr-2" />
@@ -301,6 +396,43 @@ const FileManagerSection: React.FC = () => {
           ))}
         </Tabs>
       </div>
+
+      {/* QR Code Modal */}
+      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="h-5 w-5" />
+              Share Files via QR Code
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground text-center">
+              Scan this QR code with any device to download the selected files
+            </div>
+            {qrCodeData && (
+              <div className="flex justify-center">
+                <img 
+                  src={qrCodeData} 
+                  alt="QR Code for file sharing" 
+                  className="border rounded-lg"
+                />
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground text-center space-y-1">
+              <p>• Single file: Direct download link</p>
+              <p>• Multiple files: JSON data with all download links</p>
+              <p>• Files will be downloaded to the device's Downloads folder</p>
+            </div>
+            <div className="flex justify-center">
+              <Button variant="outline" onClick={() => setShowQRCode(false)}>
+                <X className="h-4 w-4 mr-2" />
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

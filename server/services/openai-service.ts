@@ -171,7 +171,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
                 });
               }
             } else {
-              // For assistant messages or non-image attachments, use text format
+              // Assistant messages or non-image attachments get a text representation
               const attachmentRefs = msg.metadata.attachments
                 .filter(att => !att.fileType?.startsWith('image/'))
                 .map(att => `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`)
@@ -184,9 +184,10 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
 
               const refs = [attachmentRefs, imageRefs].filter(Boolean).join('\n');
 
+              // **FIX**: Wrap in array format
               conversationContext.push({
                 role: msg.role,
-                content: refs ? `${msg.content}\n\n${refs}` : msg.content
+                content: [{ type: 'text', text: refs ? `${msg.content}\n\n${refs}` : msg.content }]
               });
             }
           } else {
@@ -608,6 +609,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     // Add text content first
     content.push({ type: "text", text: message });
 
+    // Your existing attachment processing logic follows...
     for (const attachment of attachments) {
       if (attachment.fileType?.startsWith('image/')) {
         try {
@@ -615,10 +617,7 @@ Please acknowledge that you understand these visual analysis requirements.`
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
-
-            console.log(`Adding current image to message: ${attachment.fileName} (${imageBuffer.length} bytes)`);
-
-            // Include actual image data (ChatGPT approach)
+            console.log(`Adding current image to message: ${attachment.fileName}`);
             content.push({
               type: "image_url",
               image_url: {
@@ -635,13 +634,11 @@ Please acknowledge that you understand these visual analysis requirements.`
           });
         }
       } else if (attachment.fileType === 'application/pdf') {
-        // Simple reference for PDF documents
         content.push({
           type: "text",
-          text: `[PDF Document: ${attachment.displayName || attachment.fileName} - Please describe the document content in your message for analysis]`
+          text: `[PDF Document attached: ${attachment.displayName || attachment.fileName}. The content of this document is not yet readable by the AI.]`
         });
       } else {
-        // For non-image attachments, add descriptive text
         content.push({
           type: "text",
           text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`

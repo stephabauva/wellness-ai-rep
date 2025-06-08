@@ -86,9 +86,15 @@ class ChatService {
       const basePersona = this.getCoachingPersona(coachingMode);
       const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
 
-      conversationContext.push({
-        role: 'system',
-        content: `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
+      // Check if current message has images to determine system prompt behavior
+      const currentHasImages = attachments.some(att => att.fileType?.startsWith('image/'));
+      const currentHasPDFs = attachments.some(att => att.fileType === 'application/pdf');
+
+      let systemPrompt = `=== COACHING PERSONA ===
+${memoryEnhancedPrompt}`;
+
+      if (currentHasImages) {
+        systemPrompt = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
 YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
 
 CRITICAL RULES - NO EXCEPTIONS:
@@ -119,7 +125,26 @@ REQUIRED RESPONSES:
 === COACHING PERSONA ===
 ${memoryEnhancedPrompt}
 
-IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`
+IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`;
+      } else if (currentHasPDFs) {
+        systemPrompt = `=== DOCUMENT ASSISTANCE MODE ===
+The user has shared PDF documents. You cannot directly read PDF content, but you can:
+1. Acknowledge the document attachment
+2. Ask specific questions about what information they need help with
+3. Provide guidance on how to extract or use information from the document
+4. Offer to help analyze text they copy/paste from the document
+
+BE CLEAR: You cannot see the PDF content directly and need the user to describe or share text from it.
+
+=== COACHING PERSONA ===
+${memoryEnhancedPrompt}
+
+Focus on helping the user get the most value from their document by guiding them on what information to share.`;
+      }
+
+      conversationContext.push({
+        role: 'system',
+        content: systemPrompt
       });
 
       // Process conversation history in chronological order
@@ -608,11 +633,26 @@ Please acknowledge that you understand these visual analysis requirements.`
       return { role: 'user', content: message };
     }
 
+    // Check what types of attachments we actually have
+    const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
+    const hasPDFs = attachments.some(att => att.fileType === 'application/pdf');
+    
+    console.log(`Processing attachments: ${attachments.length} total, ${hasImages ? 'has images' : 'no images'}, ${hasPDFs ? 'has PDFs' : 'no PDFs'}`);
+
     // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
 
-    // Add text content first
-    content.push({ type: "text", text: message });
+    // Add text content first - modify message based on actual attachments
+    let messageText = message;
+    if (!hasImages && hasPDFs) {
+      // If only PDFs, make it clear no images are present
+      messageText = message.replace(/\[.*?attachment.*?\]/gi, '').trim();
+      if (!messageText) {
+        messageText = "I have attached a PDF document. Please help me understand what information you need from this document.";
+      }
+    }
+    
+    content.push({ type: "text", text: messageText });
 
     for (const attachment of attachments) {
       if (attachment.fileType?.startsWith('image/')) {
@@ -640,11 +680,17 @@ Please acknowledge that you understand these visual analysis requirements.`
             text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]`
           });
         }
-      } else {
-        // For non-image attachments like PDFs, add more detailed context
+      } else if (attachment.fileType === 'application/pdf') {
+        // For PDF attachments, be more specific about the limitation
         content.push({
           type: "text",
-          text: `[PDF/Document attached: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - Note: I can see this file attachment but cannot directly analyze PDF content. Please describe what specific information you'd like me to help you with regarding this document.]`
+          text: `[PDF Document: ${attachment.displayName || attachment.fileName} - I can see you've attached this PDF file. While I cannot directly read PDF content, I can help you with questions about the document if you describe what specific information you're looking for or copy/paste relevant text from the PDF.]`
+        });
+      } else {
+        // For other non-image attachments
+        content.push({
+          type: "text",
+          text: `[Document attached: ${attachment.displayName || attachment.fileName} (${attachment.fileType}) - I can see this file attachment but cannot directly analyze its content. Please describe what specific information you'd like me to help you with regarding this document.]`
         });
       }
     }

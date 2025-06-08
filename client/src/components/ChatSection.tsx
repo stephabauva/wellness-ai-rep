@@ -117,16 +117,16 @@ const ChatSection: React.FC = () => {
     mutationFn: async ({
       content,
       attachments,
-      conversationId,
     }: {
       content: string;
       attachments: AttachedFile[];
-      conversationId: string | null;
     }) => {
-      console.log("Sending message with conversation ID:", conversationId);
+      // Use the current conversation ID from state
+      const conversationIdToSend = currentConversationId;
+      console.log("Sending message with conversation ID:", conversationIdToSend);
       const response = await apiRequest("POST", "/api/messages", {
         content,
-        conversationId,
+        conversationId: conversationIdToSend,
         coachingMode,
         aiProvider: settings?.aiProvider || "openai",
         aiModel: settings?.aiModel || "gpt-4o",
@@ -162,9 +162,11 @@ const ChatSection: React.FC = () => {
 
       setPendingUserMessage(null);
 
-      // Always update conversation ID to ensure continuity
-      setCurrentConversationId(finalConversationId);
-      console.log("Setting conversation ID to:", finalConversationId);
+      // Update conversation ID immediately and synchronously
+      if (!currentConversationId || currentConversationId !== finalConversationId) {
+        console.log("Updating conversation ID from", currentConversationId, "to", finalConversationId);
+        setCurrentConversationId(finalConversationId);
+      }
 
       // Use the final conversation ID for cache updates
       const targetQueryKey = ["messages", finalConversationId];
@@ -204,7 +206,6 @@ const ChatSection: React.FC = () => {
       sendMessageMutation.mutate({
         content: inputMessage,
         attachments: attachedFiles,
-        conversationId: currentConversationId,
       });
       setInputMessage("");
     }

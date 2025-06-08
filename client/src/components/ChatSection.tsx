@@ -68,10 +68,9 @@ const ChatSection: React.FC = () => {
   const {
     attachedFiles,
     setAttachedFiles,
-    uploadFileMutation,
+    handleFileUpload,
     removeAttachedFile,
-    clearAttachedFiles,
-    handleFileChange,
+    updateAttachedFiles,
   } = useFileManagement();
 
   // Ensure setAttachedFiles is available for file import

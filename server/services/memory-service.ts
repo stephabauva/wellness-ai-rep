@@ -421,18 +421,20 @@ Respond with JSON:
   }
 
   // Build system prompt with relevant memories
-  buildSystemPromptWithMemories(memories: RelevantMemory[]): string {
+  buildSystemPromptWithMemories(memories: RelevantMemory[], basePersona?: string): string {
+    const defaultPersona = basePersona || "You are a helpful AI wellness coach. Provide personalized advice based on the conversation.";
+    
     if (memories.length === 0) {
-      return "You are a helpful AI wellness coach. Provide personalized advice based on the conversation.";
+      return defaultPersona;
     }
 
     const memoryContext = memories.map(memory => 
       `- ${memory.content} (${memory.category}, importance: ${memory.importanceScore})`
     ).join('\n');
 
-    return `You are a helpful AI wellness coach. Use the following information about the user to provide personalized advice:
+    return `${defaultPersona}
 
-REMEMBERED INFORMATION:
+REMEMBERED INFORMATION FROM PAST CONVERSATIONS:
 ${memoryContext}
 
 Use this information to personalize your responses, but don't explicitly mention that you're using remembered information unless directly relevant to the conversation.`;

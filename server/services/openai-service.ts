@@ -130,6 +130,14 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
         systemPrompt = `=== DOCUMENT ASSISTANCE MODE ===
 IMPORTANT: The user has shared a PDF document ONLY. There are NO IMAGES in this conversation.
 
+CURRENT MESSAGE CONTEXT: The user has shared a PDF document ONLY in this specific message. There are NO IMAGES in the current message.
+
+CRITICAL CONTEXT AWARENESS:
+- CURRENT ATTACHMENT: PDF document only
+- NO CURRENT IMAGES: Do not reference any visual content from this message
+- FOCUS ON CURRENT SESSION: This query is about the current PDF attachment, not past conversations
+- IGNORE PAST CONTEXT: Do not reference previous conversations unless explicitly asked
+
 You cannot directly read PDF content, but you can:
 1. Acknowledge the PDF document attachment
 2. Ask specific questions about what information they need help with from the PDF
@@ -647,7 +655,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     // Check what types of attachments we actually have
     const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
     const hasPDFs = attachments.some(att => att.fileType === 'application/pdf');
-    
+
     console.log(`Processing attachments: ${attachments.length} total, ${hasImages ? 'has images' : 'no images'}, ${hasPDFs ? 'has PDFs' : 'no PDFs'}`);
 
     // Use ChatGPT's approach: include actual image data in message content
@@ -665,7 +673,7 @@ Please acknowledge that you understand these visual analysis requirements.`
         messageText = `${messageText} (Note: I have attached a PDF document, not an image)`;
       }
     }
-    
+
     content.push({ type: "text", text: messageText });
 
     for (const attachment of attachments) {

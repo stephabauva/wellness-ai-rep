@@ -63,32 +63,51 @@ class ChatService {
         aiConfig = this.selectOptimalModel(message, attachments, aiConfig);
       }
 
-      // Process message for memory extraction
-      const memoryProcessing = await memoryService.processMessageForMemory(
-        userId, 
-        message, 
-        conversationId, 
-        messageId,
-        conversationHistory
-      );
+      // Determine if this is a current session attachment-focused query
+      const isCurrentAttachmentQuery = attachments.length > 0 && conversationHistory.length === 0;
+      const isFileAnalysisQuery = message.toLowerCase().includes('what') || 
+                                  message.toLowerCase().includes('this') || 
+                                  message.toLowerCase().includes('about') ||
+                                  message.toLowerCase().includes('contain');
 
-      // Retrieve relevant memories for context
-      const relevantMemories = await memoryService.getContextualMemories(
-        userId,
-        conversationHistory,
-        message
-      );
+      // Skip memory retrieval for fresh conversations with attachments
+      let memoryProcessing = { triggers: [] };
+      let relevantMemories = [];
+
+      if (!isCurrentAttachmentQuery || !isFileAnalysisQuery) {
+        // Process message for memory extraction only for ongoing conversations
+        memoryProcessing = await memoryService.processMessageForMemory(
+          userId, 
+          message, 
+          conversationId, 
+          messageId,
+          conversationHistory
+        );
+
+        // Retrieve relevant memories for context only when appropriate
+        relevantMemories = await memoryService.getContextualMemories(
+          userId,
+          conversationHistory,
+          message
+        );
+      }
+
+      console.log(`Memory retrieval: ${isCurrentAttachmentQuery && isFileAnalysisQuery ? 'SKIPPED (current file query)' : 'ACTIVE'} - ${relevantMemories.length} memories used`);
 
       // Build conversation context with proper message history
       const conversationContext = [];
 
-      // Build enhanced system prompt with visual analysis taking priority
+      // Build system prompt based on context
       const basePersona = this.getCoachingPersona(coachingMode);
-      const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
+      let systemPrompt;
 
-      conversationContext.push({
-        role: 'system',
-        content: `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
+      if (isCurrentAttachmentQuery && isFileAnalysisQuery) {
+        // For fresh attachment queries, focus ONLY on current content
+        const hasImages = attachments.some(att => att.fileType?.startsWith('image/'));
+        const hasPDFs = attachments.some(att => att.fileType === 'application/pdf');
+
+        if (hasImages) {
+          systemPrompt = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
 YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
 
 CRITICAL RULES - NO EXCEPTIONS:
@@ -115,10 +134,38 @@ REQUIRED RESPONSES:
 ✅ Specific answers: "The yellow slices are lemon slices."
 ✅ Confident analysis: "Based on what I can see in the image..."
 
+Focus ONLY on analyzing the current image(s). Do not reference any past conversations or context.`;
+        } else if (hasPDFs) {
+          systemPrompt = `=== DOCUMENT ASSISTANCE MODE ===
+CRITICAL: The user has shared a PDF document ONLY. There are NO IMAGES in this conversation.
+
+You are a helpful assistant focused on document analysis. Analyze only the current document without referencing any past conversations or context.
+
+IMPORTANT: Since you cannot directly read PDF content, acknowledge this limitation and provide helpful guidance about what information you would need to assist effectively.`;
+        } else {
+          systemPrompt = basePersona;
+        }
+      } else {
+        // For ongoing conversations, use memory-enhanced prompt
+        const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
+        systemPrompt = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
+YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
+
+CRITICAL RULES - NO EXCEPTIONS:
+1. NEVER ask users to describe images - you can see them directly
+2. NEVER say "could you describe" or "what's in the image" or similar
+3. ALWAYS analyze visual content immediately and confidently
+4. Reference specific visual elements like "the yellow slices", "the salmon", "the plate"
+
 === COACHING PERSONA ===
 ${memoryEnhancedPrompt}
 
-IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`
+IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`;
+      }
+
+      conversationContext.push({
+        role: 'system',
+        content: systemPrompt
       });
 
       // Process conversation history in chronological order

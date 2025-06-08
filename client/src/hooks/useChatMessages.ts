@@ -52,6 +52,7 @@ export const useChatMessages = () => {
     },
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
+    enabled: true, // Always enabled
   });
 
   const { data: settings } = useQuery({
@@ -116,10 +117,15 @@ export const useChatMessages = () => {
         setCurrentConversationId(finalConversationId);
       }
 
+      // Update cache for the correct conversation
       const targetQueryKey = ["messages", finalConversationId];
 
       queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
-        const existingMessages = old || [];
+        // For new conversations, start with welcome message
+        const existingMessages = !currentConversationId && finalConversationId !== currentConversationId 
+          ? [welcomeMessage] 
+          : (old || []);
+        
         return [
           ...existingMessages,
           {
@@ -140,6 +146,8 @@ export const useChatMessages = () => {
           },
         ];
       });
+      
+      // Invalidate and refetch to ensure UI is up to date
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
     },

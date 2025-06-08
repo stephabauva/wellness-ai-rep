@@ -162,7 +162,6 @@ ABSOLUTELY FORBIDDEN:
 === COACHING PERSONA ===
 ${memoryEnhancedPrompt}`;
       }
-      }
 
       conversationContext.push({
         role: 'system',

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FileText, Image, Video, File } from "lucide-react";
 
@@ -16,37 +15,44 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: any[],
-  pendingUserMessage: any,
+  messages: Message[] | undefined,
+  pendingUserMessage: { content: string; timestamp: Date; attachments?: any[] } | null,
   currentConversationId: string | null,
-  welcomeMessage: any
+  welcomeMessage: Message
 ) => {
-  let welcomeMessages = [welcomeMessage];
-  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
-
-  if (pendingUserMessage) {
-    if (!currentConversationId) {
-      messagesToDisplay = [
+  // If no conversation is selected (new chat), show welcome message
+  if (!currentConversationId) {
+    if (pendingUserMessage) {
+      // User has sent a message in new chat - show pending message instead of welcome
+      return [
         {
           id: "temp-pending",
           content: pendingUserMessage.content,
           isUserMessage: true,
           timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    } else {
-      messagesToDisplay = [
-        ...messagesToDisplay,
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
+          attachments: pendingUserMessage.attachments
         }
       ];
     }
+    return [welcomeMessage];
+  }
+
+  // For existing conversations, always show messages (even if empty array while loading)
+  // This ensures the UI doesn't fall back to welcome message for existing conversations
+  let messagesToDisplay = messages && Array.isArray(messages) ? [...messages] : [];
+
+  // Add pending message if exists
+  if (pendingUserMessage) {
+    messagesToDisplay = [
+      ...messagesToDisplay,
+      {
+        id: "temp-pending",
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments
+      }
+    ];
   }
 
   return messagesToDisplay;

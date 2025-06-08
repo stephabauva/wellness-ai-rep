@@ -34,11 +34,12 @@ export const useChatMessages = () => {
     queryKey: ["messages", currentConversationId || "new"],
     queryFn: async () => {
       if (!currentConversationId) {
-        return [welcomeMessage];
+        return [];
       }
       const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
+      console.log(`Loaded ${convMessages.length} messages for conversation ${currentConversationId}:`, convMessages);
       return convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
@@ -121,10 +122,10 @@ export const useChatMessages = () => {
       const targetQueryKey = ["messages", finalConversationId];
 
       queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
-        // For new conversations, start with welcome message
-        const existingMessages = !currentConversationId && finalConversationId !== currentConversationId 
-          ? [welcomeMessage] 
-          : (old || []);
+        // Always use existing messages from cache, or empty array for new conversations
+        const existingMessages = old || [];
+        
+        console.log(`Updating cache for conversation ${finalConversationId}: ${existingMessages.length} existing + 2 new messages`);
         
         return [
           ...existingMessages,

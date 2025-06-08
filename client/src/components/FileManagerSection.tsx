@@ -235,65 +235,62 @@ const FileManagerSection: React.FC<FileManagerSectionProps> = ({ selectionMode =
           
             
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {files.map(file => (
-                
-<div 
-                        key={file.name} 
-                        className={`border rounded-lg p-4 ${
-                          selectionMode ? 'cursor-pointer hover:bg-accent' : ''
-                        } ${
-                          selectedFiles.has(file.name) ? 'bg-accent border-primary' : ''
-                        }`}
-                        onClick={() => selectionMode && handleFileSelection(file.name)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {selectionMode && (
-                              <input 
-                                type="checkbox" 
-                                checked={selectedFiles.has(file.name)}
-                                onChange={() => handleFileSelection(file.name)}
-                                className="rounded"
-                              />
-                            )}
-                            {getFileIcon(file.type)}
-                            <div>
-                              <p className="font-medium">{file.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {formatFileSize(file.size)} • {format(new Date(file.lastModified), 'MMM d, yyyy')}
-                              </p>
-                            </div>
-                          </div>
-                          {!selectionMode && (
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDownload(file.name)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleShare([file])}
-                              >
-                                <Share className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDelete(file.name)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-              ))}
+          {files.map(file => (
+            <div 
+              key={file.name} 
+              className={`border rounded-lg p-4 ${
+                selectionMode ? 'cursor-pointer hover:bg-accent' : ''
+              } ${
+                selectedFiles.has(file.name) ? 'bg-accent border-primary' : ''
+              }`}
+              onClick={() => selectionMode && handleFileSelection(file.name)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {selectionMode && (
+                    <input 
+                      type="checkbox" 
+                      checked={selectedFiles.has(file.name)}
+                      onChange={() => handleFileSelection(file.name)}
+                      className="rounded"
+                    />
+                  )}
+                  {getFileIcon(file.type)}
+                  <div>
+                    <p className="font-medium">{file.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatFileSize(file.size)} • {format(new Date(file.lastModified), 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                </div>
+                {!selectionMode && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(file.name)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleShare([file])}
+                    >
+                      <Share className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(file.name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     

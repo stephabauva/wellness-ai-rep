@@ -71,6 +71,7 @@ const ChatSection: React.FC = () => {
     removeAttachedFile,
     clearAttachedFiles,
     handleFileChange,
+    setAttachedFiles,
   } = useFileManagement();
 
   const {

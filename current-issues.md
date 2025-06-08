@@ -15,7 +15,7 @@
 
 #### 🟥 High Priority (Critical to UX/Functionality)
 
-  ❌ history shows each message instead of title and date  
+  ❌ all uploaded attachments are kept in uploads/ undefinetly 
 
   ✅ New message is not immediatly visible in the chat after being sent
 
@@ -44,9 +44,6 @@
 
 #### 🟥 High Priority (Critical to UX/Functionality)
 
-  ❌ Implement “New chat” button functionality (UI exists, backend logic pending)  
-
-  ❌ Images, documents and photos must be displayed in the chat
 
   ❌ Chat input disappears when switching tabs — should persist and offer a “clear” button  
 
@@ -54,7 +51,11 @@
 
   ✅ “New chat” button added  
 
-  ✅ AI now has full context of current chat  
+  ✅ AI now has full context of current chat 
+
+  ✅ Implement “New chat” button functionality (UI exists, backend logic pending)  
+
+  ✅ Images, documents and photos must be displayed in the chat
 
 
 <br>

@@ -130,7 +130,6 @@ const ChatSection: React.FC = () => {
       });
     },
     onMutate: async ({ content, conversationId }) => {
-      // The query key for the optimistic update is derived from the mutation's variables.
       const queryKey = ["messages", conversationId || "new"];
       await queryClient.cancelQueries({ queryKey });
       const previousMessages = queryClient.getQueryData<Message[]>(queryKey);
@@ -147,12 +146,10 @@ const ChatSection: React.FC = () => {
         optimisticUserMessage,
       ]);
 
-      // Pass the key we used in the context for robust onSuccess/onError handling.
-      return { previousMessages, queryKey };
+      return { previousMessages, queryKey, conversationId };
     },
     onError: (err, variables, context) => {
-      if (context?.previousMessages) {
-        // Use the key from context to guarantee we roll back the correct query.
+      if (context?.previousMessages && context?.queryKey) {
         queryClient.setQueryData(context.queryKey, context.previousMessages);
       }
       toast({
@@ -162,49 +159,47 @@ const ChatSection: React.FC = () => {
       });
     },
     onSuccess: (data, variables, context) => {
-      // FIX 2: Determine if it was the first message based on the variables passed to *this* mutation,
-      // not the component's (potentially stale) state.
-      const isFirstMessage = !variables.conversationId;
+      const isFirstMessage = !context?.conversationId;
 
       if (isFirstMessage && data?.conversationId) {
+        // First message: transition from "new" to actual conversation
         const newConversationId = data.conversationId;
-        const newConversationQueryKey = ["messages", newConversationId];
-        const oldQueryKey = ["messages", "new"];
+        const newQueryKey = ["messages", newConversationId];
+        
+        // Build the complete message list with actual server data
+        const messages: Message[] = [
+          // Keep the welcome message for first conversations
+          welcomeMessage,
+          {
+            id: data.userMessage.id,
+            content: data.userMessage.content,
+            isUserMessage: true,
+            timestamp: new Date(data.userMessage.timestamp),
+          },
+          {
+            id: data.aiMessage.id,
+            content: data.aiMessage.content,
+            isUserMessage: false,
+            timestamp: new Date(data.aiMessage.timestamp),
+          },
+        ];
 
-        const optimisticMessages =
-          queryClient.getQueryData<Message[]>(oldQueryKey) || [];
-        const finalMessages = optimisticMessages.filter(
-          (msg) => !msg.id.startsWith("temp-"),
-        );
+        // Set the new conversation's cache
+        queryClient.setQueryData(newQueryKey, messages);
+        
+        // Remove the old "new" cache
+        queryClient.removeQueries({ queryKey: ["messages", "new"] });
 
-        finalMessages.push({
-          id: data.userMessage.id,
-          content: data.userMessage.content,
-          isUserMessage: true,
-          timestamp: new Date(data.userMessage.timestamp),
-        });
-        finalMessages.push({
-          id: data.aiMessage.id,
-          content: data.aiMessage.content,
-          isUserMessage: false,
-          timestamp: new Date(data.aiMessage.timestamp),
-        });
-
-        queryClient.setQueryData(newConversationQueryKey, finalMessages);
-        queryClient.removeQueries({ queryKey: oldQueryKey });
-
-        // This is the only place state is updated, after all cache manipulation is complete.
+        // Update component state to switch to the new conversation
         setCurrentConversationId(newConversationId);
       } else {
-        // FIX 3: This is the critical fix for subsequent messages.
-        // Use the queryKey from context, which is guaranteed to be the one we
-        // optimistically updated in onMutate, avoiding any race conditions.
-        queryClient.setQueryData<Message[]>(context.queryKey, (old = []) => {
-          const existingMessages = old.filter(
-            (msg) => !msg.id.startsWith("temp-"),
-          );
+        // Subsequent messages: update existing conversation
+        const queryKey = context?.queryKey || ["messages", variables.conversationId];
+        
+        queryClient.setQueryData<Message[]>(queryKey, (old = []) => {
+          const withoutTemp = old.filter((msg) => !msg.id.startsWith("temp-"));
           return [
-            ...existingMessages,
+            ...withoutTemp,
             {
               id: data.userMessage.id,
               content: data.userMessage.content,

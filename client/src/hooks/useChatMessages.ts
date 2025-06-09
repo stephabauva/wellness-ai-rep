@@ -167,10 +167,10 @@ export const useChatMessages = () => {
       if (data.conversationId) {
         console.log("Setting conversation ID to:", data.conversationId);
         
-        // Get existing messages from cache or initialize empty array
+        // Get existing messages from cache and ensure we keep them
         const existingMessages = queryClient.getQueryData(["messages", data.conversationId]) || [];
-        const filteredExisting = Array.isArray(existingMessages) ? 
-          existingMessages.filter((msg: any) => msg.id !== "welcome-message") : [];
+        const currentMessages = Array.isArray(existingMessages) ? 
+          existingMessages.filter((msg: any) => msg.id !== "welcome-message" && !msg.id.startsWith("temp-")) : [];
         
         // Format the new messages from the response
         const newMessages = [];
@@ -196,19 +196,17 @@ export const useChatMessages = () => {
         }
         
         // Combine existing and new messages, removing duplicates by ID
-        const allMessages = [...filteredExisting, ...newMessages];
+        const allMessages = [...currentMessages, ...newMessages];
         const uniqueMessages = allMessages.filter((msg, index, arr) => 
           arr.findIndex(m => m.id === msg.id) === index
         );
         
-        // Sort by timestamp
-        uniqueMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        
-        // Set the query data directly to ensure immediate display
-        queryClient.setQueryData(
-          ["messages", data.conversationId], 
-          uniqueMessages
+        // Sort by timestamp and set immediately
+        const sortedMessages = uniqueMessages.sort((a, b) => 
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
+        
+        queryClient.setQueryData(["messages", data.conversationId], sortedMessages);
         
         // Set the conversation ID immediately
         setConversationId(data.conversationId);

@@ -27,6 +27,7 @@ function ChatSection() {
     welcomeMessage,
     // sendMessageMutation, // Now handled by useChatActions
     setCurrentConversationId,
+    handleNewChat,
     loadingMessages
   } = useChatMessages();
 
@@ -75,7 +76,7 @@ function ChatSection() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentConversationId(null)} // Clears current conversation
+            onClick={handleNewChat}
           >
             New Chat
           </Button>

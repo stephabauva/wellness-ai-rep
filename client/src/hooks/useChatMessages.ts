@@ -39,19 +39,23 @@ export const useChatMessages = () => {
       const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
+      
+      console.log(`Loaded ${convMessages.length} messages for conversation ${currentConversationId}:`, convMessages);
+      
       return convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
         isUserMessage: msg.role === "user",
         timestamp: new Date(msg.createdAt),
         attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-          name: att.fileName || att.name,
+          name: att.displayName || att.fileName || att.name,
           type: att.fileType || att.type
         })) : undefined
       }));
     },
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
+    enabled: true, // Always enabled to ensure messages load
   });
 
   const { data: settings } = useQuery({
@@ -120,15 +124,14 @@ export const useChatMessages = () => {
 
       queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
         const existingMessages = old || [];
-        return [
-          ...existingMessages,
+        const newMessages = [
           {
             id: data.userMessage.id,
             content: data.userMessage.content,
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
             attachments: data.userMessage.metadata?.attachments ? data.userMessage.metadata.attachments.map((att: any) => ({
-              name: att.fileName || att.name,
+              name: att.displayName || att.fileName || att.name,
               type: att.fileType || att.type
             })) : undefined
           },
@@ -139,6 +142,10 @@ export const useChatMessages = () => {
             timestamp: new Date(data.aiMessage.timestamp),
           },
         ];
+        
+        const updatedMessages = [...existingMessages, ...newMessages];
+        console.log(`Updating cache for conversation ${finalConversationId}: ${existingMessages.length} existing + ${newMessages.length} new messages`);
+        return updatedMessages;
       });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });

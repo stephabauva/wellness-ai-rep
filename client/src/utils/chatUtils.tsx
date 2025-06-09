@@ -21,32 +21,21 @@ export const generateMessagesToDisplay = (
   currentConversationId: string | null,
   welcomeMessage: any
 ) => {
-  let welcomeMessages = [welcomeMessage];
-  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
+  // Start with existing messages or welcome message if no messages exist
+  let messagesToDisplay = messages && messages.length > 0 ? messages : [welcomeMessage];
 
+  // Always append pending message if it exists, regardless of conversation state
   if (pendingUserMessage) {
-    if (!currentConversationId) {
-      messagesToDisplay = [
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    } else {
-      messagesToDisplay = [
-        ...messagesToDisplay,
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    }
+    messagesToDisplay = [
+      ...messagesToDisplay,
+      {
+        id: "temp-pending",
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments,
+      }
+    ];
   }
 
   return messagesToDisplay;

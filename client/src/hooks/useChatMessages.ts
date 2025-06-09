@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAppContext } from '@/context/AppContext';
@@ -72,13 +72,34 @@ export const useChatMessages = () => {
       console.log("Formatted messages:", formattedMessages.length, formattedMessages);
       console.log("All messages in conversation:", formattedMessages.map(m => ({ id: m.id, content: m.content.substring(0, 50) + '...', isUser: m.isUserMessage })));
       
-      return formattedMessages.length > 0 ? formattedMessages : [welcomeMessage];
+      return formattedMessages;
     },
     refetchOnWindowFocus: false,
     staleTime: 0, // Always fetch fresh data
     refetchOnMount: true,
     enabled: true // Always enable this query
   });
+
+  // Get active conversation ID by checking cache for actual conversation data
+  let activeConversationId = currentConversationId;
+  
+  // If no current conversation ID, check cache for active conversations
+  if (!currentConversationId) {
+    const allQueries = queryClient.getQueriesData({ queryKey: ["messages"] });
+    for (const [queryKey, data] of allQueries) {
+      const [, conversationId] = queryKey as [string, string];
+      if (conversationId !== "new" && Array.isArray(data) && data.length > 0) {
+        const hasRealMessages = data.some((msg: any) => msg.id !== "welcome-message");
+        if (hasRealMessages) {
+          console.log("Found active conversation in cache:", conversationId);
+          activeConversationId = conversationId;
+          // Update the state to match the cached data (but don't cause infinite re-renders)
+          setTimeout(() => setConversationId(conversationId), 0);
+          break;
+        }
+      }
+    }
+  }
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -123,9 +144,6 @@ export const useChatMessages = () => {
       if (data.conversationId) {
         console.log("Setting conversation ID to:", data.conversationId);
         
-        // Set the conversation ID immediately
-        setConversationId(data.conversationId);
-        
         // Format the messages from the response and set them directly in the cache
         const formattedMessages = [];
         
@@ -155,8 +173,16 @@ export const useChatMessages = () => {
           formattedMessages
         );
         
+        // Set the conversation ID immediately and force a re-render
+        setConversationId(data.conversationId);
+        
         // Invalidate the "new" query since we now have a conversation
         queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
+        
+        // Force an immediate refetch to ensure the UI updates
+        queryClient.invalidateQueries({ 
+          queryKey: ["messages", data.conversationId] 
+        });
       }
 
       // Invalidate conversations list
@@ -185,15 +211,12 @@ export const useChatMessages = () => {
     console.log("Switching to conversation:", conversationId);
     setConversationId(conversationId);
     setPendingUserMessage(null);
-    
-    // No need to invalidate - React Query will automatically refetch when the key changes
-    // This eliminates race conditions and improves performance
   }, []);
 
   return {
     messages: messages || [],
     loadingMessages,
-    currentConversationId,
+    currentConversationId: activeConversationId,
     sendMessageMutation,
     handleSelectConversation,
     handleNewChat,

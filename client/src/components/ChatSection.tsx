@@ -9,7 +9,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useChatActions } from "@/hooks/useChatActions"; // Import the new hook
 
 // Import the new components
-import { MessageDisplayArea, DisplayMessage } from "@/components/MessageDisplayArea";
+import { MessageDisplayArea } from "@/components/MessageDisplayArea";
 import { ChatInputArea } from "@/components/ChatInputArea";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { ConversationHistory } from "@/components/ConversationHistory";
@@ -42,13 +42,12 @@ function ChatSection() {
 
 
   // Generate messages to display
-  // Ensure DisplayMessage type is compatible with generateMessagesToDisplay's output
-  const messagesToDisplay: DisplayMessage[] = generateMessagesToDisplay(
+  const messagesToDisplay = generateMessagesToDisplay(
     messages || [],
     pendingUserMessage,
     currentConversationId,
     welcomeMessage
-  ) as DisplayMessage[]; // Cast if necessary, ensure compatibility
+  );
 
   const handleConversationSelect = useCallback((conversationId: string) => {
     setCurrentConversationId(conversationId);

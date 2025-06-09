@@ -2,18 +2,17 @@ import React, { useRef, useEffect } from "react";
 import { ChatMessage } from "@/components/ui/chat-message"; // Assuming this is the correct path
 import { AttachedFile } from "@/hooks/useFileManagement"; // For message attachments type
 
-// This type should ideally come from a shared types definition
-// or be inferred from useChatMessages or generateMessagesToDisplay
-export interface DisplayMessage {
+// Import the Message type from utils to ensure consistency
+type Message = {
   id: string;
   content: string;
   isUserMessage: boolean;
   timestamp: Date;
-  attachments?: Array<{ name: string; type: string; url?: string }>; // Match ChatMessage attachment prop
-}
+  attachments?: { name: string; type: string }[];
+};
 
 interface MessageDisplayAreaProps {
-  messagesToDisplay: DisplayMessage[];
+  messagesToDisplay: Message[];
   isLoading?: boolean; // To show a loader if messages are loading
 }
 
@@ -46,11 +45,10 @@ export function MessageDisplayArea({
           message={message.content}
           isUser={message.isUserMessage}
           timestamp={message.timestamp}
-          // Ensure attachments are mapped correctly to ChatMessage's expected format
+          // Map attachments to ChatMessage's expected format
           attachments={message.attachments?.map(att => ({
             name: att.name,
             type: att.type,
-            url: att.url || '', // Provide a fallback for URL
           }))}
         />
       ))}

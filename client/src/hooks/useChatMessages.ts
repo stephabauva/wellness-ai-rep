@@ -124,6 +124,8 @@ export const useChatMessages = () => {
       return await response.json();
     },
     onMutate: async ({ content, attachments, conversationId }) => {
+      console.log("onMutate triggered - setting pending message:", { content, conversationId });
+      
       // Cancel any outgoing queries to avoid race conditions
       await queryClient.cancelQueries({ queryKey: ["messages"] });
 
@@ -136,6 +138,8 @@ export const useChatMessages = () => {
           type: f.fileType 
         }))
       });
+
+      console.log("Pending user message set");
 
       // If we have a conversation ID, add the message optimistically
       if (conversationId) {
@@ -155,6 +159,7 @@ export const useChatMessages = () => {
           ["messages", conversationId], 
           [...(Array.isArray(existingMessages) ? existingMessages : []), optimisticUserMessage]
         );
+        console.log("Optimistic message added to cache");
       }
     },
     onSuccess: (data) => {

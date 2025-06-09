@@ -99,8 +99,8 @@ interface UserSettings {
 ```
 
 ### Default Behavior
-- **New Users**: Automatic selection enabled by default
-- **Existing Users**: Automatic selection disabled to preserve current workflow
+- **All Users**: Automatic selection enabled by default (updated June 2025)
+- **Image Uploads**: Google Gemini automatically selected for optimal visual analysis
 - **Fallback Strategy**: Always falls back to user's manually selected model if automatic selection fails
 
 ## Future Enhancements
@@ -139,6 +139,8 @@ interface UserSettings {
 - ✅ Fallback system works when primary models unavailable
 - ✅ Manual override functions correctly
 - ✅ Settings toggle persists across sessions
+- ✅ **June 2025 Fix**: Automatic selection now enabled by default for all users
+- ✅ **June 2025 Fix**: Google Gemini properly selected for image analysis
 
 ## Integration Notes
 

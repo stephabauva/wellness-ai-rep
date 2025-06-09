@@ -45,3 +45,10 @@ Enhanced Error Handling: Fixed Web Speech API "aborted" error when user clicks t
 Fixed Text Duplication: Resolved critical issue where Web Speech API was duplicating transcribed text by implementing persistent result tracking flag
 Improved Recognition Lifecycle: Enhanced recognition start/stop handling with proper cleanup and state management to prevent restart loops
 Robust Promise Handling: Added safeguards to ensure transcription results are delivered exactly once per recording session
+
+Critical Fixes (June 2025)
+
+Microphone Activation: Fixed hardcoded disabled microphone button in ChatSection.tsx - replaced with functional AudioRecorder component
+Provider Integration: Restored proper transcription provider configuration with Web Speech API as default
+Settings Integration: Enhanced AppContext to include transcriptionProvider field for proper component functionality
+Voice Input Restoration: Complete voice-to-text functionality now operational across all supported providers

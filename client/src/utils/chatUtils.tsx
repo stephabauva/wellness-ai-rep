@@ -24,6 +24,13 @@ export const generateMessagesToDisplay = (
   // If we have a current conversation, show all messages from that conversation
   if (currentConversationId && messages && messages.length > 0) {
     let messagesToDisplay = messages;
+    
+    console.log(`Displaying ${messagesToDisplay.length} messages for conversation ${currentConversationId}`);
+    messagesToDisplay.forEach((msg, index) => {
+      if (msg.attachments && msg.attachments.length > 0) {
+        console.log(`Message ${index} has ${msg.attachments.length} attachments:`, msg.attachments);
+      }
+    });
 
     // Always append pending message if it exists
     if (pendingUserMessage) {

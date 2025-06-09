@@ -56,10 +56,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 {attachment.type.startsWith("image/") ? (
                   <div className="relative">
                     <img
-                      src={`/uploads/${attachment.fileName || attachment.name}`}
+                      src={`/uploads/${attachment.fileName || attachment.name}?t=${Date.now()}`}
                       alt={attachment.name}
                       className="max-w-64 max-h-48 rounded-lg object-cover border border-gray-200"
+                      onLoad={() => {
+                        console.log(`Image loaded successfully: ${attachment.fileName || attachment.name}`);
+                      }}
                       onError={(e) => {
+                        console.error(`Failed to load image: ${attachment.fileName || attachment.name}`);
                         // Fallback to badge if image fails to load
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';

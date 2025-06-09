@@ -52,7 +52,7 @@ export const useChatMessages = () => {
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
       console.log("Loaded messages for conversation:", currentConversationId, convMessages);
-      return Array.isArray(convMessages) ? convMessages.map((msg: any) => ({
+      const formattedMessages = Array.isArray(convMessages) ? convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
         isUserMessage: msg.role === "user",
@@ -61,11 +61,15 @@ export const useChatMessages = () => {
           name: att.fileName || att.name,
           type: att.fileType || att.type
         })) : undefined
-      })) : [welcomeMessage];
+      })) : [];
+      
+      console.log("Formatted messages:", formattedMessages.length, formattedMessages);
+      return formattedMessages.length > 0 ? formattedMessages : [welcomeMessage];
     },
     refetchOnWindowFocus: true,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data
     refetchOnMount: true,
+    enabled: true, // Always enable this query
   });
 
   // Send message mutation
@@ -115,20 +119,29 @@ export const useChatMessages = () => {
       // Clear pending message
       setPendingUserMessage(null);
 
-      // Force refetch messages for this conversation
+      // Invalidate and refetch immediately
       queryClient.invalidateQueries({ 
+        queryKey: ["messages"] 
+      });
+
+      queryClient.invalidateQueries({ 
+        queryKey: ["conversations"] 
+      });
+
+      // Force immediate refetch with correct conversation ID
+      queryClient.refetchQueries({ 
         queryKey: ["messages", conversationId] 
       });
 
-      // Force refetch to ensure we get all messages
+      // Secondary refetch to ensure data consistency
       setTimeout(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: ["messages", conversationId] 
+        });
         queryClient.refetchQueries({ 
           queryKey: ["messages", conversationId] 
         });
-      }, 100);
-
-      // Invalidate conversations list
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      }, 200);
     },
     onError: (error) => {
       console.error("Message send error:", error);
@@ -152,18 +165,22 @@ export const useChatMessages = () => {
     setConversationId(conversationId);
     setPendingUserMessage(null);
 
-    // Force refetch messages for the new conversation
+    // Clear all message cache and force fresh fetch
+    queryClient.invalidateQueries({ 
+      queryKey: ["messages"] 
+    });
+
+    // Force immediate refetch for the new conversation
     if (conversationId) {
-      setTimeout(() => {
-        queryClient.invalidateQueries({ 
-          queryKey: ["messages", conversationId] 
-        });
-        queryClient.refetchQueries({ 
-          queryKey: ["messages", conversationId] 
-        });
-      }, 50);
+      queryClient.refetchQueries({ 
+        queryKey: ["messages", conversationId] 
+      });
+    } else {
+      queryClient.refetchQueries({ 
+        queryKey: ["messages", "new"] 
+      });
     }
-  }, [queryClient]);
+  }, []);
 
   return {
     messages: messages || [],

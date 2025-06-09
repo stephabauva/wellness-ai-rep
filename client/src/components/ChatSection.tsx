@@ -59,7 +59,9 @@ export function ChatSection() {
     messagesLength: messages?.length || 0,
     messagesToDisplayLength: messagesToDisplay?.length || 0,
     currentConversationId,
-    pendingUserMessage: !!pendingUserMessage
+    pendingUserMessage: !!pendingUserMessage,
+    messagesData: messages,
+    messagesToDisplayData: messagesToDisplay
   });
 
   const handleSendMessage = useCallback(() => {

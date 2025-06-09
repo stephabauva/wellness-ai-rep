@@ -25,7 +25,7 @@ export const getFileIcon = (fileType: string) => {
 
 export const generateMessagesToDisplay = (
   messages: Message[],
-  pendingUserMessage: string | null,
+  pendingUserMessage: { content: string; timestamp: Date; attachments?: { name: string; type: string }[] } | null,
   currentConversationId: string | null,
   welcomeMessage: Message | null
 ): Message[] => {
@@ -56,12 +56,10 @@ export const generateMessagesToDisplay = (
   if (pendingUserMessage) {
     const pendingMessage: Message = {
       id: `pending-${Date.now()}`,
-      userId: 1,
-      conversationId: currentConversationId || 'pending',
-      content: pendingUserMessage,
+      content: pendingUserMessage.content,
       isUserMessage: true,
-      timestamp: new Date().toISOString(),
-      attachments: []
+      timestamp: pendingUserMessage.timestamp,
+      attachments: pendingUserMessage.attachments
     };
     messagesToDisplay = [...messagesToDisplay, pendingMessage];
     console.log("Added pending message");

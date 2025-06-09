@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Paperclip,
@@ -28,7 +29,7 @@ import { useChatMessages } from "@/hooks/useChatMessages";
 import { useReportGeneration } from "@/hooks/useReportGeneration";
 
 // Utilities
-import { getFileIcon, generateMessagesToDisplay } from "@/utils/chatUtils";
+import { getFileIcon } from "@/utils/chatUtils";
 
 const welcomeMessage = {
   id: "welcome-message",
@@ -45,37 +46,49 @@ const ChatSection: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Custom hooks
+  // Custom hooks with error handling
+  const fileManagement = useFileManagement();
+  const chatMessages = useChatMessages();
+  const reportGeneration = useReportGeneration();
+
+  // Safe destructuring with fallbacks
   const {
-    attachedFiles,
-    uploadFileMutation,
-    removeAttachedFile,
-    clearAttachedFiles,
-    handleFileChange,
-  } = useFileManagement();
+    attachedFiles = [],
+    uploadFileMutation = { mutate: () => {}, isPending: false },
+    removeAttachedFile = () => {},
+    clearAttachedFiles = () => {},
+    handleFileChange = () => {},
+  } = fileManagement || {};
 
   const {
-    messages,
-    loadingMessages,
-    currentConversationId,
-    pendingUserMessage,
-    sendMessageMutation,
-    handleSelectConversation,
-    handleNewChat,
-  } = useChatMessages();
+    messages = [],
+    loadingMessages = false,
+    currentConversationId = null,
+    pendingUserMessage = null,
+    sendMessageMutation = { mutate: () => {}, isPending: false },
+    handleSelectConversation = () => {},
+    handleNewChat = () => {},
+  } = chatMessages || {};
 
-  const { downloadReportMutation, handleDownloadPDF } = useReportGeneration();
+  const {
+    downloadReportMutation = { mutate: () => {}, isPending: false },
+    handleDownloadPDF = () => {},
+  } = reportGeneration || {};
 
   // Event handlers
   const handleSendMessage = () => {
-    if (inputMessage.trim() || attachedFiles.length > 0) {
-      sendMessageMutation.mutate({
-        content: inputMessage,
-        attachments: attachedFiles,
-        conversationId: currentConversationId,
-      });
-      setInputMessage("");
-      clearAttachedFiles();
+    try {
+      if (inputMessage.trim() || attachedFiles.length > 0) {
+        sendMessageMutation.mutate({
+          content: inputMessage,
+          attachments: attachedFiles,
+          conversationId: currentConversationId,
+        });
+        setInputMessage("");
+        clearAttachedFiles();
+      }
+    } catch (error) {
+      console.error("Send message error:", error);
     }
   };
 
@@ -99,40 +112,118 @@ const ChatSection: React.FC = () => {
   };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileChange(event.target.files);
+    try {
+      handleFileChange(event.target.files);
+    } catch (error) {
+      console.error("File input error:", error);
+    }
   };
 
   const handleCameraChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      uploadFileMutation.mutate(file);
+    try {
+      const file = event.target.files?.[0];
+      if (file) {
+        uploadFileMutation.mutate(file);
+      }
+    } catch (error) {
+      console.error("Camera change error:", error);
     }
   };
 
   const handleNewChatWithCleanup = () => {
-    handleNewChat();
-    setInputMessage("");
-    clearAttachedFiles();
+    try {
+      handleNewChat();
+      setInputMessage("");
+      clearAttachedFiles();
+    } catch (error) {
+      console.error("New chat error:", error);
+    }
   };
 
   const handleSelectConversationWithCleanup = (conversationId: string) => {
-    handleSelectConversation(conversationId);
-    setInputMessage("");
-    clearAttachedFiles();
+    try {
+      handleSelectConversation(conversationId);
+      setInputMessage("");
+      clearAttachedFiles();
+    } catch (error) {
+      console.error("Select conversation error:", error);
+    }
   };
 
   // Auto-scroll effect
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    try {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } catch (error) {
+      console.error("Scroll error:", error);
+    }
   }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
 
-  // Generate messages to display
-  const messagesToDisplay = generateMessagesToDisplay(
-    messages,
-    pendingUserMessage,
-    currentConversationId,
-    welcomeMessage
-  );
+  // Force scroll on conversation change
+  useEffect(() => {
+    if (currentConversationId) {
+      try {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } catch (error) {
+        console.error("Conversation scroll error:", error);
+      }
+    }
+  }, [currentConversationId]);
+
+  // Force scroll when loading finishes
+  useEffect(() => {
+    if (!loadingMessages && messages && messages.length > 0) {
+      try {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 200);
+      } catch (error) {
+        console.error("Loading scroll error:", error);
+      }
+    }
+  }, [loadingMessages, messages]);
+
+  // Safe message display logic
+  let messagesToDisplay = [];
+  
+  try {
+    if (currentConversationId && Array.isArray(messages)) {
+      // Active conversation - show all messages
+      messagesToDisplay = [...messages];
+      if (pendingUserMessage) {
+        messagesToDisplay.push({
+          id: "pending-user",
+          content: pendingUserMessage.content || "",
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp || new Date(),
+          attachments: pendingUserMessage.attachments?.map(att => ({
+            name: att.name || "",
+            type: att.type || ""
+          })) || undefined
+        });
+      }
+    } else {
+      // New conversation - show welcome message
+      messagesToDisplay = [welcomeMessage];
+      if (pendingUserMessage) {
+        messagesToDisplay.push({
+          id: "pending-user",
+          content: pendingUserMessage.content || "",
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp || new Date(),
+          attachments: pendingUserMessage.attachments?.map(att => ({
+            name: att.name || "",
+            type: att.type || ""
+          })) || undefined
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Message display error:", error);
+    messagesToDisplay = [welcomeMessage];
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -192,14 +283,14 @@ const ChatSection: React.FC = () => {
       {/* Input Area */}
       <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Attached Files Preview */}
-        {attachedFiles.length > 0 && (
+        {Array.isArray(attachedFiles) && attachedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachedFiles.map((file) => (
               <div
                 key={file.id}
                 className="relative bg-secondary rounded-lg p-2 max-w-48"
               >
-                {file.fileType.startsWith("image/") ? (
+                {file.fileType?.startsWith("image/") ? (
                   <div className="space-y-2">
                     <img
                       src={`/uploads/${file.fileName}`}
@@ -321,11 +412,15 @@ const ChatSection: React.FC = () => {
 
         {/* Loading Indicator */}
         {sendMessageMutation.isPending && (
-          <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-            <div className="h-1 w-1 rounded-full bg-current animate-pulse" />
-            <div className="h-1 w-1 rounded-full bg-current animate-pulse delay-75" />
-            <div className="h-1 w-1 rounded-full bg-current animate-pulse delay-150" />
-            <span>AI is thinking...</span>
+          <div className="flex items-center gap-2 mt-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-4 border-blue-500">
+            <div className="flex gap-1">
+              <div className="h-2 w-2 rounded-full bg-blue-500 animate-bounce" />
+              <div className="h-2 w-2 rounded-full bg-blue-500 animate-bounce delay-100" />
+              <div className="h-2 w-2 rounded-full bg-blue-500 animate-bounce delay-200" />
+            </div>
+            <span className="text-blue-700 dark:text-blue-300 font-medium">
+              🤖 AI is processing your message...
+            </span>
           </div>
         )}
       </div>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -34,11 +33,12 @@ export const useChatMessages = () => {
     queryKey: ["messages", currentConversationId || "new"],
     queryFn: async () => {
       if (!currentConversationId) {
-        return [welcomeMessage];
+        return [];
       }
       const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
+      console.log(`Loaded ${convMessages.length} messages for conversation ${currentConversationId}:`, convMessages);
       return convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
@@ -51,7 +51,9 @@ export const useChatMessages = () => {
       }));
     },
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // No stale time - always consider data fresh
+    enabled: !!currentConversationId, // Only fetch when we have a conversation ID
+    refetchOnMount: false, // Don't refetch on mount if we have cached data
   });
 
   const { data: settings } = useQuery({
@@ -116,10 +118,14 @@ export const useChatMessages = () => {
         setCurrentConversationId(finalConversationId);
       }
 
+      // Update cache for the correct conversation
       const targetQueryKey = ["messages", finalConversationId];
 
       queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
         const existingMessages = old || [];
+
+        console.log(`Updating cache for conversation ${finalConversationId}: ${existingMessages.length} existing + 2 new messages`);
+
         return [
           ...existingMessages,
           {
@@ -140,8 +146,17 @@ export const useChatMessages = () => {
           },
         ];
       });
+
+      // Force immediate UI update
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      
+      // Force the query to update immediately
       queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
+      
+      // Ensure the UI updates by triggering a manual refetch
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["messages", finalConversationId] });
+      }, 100);
     },
     onError: (error) => {
       console.error("Message send error:", error);

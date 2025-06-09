@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FileText, Image, Video, File } from "lucide-react";
 
@@ -16,38 +15,48 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: any[],
+  messages: any[] = [],
   pendingUserMessage: any,
   currentConversationId: string | null,
   welcomeMessage: any
 ) => {
-  let welcomeMessages = [welcomeMessage];
-  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
+  // If we have a conversation ID, we're in an active conversation
+  if (currentConversationId) {
+    // Start with existing messages (or empty array if still loading)
+    const conversationMessages = messages ? [...messages] : [];
 
-  if (pendingUserMessage) {
-    if (!currentConversationId) {
-      messagesToDisplay = [
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    } else {
-      messagesToDisplay = [
-        ...messagesToDisplay,
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
+    // Add pending message if it exists
+    if (pendingUserMessage) {
+      conversationMessages.push({
+        id: "pending-user",
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments?.map(att => ({
+          name: att.name,
+          type: att.type
+        }))
+      });
     }
+
+    return conversationMessages;
   }
 
-  return messagesToDisplay;
+  // For new conversations (no ID), show welcome message and any pending
+  const newConversationMessages = [welcomeMessage];
+
+  if (pendingUserMessage) {
+    newConversationMessages.push({
+      id: "pending-user",
+      content: pendingUserMessage.content,
+      isUserMessage: true,
+      timestamp: pendingUserMessage.timestamp,
+      attachments: pendingUserMessage.attachments?.map(att => ({
+        name: att.name,
+        type: att.type
+      }))
+    });
+  }
+
+  return newConversationMessages;
 };

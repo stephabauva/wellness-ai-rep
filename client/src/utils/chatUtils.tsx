@@ -23,7 +23,7 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: Message[],
+  messages: Message[] | undefined,
   pendingUserMessage: { content: string; timestamp: Date; attachments?: { name: string; type: string }[] } | null,
   currentConversationId: string | null,
   welcomeMessage: Message
@@ -33,19 +33,34 @@ export const generateMessagesToDisplay = (
 
   if (!currentConversationId) {
     displayMessages = [welcomeMessage];
-  } else {
+  } else if (messages) {
     displayMessages = [...messages];
   }
 
   // Add pending user message if it exists (this is the key for immediate display!)
   if (pendingUserMessage) {
-    displayMessages.push({
-      id: "pending-user",
-      content: pendingUserMessage.content,
-      isUserMessage: true,
-      timestamp: pendingUserMessage.timestamp,
-      attachments: pendingUserMessage.attachments
-    });
+    if (!currentConversationId) {
+      // New conversation - replace welcome message with pending message
+      displayMessages = [{
+        id: "pending-user",
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments
+      }];
+    } else {
+      // Existing conversation - append pending message
+      displayMessages = [
+        ...displayMessages,
+        {
+          id: "pending-user",
+          content: pendingUserMessage.content,
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp,
+          attachments: pendingUserMessage.attachments
+        }
+      ];
+    }
   }
 
   return displayMessages;

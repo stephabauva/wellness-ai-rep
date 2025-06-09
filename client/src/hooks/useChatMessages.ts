@@ -84,38 +84,22 @@ export const useChatMessages = () => {
 
       return await response.json();
     },
-    onMutate: async ({ content, attachments, conversationId }) => {
-      // Cancel any outgoing refetches
-      const queryKey = ["messages", conversationId || "new"];
-      await queryClient.cancelQueries({ queryKey });
-
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData(queryKey);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(queryKey, (old: Message[] = []) => {
-        const existingMessages = old.filter(msg => msg.id !== "welcome-message");
-
-        // Add the user message optimistically
-        const optimisticUserMessage: Message = {
-          id: `temp-user-${Date.now()}`,
-          content,
-          isUserMessage: true,
-          timestamp: new Date(),
-          attachments: attachments?.map(f => ({ 
-            name: f.fileName || f.displayName, 
-            type: f.fileType 
-          }))
-        };
-
-        return [...existingMessages, optimisticUserMessage];
+    onMutate: async ({ content, attachments }) => {
+      // Set pending message for immediate display
+      setPendingUserMessage({
+        content,
+        timestamp: new Date(),
+        attachments: attachments?.map(f => ({ 
+          name: f.fileName || f.displayName, 
+          type: f.fileType 
+        }))
       });
-
-      // Return a context object with the snapshotted value
-      return { previousMessages, queryKey };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data) => {
       console.log("Message sent successfully:", data);
+
+      // Clear pending message
+      setPendingUserMessage(null);
 
       // Update conversation ID if this was a new conversation
       if (data.conversationId && !currentConversationId) {
@@ -126,21 +110,11 @@ export const useChatMessages = () => {
       // Update the cache with the real server response
       const targetQueryKey = ["messages", data.conversationId];
 
-      // If this was a new conversation, we need to update the cache key
-      if (variables.conversationId !== data.conversationId) {
-        // Move data from "new" to actual conversation ID
-        const tempData = queryClient.getQueryData(context?.queryKey);
-        queryClient.setQueryData(targetQueryKey, tempData);
-        queryClient.removeQueries({ queryKey: context?.queryKey });
-      }
-
-      // Replace optimistic messages with real ones
       queryClient.setQueryData(targetQueryKey, (old: Message[] = []) => {
-        // Remove any temporary messages
-        const cleanMessages = old.filter(msg => !msg.id.startsWith('temp-'));
-
+        const existingMessages = old || [];
+        
         return [
-          ...cleanMessages,
+          ...existingMessages,
           {
             id: data.userMessage.id,
             content: data.userMessage.content,
@@ -164,13 +138,11 @@ export const useChatMessages = () => {
         ];
       });
     },
-    onError: (error, variables, context) => {
+    onError: (error) => {
       console.error("Message send error:", error);
-
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousMessages) {
-        queryClient.setQueryData(context.queryKey, context.previousMessages);
-      }
+      
+      // Clear pending message on error
+      setPendingUserMessage(null);
     },
   });
 

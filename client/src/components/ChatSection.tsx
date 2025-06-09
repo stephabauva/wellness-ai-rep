@@ -13,6 +13,7 @@ import { ConversationHistory } from "@/components/ConversationHistory";
 import { useAppContext } from "@/context/AppContext";
 
 export function ChatSection() {
+  // Always call all hooks at the top level in the same order
   const [inputMessage, setInputMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isConversationHistoryOpen, setIsConversationHistoryOpen] = useState(false);
@@ -41,10 +42,12 @@ export function ChatSection() {
     removeAttachedFile
   } = useFileManagement();
 
+  // Effects after all hooks
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pendingUserMessage]);
 
+  // Generate messages to display
   const messagesToDisplay = generateMessagesToDisplay(
     messages || [],
     pendingUserMessage,

@@ -108,21 +108,30 @@ export const useChatMessages = () => {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ content, attachments, conversationId, aiProvider, aiModel, automaticModelSelection }: SendMessageParams) => {
+      const requestBody = {
+        content,
+        attachments,
+        conversationId,
+        aiProvider: aiProvider || "openai",
+        aiModel: aiModel || "gpt-4o",
+        automaticModelSelection: automaticModelSelection || false
+      };
+      console.log("[mutationFn] Sending to /api/messages. Request Body:", JSON.stringify(requestBody, null, 2));
+
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          content, 
-          attachments, 
-          conversationId,
-          aiProvider: aiProvider || "openai",
-          aiModel: aiModel || "gpt-4o",
-          automaticModelSelection: automaticModelSelection || false
-        }),
+        body: JSON.stringify(requestBody), // Use the pre-defined requestBody
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send message");
+        console.error("[mutationFn] Error from /api/messages. Status:", response.status, "StatusText:", response.statusText);
+        response.text().then(text => {
+          console.error("[mutationFn] Error response body:", text);
+        }).catch(e => {
+          console.error("[mutationFn] Error reading response body:", e);
+        });
+        throw new Error("Failed to send message"); // Keep the original error throw
       }
 
       return await response.json();

@@ -10,9 +10,8 @@ import SettingsSection from "@/components/SettingsSection";
 import { useAppContext } from "@/context/AppContext";
 
 const Home: React.FC = () => {
-  // const { activeSection } = useAppContext(); // Commented out for debugging
-  const activeSection = 'chat'; // TEMPORARY DEBUGGING: Forcing chat section to be active
-  console.log("[Home] Component body execution. activeSection (forced):", activeSection);
+  const { activeSection } = useAppContext(); // Restored from context
+  console.log("[Home] Component body execution. activeSection:", activeSection); // Adjusted log
   
   // Memoize section components
   const chatSectionComponent = useMemo(() => <ChatSection />, []);

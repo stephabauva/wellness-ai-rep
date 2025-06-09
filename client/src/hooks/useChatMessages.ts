@@ -127,42 +127,41 @@ export const useChatMessages = () => {
       // Clear pending message
       setPendingUserMessage(null);
 
-      // Completely clear the cache for this conversation and force fresh fetch
-      queryClient.removeQueries({ 
-        queryKey: ["messages", conversationId] 
-      });
+      // Immediately update cache with optimistic data from the response
+      const currentMessages = queryClient.getQueryData(["messages", conversationId]) || [];
+      const userMessage = {
+        id: data.userMessage.id,
+        content: data.userMessage.content,
+        isUserMessage: true,
+        timestamp: new Date(data.userMessage.createdAt || Date.now()),
+        attachments: undefined
+      };
+      const aiMessage = {
+        id: data.aiMessage.id,
+        content: data.aiMessage.content,
+        isUserMessage: false,
+        timestamp: new Date(data.aiMessage.createdAt || Date.now()),
+        attachments: undefined
+      };
 
+      // Build the new message list
+      const existingMessages = Array.isArray(currentMessages) ? currentMessages : [];
+      const newMessages = [...existingMessages, userMessage, aiMessage];
+      
+      console.log("Optimistically updating cache with:", newMessages.length, "messages");
+      queryClient.setQueryData(["messages", conversationId], newMessages);
+
+      // Invalidate conversations list
       queryClient.invalidateQueries({ 
         queryKey: ["conversations"] 
       });
 
-      // Force immediate fresh fetch
-      queryClient.fetchQuery({ 
-        queryKey: ["messages", conversationId],
-        queryFn: async () => {
-          const response = await fetch(`/api/conversations/${conversationId}/messages`);
-          if (!response.ok) throw new Error("Failed to fetch conversation messages");
-          const convMessages = await response.json();
-          console.log("Fresh fetch - loaded messages for conversation:", conversationId, convMessages);
-          
-          const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-          const formattedMessages = messagesArray.map((msg: any) => ({
-            id: msg.id,
-            content: msg.content,
-            isUserMessage: msg.role === "user",
-            timestamp: new Date(msg.createdAt),
-            attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-              name: att.fileName || att.name || 'Unknown file',
-              type: att.fileType || att.type
-            })) : undefined
-          }));
-          
-          formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-          console.log("Fresh fetch - formatted messages:", formattedMessages.length, formattedMessages);
-          
-          return formattedMessages;
-        }
-      });
+      // Background refresh to ensure accuracy after 100ms
+      setTimeout(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: ["messages", conversationId] 
+        });
+      }, 100);
     },
     onError: (error) => {
       console.error("Message send error:", error);

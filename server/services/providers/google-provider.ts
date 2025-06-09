@@ -29,9 +29,9 @@ export class GoogleProvider implements AiProvider {
     log('info', 'GoogleProvider initialized');
   }
 
-  // Helper to convert generic ChatMessage format to Google's Part[]
-  private static convertMessagesToGoogleParts(messages: ProviderChatMessage[]): Part[] {
-    const history: Part[] = [];
+  // Helper to convert generic ChatMessage format to Google's history format
+  private convertMessagesToGoogleHistory(messages: ProviderChatMessage[]): Array<{role: string, parts: Part[]}> {
+    const history: Array<{role: string, parts: Part[]}> = [];
     for (const msg of messages) {
       const parts: Part[] = [];
       if (typeof msg.content === 'string') {
@@ -61,6 +61,38 @@ export class GoogleProvider implements AiProvider {
       history.push({ role: msg.role === 'assistant' ? 'model' : msg.role, parts });
     }
     return history;
+  }
+
+  // Helper to convert generic ChatMessage format to Google's Part[] (legacy method)
+  private static convertMessagesToGoogleParts(messages: ProviderChatMessage[]): Part[] {
+    const allParts: Part[] = [];
+    for (const msg of messages) {
+      if (typeof msg.content === 'string') {
+        allParts.push({ text: msg.content });
+      } else { // It's MessageContentPart[]
+        for (const part of msg.content) {
+          if (part.type === 'text' && part.text) {
+            allParts.push({ text: part.text });
+          } else if (part.type === 'image_url' && part.image_url?.url) {
+            if (part.image_url.url.startsWith('data:')) {
+              const [header, base64Data] = part.image_url.url.split(',');
+              if (base64Data) {
+                const mimeType = header.substring(header.indexOf(':') + 1, header.indexOf(';'));
+                allParts.push({ inlineData: { mimeType, data: base64Data } });
+              } else {
+                log('warn', 'Could not parse base64 data URI for Google message part.');
+              }
+            } else {
+              // Direct URLs are not directly supported by Google's inlineData.
+              // This would require fetching the image and converting to base64.
+              // For now, we assume data URIs are provided by the context builder.
+              log('warn', `Skipping non-data URI image URL for Google: ${part.image_url.url}`);
+            }
+          }
+        }
+      }
+    }
+    return allParts;
   }
 
   // Static method to process attachments into Google's format (similar to OpenAI's but for Google Parts)
@@ -115,8 +147,20 @@ export class GoogleProvider implements AiProvider {
     try {
       log('info', `Generating chat response with model: ${config.model}`);
       const model = config.model as GoogleModel;
+      
+      // Extract system message if present and use it as system instruction
+      let systemInstruction = '';
+      const nonSystemMessages = messages.filter(msg => {
+        if (msg.role === 'system') {
+          systemInstruction = typeof msg.content === 'string' ? msg.content : msg.content.map(part => part.type === 'text' ? part.text : '').join('');
+          return false;
+        }
+        return true;
+      });
+
       const genModel = this.googleAI.getGenerativeModel({
         model,
+        systemInstruction: systemInstruction || undefined,
         // Default safety settings - can be configured if needed
         safetySettings: [
             { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
@@ -126,8 +170,10 @@ export class GoogleProvider implements AiProvider {
         ]
       });
 
-      const googleHistory = GoogleProvider.convertMessagesToGoogleParts(messages.slice(0, -1));
-      const lastMessage = messages[messages.length - 1];
+      // Build history from non-system messages, excluding the last message
+      const historyMessages = nonSystemMessages.slice(0, -1);
+      const googleHistory = this.convertMessagesToGoogleHistory(historyMessages);
+      const lastMessage = nonSystemMessages[nonSystemMessages.length - 1];
 
       let lastMessageParts: Part[];
       if (typeof lastMessage.content === 'string') {
@@ -149,7 +195,6 @@ export class GoogleProvider implements AiProvider {
         lastMessageParts.push({text: "No specific query, please respond generally or based on history."});
       }
 
-
       log('info', `Starting chat. History length: ${googleHistory.length}, Last message parts: ${lastMessageParts.length}`);
 
       const chat = genModel.startChat({ history: googleHistory });
@@ -160,9 +205,9 @@ export class GoogleProvider implements AiProvider {
       log('info', 'Chat response received from Google.');
       return { response: responseText };
 
-    } catch (error) {
+    } catch (error: any) {
       log('error', 'Error in generateChatResponse (Google):', error);
-      if (error.message.includes('SAFETY')) {
+      if (error?.message?.includes('SAFETY')) {
          return { response: "I'm unable to respond to that request due to safety guidelines." };
       }
       throw error;
@@ -198,8 +243,8 @@ export class GoogleProvider implements AiProvider {
           return { insights: parsedInsights.insights };
         }
         throw new Error("JSON response from Google was not in the expected format.");
-      } catch (parseError) {
-        log('warn', `Failed to parse health insights as JSON from Google: ${parseError.message}. Falling back to text extraction.`);
+      } catch (parseError: any) {
+        log('warn', `Failed to parse health insights as JSON from Google: ${parseError?.message || 'Unknown parse error'}. Falling back to text extraction.`);
         const extractedInsights = text.split('\n')
           .filter(line => line.trim() && (line.includes('•') || line.includes('-') || line.includes('*') || /^\d+\./.test(line.trim())))
           .map(line => line.replace(/^[•\-*]\s*|\d+\.\s*/, '').trim())

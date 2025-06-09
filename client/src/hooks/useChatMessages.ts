@@ -116,22 +116,28 @@ export const useChatMessages = () => {
     onSuccess: (data) => {
       console.log("Message sent successfully:", data);
 
-      const conversationId = data.conversationId || currentConversationId;
-
-      // Set conversation ID if it's a new conversation
-      if (data.conversationId && !currentConversationId) {
+      // Always set conversation ID from response to ensure we have the correct one
+      if (data.conversationId) {
         console.log("Setting conversation ID to:", data.conversationId);
         setConversationId(data.conversationId);
+        
+        // Clear pending message
+        setPendingUserMessage(null);
+
+        // Invalidate the old query and force fetch for the new conversation
+        queryClient.invalidateQueries({ queryKey: ["messages"] });
+        
+        // Force immediate refetch for the conversation with the correct ID
+        setTimeout(() => {
+          console.log("Forcing refetch after message send...");
+          queryClient.refetchQueries({ 
+            queryKey: ["messages", data.conversationId] 
+          });
+        }, 50);
+      } else {
+        // Clear pending message even if no conversation ID
+        setPendingUserMessage(null);
       }
-
-      // Clear pending message
-      setPendingUserMessage(null);
-
-      // Force an immediate refetch with a small delay to ensure the backend has processed the message
-      setTimeout(async () => {
-        console.log("Forcing refetch after message send...");
-        await refetchMessages();
-      }, 100);
 
       // Invalidate conversations list
       queryClient.invalidateQueries({ 

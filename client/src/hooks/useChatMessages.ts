@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -123,11 +122,10 @@ export const useChatMessages = () => {
       const targetQueryKey = ["messages", finalConversationId];
 
       queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
-        // Always use existing messages from cache, or empty array for new conversations
         const existingMessages = old || [];
-        
+
         console.log(`Updating cache for conversation ${finalConversationId}: ${existingMessages.length} existing + 2 new messages`);
-        
+
         return [
           ...existingMessages,
           {
@@ -148,7 +146,7 @@ export const useChatMessages = () => {
           },
         ];
       });
-      
+
       // Force immediate UI update with refetch
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       queryClient.refetchQueries({ queryKey: ["messages", finalConversationId] });

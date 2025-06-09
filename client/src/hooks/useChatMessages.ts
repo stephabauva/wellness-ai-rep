@@ -167,7 +167,7 @@ export const useChatMessages = () => {
       // Don't rely on pending state - use direct cache updates
       return { userMessage };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: async (data, variables, context) => {
       console.log("Message sent successfully:", data);
 
       // Always set conversation ID from response to ensure we have the correct one
@@ -227,6 +227,7 @@ export const useChatMessages = () => {
         console.log("Updated cache with final messages:", sortedMessages.length);
         // Explicitly invalidate messages for the specific conversation
         queryClient.invalidateQueries({ queryKey: ["messages", data.conversationId] });
+        await queryClient.refetchQueries({ queryKey: ["messages", data.conversationId], exact: true });
       }
 
       // Invalidate conversations list

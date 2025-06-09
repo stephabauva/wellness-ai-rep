@@ -8,6 +8,11 @@ interface AppContextType {
   setActiveSection: (section: ActiveSection) => void;
   coachingMode: string;
   setCoachingMode: (mode: string) => void;
+  settings?: {
+    aiProvider?: string;
+    aiModel?: string;
+    automaticModelSelection?: boolean;
+  };
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -19,6 +24,13 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [activeSection, setActiveSectionState] = useState<ActiveSection>("chat");
   const [coachingMode, setCoachingModeState] = useState<string>("weight-loss");
+
+  // Default settings for AI provider
+  const settings = {
+    aiProvider: "openai",
+    aiModel: "gpt-4o",
+    automaticModelSelection: false
+  };
 
   // Memoized callback functions to prevent unnecessary re-renders
   const setActiveSection = useCallback((section: ActiveSection) => {
@@ -34,7 +46,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     activeSection,
     setActiveSection,
     coachingMode,
-    setCoachingMode
+    setCoachingMode,
+    settings
   }), [activeSection, setActiveSection, coachingMode, setCoachingMode]);
 
   return (

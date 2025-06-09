@@ -28,7 +28,7 @@ type ConversationHistoryProps = {
 export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   isOpen,
   onClose,
-  onSelectConversation,
+  onConversationSelect,
   currentConversationId
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,7 +93,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                       currentConversationId === conversation.id ? 'ring-2 ring-primary' : ''
                     }`}
                     onClick={() => {
-                      onSelectConversation(conversation.id);
+                      onConversationSelect(conversation.id);
                       onClose();
                     }}
                   >

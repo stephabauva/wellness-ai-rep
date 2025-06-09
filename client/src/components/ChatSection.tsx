@@ -8,7 +8,7 @@ import { useChatMessages } from "@/hooks/useChatMessages";
 import { useFileManagement } from "@/hooks/useFileManagement";
 import { generateMessagesToDisplay, getFileIcon } from "@/utils/chatUtils";
 import { ChatMessage } from "@/components/ui/chat-message";
-import { AudioRecorder } from "@/components/AudioRecorder";
+
 import { ConversationHistory } from "@/components/ConversationHistory";
 import { useAppContext } from "@/context/AppContext";
 
@@ -126,13 +126,7 @@ function ChatSection() {
     removeAttachedFile(fileId);
   }, [removeAttachedFile]);
 
-  const handleRecordingComplete = useCallback((audioBlob: Blob) => {
-    const audioFile = new File([audioBlob], "recording.webm", {
-      type: "audio/webm;codecs=opus"
-    });
-    uploadFileMutation.mutate(audioFile);
-    setIsRecording(false);
-  }, [uploadFileMutation]);
+
 
   const handleConversationSelect = useCallback((conversationId: string) => {
     setCurrentConversationId(conversationId);
@@ -249,23 +243,15 @@ function ChatSection() {
             <Camera className="h-4 w-4" />
           </Button>
 
-          {/* Audio Recording */}
-          <div className="relative">
-            {isRecording ? (
-              <AudioRecorder
-                onRecordingComplete={handleRecordingComplete}
-                onCancel={() => setIsRecording(false)}
-              />
-            ) : (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsRecording(true)}
-              >
-                <Mic className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          {/* Audio Recording - Temporarily disabled */}
+          <Button
+            variant="outline"
+            size="icon"
+            disabled
+            title="Audio recording temporarily unavailable"
+          >
+            <Mic className="h-4 w-4" />
+          </Button>
 
           {/* Text Input */}
           <div className="flex-1">

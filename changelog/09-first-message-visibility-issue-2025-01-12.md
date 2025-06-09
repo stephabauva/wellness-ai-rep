@@ -159,6 +159,12 @@ The first message visibility fix has been preserved through the ChatSection refa
 - **Error handling**: Graceful handling of failures
 - **User experience**: Seamless ChatGPT-like experience
 
+### Additional Fixes (June 2025)
+- **React Query Cache Race Conditions**: Fixed persistent issue where only first 2 messages displayed
+- **Cache Invalidation Timing**: Implemented forced refetch with zero stale time for immediate updates
+- **Message Persistence**: All conversation messages now persist correctly across sessions
+- **Technical Solution**: Enhanced useChatMessages.ts with refetchInterval: 0 and immediate cache updates
+
 ### 📊 Console Validation (Latest Logs):
 ```
 Sending message with conversation ID: null

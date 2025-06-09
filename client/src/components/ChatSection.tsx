@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Paperclip,
@@ -28,7 +29,7 @@ import { useChatMessages } from "@/hooks/useChatMessages";
 import { useReportGeneration } from "@/hooks/useReportGeneration";
 
 // Utilities
-import { getFileIcon, generateMessagesToDisplay } from "@/utils/chatUtils";
+import { getFileIcon } from "@/utils/chatUtils";
 
 const welcomeMessage = {
   id: "welcome-message",
@@ -144,13 +145,50 @@ const ChatSection: React.FC = () => {
     }
   }, [loadingMessages, messages]);
 
-  // Generate messages to display
-  const messagesToDisplay = generateMessagesToDisplay(
-    messages || [],
-    pendingUserMessage,
-    currentConversationId || null,
-    welcomeMessage
-  );
+  // Generate messages to display with safe initialization
+  const getMessagesToDisplay = () => {
+    // If we have a conversation ID, we're in an active conversation
+    if (currentConversationId) {
+      // Start with existing messages (or empty array if still loading)
+      const conversationMessages = Array.isArray(messages) ? [...messages] : [];
+
+      // Add pending message if it exists
+      if (pendingUserMessage) {
+        conversationMessages.push({
+          id: "pending-user",
+          content: pendingUserMessage.content,
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp,
+          attachments: pendingUserMessage.attachments?.map(att => ({
+            name: att.name,
+            type: att.type
+          }))
+        });
+      }
+
+      return conversationMessages;
+    }
+
+    // For new conversations (no ID), show welcome message and any pending
+    const newConversationMessages = [welcomeMessage];
+
+    if (pendingUserMessage) {
+      newConversationMessages.push({
+        id: "pending-user",
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments?.map(att => ({
+          name: att.name,
+          type: att.type
+        }))
+      });
+    }
+
+    return newConversationMessages;
+  };
+
+  const messagesToDisplay = getMessagesToDisplay();
 
   return (
     <div className="flex flex-col h-full">

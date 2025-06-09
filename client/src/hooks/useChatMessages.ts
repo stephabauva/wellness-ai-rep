@@ -76,9 +76,8 @@ export const useChatMessages = () => {
     },
     refetchOnWindowFocus: false,
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache results
     refetchOnMount: true,
-    enabled: true, // Always enable this query
+    enabled: true // Always enable this query
   });
 
   // Send message mutation
@@ -128,40 +127,11 @@ export const useChatMessages = () => {
       // Clear pending message
       setPendingUserMessage(null);
 
-      // Force immediate refetch and update the cache
-      const refetchMessages = async () => {
-        try {
-          const response = await fetch(`/api/conversations/${conversationId}/messages`);
-          if (!response.ok) throw new Error("Failed to fetch conversation messages");
-          const convMessages = await response.json();
-          console.log("Post-send fetch - loaded messages for conversation:", conversationId, convMessages);
-          
-          const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-          const formattedMessages = messagesArray.map((msg: any) => ({
-            id: msg.id,
-            content: msg.content,
-            isUserMessage: msg.role === "user",
-            timestamp: new Date(msg.createdAt),
-            attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-              name: att.fileName || att.name || 'Unknown file',
-              type: att.fileType || att.type
-            })) : undefined
-          }));
-          
-          formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-          console.log("Post-send fetch - setting cache with:", formattedMessages.length, "messages");
-          
-          // Force set the query data
-          queryClient.setQueryData(["messages", conversationId], formattedMessages);
-          
-          return formattedMessages;
-        } catch (error) {
-          console.error("Error refetching messages:", error);
-        }
-      };
-
-      // Execute the refetch immediately
-      refetchMessages();
+      // Force an immediate refetch with a small delay to ensure the backend has processed the message
+      setTimeout(async () => {
+        console.log("Forcing refetch after message send...");
+        await refetchMessages();
+      }, 100);
 
       // Invalidate conversations list
       queryClient.invalidateQueries({ 

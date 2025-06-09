@@ -48,7 +48,7 @@ export const useChatMessages = () => {
       if (!currentConversationId) {
         return [welcomeMessage];
       }
-      const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
+      const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
       console.log("Loaded messages for conversation:", currentConversationId, convMessages);
@@ -74,8 +74,9 @@ export const useChatMessages = () => {
       
       return formattedMessages.length > 0 ? formattedMessages : [welcomeMessage];
     },
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache results
     refetchOnMount: true,
     enabled: true, // Always enable this query
   });
@@ -127,41 +128,45 @@ export const useChatMessages = () => {
       // Clear pending message
       setPendingUserMessage(null);
 
-      // Immediately update cache with optimistic data from the response
-      const currentMessages = queryClient.getQueryData(["messages", conversationId]) || [];
-      const userMessage = {
-        id: data.userMessage.id,
-        content: data.userMessage.content,
-        isUserMessage: true,
-        timestamp: new Date(data.userMessage.createdAt || Date.now()),
-        attachments: undefined
-      };
-      const aiMessage = {
-        id: data.aiMessage.id,
-        content: data.aiMessage.content,
-        isUserMessage: false,
-        timestamp: new Date(data.aiMessage.createdAt || Date.now()),
-        attachments: undefined
+      // Force immediate refetch and update the cache
+      const refetchMessages = async () => {
+        try {
+          const response = await fetch(`/api/conversations/${conversationId}/messages`);
+          if (!response.ok) throw new Error("Failed to fetch conversation messages");
+          const convMessages = await response.json();
+          console.log("Post-send fetch - loaded messages for conversation:", conversationId, convMessages);
+          
+          const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+          const formattedMessages = messagesArray.map((msg: any) => ({
+            id: msg.id,
+            content: msg.content,
+            isUserMessage: msg.role === "user",
+            timestamp: new Date(msg.createdAt),
+            attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
+              name: att.fileName || att.name || 'Unknown file',
+              type: att.fileType || att.type
+            })) : undefined
+          }));
+          
+          formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          console.log("Post-send fetch - setting cache with:", formattedMessages.length, "messages");
+          
+          // Force set the query data
+          queryClient.setQueryData(["messages", conversationId], formattedMessages);
+          
+          return formattedMessages;
+        } catch (error) {
+          console.error("Error refetching messages:", error);
+        }
       };
 
-      // Build the new message list
-      const existingMessages = Array.isArray(currentMessages) ? currentMessages : [];
-      const newMessages = [...existingMessages, userMessage, aiMessage];
-      
-      console.log("Optimistically updating cache with:", newMessages.length, "messages");
-      queryClient.setQueryData(["messages", conversationId], newMessages);
+      // Execute the refetch immediately
+      refetchMessages();
 
       // Invalidate conversations list
       queryClient.invalidateQueries({ 
         queryKey: ["conversations"] 
       });
-
-      // Background refresh to ensure accuracy after 100ms
-      setTimeout(() => {
-        queryClient.invalidateQueries({ 
-          queryKey: ["messages", conversationId] 
-        });
-      }, 100);
     },
     onError: (error) => {
       console.error("Message send error:", error);

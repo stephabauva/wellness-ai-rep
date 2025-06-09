@@ -23,11 +23,7 @@ const welcomeMessage: Message = {
 export const useChatMessages = () => {
   const { coachingMode } = useAppContext();
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [pendingUserMessage, setPendingUserMessage] = useState<{
-    content: string;
-    timestamp: Date;
-    attachments?: any[];
-  } | null>(null);
+  
 
   type SendMessageParams = {
     content: string;
@@ -83,18 +79,37 @@ export const useChatMessages = () => {
 
       return await response.json();
     },
-    onMutate: async ({ content, attachments }) => {
-      // Show pending message immediately
-      setPendingUserMessage({
-        content,
-        timestamp: new Date(),
-        attachments: attachments?.map(f => ({ 
-          name: f.fileName || f.displayName, 
-          type: f.fileType 
-        }))
+    onMutate: async ({ content, attachments, conversationId }) => {
+      // Cancel any outgoing refetches
+      const queryKey = ["messages", conversationId || "new"];
+      await queryClient.cancelQueries({ queryKey });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(queryKey);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(queryKey, (old: Message[] = []) => {
+        const existingMessages = old.filter(msg => msg.id !== "welcome-message");
+        
+        // Add the user message optimistically
+        const optimisticUserMessage: Message = {
+          id: `temp-user-${Date.now()}`,
+          content,
+          isUserMessage: true,
+          timestamp: new Date(),
+          attachments: attachments?.map(f => ({ 
+            name: f.fileName || f.displayName, 
+            type: f.fileType 
+          }))
+        };
+
+        return [...existingMessages, optimisticUserMessage];
       });
+
+      // Return a context object with the snapshotted value
+      return { previousMessages, queryKey };
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables, context) => {
       console.log("Message sent successfully:", data);
 
       // Update conversation ID if this was a new conversation
@@ -103,38 +118,54 @@ export const useChatMessages = () => {
         setCurrentConversationId(data.conversationId);
       }
 
-      // Clear pending message
-      setPendingUserMessage(null);
-
-      // Invalidate and refetch the messages query to ensure UI displays all messages
+      // Update the cache with the real server response
       const targetQueryKey = ["messages", data.conversationId];
-      queryClient.invalidateQueries({ queryKey: targetQueryKey });
+      
+      // If this was a new conversation, we need to update the cache key
+      if (variables.conversationId !== data.conversationId) {
+        // Move data from "new" to actual conversation ID
+        const tempData = queryClient.getQueryData(context?.queryKey);
+        queryClient.setQueryData(targetQueryKey, tempData);
+        queryClient.removeQueries({ queryKey: context?.queryKey });
+      }
 
-      // Also update cache optimistically with the new messages
+      // Replace optimistic messages with real ones
       queryClient.setQueryData(targetQueryKey, (old: Message[] = []) => {
-        const existingMessages = old.filter(msg => msg.id !== "welcome-message");
+        // Remove any temporary messages
+        const cleanMessages = old.filter(msg => !msg.id.startsWith('temp-'));
+        
         return [
-          ...existingMessages,
+          ...cleanMessages,
           {
             id: data.userMessage.id,
             content: data.userMessage.content,
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
-            attachments: data.userMessage.metadata?.attachments
+            attachments: data.userMessage.metadata?.attachments?.map((att: any) => ({
+              name: att.fileName || att.name,
+              type: att.fileType || att.type
+            }))
           },
           {
             id: data.aiMessage.id,
             content: data.aiMessage.content,
             isUserMessage: false,
             timestamp: new Date(data.aiMessage.timestamp),
-            attachments: data.aiMessage.metadata?.attachments
+            attachments: data.aiMessage.metadata?.attachments?.map((att: any) => ({
+              name: att.fileName || att.name,
+              type: att.fileType || att.type
+            }))
           }
         ];
       });
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error("Message send error:", error);
-      setPendingUserMessage(null);
+      
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousMessages) {
+        queryClient.setQueryData(context.queryKey, context.previousMessages);
+      }
     },
   });
 
@@ -151,7 +182,7 @@ export const useChatMessages = () => {
     messages,
     loadingMessages,
     currentConversationId,
-    pendingUserMessage,
+    pendingUserMessage: null, // Keep for compatibility but always null
     sendMessageMutation,
     handleSelectConversation,
     handleNewChat,

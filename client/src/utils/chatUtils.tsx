@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FileText, Image, Video, File } from "lucide-react";
 
@@ -16,38 +15,18 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: any[],
+  messages: Message[] | undefined,
   pendingUserMessage: any,
   currentConversationId: string | null,
-  welcomeMessage: any
-) => {
-  let welcomeMessages = [welcomeMessage];
-  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
+  welcomeMessage: Message
+): Message[] => {
+  if (!messages) return [welcomeMessage];
 
-  if (pendingUserMessage) {
-    if (!currentConversationId) {
-      messagesToDisplay = [
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    } else {
-      messagesToDisplay = [
-        ...messagesToDisplay,
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    }
+  // For new conversations (no conversation ID), show welcome message
+  if (!currentConversationId) {
+    return messages.length > 0 ? messages : [welcomeMessage];
   }
 
-  return messagesToDisplay;
+  // For existing conversations, show actual messages from cache
+  return messages.length > 0 ? messages : [welcomeMessage];
 };

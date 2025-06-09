@@ -126,10 +126,10 @@ const ChatSection: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
 
-  // Generate messages to display
+  // Generate messages for display
   const messagesToDisplay = generateMessagesToDisplay(
     messages,
-    pendingUserMessage,
+    null, // No pending message state needed
     currentConversationId,
     welcomeMessage
   );

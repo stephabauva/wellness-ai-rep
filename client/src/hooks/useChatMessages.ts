@@ -182,7 +182,6 @@ export const useChatMessages = () => {
     messages,
     loadingMessages,
     currentConversationId,
-    pendingUserMessage: null, // Keep for compatibility but always null
     sendMessageMutation,
     handleSelectConversation,
     handleNewChat,

@@ -1,6 +1,14 @@
 import React from "react";
 import { FileText, Image, Video, File } from "lucide-react";
 
+type Message = {
+  id: string;
+  content: string;
+  isUserMessage: boolean;
+  timestamp: Date;
+  attachments?: { name: string; type: string }[];
+};
+
 export const getFileIcon = (fileType: string) => {
   if (fileType.startsWith("image/")) return <Image className="h-4 w-4" />;
   if (fileType.startsWith("video/")) return <Video className="h-4 w-4" />;

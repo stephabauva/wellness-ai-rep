@@ -189,36 +189,29 @@ const ChatSection: React.FC = () => {
   let messagesToDisplay = [];
   
   try {
-    if (currentConversationId && Array.isArray(messages)) {
-      // Active conversation - show all messages
+    if (currentConversationId && Array.isArray(messages) && messages.length > 0) {
+      // Active conversation with messages - show all messages
       messagesToDisplay = [...messages];
-      if (pendingUserMessage) {
-        messagesToDisplay.push({
-          id: "pending-user",
-          content: pendingUserMessage.content || "",
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp || new Date(),
-          attachments: pendingUserMessage.attachments?.map(att => ({
-            name: att.name || "",
-            type: att.type || ""
-          })) || undefined
-        });
-      }
+    } else if (currentConversationId && Array.isArray(messages) && messages.length === 0) {
+      // Active conversation but no messages loaded yet - show welcome while loading
+      messagesToDisplay = [welcomeMessage];
     } else {
       // New conversation - show welcome message
       messagesToDisplay = [welcomeMessage];
-      if (pendingUserMessage) {
-        messagesToDisplay.push({
-          id: "pending-user",
-          content: pendingUserMessage.content || "",
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp || new Date(),
-          attachments: pendingUserMessage.attachments?.map(att => ({
-            name: att.name || "",
-            type: att.type || ""
-          })) || undefined
-        });
-      }
+    }
+
+    // Always add pending user message if it exists
+    if (pendingUserMessage) {
+      messagesToDisplay.push({
+        id: "pending-user",
+        content: pendingUserMessage.content || "",
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp || new Date(),
+        attachments: pendingUserMessage.attachments?.map(att => ({
+          name: att.name || "",
+          type: att.type || ""
+        })) || undefined
+      });
     }
   } catch (error) {
     console.error("Message display error:", error);
@@ -267,9 +260,9 @@ const ChatSection: React.FC = () => {
             ))}
           </div>
         ) : (
-          messagesToDisplay?.map((message) => (
+          messagesToDisplay?.map((message, index) => (
             <ChatMessage
-              key={message.id}
+              key={`${message.id}-${index}`}
               message={message.content}
               isUser={message.isUserMessage}
               timestamp={message.timestamp}

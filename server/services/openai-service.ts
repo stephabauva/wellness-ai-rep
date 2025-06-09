@@ -233,7 +233,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       if (aiConfig.provider === "openai") {
         response = await this.getOpenAIResponse(conversationContext, aiConfig.model as OpenAIModel);
       } else {
-        response = await this.getGoogleResponse(message, this.getSystemPrompt(mode, relevantMemories), aiConfig.model as GoogleModel, attachments, conversationHistory);
+        response = await this.getGoogleResponse(message, this.getSystemPrompt(mode, relevantMemories), aiConfig.model as GoogleModel, attachments, conversationHistory, conversationId);
       }
 
       // Log memory usage
@@ -282,7 +282,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
     return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
   }
 
-  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = [], conversationHistory: any[] = []): Promise<string> {
+  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = [], conversationHistory: any[] = [], currentConversationId?: string): Promise<string> {
     const genModel = this.google.getGenerativeModel({ model });
 
     // Build Google Gemini conversation format with proper persistence
@@ -320,11 +320,11 @@ Please acknowledge that you understand these visual analysis requirements.`
     });
 
     // Filter conversation history to current session only for Google Gemini
-    const currentSessionHistory = conversationHistory.filter(msg => 
-      msg.conversationId === conversationId
-    );
+    const currentSessionHistory = currentConversationId 
+      ? conversationHistory.filter(msg => msg.conversationId === currentConversationId)
+      : conversationHistory;
 
-    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
+    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages for conversation ${currentConversationId || 'new'}`);
 
     for (const msg of currentSessionHistory) {
       if (msg.role === 'user') {

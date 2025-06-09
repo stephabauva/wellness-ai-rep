@@ -23,20 +23,35 @@ const welcomeMessage: Message = {
 export const useChatMessages = () => {
   const { coachingMode } = useAppContext();
   const [currentConversationId, setConversationId] = useState<string | null>(null);
+  const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
   // pendingUserMessage state is removed
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
 
 
   useEffect(() => {
-    const fetchInitialMessages = async () => {
-      if (!currentConversationId) {
+    // Renamed for clarity within useEffect
+    const loadConversationMessages = async () => {
+      if (currentConversationId === null) {
+        // Standard new chat session (e.g., user clicked "New Chat" button)
         setActiveMessages([welcomeMessage]);
         setIsLoadingMessages(false);
+        setNewlyCreatedConvId(null); // Clear flag
         return;
       }
 
+      if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId) {
+        // This conversation was just created by sending the first message.
+        // onSuccess has already updated activeMessages with this first message.
+        // So, we don't need to fetch history from the server for it right now.
+        setIsLoadingMessages(false);
+        setNewlyCreatedConvId(null); // Consume/clear the signal
+        return;
+      }
+
+      // Proceed to fetch messages for existing conversations or if the new flag isn't relevant
       setIsLoadingMessages(true);
+      setNewlyCreatedConvId(null); // Ensure flag is cleared if we are fetching
       try {
         const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
         if (!response.ok) {
@@ -64,15 +79,14 @@ export const useChatMessages = () => {
         setActiveMessages(formattedMessages);
       } catch (error) {
         console.error("Error fetching initial messages:", error);
-        // Potentially set an error state here
-        setActiveMessages([welcomeMessage]); // Fallback to welcome message on error
+        setActiveMessages([welcomeMessage]);
       } finally {
         setIsLoadingMessages(false);
       }
     };
 
-    fetchInitialMessages();
-  }, [currentConversationId]);
+    loadConversationMessages(); // Call the renamed function
+  }, [currentConversationId, newlyCreatedConvId]); // Added newlyCreatedConvId to dependencies
 
   // Get active conversation ID by checking cache for actual conversation data
   // This logic might need adjustment or removal if currentConversationId is managed differently
@@ -195,8 +209,14 @@ export const useChatMessages = () => {
         }
       }
 
+      // Signal if a new conversation was just created by this message send
+      if (variables.conversationId === null && data.conversationId) {
+        setNewlyCreatedConvId(data.conversationId);
+      } else {
+        setNewlyCreatedConvId(null); // Clear if it's not a new ID from a null original ID
+      }
+
       // Invalidate conversations list (for sidebar updates, etc.)
-      // This is a good place for it, as a successful message send might mean a new conversation appears.
       queryClient.invalidateQueries({ 
         queryKey: ["conversations"] 
       });

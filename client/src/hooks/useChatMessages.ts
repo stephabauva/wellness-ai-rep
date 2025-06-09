@@ -21,8 +21,11 @@ const welcomeMessage: Message = {
 };
 
 export const useChatMessages = () => {
-  const { coachingMode } = useAppContext();
   const [currentConversationId, setConversationId] = useState<string | null>(null);
+  // Log hook instantiation with initial state value for currentConversationId
+  // Note: This log captures the initial value from useState, not necessarily the activeConversationId used later
+  console.log("[useChatMessages] Hook instantiated. Initial internal currentConversationId (from useState):", currentConversationId);
+  const { coachingMode } = useAppContext();
   const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
   // pendingUserMessage state is removed
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
@@ -30,6 +33,7 @@ export const useChatMessages = () => {
 
 
   useEffect(() => {
+    console.log("[useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId);
     // Renamed for clarity within useEffect
     const loadConversationMessages = async () => {
       if (currentConversationId === null) {
@@ -76,6 +80,7 @@ export const useChatMessages = () => {
         }));
 
         formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        console.log("[useEffect messages] Fetched initial messages, about to call setActiveMessages. Count:", formattedMessages.length, "Messages:", formattedMessages.map(m => ({id: m.id, content: m.content.substring(0,20), att: m.attachments?.length || 0 })));
         setActiveMessages(formattedMessages);
       } catch (error) {
         console.error("Error fetching initial messages:", error);
@@ -88,25 +93,8 @@ export const useChatMessages = () => {
     loadConversationMessages(); // Call the renamed function
   }, [currentConversationId, newlyCreatedConvId]); // Added newlyCreatedConvId to dependencies
 
-  // Get active conversation ID by checking cache for actual conversation data
-  // This logic might need adjustment or removal if currentConversationId is managed differently
-  let activeConversationId = currentConversationId;
-  if (!currentConversationId) {
-    const allQueries = queryClient.getQueriesData({ queryKey: ["messages"] });
-    for (const [queryKey, data] of allQueries) {
-      const [, conversationIdFromCache] = queryKey as [string, string];
-      if (conversationIdFromCache !== "new" && Array.isArray(data) && data.length > 0) {
-        const hasRealMessages = data.some((msg: any) => msg.id !== "welcome-message");
-        if (hasRealMessages) {
-          console.log("Found active conversation in cache:", conversationIdFromCache);
-          activeConversationId = conversationIdFromCache;
-          setTimeout(() => setConversationId(conversationIdFromCache), 0);
-          break;
-        }
-      }
-    }
-  }
-
+  // The activeConversationId derivation logic (iterating queryClient.getQueriesData) is removed.
+  // currentConversationId from useState will be the source of truth.
 
   type SendMessageParams = {
     content: string;
@@ -153,7 +141,7 @@ export const useChatMessages = () => {
           type: f.fileType || 'application/octet-stream' // Provide a default type if necessary
         }))
       };
-
+      console.log("[onMutate] About to add optimistic message. Current activeMessages count:", activeMessages.length, "Optimistic message:", {id: userMessage.id, content: userMessage.content.substring(0,20), att: userMessage.attachments?.length || 0});
       // Add optimistic message to local state
       setActiveMessages(prevMessages => [...prevMessages, userMessage]);
 
@@ -161,7 +149,7 @@ export const useChatMessages = () => {
       return { optimisticMessage: userMessage };
     },
     onSuccess: async (data, variables, context: { optimisticMessage?: Message } | undefined) => {
-      console.log("Message sent successfully, server data:", data);
+      console.log("[onSuccess] Received server data. About to update activeMessages. Current activeMessages count:", activeMessages.length, "Server data:", data, "Optimistic context ID:", context?.optimisticMessage?.id);
 
       setActiveMessages(prevMessages => {
         // Filter out the optimistic message using its temporary ID
@@ -259,15 +247,20 @@ export const useChatMessages = () => {
     // pendingUserMessage removed, so no setPendingUserMessage(null) needed
   }, []);
 
+  // Log state before returning
+  console.log("[useChatMessages] Returning state:", {
+    messagesCount: activeMessages.length, // Log count instead of full messages array for brevity
+    currentConversationId: currentConversationId, // Now directly using the state variable
+    loadingMessages: isLoadingMessages,
+    newlyCreatedConvId: newlyCreatedConvId
+  });
   return {
     messages: activeMessages,
     loadingMessages: isLoadingMessages,
-    currentConversationId: activeConversationId, // Ensure this reflects the ID used for fetching
+    currentConversationId: currentConversationId, // Now directly using the state variable
     sendMessageMutation,
     handleSelectConversation,
     handleNewChat,
-    // pendingUserMessage removed from return
-    // welcomeMessage constant is not returned, it's used internally for activeMessages
     setCurrentConversationId,
   };
 };

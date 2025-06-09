@@ -30,6 +30,7 @@ function ChatSection() {
     handleNewChat,
     loadingMessages
   } = useChatMessages();
+  console.log("[ChatSection] Received from useChatMessages hook:", { messagesCount: messages?.length, currentConversationId, loadingMessages });
 
   // Consolidate actions into useChatActions
   const chatActions = useChatActions({
@@ -52,6 +53,7 @@ function ChatSection() {
 
   // The loading state from useChatMessages can be passed to MessageDisplayArea
   if (loadingMessages && !currentConversationId) { // Show full loader only on initial load or new chat
+    console.log("[ChatSection] Rendering full loading screen.");
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
@@ -114,6 +116,9 @@ function ChatSection() {
       />
     </div>
   );
+  // Log before main return
+  console.log("[ChatSection] Rendering. messagesToDisplay count:", messagesToDisplay.length, "isLoading (inline):", (loadingMessages && !!currentConversationId) );
+  // The duplicated return block below was removed.
 }
 
 export default ChatSection;

@@ -20,9 +20,11 @@ export function MessageDisplayArea({
   messagesToDisplay,
   isLoading,
 }: MessageDisplayAreaProps) {
+  console.log("[MessageDisplayArea] Props received. messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined', "isLoading:", isLoading);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log("[MessageDisplayArea useEffect scroll] messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined');
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesToDisplay]);
 

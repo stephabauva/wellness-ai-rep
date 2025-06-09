@@ -155,21 +155,20 @@ export const useChatMessages = () => {
         );
         console.log("User message added to existing conversation cache");
         
-        // Force immediate UI update for existing conversations
-        queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
       } else {
         // For new conversation, create new cache entry
         queryClient.setQueryData(["messages", "new"], [userMessage]);
         console.log("User message added to new conversation cache");
         
-        // Force immediate UI update for new conversations
-        queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
       }
+      // Set pending user message
+      setPendingUserMessage(userMessage);
 
       // Don't rely on pending state - use direct cache updates
       return { userMessage };
     },
     onSuccess: (data, variables, context) => {
+      setPendingUserMessage(null);
       console.log("Message sent successfully:", data);
 
       // Always set conversation ID from response to ensure we have the correct one
@@ -227,6 +226,8 @@ export const useChatMessages = () => {
         queryClient.removeQueries({ queryKey: ["messages", "new"] });
         
         console.log("Updated cache with final messages:", sortedMessages.length);
+        // Explicitly invalidate messages for the specific conversation
+        queryClient.invalidateQueries({ queryKey: ["messages", data.conversationId] });
       }
 
       // Invalidate conversations list

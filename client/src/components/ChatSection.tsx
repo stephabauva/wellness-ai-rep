@@ -72,6 +72,13 @@ function ChatSection() {
       // Enable automatic model selection by default when images are attached
       const hasImages = attachedFiles?.some(file => file.fileType?.startsWith('image/'));
       const automaticModelSelection = settings?.automaticModelSelection ?? hasImages;
+      
+      console.log("Frontend automatic model selection logic:", {
+        hasImages,
+        settingsAutoSelection: settings?.automaticModelSelection,
+        finalAutoSelection: automaticModelSelection,
+        attachedFiles: attachedFiles?.map(f => ({ name: f.fileName, type: f.fileType }))
+      });
 
       sendMessageMutation.mutate({
         content: inputMessage,

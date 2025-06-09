@@ -52,7 +52,10 @@ export const useChatMessages = () => {
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
       console.log("Loaded messages for conversation:", currentConversationId, convMessages);
-      const formattedMessages = Array.isArray(convMessages) ? convMessages.map((msg: any) => ({
+      
+      // Ensure we have an array and properly format all messages
+      const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+      const formattedMessages = messagesArray.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
         isUserMessage: msg.role === "user",
@@ -61,9 +64,14 @@ export const useChatMessages = () => {
           name: att.fileName || att.name,
           type: att.fileType || att.type
         })) : undefined
-      })) : [];
+      }));
+      
+      // Sort messages by timestamp to ensure correct order
+      formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       
       console.log("Formatted messages:", formattedMessages.length, formattedMessages);
+      console.log("All messages in conversation:", formattedMessages.map(m => ({ id: m.id, content: m.content.substring(0, 50) + '...', isUser: m.isUserMessage })));
+      
       return formattedMessages.length > 0 ? formattedMessages : [welcomeMessage];
     },
     refetchOnWindowFocus: true,

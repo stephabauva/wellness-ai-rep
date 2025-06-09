@@ -7,6 +7,14 @@ import {
   AudioWaveformIcon
 } from "lucide-react";
 
+type Message = {
+  id: string;
+  content: string;
+  isUserMessage: boolean;
+  timestamp: Date;
+  attachments?: { name: string; type: string }[];
+};
+
 export const getFileIcon = (fileType: string) => {
   if (fileType.startsWith('image/')) {
     return <ImageIcon className="h-4 w-4 text-blue-500" />;
@@ -35,16 +43,20 @@ export const generateMessagesToDisplay = (
     messagesCount: messages?.length || 0,
     pendingUserMessage: !!pendingUserMessage,
     currentConversationId,
-    hasWelcomeMessage: !!welcomeMessage
+    hasWelcomeMessage: !!welcomeMessage,
+    allMessages: messages?.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage }))
   });
 
-  // If we have a current conversation, show its messages
+  // If we have a current conversation, show ALL its messages
   if (currentConversationId && messages && messages.length > 0) {
+    // Filter out welcome message if it exists and add all conversation messages
+    const conversationMessages = messages.filter(m => m.id !== "welcome-message");
     // Sort messages by timestamp to ensure correct order
-    messagesToDisplay = [...messages].sort((a, b) => 
+    messagesToDisplay = [...conversationMessages].sort((a, b) => 
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
-    console.log("Showing conversation messages:", messagesToDisplay.length);
+    console.log("Showing ALL conversation messages:", messagesToDisplay.length);
+    console.log("Messages being displayed:", messagesToDisplay.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage })));
   } 
   // If no conversation but we have a welcome message, show it
   else if (!currentConversationId && welcomeMessage) {
@@ -66,6 +78,7 @@ export const generateMessagesToDisplay = (
   }
 
   console.log("Final messages to display:", messagesToDisplay.length);
+  console.log("Final message list:", messagesToDisplay.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage })));
   return messagesToDisplay;
 };
 

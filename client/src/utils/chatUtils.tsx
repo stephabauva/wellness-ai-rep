@@ -44,7 +44,8 @@ export const generateMessagesToDisplay = (
     pendingUserMessage: !!pendingUserMessage,
     currentConversationId,
     hasWelcomeMessage: !!welcomeMessage,
-    allMessages: messages?.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage }))
+    allMessages: messages?.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage })),
+    messagesContainWelcome: messages?.some(m => m.id === "welcome-message")
   });
 
   // If we have a current conversation, show ALL its messages

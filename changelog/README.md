@@ -44,6 +44,9 @@ This directory contains detailed changelogs for major feature releases of the AI
 *   **[2025-01-15: Mobile Layout & File Manager Enhancements](./13-mobile-layout-file-manager-enhancements-2025-01-15.md)**
     *   **✅ COMPLETE**: Comprehensive mobile user experience optimization with File Manager integration into mobile navigation. Fixed layout overflow issues, implemented Web Share API for native sharing (including AirDrop), added QR code generation for cross-device file sharing, implemented multiple file view modes (list, list with icons, grid), and enhanced responsive design throughout. Features universal device compatibility, one-click sharing, visual file recognition, and maintains privacy-first approach while providing modern sharing capabilities.
 
+*   **[2025-06-09: Critical System Fixes](./08-critical-fixes-2025-06-09.md)**
+    *   **✅ RESOLVED**: Major bug fixes addressing message display persistence, automatic AI model selection, image format compatibility, and audio recording functionality. Fixed React Query cache race conditions causing only first 2 messages to display, corrected hardcoded settings preventing automatic Google Gemini selection for images, added AVIF format validation, and restored voice input capabilities. All core features now fully operational.
+
 ## Feature Interconnections & Evolution
 
 The AI Wellness Coach has evolved through several key stages, with features often building upon or interacting with each other:
@@ -116,12 +119,20 @@ The AI Wellness Coach has evolved through several key stages, with features ofte
 
 The AI Wellness Coach now provides a complete, ChatGPT-like conversational experience with:
 - **Persistent Visual Context**: Images and attachments remain visible throughout conversations
-- **Intelligent Model Selection**: Automatic optimization based on query complexity and content type
-- **Robust State Management**: Proper conversation threading and message visibility
+- **Intelligent Model Selection**: Automatic optimization based on query complexity and content type (Google Gemini for images, OpenAI for text)
+- **Robust State Management**: Proper conversation threading and message visibility with React Query cache optimizations
 - **Multi-modal Interactions**: Text, voice, images, and files all work seamlessly together
+- **Voice Input Functionality**: AudioRecorder component fully operational with Web Speech API and cloud transcription options
+- **Image Format Support**: AVIF, JPEG, PNG, WebP handled appropriately with automatic format validation
 - **Personalized Coaching**: AI memory system provides contextual, personalized responses
 - **Smart File Management**: Intelligent attachment retention with automated cleanup and user-customizable policies
 - **Mobile-First Design**: Fully responsive interface with native sharing capabilities (Web Share API, AirDrop, QR codes)
 - **Universal Device Access**: Consistent experience across desktop, tablet, and mobile devices
 - **Cross-Platform Compatibility**: Works across all supported AI providers (OpenAI, Google Gemini) and operating systems
 - **Enhanced Code Architecture**: Clean, maintainable codebase with proper separation of concerns (January 2025 refactoring)
+
+### Recent Critical Fixes (June 2025):
+- ✅ **Message Display**: All conversation messages now persist correctly across sessions
+- ✅ **Auto Model Selection**: Google Gemini automatically selected for image analysis
+- ✅ **Audio Recording**: Microphone functionality restored and fully operational
+- ✅ **Image Compatibility**: Enhanced format support including AVIF with graceful handling

@@ -12,6 +12,7 @@ interface AppContextType {
     aiProvider?: string;
     aiModel?: string;
     automaticModelSelection?: boolean;
+    transcriptionProvider?: string;
   };
 }
 
@@ -29,7 +30,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const settings = {
     aiProvider: "openai",
     aiModel: "gpt-4o",
-    automaticModelSelection: true // Enable by default for better image handling
+    automaticModelSelection: true, // Enable by default for better image handling
+    transcriptionProvider: "webspeech"
   };
 
   // Memoized callback functions to prevent unnecessary re-renders

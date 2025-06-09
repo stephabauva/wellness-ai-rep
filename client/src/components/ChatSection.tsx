@@ -266,7 +266,7 @@ function ChatSection() {
           {/* Audio Recording */}
           <AudioRecorder 
             onTranscriptionComplete={(text) => setInputMessage(text)}
-            provider={settings?.transcriptionProvider || "webspeech"}
+            provider={(settings?.transcriptionProvider as any) || "webspeech"}
           />
 
           {/* Text Input */}

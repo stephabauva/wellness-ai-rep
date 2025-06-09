@@ -23,7 +23,12 @@ const welcomeMessage: Message = {
 export const useChatMessages = () => {
   const { coachingMode } = useAppContext();
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  
+  const [pendingUserMessage, setPendingUserMessage] = useState<{
+    content: string;
+    timestamp: Date;
+    attachments?: { name: string; type: string }[];
+  } | null>(null);
+
 
   type SendMessageParams = {
     content: string;
@@ -90,7 +95,7 @@ export const useChatMessages = () => {
       // Optimistically update to the new value
       queryClient.setQueryData(queryKey, (old: Message[] = []) => {
         const existingMessages = old.filter(msg => msg.id !== "welcome-message");
-        
+
         // Add the user message optimistically
         const optimisticUserMessage: Message = {
           id: `temp-user-${Date.now()}`,
@@ -120,7 +125,7 @@ export const useChatMessages = () => {
 
       // Update the cache with the real server response
       const targetQueryKey = ["messages", data.conversationId];
-      
+
       // If this was a new conversation, we need to update the cache key
       if (variables.conversationId !== data.conversationId) {
         // Move data from "new" to actual conversation ID
@@ -133,7 +138,7 @@ export const useChatMessages = () => {
       queryClient.setQueryData(targetQueryKey, (old: Message[] = []) => {
         // Remove any temporary messages
         const cleanMessages = old.filter(msg => !msg.id.startsWith('temp-'));
-        
+
         return [
           ...cleanMessages,
           {
@@ -161,7 +166,7 @@ export const useChatMessages = () => {
     },
     onError: (error, variables, context) => {
       console.error("Message send error:", error);
-      
+
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousMessages) {
         queryClient.setQueryData(context.queryKey, context.previousMessages);
@@ -185,5 +190,6 @@ export const useChatMessages = () => {
     sendMessageMutation,
     handleSelectConversation,
     handleNewChat,
+    pendingUserMessage,
   };
 };

@@ -23,18 +23,30 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: Message[] | undefined,
-  pendingUserMessage: any,
+  messages: Message[],
+  pendingUserMessage: { content: string; timestamp: Date; attachments?: { name: string; type: string }[] } | null,
   currentConversationId: string | null,
   welcomeMessage: Message
 ): Message[] => {
-  if (!messages) return [welcomeMessage];
+  // Start with welcome message for new conversations
+  let displayMessages: Message[] = [];
 
-  // For new conversations (no conversation ID), show welcome message
   if (!currentConversationId) {
-    return messages.length > 0 ? messages : [welcomeMessage];
+    displayMessages = [welcomeMessage];
+  } else {
+    displayMessages = [...messages];
   }
 
-  // For existing conversations, show actual messages from cache
-  return messages.length > 0 ? messages : [welcomeMessage];
+  // Add pending user message if it exists (this is the key for immediate display!)
+  if (pendingUserMessage) {
+    displayMessages.push({
+      id: "pending-user",
+      content: pendingUserMessage.content,
+      isUserMessage: true,
+      timestamp: pendingUserMessage.timestamp,
+      attachments: pendingUserMessage.attachments
+    });
+  }
+
+  return displayMessages;
 };

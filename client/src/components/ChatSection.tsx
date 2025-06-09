@@ -129,7 +129,7 @@ const ChatSection: React.FC = () => {
   // Generate messages for display
   const messagesToDisplay = generateMessagesToDisplay(
     messages,
-    null, // No pending message state needed
+    pendingUserMessage,
     currentConversationId,
     welcomeMessage
   );

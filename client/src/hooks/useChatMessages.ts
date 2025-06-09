@@ -161,14 +161,11 @@ export const useChatMessages = () => {
         console.log("User message added to new conversation cache");
         
       }
-      // Set pending user message
-      setPendingUserMessage(userMessage);
 
       // Don't rely on pending state - use direct cache updates
       return { userMessage };
     },
     onSuccess: (data, variables, context) => {
-      setPendingUserMessage(null);
       console.log("Message sent successfully:", data);
 
       // Always set conversation ID from response to ensure we have the correct one
@@ -237,9 +234,6 @@ export const useChatMessages = () => {
     },
     onError: (error, variables, context) => {
       console.error("Message send error:", error);
-
-      // Clear pending message on error
-      setPendingUserMessage(null);
 
       // Rollback optimistic updates if we had a conversation ID
       if (variables.conversationId) {

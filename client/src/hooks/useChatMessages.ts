@@ -149,8 +149,9 @@ export const useChatMessages = () => {
         console.log(`Updating cache for conversation ${finalConversationId}: ${existingMessages.length} existing + ${newMessages.length} new messages`);
         return updatedMessages;
       });
+      
+      // Only invalidate the conversations list, not the current conversation messages
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
     },
     onError: (error) => {
       console.error("Message send error:", error);

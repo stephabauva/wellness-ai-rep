@@ -48,19 +48,21 @@ export const generateMessagesToDisplay = (
     messagesContainWelcome: messages?.some(m => m.id === "welcome-message")
   });
 
-  // If we have a current conversation, show ALL its messages
+  // If we have a current conversation, show ALL its messages (excluding welcome message)
   if (currentConversationId && messages && messages.length > 0) {
-    // Filter out welcome message if it exists and add all conversation messages
     const conversationMessages = messages.filter(m => m.id !== "welcome-message");
-    // Sort messages by timestamp to ensure correct order
-    messagesToDisplay = [...conversationMessages].sort((a, b) => 
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-    console.log("Showing ALL conversation messages:", messagesToDisplay.length);
-    console.log("Messages being displayed:", messagesToDisplay.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage })));
+    
+    // If we have actual conversation messages, show them
+    if (conversationMessages.length > 0) {
+      messagesToDisplay = [...conversationMessages].sort((a, b) => 
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+      console.log("Showing conversation messages:", messagesToDisplay.length);
+      console.log("Messages being displayed:", messagesToDisplay.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage })));
+    }
   } 
-  // If no conversation but we have a welcome message, show it
-  else if (!currentConversationId && welcomeMessage) {
+  // If no conversation ID or no conversation messages, show welcome message
+  if (messagesToDisplay.length === 0 && welcomeMessage && !currentConversationId) {
     messagesToDisplay = [welcomeMessage];
     console.log("Showing welcome message");
   }

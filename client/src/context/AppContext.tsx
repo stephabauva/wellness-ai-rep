@@ -29,7 +29,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const settings = {
     aiProvider: "openai",
     aiModel: "gpt-4o",
-    automaticModelSelection: false
+    automaticModelSelection: true // Enable by default for better image handling
   };
 
   // Memoized callback functions to prevent unnecessary re-renders

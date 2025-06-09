@@ -10,6 +10,7 @@ import { generateMessagesToDisplay, getFileIcon } from "@/utils/chatUtils";
 import { ChatMessage } from "@/components/ui/chat-message";
 
 import { ConversationHistory } from "@/components/ConversationHistory";
+import { AudioRecorder } from "@/components/AudioRecorder";
 import { useAppContext } from "@/context/AppContext";
 
 function ChatSection() {
@@ -262,15 +263,11 @@ function ChatSection() {
             <Camera className="h-4 w-4" />
           </Button>
 
-          {/* Audio Recording - Temporarily disabled */}
-          <Button
-            variant="outline"
-            size="icon"
-            disabled
-            title="Audio recording temporarily unavailable"
-          >
-            <Mic className="h-4 w-4" />
-          </Button>
+          {/* Audio Recording */}
+          <AudioRecorder 
+            onTranscriptionComplete={(text) => setInputMessage(text)}
+            provider={settings?.transcriptionProvider || "webspeech"}
+          />
 
           {/* Text Input */}
           <div className="flex-1">

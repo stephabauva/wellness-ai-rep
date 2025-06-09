@@ -153,10 +153,15 @@ export const useChatMessages = () => {
       // Immediately invalidate and refetch to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
       
-      // Force the current query to show the updated data immediately
-      queryClient.setQueryData<Message[]>(["messages", currentConversationId || "new"], () => {
-        return queryClient.getQueryData<Message[]>(targetQueryKey) || [];
-      });
+      // If conversation ID changed, also invalidate the current query
+      if (currentConversationId !== finalConversationId) {
+        queryClient.invalidateQueries({ queryKey: ["messages", currentConversationId || "new"] });
+      }
+      
+      // Force a manual refetch to ensure the UI updates immediately
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["messages", finalConversationId] });
+      }, 50);
     },
     onError: (error) => {
       console.error("Message send error:", error);

@@ -30,7 +30,7 @@ export const generateMessagesToDisplay = (
   currentConversationId: string | null,
   welcomeMessage: any
 ) => {
-  // Ensure messages is an array
+  // Ensure messages is an array and handle null/undefined
   const safeMessages = Array.isArray(messages) ? messages : [];
   
   // If we have a conversation ID, show the real messages
@@ -41,10 +41,10 @@ export const generateMessagesToDisplay = (
     if (pendingUserMessage) {
       result.push({
         id: `pending-${Date.now()}`,
-        content: pendingUserMessage.content,
+        content: pendingUserMessage.content || "",
         isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp,
-        attachments: pendingUserMessage.attachments
+        timestamp: pendingUserMessage.timestamp || new Date(),
+        attachments: pendingUserMessage.attachments || []
       });
     }
     
@@ -63,10 +63,10 @@ export const generateMessagesToDisplay = (
   if (pendingUserMessage) {
     result.push({
       id: `pending-${Date.now()}`,
-      content: pendingUserMessage.content,
+      content: pendingUserMessage.content || "",
       isUserMessage: true,
-      timestamp: pendingUserMessage.timestamp,
-      attachments: pendingUserMessage.attachments
+      timestamp: pendingUserMessage.timestamp || new Date(),
+      attachments: pendingUserMessage.attachments || []
     });
   }
   

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Paperclip, Send, Mic, MicOff, Camera, History } from "lucide-react";
+import { Paperclip, Send, Mic, Camera, History } from "lucide-react";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import { useFileManagement } from "@/hooks/useFileManagement";
 import { generateMessagesToDisplay } from "@/utils/chatUtils";
@@ -13,7 +13,6 @@ import { ConversationHistory } from "@/components/ConversationHistory";
 import { useAppContext } from "@/context/AppContext";
 
 export function ChatSection() {
-  // All hooks must be called at the top level and in the same order every render
   const [inputMessage, setInputMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isConversationHistoryOpen, setIsConversationHistoryOpen] = useState(false);
@@ -22,7 +21,6 @@ export function ChatSection() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
-  // Context and hooks - must be called unconditionally
   const { settings } = useAppContext();
   
   const {
@@ -43,12 +41,10 @@ export function ChatSection() {
     getFileIcon
   } = useFileManagement();
 
-  // Scroll to bottom effect
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pendingUserMessage]);
 
-  // Generate messages to display - ensure we have valid data
   const messagesToDisplay = generateMessagesToDisplay(
     messages || [],
     pendingUserMessage,
@@ -57,14 +53,14 @@ export function ChatSection() {
   );
 
   const handleSendMessage = useCallback(() => {
-    if (inputMessage.trim() || attachedFiles.length > 0) {
+    if (inputMessage.trim() || (attachedFiles && attachedFiles.length > 0)) {
       const aiProvider = settings?.aiProvider || "openai";
       const aiModel = settings?.aiModel || "gpt-4o";
       const automaticModelSelection = settings?.automaticModelSelection || false;
 
       sendMessageMutation.mutate({
         content: inputMessage,
-        attachments: attachedFiles,
+        attachments: attachedFiles || [],
         conversationId: currentConversationId,
         aiProvider,
         aiModel,
@@ -115,7 +111,7 @@ export function ChatSection() {
   }, [uploadFileMutation]);
 
   const removeAttachment = useCallback((fileId: string) => {
-    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
+    setAttachedFiles(prev => prev ? prev.filter(file => file.id !== fileId) : []);
   }, [setAttachedFiles]);
 
   const handleRecordingComplete = useCallback((audioBlob: Blob) => {
@@ -274,7 +270,7 @@ export function ChatSection() {
           {/* Send Button */}
           <Button 
             onClick={handleSendMessage}
-            disabled={sendMessageMutation.isPending || (!inputMessage.trim() && attachedFiles.length === 0)}
+            disabled={sendMessageMutation.isPending || (!inputMessage.trim() && (!attachedFiles || attachedFiles.length === 0))}
           >
             <Send className="h-4 w-4" />
           </Button>

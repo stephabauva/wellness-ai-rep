@@ -48,7 +48,7 @@ export const useChatMessages = () => {
       const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
-      return convMessages.map((msg: any) => ({
+      return Array.isArray(convMessages) ? convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
         isUserMessage: msg.role === "user",
@@ -57,7 +57,7 @@ export const useChatMessages = () => {
           name: att.fileName || att.name,
           type: att.fileType || att.type
         })) : undefined
-      }));
+      })) : [welcomeMessage];
     },
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,

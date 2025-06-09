@@ -560,9 +560,20 @@ Please acknowledge that you understand these visual analysis requirements.`
   // Process historical attachments for vision models
   private async processAttachmentsForHistory(attachments: any[]): Promise<any[]> {
     const content: any[] = [];
+    const supportedImageFormats = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
     for (const attachment of attachments) {
       if (attachment.fileType?.startsWith('image/')) {
+        // Check if image format is supported by OpenAI
+        if (!supportedImageFormats.includes(attachment.fileType)) {
+          console.warn(`Unsupported image format for OpenAI: ${attachment.fileType}. Supported formats: PNG, JPEG, GIF, WebP`);
+          content.push({
+            type: "text",
+            text: `[Image: ${attachment.displayName || attachment.fileName} - ${attachment.fileType} format not supported by OpenAI. Please use PNG, JPEG, GIF, or WebP format.]`
+          });
+          continue;
+        }
+
         try {
           const { readFileSync, existsSync } = await import('fs');
           const { join } = await import('path');
@@ -615,7 +626,7 @@ Please acknowledge that you understand these visual analysis requirements.`
       return { role: 'user', content: message };
     }
 
-    // Use ChatGPT's approach: include actual image data in message content
+    const supportedImageFormats = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
     const content: any[] = [];
 
     // Add text content first
@@ -623,7 +634,20 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     for (const attachment of attachments) {
       if (attachment.fileType?.startsWith('image/')) {
+        // Check if image format is supported by OpenAI
+        if (!supportedImageFormats.includes(attachment.fileType)) {
+          console.warn(`Unsupported image format for OpenAI: ${attachment.fileType}. Supported formats: PNG, JPEG, GIF, WebP`);
+          content.push({
+            type: "text",
+            text: `[Image: ${attachment.displayName || attachment.fileName} - ${attachment.fileType} format not supported by OpenAI. Please use PNG, JPEG, GIF, or WebP format.]`
+          });
+          continue;
+        }
+
         try {
+          const { readFileSync, existsSync } = await import('fs');
+          const { join } = await import('path');
+          
           const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);

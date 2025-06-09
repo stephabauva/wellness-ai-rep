@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAppContext } from '@/context/AppContext';
 import type { AttachedFile } from './useFileManagement';
@@ -23,12 +23,75 @@ const welcomeMessage: Message = {
 export const useChatMessages = () => {
   const { coachingMode } = useAppContext();
   const [currentConversationId, setConversationId] = useState<string | null>(null);
-  const [pendingUserMessage, setPendingUserMessage] = useState<{
-    content: string;
-    timestamp: Date;
-    attachments?: { name: string; type: string }[];
-  } | null>(null);
-  
+  // pendingUserMessage state is removed
+  const [activeMessages, setActiveMessages] = useState<Message[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
+
+
+  useEffect(() => {
+    const fetchInitialMessages = async () => {
+      if (!currentConversationId) {
+        setActiveMessages([welcomeMessage]);
+        setIsLoadingMessages(false);
+        return;
+      }
+
+      setIsLoadingMessages(true);
+      try {
+        const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
+        if (!response.ok) {
+          console.error("Failed to fetch conversation messages");
+          // Potentially set an error state here
+          setActiveMessages([welcomeMessage]); // Fallback to welcome message on error
+          return;
+        }
+        const convMessages = await response.json();
+        console.log("Loaded messages for conversation:", currentConversationId, convMessages);
+
+        const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+        const formattedMessages = messagesArray.map((msg: any) => ({
+          id: msg.id,
+          content: msg.content,
+          isUserMessage: msg.role === "user",
+          timestamp: new Date(msg.createdAt),
+          attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
+            name: att.fileName || att.name || 'Unknown file',
+            type: att.fileType || att.type
+          })) : undefined
+        }));
+
+        formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        setActiveMessages(formattedMessages);
+      } catch (error) {
+        console.error("Error fetching initial messages:", error);
+        // Potentially set an error state here
+        setActiveMessages([welcomeMessage]); // Fallback to welcome message on error
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    fetchInitialMessages();
+  }, [currentConversationId]);
+
+  // Get active conversation ID by checking cache for actual conversation data
+  // This logic might need adjustment or removal if currentConversationId is managed differently
+  let activeConversationId = currentConversationId;
+  if (!currentConversationId) {
+    const allQueries = queryClient.getQueriesData({ queryKey: ["messages"] });
+    for (const [queryKey, data] of allQueries) {
+      const [, conversationIdFromCache] = queryKey as [string, string];
+      if (conversationIdFromCache !== "new" && Array.isArray(data) && data.length > 0) {
+        const hasRealMessages = data.some((msg: any) => msg.id !== "welcome-message");
+        if (hasRealMessages) {
+          console.log("Found active conversation in cache:", conversationIdFromCache);
+          activeConversationId = conversationIdFromCache;
+          setTimeout(() => setConversationId(conversationIdFromCache), 0);
+          break;
+        }
+      }
+    }
+  }
 
 
   type SendMessageParams = {
@@ -38,69 +101,6 @@ export const useChatMessages = () => {
     aiProvider?: string;
     aiModel?: string;
     automaticModelSelection?: boolean;
-  }
-
-  const {
-    data: messages,
-    isLoading: loadingMessages,
-    refetch: refetchMessages
-  } = useQuery({
-    queryKey: ["messages", currentConversationId || "new"],
-    queryFn: async () => {
-      if (!currentConversationId) {
-        return [welcomeMessage];
-      }
-      const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
-      if (!response.ok) throw new Error("Failed to fetch conversation messages");
-      const convMessages = await response.json();
-      console.log("Loaded messages for conversation:", currentConversationId, convMessages);
-      
-      // Ensure we have an array and properly format all messages
-      const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-      const formattedMessages = messagesArray.map((msg: any) => ({
-        id: msg.id,
-        content: msg.content,
-        isUserMessage: msg.role === "user",
-        timestamp: new Date(msg.createdAt),
-        attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-          name: att.fileName || att.name || 'Unknown file',
-          type: att.fileType || att.type
-        })) : undefined
-      }));
-      
-      // Sort messages by timestamp to ensure correct order
-      formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-      
-      console.log("Formatted messages:", formattedMessages.length, formattedMessages);
-      console.log("All messages in conversation:", formattedMessages.map(m => ({ id: m.id, content: m.content.substring(0, 50) + '...', isUser: m.isUserMessage })));
-      
-      return formattedMessages;
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 0, // Cache for 5 minutes
-    refetchOnMount: false,
-    enabled: true // Always enable this query
-  });
-
-  // Get active conversation ID by checking cache for actual conversation data
-  let activeConversationId = currentConversationId;
-  
-  // If no current conversation ID, check cache for active conversations
-  if (!currentConversationId) {
-    const allQueries = queryClient.getQueriesData({ queryKey: ["messages"] });
-    for (const [queryKey, data] of allQueries) {
-      const [, conversationId] = queryKey as [string, string];
-      if (conversationId !== "new" && Array.isArray(data) && data.length > 0) {
-        const hasRealMessages = data.some((msg: any) => msg.id !== "welcome-message");
-        if (hasRealMessages) {
-          console.log("Found active conversation in cache:", conversationId);
-          activeConversationId = conversationId;
-          // Update the state to match the cached data (but don't cause infinite re-renders)
-          setTimeout(() => setConversationId(conversationId), 0);
-          break;
-        }
-      }
-    }
   }
 
   // Send message mutation
@@ -126,158 +126,128 @@ export const useChatMessages = () => {
       return await response.json();
     },
     onMutate: async ({ content, attachments, conversationId }) => {
-      console.log("onMutate triggered - setting pending message:", { content, conversationId });
-      
-      // Cancel any outgoing queries to avoid race conditions
-      await queryClient.cancelQueries({ queryKey: ["messages"] });
+      console.log("onMutate triggered for optimistic update:", { content, conversationId });
 
-      // Create the user message immediately in cache for all scenarios
-      const userMessage = {
-        id: `temp-user-${Date.now()}`,
+      // Create the optimistic user message
+      const userMessage: Message = { // Ensure Message type is used
+        id: `temp-user-${Date.now()}`, // Temporary ID
         content,
         isUserMessage: true,
         timestamp: new Date(),
-        attachments: attachments?.map(f => ({ 
-          name: f.fileName || f.displayName || 'Unknown file', 
-          type: f.fileType 
+        attachments: attachments?.map(f => ({
+          name: f.fileName || f.displayName || 'Unknown file',
+          type: f.fileType || 'application/octet-stream' // Provide a default type if necessary
         }))
       };
 
-      // For existing conversation, add to existing messages
-      if (conversationId) {
-        const existingMessages = queryClient.getQueryData(["messages", conversationId]) || [];
-        const filteredMessages = Array.isArray(existingMessages) ? 
-          existingMessages.filter(m => m.id !== "welcome-message") : [];
-        
-        queryClient.setQueryData(
-          ["messages", conversationId], 
-          [...filteredMessages, userMessage]
-        );
-        console.log("User message added to existing conversation cache");
-        queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+      // Add optimistic message to local state
+      setActiveMessages(prevMessages => [...prevMessages, userMessage]);
 
-      } else {
-        // For new conversation, create new cache entry
-        queryClient.setQueryData(["messages", "new"], [userMessage]);
-        console.log("User message added to new conversation cache");
-        queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
-
-      }
-
-      // Don't rely on pending state - use direct cache updates
-      return { userMessage };
+      // Return context with the optimistic message
+      return { optimisticMessage: userMessage };
     },
-    onSuccess: async (data, variables, context) => {
-      console.log("Message sent successfully:", data);
+    onSuccess: async (data, variables, context: { optimisticMessage?: Message } | undefined) => {
+      console.log("Message sent successfully, server data:", data);
 
-      // Always set conversation ID from response to ensure we have the correct one
-      if (data.conversationId) {
-        console.log("Setting conversation ID to:", data.conversationId);
-        
-        // Get existing messages from cache (including our temp message)
-        const existingMessages = queryClient.getQueryData(["messages", data.conversationId]) || 
-                                 queryClient.getQueryData(["messages", "new"]) || [];
-        
-        // Remove temp messages and welcome message
-        const cleanMessages = Array.isArray(existingMessages) ? 
-          existingMessages.filter((msg: any) => 
-            msg.id !== "welcome-message" && 
-            !msg.id.startsWith("temp-")
-          ) : [];
-        
-        // Format the new messages from the response
-        const newMessages = [];
-        
-        if (data.userMessage) {
-          newMessages.push({
-            id: data.userMessage.id.toString(),
-            content: data.userMessage.content,
-            isUserMessage: true,
+      setActiveMessages(prevMessages => {
+        // Filter out the optimistic message using its temporary ID
+        const filteredMessages = context?.optimisticMessage
+          ? prevMessages.filter(msg => msg.id !== context.optimisticMessage!.id)
+          : prevMessages;
+
+        const newMessagesFromServer = [];
+        // Ensure server response structure for userMessage and aiMessage is handled
+        // And that their IDs are strings
+        if (data.userMessage && data.userMessage.id) {
+          newMessagesFromServer.push({
+            ...data.userMessage,
+            id: data.userMessage.id.toString(), // Ensure ID is a string
             timestamp: new Date(data.userMessage.timestamp),
-            attachments: data.userMessage.attachments
+            attachments: data.userMessage.attachments?.map((att: any) => ({
+              name: att.fileName || att.name || 'Unknown file',
+              type: att.fileType || att.type || 'application/octet-stream'
+            }))
           });
         }
-        
-        if (data.aiMessage) {
-          newMessages.push({
-            id: data.aiMessage.id.toString(),
-            content: data.aiMessage.content,
-            isUserMessage: false,
+        if (data.aiMessage && data.aiMessage.id) {
+          newMessagesFromServer.push({
+            ...data.aiMessage,
+            id: data.aiMessage.id.toString(), // Ensure ID is a string
             timestamp: new Date(data.aiMessage.timestamp),
-            attachments: data.aiMessage.attachments
+            attachments: data.aiMessage.attachments?.map((att: any) => ({
+              name: att.fileName || att.name || 'Unknown file',
+              type: att.fileType || att.type || 'application/octet-stream'
+            }))
           });
         }
-        
-        // Combine clean existing and new messages
-        const allMessages = [...cleanMessages, ...newMessages];
-        
-        // Sort by timestamp and set immediately
-        const sortedMessages = allMessages.sort((a, b) => 
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
-        
-        queryClient.setQueryData(["messages", data.conversationId], sortedMessages);
-        
-        // Set the conversation ID immediately
-        setConversationId(data.conversationId);
-        
-        // Clear the "new" query cache since we now have a conversation
-        queryClient.removeQueries({ queryKey: ["messages", "new"] });
-        
-        console.log("Updated cache with final messages:", sortedMessages.length);
-        // Explicitly invalidate messages for the specific conversation
-        queryClient.invalidateQueries({ queryKey: ["messages", data.conversationId] });
-        await queryClient.refetchQueries({ queryKey: ["messages", data.conversationId], exact: true });
+
+        const updatedMessages = [...filteredMessages, ...newMessagesFromServer];
+        updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        return updatedMessages;
+      });
+
+      if (data.conversationId) {
+        // If the conversationId changed (e.g., for a new chat), update it.
+        // This will also trigger the useEffect to fetch initial messages if its logic
+        // is to refetch/verify when currentConversationId is set.
+        if (currentConversationId !== data.conversationId) {
+            setConversationId(data.conversationId);
+        }
       }
 
-      // Invalidate conversations list
+      // Invalidate conversations list (for sidebar updates, etc.)
+      // This is a good place for it, as a successful message send might mean a new conversation appears.
       queryClient.invalidateQueries({ 
         queryKey: ["conversations"] 
       });
     },
-    onError: (error, variables, context) => {
-      console.error("Message send error:", error);
-
-      // Rollback optimistic updates if we had a conversation ID
-      if (variables.conversationId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ["messages", variables.conversationId] 
-        });
+    onError: (error: Error, variables, context: { optimisticMessage?: Message } | undefined) => {
+      console.error("Failed to send message:", error);
+      if (context?.optimisticMessage) {
+        // Remove the optimistic message from local state
+        setActiveMessages(prevMessages =>
+          prevMessages.filter(msg => msg.id !== context.optimisticMessage!.id)
+        );
+        // Optionally, add a system message or mark the failed message
+        // For example, to add an error message to the chat:
+        // const errorMessage: Message = {
+        //   id: `error-${Date.now()}`,
+        //   content: `Failed to send message: "${context.optimisticMessage.content.substring(0, 30)}...". Error: ${error.message}`,
+        //   isUserMessage: false, // Or true if you want to show it as a user's error bubble
+        //   timestamp: new Date(),
+        //   attachments: [] // No attachments for an error message
+        // };
+        // setActiveMessages(prevMessages => [...prevMessages, errorMessage].sort((a,b) => a.timestamp.getTime() - b.timestamp.getTime()));
       }
+      // No need to invalidate queries for ["messages", ...] as we handle UI directly.
     },
   });
 
   const handleSelectConversation = (conversationId: string) => {
-    setConversationId(conversationId);
+    setConversationId(conversationId); // Triggers useEffect to load messages
   };
 
   const handleNewChat = () => {
     console.log("Starting new chat - clearing current conversation");
-    setConversationId(null);
-    setPendingUserMessage(null);
-    
-    // Clear all message caches to ensure fresh start
-    queryClient.removeQueries({ queryKey: ["messages"] });
-    
-    // Set welcome message immediately for new chat
-    queryClient.setQueryData(["messages", "new"], [welcomeMessage]);
+    setConversationId(null); // This will trigger useEffect to set welcomeMessage
+    // pendingUserMessage removed, so no setPendingUserMessage(null) needed
   };
 
   const setCurrentConversationId = useCallback((conversationId: string | null) => {
     console.log("Switching to conversation:", conversationId);
-    setConversationId(conversationId);
-    setPendingUserMessage(null);
+    setConversationId(conversationId); // This will trigger useEffect to load messages
+    // pendingUserMessage removed, so no setPendingUserMessage(null) needed
   }, []);
 
   return {
-    messages: messages || [],
-    loadingMessages,
-    currentConversationId: activeConversationId,
+    messages: activeMessages,
+    loadingMessages: isLoadingMessages,
+    currentConversationId: activeConversationId, // Ensure this reflects the ID used for fetching
     sendMessageMutation,
     handleSelectConversation,
     handleNewChat,
-    pendingUserMessage,
-    welcomeMessage,
+    // pendingUserMessage removed from return
+    // welcomeMessage constant is not returned, it's used internally for activeMessages
     setCurrentConversationId,
   };
 };

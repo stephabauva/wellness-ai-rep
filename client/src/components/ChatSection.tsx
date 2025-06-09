@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { History } from "lucide-react"; // Only History is needed from lucide-react here
 import { useChatMessages } from "@/hooks/useChatMessages";
 // useFileManagement is now used indirectly via useChatActions
-import { generateMessagesToDisplay } from "@/utils/chatUtils";
+// import { generateMessagesToDisplay } from "@/utils/chatUtils"; // Removed
 import { useAppContext } from "@/context/AppContext";
 import { useChatActions } from "@/hooks/useChatActions"; // Import the new hook
 
@@ -23,8 +23,8 @@ function ChatSection() {
   const {
     messages,
     currentConversationId,
-    pendingUserMessage,
-    welcomeMessage,
+    // pendingUserMessage, // Removed
+    // welcomeMessage, // Removed
     // sendMessageMutation, // Now handled by useChatActions
     setCurrentConversationId,
     handleNewChat,
@@ -43,12 +43,7 @@ function ChatSection() {
 
 
   // Generate messages to display
-  const messagesToDisplay = generateMessagesToDisplay(
-    messages || [],
-    pendingUserMessage,
-    currentConversationId,
-    welcomeMessage
-  );
+  const messagesToDisplay = messages; // Simplified
 
   const handleConversationSelect = useCallback((conversationId: string) => {
     setCurrentConversationId(conversationId);

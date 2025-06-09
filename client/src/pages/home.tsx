@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 import ChatSection from "@/components/ChatSection";
@@ -13,6 +13,14 @@ const Home: React.FC = () => {
   const { activeSection } = useAppContext();
   console.log("[Home] Component body execution. activeSection:", activeSection);
   
+  // Memoize section components
+  const chatSectionComponent = useMemo(() => <ChatSection />, []);
+  const healthSectionComponent = useMemo(() => <HealthDataSection />, []);
+  const devicesSectionComponent = useMemo(() => <ConnectedDevicesSection />, []);
+  const memorySectionComponent = useMemo(() => <MemorySection />, []);
+  const filesSectionComponent = useMemo(() => <FileManagerSection />, []);
+  const settingsSectionComponent = useMemo(() => <SettingsSection />, []);
+
   // renderActiveSection function is removed
   
   return (
@@ -27,22 +35,22 @@ const Home: React.FC = () => {
       <div className="flex flex-col flex-1 w-0 min-h-0 md:pt-0 pt-12">
         {/* Render all sections, control visibility with display style */}
         <div style={{ display: activeSection === 'chat' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
-          <ChatSection />
+          {chatSectionComponent}
         </div>
         <div style={{ display: activeSection === 'health' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
-          <HealthDataSection />
+          {healthSectionComponent}
         </div>
         <div style={{ display: activeSection === 'devices' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
-          <ConnectedDevicesSection />
+          {devicesSectionComponent}
         </div>
         <div style={{ display: activeSection === 'memory' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
-          <MemorySection />
+          {memorySectionComponent}
         </div>
         <div style={{ display: activeSection === 'files' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
-          <FileManagerSection />
+          {filesSectionComponent}
         </div>
         <div style={{ display: activeSection === 'settings' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
-          <SettingsSection />
+          {settingsSectionComponent}
         </div>
         {/*
           If AppContext guarantees activeSection is always one of the known valid sections (and defaults to 'chat'),

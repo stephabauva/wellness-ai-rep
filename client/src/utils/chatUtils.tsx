@@ -70,20 +70,31 @@ export const generateMessagesToDisplay = (
       );
       console.log("Showing conversation messages:", messagesToDisplay.length);
       console.log("Messages being displayed:", messagesToDisplay.map(m => ({ id: m.id, content: m.content.substring(0, 30) + '...', isUser: m.isUserMessage })));
-      
-      // Add pending message to existing conversation
-      if (pendingUserMessage) {
-        const pendingMessage: Message = {
-          id: `pending-${Date.now()}`,
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments
-        };
-        messagesToDisplay = [...messagesToDisplay, pendingMessage];
-        console.log("Added pending message to existing conversation");
-      }
     }
+    
+    // Always add pending message to existing conversation if it exists
+    if (pendingUserMessage) {
+      const pendingMessage: Message = {
+        id: `pending-${Date.now()}`,
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments
+      };
+      messagesToDisplay = [...messagesToDisplay, pendingMessage];
+      console.log("Added pending message to existing conversation");
+    }
+  }
+  // If we have a conversation ID but no messages yet, show pending message only
+  else if (currentConversationId && pendingUserMessage) {
+    messagesToDisplay = [{
+      id: `pending-${Date.now()}`,
+      content: pendingUserMessage.content,
+      isUserMessage: true,
+      timestamp: pendingUserMessage.timestamp,
+      attachments: pendingUserMessage.attachments
+    }];
+    console.log("Showing pending message for active conversation with no history");
   } 
   // Default: show welcome message if no conversation and no pending message
   else if (welcomeMessage && !pendingUserMessage) {

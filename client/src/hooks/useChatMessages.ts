@@ -160,9 +160,6 @@ export const useChatMessages = () => {
     onSuccess: (data) => {
       console.log("Message sent successfully:", data);
 
-      // Clear pending message first
-      setPendingUserMessage(null);
-
       // Always set conversation ID from response to ensure we have the correct one
       if (data.conversationId) {
         console.log("Setting conversation ID to:", data.conversationId);
@@ -213,6 +210,12 @@ export const useChatMessages = () => {
         
         // Clear the "new" query cache since we now have a conversation
         queryClient.removeQueries({ queryKey: ["messages", "new"] });
+        
+        // Clear pending message only after setting all data
+        setPendingUserMessage(null);
+      } else {
+        // Clear pending message even if no conversation ID
+        setPendingUserMessage(null);
       }
 
       // Invalidate conversations list

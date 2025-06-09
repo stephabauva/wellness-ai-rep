@@ -145,35 +145,14 @@ const ChatSection: React.FC = () => {
     }
   }, [loadingMessages, messages]);
 
-  // Generate messages to display with safe initialization using useMemo
-  const messagesToDisplay = React.useMemo(() => {
-    // If we have a conversation ID, we're in an active conversation
-    if (currentConversationId) {
-      // Start with existing messages (or empty array if still loading)
-      const conversationMessages = Array.isArray(messages) ? [...messages] : [];
-
-      // Add pending message if it exists
-      if (pendingUserMessage) {
-        conversationMessages.push({
-          id: "pending-user",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments?.map(att => ({
-            name: att.name,
-            type: att.type
-          }))
-        });
-      }
-
-      return conversationMessages;
-    }
-
-    // For new conversations (no ID), show welcome message and any pending
-    const newConversationMessages = [welcomeMessage];
-
+  // Simple message display logic - no complex hooks
+  let messagesToDisplay = [];
+  
+  if (currentConversationId && messages) {
+    // Active conversation - show all messages
+    messagesToDisplay = [...messages];
     if (pendingUserMessage) {
-      newConversationMessages.push({
+      messagesToDisplay.push({
         id: "pending-user",
         content: pendingUserMessage.content,
         isUserMessage: true,
@@ -184,9 +163,22 @@ const ChatSection: React.FC = () => {
         }))
       });
     }
-
-    return newConversationMessages;
-  }, [currentConversationId, messages, pendingUserMessage]);
+  } else {
+    // New conversation - show welcome message
+    messagesToDisplay = [welcomeMessage];
+    if (pendingUserMessage) {
+      messagesToDisplay.push({
+        id: "pending-user",
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments?.map(att => ({
+          name: att.name,
+          type: att.type
+        }))
+      });
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">

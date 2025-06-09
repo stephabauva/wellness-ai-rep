@@ -145,8 +145,8 @@ const ChatSection: React.FC = () => {
     }
   }, [loadingMessages, messages]);
 
-  // Generate messages to display with safe initialization
-  const getMessagesToDisplay = () => {
+  // Generate messages to display with safe initialization using useMemo
+  const messagesToDisplay = React.useMemo(() => {
     // If we have a conversation ID, we're in an active conversation
     if (currentConversationId) {
       // Start with existing messages (or empty array if still loading)
@@ -186,9 +186,7 @@ const ChatSection: React.FC = () => {
     }
 
     return newConversationMessages;
-  };
-
-  const messagesToDisplay = getMessagesToDisplay();
+  }, [currentConversationId, messages, pendingUserMessage]);
 
   return (
     <div className="flex flex-col h-full">

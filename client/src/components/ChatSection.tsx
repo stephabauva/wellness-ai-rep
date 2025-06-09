@@ -46,37 +46,49 @@ const ChatSection: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Custom hooks
+  // Custom hooks with error handling
+  const fileManagement = useFileManagement();
+  const chatMessages = useChatMessages();
+  const reportGeneration = useReportGeneration();
+
+  // Safe destructuring with fallbacks
   const {
-    attachedFiles,
-    uploadFileMutation,
-    removeAttachedFile,
-    clearAttachedFiles,
-    handleFileChange,
-  } = useFileManagement();
+    attachedFiles = [],
+    uploadFileMutation = { mutate: () => {}, isPending: false },
+    removeAttachedFile = () => {},
+    clearAttachedFiles = () => {},
+    handleFileChange = () => {},
+  } = fileManagement || {};
 
   const {
-    messages,
-    loadingMessages,
-    currentConversationId,
-    pendingUserMessage,
-    sendMessageMutation,
-    handleSelectConversation,
-    handleNewChat,
-  } = useChatMessages();
+    messages = [],
+    loadingMessages = false,
+    currentConversationId = null,
+    pendingUserMessage = null,
+    sendMessageMutation = { mutate: () => {}, isPending: false },
+    handleSelectConversation = () => {},
+    handleNewChat = () => {},
+  } = chatMessages || {};
 
-  const { downloadReportMutation, handleDownloadPDF } = useReportGeneration();
+  const {
+    downloadReportMutation = { mutate: () => {}, isPending: false },
+    handleDownloadPDF = () => {},
+  } = reportGeneration || {};
 
   // Event handlers
   const handleSendMessage = () => {
-    if (inputMessage.trim() || attachedFiles.length > 0) {
-      sendMessageMutation.mutate({
-        content: inputMessage,
-        attachments: attachedFiles,
-        conversationId: currentConversationId,
-      });
-      setInputMessage("");
-      clearAttachedFiles();
+    try {
+      if (inputMessage.trim() || attachedFiles.length > 0) {
+        sendMessageMutation.mutate({
+          content: inputMessage,
+          attachments: attachedFiles,
+          conversationId: currentConversationId,
+        });
+        setInputMessage("");
+        clearAttachedFiles();
+      }
+    } catch (error) {
+      console.error("Send message error:", error);
     }
   };
 
@@ -100,84 +112,117 @@ const ChatSection: React.FC = () => {
   };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileChange(event.target.files);
+    try {
+      handleFileChange(event.target.files);
+    } catch (error) {
+      console.error("File input error:", error);
+    }
   };
 
   const handleCameraChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      uploadFileMutation.mutate(file);
+    try {
+      const file = event.target.files?.[0];
+      if (file) {
+        uploadFileMutation.mutate(file);
+      }
+    } catch (error) {
+      console.error("Camera change error:", error);
     }
   };
 
   const handleNewChatWithCleanup = () => {
-    handleNewChat();
-    setInputMessage("");
-    clearAttachedFiles();
+    try {
+      handleNewChat();
+      setInputMessage("");
+      clearAttachedFiles();
+    } catch (error) {
+      console.error("New chat error:", error);
+    }
   };
 
   const handleSelectConversationWithCleanup = (conversationId: string) => {
-    handleSelectConversation(conversationId);
-    setInputMessage("");
-    clearAttachedFiles();
+    try {
+      handleSelectConversation(conversationId);
+      setInputMessage("");
+      clearAttachedFiles();
+    } catch (error) {
+      console.error("Select conversation error:", error);
+    }
   };
 
   // Auto-scroll effect
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    try {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } catch (error) {
+      console.error("Scroll error:", error);
+    }
   }, [messages, pendingUserMessage, sendMessageMutation.isPending]);
 
   // Force scroll on conversation change
   useEffect(() => {
     if (currentConversationId) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      try {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } catch (error) {
+        console.error("Conversation scroll error:", error);
+      }
     }
   }, [currentConversationId]);
 
   // Force scroll when loading finishes
   useEffect(() => {
     if (!loadingMessages && messages && messages.length > 0) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 200);
+      try {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 200);
+      } catch (error) {
+        console.error("Loading scroll error:", error);
+      }
     }
   }, [loadingMessages, messages]);
 
-  // Simple message display logic - no complex hooks
+  // Safe message display logic
   let messagesToDisplay = [];
   
-  if (currentConversationId && messages) {
-    // Active conversation - show all messages
-    messagesToDisplay = [...messages];
-    if (pendingUserMessage) {
-      messagesToDisplay.push({
-        id: "pending-user",
-        content: pendingUserMessage.content,
-        isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp,
-        attachments: pendingUserMessage.attachments?.map(att => ({
-          name: att.name,
-          type: att.type
-        }))
-      });
+  try {
+    if (currentConversationId && Array.isArray(messages)) {
+      // Active conversation - show all messages
+      messagesToDisplay = [...messages];
+      if (pendingUserMessage) {
+        messagesToDisplay.push({
+          id: "pending-user",
+          content: pendingUserMessage.content || "",
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp || new Date(),
+          attachments: pendingUserMessage.attachments?.map(att => ({
+            name: att.name || "",
+            type: att.type || ""
+          })) || undefined
+        });
+      }
+    } else {
+      // New conversation - show welcome message
+      messagesToDisplay = [welcomeMessage];
+      if (pendingUserMessage) {
+        messagesToDisplay.push({
+          id: "pending-user",
+          content: pendingUserMessage.content || "",
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp || new Date(),
+          attachments: pendingUserMessage.attachments?.map(att => ({
+            name: att.name || "",
+            type: att.type || ""
+          })) || undefined
+        });
+      }
     }
-  } else {
-    // New conversation - show welcome message
+  } catch (error) {
+    console.error("Message display error:", error);
     messagesToDisplay = [welcomeMessage];
-    if (pendingUserMessage) {
-      messagesToDisplay.push({
-        id: "pending-user",
-        content: pendingUserMessage.content,
-        isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp,
-        attachments: pendingUserMessage.attachments?.map(att => ({
-          name: att.name,
-          type: att.type
-        }))
-      });
-    }
   }
 
   return (
@@ -238,14 +283,14 @@ const ChatSection: React.FC = () => {
       {/* Input Area */}
       <div className="border-t p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Attached Files Preview */}
-        {attachedFiles.length > 0 && (
+        {Array.isArray(attachedFiles) && attachedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachedFiles.map((file) => (
               <div
                 key={file.id}
                 className="relative bg-secondary rounded-lg p-2 max-w-48"
               >
-                {file.fileType.startsWith("image/") ? (
+                {file.fileType?.startsWith("image/") ? (
                   <div className="space-y-2">
                     <img
                       src={`/uploads/${file.fileName}`}

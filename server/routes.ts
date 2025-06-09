@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { chatService } from "./services/openai-service";
+import { aiService } from "./services/ai-service";
 import { memoryService } from "./services/memory-service";
 import { generatePDFReport } from "./services/pdf-service";
 import { transcriptionService } from "./services/transcription-service";
@@ -177,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 4. Call the AI service with raw, un-formatted data.
       // The service will handle building the context.
       const aiConfig = { provider: aiProvider, model: aiModel };
-      const aiResult = await chatService.getChatResponse(
+      const aiResult = await aiService.getChatResponse(
         content, // Pass the original, raw message content
         userId,
         currentConversationId,

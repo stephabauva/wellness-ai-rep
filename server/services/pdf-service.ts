@@ -1,6 +1,6 @@
 import { User, HealthData } from "@shared/schema";
 import { format, subDays } from "date-fns";
-import { chatService } from "./openai-service";
+import { aiService } from "./ai-service";
 
 interface ReportTrend {
   date: string;

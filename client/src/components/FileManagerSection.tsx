@@ -136,7 +136,7 @@ const FileManagerSection: React.FC = () => {
           </TabsContent>
         )}
         {/* Category-specific tab content */}
-        {categories.map(category => (
+        {categories.map(category => 
           activeTab === category.id && ( // Only render content for the active category tab
             <TabsContent key={category.id} value={category.id} className="mt-0">
                <Card className="mb-4"> {/* Optional: Card header for category context */}
@@ -158,7 +158,8 @@ const FileManagerSection: React.FC = () => {
                 viewMode={viewMode}
               />
             </TabsContent>
-          ))}
+          )
+        )}
         </Tabs>
       </div>
 

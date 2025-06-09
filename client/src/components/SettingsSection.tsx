@@ -54,7 +54,26 @@ const SettingsSection: React.FC = () => {
 
   const form = useForm<CombinedSettingsFormValues>({
     resolver: zodResolver(settingsSchema),
-    // Default values will be set by useEffect once data is loaded
+    defaultValues: {
+      name: "",
+      email: "",
+      primaryGoal: "weight-loss",
+      coachStyle: "motivational",
+      reminderFrequency: "daily",
+      focusAreas: ["nutrition", "exercise", "sleep"],
+      darkMode: false,
+      pushNotifications: true,
+      emailSummaries: true,
+      dataSharing: false,
+      aiProvider: "openai",
+      aiModel: "gpt-4o",
+      transcriptionProvider: "webspeech",
+      preferredLanguage: "en",
+      automaticModelSelection: true,
+      highValueRetentionDays: -1,
+      mediumValueRetentionDays: 90,
+      lowValueRetentionDays: 30,
+    },
   });
 
   useEffect(() => {

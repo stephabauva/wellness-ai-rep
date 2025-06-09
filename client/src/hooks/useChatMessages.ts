@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAppContext } from '@/context/AppContext';
@@ -28,6 +28,8 @@ export const useChatMessages = () => {
     timestamp: Date;
     attachments?: { name: string; type: string }[];
   } | null>(null);
+  
+
 
   type SendMessageParams = {
     content: string;
@@ -129,50 +131,55 @@ export const useChatMessages = () => {
       // Cancel any outgoing queries to avoid race conditions
       await queryClient.cancelQueries({ queryKey: ["messages"] });
 
-      // Set pending message for immediate display
-      setPendingUserMessage({
+      // Create the user message immediately in cache for all scenarios
+      const userMessage = {
+        id: `temp-user-${Date.now()}`,
         content,
+        isUserMessage: true,
         timestamp: new Date(),
         attachments: attachments?.map(f => ({ 
           name: f.fileName || f.displayName || 'Unknown file', 
           type: f.fileType 
         }))
-      });
+      };
 
-      console.log("Pending user message set");
-
-      // If we have a conversation ID, add the message optimistically
+      // For existing conversation, add to existing messages
       if (conversationId) {
         const existingMessages = queryClient.getQueryData(["messages", conversationId]) || [];
-        const optimisticUserMessage = {
-          id: `temp-${Date.now()}`,
-          content,
-          isUserMessage: true,
-          timestamp: new Date(),
-          attachments: attachments?.map(f => ({ 
-            name: f.fileName || f.displayName || 'Unknown file', 
-            type: f.fileType 
-          }))
-        };
-
+        const filteredMessages = Array.isArray(existingMessages) ? 
+          existingMessages.filter(m => m.id !== "welcome-message") : [];
+        
         queryClient.setQueryData(
           ["messages", conversationId], 
-          [...(Array.isArray(existingMessages) ? existingMessages : []), optimisticUserMessage]
+          [...filteredMessages, userMessage]
         );
-        console.log("Optimistic message added to cache");
+        console.log("User message added to existing conversation cache");
+      } else {
+        // For new conversation, create new cache entry
+        queryClient.setQueryData(["messages", "new"], [userMessage]);
+        console.log("User message added to new conversation cache");
       }
+
+      // Don't rely on pending state - use direct cache updates
+      return { userMessage };
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables, context) => {
       console.log("Message sent successfully:", data);
 
       // Always set conversation ID from response to ensure we have the correct one
       if (data.conversationId) {
         console.log("Setting conversation ID to:", data.conversationId);
         
-        // Get existing messages from cache and ensure we keep them
-        const existingMessages = queryClient.getQueryData(["messages", data.conversationId]) || [];
-        const currentMessages = Array.isArray(existingMessages) ? 
-          existingMessages.filter((msg: any) => msg.id !== "welcome-message" && !msg.id.startsWith("temp-")) : [];
+        // Get existing messages from cache (including our temp message)
+        const existingMessages = queryClient.getQueryData(["messages", data.conversationId]) || 
+                                 queryClient.getQueryData(["messages", "new"]) || [];
+        
+        // Remove temp messages and welcome message
+        const cleanMessages = Array.isArray(existingMessages) ? 
+          existingMessages.filter((msg: any) => 
+            msg.id !== "welcome-message" && 
+            !msg.id.startsWith("temp-")
+          ) : [];
         
         // Format the new messages from the response
         const newMessages = [];
@@ -197,14 +204,11 @@ export const useChatMessages = () => {
           });
         }
         
-        // Combine existing and new messages, removing duplicates by ID
-        const allMessages = [...currentMessages, ...newMessages];
-        const uniqueMessages = allMessages.filter((msg, index, arr) => 
-          arr.findIndex(m => m.id === msg.id) === index
-        );
+        // Combine clean existing and new messages
+        const allMessages = [...cleanMessages, ...newMessages];
         
         // Sort by timestamp and set immediately
-        const sortedMessages = uniqueMessages.sort((a, b) => 
+        const sortedMessages = allMessages.sort((a, b) => 
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
         
@@ -216,11 +220,7 @@ export const useChatMessages = () => {
         // Clear the "new" query cache since we now have a conversation
         queryClient.removeQueries({ queryKey: ["messages", "new"] });
         
-        // Clear pending message only after setting all data
-        setPendingUserMessage(null);
-      } else {
-        // Clear pending message even if no conversation ID
-        setPendingUserMessage(null);
+        console.log("Updated cache with final messages:", sortedMessages.length);
       }
 
       // Invalidate conversations list

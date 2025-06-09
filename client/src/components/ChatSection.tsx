@@ -55,6 +55,13 @@ export function ChatSection() {
     welcomeMessage
   );
 
+  console.log("ChatSection render:", {
+    messagesLength: messages?.length || 0,
+    messagesToDisplayLength: messagesToDisplay?.length || 0,
+    currentConversationId,
+    pendingUserMessage: !!pendingUserMessage
+  });
+
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() || (attachedFiles && attachedFiles.length > 0)) {
       const aiProvider = settings?.aiProvider || "openai";

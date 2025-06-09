@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAppContext } from '@/context/AppContext';
@@ -23,7 +22,7 @@ const welcomeMessage: Message = {
 
 export const useChatMessages = () => {
   const { coachingMode } = useAppContext();
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [currentConversationId, setConversationId] = useState<string | null>(null);
   const [pendingUserMessage, setPendingUserMessage] = useState<{
     content: string;
     timestamp: Date;
@@ -39,7 +38,11 @@ export const useChatMessages = () => {
     automaticModelSelection?: boolean;
   }
 
-  const { data: messages, isLoading: loadingMessages } = useQuery({
+  const {
+    data: messages,
+    isLoading: loadingMessages,
+    refetch: refetchMessages
+  } = useQuery({
     queryKey: ["messages", currentConversationId || "new"],
     queryFn: async () => {
       if (!currentConversationId) {
@@ -48,6 +51,7 @@ export const useChatMessages = () => {
       const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
+      console.log("Loaded messages for conversation:", currentConversationId, convMessages);
       return Array.isArray(convMessages) ? convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
@@ -59,8 +63,9 @@ export const useChatMessages = () => {
         })) : undefined
       })) : [welcomeMessage];
     },
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
   });
 
   // Send message mutation
@@ -99,70 +104,66 @@ export const useChatMessages = () => {
     onSuccess: (data) => {
       console.log("Message sent successfully:", data);
 
+      const conversationId = data.conversationId || currentConversationId;
+
+      // Set conversation ID if it's a new conversation
+      if (data.conversationId && !currentConversationId) {
+        console.log("Setting conversation ID to:", data.conversationId);
+        setConversationId(data.conversationId);
+      }
+
       // Clear pending message
       setPendingUserMessage(null);
 
-      // Update conversation ID if this was a new conversation
-      if (data.conversationId && !currentConversationId) {
-        console.log("Setting conversation ID to:", data.conversationId);
-        setCurrentConversationId(data.conversationId);
-      }
-
-      // Update the cache with the real server response
-      const targetQueryKey = ["messages", data.conversationId];
-
-      queryClient.setQueryData(targetQueryKey, (old: Message[] = []) => {
-        const existingMessages = Array.isArray(old) ? old : [];
-        
-        // Filter out welcome message if this is a real conversation
-        const filteredMessages = data.conversationId ? 
-          existingMessages.filter(msg => msg.id !== "welcome-message") : 
-          existingMessages;
-        
-        return [
-          ...filteredMessages,
-          {
-            id: data.userMessage.id,
-            content: data.userMessage.content,
-            isUserMessage: true,
-            timestamp: new Date(data.userMessage.timestamp),
-            attachments: data.userMessage.metadata?.attachments?.map((att: any) => ({
-              name: att.fileName || att.name,
-              type: att.fileType || att.type
-            }))
-          },
-          {
-            id: data.aiMessage.id,
-            content: data.aiMessage.content,
-            isUserMessage: false,
-            timestamp: new Date(data.aiMessage.timestamp),
-            attachments: data.aiMessage.metadata?.attachments?.map((att: any) => ({
-              name: att.fileName || att.name,
-              type: att.fileType || att.type
-            }))
-          }
-        ];
+      // Force refetch messages for this conversation
+      queryClient.invalidateQueries({ 
+        queryKey: ["messages", conversationId] 
       });
 
-      // Also invalidate the query to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: targetQueryKey });
+      // Force refetch to ensure we get all messages
+      setTimeout(() => {
+        queryClient.refetchQueries({ 
+          queryKey: ["messages", conversationId] 
+        });
+      }, 100);
+
+      // Invalidate conversations list
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (error) => {
       console.error("Message send error:", error);
-      
+
       // Clear pending message on error
       setPendingUserMessage(null);
     },
   });
 
   const handleSelectConversation = (conversationId: string) => {
-    setCurrentConversationId(conversationId);
+    setConversationId(conversationId);
   };
 
   const handleNewChat = () => {
-    setCurrentConversationId(null);
+    setConversationId(null);
     queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
   };
+
+  const setCurrentConversationId = useCallback((conversationId: string | null) => {
+    console.log("Switching to conversation:", conversationId);
+    setConversationId(conversationId);
+    setPendingUserMessage(null);
+
+    // Force refetch messages for the new conversation
+    if (conversationId) {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: ["messages", conversationId] 
+        });
+        queryClient.refetchQueries({ 
+          queryKey: ["messages", conversationId] 
+        });
+      }, 50);
+    }
+  }, [queryClient]);
 
   return {
     messages: messages || [],

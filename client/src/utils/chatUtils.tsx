@@ -1,4 +1,3 @@
-
 import React from "react";
 import { 
   FileIcon, 
@@ -25,52 +24,51 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: any[] = [],
-  pendingUserMessage: any = null,
+  messages: Message[],
+  pendingUserMessage: string | null,
   currentConversationId: string | null,
-  welcomeMessage: any
-) => {
-  // Ensure messages is an array and handle null/undefined
-  const safeMessages = Array.isArray(messages) ? messages : [];
-  
-  // If we have a conversation ID, show the real messages
-  if (currentConversationId) {
-    const result = [...safeMessages];
-    
-    // Add pending message if it exists
-    if (pendingUserMessage) {
-      result.push({
-        id: `pending-${Date.now()}`,
-        content: pendingUserMessage.content || "",
-        isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp || new Date(),
-        attachments: pendingUserMessage.attachments || []
-      });
-    }
-    
-    return result;
+  welcomeMessage: Message | null
+): Message[] => {
+  let messagesToDisplay: Message[] = [];
+
+  console.log("Generating messages to display:", {
+    messagesCount: messages?.length || 0,
+    pendingUserMessage: !!pendingUserMessage,
+    currentConversationId,
+    hasWelcomeMessage: !!welcomeMessage
+  });
+
+  // If we have a current conversation, show its messages
+  if (currentConversationId && messages && messages.length > 0) {
+    // Sort messages by timestamp to ensure correct order
+    messagesToDisplay = [...messages].sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    console.log("Showing conversation messages:", messagesToDisplay.length);
+  } 
+  // If no conversation but we have a welcome message, show it
+  else if (!currentConversationId && welcomeMessage) {
+    messagesToDisplay = [welcomeMessage];
+    console.log("Showing welcome message");
   }
-  
-  // For new conversations, show welcome message and pending message
-  const result = [];
-  
-  // Add welcome message for new conversations
-  if (welcomeMessage) {
-    result.push(welcomeMessage);
-  }
-  
-  // Add pending message if it exists
+
+  // Add pending user message if it exists
   if (pendingUserMessage) {
-    result.push({
+    const pendingMessage: Message = {
       id: `pending-${Date.now()}`,
-      content: pendingUserMessage.content || "",
+      userId: 1,
+      conversationId: currentConversationId || 'pending',
+      content: pendingUserMessage,
       isUserMessage: true,
-      timestamp: pendingUserMessage.timestamp || new Date(),
-      attachments: pendingUserMessage.attachments || []
-    });
+      timestamp: new Date().toISOString(),
+      attachments: []
+    };
+    messagesToDisplay = [...messagesToDisplay, pendingMessage];
+    console.log("Added pending message");
   }
-  
-  return result;
+
+  console.log("Final messages to display:", messagesToDisplay.length);
+  return messagesToDisplay;
 };
 
 export const formatTime = (timestamp: Date) => {

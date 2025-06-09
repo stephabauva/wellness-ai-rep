@@ -620,16 +620,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get conversation messages
+  // Get messages for a conversation
   app.get("/api/conversations/:id/messages", async (req, res) => {
     try {
       const conversationId = req.params.id;
+      console.log("Fetching messages for conversation:", conversationId);
+
       const messages = await db
         .select()
         .from(conversationMessages)
         .where(eq(conversationMessages.conversationId, conversationId))
         .orderBy(conversationMessages.createdAt);
 
+      console.log(`Found ${messages.length} messages for conversation ${conversationId}`);
       res.json(messages);
     } catch (error) {
       console.error('Error fetching conversation messages:', error);

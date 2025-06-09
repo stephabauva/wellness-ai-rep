@@ -25,6 +25,12 @@ Conversation tracking with UUID-based session management
 Memory usage indicators showing how many memories influenced each response
 Cross-session context maintenance for continuous personalization
 Automatic memory saving during natural conversations
+
+Critical Context Fixes (June 2025)
+Cross-Session Context Contamination: Fixed React Query cache race conditions preventing proper message persistence
+Message Display Resolution: Implemented forced refetch with zero stale time to ensure all messages appear correctly
+Cache Invalidation Timing: Enhanced useChatMessages.ts to resolve issues where only first 2 messages displayed
+Context Persistence: All conversation messages and visual context now maintained properly across sessions
 Database Schema Extensions
 
 Memory Entries Table: Vector embeddings storage with semantic search capability

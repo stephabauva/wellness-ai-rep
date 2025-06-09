@@ -75,8 +75,8 @@ export const useChatMessages = () => {
       return formattedMessages;
     },
     refetchOnWindowFocus: false,
-    staleTime: 0, // Always fetch fresh data
-    refetchOnMount: true,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnMount: false,
     enabled: true // Always enable this query
   });
 
@@ -123,7 +123,10 @@ export const useChatMessages = () => {
 
       return await response.json();
     },
-    onMutate: async ({ content, attachments }) => {
+    onMutate: async ({ content, attachments, conversationId }) => {
+      // Cancel any outgoing queries to avoid race conditions
+      await queryClient.cancelQueries({ queryKey: ["messages"] });
+
       // Set pending message for immediate display
       setPendingUserMessage({
         content,
@@ -133,6 +136,26 @@ export const useChatMessages = () => {
           type: f.fileType 
         }))
       });
+
+      // If we have a conversation ID, add the message optimistically
+      if (conversationId) {
+        const existingMessages = queryClient.getQueryData(["messages", conversationId]) || [];
+        const optimisticUserMessage = {
+          id: `temp-${Date.now()}`,
+          content,
+          isUserMessage: true,
+          timestamp: new Date(),
+          attachments: attachments?.map(f => ({ 
+            name: f.fileName || f.displayName || 'Unknown file', 
+            type: f.fileType 
+          }))
+        };
+
+        queryClient.setQueryData(
+          ["messages", conversationId], 
+          [...(Array.isArray(existingMessages) ? existingMessages : []), optimisticUserMessage]
+        );
+      }
     },
     onSuccess: (data) => {
       console.log("Message sent successfully:", data);
@@ -144,11 +167,16 @@ export const useChatMessages = () => {
       if (data.conversationId) {
         console.log("Setting conversation ID to:", data.conversationId);
         
-        // Format the messages from the response and set them directly in the cache
-        const formattedMessages = [];
+        // Get existing messages from cache or initialize empty array
+        const existingMessages = queryClient.getQueryData(["messages", data.conversationId]) || [];
+        const filteredExisting = Array.isArray(existingMessages) ? 
+          existingMessages.filter((msg: any) => msg.id !== "welcome-message") : [];
+        
+        // Format the new messages from the response
+        const newMessages = [];
         
         if (data.userMessage) {
-          formattedMessages.push({
+          newMessages.push({
             id: data.userMessage.id.toString(),
             content: data.userMessage.content,
             isUserMessage: true,
@@ -158,7 +186,7 @@ export const useChatMessages = () => {
         }
         
         if (data.aiMessage) {
-          formattedMessages.push({
+          newMessages.push({
             id: data.aiMessage.id.toString(),
             content: data.aiMessage.content,
             isUserMessage: false,
@@ -167,22 +195,26 @@ export const useChatMessages = () => {
           });
         }
         
+        // Combine existing and new messages, removing duplicates by ID
+        const allMessages = [...filteredExisting, ...newMessages];
+        const uniqueMessages = allMessages.filter((msg, index, arr) => 
+          arr.findIndex(m => m.id === msg.id) === index
+        );
+        
+        // Sort by timestamp
+        uniqueMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        
         // Set the query data directly to ensure immediate display
         queryClient.setQueryData(
           ["messages", data.conversationId], 
-          formattedMessages
+          uniqueMessages
         );
         
-        // Set the conversation ID immediately and force a re-render
+        // Set the conversation ID immediately
         setConversationId(data.conversationId);
         
-        // Invalidate the "new" query since we now have a conversation
-        queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
-        
-        // Force an immediate refetch to ensure the UI updates
-        queryClient.invalidateQueries({ 
-          queryKey: ["messages", data.conversationId] 
-        });
+        // Clear the "new" query cache since we now have a conversation
+        queryClient.removeQueries({ queryKey: ["messages", "new"] });
       }
 
       // Invalidate conversations list
@@ -190,11 +222,18 @@ export const useChatMessages = () => {
         queryKey: ["conversations"] 
       });
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error("Message send error:", error);
 
       // Clear pending message on error
       setPendingUserMessage(null);
+
+      // Rollback optimistic updates if we had a conversation ID
+      if (variables.conversationId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ["messages", variables.conversationId] 
+        });
+      }
     },
   });
 
@@ -203,8 +242,15 @@ export const useChatMessages = () => {
   };
 
   const handleNewChat = () => {
+    console.log("Starting new chat - clearing current conversation");
     setConversationId(null);
-    queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
+    setPendingUserMessage(null);
+    
+    // Clear all message caches to ensure fresh start
+    queryClient.removeQueries({ queryKey: ["messages"] });
+    
+    // Set welcome message immediately for new chat
+    queryClient.setQueryData(["messages", "new"], [welcomeMessage]);
   };
 
   const setCurrentConversationId = useCallback((conversationId: string | null) => {

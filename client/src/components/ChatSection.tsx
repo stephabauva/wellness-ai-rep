@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Paperclip, Send, Mic, Camera, History } from "lucide-react";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import { useFileManagement } from "@/hooks/useFileManagement";
-import { generateMessagesToDisplay } from "@/utils/chatUtils";
+import { generateMessagesToDisplay, getFileIcon } from "@/utils/chatUtils";
 import { ChatMessage } from "@/components/ui/chat-message";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConversationHistory } from "@/components/ConversationHistory";
@@ -37,8 +37,7 @@ export function ChatSection() {
     attachedFiles,
     setAttachedFiles,
     clearAttachedFiles,
-    uploadFileMutation,
-    getFileIcon
+    uploadFileMutation
   } = useFileManagement();
 
   useEffect(() => {

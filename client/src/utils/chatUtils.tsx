@@ -82,3 +82,12 @@ export const formatTime = (timestamp: Date) => {
     minute: '2-digit' 
   });
 };
+
+// Default export as an object containing all the utilities
+const chatUtils = {
+  getFileIcon,
+  generateMessagesToDisplay,
+  formatTime
+};
+
+export default chatUtils;

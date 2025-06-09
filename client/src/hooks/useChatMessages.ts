@@ -61,7 +61,7 @@ export const useChatMessages = () => {
         isUserMessage: msg.role === "user",
         timestamp: new Date(msg.createdAt),
         attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-          name: att.fileName || att.name,
+          name: att.fileName || att.name || 'Unknown file',
           type: att.fileType || att.type
         })) : undefined
       }));
@@ -108,7 +108,7 @@ export const useChatMessages = () => {
         content,
         timestamp: new Date(),
         attachments: attachments?.map(f => ({ 
-          name: f.fileName || f.displayName, 
+          name: f.fileName || f.displayName || 'Unknown file', 
           type: f.fileType 
         }))
       });
@@ -127,29 +127,42 @@ export const useChatMessages = () => {
       // Clear pending message
       setPendingUserMessage(null);
 
-      // Invalidate and refetch immediately
-      queryClient.invalidateQueries({ 
-        queryKey: ["messages"] 
+      // Completely clear the cache for this conversation and force fresh fetch
+      queryClient.removeQueries({ 
+        queryKey: ["messages", conversationId] 
       });
 
       queryClient.invalidateQueries({ 
         queryKey: ["conversations"] 
       });
 
-      // Force immediate refetch with correct conversation ID
-      queryClient.refetchQueries({ 
-        queryKey: ["messages", conversationId] 
+      // Force immediate fresh fetch
+      queryClient.fetchQuery({ 
+        queryKey: ["messages", conversationId],
+        queryFn: async () => {
+          const response = await fetch(`/api/conversations/${conversationId}/messages`);
+          if (!response.ok) throw new Error("Failed to fetch conversation messages");
+          const convMessages = await response.json();
+          console.log("Fresh fetch - loaded messages for conversation:", conversationId, convMessages);
+          
+          const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+          const formattedMessages = messagesArray.map((msg: any) => ({
+            id: msg.id,
+            content: msg.content,
+            isUserMessage: msg.role === "user",
+            timestamp: new Date(msg.createdAt),
+            attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
+              name: att.fileName || att.name || 'Unknown file',
+              type: att.fileType || att.type
+            })) : undefined
+          }));
+          
+          formattedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          console.log("Fresh fetch - formatted messages:", formattedMessages.length, formattedMessages);
+          
+          return formattedMessages;
+        }
       });
-
-      // Secondary refetch to ensure data consistency
-      setTimeout(() => {
-        queryClient.invalidateQueries({ 
-          queryKey: ["messages", conversationId] 
-        });
-        queryClient.refetchQueries({ 
-          queryKey: ["messages", conversationId] 
-        });
-      }, 200);
     },
     onError: (error) => {
       console.error("Message send error:", error);

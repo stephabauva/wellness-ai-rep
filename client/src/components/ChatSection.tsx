@@ -149,14 +149,23 @@ function ChatSection() {
       {/* Header */}
       <div className="border-b p-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold">AI Wellness Coach</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsConversationHistoryOpen(true)}
-        >
-          <History className="h-4 w-4 mr-2" />
-          History
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentConversationId(null)}
+          >
+            New Chat
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsConversationHistoryOpen(true)}
+          >
+            <History className="h-4 w-4 mr-2" />
+            History
+          </Button>
+        </div>
       </div>
 
       {/* Messages Area */}

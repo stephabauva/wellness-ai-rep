@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FileText, Image, Video, File } from "lucide-react";
 
@@ -16,55 +15,43 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: any[],
-  pendingUserMessage: any,
+  messages: Message[] | undefined,
+  pendingUserMessage: { content: string; timestamp: Date; attachments?: any[] } | null,
   currentConversationId: string | null,
-  welcomeMessage: any
-) => {
-  // If we have a current conversation, show all messages from that conversation
-  if (currentConversationId && messages && messages.length > 0) {
-    let messagesToDisplay = messages;
-    
-    console.log(`Displaying ${messagesToDisplay.length} messages for conversation ${currentConversationId}`);
-    messagesToDisplay.forEach((msg, index) => {
-      if (msg.attachments && msg.attachments.length > 0) {
-        console.log(`Message ${index} has ${msg.attachments.length} attachments:`, msg.attachments);
-      }
-    });
+  welcomeMessage: Message
+): Message[] => {
+  if (!currentConversationId) {
+    const messagesToShow = [welcomeMessage];
 
-    // Always append pending message if it exists
     if (pendingUserMessage) {
-      messagesToDisplay = [
-        ...messagesToDisplay,
-        {
-          id: "temp-pending",
-          content: pendingUserMessage.content,
-          isUserMessage: true,
-          timestamp: pendingUserMessage.timestamp,
-          attachments: pendingUserMessage.attachments,
-        }
-      ];
-    }
-
-    return messagesToDisplay;
-  }
-
-  // If no conversation ID (new chat), show welcome message or existing messages
-  let messagesToDisplay = messages && messages.length > 0 ? messages : [welcomeMessage];
-
-  // Always append pending message if it exists
-  if (pendingUserMessage) {
-    messagesToDisplay = [
-      ...messagesToDisplay,
-      {
-        id: "temp-pending",
+      messagesToShow.push({
+        id: "pending-user",
         content: pendingUserMessage.content,
         isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp,
-        attachments: pendingUserMessage.attachments,
-      }
-    ];
+        timestamp: pendingUserMessage.timestamp && !isNaN(pendingUserMessage.timestamp.getTime()) 
+          ? pendingUserMessage.timestamp 
+          : new Date(),
+        attachments: pendingUserMessage.attachments
+      });
+    }
+
+    return messagesToShow;
   }
 
-  return messagesToDisplay;
+  const messagesToShow = messages || [];
+
+  if (pendingUserMessage) {
+    const pendingMessage: Message = {
+      id: "pending-user",
+      content: pendingUserMessage.content,
+      isUserMessage: true,
+      timestamp: pendingUserMessage.timestamp && !isNaN(pendingUserMessage.timestamp.getTime()) 
+        ? pendingUserMessage.timestamp 
+        : new Date(),
+      attachments: pendingUserMessage.attachments
+    };
+    return [...messagesToShow, pendingMessage];
+  }
+
+  return messagesToShow;
 };

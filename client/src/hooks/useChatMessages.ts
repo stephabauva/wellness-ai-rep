@@ -45,7 +45,7 @@ export const useChatMessages = () => {
         id: msg.id,
         content: msg.content,
         isUserMessage: msg.role === "user",
-        timestamp: new Date(msg.createdAt),
+        timestamp: msg.createdAt ? new Date(msg.createdAt) : new Date(),
         attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
           name: att.fileName || att.displayName || att.name,
           type: att.fileType || att.type,

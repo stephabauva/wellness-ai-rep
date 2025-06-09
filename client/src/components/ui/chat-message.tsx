@@ -30,6 +30,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     }).format(date);
   };
 
+  const formatTimestamp = (timestamp: Date) => {
+    // Validate the date before formatting
+    if (!timestamp || isNaN(timestamp.getTime())) {
+      return new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+
+    return timestamp.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
   return (
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar className="h-8 w-8 shrink-0">

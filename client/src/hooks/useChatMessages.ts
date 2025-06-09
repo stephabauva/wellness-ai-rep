@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -39,9 +38,9 @@ export const useChatMessages = () => {
       const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
-      
+
       console.log(`Loaded ${convMessages.length} messages for conversation ${currentConversationId}:`, convMessages);
-      
+
       return convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
@@ -107,7 +106,7 @@ export const useChatMessages = () => {
         })) : undefined
       });
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log("Message sent successfully:", data);
       const finalConversationId = data.conversationId;
 
@@ -121,36 +120,10 @@ export const useChatMessages = () => {
         setCurrentConversationId(finalConversationId);
       }
 
-      const targetQueryKey = ["messages", finalConversationId];
+      // Force refetch the conversation messages to ensure consistency
+      await queryClient.invalidateQueries({ queryKey: ['messages', finalConversationId] });
 
-      queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
-        const existingMessages = old || [];
-        const newMessages = [
-          {
-            id: data.userMessage.id,
-            content: data.userMessage.content,
-            isUserMessage: true,
-            timestamp: new Date(data.userMessage.timestamp),
-            attachments: data.userMessage.metadata?.attachments ? data.userMessage.metadata.attachments.map((att: any) => ({
-              name: att.fileName || att.displayName || att.name,
-              type: att.fileType || att.type,
-              fileName: att.fileName
-            })) : undefined
-          },
-          {
-            id: data.aiMessage.id,
-            content: data.aiMessage.content,
-            isUserMessage: false,
-            timestamp: new Date(data.aiMessage.timestamp),
-          },
-        ];
-        
-        const updatedMessages = [...existingMessages, ...newMessages];
-        console.log(`Updating cache for conversation ${finalConversationId}: ${existingMessages.length} existing + ${newMessages.length} new messages`);
-        return updatedMessages;
-      });
-      
-      // Only invalidate the conversations list, not the current conversation messages
+      // Also invalidate the conversations list
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
     },
     onError: (error) => {

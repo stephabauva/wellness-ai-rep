@@ -630,7 +630,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(conversationMessages.conversationId, conversationId))
         .orderBy(conversationMessages.createdAt);
 
-      res.json(messages);
+      // Transform the messages to match the expected format
+      const transformedMessages = messages.map(msg => ({
+        id: msg.id,
+        userId: 1, // Default user ID for compatibility
+        content: msg.content,
+        isUserMessage: msg.role === 'user',
+        timestamp: msg.createdAt,
+        metadata: msg.metadata
+      }));
+
+      console.log(`Loaded ${transformedMessages.length} messages for conversation ${conversationId}:`, transformedMessages.map(m => `${m.isUserMessage ? 'user' : 'assistant'}: ${m.content?.substring(0, 50)}...`));
+
+      res.json(transformedMessages);
     } catch (error) {
       console.error('Error fetching conversation messages:', error);
       res.status(500).json({ message: "Failed to fetch conversation messages" });

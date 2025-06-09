@@ -154,12 +154,14 @@ export const useChatMessages = () => {
           [...filteredMessages, userMessage]
         );
         console.log("User message added to existing conversation cache");
-        
+        queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
+
       } else {
         // For new conversation, create new cache entry
         queryClient.setQueryData(["messages", "new"], [userMessage]);
         console.log("User message added to new conversation cache");
-        
+        queryClient.invalidateQueries({ queryKey: ["messages", "new"] });
+
       }
 
       // Don't rely on pending state - use direct cache updates

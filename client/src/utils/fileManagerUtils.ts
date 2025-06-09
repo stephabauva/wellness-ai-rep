@@ -1,15 +1,14 @@
 import React from 'react';
-import { Image, FileText, Stethoscope, Activity } from 'lucide-react'; // Added Stethoscope, Activity
-import { FileItem, FileCategory } from '@/types/fileManager'; // Assuming types will be defined here or imported
+import { Image, FileText, Stethoscope, Activity } from 'lucide-react';
+import { FileItem, FileCategory } from '@/types/fileManager';
 
 export const getFileIcon = (fileType: string, fileName: string): React.ReactNode => {
   const lowerFileType = fileType.toLowerCase();
 
   if (lowerFileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
-    return <Image className="h-4 w-4" />;
+    return React.createElement(Image, { className: "h-4 w-4" });
   }
-  // Add more specific icons if needed, e.g., for PDF, DOC, etc.
-  return <FileText className="h-4 w-4" />;
+  return React.createElement(FileText, { className: "h-4 w-4" });
 };
 
 export const formatFileSize = (bytes: number): string => {
@@ -72,28 +71,28 @@ export const categorizeFiles = (files: FileItem[]): FileCategory[] => {
     {
       id: 'medical',
       name: 'Medical',
-      icon: <Stethoscope className="h-4 w-4" />,
+      icon: React.createElement(Stethoscope, { className: "h-4 w-4" }),
       files: medical,
       description: 'Medical documents, lab results, prescriptions'
     },
     {
       id: 'fitness',
       name: 'Fitness',
-      icon: <Activity className="h-4 w-4" />,
+      icon: React.createElement(Activity, { className: "h-4 w-4" }),
       files: fitness,
       description: 'Exercise routines, workout plans, fitness tracking'
     },
     {
       id: 'nutrition',
       name: 'Nutrition',
-      icon: <Image className="h-4 w-4" />, // Standard image icon for nutrition
+      icon: React.createElement(Image, { className: "h-4 w-4" }),
       files: nutrition,
       description: 'Food photos, meal plans, nutrition information'
     },
     {
       id: 'other',
       name: 'Other',
-      icon: <FileText className="h-4 w-4" />,
+      icon: React.createElement(FileText, { className: "h-4 w-4" }),
       files: other,
       description: 'Miscellaneous documents and files'
     }

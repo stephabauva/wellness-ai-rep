@@ -124,17 +124,16 @@ const FileManagerSection: React.FC = () => {
       </div>
 
       <div className="flex-1 p-4 md:p-6 overflow-auto space-y-6">
-        <CategoryTabs
-          categories={categories}
-          activeTab={activeTab}
-          onTabChange={setActiveTab} // This now clears selection automatically
-          totalFilesCount={files.length}
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <CategoryTabs
+            categories={categories}
+            activeTab={activeTab}
+            onTabChange={setActiveTab} // This now clears selection automatically
+            totalFilesCount={files.length}
+          />
 
-        {/* Render FileList based on activeTab */}
-        {/* "all" tab content */}
-        {activeTab === 'all' && (
-          <TabsContent value="all" className="mt-0"> {/* mt-0 because space-y-6 on parent handles spacing */}
+          {/* "all" tab content */}
+          <TabsContent value="all" className="mt-6">
             <FileListComponent 
               files={files} // Show all files for "all" tab
               selectedFiles={selectedFiles}
@@ -143,11 +142,10 @@ const FileManagerSection: React.FC = () => {
               viewMode={viewMode}
             />
           </TabsContent>
-        )}
-        {/* Category-specific tab content */}
-        {categories.map(category => 
-          activeTab === category.id && ( // Only render content for the active category tab
-            <TabsContent key={category.id} value={category.id} className="mt-0">
+
+          {/* Category-specific tab content */}
+          {categories.map(category => (
+            <TabsContent key={category.id} value={category.id} className="mt-6">
                <Card className="mb-4"> {/* Optional: Card header for category context */}
                 <CardHeader className="pb-3 pt-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -167,8 +165,8 @@ const FileManagerSection: React.FC = () => {
                 viewMode={viewMode}
               />
             </TabsContent>
-          )
-        )}
+          ))}
+        </Tabs>
       </div>
 
       {/* QR Code Modal */}

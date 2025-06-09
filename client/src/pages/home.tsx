@@ -11,6 +11,7 @@ import { useAppContext } from "@/context/AppContext";
 
 const Home: React.FC = () => {
   const { activeSection } = useAppContext();
+  console.log("[Home] Component body execution. activeSection:", activeSection);
   
   // renderActiveSection function is removed
   

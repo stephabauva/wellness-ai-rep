@@ -25,6 +25,7 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  console.log("[AppContext] AppProvider body execution.");
   const [activeSection, setActiveSectionState] = useState<ActiveSection>("chat");
   const [coachingMode, setCoachingModeState] = useState<string>("weight-loss");
 

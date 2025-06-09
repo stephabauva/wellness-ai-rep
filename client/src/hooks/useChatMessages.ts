@@ -48,8 +48,9 @@ export const useChatMessages = () => {
         isUserMessage: msg.role === "user",
         timestamp: new Date(msg.createdAt),
         attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-          name: att.displayName || att.fileName || att.name,
-          type: att.fileType || att.type
+          name: att.fileName || att.displayName || att.name,
+          type: att.fileType || att.type,
+          fileName: att.fileName
         })) : undefined
       }));
     },
@@ -131,8 +132,9 @@ export const useChatMessages = () => {
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
             attachments: data.userMessage.metadata?.attachments ? data.userMessage.metadata.attachments.map((att: any) => ({
-              name: att.displayName || att.fileName || att.name,
-              type: att.fileType || att.type
+              name: att.fileName || att.displayName || att.name,
+              type: att.fileType || att.type,
+              fileName: att.fileName
             })) : undefined
           },
           {

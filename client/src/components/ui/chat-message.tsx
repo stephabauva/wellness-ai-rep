@@ -7,6 +7,7 @@ import { Bot, User } from "lucide-react";
 interface Attachment {
   name: string;
   type: string;
+  fileName?: string;
 }
 
 interface ChatMessageProps {
@@ -52,12 +53,35 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <div className="mb-2 flex flex-wrap gap-2">
             {attachments.map((attachment, index) => (
               <div key={index} className="flex items-center gap-1">
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {getFileIcon(attachment.type)}
-                  <span className="text-xs truncate max-w-32">
-                    {attachment.name}
-                  </span>
-                </Badge>
+                {attachment.type.startsWith("image/") ? (
+                  <div className="relative">
+                    <img
+                      src={`/uploads/${attachment.fileName || attachment.name}`}
+                      alt={attachment.name}
+                      className="max-w-64 max-h-48 rounded-lg object-cover border border-gray-200"
+                      onError={(e) => {
+                        // Fallback to badge if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const badge = target.nextElementSibling as HTMLElement;
+                        if (badge) badge.style.display = 'flex';
+                      }}
+                    />
+                    <Badge variant="secondary" className="hidden items-center gap-1 mt-1">
+                      {getFileIcon(attachment.type)}
+                      <span className="text-xs truncate max-w-32">
+                        {attachment.name}
+                      </span>
+                    </Badge>
+                  </div>
+                ) : (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    {getFileIcon(attachment.type)}
+                    <span className="text-xs truncate max-w-32">
+                      {attachment.name}
+                    </span>
+                  </Badge>
+                )}
               </div>
             ))}
           </div>

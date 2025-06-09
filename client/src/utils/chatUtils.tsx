@@ -21,10 +21,31 @@ export const generateMessagesToDisplay = (
   currentConversationId: string | null,
   welcomeMessage: any
 ) => {
-  // Start with existing messages or welcome message if no messages exist
+  // If we have a current conversation, show all messages from that conversation
+  if (currentConversationId && messages && messages.length > 0) {
+    let messagesToDisplay = messages;
+
+    // Always append pending message if it exists
+    if (pendingUserMessage) {
+      messagesToDisplay = [
+        ...messagesToDisplay,
+        {
+          id: "temp-pending",
+          content: pendingUserMessage.content,
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp,
+          attachments: pendingUserMessage.attachments,
+        }
+      ];
+    }
+
+    return messagesToDisplay;
+  }
+
+  // If no conversation ID (new chat), show welcome message or existing messages
   let messagesToDisplay = messages && messages.length > 0 ? messages : [welcomeMessage];
 
-  // Always append pending message if it exists, regardless of conversation state
+  // Always append pending message if it exists
   if (pendingUserMessage) {
     messagesToDisplay = [
       ...messagesToDisplay,

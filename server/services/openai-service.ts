@@ -121,14 +121,10 @@ ${memoryEnhancedPrompt}
 IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`
       });
 
-      // Filter conversation history to current session only (exclude cross-session history)
-      const currentSessionHistory = conversationHistory.filter(msg => 
-        msg.conversationId === conversationId
-      );
+      // Process conversation history in chronological order
+      console.log(`Processing conversation history: ${conversationHistory.length} messages`);
 
-      console.log(`Processing conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
-
-      for (const msg of currentSessionHistory) {
+      for (const msg of conversationHistory) {
         if (msg.role === 'user' || msg.role === 'assistant') {
           // Handle file attachments in message metadata
           if (msg.metadata?.attachments && msg.metadata.attachments.length > 0) {
@@ -203,7 +199,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       const currentMessage = await this.processCurrentMessageWithAttachments(message, attachments);
       conversationContext.push(currentMessage);
 
-      console.log(`Final conversation context: ${conversationContext.length} messages (current session only + system prompt)`);
+      console.log(`Final conversation context: ${conversationContext.length} messages (including system prompt)`);
 
       // Enhanced debug logging like ChatGPT's internal validation
       console.log('=== CONVERSATION CONTEXT VALIDATION ===');
@@ -233,7 +229,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       if (aiConfig.provider === "openai") {
         response = await this.getOpenAIResponse(conversationContext, aiConfig.model as OpenAIModel);
       } else {
-        response = await this.getGoogleResponse(message, this.getSystemPrompt(mode, relevantMemories), aiConfig.model as GoogleModel, attachments, conversationHistory, conversationId);
+        response = await this.getGoogleResponse(message, this.getSystemPrompt(mode, relevantMemories), aiConfig.model as GoogleModel, attachments, conversationHistory);
       }
 
       // Log memory usage
@@ -282,7 +278,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
     return response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
   }
 
-  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = [], conversationHistory: any[] = [], currentConversationId?: string): Promise<string> {
+  private async getGoogleResponse(userMessage: string, persona: string, model: GoogleModel, attachments: any[] = [], conversationHistory: any[] = []): Promise<string> {
     const genModel = this.google.getGenerativeModel({ model });
 
     // Build Google Gemini conversation format with proper persistence
@@ -319,17 +315,13 @@ Please acknowledge that you understand these visual analysis requirements.`
       parts: [{ text: "I understand. I have full visual access to all images and will analyze them directly without asking for descriptions. I can see and reference specific visual elements confidently." }]
     });
 
-    // Filter conversation history to current session only for Google Gemini
-    const currentSessionHistory = currentConversationId 
-      ? conversationHistory.filter(msg => msg.conversationId === currentConversationId)
-      : conversationHistory;
+    // Process conversation history for Google Gemini format
+    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} messages`);
 
-    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages for conversation ${currentConversationId || 'new'}`);
-
-    for (const msg of currentSessionHistory) {
+    for (const msg of conversationHistory) {
       if (msg.role === 'user') {
         const parts = [];
-
+        
         // Add text content
         parts.push({ text: msg.content });
 
@@ -342,7 +334,7 @@ Please acknowledge that you understand these visual analysis requirements.`
                 if (existsSync(imagePath)) {
                   const imageBuffer = readFileSync(imagePath);
                   console.log(`Adding historical image to Google Gemini context: ${attachment.fileName} (${imageBuffer.length} bytes)`);
-
+                  
                   parts.push({
                     inlineData: {
                       data: imageBuffer.toString('base64'),
@@ -401,7 +393,7 @@ Please acknowledge that you understand these visual analysis requirements.`
       parts: currentParts
     });
 
-    console.log(`Google Gemini conversation context: ${conversationParts.length} turns (current session only)`);
+    console.log(`Google Gemini conversation context: ${conversationParts.length} turns`);
     console.log('Google Gemini image count:', conversationParts.reduce((total, part) => {
       return total + (part.parts?.filter(p => p.inlineData)?.length || 0);
     }, 0));
@@ -609,7 +601,7 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
-
+    
     // Add text content first
     content.push({ type: "text", text: message });
 
@@ -651,7 +643,7 @@ Please acknowledge that you understand these visual analysis requirements.`
     return { role: 'user', content: content };
   }
 
-
+  
 }
 
 export const chatService = new ChatService();

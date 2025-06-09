@@ -505,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // fileId is the fileName from the frontend
           const filePath = join(process.cwd(), 'uploads', fileId);
           console.log(`Attempting to delete file: ${filePath}`);
-
+          
           if (existsSync(filePath)) {
             const stats = statSync(filePath);
             unlinkSync(filePath);
@@ -522,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Deletion summary: ${deletedCount} files deleted, ${notFoundCount} files not found, ${freedSpace} bytes freed`);
-
+      
       // Return success even if files were not found (they're effectively "deleted")
       const totalProcessed = deletedCount + notFoundCount;
       res.json({ 
@@ -630,19 +630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(conversationMessages.conversationId, conversationId))
         .orderBy(conversationMessages.createdAt);
 
-      // Transform the messages to match the expected format
-      const transformedMessages = messages.map(msg => ({
-        id: msg.id,
-        userId: 1, // Default user ID for compatibility
-        content: msg.content,
-        isUserMessage: msg.role === 'user',
-        timestamp: msg.createdAt,
-        metadata: msg.metadata
-      }));
-
-      console.log(`Loaded ${transformedMessages.length} messages for conversation ${conversationId}:`, transformedMessages.map(m => `${m.isUserMessage ? 'user' : 'assistant'}: ${m.content?.substring(0, 50)}...`));
-
-      res.json(transformedMessages);
+      res.json(messages);
     } catch (error) {
       console.error('Error fetching conversation messages:', error);
       res.status(500).json({ message: "Failed to fetch conversation messages" });

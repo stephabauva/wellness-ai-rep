@@ -212,7 +212,7 @@ Respond with JSON:
     currentMessage: string
   ): Promise<RelevantMemory[]> {
     try {
-      // Combine recent conversation + current message for context (current session only)
+      // Combine recent conversation + current message for context
       const context = [
         ...conversationHistory.slice(-3),
         { role: 'user', content: currentMessage }

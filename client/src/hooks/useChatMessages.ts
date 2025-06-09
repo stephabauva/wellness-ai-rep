@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -38,24 +39,19 @@ export const useChatMessages = () => {
       const response = await fetch(`/api/conversations/${currentConversationId}/messages`);
       if (!response.ok) throw new Error("Failed to fetch conversation messages");
       const convMessages = await response.json();
-
-      console.log(`Loaded ${convMessages.length} messages for conversation ${currentConversationId}:`, convMessages);
-
       return convMessages.map((msg: any) => ({
         id: msg.id,
         content: msg.content,
         isUserMessage: msg.role === "user",
-        timestamp: msg.createdAt ? new Date(msg.createdAt) : new Date(),
+        timestamp: new Date(msg.createdAt),
         attachments: msg.metadata?.attachments ? msg.metadata.attachments.map((att: any) => ({
-          name: att.fileName || att.displayName || att.name,
-          type: att.fileType || att.type,
-          fileName: att.fileName
+          name: att.fileName || att.name,
+          type: att.fileType || att.type
         })) : undefined
       }));
     },
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
-    enabled: true, // Always enabled to ensure messages load
   });
 
   const { data: settings } = useQuery({
@@ -106,7 +102,7 @@ export const useChatMessages = () => {
         })) : undefined
       });
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       console.log("Message sent successfully:", data);
       const finalConversationId = data.conversationId;
 
@@ -120,11 +116,32 @@ export const useChatMessages = () => {
         setCurrentConversationId(finalConversationId);
       }
 
-      // Force refetch the conversation messages to ensure consistency
-      await queryClient.invalidateQueries({ queryKey: ['messages', finalConversationId] });
+      const targetQueryKey = ["messages", finalConversationId];
 
-      // Also invalidate the conversations list
+      queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
+        const existingMessages = old || [];
+        return [
+          ...existingMessages,
+          {
+            id: data.userMessage.id,
+            content: data.userMessage.content,
+            isUserMessage: true,
+            timestamp: new Date(data.userMessage.timestamp),
+            attachments: data.userMessage.metadata?.attachments ? data.userMessage.metadata.attachments.map((att: any) => ({
+              name: att.fileName || att.name,
+              type: att.fileType || att.type
+            })) : undefined
+          },
+          {
+            id: data.aiMessage.id,
+            content: data.aiMessage.content,
+            isUserMessage: false,
+            timestamp: new Date(data.aiMessage.timestamp),
+          },
+        ];
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
     },
     onError: (error) => {
       console.error("Message send error:", error);

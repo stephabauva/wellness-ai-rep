@@ -1,3 +1,4 @@
+
 import React from "react";
 import { FileText, Image, Video, File } from "lucide-react";
 
@@ -15,43 +16,38 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: Message[] | undefined,
-  pendingUserMessage: { content: string; timestamp: Date; attachments?: any[] } | null,
+  messages: any[],
+  pendingUserMessage: any,
   currentConversationId: string | null,
-  welcomeMessage: Message
-): Message[] => {
-  if (!currentConversationId) {
-    const messagesToShow = [welcomeMessage];
-
-    if (pendingUserMessage) {
-      messagesToShow.push({
-        id: "pending-user",
-        content: pendingUserMessage.content,
-        isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp && !isNaN(pendingUserMessage.timestamp.getTime()) 
-          ? pendingUserMessage.timestamp 
-          : new Date(),
-        attachments: pendingUserMessage.attachments
-      });
-    }
-
-    return messagesToShow;
-  }
-
-  const messagesToShow = messages || [];
+  welcomeMessage: any
+) => {
+  let welcomeMessages = [welcomeMessage];
+  let messagesToDisplay = messages && messages.length > 0 ? messages : welcomeMessages;
 
   if (pendingUserMessage) {
-    const pendingMessage: Message = {
-      id: "pending-user",
-      content: pendingUserMessage.content,
-      isUserMessage: true,
-      timestamp: pendingUserMessage.timestamp && !isNaN(pendingUserMessage.timestamp.getTime()) 
-        ? pendingUserMessage.timestamp 
-        : new Date(),
-      attachments: pendingUserMessage.attachments
-    };
-    return [...messagesToShow, pendingMessage];
+    if (!currentConversationId) {
+      messagesToDisplay = [
+        {
+          id: "temp-pending",
+          content: pendingUserMessage.content,
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp,
+          attachments: pendingUserMessage.attachments,
+        }
+      ];
+    } else {
+      messagesToDisplay = [
+        ...messagesToDisplay,
+        {
+          id: "temp-pending",
+          content: pendingUserMessage.content,
+          isUserMessage: true,
+          timestamp: pendingUserMessage.timestamp,
+          attachments: pendingUserMessage.attachments,
+        }
+      ];
+    }
   }
 
-  return messagesToShow;
+  return messagesToDisplay;
 };

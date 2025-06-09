@@ -114,7 +114,7 @@ export async function generatePDFReport(user: User, healthData: HealthData[]): P
   // Get AI-generated recommendations
   let recommendations: string[] = [];
   try {
-    recommendations = await chatService.getHealthInsights(healthData);
+    recommendations = await aiService.getHealthInsights(healthData);
   } catch (error) {
     console.error("Error getting recommendations:", error);
     recommendations = [

@@ -135,7 +135,7 @@ const FileManagerSection: React.FC = () => {
         {/* "all" tab content */}
         {activeTab === 'all' && (
           <TabsContent value="all" className="mt-0"> {/* mt-0 because space-y-6 on parent handles spacing */}
-            <FileList 
+            <FileListComponent 
               files={files} // Show all files for "all" tab
               selectedFiles={selectedFiles}
               onSelectFile={handleSelectFile}
@@ -159,11 +159,11 @@ const FileManagerSection: React.FC = () => {
                   </p>
                 </CardHeader>
               </Card>
-              <FileList 
+              <FileListComponent 
                 files={category.files}
                 selectedFiles={selectedFiles}
                 onSelectFile={handleSelectFile}
-                onSelectAll={handleSelectAll}
+                onSelectAll={() => handleSelectAll(category.files)}
                 viewMode={viewMode}
               />
             </TabsContent>
@@ -239,7 +239,7 @@ const FileList: React.FC<FileListProps> = ({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <DefaultFileIcon className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium mb-2">No files found</h3>
           <p className="text-muted-foreground text-center">
             Upload some files through the chat to see them here.
@@ -260,9 +260,6 @@ const FileList: React.FC<FileListProps> = ({
             <div className="flex items-center gap-2">
               <Checkbox
                 checked={allSelected}
-                ref={(el) => {
-                  if (el) el.indeterminate = someSelected;
-                }}
                 onCheckedChange={onSelectAll}
               />
               <span className="text-sm font-medium">
@@ -370,9 +367,6 @@ const FileList: React.FC<FileListProps> = ({
           <div className="flex items-center gap-2">
             <Checkbox
               checked={allSelected}
-              ref={(el) => {
-                if (el) el.indeterminate = someSelected;
-              }}
               onCheckedChange={onSelectAll}
             />
             <span className="text-sm font-medium">

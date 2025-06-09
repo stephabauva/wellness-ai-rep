@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -29,6 +28,12 @@ export const useChatMessages = () => {
     timestamp: Date;
     attachments?: any[];
   } | null>(null);
+
+  type SendMessageParams = {
+    content: string;
+    attachments: AttachedFile[];
+    conversationId: string | null;
+  }
 
   const { data: messages, isLoading: loadingMessages } = useQuery({
     queryKey: ["messages", currentConversationId || "new"],
@@ -63,63 +68,51 @@ export const useChatMessages = () => {
     },
   });
 
+// Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({
-      content,
-      attachments,
-      conversationId,
-    }: {
-      content: string;
-      attachments: AttachedFile[];
-      conversationId: string | null;
-    }) => {
-      console.log("Sending message with conversation ID:", conversationId);
-      const response = await apiRequest("POST", "/api/messages", {
-        content,
-        conversationId,
-        coachingMode,
-        aiProvider: settings?.aiProvider || "openai",
-        aiModel: settings?.aiModel || "gpt-4o",
-        attachments: attachments.map((file) => ({
-          id: file.id,
-          fileName: file.fileName,
-          displayName: file.displayName,
-          fileType: file.fileType,
-          fileSize: file.fileSize,
-        })),
-        automaticModelSelection: settings?.automaticModelSelection ?? true,
+    mutationFn: async ({ content, attachments, conversationId }: SendMessageParams) => {
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, attachments, conversationId }),
       });
-      console.log("API Response data:", response);
-      return response;
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      return await response.json();
     },
     onMutate: async ({ content, attachments }) => {
+      // Show pending message immediately
       setPendingUserMessage({
         content,
         timestamp: new Date(),
-        attachments: attachments.length > 0 ? attachments.map(f => ({ 
-          name: f.fileName, 
+        attachments: attachments?.map(f => ({ 
+          name: f.fileName || f.displayName, 
           type: f.fileType 
-        })) : undefined
+        }))
       });
     },
     onSuccess: (data) => {
       console.log("Message sent successfully:", data);
-      const finalConversationId = data.conversationId;
 
-      setPendingUserMessage(null);
-
-      if (!currentConversationId) {
-        console.log("Setting conversation ID to:", finalConversationId);
-        setCurrentConversationId(finalConversationId);
-      } else if (currentConversationId !== finalConversationId) {
-        console.log("Updating conversation ID from", currentConversationId, "to", finalConversationId);
-        setCurrentConversationId(finalConversationId);
+      // Update conversation ID if this was a new conversation
+      if (data.conversationId && !currentConversationId) {
+        console.log("Setting conversation ID to:", data.conversationId);
+        setCurrentConversationId(data.conversationId);
       }
 
-      const targetQueryKey = ["messages", finalConversationId];
+      // Clear pending message
+      setPendingUserMessage(null);
 
-      queryClient.setQueryData<Message[]>(targetQueryKey, (old = []) => {
-        const existingMessages = old || [];
+      // Invalidate and refetch the messages query to ensure UI displays all messages
+      const targetQueryKey = ["messages", data.conversationId];
+      queryClient.invalidateQueries({ queryKey: targetQueryKey });
+
+      // Also update cache optimistically with the new messages
+      queryClient.setQueryData(targetQueryKey, (old: Message[] = []) => {
+        const existingMessages = old.filter(msg => msg.id !== "welcome-message");
         return [
           ...existingMessages,
           {
@@ -127,21 +120,17 @@ export const useChatMessages = () => {
             content: data.userMessage.content,
             isUserMessage: true,
             timestamp: new Date(data.userMessage.timestamp),
-            attachments: data.userMessage.metadata?.attachments ? data.userMessage.metadata.attachments.map((att: any) => ({
-              name: att.fileName || att.name,
-              type: att.fileType || att.type
-            })) : undefined
+            attachments: data.userMessage.metadata?.attachments
           },
           {
             id: data.aiMessage.id,
             content: data.aiMessage.content,
             isUserMessage: false,
             timestamp: new Date(data.aiMessage.timestamp),
-          },
+            attachments: data.aiMessage.metadata?.attachments
+          }
         ];
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
     },
     onError: (error) => {
       console.error("Message send error:", error);

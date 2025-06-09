@@ -3,17 +3,19 @@ import { CoachingMode } from "@shared/schema";
 
 export type ActiveSection = "chat" | "health" | "devices" | "memory" | "files" | "settings";
 
+export interface AppSettings {
+  aiProvider?: string;
+  aiModel?: string;
+  automaticModelSelection?: boolean;
+  transcriptionProvider?: string;
+}
+
 interface AppContextType {
   activeSection: ActiveSection;
   setActiveSection: (section: ActiveSection) => void;
   coachingMode: string;
   setCoachingMode: (mode: string) => void;
-  settings?: {
-    aiProvider?: string;
-    aiModel?: string;
-    automaticModelSelection?: boolean;
-    transcriptionProvider?: string;
-  };
+  settings?: AppSettings;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);

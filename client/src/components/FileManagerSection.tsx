@@ -1,307 +1,92 @@
 
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Trash2, 
-  Download, 
-  FileText, 
-  Image, 
-  Activity, 
-  Stethoscope,
-  CheckSquare,
-  Square,
-  RotateCcw,
-  Share2,
-  QrCode,
-  X,
-  Grid3X3,
-  List
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import React, { useMemo, useEffect } from 'react';
+import { RotateCcw, FileText as DefaultFileIcon, Card, CardHeader, CardTitle, CardContent } from 'lucide-react'; // Import Card related components
+import { TabsContent } from '@/components/ui/tabs'; // TabsContent is used
+import { Skeleton } from '@/components/ui/skeleton'; // For loading state
 
-interface FileItem {
-  id: string;
-  fileName: string;
-  displayName: string;
-  fileType: string;
-  fileSize: number;
-  uploadDate: string;
-  retentionInfo: {
-    category: 'high' | 'medium' | 'low';
-    retentionDays: number;
-    reason: string;
-  };
-  url?: string;
-}
+// Import hooks
+import { useFileApi } from '@/hooks/useFileApi';
+import { useFileManagerState } from '@/hooks/useFileManagerState';
+import { useFileSharing } from '@/hooks/useFileSharing';
 
-interface FileCategory {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  files: FileItem[];
-  description: string;
-}
+// Import sub-components
+import { FileList } from './filemanager/FileList';
+import { FileActionsToolbar } from './filemanager/FileActionsToolbar';
+import { CategoryTabs } from './filemanager/CategoryTabs';
+import { QrCodeDialog } from './filemanager/QrCodeDialog';
 
-const getFileIcon = (fileType: string, fileName: string) => {
-  const lowerFileName = fileName.toLowerCase();
-  const lowerFileType = fileType.toLowerCase();
-  
-  if (lowerFileType.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
-    return <Image className="h-4 w-4" />;
-  }
-  
-  return <FileText className="h-4 w-4" />;
-};
+// Import utilities and types
+import { categorizeFiles } from '@/utils/fileManagerUtils';
+import { FileCategory, FileItem } from '@/types/fileManager';
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
 
 const FileManagerSection: React.FC = () => {
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState('all');
-  const [showQRCode, setShowQRCode] = useState(false);
-  const [qrCodeData, setQRCodeData] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const {
+    files,
+    isLoadingFiles,
+    refetchFiles,
+    deleteFiles,
+    isDeletingFiles
+  } = useFileApi();
 
-  // Fetch all uploaded files
-  const { data: files = [], isLoading, refetch } = useQuery({
-    queryKey: ['/api/files'],
-    queryFn: async () => {
-      const response = await fetch('/api/files');
-      if (!response.ok) throw new Error('Failed to fetch files');
-      return await response.json() as FileItem[];
-    }
-  });
+  const {
+    selectedFiles,
+    setSelectedFiles, // Used to clear selection after delete
+    activeTab,
+    setActiveTab,
+    viewMode,
+    setViewMode,
+    handleSelectFile,
+    handleSelectAll,
+    clearSelection,
+  } = useFileManagerState();
 
-  // Delete files mutation
-  const deleteFilesMutation = useMutation({
-    mutationFn: async (fileIds: string[]) => {
-      const response = await fetch('/api/files/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileIds })
-      });
-      if (!response.ok) throw new Error('Failed to delete files');
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      setSelectedFiles(new Set());
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-      
-      const { deletedCount, actuallyDeleted, notFound, freedSpace } = data;
-      let description = `Successfully processed ${deletedCount} file(s)`;
-      
-      if (actuallyDeleted > 0) {
-        description += `, deleted ${actuallyDeleted} file(s) and freed ${formatFileSize(freedSpace)}`;
+  const {
+    showQRCodeDialog,
+    setShowQRCodeDialog,
+    qrCodeData,
+    shareSelectedFiles,
+    generateAndShowQRCode,
+  } = useFileSharing(files); // Pass all files to the sharing hook
+
+  const categories: FileCategory[] = useMemo(() => categorizeFiles(files), [files]);
+
+  const activeFiles: FileItem[] = useMemo(() => {
+    if (activeTab === 'all') return files;
+    return categories.find(c => c.id === activeTab)?.files || [];
+  }, [activeTab, files, categories]);
+
+  // Effect to clear selection when files data changes (e.g., after delete or refetch)
+  // and the selected files are no longer in the list of all files.
+  useEffect(() => {
+    const currentFileIds = new Set(files.map(f => f.id));
+    const newSelectedFiles = new Set<string>();
+    selectedFiles.forEach(id => {
+      if (currentFileIds.has(id)) {
+        newSelectedFiles.add(id);
       }
-      
-      if (notFound > 0) {
-        description += `, ${notFound} file(s) were already removed`;
-      }
-      
-      toast({
-        title: "Files processed",
-        description,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Delete failed",
-        description: "Failed to delete selected files. Please try again.",
-        variant: "destructive",
-      });
+    });
+    if (newSelectedFiles.size !== selectedFiles.size) {
+      setSelectedFiles(newSelectedFiles);
     }
-  });
+  }, [files, selectedFiles, setSelectedFiles]);
 
-  // Categorize files
-  const categorizeFiles = (files: FileItem[]): FileCategory[] => {
-    const medical = files.filter(f => 
-      f.retentionInfo.category === 'high' || 
-      f.fileName.toLowerCase().includes('medical') ||
-      f.fileName.toLowerCase().includes('lab') ||
-      f.fileName.toLowerCase().includes('prescription')
-    );
-    
-    const fitness = files.filter(f => 
-      f.fileName.toLowerCase().includes('workout') ||
-      f.fileName.toLowerCase().includes('exercise') ||
-      f.fileName.toLowerCase().includes('fitness') ||
-      f.fileName.toLowerCase().includes('routine')
-    );
-    
-    const nutrition = files.filter(f => 
-      f.fileName.toLowerCase().includes('food') ||
-      f.fileName.toLowerCase().includes('meal') ||
-      f.fileName.toLowerCase().includes('nutrition') ||
-      f.fileType.includes('image') // Assume images are mostly food photos
-    );
-    
-    const other = files.filter(f => 
-      !medical.includes(f) && !fitness.includes(f) && !nutrition.includes(f)
-    );
 
-    return [
-      {
-        id: 'medical',
-        name: 'Medical',
-        icon: <Stethoscope className="h-4 w-4" />,
-        files: medical,
-        description: 'Medical documents, lab results, prescriptions'
-      },
-      {
-        id: 'fitness',
-        name: 'Fitness',
-        icon: <Activity className="h-4 w-4" />,
-        files: fitness,
-        description: 'Exercise routines, workout plans, fitness tracking'
-      },
-      {
-        id: 'nutrition',
-        name: 'Nutrition',
-        icon: <Image className="h-4 w-4" />,
-        files: nutrition,
-        description: 'Food photos, meal plans, nutrition information'
-      },
-      {
-        id: 'other',
-        name: 'Other',
-        icon: <FileText className="h-4 w-4" />,
-        files: other,
-        description: 'Miscellaneous documents and files'
-      }
-    ];
-  };
-
-  const categories = categorizeFiles(files);
-  const activeFiles = activeTab === 'all' ? files : categories.find(c => c.id === activeTab)?.files || [];
-
-  const handleSelectFile = (fileId: string) => {
-    const newSelected = new Set(selectedFiles);
-    if (newSelected.has(fileId)) {
-      newSelected.delete(fileId);
-    } else {
-      newSelected.add(fileId);
-    }
-    setSelectedFiles(newSelected);
-  };
-
-  const handleSelectAll = () => {
-    if (selectedFiles.size === activeFiles.length) {
-      setSelectedFiles(new Set());
-    } else {
-      setSelectedFiles(new Set(activeFiles.map(f => f.id)));
+  const handleDelete = () => {
+    if (selectedFiles.size > 0) {
+      deleteFiles(Array.from(selectedFiles));
+      // Selection is cleared optimistically by the mutation's onSuccess in useFileApi,
+      // or could be cleared here: clearSelection();
     }
   };
-
-  const handleDeleteSelected = () => {
-    if (selectedFiles.size === 0) return;
-    deleteFilesMutation.mutate(Array.from(selectedFiles));
-  };
-
-  const handleWebShare = async () => {
-    if (selectedFiles.size === 0) return;
-    
-    const selectedFileItems = activeFiles.filter(f => selectedFiles.has(f.id));
-    
-    // Check if Web Share API is supported
-    if (navigator.share) {
-      try {
-        // For multiple files, we'll share download links
-        const fileNames = selectedFileItems.map(f => f.displayName).join(', ');
-        const downloadLinks = selectedFileItems.map(f => 
-          `${window.location.origin}/uploads/${f.fileName}`
-        ).join('\n');
-        
-        await navigator.share({
-          title: `Shared Files: ${fileNames}`,
-          text: `Download these files:\n${downloadLinks}`,
-          url: downloadLinks.split('\n')[0] // First file URL as primary
-        });
-        
-        toast({
-          title: "Files shared",
-          description: "Files have been shared successfully",
-        });
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          toast({
-            title: "Sharing failed",
-            description: "Could not share files. Try the QR code option.",
-            variant: "destructive",
-          });
-        }
-      }
-    } else {
-      toast({
-        title: "Sharing not supported",
-        description: "Web Share API not supported. Use QR code instead.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const generateQRCode = () => {
-    if (selectedFiles.size === 0) return;
-    
-    const selectedFileItems = activeFiles.filter(f => selectedFiles.has(f.id));
-    const downloadLinks = selectedFileItems.map(f => 
-      `${window.location.origin}/uploads/${f.fileName}`
-    );
-    
-    // For single file, use direct link. For multiple files, create a JSON structure
-    let qrData: string;
-    if (downloadLinks.length === 1) {
-      qrData = downloadLinks[0];
-    } else {
-      qrData = JSON.stringify({
-        type: 'multiple_files',
-        files: selectedFileItems.map((f, index) => ({
-          name: f.displayName,
-          url: downloadLinks[index],
-          size: f.fileSize
-        }))
-      });
-    }
-    
-    // Use a QR code generation service (you could also use a local library)
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}`;
-    setQRCodeData(qrCodeUrl);
-    setShowQRCode(true);
-  };
-
   
-
-  if (isLoading) {
+  if (isLoadingFiles) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <RotateCcw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground">Loading files...</p>
-        </div>
+      <div className="flex-1 flex flex-col h-full p-4 md:p-6 space-y-4">
+        <Skeleton className="h-10 w-1/3" /> {/* Title placeholder */}
+        <Skeleton className="h-8 w-full" /> {/* Toolbar placeholder */}
+        <Skeleton className="h-10 w-full" /> {/* Tabs placeholder */}
+        <Skeleton className="flex-1 w-full" /> {/* File list placeholder */}
       </div>
     );
   }
@@ -316,120 +101,48 @@ const FileManagerSection: React.FC = () => {
               Manage your uploaded documents and photos
             </p>
           </div>
-          
-          {/* Mobile: Stack buttons vertically when files are selected */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            {selectedFiles.size > 0 && (
-              <>
-                <div className="flex flex-col sm:flex-row gap-2 flex-1">
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleWebShare}
-                      title="Share via native sharing (AirDrop, Messages, etc.)"
-                      className="flex-1 sm:flex-none"
-                    >
-                      <Share2 className="h-4 w-4 sm:mr-2" />
-                      <span className="sm:inline">Share</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={generateQRCode}
-                      title="Generate QR code for sharing"
-                      className="flex-1 sm:flex-none"
-                    >
-                      <QrCode className="h-4 w-4 sm:mr-2" />
-                      <span className="sm:inline">QR</span>
-                    </Button>
-                  </div>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={handleDeleteSelected}
-                    disabled={deleteFilesMutation.isPending}
-                    className="w-full sm:w-auto"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete {selectedFiles.size}
-                  </Button>
-                </div>
-              </>
-            )}
-            
-            {/* View Mode Toggle */}
-            <div className="flex gap-1 border rounded-md p-1">
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="h-7 w-7 p-0"
-                title="List view"
-              >
-                <List className="h-3 w-3" />
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-7 w-7 p-0"
-                title="Grid view"
-              >
-                <Grid3X3 className="h-3 w-3" />
-              </Button>
-            </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => refetch()}
-              className={selectedFiles.size > 0 ? "w-full sm:w-auto" : ""}
-            >
-              <RotateCcw className="h-4 w-4 sm:mr-2" />
-              <span className="sm:inline">Refresh</span>
-            </Button>
-          </div>
+          <FileActionsToolbar
+            selectedFilesCount={selectedFiles.size}
+            onShare={() => shareSelectedFiles(selectedFiles)}
+            onQrCode={() => generateAndShowQRCode(selectedFiles)}
+            onDelete={handleDelete}
+            currentViewMode={viewMode}
+            onSetViewMode={setViewMode}
+            onRefresh={refetchFiles}
+            isDeleting={isDeletingFiles}
+          />
         </div>
       </div>
 
-      <div className="flex-1 p-4 md:p-6 overflow-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto">
-            <TabsTrigger value="all" className="text-xs sm:text-sm p-2 sm:p-3">
-              <span className="flex flex-col sm:flex-row items-center gap-1">
-                <span className="sm:hidden">All</span>
-                <span className="hidden sm:inline">All Files</span>
-                <span className="text-xs">({files.length})</span>
-              </span>
-            </TabsTrigger>
-            {categories.map(category => (
-              <TabsTrigger key={category.id} value={category.id} className="text-xs sm:text-sm p-2 sm:p-3">
-                <span className="flex flex-col sm:flex-row items-center gap-1">
-                  {category.icon}
-                  <span className="truncate">{category.name}</span>
-                  <span className="text-xs">({category.files.length})</span>
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <div className="flex-1 p-4 md:p-6 overflow-auto space-y-6">
+        <CategoryTabs
+          categories={categories}
+          activeTab={activeTab}
+          onTabChange={setActiveTab} // This now clears selection automatically
+          totalFilesCount={files.length}
+        />
 
-          <TabsContent value="all" className="space-y-4">
+        {/* Render FileList based on activeTab */}
+        {/* "all" tab content */}
+        {activeTab === 'all' && (
+          <TabsContent value="all" className="mt-0"> {/* mt-0 because space-y-6 on parent handles spacing */}
             <FileList 
-              files={files}
+              files={files} // Show all files for "all" tab
               selectedFiles={selectedFiles}
               onSelectFile={handleSelectFile}
-              onSelectAll={handleSelectAll}
+              onSelectAll={() => handleSelectAll(files)} // Pass all files to selectAll for "all" tab
               viewMode={viewMode}
             />
           </TabsContent>
-
-          {categories.map(category => (
-            <TabsContent key={category.id} value={category.id} className="space-y-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">
-                    {category.icon}
+        )}
+        {/* Category-specific tab content */}
+        {categories.map(category => (
+          activeTab === category.id && ( // Only render content for the active category tab
+            <TabsContent key={category.id} value={category.id} className="mt-0">
+               <Card className="mb-4"> {/* Optional: Card header for category context */}
+                <CardHeader className="pb-3 pt-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    {React.cloneElement(category.icon as React.ReactElement, { className: "h-5 w-5" })}
                     {category.name} Files
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">

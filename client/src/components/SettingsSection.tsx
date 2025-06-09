@@ -1,37 +1,27 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect } from "react";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form"; // Only Form component needed at top level
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/context/AppContext";
-import { supportedLanguages } from "@shared/schema";
 
-const formSchema = z.object({
+// Import hooks
+import { useUserSettings, UserSettingsFormValues } from "@/hooks/useUserSettings";
+import { useRetentionSettings, RetentionSettingsFormValues } from "@/hooks/useRetentionSettings";
+import { useAiModels } from "@/hooks/useAiModels";
+
+// Import sub-components
+import { AccountSettings } from "./settings/AccountSettings";
+import { CoachingPreferencesSettings } from "./settings/CoachingPreferencesSettings";
+import { AppPreferencesSettings } from "./settings/AppPreferencesSettings";
+import { FileManagementSettings } from "./settings/FileManagementSettings";
+import { AiConfigurationSettings } from "./settings/AiConfigurationSettings";
+
+// Define the combined Zod schema for the entire settings form
+// This should be compatible with UserSettingsFormValues and RetentionSettingsFormValues
+const settingsSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   primaryGoal: z.string(),
@@ -52,105 +42,83 @@ const formSchema = z.object({
   lowValueRetentionDays: z.number(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+// This type will be used by the form
+export type CombinedSettingsFormValues = z.infer<typeof settingsSchema>;
 
 const SettingsSection: React.FC = () => {
-  const { toast } = useToast();
   const { coachingMode, setCoachingMode } = useAppContext();
   
-  // Fetch user settings
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['/api/settings'],
-    queryFn: async () => {
-      const response = await fetch('/api/settings');
-      if (!response.ok) throw new Error('Failed to fetch settings');
-      return await response.json();
-    }
+  const { userSettings, isLoadingSettings, updateUserSettings, isUpdatingSettings } = useUserSettings();
+  const { retentionSettings, isLoadingRetentionSettings, updateRetentionSettings, isUpdatingRetentionSettings } = useRetentionSettings();
+  const { aiModels, isLoadingAiModels } = useAiModels();
+
+  const form = useForm<CombinedSettingsFormValues>({
+    resolver: zodResolver(settingsSchema),
+    // Default values will be set by useEffect once data is loaded
   });
 
-  // Fetch available AI models
-  const { data: aiModels, isLoading: modelsLoading } = useQuery({
-    queryKey: ['/api/ai-models'],
-    queryFn: async () => {
-      const response = await fetch('/api/ai-models');
-      if (!response.ok) throw new Error('Failed to fetch AI models');
-      return await response.json();
+  useEffect(() => {
+    if (userSettings && retentionSettings) {
+      form.reset({
+        name: userSettings.name || "",
+        email: userSettings.email || "",
+        primaryGoal: userSettings.primaryGoal || "weight-loss",
+        coachStyle: userSettings.coachStyle || "motivational",
+        reminderFrequency: userSettings.reminderFrequency || "daily",
+        focusAreas: userSettings.focusAreas || ["nutrition", "exercise", "sleep"],
+        darkMode: userSettings.darkMode || false,
+        pushNotifications: userSettings.pushNotifications || true,
+        emailSummaries: userSettings.emailSummaries || true,
+        dataSharing: userSettings.dataSharing || false,
+        aiProvider: userSettings.aiProvider || "openai",
+        aiModel: userSettings.aiModel || "gpt-4o", // Default to a common model
+        transcriptionProvider: userSettings.transcriptionProvider || "webspeech",
+        preferredLanguage: userSettings.preferredLanguage || "en",
+        automaticModelSelection: userSettings.automaticModelSelection ?? true,
+        highValueRetentionDays: retentionSettings.highValueRetentionDays ?? -1,
+        mediumValueRetentionDays: retentionSettings.mediumValueRetentionDays ?? 90,
+        lowValueRetentionDays: retentionSettings.lowValueRetentionDays ?? 30,
+      });
     }
-  });
+  }, [userSettings, retentionSettings, form.reset]);
+  
+  const onSubmit = (data: CombinedSettingsFormValues) => {
+    // Separate data for different update functions if necessary
+    const userSettingsData: Partial<UserSettingsFormValues> = {
+      name: data.name,
+      email: data.email,
+      primaryGoal: data.primaryGoal,
+      coachStyle: data.coachStyle,
+      reminderFrequency: data.reminderFrequency,
+      focusAreas: data.focusAreas,
+      darkMode: data.darkMode,
+      pushNotifications: data.pushNotifications,
+      emailSummaries: data.emailSummaries,
+      dataSharing: data.dataSharing,
+      aiProvider: data.aiProvider,
+      aiModel: data.aiModel,
+      transcriptionProvider: data.transcriptionProvider,
+      preferredLanguage: data.preferredLanguage,
+      automaticModelSelection: data.automaticModelSelection,
+    };
+    updateUserSettings(userSettingsData);
 
-  // Fetch retention settings
-  const { data: retentionSettings } = useQuery({
-    queryKey: ['/api/retention-settings'],
-    queryFn: async () => {
-      const response = await fetch('/api/retention-settings');
-      if (!response.ok) throw new Error('Failed to fetch retention settings');
-      return await response.json();
+    const retentionData: RetentionSettingsFormValues = {
+      highValueRetentionDays: data.highValueRetentionDays,
+      mediumValueRetentionDays: data.mediumValueRetentionDays,
+      lowValueRetentionDays: data.lowValueRetentionDays,
+    };
+    // Only update retention if values are present (could be refined)
+    if (data.highValueRetentionDays !== undefined) {
+        updateRetentionSettings(retentionData);
     }
-  });
-  
-  // Update settings mutation
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: FormValues) => {
-      return apiRequest('PATCH', '/api/settings', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
-      toast({
-        title: "Settings updated",
-        description: "Your settings have been saved successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update settings. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
-  
-  // Set up form with default values
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: settings?.name || "Jane Smith",
-      email: settings?.email || "jane.smith@example.com",
-      primaryGoal: settings?.primaryGoal || "weight-loss",
-      coachStyle: settings?.coachStyle || "motivational",
-      reminderFrequency: settings?.reminderFrequency || "daily",
-      focusAreas: settings?.focusAreas || ["nutrition", "exercise", "sleep"],
-      darkMode: settings?.darkMode || false,
-      pushNotifications: settings?.pushNotifications || true,
-      emailSummaries: settings?.emailSummaries || true,
-      dataSharing: settings?.dataSharing || false,
-      aiProvider: settings?.aiProvider || "openai",
-      aiModel: settings?.aiModel || "gpt-4o",
-      transcriptionProvider: settings?.transcriptionProvider || "webspeech",
-      preferredLanguage: settings?.preferredLanguage || "en",
-      automaticModelSelection: settings?.automaticModelSelection ?? true,
-      highValueRetentionDays: retentionSettings?.highValueRetentionDays ?? -1,
-      mediumValueRetentionDays: retentionSettings?.mediumValueRetentionDays ?? 90,
-      lowValueRetentionDays: retentionSettings?.lowValueRetentionDays ?? 30,
-    }
-  });
-  
-  const onSubmit = (data: FormValues) => {
-    updateSettingsMutation.mutate(data);
     
-    // Update coaching mode in context if primary goal changed
     if (data.primaryGoal !== coachingMode) {
       setCoachingMode(data.primaryGoal);
     }
   };
   
-  // Focus areas options
-  const focusAreas = [
-    { id: "nutrition", label: "Nutrition" },
-    { id: "exercise", label: "Exercise" },
-    { id: "sleep", label: "Sleep" },
-    { id: "mental", label: "Mental Wellness" },
-    { id: "hydration", label: "Hydration" },
-  ];
+  const isLoading = isLoadingSettings || isLoadingRetentionSettings;
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
@@ -159,616 +127,38 @@ const SettingsSection: React.FC = () => {
           <h1 className="text-2xl font-semibold text-foreground mb-6">Settings</h1>
 
           {isLoading ? (
-            // Loading state
             <>
               <Skeleton className="h-[200px] w-full mb-8" />
               <Skeleton className="h-[300px] w-full mb-8" />
-              <Skeleton className="h-[200px] w-full mb-8" />
+              <Skeleton className="h-[250px] w-full mb-8" />
+              <Skeleton className="h-[350px] w-full mb-8" />
+              <Skeleton className="h-[400px] w-full mb-8" />
             </>
           ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
-                {/* Account Settings */}
-                <Card className="mb-8">
-                  <CardHeader>
-                    <CardTitle>Account Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col sm:flex-row sm:items-center mb-6">
-                      <div className="sm:w-1/3">
-                        <FormLabel>Profile Photo</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3 flex items-center">
-                        <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden mr-4">
-                          <span className="text-lg font-medium text-muted-foreground">JS</span>
-                        </div>
-                        <Button variant="outline" size="sm">Change</Button>
-                      </div>
-                    </div>
+            <FormProvider {...form}> {/* Pass all form methods to children */}
+              <Form {...form}> {/* This Form is from ui/form, for Shadcn layout */}
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                  <AccountSettings />
+                  <CoachingPreferencesSettings />
+                  <AppPreferencesSettings />
+                  <FileManagementSettings />
+                  <AiConfigurationSettings
+                    aiModels={aiModels}
+                    isLoadingAiModels={isLoadingAiModels}
+                  />
 
-                    <div className="flex flex-col sm:flex-row sm:items-center py-4 border-t border-border">
-                      <div className="sm:w-1/3">
-                        <FormLabel htmlFor="name">Full Name</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input id="name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center py-4 border-t border-border">
-                      <div className="sm:w-1/3">
-                        <FormLabel htmlFor="email">Email Address</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3">
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input id="email" type="email" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center py-4 border-t border-border">
-                      <div className="sm:w-1/3">
-                        <FormLabel>Password</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3">
-                        <Button variant="outline" size="sm">Change password</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Coaching Preferences */}
-                <Card className="mb-8">
-                  <CardHeader>
-                    <CardTitle>Coaching Preferences</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col sm:flex-row sm:items-center mb-6">
-                      <div className="sm:w-1/3">
-                        <FormLabel>Primary Goal</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3">
-                        <FormField
-                          control={form.control}
-                          name="primaryGoal"
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select 
-                                onValueChange={field.onChange} 
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select your primary goal" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="weight-loss">Weight Loss</SelectItem>
-                                  <SelectItem value="muscle-gain">Muscle Gain</SelectItem>
-                                  <SelectItem value="fitness">Fitness Improvement</SelectItem>
-                                  <SelectItem value="mental-wellness">Mental Wellness</SelectItem>
-                                  <SelectItem value="nutrition">Balanced Eating</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row py-4 border-t border-border">
-                      <div className="sm:w-1/3">
-                        <FormLabel>Coach Communication Style</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3">
-                        <FormField
-                          control={form.control}
-                          name="coachStyle"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <RadioGroup
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                  className="space-y-2"
-                                >
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="motivational" id="style-motivational" />
-                                    <FormLabel htmlFor="style-motivational">Motivational</FormLabel>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="educational" id="style-educational" />
-                                    <FormLabel htmlFor="style-educational">Educational</FormLabel>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="supportive" id="style-supportive" />
-                                    <FormLabel htmlFor="style-supportive">Supportive</FormLabel>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="challenging" id="style-challenging" />
-                                    <FormLabel htmlFor="style-challenging">Challenging</FormLabel>
-                                  </div>
-                                </RadioGroup>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center py-4 border-t border-border">
-                      <div className="sm:w-1/3">
-                        <FormLabel>Reminder Frequency</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3">
-                        <FormField
-                          control={form.control}
-                          name="reminderFrequency"
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select 
-                                onValueChange={field.onChange} 
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select reminder frequency" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="frequent">Frequently (Multiple times per day)</SelectItem>
-                                  <SelectItem value="daily">Daily</SelectItem>
-                                  <SelectItem value="few-times-week">A few times per week</SelectItem>
-                                  <SelectItem value="weekly">Weekly</SelectItem>
-                                  <SelectItem value="never">Never</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row py-4 border-t border-border">
-                      <div className="sm:w-1/3">
-                        <FormLabel>Areas of Focus</FormLabel>
-                      </div>
-                      <div className="mt-2 sm:mt-0 sm:w-2/3">
-                        <FormField
-                          control={form.control}
-                          name="focusAreas"
-                          render={() => (
-                            <FormItem>
-                              <div className="space-y-2">
-                                {focusAreas.map((area) => (
-                                  <FormField
-                                    key={area.id}
-                                    control={form.control}
-                                    name="focusAreas"
-                                    render={({ field }) => {
-                                      return (
-                                        <FormItem
-                                          key={area.id}
-                                          className="flex flex-row items-start space-x-3 space-y-0"
-                                        >
-                                          <FormControl>
-                                            <Checkbox
-                                              checked={field.value?.includes(area.id)}
-                                              onCheckedChange={(checked) => {
-                                                const updatedAreas = checked
-                                                  ? [...field.value, area.id]
-                                                  : field.value?.filter(
-                                                      (value) => value !== area.id
-                                                    );
-                                                field.onChange(updatedAreas);
-                                              }}
-                                            />
-                                          </FormControl>
-                                          <FormLabel className="font-normal">
-                                            {area.label}
-                                          </FormLabel>
-                                        </FormItem>
-                                      );
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* App Preferences */}
-                <Card className="mb-8">
-                  <CardHeader>
-                    <CardTitle>App Preferences</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center py-4">
-                      <div>
-                        <h4 className="text-md font-medium">Dark Mode</h4>
-                        <p className="text-sm text-muted-foreground">Use dark theme throughout the app</p>
-                      </div>
-                      <div className="flex items-center">
-                        <FormField
-                          control={form.control}
-                          name="darkMode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center py-4 border-t border-border">
-                      <div>
-                        <h4 className="text-md font-medium">Push Notifications</h4>
-                        <p className="text-sm text-muted-foreground">Receive reminder notifications</p>
-                      </div>
-                      <div className="flex items-center">
-                        <FormField
-                          control={form.control}
-                          name="pushNotifications"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center py-4 border-t border-border">
-                      <div>
-                        <h4 className="text-md font-medium">Email Summaries</h4>
-                        <p className="text-sm text-muted-foreground">Receive weekly email progress reports</p>
-                      </div>
-                      <div className="flex items-center">
-                        <FormField
-                          control={form.control}
-                          name="emailSummaries"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center py-4 border-t border-border">
-                      <div>
-                        <h4 className="text-md font-medium">Data Sharing</h4>
-                        <p className="text-sm text-muted-foreground">Allow anonymous data use for service improvement</p>
-                      </div>
-                      <div className="flex items-center">
-                        <FormField
-                          control={form.control}
-                          name="dataSharing"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* File Management */}
-                <Card className="mb-8">
-                  <CardHeader>
-                    <CardTitle>File Management</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="text-sm text-muted-foreground mb-4">
-                      Configure how long uploaded files are kept on the system. Medical documents are typically kept longer than photos or temporary files.
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="highValueRetentionDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Medical Documents Retention</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))} 
-                            defaultValue={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select retention period" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="-1">Keep indefinitely</SelectItem>
-                              <SelectItem value="365">1 year</SelectItem>
-                              <SelectItem value="180">6 months</SelectItem>
-                              <SelectItem value="90">3 months</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            How long to keep medical documents, lab results, and prescriptions
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="mediumValueRetentionDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Health Plans & Routines Retention</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))} 
-                            defaultValue={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select retention period" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="180">6 months</SelectItem>
-                              <SelectItem value="90">3 months</SelectItem>
-                              <SelectItem value="60">2 months</SelectItem>
-                              <SelectItem value="30">1 month</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            How long to keep nutrition plans and exercise routines
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="lowValueRetentionDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Photos & Temporary Files Retention</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))} 
-                            defaultValue={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select retention period" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="60">2 months</SelectItem>
-                              <SelectItem value="30">1 month</SelectItem>
-                              <SelectItem value="14">2 weeks</SelectItem>
-                              <SelectItem value="7">1 week</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            How long to keep food photos, screenshots, and temporary files
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* AI Configuration */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>AI Assistant Configuration</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="aiProvider"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>AI Provider</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select AI provider" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="openai">OpenAI</SelectItem>
-                              <SelectItem value="google">Google Gemini</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Choose your preferred AI provider for coaching responses
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="aiModel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>AI Model</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select AI model" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {!modelsLoading && aiModels && (
-                                <>
-                                  {form.watch("aiProvider") === "openai" && aiModels.openai?.map((model: any) => (
-                                    <SelectItem key={model.id} value={model.id}>
-                                      {model.name} - {model.description}
-                                    </SelectItem>
-                                  ))}
-                                  {form.watch("aiProvider") === "google" && aiModels.google?.map((model: any) => (
-                                    <SelectItem key={model.id} value={model.id}>
-                                      {model.name} - {model.description}
-                                    </SelectItem>
-                                  ))}
-                                </>
-                              )}
-                              {modelsLoading && (
-                                <SelectItem value="loading" disabled>Loading models...</SelectItem>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Select the specific model for enhanced coaching capabilities
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="transcriptionProvider"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Audio Transcription Provider</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select transcription provider" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="webspeech">Web Speech API (Browser-based, may work offline)</SelectItem>
-                              <SelectItem value="openai">OpenAI Whisper (High accuracy, requires internet)</SelectItem>
-                              <SelectItem value="google">Google Speech-to-Text (Fast processing, requires internet)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Choose your preferred method for converting speech to text in the chat
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="preferredLanguage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Preferred Language for Audio Transcription</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select language" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {supportedLanguages.map((language) => (
-                                <SelectItem key={language.code} value={language.code}>
-                                  {language.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Select your preferred language for speech recognition to improve accuracy
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="flex justify-between items-center py-4 border-t border-border">
-                      <div>
-                        <h4 className="text-md font-medium">Automatic AI Model Selection</h4>
-                        <p className="text-sm text-muted-foreground">Automatically choose the best AI model based on your query type and attachments</p>
-                      </div>
-                      <div className="flex items-center">
-                        <FormField
-                          control={form.control}
-                          name="automaticModelSelection"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Save Button */}
-                <div className="flex justify-end">
-                  <Button 
-                    type="submit" 
-                    className="bg-primary hover:bg-primary/90"
-                    disabled={updateSettingsMutation.isPending}
-                  >
-                    Save Changes
-                  </Button>
-                </div>
-              </form>
-            </Form>
+                  <div className="flex justify-end mt-8"> {/* Added mt-8 for spacing */}
+                    <Button
+                      type="submit"
+                      className="bg-primary hover:bg-primary/90"
+                      disabled={isUpdatingSettings || isUpdatingRetentionSettings}
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </FormProvider>
           )}
         </div>
       </div>

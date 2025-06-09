@@ -123,14 +123,37 @@ export const useChatMessages = () => {
       if (data.conversationId) {
         console.log("Setting conversation ID to:", data.conversationId);
         
-        // Set the conversation ID first
+        // Set the conversation ID immediately
         setConversationId(data.conversationId);
         
-        // Trigger a fresh fetch for the conversation to get all messages
-        // This ensures we get the complete conversation history
-        queryClient.invalidateQueries({ 
-          queryKey: ["messages", data.conversationId] 
-        });
+        // Format the messages from the response and set them directly in the cache
+        const formattedMessages = [];
+        
+        if (data.userMessage) {
+          formattedMessages.push({
+            id: data.userMessage.id.toString(),
+            content: data.userMessage.content,
+            isUserMessage: true,
+            timestamp: new Date(data.userMessage.timestamp),
+            attachments: data.userMessage.attachments
+          });
+        }
+        
+        if (data.aiMessage) {
+          formattedMessages.push({
+            id: data.aiMessage.id.toString(),
+            content: data.aiMessage.content,
+            isUserMessage: false,
+            timestamp: new Date(data.aiMessage.timestamp),
+            attachments: data.aiMessage.attachments
+          });
+        }
+        
+        // Set the query data directly to ensure immediate display
+        queryClient.setQueryData(
+          ["messages", data.conversationId], 
+          formattedMessages
+        );
         
         // Invalidate the "new" query since we now have a conversation
         queryClient.invalidateQueries({ queryKey: ["messages", "new"] });

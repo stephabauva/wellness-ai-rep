@@ -15,10 +15,10 @@ export const getFileIcon = (fileType: string) => {
 };
 
 export const generateMessagesToDisplay = (
-  messages: Message[] | undefined,
-  pendingUserMessage: { content: string; timestamp: Date; attachments?: any[] } | null,
+  messages: any[] = [],
+  pendingUserMessage: any,
   currentConversationId: string | null,
-  welcomeMessage: Message
+  welcomeMessage: any
 ) => {
   // If we have a conversation ID, we're in an active conversation
   if (currentConversationId) {

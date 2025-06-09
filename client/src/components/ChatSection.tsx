@@ -146,9 +146,9 @@ const ChatSection: React.FC = () => {
 
   // Generate messages to display
   const messagesToDisplay = generateMessagesToDisplay(
-    messages,
+    messages || [],
     pendingUserMessage,
-    currentConversationId,
+    currentConversationId || null,
     welcomeMessage
   );
 

@@ -252,9 +252,19 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
         }
       };
     } catch (error) {
-      console.error(`${aiConfig.provider} API error:`, error);
+      console.error('=== AI SERVICE ERROR DETAILS ===');
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Error object:', error);
+      console.error('Message content:', message);
+      console.error('Conversation ID:', conversationId);
+      console.error('AI Config:', aiConfig);
+      console.error('Attachments:', attachments);
+      console.error('=== END AI SERVICE ERROR ===');
       return {
-        response: "I apologize, but I'm having trouble connecting to my coaching system right now. Please try again in a moment."
+        response: "I apologize, but I'm having trouble connecting to my coaching system right now. Please try again in a moment.",
+        conversationId,
+        memoryInfo: { memoriesUsed: 0, newMemories: { explicit: false, autoDetected: false } }
       };
     }
   }

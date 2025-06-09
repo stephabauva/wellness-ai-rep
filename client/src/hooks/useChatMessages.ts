@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -29,11 +30,13 @@ export const useChatMessages = () => {
     attachments?: { name: string; type: string }[];
   } | null>(null);
 
-
   type SendMessageParams = {
     content: string;
     attachments: AttachedFile[];
     conversationId: string | null;
+    aiProvider?: string;
+    aiModel?: string;
+    automaticModelSelection?: boolean;
   }
 
   const { data: messages, isLoading: loadingMessages } = useQuery({
@@ -60,22 +63,20 @@ export const useChatMessages = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: settings } = useQuery({
-    queryKey: ["/api/settings"],
-    queryFn: async () => {
-      const response = await fetch("/api/settings");
-      if (!response.ok) throw new Error("Failed to fetch settings");
-      return await response.json();
-    },
-  });
-
-// Send message mutation
+  // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ content, attachments, conversationId }: SendMessageParams) => {
+    mutationFn: async ({ content, attachments, conversationId, aiProvider, aiModel, automaticModelSelection }: SendMessageParams) => {
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, attachments, conversationId }),
+        body: JSON.stringify({ 
+          content, 
+          attachments, 
+          conversationId,
+          aiProvider: aiProvider || "openai",
+          aiModel: aiModel || "gpt-4o",
+          automaticModelSelection: automaticModelSelection || false
+        }),
       });
 
       if (!response.ok) {
@@ -111,10 +112,15 @@ export const useChatMessages = () => {
       const targetQueryKey = ["messages", data.conversationId];
 
       queryClient.setQueryData(targetQueryKey, (old: Message[] = []) => {
-        const existingMessages = old || [];
+        const existingMessages = Array.isArray(old) ? old : [];
+        
+        // Filter out welcome message if this is a real conversation
+        const filteredMessages = data.conversationId ? 
+          existingMessages.filter(msg => msg.id !== "welcome-message") : 
+          existingMessages;
         
         return [
-          ...existingMessages,
+          ...filteredMessages,
           {
             id: data.userMessage.id,
             content: data.userMessage.content,
@@ -137,6 +143,9 @@ export const useChatMessages = () => {
           }
         ];
       });
+
+      // Also invalidate the query to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: targetQueryKey });
     },
     onError: (error) => {
       console.error("Message send error:", error);
@@ -156,12 +165,14 @@ export const useChatMessages = () => {
   };
 
   return {
-    messages,
+    messages: messages || [],
     loadingMessages,
     currentConversationId,
     sendMessageMutation,
     handleSelectConversation,
     handleNewChat,
     pendingUserMessage,
+    welcomeMessage,
+    setCurrentConversationId,
   };
 };

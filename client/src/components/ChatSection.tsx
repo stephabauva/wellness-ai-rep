@@ -13,7 +13,7 @@ import { ConversationHistory } from "@/components/ConversationHistory";
 import { useAppContext } from "@/context/AppContext";
 
 export function ChatSection() {
-  // All hooks must be called in the same order every render
+  // All hooks must be called at the top level and in the same order every render
   const [inputMessage, setInputMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isConversationHistoryOpen, setIsConversationHistoryOpen] = useState(false);
@@ -22,6 +22,7 @@ export function ChatSection() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
+  // Context and hooks - must be called unconditionally
   const { settings } = useAppContext();
   
   const {
@@ -47,9 +48,9 @@ export function ChatSection() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pendingUserMessage]);
 
-  // Generate messages to display
+  // Generate messages to display - ensure we have valid data
   const messagesToDisplay = generateMessagesToDisplay(
-    messages,
+    messages || [],
     pendingUserMessage,
     currentConversationId,
     welcomeMessage
@@ -158,7 +159,7 @@ export function ChatSection() {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messagesToDisplay?.map((message) => (
+        {messagesToDisplay && Array.isArray(messagesToDisplay) && messagesToDisplay.map((message) => (
           <ChatMessage
             key={message.id}
             message={message.content}
@@ -171,7 +172,7 @@ export function ChatSection() {
       </div>
 
       {/* Attached Files Preview */}
-      {attachedFiles.length > 0 && (
+      {attachedFiles && attachedFiles.length > 0 && (
         <div className="px-4 pb-2">
           <Card>
             <CardContent className="p-3">

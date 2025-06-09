@@ -21,7 +21,7 @@ type Conversation = {
 type ConversationHistoryProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSelectConversation: (conversationId: string) => void;
+  onConversationSelect: (conversationId: string) => void;
   currentConversationId?: string;
 };
 

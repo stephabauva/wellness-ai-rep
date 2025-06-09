@@ -12,7 +12,7 @@ import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConversationHistory } from "@/components/ConversationHistory";
 import { useAppContext } from "@/context/AppContext";
 
-export function ChatSection() {
+function ChatSection() {
   // Always call all hooks at the top level in the same order
   const [inputMessage, setInputMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -316,3 +316,5 @@ export function ChatSection() {
     </div>
   );
 }
+
+export default ChatSection;

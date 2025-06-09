@@ -505,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // fileId is the fileName from the frontend
           const filePath = join(process.cwd(), 'uploads', fileId);
           console.log(`Attempting to delete file: ${filePath}`);
-
+          
           if (existsSync(filePath)) {
             const stats = statSync(filePath);
             unlinkSync(filePath);
@@ -522,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Deletion summary: ${deletedCount} files deleted, ${notFoundCount} files not found, ${freedSpace} bytes freed`);
-
+      
       // Return success even if files were not found (they're effectively "deleted")
       const totalProcessed = deletedCount + notFoundCount;
       res.json({ 

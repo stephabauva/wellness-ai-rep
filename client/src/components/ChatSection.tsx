@@ -37,7 +37,8 @@ export function ChatSection() {
     attachedFiles,
     setAttachedFiles,
     clearAttachedFiles,
-    uploadFileMutation
+    uploadFileMutation,
+    removeAttachedFile
   } = useFileManagement();
 
   useEffect(() => {
@@ -110,8 +111,8 @@ export function ChatSection() {
   }, [uploadFileMutation]);
 
   const removeAttachment = useCallback((fileId: string) => {
-    setAttachedFiles(prev => prev ? prev.filter(file => file.id !== fileId) : []);
-  }, [setAttachedFiles]);
+    removeAttachedFile(fileId);
+  }, [removeAttachedFile]);
 
   const handleRecordingComplete = useCallback((audioBlob: Blob) => {
     const audioFile = new File([audioBlob], "recording.webm", {

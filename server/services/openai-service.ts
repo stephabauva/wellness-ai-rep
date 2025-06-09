@@ -499,11 +499,8 @@ Please acknowledge that you understand these visual analysis requirements.`
 
     // 2. Image Upload - Default: Gemini Pro, Fallback: GPT-4o
     if (hasImages) {
-      try {
-        return { provider: "google", model: "gemini-1.5-pro" };
-      } catch {
-        return { provider: "openai", model: "gpt-4o" };
-      }
+      console.log("Auto-selecting Google Gemini for image analysis");
+      return { provider: "google", model: "gemini-1.5-pro" };
     }
 
     // 3. PDF/Document Upload - Default: Gemini Pro, Fallback: GPT-4o

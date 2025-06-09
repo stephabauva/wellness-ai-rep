@@ -68,7 +68,10 @@ function ChatSection() {
     if (inputMessage.trim() || (attachedFiles && attachedFiles.length > 0)) {
       const aiProvider = settings?.aiProvider || "openai";
       const aiModel = settings?.aiModel || "gpt-4o";
-      const automaticModelSelection = settings?.automaticModelSelection || false;
+      
+      // Enable automatic model selection by default when images are attached
+      const hasImages = attachedFiles?.some(file => file.fileType?.startsWith('image/'));
+      const automaticModelSelection = settings?.automaticModelSelection ?? hasImages;
 
       sendMessageMutation.mutate({
         content: inputMessage,

@@ -171,7 +171,7 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
                 });
               }
             } else {
-              // Assistant messages or non-image attachments get a text representation
+              // For assistant messages or non-image attachments, use text format
               const attachmentRefs = msg.metadata.attachments
                 .filter(att => !att.fileType?.startsWith('image/'))
                 .map(att => `[Previously shared file: ${att.displayName || att.fileName} (${att.fileType})]`)
@@ -184,18 +184,16 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
 
               const refs = [attachmentRefs, imageRefs].filter(Boolean).join('\n');
 
-              // **FIX**: Wrap in array format
               conversationContext.push({
                 role: msg.role,
-                content: [{ type: 'text', text: refs ? `${msg.content}\n\n${refs}` : msg.content }]
+                content: refs ? `${msg.content}\n\n${refs}` : msg.content
               });
             }
           } else {
-            // **CRITICAL FIX**: Regular message without attachments
-            // MUST be wrapped in the array format for consistency.
+            // Regular message without attachments
             conversationContext.push({
               role: msg.role,
-              content: [{ type: 'text', text: msg.content || '' }]
+              content: msg.content
             });
           }
         }
@@ -321,14 +319,19 @@ Please acknowledge that you understand these visual analysis requirements.`
       parts: [{ text: "I understand. I have full visual access to all images and will analyze them directly without asking for descriptions. I can see and reference specific visual elements confidently." }]
     });
 
-    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} current session messages`);
+    // Filter conversation history to current session only for Google Gemini
+    const currentSessionHistory = conversationHistory.filter(msg => 
+      msg.conversationId === conversationId
+    );
 
-    for (const msg of conversationHistory) {
+    console.log(`Building Google Gemini conversation history: ${conversationHistory.length} total messages -> ${currentSessionHistory.length} current session messages`);
+
+    for (const msg of currentSessionHistory) {
       if (msg.role === 'user') {
         const parts = [];
 
-        // Add text content - **CRITICAL FIX**: Add null safety
-        parts.push({ text: msg.content || '' });
+        // Add text content
+        parts.push({ text: msg.content });
 
         // Add historical images if they exist in metadata
         if (msg.metadata?.attachments) {
@@ -361,7 +364,7 @@ Please acknowledge that you understand these visual analysis requirements.`
       } else if (msg.role === 'assistant') {
         conversationParts.push({
           role: "model",
-          parts: [{ text: msg.content || '' }]
+          parts: [{ text: msg.content }]
         });
       }
     }
@@ -588,10 +591,10 @@ Please acknowledge that you understand these visual analysis requirements.`
           });
         }
       } else {
-        // Simplified non-image attachment handling
+        // For non-image attachments, add descriptive text
         content.push({
           type: "text",
-          text: `[File: ${attachment.displayName || attachment.fileName}]`
+          text: `[Attachment: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
         });
       }
     }
@@ -600,17 +603,16 @@ Please acknowledge that you understand these visual analysis requirements.`
   }
 
   async processCurrentMessageWithAttachments(message: string, attachments: any[] = []): Promise<any> {
-    // **CRITICAL FIX**: Always use the array format for content
+    if (!attachments || attachments.length === 0) {
+      return { role: 'user', content: message };
+    }
+
+    // Use ChatGPT's approach: include actual image data in message content
     const content: any[] = [];
 
     // Add text content first
     content.push({ type: "text", text: message });
 
-    if (!attachments || attachments.length === 0) {
-      return { role: 'user', content: content };
-    }
-
-    // Your existing attachment processing logic follows...
     for (const attachment of attachments) {
       if (attachment.fileType?.startsWith('image/')) {
         try {
@@ -618,7 +620,10 @@ Please acknowledge that you understand these visual analysis requirements.`
           if (existsSync(imagePath)) {
             const imageBuffer = readFileSync(imagePath);
             const base64Image = imageBuffer.toString('base64');
-            console.log(`Adding current image to message: ${attachment.fileName}`);
+
+            console.log(`Adding current image to message: ${attachment.fileName} (${imageBuffer.length} bytes)`);
+
+            // Include actual image data (ChatGPT approach)
             content.push({
               type: "image_url",
               image_url: {
@@ -635,12 +640,12 @@ Please acknowledge that you understand these visual analysis requirements.`
           });
         }
       } else {
-          // Simplified handling for all non-image files (PDFs, documents, etc.)
-          content.push({
-            type: "text",
-            text: `[File: ${attachment.displayName || attachment.fileName}]`
-          });
-        }
+        // For non-image attachments, add descriptive text
+        content.push({
+          type: "text",
+          text: `[Attached file: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]`
+        });
+      }
     }
 
     return { role: 'user', content: content };

@@ -391,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get available AI models
   app.get("/api/ai-models", async (req, res) => {
     try {
-      const models = chatService.getAvailableModels();
+      const models = aiService.getAvailableModels();
       res.json(models);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch AI models" });

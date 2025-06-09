@@ -1,8 +1,14 @@
 
 import React, { useMemo, useEffect } from 'react';
-import { RotateCcw, FileText as DefaultFileIcon, Card, CardHeader, CardTitle, CardContent } from 'lucide-react'; // Import Card related components
-import { TabsContent } from '@/components/ui/tabs'; // TabsContent is used
-import { Skeleton } from '@/components/ui/skeleton'; // For loading state
+import { RotateCcw, FileText as DefaultFileIcon, QrCode, X, Download } from 'lucide-react';
+import { TabsContent, Tabs } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 // Import hooks
 import { useFileApi } from '@/hooks/useFileApi';
@@ -10,13 +16,13 @@ import { useFileManagerState } from '@/hooks/useFileManagerState';
 import { useFileSharing } from '@/hooks/useFileSharing';
 
 // Import sub-components
-import { FileList } from './filemanager/FileList';
+import { FileList as FileListComponent } from './filemanager/FileList';
 import { FileActionsToolbar } from './filemanager/FileActionsToolbar';
 import { CategoryTabs } from './filemanager/CategoryTabs';
 import { QrCodeDialog } from './filemanager/QrCodeDialog';
 
 // Import utilities and types
-import { categorizeFiles } from '@/utils/fileManagerUtils';
+import { categorizeFiles, getFileIcon, formatFileSize, formatDate } from '@/utils/fileManagerUtils';
 import { FileCategory, FileItem } from '@/types/fileManager';
 
 
@@ -48,6 +54,9 @@ const FileManagerSection: React.FC = () => {
     shareSelectedFiles,
     generateAndShowQRCode,
   } = useFileSharing(files); // Pass all files to the sharing hook
+  
+  const showQRCode = showQRCodeDialog;
+  const setShowQRCode = setShowQRCodeDialog;
 
   const categories: FileCategory[] = useMemo(() => categorizeFiles(files), [files]);
 
@@ -160,7 +169,6 @@ const FileManagerSection: React.FC = () => {
             </TabsContent>
           )
         )}
-        </Tabs>
       </div>
 
       {/* QR Code Modal */}

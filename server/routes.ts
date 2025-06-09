@@ -16,6 +16,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import fs from 'fs';
 import { attachmentRetentionService } from "./services/attachment-retention-service";
+import { statSync, unlinkSync } from 'fs';
 
 // Attachment schema for client
 const attachmentSchema = z.object({
@@ -345,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/settings", async (req, res) => {
     try {
       const settings = settingsUpdateSchema.parse(req.body);
-      
+
       // Update attachment retention settings if provided
       if (settings.highValueRetentionDays !== undefined || 
           settings.mediumValueRetentionDays !== undefined || 
@@ -354,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (settings.highValueRetentionDays !== undefined) retentionUpdates.highValueRetentionDays = settings.highValueRetentionDays;
         if (settings.mediumValueRetentionDays !== undefined) retentionUpdates.mediumValueRetentionDays = settings.mediumValueRetentionDays;
         if (settings.lowValueRetentionDays !== undefined) retentionUpdates.lowValueRetentionDays = settings.lowValueRetentionDays;
-        
+
         attachmentRetentionService.updateRetentionDurations(retentionUpdates);
       }
 
@@ -419,6 +420,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to update retention settings" });
       }
+    }
+  });
+
+  // File management endpoints
+  app.get('/api/files', async (req, res) => {
+    try {
+      const userId = 1; // TODO: Get from auth
+
+      // Get all conversations with messages that have attachments
+      const conversationsWithMessages = await db
+        .select()
+        .from(conversations)
+        .leftJoin(
+          conversationMessages,
+          eq(conversations.id, conversationMessages.conversationId)
+        )
+        .where(eq(conversations.userId, userId));
+
+      const files: any[] = [];
+      const processedFiles = new Set<string>();
+
+      for (const row of conversationsWithMessages) {
+        const message = row.conversation_messages;
+        if (!message?.metadata?.attachments) continue;
+
+        const attachments = message.metadata.attachments as any[];
+
+        for (const attachment of attachments) {
+          if (processedFiles.has(attachment.fileName)) continue;
+          processedFiles.add(attachment.fileName);
+
+          // Check if file actually exists on disk
+          const filePath = join(process.cwd(), 'uploads', attachment.fileName);
+          if (!existsSync(filePath)) {
+            console.log(`Skipping non-existent file in listing: ${attachment.fileName}`);
+            continue;
+          }
+
+          // Get retention info for this file
+          const retentionInfo = attachmentRetentionService.getRetentionInfo(
+            attachment.displayName || attachment.fileName,
+            attachment.fileType,
+            message.content
+          );
+
+          files.push({
+            id: attachment.fileName, // Use fileName as ID
+            fileName: attachment.fileName,
+            displayName: attachment.displayName || attachment.originalName || attachment.fileName,
+            fileType: attachment.fileType,
+            fileSize: attachment.fileSize || 0,
+            uploadDate: message.timestamp,
+            retentionInfo,
+            url: `/uploads/${attachment.fileName}`
+          });
+        }
+      }
+
+      // Sort by upload date (newest first)
+      files.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
+
+      res.json(files);
+    } catch (error) {
+      console.error('Error fetching files:', error);
+      res.status(500).json({ error: 'Failed to fetch files' });
+    }
+  });
+
+  app.post('/api/files/delete', async (req, res) => {
+    try {
+      const { fileIds } = req.body;
+
+      if (!Array.isArray(fileIds) || fileIds.length === 0) {
+        return res.status(400).json({ error: 'No file IDs provided' });
+      }
+
+      let deletedCount = 0;
+      let freedSpace = 0;
+      let notFoundCount = 0;
+
+      for (const fileId of fileIds) {
+        try {
+          // fileId is the fileName from the frontend
+          const filePath = join(process.cwd(), 'uploads', fileId);
+          console.log(`Attempting to delete file: ${filePath}`);
+
+          if (existsSync(filePath)) {
+            const stats = statSync(filePath);
+            unlinkSync(filePath);
+            deletedCount++;
+            freedSpace += stats.size;
+            console.log(`Successfully deleted file: ${fileId}, size: ${stats.size} bytes`);
+          } else {
+            notFoundCount++;
+            console.log(`File not found (already deleted or missing): ${filePath}`);
+          }
+        } catch (error) {
+          console.error(`Failed to delete file ${fileId}:`, error);
+        }
+      }
+
+      console.log(`Deletion summary: ${deletedCount} files deleted, ${notFoundCount} files not found, ${freedSpace} bytes freed`);
+
+      // Return success even if files were not found (they're effectively "deleted")
+      const totalProcessed = deletedCount + notFoundCount;
+      res.json({ 
+        deletedCount: totalProcessed, 
+        actuallyDeleted: deletedCount,
+        notFound: notFoundCount,
+        freedSpace 
+      });
+    } catch (error) {
+      console.error('Error deleting files:', error);
+      res.status(500).json({ error: 'Failed to delete files' });
     }
   });
 

@@ -6,7 +6,8 @@ import {
   Cpu, 
   Brain,
   Settings, 
-  Zap 
+  Zap,
+  FolderOpen
 } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
@@ -39,7 +40,7 @@ const MobileNav: React.FC = () => {
 
   const toggleNav = useCallback(() => setIsOpen(prev => !prev), []);
 
-  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "settings") => {
+  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "files" | "settings") => {
     setActiveSection(section);
     setIsOpen(false);
   }, [setActiveSection]);
@@ -68,7 +69,7 @@ const MobileNav: React.FC = () => {
         "bg-card absolute w-full left-0 p-4 border-b border-border shadow-lg",
         isOpen ? "block" : "hidden"
       )}>
-        <nav className="grid grid-cols-5 gap-2">
+        <nav className="grid grid-cols-6 gap-2">
           <NavButton 
             active={activeSection === "chat"}
             onClick={() => handleNavClick("chat")}
@@ -95,6 +96,13 @@ const MobileNav: React.FC = () => {
             onClick={() => handleNavClick("memory")}
             label="Memory"
             icon={<Brain className="h-6 w-6" />}
+          />
+
+          <NavButton 
+            active={activeSection === "files"}
+            onClick={() => handleNavClick("files")}
+            label="Files"
+            icon={<FolderOpen className="h-6 w-6" />}
           />
           
           <NavButton 

@@ -51,9 +51,9 @@ export const useChatMessages = () => {
       }));
     },
     refetchOnWindowFocus: false,
-    staleTime: 1000, // Reduce stale time to 1 second for immediate updates
-    enabled: true,
-    refetchOnMount: true, // Always refetch when component mounts
+    staleTime: 0, // No stale time - always consider data fresh
+    enabled: !!currentConversationId, // Only fetch when we have a conversation ID
+    refetchOnMount: false, // Don't refetch on mount if we have cached data
   });
 
   const { data: settings } = useQuery({
@@ -147,9 +147,16 @@ export const useChatMessages = () => {
         ];
       });
 
-      // Force immediate UI update with refetch
+      // Force immediate UI update
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      queryClient.refetchQueries({ queryKey: ["messages", finalConversationId] });
+      
+      // Force the query to update immediately
+      queryClient.invalidateQueries({ queryKey: ["messages", finalConversationId] });
+      
+      // Ensure the UI updates by triggering a manual refetch
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["messages", finalConversationId] });
+      }, 100);
     },
     onError: (error) => {
       console.error("Message send error:", error);

@@ -59,8 +59,14 @@ class ChatService {
         : "weight-loss";
 
       // Apply automatic model selection if enabled
+      console.log("Automatic model selection enabled:", automaticModelSelection);
+      console.log("Current AI config:", aiConfig);
+      console.log("Attachments for model selection:", attachments.map(att => ({ fileName: att.fileName, fileType: att.fileType })));
+      
       if (automaticModelSelection) {
+        console.log("Running automatic model selection...");
         aiConfig = this.selectOptimalModel(message, attachments, aiConfig);
+        console.log("Selected AI config:", aiConfig);
       }
 
       // Process message for memory extraction

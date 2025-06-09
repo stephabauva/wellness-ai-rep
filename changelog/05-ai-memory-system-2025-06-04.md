@@ -2,7 +2,7 @@
 
 Added - ChatGPT-Style AI Memory System
 
-(See `../../annexe-05-ai-memory-system-implementation.md` for a deep dive)
+(See `../../ai-memory-system-implementation.md` for a deep dive)
 
 Smart Memory Detection: Automatic identification of important information during conversations
 Explicit memory triggers: "remember this", "don't forget", "keep in mind"

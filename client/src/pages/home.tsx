@@ -5,7 +5,6 @@ import ChatSection from "@/components/ChatSection";
 import HealthDataSection from "@/components/HealthDataSection";
 import ConnectedDevicesSection from "@/components/ConnectedDevicesSection";
 import MemorySection from "@/components/MemorySection";
-import FileManagerSection from "@/components/FileManagerSection";
 import SettingsSection from "@/components/SettingsSection";
 import { useAppContext } from "@/context/AppContext";
 
@@ -23,8 +22,6 @@ const Home: React.FC = () => {
         return <ConnectedDevicesSection />;
       case "memory":
         return <MemorySection />;
-      case "files":
-        return <FileManagerSection />;
       case "settings":
         return <SettingsSection />;
       default:

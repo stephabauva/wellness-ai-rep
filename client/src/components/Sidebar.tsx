@@ -5,8 +5,7 @@ import {
   Cpu, 
   Brain,
   Settings, 
-  Zap,
-  FolderOpen
+  Zap
 } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
@@ -36,7 +35,7 @@ const NavButton: React.FC<{
 const Sidebar: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
 
-  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "files" | "settings") => {
+  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "settings") => {
     setActiveSection(section);
   }, [setActiveSection]);
 
@@ -79,13 +78,6 @@ const Sidebar: React.FC = () => {
               onClick={() => handleNavClick("memory")}
               label="AI Memory"
               icon={<Brain className="h-6 w-6" />}
-            />
-
-            <NavButton 
-              active={activeSection === "files"}
-              onClick={() => handleNavClick("files")}
-              label="File Manager"
-              icon={<FolderOpen className="h-6 w-6" />}
             />
             
             <NavButton 

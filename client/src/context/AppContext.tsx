@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
 import { CoachingMode } from "@shared/schema";
 
-export type ActiveSection = "chat" | "health" | "devices" | "memory" | "files" | "settings";
+type ActiveSection = "chat" | "health" | "devices" | "memory" | "settings";
 
 interface AppContextType {
   activeSection: ActiveSection;
@@ -19,7 +19,7 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [activeSection, setActiveSectionState] = useState<ActiveSection>("chat");
   const [coachingMode, setCoachingModeState] = useState<string>("weight-loss");
-
+  
   // Memoized callback functions to prevent unnecessary re-renders
   const setActiveSection = useCallback((section: ActiveSection) => {
     setActiveSectionState(section);
@@ -28,7 +28,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const setCoachingMode = useCallback((mode: string) => {
     setCoachingModeState(mode);
   }, []);
-
+  
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     activeSection,
@@ -36,7 +36,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     coachingMode,
     setCoachingMode
   }), [activeSection, setActiveSection, coachingMode, setCoachingMode]);
-
+  
   return (
     <AppContext.Provider value={contextValue}>
       {children}

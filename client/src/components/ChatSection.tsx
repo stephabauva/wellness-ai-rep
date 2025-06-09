@@ -16,6 +16,7 @@ import { ConversationHistory } from "@/components/ConversationHistory";
 
 function ChatSection() {
   const [inputMessage, setInputMessage] = useState("");
+  console.log("[ChatSection] Component body execution (render/re-render). InputMessage state:", inputMessage);
   const [isConversationHistoryOpen, setIsConversationHistoryOpen] = useState(false);
   
   const { settings } = useAppContext();

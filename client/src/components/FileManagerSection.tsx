@@ -147,7 +147,8 @@ const FileManagerSection: React.FC = () => {
       <div className="flex-1 p-4 md:p-6 overflow-auto space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <CategoryTabs
-            categories={categories} // This will be updated in next phase to use DB categories
+            categories={categories}
+            files={files}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             totalFilesCount={files.length}

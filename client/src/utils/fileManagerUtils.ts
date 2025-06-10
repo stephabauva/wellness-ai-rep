@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, FileText, Stethoscope, Activity } from 'lucide-react';
+import { Image, FileText, Stethoscope, Activity, Folder, Heart, Apple, Dumbbell, FileImage, Camera, Users, Settings } from 'lucide-react';
 import { FileItem, FileCategory } from '@/types/fileManager';
 
 export const getFileIcon = (fileType: string, fileName: string): React.ReactNode => {
@@ -97,4 +97,24 @@ export const categorizeFiles = (files: FileItem[]): FileCategory[] => {
       description: 'Miscellaneous documents and files'
     }
   ];
+};
+
+// Map icon names from database to actual Lucide icon components
+export const getIconFromName = (iconName: string | null | undefined): React.ComponentType<any> => {
+  const iconMap: Record<string, React.ComponentType<any>> = {
+    'stethoscope': Stethoscope,
+    'heart': Heart,
+    'activity': Activity,
+    'dumbbell': Dumbbell,
+    'apple': Apple,
+    'image': Image,
+    'file-image': FileImage,
+    'camera': Camera,
+    'file-text': FileText,
+    'folder': Folder,
+    'users': Users,
+    'settings': Settings,
+  };
+
+  return iconMap[iconName?.toLowerCase() || 'folder'] || Folder;
 };

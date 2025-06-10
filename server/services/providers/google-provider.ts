@@ -248,6 +248,11 @@ export class GoogleProvider implements AiProvider {
       } finally {
         clearTimeout(timeoutId); // Ensure timeout is always cleared
       }
+    } catch (error: any) { // This is the catch for the outer try block
+      log('error', 'Unhandled error in generateChatResponse (Google):', error);
+      // This will catch errors from the setup phase before the inner try,
+      // or errors re-thrown by the inner catch block that are not AbortError or SAFETY.
+      return { response: "An unexpected error occurred while processing your request with Google." };
     }
   }
 

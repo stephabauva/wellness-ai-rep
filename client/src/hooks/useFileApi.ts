@@ -72,8 +72,6 @@ export function useFileApi() {
     },
   });
 
-  });
-
   // Category Queries & Mutations
   const {
     data: categories = [],

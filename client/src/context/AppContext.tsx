@@ -220,14 +220,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         console.log("[AppContext sendMessage onSuccess] Changing currentConversationId from", currentConversationId, "to:", data.conversationId);
         setCurrentConversationIdState(data.conversationId);
       }
-      // Temporarily comment out setNewlyCreatedConvId logic for testing
-      // if (variables.conversationId === null && data.conversationId) {
-      //   // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to:", data.conversationId); // Optional: also comment out log if it exists
-      //   setNewlyCreatedConvId(data.conversationId);
-      // } else {
-      //   // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to null"); // Optional: also comment out log if it exists
-      //   setNewlyCreatedConvId(null);
-      // }
+      if (variables.conversationId === null && data.conversationId) {
+        // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to:", data.conversationId);
+        setNewlyCreatedConvId(data.conversationId);
+      } else {
+        // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to null");
+        setNewlyCreatedConvId(null);
+      }
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (error, variables, context) => {

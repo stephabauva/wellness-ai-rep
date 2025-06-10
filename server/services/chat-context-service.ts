@@ -141,16 +141,17 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
                     log('warn', `Historical ASSISTANT message ID ${msg.id || 'N/A'} for OpenAI had attachments in metadata; these are ignored for OpenAI assistant role.`);
                 }
             }
-        } else { // For Google or other providers
-            if (historicalAttachments.length > 0) {
-                // Using OpenAiProvider.processMessageWithAttachments as a generic formatter here.
-                // This might need adjustment if GoogleProvider cannot consume MessageContentPart[] directly
-                // or if its own attachment processing logic (GoogleProvider.processMessageWithAttachments) is preferred.
-                // For now, this maintains existing behavior for Google while fixing OpenAI.
-                messageContent = await OpenAiProvider.processMessageWithAttachments(baseTextContent, historicalAttachments, true);
-                log('info', `Processed historical message ID ${msg.id || 'N/A'} for ${targetProvider} with ${historicalAttachments.length} attachments (using OpenAI formatter as base).`);
-            } else {
+        } else if (targetProvider === 'google') {
+            if (msg.role === 'user' && historicalAttachments.length > 0) {
+                messageContent = await GoogleProvider.processMessageWithAttachments(baseTextContent, historicalAttachments);
+                log('info', `Processed historical USER message ID ${msg.id || 'N/A'} for Google with ${historicalAttachments.length} attachments.`);
+            } else { // Assistant messages or user messages without attachments
                 messageContent = baseTextContent;
+            }
+        } else { // Fallback for any other provider or if logic needs refinement
+            messageContent = baseTextContent;
+            if (historicalAttachments.length > 0) {
+                log('warn', `Unsupported targetProvider '${targetProvider}' for historical attachment processing of message ID ${msg.id || 'N/A'}. Using text content only.`);
             }
         }
 
@@ -200,10 +201,14 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
     if (currentAttachments && currentAttachments.length > 0) {
       if (targetProvider === 'openai') {
         currentMessageContent = await OpenAiProvider.processMessageWithAttachments(currentBaseTextContent, currentAttachments);
-      } else { // google
-         currentMessageContent = await OpenAiProvider.processMessageWithAttachments(currentBaseTextContent, currentAttachments);
+        log('info', `Processed current message for OpenAI with ${currentAttachments.length} attachments.`);
+      } else if (targetProvider === 'google') {
+         currentMessageContent = await GoogleProvider.processMessageWithAttachments(currentBaseTextContent, currentAttachments);
+         log('info', `Processed current message for Google with ${currentAttachments.length} attachments.`);
+      } else {
+        currentMessageContent = currentBaseTextContent;
+        log('warn', `Unsupported targetProvider '${targetProvider}' for current attachment processing. Using text content only.`);
       }
-      log('info', `Processed current message with ${currentAttachments.length} attachments.`);
     } else {
       currentMessageContent = currentBaseTextContent;
     }

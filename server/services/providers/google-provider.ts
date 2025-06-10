@@ -99,10 +99,10 @@ export class GoogleProvider implements AiProvider {
   public static async processMessageWithAttachments(
     messageText: string,
     attachments: AttachmentData[] = []
-  ): Promise<Part[]> {
-    const parts: Part[] = [];
+  ): Promise<MessageContentPart[]> {
+    const parts: MessageContentPart[] = [];
     if (messageText) {
-      parts.push({ text: messageText });
+      parts.push({ type: "text", text: messageText });
     }
 
     for (const attachment of attachments) {
@@ -111,29 +111,30 @@ export class GoogleProvider implements AiProvider {
           const imagePath = join(process.cwd(), 'uploads', attachment.fileName);
           if (!existsSync(imagePath)) {
             log('error', `Image file not found: ${imagePath}`);
-            parts.push({ text: `[Image file: ${attachment.displayName || attachment.fileName} - file not found]` });
+            parts.push({ type: "text", text: `[Image file: ${attachment.displayName || attachment.fileName} - file not found]` });
             continue;
           }
           const imageBuffer = readFileSync(imagePath);
           parts.push({
-            inlineData: {
-              data: imageBuffer.toString('base64'),
-              mimeType: attachment.fileType,
-            },
+            type: "image_url",
+            image_url: {
+              url: `data:${attachment.fileType};base64,${imageBuffer.toString('base64')}`
+            }
           });
           log('info', `Successfully loaded image for Google: ${attachment.fileName} (${imageBuffer.length} bytes)`);
         } catch (error) {
           log('error', `Failed to load image ${attachment.fileName} for Google:`, error);
-          parts.push({ text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]` });
+          parts.push({ type: "text", text: `[Image file: ${attachment.displayName || attachment.fileName} - error loading file]` });
         }
       } else {
-         parts.push({ text: `[Attachment reference: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]` });
+         parts.push({ type: "text", text: `[Attachment reference: ${attachment.displayName || attachment.fileName} (${attachment.fileType})]` });
       }
     }
 
     // If no text and no attachments, or only non-image attachments without text, add a default text part
-    if (parts.length === 0 || (parts.every(p => !p.text) && !messageText)) {
-        parts.unshift({ text: "Analyzing content." });
+    // Ensure this default part is also of type MessageContentPart
+    if (parts.length === 0 || (parts.every(p => p.type === 'image_url') && !messageText)) {
+        parts.unshift({ type: "text", text: "Analyzing content." });
     }
     return parts;
   }

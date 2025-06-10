@@ -19,6 +19,7 @@ interface FileListProps {
   onSelectFile: (fileId: string) => void;
   onSelectAll: () => void; // This will now be connected to handleSelectAll from useFileManagerState
   viewMode: ViewMode;
+  categories?: Array<{ id: string; name: string; icon?: string | null; color?: string | null }>;
 }
 
 export const FileList: React.FC<FileListProps> = ({
@@ -26,8 +27,15 @@ export const FileList: React.FC<FileListProps> = ({
   selectedFiles,
   onSelectFile,
   onSelectAll,
-  viewMode
+  viewMode,
+  categories = []
 }) => {
+  // Helper function to get category name
+  const getCategoryName = (categoryId?: string | null) => {
+    if (!categoryId) return 'Uncategorized';
+    const category = categories.find(cat => cat.id === categoryId);
+    return category?.name || 'Unknown';
+  };
   if (files.length === 0) {
     return (
       <Card>
@@ -135,6 +143,9 @@ export const FileList: React.FC<FileListProps> = ({
                   <h4 className="text-xs font-medium truncate w-full" title={file.displayName}>
                     {file.displayName}
                   </h4>
+                  <p className="text-[10px] text-muted-foreground truncate w-full">
+                    {getCategoryName(file.categoryId)}
+                  </p>
                 </div>
                  <div className="flex flex-col items-center gap-1 text-xs w-full mt-auto">
                     <Badge
@@ -244,12 +255,10 @@ export const FileList: React.FC<FileListProps> = ({
                 <span className="hidden sm:inline">•</span>
                 <span className="hidden sm:inline">{formatDate(file.uploadDate)}</span>
                 <span className="sm:hidden">{new Date(file.uploadDate).toLocaleDateString()}</span>
-                {file.categoryName && (
-                  <>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="truncate" title={`Category: ${file.categoryName}`}>{file.categoryName}</span>
-                  </>
-                )}
+                <span className="hidden sm:inline">•</span>
+                <span className="truncate" title={`Category: ${getCategoryName(file.categoryId)}`}>
+                  {getCategoryName(file.categoryId)}
+                </span>
                 <span className="hidden sm:inline">•</span>
                 <span className="truncate hidden md:inline" title={file.retentionInfo?.reason}>{file.retentionInfo?.reason}</span>
               </div>

@@ -163,6 +163,7 @@ const FileManagerSection: React.FC = () => {
           onSelectFile={handleSelectFile}
           onSelectAll={() => handleSelectAll(activeFiles)}
           viewMode={viewMode}
+          categories={categories}
         />
       </div>
 

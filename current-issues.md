@@ -33,6 +33,11 @@
 
   ✅ Mic error on click-back (“aborted”) now handled gracefully  
 
+<br>
+
+#### 🟩 Low Priority (Polish/Nice-to-Have)
+
+❌ AVIF files not processed by openai model (gpt4o-mini), Add AVIF to supported formats list in `openai-provider.ts`
 
 ---  
 

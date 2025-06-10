@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 // Select components are no longer directly used here, but CategorySelector uses them.
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFileUpload } from '@/hooks/useFileUpload'; // Import the hook
-import { CategorySelector } from './CategorySelector'; // Import the new CategorySelector
+import { CategoryDropdown } from './CategoryDropdown'; // Import the new CategoryDropdown
 
 
 interface FileUploadDialogProps {
@@ -87,13 +87,13 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ isOpen, onClose, on
             <Label htmlFor="category-select" className="text-right pt-2"> {/* Added pt-2 for alignment with selector */}
               Category
             </Label>
-            <CategorySelector
+            <CategoryDropdown
               selectedCategoryId={currentCategoryId}
               onCategoryChange={setCurrentCategoryId}
               placeholder="Select a category (optional)"
               allowClear={true}
               disabled={isUploading}
-              // The CategorySelector itself handles loading/error states for categories
+              className="col-span-3"
             />
             {/* The CategorySelector is a single component, ensure it spans correctly if needed, or adjust grid.
                 Assuming CategorySelector's internal SelectTrigger will take col-span-3 effectively if needed,

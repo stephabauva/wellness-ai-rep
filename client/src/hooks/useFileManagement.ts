@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 export type AttachedFile = {
@@ -20,6 +20,7 @@ export type AttachedFile = {
 export const useFileManagement = () => {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -43,6 +44,10 @@ export const useFileManagement = () => {
         retentionInfo: data.file.retentionInfo,
       };
       setAttachedFiles((prev) => [...prev, attachedFile]);
+      
+      // Invalidate file queries to ensure file management shows updated files
+      queryClient.invalidateQueries({ queryKey: ['files', '/api/files'] });
+      queryClient.invalidateQueries({ queryKey: ['files'] });
       
       const retentionMessage = data.file.retentionInfo?.retentionDays === -1 
         ? "This file will be kept permanently as it appears to be medical data."

@@ -1,86 +1,79 @@
-import React from 'react'; // useEffect, useState not strictly needed based on provided structure
-import { useFileApi } from '@/hooks/useFileApi';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileCategory } from '@/types/fileManager'; // Assuming this path and type definition
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { Tag, ChevronDown } from 'lucide-react';
+import { FileCategory } from '@/types/fileManager';
 
 interface CategorySelectorProps {
-  selectedCategoryId: string | undefined;
-  onCategoryChange: (categoryId: string | undefined) => void;
+  categories: FileCategory[];
+  selectedFiles: string[];
+  onCategorize: (fileIds: string[], categoryId?: string) => void;
+  isLoading?: boolean;
   disabled?: boolean;
-  placeholder?: string;
-  allowClear?: boolean; // New prop to control if a "None" option is added
 }
 
-export const CategorySelector: React.FC<CategorySelectorProps> = ({
-  selectedCategoryId,
-  onCategoryChange,
-  disabled,
-  placeholder = "Select a category",
-  allowClear = false,
-}) => {
-  const { categories, isLoadingCategories, categoriesError } = useFileApi();
-
-  const handleValueChange = (value: string) => {
-    if (value === "---NONE---") { // Special value for clearing selection
-      onCategoryChange(undefined);
-    } else {
-      onCategoryChange(value);
+export function CategorySelector({
+  categories,
+  selectedFiles,
+  onCategorize,
+  isLoading = false,
+  disabled = false,
+}: CategorySelectorProps) {
+  const handleCategorize = (categoryId?: string) => {
+    if (selectedFiles.length > 0) {
+      onCategorize(selectedFiles, categoryId);
     }
   };
 
-  if (isLoadingCategories) {
-    return (
-      <Select disabled={true}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Loading categories..." />
-        </SelectTrigger>
-      </Select>
-    );
-  }
-
-  if (categoriesError) {
-    return (
-      <Select disabled={true}>
-        <SelectTrigger className="w-full error-state"> {/* Added class for styling potential errors */}
-          <SelectValue placeholder={`Error: ${categoriesError.message || 'Failed to load'}`} />
-        </SelectTrigger>
-      </Select>
-    );
-  }
-
-  if (!categories || categories.length === 0) {
-    return (
-      <Select disabled={true}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="No categories available" />
-        </SelectTrigger>
-      </Select>
-    );
-  }
+  const isDisabled = disabled || isLoading || selectedFiles.length === 0;
 
   return (
-    <Select
-      value={selectedCategoryId ?? (allowClear ? "---NONE---" : undefined)}
-      onValueChange={handleValueChange}
-      disabled={disabled}
-    >
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {allowClear && (
-          <SelectItem value="---NONE---">
-            <em>{placeholder === "Select a category" ? "None" : placeholder}</em>
-          </SelectItem>
-        )}
-        {categories.map((category: FileCategory) => (
-          <SelectItem key={category.id} value={category.id}>
-            {/* TODO: Optionally, display icon and color too e.g. <span style={{ color: category.color }}>{category.icon}</span> {category.name} */}
-            {category.name}
-            {!category.isCustom && <span className="text-xs text-muted-foreground ml-2">(System)</span>}
-          </SelectItem>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isDisabled}
+          className="gap-2"
+        >
+          <Tag className="h-4 w-4" />
+          Categorize
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48">
+        {categories.map((category) => (
+          <DropdownMenuItem
+            key={category.id}
+            onClick={() => handleCategorize(category.id)}
+            className="flex items-center gap-2"
+          >
+            {category.icon && (
+              <span className="text-sm">{category.icon}</span>
+            )}
+            <span className="flex-1">{category.name}</span>
+            {category.color && (
+              <div
+                className="w-3 h-3 rounded-full border"
+                style={{ backgroundColor: category.color }}
+              />
+            )}
+          </DropdownMenuItem>
         ))}
-      </SelectContent>
-    </Select>
+        {categories.length > 0 && <DropdownMenuSeparator />}
+        <DropdownMenuItem
+          onClick={() => handleCategorize(undefined)}
+          className="text-muted-foreground"
+        >
+          Remove Category
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
-};
+}

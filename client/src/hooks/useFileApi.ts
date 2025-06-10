@@ -72,6 +72,41 @@ export function useFileApi() {
     },
   });
 
+  const categorizeFilesMutation = useMutation({
+    mutationFn: async ({ fileIds, categoryId }: { fileIds: string[]; categoryId?: string }) => {
+      const response = await fetch('/api/files/categorize', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileIds, categoryId }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to categorize files' }));
+        throw new Error(errorData.message || 'Failed to categorize files');
+      }
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['files', '/api/files'] });
+      
+      const { updatedCount = 0 } = data || {};
+      const categoryName = data.categoryId 
+        ? categories.find(cat => cat.id === data.categoryId)?.name || 'Selected Category'
+        : 'Uncategorized';
+      
+      toast({
+        title: "Files Categorized",
+        description: `Successfully updated ${updatedCount} file(s) to ${categoryName}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Categorization Failed",
+        description: error.message || "Could not categorize selected files. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Category Queries & Mutations
   const {
     data: categories = [],
@@ -166,6 +201,11 @@ export function useFileApi() {
     deleteFiles: deleteFilesMutation.mutate,
     deleteFilesAsync: deleteFilesMutation.mutateAsync,
     isDeletingFiles: deleteFilesMutation.isPending,
+
+    // File Categorization
+    categorizeFiles: categorizeFilesMutation.mutate,
+    categorizeFilesAsync: categorizeFilesMutation.mutateAsync,
+    isCategorizingFiles: categorizeFilesMutation.isPending,
 
     // Categories
     categories,

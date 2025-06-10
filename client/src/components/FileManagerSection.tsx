@@ -34,6 +34,8 @@ const FileManagerSection: React.FC = () => {
     refetchFiles,
     deleteFiles,
     isDeletingFiles,
+    categorizeFiles,
+    isCategorizingFiles,
     categories,
     isLoadingCategories
   } = useFileApi();

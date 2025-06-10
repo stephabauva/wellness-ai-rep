@@ -9,30 +9,39 @@ import {
   RotateCcw,
   Upload
 } from 'lucide-react';
-import { ViewMode } from '@/types/fileManager';
+import { ViewMode, FileCategory } from '@/types/fileManager';
+import { CategorySelector } from './CategorySelector';
 
 interface FileActionsToolbarProps {
   selectedFilesCount: number;
+  selectedFiles: string[];
   onShare: () => void;
   onQrCode: () => void;
   onDelete: () => void;
+  onCategorize: (fileIds: string[], categoryId?: string) => void;
   currentViewMode: ViewMode;
   onSetViewMode: (mode: ViewMode) => void;
   onRefresh: () => void;
   isDeleting: boolean;
+  isCategorizing?: boolean;
   onUploadClick: () => void;
+  categories: FileCategory[];
 }
 
 export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
   selectedFilesCount,
+  selectedFiles,
   onShare,
   onQrCode,
   onDelete,
+  onCategorize,
   currentViewMode,
   onSetViewMode,
   onRefresh,
   isDeleting,
+  isCategorizing = false,
   onUploadClick,
+  categories,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -61,6 +70,12 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
               <span className="hidden sm:inline">QR</span>
               <span className="sm:hidden">QR ({selectedFilesCount})</span>
             </Button>
+            <CategorySelector
+              categories={categories}
+              selectedFiles={selectedFiles}
+              onCategorize={onCategorize}
+              isLoading={isCategorizing}
+            />
           </div>
           <Button
             variant="destructive"

@@ -783,6 +783,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileData.categoryId = validatedCategoryId; // Note: key is categoryId
       }
 
+      // Create a conversation and message to track this uploaded file
+      // This ensures the file appears in the file listing API
+      const userId = 1; // TODO: Get from authentication
+      
+      // Create or get a conversation for standalone file uploads
+      let uploadConversationId;
+      const existingUploadConversations = await db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.createdAt))
+        .limit(1);
+
+      if (existingUploadConversations.length > 0) {
+        uploadConversationId = existingUploadConversations[0].id;
+      } else {
+        const [newConversation] = await db.insert(conversations).values({
+          userId,
+          title: 'File Uploads',
+        }).returning();
+        uploadConversationId = newConversation.id;
+      }
+
+      // Create a message with the file attachment
+      await db.insert(conversationMessages).values({
+        conversationId: uploadConversationId,
+        role: 'user',
+        content: `Uploaded file: ${originalFileName}`,
+        metadata: {
+          attachments: [fileData]
+        }
+      });
+
       res.json({
         success: true,
         file: fileData

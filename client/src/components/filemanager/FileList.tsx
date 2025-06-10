@@ -54,7 +54,10 @@ export const FileList: React.FC<FileListProps> = ({
               <Checkbox
                 checked={allDisplayedFilesSelected}
                 ref={(el) => { // For indeterminate state
-                  if (el) el.indeterminate = someFilesSelected;
+                  if (el) {
+                    const input = el.querySelector('input');
+                    if (input) input.indeterminate = someFilesSelected;
+                  }
                 }}
                 onCheckedChange={onSelectAll} // Directly use the passed handler
                 aria-label="Select all files in current view"
@@ -166,7 +169,10 @@ export const FileList: React.FC<FileListProps> = ({
             <Checkbox
               checked={allDisplayedFilesSelected}
               ref={(el) => { // For indeterminate state
-                if (el) el.indeterminate = someFilesSelected;
+                if (el) {
+                  const input = el.querySelector('input');
+                  if (input) input.indeterminate = someFilesSelected;
+                }
               }}
               onCheckedChange={onSelectAll}
               aria-label="Select all files in current view"

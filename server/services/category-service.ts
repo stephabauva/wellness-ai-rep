@@ -140,13 +140,12 @@ export const categoryService = {
 // This would typically be run once at application startup or via a migration script
 export async function seedDefaultCategories() {
   const defaultCategories: Omit<InsertFileCategory, 'id' | 'userId' | 'isCustom' | 'createdAt'>[] = [
-    { name: 'Medical', description: 'Medical records, prescriptions, lab results.', icon: 'Heart', color: 'red-500' },
-    { name: 'Fitness', description: 'Workout plans, progress photos, fitness logs.', icon: 'Activity', color: 'green-500' },
-    { name: 'Financial', description: 'Invoices, receipts, tax documents.', icon: 'DollarSign', color: 'blue-500' },
-    { name: 'Personal', description: 'Personal documents, notes, journals.', icon: 'User', color: 'purple-500' },
-    { name: 'Work', description: 'Work-related documents, projects, reports.', icon: 'Briefcase', color: 'yellow-500' },
-    { name: 'Photo', description: 'Photos and images from chat or uploads.', icon: 'Camera', color: 'pink-500' },
-    { name: 'General', description: 'General purpose documents.', icon: 'FileText', color: 'gray-500' },
+    { name: '❤️ Medical', description: 'Medical records, prescriptions, lab results.', icon: 'Heart', color: '#ef4444' },
+    { name: '💪 Fitness', description: 'Workout plans, progress photos, fitness logs.', icon: 'Activity', color: '#22c55e' },
+    { name: '👤 Personal', description: 'Personal documents, notes, journals.', icon: 'User', color: '#a855f7' },
+    { name: '📸 Photo', description: 'Photos and images from chat or uploads.', icon: 'Camera', color: '#ec4899' },
+    { name: '🥗 Nutrition', description: 'Meal plans, nutrition logs, recipes.', icon: 'Apple', color: '#f59e0b' },
+    { name: '📄 General', description: 'General purpose documents.', icon: 'FileText', color: '#6b7280' },
   ];
 
   for (const catData of defaultCategories) {

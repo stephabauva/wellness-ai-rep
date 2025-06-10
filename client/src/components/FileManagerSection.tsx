@@ -1,7 +1,7 @@
 
 import React, { useMemo, useEffect, useState } from 'react';
 import { RotateCcw, FileText as DefaultFileIcon, QrCode, X, Download } from 'lucide-react';
-import { TabsContent, Tabs } from '@/components/ui/tabs';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -71,21 +71,14 @@ const FileManagerSection: React.FC = () => {
     if (activeTab === 'all') {
       return files;
     }
-    // activeTab is now assumed to be a categoryId from the database
+    if (activeTab === 'uncategorized') {
+      return files.filter(file => !file.categoryId);
+    }
+    // activeTab is assumed to be a categoryId from the database
     return files.filter(file => file.categoryId === activeTab);
   }, [activeTab, files]);
 
-  // Temporary: Get unique category IDs from files for rendering TabsContent
-  // This will be replaced when CategoryTabs is updated to use DB categories.
-  const uniqueCategoryIdsInFiles = useMemo(() => {
-    const ids = new Set<string>();
-    files.forEach(file => {
-      if (file.categoryId) {
-        ids.add(file.categoryId);
-      }
-    });
-    return Array.from(ids);
-  }, [files]);
+
 
   // Effect to clear selection when files data changes (e.g., after delete or refetch)
   // and the selected files are no longer in the list of all files.
@@ -155,74 +148,22 @@ const FileManagerSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 p-4 md:p-6 overflow-auto space-y-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <CategoryTabs
-            categories={categories}
-            files={files}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            totalFilesCount={files.length}
-          />
+      <div className="flex-1 p-4 md:p-6 overflow-auto space-y-4">
+        <CategoryTabs
+          categories={categories || []}
+          files={files}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          totalFilesCount={files.length}
+        />
 
-          {/* "all" tab content */}
-          <TabsContent value="all" className="mt-6">
-            <FileListComponent 
-              files={activeFiles} // Use activeFiles
-              selectedFiles={selectedFiles}
-              onSelectFile={handleSelectFile}
-              onSelectAll={() => handleSelectAll(activeFiles)} // Use activeFiles
-              viewMode={viewMode}
-            />
-          </TabsContent>
-
-          {/*
-            Temporary rendering for category-specific tabs.
-            This will be replaced when CategoryTabs is updated to use DB categories.
-            This section ensures that if a category tab IS active, its files are shown.
-          */}
-          {uniqueCategoryIdsInFiles.map(catId => (
-            <TabsContent key={catId} value={catId} className="mt-6">
-              {/*
-                Optionally, you could fetch and display category details here (name, etc.)
-                For now, just the FileListComponent with filtered files.
-                A proper CardHeader for the category would be added when CategoryTabs is fully integrated.
-              */}
-              <FileListComponent 
-                files={activeFiles} // activeFiles is already filtered for the current activeTab (which is catId here)
-                selectedFiles={selectedFiles}
-                onSelectFile={handleSelectFile}
-                onSelectAll={() => handleSelectAll(activeFiles)}
-                viewMode={viewMode}
-              />
-            </TabsContent>
-          ))}
-          {/*
-            The old mapping:
-            {categories.map(category => (
-              <TabsContent key={category.id} value={category.id} className="mt-6">
-                 <Card className="mb-4">
-                  <CardHeader className="pb-3 pt-4">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      {React.cloneElement(category.icon as React.ReactElement, { className: "h-5 w-5" })}
-                      {category.name} Files
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {category.description}
-                    </p>
-                  </CardHeader>
-                </Card>
-                <FileListComponent
-                  files={category.files} // This is the problematic part as category.files is from old system
-                  selectedFiles={selectedFiles}
-                  onSelectFile={handleSelectFile}
-                  onSelectAll={() => handleSelectAll(category.files)}
-                  viewMode={viewMode}
-                />
-              </TabsContent>
-            ))}
-          */}
-        </Tabs>
+        <FileListComponent
+          files={activeFiles}
+          selectedFiles={selectedFiles}
+          onSelectFile={handleSelectFile}
+          onSelectAll={() => handleSelectAll(activeFiles)}
+          viewMode={viewMode}
+        />
       </div>
 
       {/* QR Code Modal */}

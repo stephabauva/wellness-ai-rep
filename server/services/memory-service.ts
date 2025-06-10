@@ -104,7 +104,8 @@ Respond with JSON:
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        timeout: 4000, // Added timeout
       });
 
       let content = response.choices[0].message.content || '{}';
@@ -127,7 +128,7 @@ Respond with JSON:
         reasoning: result.reasoning || ''
       };
     } catch (error) {
-      console.error('Error in memory detection:', error);
+      console.error('Timeout or error in memory detection:', error);
       return {
         shouldRemember: false,
         category: 'context',
@@ -145,11 +146,12 @@ Respond with JSON:
       const response = await this.openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: text,
+        timeout: 4000, // Added timeout
       });
       
       return response.data[0].embedding;
     } catch (error) {
-      console.error('Error generating embedding:', error);
+      console.error('Timeout or error generating embedding:', error);
       return [];
     }
   }

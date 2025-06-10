@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo, useEffect } from "react";
 import { useMutation, QueryClient } from '@tanstack/react-query'; // queryClient might not be directly used here but good for consistency
 import { CoachingMode } from "@shared/schema";
+import { useUserSettings } from "@/hooks/useUserSettings";
 
 // Define Message type locally for now
 export type Message = {
@@ -37,7 +38,7 @@ interface AppContextType {
   setActiveSection: (section: ActiveSection) => void;
   coachingMode: string;
   setCoachingMode: (mode: string) => void;
-  settings?: AppSettings;
+  appSettings: AppSettings; // Changed from settings to appSettings
   // Chat related context values
   messages: Message[];
   currentConversationId: string | null;
@@ -89,13 +90,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
 
-  // Default settings for AI provider (can be moved or made dynamic later)
-  const settings = {
-    aiProvider: "openai",
-    aiModel: "gpt-4o",
-    automaticModelSelection: true,
-    transcriptionProvider: "webspeech"
-  };
+  const { userSettings, isLoading: isLoadingSettings } = useUserSettings();
+
+  useEffect(() => {
+    if (userSettings) {
+      console.log("[AppContext] User settings loaded:", userSettings);
+    }
+  }, [userSettings]);
+
+  const appSettings = useMemo<AppSettings>(() => ({
+    aiProvider: userSettings?.aiProvider || "openai",
+    aiModel: userSettings?.aiModel || "gpt-4o",
+    automaticModelSelection: userSettings?.automaticModelSelection ?? true,
+    transcriptionProvider: userSettings?.transcriptionProvider || "webspeech",
+  }), [userSettings]);
 
   // Message Loading useEffect (adapted from useChatMessages)
   useEffect(() => {
@@ -152,9 +160,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         content,
         attachments,
         conversationId,
-        aiProvider: aiProvider || settings.aiProvider,
-        aiModel: aiModel || settings.aiModel,
-        automaticModelSelection: automaticModelSelection ?? settings.automaticModelSelection
+        aiProvider: aiProvider || appSettings.aiProvider,
+        aiModel: aiModel || appSettings.aiModel,
+        automaticModelSelection: automaticModelSelection ?? appSettings.automaticModelSelection
       };
       console.log("[AppContext mutationFn] Sending to /api/messages. Request Body:", JSON.stringify(requestBody, null, 2));
       const response = await fetch("/api/messages", {
@@ -267,7 +275,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setActiveSection,
     coachingMode,
     setCoachingMode,
-    settings,
+    appSettings, // Changed from settings to appSettings
     messages: activeMessages,
     currentConversationId,
     loadingMessages: isLoadingMessages,
@@ -275,7 +283,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     selectConversation: selectConversationHandler,
     newChat: newChatHandler,
   }), [
-    activeSection, setActiveSection, coachingMode, setCoachingMode, settings,
+    activeSection, setActiveSection, coachingMode, setCoachingMode, appSettings, // Changed settings to appSettings
     activeMessages, currentConversationId, isLoadingMessages,
     sendMessageHandler, selectConversationHandler, newChatHandler
   ]);

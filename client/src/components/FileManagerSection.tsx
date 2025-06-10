@@ -33,7 +33,9 @@ const FileManagerSection: React.FC = () => {
     isLoadingFiles,
     refetchFiles,
     deleteFiles,
-    isDeletingFiles
+    isDeletingFiles,
+    categories,
+    isLoadingCategories
   } = useFileApi();
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);

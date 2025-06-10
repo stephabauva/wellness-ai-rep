@@ -884,7 +884,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = 1; // TODO: Get from authentication
       
       // Calculate retention settings
-      const fileRetentionInfo = attachmentRetentionService.getRetentionInfo(
+      const fileRetentionInfo = await attachmentRetentionService.getRetentionInfo(
         originalFileName,
         req.file.mimetype
       );
@@ -892,13 +892,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let retentionDays = null;
       let scheduledDeletion = null;
       
-      if (retentionInfo.category === 'high') {
+      if (fileRetentionInfo.category === 'high') {
         // Permanent files - no deletion
         retentionDays = null;
-      } else if (retentionInfo.category === 'medium') {
+      } else if (fileRetentionInfo.category === 'medium') {
         retentionDays = 90;
         scheduledDeletion = new Date(Date.now() + (90 * 24 * 60 * 60 * 1000));
-      } else if (retentionInfo.category === 'low') {
+      } else if (fileRetentionInfo.category === 'low') {
         retentionDays = 30;
         scheduledDeletion = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
       }
@@ -906,18 +906,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create file record in database
       const [savedFile] = await db.insert(files).values({
         userId,
-        categoryId: validatedCategoryId || null,
+        categoryId: validatedCategoryId || fileRetentionInfo.suggestedCategoryId || null,
         fileName: uniqueFileName,
         displayName: originalFileName,
         filePath: filePath,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         uploadSource: 'direct', // Direct upload from file manager
-        retentionPolicy: retentionInfo.category,
+        retentionPolicy: fileRetentionInfo.category,
         retentionDays,
         scheduledDeletion,
         metadata: {
-          retentionInfo,
+          retentionInfo: fileRetentionInfo,
           uploadContext: 'file_manager'
         }
       }).returning();
@@ -1077,7 +1077,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seed categories endpoint
   app.post("/api/categories/seed", async (req, res) => {
     try {
-      await categoryService.seedDefaultCategories();
+      const { seedDefaultCategories } = await import('./services/category-service.js');
+      await seedDefaultCategories();
       res.json({ message: "Default categories seeded successfully" });
     } catch (error: any) {
       console.error("Error seeding categories:", error);

@@ -85,12 +85,14 @@ export function useFileApi() {
       }
       return response.json();
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ['files', '/api/files'] });
       
       const { updatedCount = 0 } = data || {};
-      const categoryName = data.categoryId 
-        ? categories.find(cat => cat.id === data.categoryId)?.name || 'Selected Category'
+      // Get fresh categories data from the query client cache
+      const currentCategories = queryClient.getQueryData<FileCategory[]>(['categories']) || [];
+      const categoryName = variables.categoryId 
+        ? currentCategories.find(cat => cat.id === variables.categoryId)?.name || 'Selected Category'
         : 'Uncategorized';
       
       toast({

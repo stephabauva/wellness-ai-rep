@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UploadResponse {
   success: boolean;
@@ -17,7 +18,7 @@ interface UploadResponse {
 }
 
 interface UseFileUploadReturn {
-  uploadFile: (file: File, category?: string) => Promise<UploadResponse | null>;
+  uploadFile: (file: File, categoryId?: string) => Promise<UploadResponse | null>;
   isUploading: boolean;
   error: string | null;
 }
@@ -25,16 +26,17 @@ interface UseFileUploadReturn {
 export function useFileUpload(): UseFileUploadReturn {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const uploadFile = async (file: File, category?: string): Promise<UploadResponse | null> => {
+  const uploadFile = async (file: File, categoryId?: string): Promise<UploadResponse | null> => {
     setIsUploading(true);
     setError(null);
 
     const formData = new FormData();
     formData.append('file', file);
 
-    if (category) {
-      formData.append('category', category);
+    if (categoryId) {
+      formData.append('categoryId', categoryId);
     }
 
     try {
@@ -50,6 +52,11 @@ export function useFileUpload(): UseFileUploadReturn {
       }
 
       const result: UploadResponse = await response.json();
+      
+      // Invalidate file queries to ensure file management shows updated files
+      queryClient.invalidateQueries({ queryKey: ['files', '/api/files'] });
+      queryClient.invalidateQueries({ queryKey: ['files'] });
+      
       setIsUploading(false);
       return result;
     } catch (e: any) {

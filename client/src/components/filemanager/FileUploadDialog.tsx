@@ -61,10 +61,6 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ isOpen, onClose, on
     }
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">

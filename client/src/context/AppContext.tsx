@@ -217,13 +217,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return [...filteredMessages, ...newMessagesFromServer].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       });
       if (data.conversationId && currentConversationId !== data.conversationId) {
+        console.log("[AppContext sendMessage onSuccess] Changing currentConversationId from", currentConversationId, "to:", data.conversationId);
         setCurrentConversationIdState(data.conversationId);
       }
-      if (variables.conversationId === null && data.conversationId) {
-        setNewlyCreatedConvId(data.conversationId);
-      } else {
-        setNewlyCreatedConvId(null);
-      }
+      // Temporarily comment out setNewlyCreatedConvId logic for testing
+      // if (variables.conversationId === null && data.conversationId) {
+      //   // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to:", data.conversationId); // Optional: also comment out log if it exists
+      //   setNewlyCreatedConvId(data.conversationId);
+      // } else {
+      //   // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to null"); // Optional: also comment out log if it exists
+      //   setNewlyCreatedConvId(null);
+      // }
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (error, variables, context) => {
@@ -244,10 +248,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   const selectConversationHandler = useCallback((id: string | null) => {
+    console.log("[AppContext selectConversationHandler] Setting currentConversationId to:", id);
     setCurrentConversationIdState(id);
   }, []);
 
   const newChatHandler = useCallback(() => {
+    console.log("[AppContext newChatHandler] Setting currentConversationId to null");
     setCurrentConversationIdState(null); // useEffect will handle setting welcome message and clearing newlyCreatedConvId
   }, []);
 

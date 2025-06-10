@@ -278,8 +278,8 @@ export class AttachmentRetentionService {
   /**
    * Get retention info for a specific attachment
    */
-  getRetentionInfo(fileName: string, fileType: string, context?: string) {
-    return this.categorizeAttachment(fileName, fileType, context);
+  async getRetentionInfo(fileName: string, fileType: string, context?: string) {
+    return await this.categorizeAttachment(fileName, fileType, context);
   }
 
   /**

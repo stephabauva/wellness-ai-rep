@@ -194,12 +194,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (attachments && attachments.length > 0) {
         for (const attachment of attachments) {
           try {
-            // Get retention information for the uploaded file
-            const retentionInfo = attachmentRetentionService.getRetentionInfo(
-              attachment.displayName || attachment.fileName,
-              attachment.fileType
-            );
-
             // Auto-categorize the file using the retention service
             const categorization = await attachmentRetentionService.categorizeAttachment(
               attachment.displayName || attachment.fileName,
@@ -244,7 +238,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 retentionDays,
                 scheduledDeletion,
                 metadata: {
-                  retentionInfo,
                   uploadContext: 'chat',
                   conversationId: currentConversationId,
                   messageId: savedUserMessage.id,
@@ -1081,6 +1074,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Seed categories endpoint
+  app.post("/api/categories/seed", async (req, res) => {
+    try {
+      await categoryService.seedDefaultCategories();
+      res.json({ message: "Default categories seeded successfully" });
+    } catch (error: any) {
+      console.error("Error seeding categories:", error);
+      res.status(500).json({ message: "Failed to seed categories", error: error.message });
+    }
+  });
 
   return httpServer;
 }

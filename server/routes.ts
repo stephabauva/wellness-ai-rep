@@ -190,6 +190,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Saved user message ${savedUserMessage.id} to conversation ${currentConversationId}`);
 
+      // Save attachments to files table for file management integration
+      if (attachments && attachments.length > 0) {
+        for (const attachment of attachments) {
+          try {
+            // Get retention information for the uploaded file
+            const retentionInfo = attachmentRetentionService.getRetentionInfo(
+              attachment.displayName || attachment.fileName,
+              attachment.fileType
+            );
+
+            // Auto-categorize the file using the retention service
+            const categorization = attachmentRetentionService.categorizeAttachment(
+              attachment.displayName || attachment.fileName,
+              attachment.fileType,
+              `Chat upload in conversation: ${currentConversationId}`
+            );
+
+            // Calculate retention settings
+            let retentionDays = null;
+            let scheduledDeletion = null;
+            
+            if (retentionInfo.category === 'high') {
+              // Permanent files - no deletion
+              retentionDays = null;
+            } else if (retentionInfo.category === 'medium') {
+              retentionDays = 90;
+              scheduledDeletion = new Date(Date.now() + (90 * 24 * 60 * 60 * 1000));
+            } else if (retentionInfo.category === 'low') {
+              retentionDays = 30;
+              scheduledDeletion = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+            }
+
+            // Check if file already exists in files table (to avoid duplicates)
+            const existingFile = await db
+              .select()
+              .from(files)
+              .where(eq(files.fileName, attachment.fileName))
+              .limit(1);
+
+            if (existingFile.length === 0) {
+              // Create file record in database
+              await db.insert(files).values({
+                userId,
+                categoryId: categorization.suggestedCategoryId || null,
+                fileName: attachment.fileName,
+                displayName: attachment.displayName || attachment.fileName,
+                filePath: join(process.cwd(), 'uploads', attachment.fileName),
+                fileType: attachment.fileType,
+                fileSize: attachment.fileSize,
+                uploadSource: 'chat', // Mark as chat upload
+                retentionPolicy: retentionInfo.category,
+                retentionDays,
+                scheduledDeletion,
+                metadata: {
+                  retentionInfo,
+                  uploadContext: 'chat',
+                  conversationId: currentConversationId,
+                  messageId: savedUserMessage.id,
+                  categorization
+                }
+              });
+
+              console.log(`Saved attachment ${attachment.fileName} to files table with category: ${categorization.category}`);
+            }
+          } catch (error) {
+            console.error(`Failed to save attachment ${attachment.fileName} to files table:`, error);
+            // Continue processing other attachments even if one fails
+          }
+        }
+      }
+
       // Also save to legacy messages for compatibility
       const legacyUserMessage = await storage.createMessage({
         userId,
@@ -472,12 +543,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             displayName: file.displayName,
             fileType: file.fileType,
             fileSize: file.fileSize,
-            uploadDate: file.createdAt.toISOString(),
+            uploadDate: file.createdAt?.toISOString() || new Date().toISOString(),
             url: `/uploads/${file.fileName}`,
             retentionInfo: {
               category: file.retentionPolicy,
               retentionDays: file.retentionDays || (file.retentionPolicy === 'high' ? -1 : file.retentionDays),
-              reason: file.metadata?.retentionInfo?.reason || 'Auto-categorized'
+              reason: (file.metadata as any)?.retentionInfo?.reason || 'Auto-categorized'
             },
             categoryId: file.categoryId,
             uploadSource: file.uploadSource,
@@ -485,7 +556,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         })
         .filter(Boolean) // Remove null entries for non-existent files
-        .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()); // Sort by newest first
+        .sort((a, b) => {
+          if (!a || !b) return 0;
+          return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+        }); // Sort by newest first
 
       res.json(fileList);
     } catch (error) {
@@ -522,6 +596,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             notFoundCount++;
             console.log(`File not found (already deleted or missing): ${filePath}`);
           }
+
+          // Also mark as deleted in database
+          await db
+            .update(files)
+            .set({ isDeleted: true })
+            .where(eq(files.fileName, fileId));
+
         } catch (error) {
           console.error(`Failed to delete file ${fileId}:`, error);
         }
@@ -540,6 +621,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting files:', error);
       res.status(500).json({ error: 'Failed to delete files' });
+    }
+  });
+
+  // Update file categories (manual categorization)
+  app.patch('/api/files/categorize', async (req, res) => {
+    try {
+      const { fileIds, categoryId } = req.body;
+
+      if (!Array.isArray(fileIds) || fileIds.length === 0) {
+        return res.status(400).json({ error: 'No file IDs provided' });
+      }
+
+      // Validate category if provided
+      if (categoryId) {
+        const category = await categoryService.getCategoryById(categoryId, FIXED_USER_ID);
+        if (!category) {
+          return res.status(400).json({ error: 'Invalid category ID' });
+        }
+      }
+
+      // Update files in database
+      let updatedCount = 0;
+      for (const fileId of fileIds) {
+        try {
+          const result = await db
+            .update(files)
+            .set({ 
+              categoryId: categoryId || null,
+              updatedAt: new Date()
+            })
+            .where(eq(files.fileName, fileId))
+            .returning();
+
+          if (result.length > 0) {
+            updatedCount++;
+            console.log(`Updated category for file ${fileId} to ${categoryId || 'uncategorized'}`);
+          }
+        } catch (error) {
+          console.error(`Failed to update category for file ${fileId}:`, error);
+        }
+      }
+
+      res.json({ 
+        success: true,
+        updatedCount,
+        categoryId: categoryId || null
+      });
+    } catch (error) {
+      console.error('Error updating file categories:', error);
+      res.status(500).json({ error: 'Failed to update file categories' });
     }
   });
 

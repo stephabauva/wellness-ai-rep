@@ -61,6 +61,7 @@ export class AttachmentRetentionService {
     category: 'high' | 'medium' | 'low';
     retentionDays: number;
     reason: string;
+    suggestedCategoryId?: string;
   } {
     const lowerFileName = fileName.toLowerCase();
     const lowerContext = context?.toLowerCase() || '';

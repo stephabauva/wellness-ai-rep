@@ -9,7 +9,7 @@ import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, insertFileSchema } from "@shared/schema";
+import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema } from "@shared/schema";
 import { categoryService } from "./services/category-service";
 import { eq, desc } from "drizzle-orm";
 import { join } from 'path';
@@ -515,10 +515,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = 1; // TODO: Get from auth
 
-      // Query files from dedicated files table
+      // Query files from dedicated files table with category information
       const userFiles = await db
-        .select()
+        .select({
+          id: files.id,
+          fileName: files.fileName,
+          displayName: files.displayName,
+          fileType: files.fileType,
+          fileSize: files.fileSize,
+          createdAt: files.createdAt,
+          filePath: files.filePath,
+          retentionPolicy: files.retentionPolicy,
+          retentionDays: files.retentionDays,
+          scheduledDeletion: files.scheduledDeletion,
+          categoryId: files.categoryId,
+          uploadSource: files.uploadSource,
+          metadata: files.metadata,
+          isDeleted: files.isDeleted,
+          categoryName: fileCategories.name,
+          categoryIcon: fileCategories.icon,
+          categoryColor: fileCategories.color
+        })
         .from(files)
+        .leftJoin(fileCategories, eq(files.categoryId, fileCategories.id))
         .where(eq(files.userId, userId));
 
       const fileList = userFiles
@@ -544,6 +563,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               reason: (file.metadata as any)?.retentionInfo?.reason || 'Auto-categorized'
             },
             categoryId: file.categoryId,
+            categoryName: file.categoryName,
+            categoryIcon: file.categoryIcon,
+            categoryColor: file.categoryColor,
             uploadSource: file.uploadSource,
             scheduledDeletion: file.scheduledDeletion?.toISOString() || null,
           };

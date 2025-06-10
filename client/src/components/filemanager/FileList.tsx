@@ -238,7 +238,13 @@ export const FileList: React.FC<FileListProps> = ({
                 <span className="hidden sm:inline">•</span>
                 <span className="hidden sm:inline">{formatDate(file.uploadDate)}</span>
                 <span className="sm:hidden">{new Date(file.uploadDate).toLocaleDateString()}</span>
-                 <span className="hidden sm:inline">•</span>
+                {file.categoryName && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="truncate" title={`Category: ${file.categoryName}`}>{file.categoryName}</span>
+                  </>
+                )}
+                <span className="hidden sm:inline">•</span>
                 <span className="truncate hidden md:inline" title={file.retentionInfo?.reason}>{file.retentionInfo?.reason}</span>
               </div>
             </div>

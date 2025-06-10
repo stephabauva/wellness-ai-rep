@@ -18,6 +18,9 @@ export interface FileItem {
   tags?: string[];
   description?: string;
   categoryId?: string | null; // New field for linking to FileCategory.id
+  categoryName?: string | null; // Category name for display
+  categoryIcon?: string | null; // Category icon name
+  categoryColor?: string | null; // Category color
 }
 
 // This seems to be a View Model for displaying categories with their files,

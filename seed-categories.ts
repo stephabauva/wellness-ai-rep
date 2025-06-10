@@ -1,5 +1,5 @@
 
-const { seedDefaultCategories } = require('./server/services/category-service.ts');
+import { seedDefaultCategories } from './server/services/category-service';
 
 console.log('Starting category seeding...');
 

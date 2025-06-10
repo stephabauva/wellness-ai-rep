@@ -215,18 +215,19 @@ export class GoogleProvider implements AiProvider {
 
       log('info', `Calling genModel.generateContent`, { historyLength: fullHistoryForGoogle.length, generationConfig });
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-          log('warn', `Google chat generation request timed out after 15 seconds for model: ${model}`);
-          controller.abort();
-      }, 15000); // 15 seconds
+      // AbortController and related timeout logic removed for stability.
+      // const controller = new AbortController();
+      // const timeoutId = setTimeout(() => {
+      //     log('warn', `Google chat generation request timed out after 15 seconds for model: ${model}`);
+      //     controller.abort();
+      // }, 15000); // 15 seconds
 
       try {
         const result = await genModel.generateContent({
           contents: fullHistoryForGoogle,
           generationConfig,
-          safetySettings: genModel.safetySettings, // Use safety settings from the model instance
-          requestOptions: { signal: controller.signal } // Pass AbortSignal here
+          safetySettings: genModel.safetySettings // Use safety settings from the model instance
+          // requestOptions: { signal: controller.signal } // Removed
         });
 
         const response = await result.response;
@@ -236,22 +237,26 @@ export class GoogleProvider implements AiProvider {
         return { response: responseText };
 
       } catch (error: any) {
-        log('error', 'Error in generateChatResponse (Google):', error);
-        if (error.name === 'AbortError' || (error.message && (error.message.includes('deadline exceeded') || error.message.includes('timed out')))) {
-          log('warn', `Google API request timed out or aborted: ${error.message}`);
-          return { response: "I'm sorry, the request to Google timed out. Please try again."};
-        }
+        log('error', 'Error during genModel.generateContent (Google):', error);
+        // Removed AbortError specific check. SDK might still throw its own timeout errors.
         if (error?.message?.includes('SAFETY')) {
            return { response: "I'm unable to respond to that request due to safety guidelines." };
         }
+        // Re-throw other errors to be caught by the outer catch block or AiService
         throw error;
-      } finally {
-        clearTimeout(timeoutId); // Ensure timeout is always cleared
       }
+      // finally { // No longer needed as timeoutId is removed
+      //   clearTimeout(timeoutId);
+      // }
     } catch (error: any) { // This is the catch for the outer try block
       log('error', 'Unhandled error in generateChatResponse (Google):', error);
       // This will catch errors from the setup phase before the inner try,
-      // or errors re-thrown by the inner catch block that are not AbortError or SAFETY.
+      // or errors re-thrown by the inner catch block.
+      // Specific SAFETY check could be redundant if inner catch handles and doesn't re-throw,
+      // but kept for robustness if inner error handling changes.
+      if (error?.message?.includes('SAFETY')) {
+        return { response: "I'm unable to respond to that request due to safety guidelines (outer catch)." };
+      }
       return { response: "An unexpected error occurred while processing your request with Google." };
     }
   }

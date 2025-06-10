@@ -100,7 +100,10 @@ Respond with JSON:
 }`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
+    const timeoutId = setTimeout(() => {
+        console.warn('[MemoryService] Memory detection (detectMemoryWorthy) timed out after 45 seconds for message processing.');
+        controller.abort();
+    }, 45000); // 45 seconds
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -147,7 +150,10 @@ Respond with JSON:
   // Generate embeddings for semantic search
   async generateEmbedding(text: string): Promise<number[]> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
+    const timeoutId = setTimeout(() => {
+        console.warn('[MemoryService] Embedding generation (generateEmbedding) timed out after 45 seconds.');
+        controller.abort();
+    }, 45000); // 45 seconds
 
     try {
       const response = await this.openai.embeddings.create({

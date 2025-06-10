@@ -49,9 +49,9 @@ export class OpenAiProvider implements AiProvider {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-        log('warn', `OpenAI chat completion request timed out after 20 seconds for model: ${config.model}`);
+        log('warn', `OpenAI chat completion request timed out after 30 seconds for model: ${config.model}`);
         controller.abort();
-    }, 20000); // 20 seconds
+    }, 30000); // 30 seconds
 
     try {
       const response = await this.openai.chat.completions.create({

@@ -213,33 +213,41 @@ export class GoogleProvider implements AiProvider {
       if (config.topP !== undefined) generationConfig.topP = config.topP;
       // topK is also available for Google
 
-      log('info', `Calling genModel.generateContent with timeout: 15s`, { historyLength: fullHistoryForGoogle.length, generationConfig });
+      log('info', `Calling genModel.generateContent`, { historyLength: fullHistoryForGoogle.length, generationConfig });
 
-      const result = await genModel.generateContent({
-        contents: fullHistoryForGoogle,
-        generationConfig,
-        safetySettings: genModel.safetySettings, // Use safety settings from the model instance
-        requestOptions: { timeout: 15 } // 15 seconds timeout
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+          log('warn', `Google chat generation request timed out after 15 seconds for model: ${model}`);
+          controller.abort();
+      }, 15000); // 15 seconds
 
-      const response = await result.response;
-      const responseText = response.text() || "I'm sorry, I couldn't generate a response right now. Please try again.";
+      try {
+        const result = await genModel.generateContent({
+          contents: fullHistoryForGoogle,
+          generationConfig,
+          safetySettings: genModel.safetySettings, // Use safety settings from the model instance
+          requestOptions: { signal: controller.signal } // Pass AbortSignal here
+        });
 
-      log('info', 'Chat response received from Google generateContent.');
-      return { response: responseText };
+        const response = await result.response;
+        const responseText = response.text() || "I'm sorry, I couldn't generate a response right now. Please try again.";
 
-    } catch (error: any) {
-      log('error', 'Error in generateChatResponse (Google):', error);
-      if (error?.message?.includes('SAFETY')) {
-         return { response: "I'm unable to respond to that request due to safety guidelines." };
+        log('info', 'Chat response received from Google generateContent.');
+        return { response: responseText };
+
+      } catch (error: any) {
+        log('error', 'Error in generateChatResponse (Google):', error);
+        if (error.name === 'AbortError' || (error.message && (error.message.includes('deadline exceeded') || error.message.includes('timed out')))) {
+          log('warn', `Google API request timed out or aborted: ${error.message}`);
+          return { response: "I'm sorry, the request to Google timed out. Please try again."};
+        }
+        if (error?.message?.includes('SAFETY')) {
+           return { response: "I'm unable to respond to that request due to safety guidelines." };
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId); // Ensure timeout is always cleared
       }
-      // Check for timeout specific error if Google SDK throws a distinct one
-      if (error.message && (error.message.includes('deadline exceeded') || error.message.includes('timed out'))) {
-        log('warn', `Google API request timed out: ${error.message}`);
-        // Return a timeout specific message or rethrow a custom timeout error
-        return { response: "I'm sorry, the request to Google timed out. Please try again."};
-      }
-      throw error;
     }
   }
 

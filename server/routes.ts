@@ -201,23 +201,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
 
             // Auto-categorize the file using the retention service
-            const categorization = attachmentRetentionService.categorizeAttachment(
+            const categorization = await attachmentRetentionService.categorizeAttachment(
               attachment.displayName || attachment.fileName,
               attachment.fileType,
               `Chat upload in conversation: ${currentConversationId}`
             );
 
-            // Calculate retention settings
+            // Calculate retention settings based on categorization
             let retentionDays = null;
             let scheduledDeletion = null;
             
-            if (retentionInfo.category === 'high') {
+            if (categorization.category === 'high') {
               // Permanent files - no deletion
               retentionDays = null;
-            } else if (retentionInfo.category === 'medium') {
+            } else if (categorization.category === 'medium') {
               retentionDays = 90;
               scheduledDeletion = new Date(Date.now() + (90 * 24 * 60 * 60 * 1000));
-            } else if (retentionInfo.category === 'low') {
+            } else if (categorization.category === 'low') {
               retentionDays = 30;
               scheduledDeletion = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
             }
@@ -240,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 fileType: attachment.fileType,
                 fileSize: attachment.fileSize,
                 uploadSource: 'chat', // Mark as chat upload
-                retentionPolicy: retentionInfo.category,
+                retentionPolicy: categorization.category,
                 retentionDays,
                 scheduledDeletion,
                 metadata: {

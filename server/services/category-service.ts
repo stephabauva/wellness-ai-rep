@@ -145,6 +145,7 @@ export async function seedDefaultCategories() {
     { name: 'Financial', description: 'Invoices, receipts, tax documents.', icon: 'DollarSign', color: 'blue-500' },
     { name: 'Personal', description: 'Personal documents, notes, journals.', icon: 'User', color: 'purple-500' },
     { name: 'Work', description: 'Work-related documents, projects, reports.', icon: 'Briefcase', color: 'yellow-500' },
+    { name: 'Photo', description: 'Photos and images from chat or uploads.', icon: 'Camera', color: 'pink-500' },
     { name: 'General', description: 'General purpose documents.', icon: 'FileText', color: 'gray-500' },
   ];
 

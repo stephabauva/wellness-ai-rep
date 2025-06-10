@@ -150,7 +150,7 @@ const FileManagerSection: React.FC = () => {
             isDeleting={isDeletingFiles}
             isCategorizing={isCategorizingFiles}
             onUploadClick={() => setIsUploadDialogOpen(true)}
-            categories={categories}
+            categories={categories || []}
           />
         </div>
       </div>

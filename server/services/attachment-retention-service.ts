@@ -57,16 +57,31 @@ export class AttachmentRetentionService {
   /**
    * Categorize attachment based on filename, content analysis, and context
    */
-  categorizeAttachment(fileName: string, fileType: string, context?: string): {
+  async categorizeAttachment(fileName: string, fileType: string, context?: string): Promise<{
     category: 'high' | 'medium' | 'low';
     retentionDays: number;
     reason: string;
     suggestedCategoryId?: string;
-  } {
+    suggestedCategoryName?: string;
+  }> {
     const lowerFileName = fileName.toLowerCase();
     const lowerContext = context?.toLowerCase() || '';
+    const isImage = fileType.startsWith('image/');
     
-    // High-value indicators
+    // Import database functions
+    const { db } = await import('../db.js');
+    const { fileCategories } = await import('../../shared/schema.js');
+    const { eq, isNull } = await import('drizzle-orm');
+    
+    // Get system categories
+    const systemCategories = await db
+      .select()
+      .from(fileCategories)
+      .where(isNull(fileCategories.userId));
+    
+    const getCategory = (name: string) => systemCategories.find(cat => cat.name === name);
+    
+    // Medical/health indicators (high value)
     if (
       lowerFileName.includes('blood') ||
       lowerFileName.includes('lab') ||
@@ -78,33 +93,113 @@ export class AttachmentRetentionService {
       lowerContext.includes('lab result') ||
       lowerContext.includes('medical')
     ) {
+      const medicalCategory = getCategory('Medical');
       return {
         category: 'high',
         retentionDays: this.durations.highValueRetentionDays,
-        reason: 'Medical/health document detected'
+        reason: 'Medical/health document detected',
+        suggestedCategoryId: medicalCategory?.id,
+        suggestedCategoryName: 'Medical'
       };
     }
 
-    // Medium-value indicators
+    // Fitness indicators (medium value)
     if (
       lowerFileName.includes('plan') ||
       lowerFileName.includes('routine') ||
       lowerFileName.includes('workout') ||
+      lowerFileName.includes('fitness') ||
       lowerContext.includes('nutrition plan') ||
-      lowerContext.includes('exercise')
+      lowerContext.includes('exercise') ||
+      lowerContext.includes('fitness')
     ) {
+      const fitnessCategory = getCategory('Fitness');
       return {
         category: 'medium',
         retentionDays: this.durations.mediumValueRetentionDays,
-        reason: 'Health plan or routine document'
+        reason: 'Fitness plan or routine document',
+        suggestedCategoryId: fitnessCategory?.id,
+        suggestedCategoryName: 'Fitness'
       };
     }
 
-    // Low-value (default for photos and temporary files)
+    // Financial indicators (medium value)
+    if (
+      lowerFileName.includes('receipt') ||
+      lowerFileName.includes('invoice') ||
+      lowerFileName.includes('tax') ||
+      lowerFileName.includes('financial') ||
+      lowerContext.includes('receipt') ||
+      lowerContext.includes('invoice') ||
+      lowerContext.includes('financial')
+    ) {
+      const financialCategory = getCategory('Financial');
+      return {
+        category: 'medium',
+        retentionDays: this.durations.mediumValueRetentionDays,
+        reason: 'Financial document detected',
+        suggestedCategoryId: financialCategory?.id,
+        suggestedCategoryName: 'Financial'
+      };
+    }
+
+    // Work indicators (medium value)
+    if (
+      lowerFileName.includes('work') ||
+      lowerFileName.includes('project') ||
+      lowerFileName.includes('meeting') ||
+      lowerFileName.includes('presentation') ||
+      lowerContext.includes('work') ||
+      lowerContext.includes('project') ||
+      lowerContext.includes('meeting')
+    ) {
+      const workCategory = getCategory('Work');
+      return {
+        category: 'medium',
+        retentionDays: this.durations.mediumValueRetentionDays,
+        reason: 'Work-related document',
+        suggestedCategoryId: workCategory?.id,
+        suggestedCategoryName: 'Work'
+      };
+    }
+
+    // Photo/image files (low value by default, but categorized as Photo)
+    if (isImage || lowerContext.includes('photo') || lowerContext.includes('image')) {
+      const photoCategory = getCategory('Photo');
+      return {
+        category: 'low',
+        retentionDays: this.durations.lowValueRetentionDays,
+        reason: 'Photo or image file',
+        suggestedCategoryId: photoCategory?.id,
+        suggestedCategoryName: 'Photo'
+      };
+    }
+
+    // Personal indicators
+    if (
+      lowerFileName.includes('personal') ||
+      lowerFileName.includes('diary') ||
+      lowerFileName.includes('journal') ||
+      lowerContext.includes('personal')
+    ) {
+      const personalCategory = getCategory('Personal');
+      return {
+        category: 'medium',
+        retentionDays: this.durations.mediumValueRetentionDays,
+        reason: 'Personal document',
+        suggestedCategoryId: personalCategory?.id,
+        suggestedCategoryName: 'Personal'
+      };
+    }
+
+    // Default to General category (low value)
+    const generalCategory = getCategory('General');
     return {
       category: 'low',
       retentionDays: this.durations.lowValueRetentionDays,
-      reason: 'Temporary or reference file'
+      reason: 'General document or file',
+      suggestedCategoryId: generalCategory?.id,
+      suggestedCategoryName: 'General'
     };
   }
 

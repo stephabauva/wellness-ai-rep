@@ -99,14 +99,18 @@ Respond with JSON:
     "reasoning": "why this should/shouldn't be remembered"
 }`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds
+
     try {
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
-        response_format: { type: "json_object" },
-        timeout: 4000, // Added timeout
-      });
+        response_format: { type: "json_object" }
+        // Removed incorrect 'timeout: 4000'
+      }, { signal: controller.signal }); // Pass signal here
+      clearTimeout(timeoutId); // Clear the timeout if the request completes/fails sooner
 
       let content = response.choices[0].message.content || '{}';
       // Clean up markdown formatting if present
@@ -142,12 +146,16 @@ Respond with JSON:
 
   // Generate embeddings for semantic search
   async generateEmbedding(text: string): Promise<number[]> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds
+
     try {
       const response = await this.openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: text,
-        timeout: 4000, // Added timeout
-      });
+        // Removed incorrect 'timeout: 4000'
+      }, { signal: controller.signal }); // Pass signal here
+      clearTimeout(timeoutId); // Clear the timeout
       
       return response.data[0].embedding;
     } catch (error) {

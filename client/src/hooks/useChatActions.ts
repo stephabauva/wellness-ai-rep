@@ -34,6 +34,13 @@ export function useChatActions({
       const hasImages = currentAttachedFiles.some(file => file.fileType?.startsWith('image/'));
       const automaticModelSelection = settings?.automaticModelSelection ?? hasImages;
 
+      console.log("[useChatActions] Effective AI Settings for send:", {
+        contextSettings: settings, // Log the whole settings object from context
+        resolvedAiProvider: aiProvider,
+        resolvedAiModel: aiModel,
+        resolvedAutomaticModelSelection: automaticModelSelection
+      });
+
       sendMessageMutation.mutate({
         content: inputMessage,
         attachments: currentAttachedFiles,

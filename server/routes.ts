@@ -9,7 +9,8 @@ import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { conversations, conversationMessages, memoryEntries } from "@shared/schema";
+import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema } from "@shared/schema";
+import { categoryService } from "./services/category-service";
 import { eq, desc } from "drizzle-orm";
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -74,8 +75,27 @@ const retentionSettingsSchema = z.object({
   lowValueRetentionDays: z.number().min(1)
 });
 
+// Zod schema for creating a category
+const createCategoryBodySchema = insertFileCategorySchema.pick({
+  name: true,
+  description: true,
+  icon: true,
+  color: true
+}).required({ name: true }).partial({ description: true, icon: true, color: true });
+
+// Zod schema for updating a category
+const updateCategoryBodySchema = insertFileCategorySchema.pick({
+  name: true,
+  description: true,
+  icon: true,
+  color: true
+}).partial();
+
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+
+  const FIXED_USER_ID = 1; // Assuming fixed user ID for now
 
   // Serve uploaded files
   app.use('/uploads', (req, res, next) => {
@@ -716,7 +736,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.file.mimetype
       );
 
-      const category = req.body.category;
+      let validatedCategoryId: string | undefined = undefined;
+      const categoryIdFromRequest = req.body.category as string | undefined;
+
+      if (categoryIdFromRequest) {
+        try {
+          const category = await categoryService.getCategoryById(categoryIdFromRequest, FIXED_USER_ID);
+          if (!category) {
+            return res.status(400).json({
+              error: "Invalid category ID provided.",
+              details: `Category with ID '${categoryIdFromRequest}' not found or not accessible by user ${FIXED_USER_ID}.`
+            });
+          }
+          validatedCategoryId = category.id;
+        } catch (serviceError: any) {
+          console.error('Category validation error during upload:', serviceError);
+          return res.status(500).json({ error: "Error validating category during upload.", details: serviceError.message });
+        }
+      }
 
       const fileData: any = {
         id: fileId,
@@ -726,11 +763,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         url: `/uploads/${uniqueFileName}`,
-        retentionInfo
+        retentionInfo,
       };
 
-      if (category) {
-        fileData.category = category;
+      if (validatedCategoryId) {
+        fileData.categoryId = validatedCategoryId; // Note: key is categoryId
       }
 
       res.json({
@@ -810,6 +847,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Category Routes
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await categoryService.getCategories(FIXED_USER_ID);
+      res.json(categories);
+    } catch (error: any) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Failed to fetch categories", error: error.message });
+    }
+  });
+
+  app.post("/api/categories", async (req, res) => {
+    try {
+      const validatedBody = createCategoryBodySchema.parse(req.body);
+      const newCategory = await categoryService.createCategory(FIXED_USER_ID, validatedBody);
+      res.status(201).json(newCategory);
+    } catch (error: any) {
+      console.error("Error creating category:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      // Check for specific error messages from the service, e.g., name conflict
+      if (error.message?.includes("already exists")) {
+        return res.status(409).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to create category", error: error.message });
+    }
+  });
+
+  app.put("/api/categories/:id", async (req, res) => {
+    const categoryId = req.params.id;
+    try {
+      const validatedBody = updateCategoryBodySchema.parse(req.body);
+      if (Object.keys(validatedBody).length === 0) {
+        return res.status(400).json({ message: "No fields to update provided." });
+      }
+      const updatedCategory = await categoryService.updateCategory(FIXED_USER_ID, categoryId, validatedBody);
+      if (updatedCategory) {
+        res.json(updatedCategory);
+      } else {
+        res.status(404).json({ message: "Category not found or not authorized to update." });
+      }
+    } catch (error: any) {
+      console.error(`Error updating category ${categoryId}:`, error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      if (error.message?.includes("already exists")) {
+        return res.status(409).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to update category", error: error.message });
+    }
+  });
+
+  app.delete("/api/categories/:id", async (req, res) => {
+    const categoryId = req.params.id;
+    try {
+      const result = await categoryService.deleteCategory(FIXED_USER_ID, categoryId);
+      if (result.success) {
+        res.status(204).send();
+      } else {
+        // Determine appropriate status code based on message
+        if (result.message?.includes("not found") || result.message?.includes("not authorized")) {
+          res.status(404).json({ message: result.message }); // Could be 403 if specifically not authorized
+        } else {
+          res.status(400).json({ message: result.message }); // General client error
+        }
+      }
+    } catch (error: any) {
+      console.error(`Error deleting category ${categoryId}:`, error);
+      res.status(500).json({ message: "Failed to delete category", error: error.message });
+    }
+  });
+
 
   return httpServer;
 }

@@ -102,6 +102,23 @@ export type InsertHealthData = z.infer<typeof insertHealthDataSchema>;
 export type ConnectedDevice = typeof connectedDevices.$inferSelect;
 export type InsertConnectedDevice = z.infer<typeof insertConnectedDeviceSchema>;
 
+// File Categories Table
+export const fileCategories = pgTable("file_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon"), // For storing icon name or SVG string
+  color: text("color"), // For storing hex color or Tailwind class
+  isCustom: boolean("is_custom").default(false).notNull(),
+  userId: integer("user_id").references(() => users.id), // Nullable for system categories
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type FileCategory = typeof fileCategories.$inferSelect;
+export type InsertFileCategory = typeof fileCategories.$inferInsert;
+export const insertFileCategorySchema = createInsertSchema(fileCategories);
+
+
 // Conversation schema for memory system
 export const conversations = pgTable("conversations", {
   id: uuid("id").primaryKey().defaultRandom(),

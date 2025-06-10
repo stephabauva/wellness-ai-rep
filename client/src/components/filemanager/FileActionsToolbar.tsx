@@ -6,7 +6,8 @@ import {
   Trash2,
   List,
   Grid3X3, // Corrected from Grid to Grid3X3
-  RotateCcw
+  RotateCcw,
+  Upload
 } from 'lucide-react';
 import { ViewMode } from '@/types/fileManager';
 
@@ -19,6 +20,7 @@ interface FileActionsToolbarProps {
   onSetViewMode: (mode: ViewMode) => void;
   onRefresh: () => void;
   isDeleting: boolean;
+  onUploadClick: () => void;
 }
 
 export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
@@ -30,6 +32,7 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
   onSetViewMode,
   onRefresh,
   isDeleting,
+  onUploadClick,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -76,7 +79,18 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
       {/* Spacer to push view mode and refresh to the right if no files are selected */}
       {selectedFilesCount === 0 && <div className="flex-1 hidden sm:block"></div>}
 
-      <div className="flex items-center gap-2 mt-2 sm:mt-0"> {/* Group for view mode and refresh */}
+      <div className="flex items-center gap-2 mt-2 sm:mt-0"> {/* Group for upload, view mode and refresh */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onUploadClick}
+          className="h-8"
+          title="Upload files"
+        >
+          <Upload className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Upload Files</span>
+          <span className="sm:hidden">Upload</span>
+        </Button>
         <div className="flex gap-1 border rounded-md p-0.5 bg-muted dark:bg-background"> {/* Adjusted padding for a tighter look */}
           <Button
             variant={currentViewMode === 'list' ? 'secondary' : 'ghost'} // Use secondary for active

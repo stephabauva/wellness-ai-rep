@@ -716,18 +716,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.file.mimetype
       );
 
+      const category = req.body.category;
+
+      const fileData: any = {
+        id: fileId,
+        fileName: uniqueFileName,
+        displayName: originalFileName,
+        originalName: originalFileName,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        url: `/uploads/${uniqueFileName}`,
+        retentionInfo
+      };
+
+      if (category) {
+        fileData.category = category;
+      }
+
       res.json({
         success: true,
-        file: {
-          id: fileId,
-          fileName: uniqueFileName,
-          displayName: originalFileName,
-          originalName: originalFileName,
-          fileType: req.file.mimetype,
-          fileSize: req.file.size,
-          url: `/uploads/${uniqueFileName}`,
-          retentionInfo
-        }
+        file: fileData
       });
     } catch (error: any) {
       console.error('File upload error:', error);

@@ -5,6 +5,7 @@ export function useFileManagerState(initialFiles: FileItem[] = []) {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>('all'); // Default to 'all' tab
   const [viewMode, setViewMode] = useState<ViewMode>('list'); // Default to 'list' view
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
 
   const handleSelectFile = useCallback((fileId: string) => {
     setSelectedFiles(prevSelected => {
@@ -52,5 +53,7 @@ export function useFileManagerState(initialFiles: FileItem[] = []) {
     handleSelectFile,
     handleSelectAll,
     clearSelection,
+    selectedCategory,
+    setSelectedCategory,
   };
 }

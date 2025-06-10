@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { RotateCcw, FileText as DefaultFileIcon, QrCode, X, Download } from 'lucide-react';
 import { TabsContent, Tabs } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +20,7 @@ import { FileList as FileListComponent } from './filemanager/FileList';
 import { FileActionsToolbar } from './filemanager/FileActionsToolbar';
 import { CategoryTabs } from './filemanager/CategoryTabs';
 import { QrCodeDialog } from './filemanager/QrCodeDialog';
+import FileUploadDialog from './filemanager/FileUploadDialog';
 
 // Import utilities and types
 import { categorizeFiles, getFileIcon, formatFileSize, formatDate } from '@/utils/fileManagerUtils';
@@ -34,6 +35,8 @@ const FileManagerSection: React.FC = () => {
     deleteFiles,
     isDeletingFiles
   } = useFileApi();
+
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   const {
     selectedFiles,
@@ -119,6 +122,7 @@ const FileManagerSection: React.FC = () => {
             onSetViewMode={setViewMode}
             onRefresh={refetchFiles}
             isDeleting={isDeletingFiles}
+            onUploadClick={() => setIsUploadDialogOpen(true)}
           />
         </div>
       </div>
@@ -205,6 +209,17 @@ const FileManagerSection: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* File Upload Modal */}
+      <FileUploadDialog
+        isOpen={isUploadDialogOpen}
+        onClose={() => setIsUploadDialogOpen(false)}
+        onUploadSuccess={() => {
+          refetchFiles();
+          // Optionally, you might want to clear selection or reset active tab here
+          // depending on desired UX after upload.
+        }}
+      />
     </div>
   );
 };

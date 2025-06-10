@@ -15,7 +15,7 @@ export function useChatActions({
   setInputMessage,
   currentConversationId,
 }: UseChatActionsProps) {
-  const { settings }: { settings?: AppSettings } = useAppContext(); // Apply AppSettings type
+  const { appSettings }: { appSettings?: AppSettings } = useAppContext(); // Apply AppSettings type
   const { sendMessageMutation } = useChatMessages();
   const {
     attachedFiles, // This will now be Array<AttachedFile>
@@ -27,15 +27,15 @@ export function useChatActions({
 
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() || (attachedFiles && attachedFiles.length > 0)) {
-      const aiProvider = settings?.aiProvider || "openai";
-      const aiModel = settings?.aiModel || "gpt-4o";
+      const aiProvider = appSettings?.aiProvider || "openai";
+      const aiModel = appSettings?.aiModel || "gpt-4o";
 
       const currentAttachedFiles: AttachedFile[] = attachedFiles || []; // Ensure type correctness
       const hasImages = currentAttachedFiles.some(file => file.fileType?.startsWith('image/'));
-      const automaticModelSelection = settings?.automaticModelSelection ?? hasImages;
+      const automaticModelSelection = appSettings?.automaticModelSelection ?? hasImages;
 
       console.log("[useChatActions] Effective AI Settings for send:", {
-        contextSettings: settings, // Log the whole settings object from context
+        contextSettings: appSettings, // Log the whole settings object from context
         resolvedAiProvider: aiProvider,
         resolvedAiModel: aiModel,
         resolvedAutomaticModelSelection: automaticModelSelection
@@ -58,7 +58,7 @@ export function useChatActions({
     setInputMessage, // Added setInputMessage
     attachedFiles,
     currentConversationId,
-    settings,
+    appSettings,
     sendMessageMutation,
     clearAttachedFiles,
   ]);

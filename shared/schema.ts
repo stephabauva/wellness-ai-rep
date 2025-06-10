@@ -327,3 +327,79 @@ export const messageWithAttachmentsSchema = selectMessageSchema.extend({
 });
 
 export type MessageWithAttachments = z.infer<typeof messageWithAttachmentsSchema>;
+
+// Files table - dedicated table for all uploaded files
+export const files = pgTable("files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  categoryId: uuid("category_id").references(() => fileCategories.id),
+  fileName: text("file_name").notNull(), // Unique filename on disk
+  displayName: text("display_name").notNull(), // Original filename
+  filePath: text("file_path").notNull(), // Full path to file on disk
+  fileType: text("file_type").notNull(), // MIME type
+  fileSize: integer("file_size").notNull(), // Size in bytes
+  uploadSource: text("upload_source").notNull().default("direct"), // "direct" (file manager) or "chat" (AI conversation)
+  conversationId: uuid("conversation_id").references(() => conversations.id), // Link to conversation if uploaded via chat
+  messageId: uuid("message_id").references(() => conversationMessages.id), // Link to specific message if uploaded via chat
+  retentionPolicy: text("retention_policy").notNull().default("medium"), // "high" (permanent), "medium" (90 days), "low" (30 days)
+  retentionDays: integer("retention_days"), // Specific retention days (null = permanent)
+  scheduledDeletion: timestamp("scheduled_deletion"), // When file should be deleted
+  isDeleted: boolean("is_deleted").default(false), // Soft delete flag
+  deletedAt: timestamp("deleted_at"), // When file was deleted
+  metadata: jsonb("metadata"), // Additional file metadata (thumbnails, processing status, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFileSchema = createInsertSchema(files).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// File access log - track when files are accessed/downloaded
+export const fileAccessLog = pgTable("file_access_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  fileId: uuid("file_id").notNull().references(() => files.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  accessType: text("access_type").notNull(), // "view", "download", "ai_analysis"
+  conversationId: uuid("conversation_id").references(() => conversations.id), // If accessed during AI conversation
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertFileAccessLogSchema = createInsertSchema(fileAccessLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+// File retention settings - user-configurable retention policies
+export const fileRetentionSettings = pgTable("file_retention_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  categoryId: uuid("category_id").references(() => fileCategories.id), // Category-specific settings
+  retentionPolicy: text("retention_policy").notNull(), // "high", "medium", "low", "custom"
+  retentionDays: integer("retention_days"), // Override default retention days
+  autoDelete: boolean("auto_delete").default(true), // Whether to automatically delete expired files
+  notifyBeforeDeletion: boolean("notify_before_deletion").default(true), // Send notification before deletion
+  notificationDays: integer("notification_days").default(7), // Days before deletion to notify
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFileRetentionSettingsSchema = createInsertSchema(fileRetentionSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Export file types
+export type File = typeof files.$inferSelect;
+export type InsertFile = z.infer<typeof insertFileSchema>;
+
+export type FileAccessLog = typeof fileAccessLog.$inferSelect;
+export type InsertFileAccessLog = z.infer<typeof insertFileAccessLogSchema>;
+
+export type FileRetentionSettings = typeof fileRetentionSettings.$inferSelect;
+export type InsertFileRetentionSettings = z.infer<typeof insertFileRetentionSettingsSchema>;

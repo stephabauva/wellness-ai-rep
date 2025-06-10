@@ -9,7 +9,7 @@ import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema } from "@shared/schema";
+import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, insertFileSchema } from "@shared/schema";
 import { categoryService } from "./services/category-service";
 import { eq, desc } from "drizzle-orm";
 import { join } from 'path';
@@ -451,70 +451,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = 1; // TODO: Get from auth
 
-      // Get all conversations with messages that have attachments
-      const conversationsWithMessages = await db
+      // Query files from dedicated files table
+      const userFiles = await db
         .select()
-        .from(conversations)
-        .leftJoin(
-          conversationMessages,
-          eq(conversations.id, conversationMessages.conversationId)
-        )
-        .where(eq(conversations.userId, userId));
+        .from(files)
+        .where(eq(files.userId, userId));
 
-      const files: any[] = [];
-      const processedFiles = new Set<string>();
-
-      for (const row of conversationsWithMessages) {
-        const message = row.conversation_messages;
-        if (!message?.metadata?.attachments) continue;
-
-        const attachments = message.metadata.attachments as any[];
-
-        for (const attachment of attachments) {
-          if (processedFiles.has(attachment.fileName)) continue;
-          processedFiles.add(attachment.fileName);
-
+      const fileList = userFiles
+        .filter(file => !file.isDeleted) // Only return non-deleted files
+        .map(file => {
           // Check if file actually exists on disk
-          const filePath = join(process.cwd(), 'uploads', attachment.fileName);
-          if (!existsSync(filePath)) {
-            console.log(`Skipping non-existent file in listing: ${attachment.fileName}`);
-            continue;
+          if (!existsSync(file.filePath)) {
+            console.log(`Skipping non-existent file in listing: ${file.fileName}`);
+            return null;
           }
 
-          // Get retention info for this file
-          const retentionInfo = attachmentRetentionService.getRetentionInfo(
-            attachment.displayName || attachment.fileName,
-            attachment.fileType,
-            message.content // Assuming message content is available here for context
-          );
-
-          const fileEntry: any = {
-            id: attachment.fileName, // Use fileName as ID
-            fileName: attachment.fileName,
-            displayName: attachment.displayName || (attachment as any).originalName || attachment.fileName,
-            fileType: attachment.fileType,
-            fileSize: attachment.fileSize || 0,
-            uploadDate: message.createdAt || (message as any).timestamp, // Prioritize createdAt
-            retentionInfo,
-            url: `/uploads/${attachment.fileName}`,
+          return {
+            id: file.fileName, // Use fileName as ID for frontend compatibility
+            fileName: file.fileName,
+            displayName: file.displayName,
+            fileType: file.fileType,
+            fileSize: file.fileSize,
+            uploadDate: file.createdAt.toISOString(),
+            url: `/uploads/${file.fileName}`,
+            retentionInfo: {
+              category: file.retentionPolicy,
+              retentionDays: file.retentionDays || (file.retentionPolicy === 'high' ? -1 : file.retentionDays),
+              reason: file.metadata?.retentionInfo?.reason || 'Auto-categorized'
+            },
+            categoryId: file.categoryId,
+            uploadSource: file.uploadSource,
+            scheduledDeletion: file.scheduledDeletion?.toISOString() || null,
           };
+        })
+        .filter(Boolean) // Remove null entries for non-existent files
+        .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()); // Sort by newest first
 
-          if (attachment.categoryId) {
-            fileEntry.categoryId = attachment.categoryId;
-          }
-
-          files.push(fileEntry);
-        }
-      }
-
-      // Sort by upload date (newest first)
-      files.sort((a, b) => {
-        const dateA = a.uploadDate ? new Date(a.uploadDate).getTime() : 0;
-        const dateB = b.uploadDate ? new Date(b.uploadDate).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      res.json(files);
+      res.json(fileList);
     } catch (error) {
       console.error('Error fetching files:', error);
       res.status(500).json({ error: 'Failed to fetch files' });
@@ -783,38 +756,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileData.categoryId = validatedCategoryId; // Note: key is categoryId
       }
 
-      // Create a conversation and message to track this uploaded file
-      // This ensures the file appears in the file listing API
+      // Store file in dedicated files table
       const userId = 1; // TODO: Get from authentication
       
-      // Create or get a conversation for standalone file uploads
-      let uploadConversationId;
-      const existingUploadConversations = await db
-        .select()
-        .from(conversations)
-        .where(eq(conversations.userId, userId))
-        .orderBy(desc(conversations.createdAt))
-        .limit(1);
-
-      if (existingUploadConversations.length > 0) {
-        uploadConversationId = existingUploadConversations[0].id;
-      } else {
-        const [newConversation] = await db.insert(conversations).values({
-          userId,
-          title: 'File Uploads',
-        }).returning();
-        uploadConversationId = newConversation.id;
+      // Calculate retention settings
+      const fileRetentionInfo = attachmentRetentionService.getRetentionInfo(
+        originalFileName,
+        req.file.mimetype
+      );
+      
+      let retentionDays = null;
+      let scheduledDeletion = null;
+      
+      if (retentionInfo.category === 'high') {
+        // Permanent files - no deletion
+        retentionDays = null;
+      } else if (retentionInfo.category === 'medium') {
+        retentionDays = 90;
+        scheduledDeletion = new Date(Date.now() + (90 * 24 * 60 * 60 * 1000));
+      } else if (retentionInfo.category === 'low') {
+        retentionDays = 30;
+        scheduledDeletion = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
       }
 
-      // Create a message with the file attachment
-      await db.insert(conversationMessages).values({
-        conversationId: uploadConversationId,
-        role: 'user',
-        content: `Uploaded file: ${originalFileName}`,
+      // Create file record in database
+      const [savedFile] = await db.insert(files).values({
+        userId,
+        categoryId: validatedCategoryId || null,
+        fileName: uniqueFileName,
+        displayName: originalFileName,
+        filePath: filePath,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        uploadSource: 'direct', // Direct upload from file manager
+        retentionPolicy: retentionInfo.category,
+        retentionDays,
+        scheduledDeletion,
         metadata: {
-          attachments: [fileData]
+          retentionInfo,
+          uploadContext: 'file_manager'
         }
-      });
+      }).returning();
 
       res.json({
         success: true,

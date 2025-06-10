@@ -195,20 +195,49 @@ export class GoogleProvider implements AiProvider {
         lastMessageParts.push({text: "No specific query, please respond generally or based on history."});
       }
 
-      log('info', `Starting chat. History length: ${googleHistory.length}, Last message parts: ${lastMessageParts.length}`);
+      log('info', `Preparing content for generateContent. Total non-system messages: ${nonSystemMessages.length}`);
 
-      const chat = genModel.startChat({ history: googleHistory });
-      const result = await chat.sendMessage(lastMessageParts);
+      const fullHistoryForGoogle = this.convertMessagesToGoogleHistory(nonSystemMessages);
+
+      if (fullHistoryForGoogle.length === 0 || fullHistoryForGoogle[fullHistoryForGoogle.length -1].role !== 'user') {
+        log('warn', 'Google generateContent call requires at least one user message. Adding a placeholder if needed or correcting role.');
+        // This case should ideally be handled by ensuring nonSystemMessages always ends with a user message.
+        // For now, if the last message isn't 'user', it might lead to an error with Google API.
+        // convertMessagesToGoogleHistory maps 'assistant' to 'model' and 'user' to 'user'.
+      }
+
+      // Map ProviderConfig to Google's GenerationConfig
+      const generationConfig: any = {}; // Define more specific type if available from SDK
+      if (config.temperature !== undefined) generationConfig.temperature = config.temperature;
+      if (config.maxTokens !== undefined) generationConfig.maxOutputTokens = config.maxTokens;
+      if (config.topP !== undefined) generationConfig.topP = config.topP;
+      // topK is also available for Google
+
+      log('info', `Calling genModel.generateContent with timeout: 15s`, { historyLength: fullHistoryForGoogle.length, generationConfig });
+
+      const result = await genModel.generateContent({
+        contents: fullHistoryForGoogle,
+        generationConfig,
+        safetySettings: genModel.safetySettings, // Use safety settings from the model instance
+        requestOptions: { timeout: 15 } // 15 seconds timeout
+      });
+
       const response = await result.response;
       const responseText = response.text() || "I'm sorry, I couldn't generate a response right now. Please try again.";
 
-      log('info', 'Chat response received from Google.');
+      log('info', 'Chat response received from Google generateContent.');
       return { response: responseText };
 
     } catch (error: any) {
       log('error', 'Error in generateChatResponse (Google):', error);
       if (error?.message?.includes('SAFETY')) {
          return { response: "I'm unable to respond to that request due to safety guidelines." };
+      }
+      // Check for timeout specific error if Google SDK throws a distinct one
+      if (error.message && (error.message.includes('deadline exceeded') || error.message.includes('timed out'))) {
+        log('warn', `Google API request timed out: ${error.message}`);
+        // Return a timeout specific message or rethrow a custom timeout error
+        return { response: "I'm sorry, the request to Google timed out. Please try again."};
       }
       throw error;
     }

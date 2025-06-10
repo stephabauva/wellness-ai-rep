@@ -127,7 +127,14 @@ export class OpenAiProvider implements AiProvider {
     isHistory: boolean = false // Flag to differentiate logging/handling if needed
   ): Promise<MessageContentPart[]> {
     const content: MessageContentPart[] = [];
-    const supportedImageFormats = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    const supportedImageFormats = [
+      'image/png',
+      'image/jpeg', // Covers .jpeg and .jpg
+      'image/gif',
+      'image/webp',
+      'image/avif',
+      'image/bmp'
+    ];
 
     // Add text content first
     if (messageText) {

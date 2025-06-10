@@ -110,6 +110,11 @@ const FileManagerSection: React.FC = () => {
       // or could be cleared here: clearSelection();
     }
   };
+
+  const handleCategorize = (fileIds: string[], categoryId?: string) => {
+    categorizeFiles({ fileIds, categoryId });
+    clearSelection();
+  };
   
   if (isLoadingFiles) {
     return (
@@ -134,14 +139,18 @@ const FileManagerSection: React.FC = () => {
           </div>
           <FileActionsToolbar
             selectedFilesCount={selectedFiles.size}
+            selectedFiles={Array.from(selectedFiles)}
             onShare={() => shareSelectedFiles(selectedFiles)}
             onQrCode={() => generateAndShowQRCode(selectedFiles)}
             onDelete={handleDelete}
+            onCategorize={handleCategorize}
             currentViewMode={viewMode}
             onSetViewMode={setViewMode}
             onRefresh={refetchFiles}
             isDeleting={isDeletingFiles}
+            isCategorizing={isCategorizingFiles}
             onUploadClick={() => setIsUploadDialogOpen(true)}
+            categories={categories}
           />
         </div>
       </div>

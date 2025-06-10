@@ -100,7 +100,7 @@ Respond with JSON:
 }`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -147,7 +147,7 @@ Respond with JSON:
   // Generate embeddings for semantic search
   async generateEmbedding(text: string): Promise<number[]> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
 
     try {
       const response = await this.openai.embeddings.create({

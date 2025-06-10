@@ -36,46 +36,42 @@ export class OpenAiProvider implements AiProvider {
     config: ProviderConfig
     // Attachments are expected to be processed into MessageContentPart[] within messages
   ): Promise<ChatResponse> {
+    log('info', `Generating chat response with model: ${config.model}`, { numMessages: messages.length });
+
+    const lastMessage = messages[messages.length - 1];
+    if (Array.isArray(lastMessage?.content)) {
+      const imageAttachments = lastMessage.content.some(item => item.type === 'image_url');
+      if (imageAttachments) {
+        log('info', `Processing image attachment(s) for model: ${config.model}`);
+      }
+    }
+    const model = config.model as OpenAIModel;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+        log('warn', `OpenAI chat completion request timed out after 20 seconds for model: ${config.model}`);
+        controller.abort();
+    }, 20000); // 20 seconds
+
     try {
-      log('info', `Generating chat response with model: ${config.model}`, { numMessages: messages.length });
+      const response = await this.openai.chat.completions.create({
+        model: model,
+        messages: messages as any,
+        temperature: 0.7,
+        max_tokens: 1024,
+      }, { signal: controller.signal });
 
-      const lastMessage = messages[messages.length - 1];
-      if (Array.isArray(lastMessage?.content)) {
-        const imageAttachments = lastMessage.content.some(item => item.type === 'image_url');
-        if (imageAttachments) {
-          log('info', `Processing image attachment(s) for model: ${config.model}`);
-        }
-      }
+      const responseText = response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
+      log('info', 'Chat response received from OpenAI.');
+      return { response: responseText };
 
-      // Type assertion for model, as ProviderConfig.model is broad
-      const model = config.model as OpenAIModel;
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-          log('warn', `OpenAI chat completion request timed out after 20 seconds for model: ${config.model}`);
-          controller.abort();
-      }, 20000); // 20 seconds
-
-      try {
-        const response = await this.openai.chat.completions.create({
-          model: model,
-          messages: messages as any, // Cast to 'any' to match OpenAI's expected type if complex
-          temperature: 0.7, // TODO: Make configurable if needed
-          max_tokens: 1024,  // TODO: Make configurable if needed
-        }, { signal: controller.signal }); // Pass signal here
-
-        clearTimeout(timeoutId); // Clear the timeout
-
-        const responseText = response.choices[0].message.content || "I'm sorry, I couldn't process your request right now. Please try again.";
-        log('info', 'Chat response received from OpenAI.');
-        return { response: responseText };
-
-      } catch (error) {
-        clearTimeout(timeoutId); // Also clear timeout on error
-        log('error', 'Error in generateChatResponse:', error);
-        // Consider re-throwing a custom error or returning a standardized error response
-        throw error; // Or return a ChatResponse with error info
-      }
+    } catch (error) {
+      log('error', 'Error in OpenAIProvider.generateChatResponse:', error);
+      // Check if it's an AbortError (timeout) vs other API error for specific handling if needed in future
+      // For now, just re-throw to be caught by AiService
+      throw error;
+    } finally {
+      clearTimeout(timeoutId); // Ensure timeout is always cleared
     }
   }
 

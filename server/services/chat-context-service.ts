@@ -13,6 +13,21 @@ const log = (level: 'info' | 'error' | 'warn', message: string, data?: any) => {
   console[level](`[ChatContextService] ${message}`, data || '');
 };
 
+function extractTextContent(content: string | MessageContentPart[] | undefined | null): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+  if (Array.isArray(content)) {
+    // Concatenate text from all text parts, ignore others like image_url for assistant messages
+    return content
+      .filter(part => part.type === 'text' && part.text)
+      .map(part => part.text)
+      .join(' ')
+      .trim();
+  }
+  return ''; // Default for undefined, null, or unexpected content
+}
+
 export class ChatContextService {
   constructor() {
     log('info', 'ChatContextService initialized');
@@ -110,44 +125,107 @@ IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual quest
       if (msg.role === 'user' || msg.role === 'assistant') {
         let messageContent: string | MessageContentPart[];
         const historicalAttachments: AttachmentData[] = msg.metadata?.attachments || [];
+        const baseTextContent = extractTextContent(msg.content);
 
-        if (historicalAttachments.length > 0) {
-          if (targetProvider === 'openai') {
-            messageContent = await OpenAiProvider.processMessageWithAttachments(msg.content, historicalAttachments, true);
-          } else { // google
-            // GoogleProvider's processMessageWithAttachments returns Part[], need to adapt
-            // For now, let's assume a similar structure or simplify for context service
-            // This highlights a need for a truly provider-agnostic format if possible,
-            // or the context service becomes more of a dispatcher to provider-specific formatters.
-            // Let's use OpenAI's format as the "generic" rich format for now.
-             messageContent = await OpenAiProvider.processMessageWithAttachments(msg.content, historicalAttachments, true);
-            // If Google needs Parts[], the GoogleProvider itself will convert from this MessageContentPart[]
-          }
-           log('info', `Processed historical message ID ${msg.id || 'N/A'} with ${historicalAttachments.length} attachments.`);
-        } else {
-          messageContent = msg.content;
+        if (targetProvider === 'openai') {
+            if (msg.role === 'user') {
+                if (historicalAttachments.length > 0) {
+                    messageContent = await OpenAiProvider.processMessageWithAttachments(baseTextContent, historicalAttachments, true);
+                    log('info', `Processed historical USER message ID ${msg.id || 'N/A'} for OpenAI with ${historicalAttachments.length} attachments.`);
+                } else {
+                    messageContent = baseTextContent; // Ensure even user messages without attachments yield plain string
+                }
+            } else { // msg.role === 'assistant' for OpenAI
+                messageContent = baseTextContent; // Assistant messages are always text for OpenAI
+                if (historicalAttachments.length > 0) {
+                    log('warn', `Historical ASSISTANT message ID ${msg.id || 'N/A'} for OpenAI had attachments in metadata; these are ignored for OpenAI assistant role.`);
+                }
+            }
+        } else { // For Google or other providers
+            if (historicalAttachments.length > 0) {
+                // Using OpenAiProvider.processMessageWithAttachments as a generic formatter here.
+                // This might need adjustment if GoogleProvider cannot consume MessageContentPart[] directly
+                // or if its own attachment processing logic (GoogleProvider.processMessageWithAttachments) is preferred.
+                // For now, this maintains existing behavior for Google while fixing OpenAI.
+                messageContent = await OpenAiProvider.processMessageWithAttachments(baseTextContent, historicalAttachments, true);
+                log('info', `Processed historical message ID ${msg.id || 'N/A'} for ${targetProvider} with ${historicalAttachments.length} attachments (using OpenAI formatter as base).`);
+            } else {
+                messageContent = baseTextContent;
+            }
         }
+
+        // Ensure messageContent is not empty or only whitespace, especially for OpenAI user messages that might only have images
+        if (targetProvider === 'openai' && msg.role === 'user') {
+            if (Array.isArray(messageContent)) {
+                const hasTextPart = messageContent.some(part => part.type === 'text' && part.text && part.text.trim() !== '');
+                if (!hasTextPart) {
+                    // OpenAI requires a non-empty text part, even if it's just a space, if other parts (like images) are present for user role.
+                    // OpenAiProvider.processMessageWithAttachments should ideally handle this. This is a safeguard.
+                    const imageParts = messageContent.filter(part => part.type === 'image_url');
+                    if (imageParts.length > 0) {
+                       // Use original baseTextContent if available and non-empty, otherwise use a space
+                       const textForUserMessage = baseTextContent.trim() !== '' ? baseTextContent.trim() : ' ';
+                       messageContent = [{type: 'text', text: textForUserMessage }, ...imageParts];
+                       log('info', `Ensured text part for historical USER message ID ${msg.id || 'N/A'} for OpenAI with images.`);
+                    } else {
+                        // This case (array without text or images) should be rare if processMessageWithAttachments works correctly
+                        messageContent = baseTextContent.trim() !== '' ? baseTextContent.trim() : ' '; // Fallback to text or space
+                    }
+                }
+            } else if (typeof messageContent === 'string' && messageContent.trim() === '') {
+                 // If it became an empty string and there were attachments, it implies attachments were primary.
+                 // However, OpenAiProvider.processMessageWithAttachments should have handled this.
+                 // If no attachments, an empty string for user message is fine for OpenAI.
+                 // If there WERE attachments, this state (empty string) would be unusual.
+                 // For safety, if it's an empty string after processing (e.g. only non-text parts that got stripped), use a space.
+                 // This specific scenario is less likely with the current structure but added for robustness.
+                 if (historicalAttachments.length > 0) { // Only add space if there were attachments that might have been processed away
+                    messageContent = ' ';
+                 }
+            }
+        }
+
         conversationContext.push({
           role: msg.role,
           content: messageContent,
-          metadata: msg.metadata, // Preserve metadata
+          metadata: msg.metadata,
         });
       }
     }
 
     // Process and add current user message with attachments
     let currentMessageContent: string | MessageContentPart[];
+    const currentBaseTextContent = extractTextContent(rawMessage); // Use for current message too
+
     if (currentAttachments && currentAttachments.length > 0) {
       if (targetProvider === 'openai') {
-        currentMessageContent = await OpenAiProvider.processMessageWithAttachments(rawMessage, currentAttachments);
+        currentMessageContent = await OpenAiProvider.processMessageWithAttachments(currentBaseTextContent, currentAttachments);
       } else { // google
-         currentMessageContent = await OpenAiProvider.processMessageWithAttachments(rawMessage, currentAttachments);
-        // Again, GoogleProvider will handle conversion from MessageContentPart[] to its specific Part[]
+         currentMessageContent = await OpenAiProvider.processMessageWithAttachments(currentBaseTextContent, currentAttachments);
       }
       log('info', `Processed current message with ${currentAttachments.length} attachments.`);
     } else {
-      currentMessageContent = rawMessage;
+      currentMessageContent = currentBaseTextContent;
     }
+
+    // Safeguard for current user message for OpenAI (similar to historical)
+    if (targetProvider === 'openai' && Array.isArray(currentMessageContent)) {
+        const hasTextPart = currentMessageContent.some(part => part.type === 'text' && part.text && part.text.trim() !== '');
+        if (!hasTextPart) {
+            const imageParts = currentMessageContent.filter(part => part.type === 'image_url');
+            if (imageParts.length > 0) {
+                const textForUserMessage = currentBaseTextContent.trim() !== '' ? currentBaseTextContent.trim() : ' ';
+                currentMessageContent = [{type: 'text', text: textForUserMessage }, ...imageParts];
+                log('info', `Ensured text part for CURRENT USER message for OpenAI with images.`);
+            } else {
+                currentMessageContent = currentBaseTextContent.trim() !== '' ? currentBaseTextContent.trim() : ' ';
+            }
+        }
+    } else if (targetProvider === 'openai' && typeof currentMessageContent === 'string' && currentMessageContent.trim() === '' && currentAttachments && currentAttachments.length > 0) {
+        currentMessageContent = ' '; // If only attachments and empty text, send a space for OpenAI user message
+    }
+
+
     conversationContext.push({ role: 'user', content: currentMessageContent });
 
     log('info', `Built context with ${conversationContext.length} messages.`);

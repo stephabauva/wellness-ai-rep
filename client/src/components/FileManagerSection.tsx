@@ -61,12 +61,27 @@ const FileManagerSection: React.FC = () => {
   const showQRCode = showQRCodeDialog;
   const setShowQRCode = setShowQRCodeDialog;
 
-  const categories: FileCategory[] = useMemo(() => categorizeFiles(files), [files]);
+  // const categories: FileCategory[] = useMemo(() => categorizeFiles(files), [files]); // Commented out old categories derivation
 
   const activeFiles: FileItem[] = useMemo(() => {
-    if (activeTab === 'all') return files;
-    return categories.find(c => c.id === activeTab)?.files || [];
-  }, [activeTab, files, categories]);
+    if (activeTab === 'all') {
+      return files;
+    }
+    // activeTab is now assumed to be a categoryId from the database
+    return files.filter(file => file.categoryId === activeTab);
+  }, [activeTab, files]);
+
+  // Temporary: Get unique category IDs from files for rendering TabsContent
+  // This will be replaced when CategoryTabs is updated to use DB categories.
+  const uniqueCategoryIdsInFiles = useMemo(() => {
+    const ids = new Set<string>();
+    files.forEach(file => {
+      if (file.categoryId) {
+        ids.add(file.categoryId);
+      }
+    });
+    return Array.from(ids);
+  }, [files]);
 
   // Effect to clear selection when files data changes (e.g., after delete or refetch)
   // and the selected files are no longer in the list of all files.
@@ -130,46 +145,69 @@ const FileManagerSection: React.FC = () => {
       <div className="flex-1 p-4 md:p-6 overflow-auto space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <CategoryTabs
-            categories={categories}
+            categories={categories} // This will be updated in next phase to use DB categories
             activeTab={activeTab}
-            onTabChange={setActiveTab} // This now clears selection automatically
+            onTabChange={setActiveTab}
             totalFilesCount={files.length}
           />
 
           {/* "all" tab content */}
           <TabsContent value="all" className="mt-6">
             <FileListComponent 
-              files={files} // Show all files for "all" tab
+              files={activeFiles} // Use activeFiles
               selectedFiles={selectedFiles}
               onSelectFile={handleSelectFile}
-              onSelectAll={() => handleSelectAll(files)} // Pass all files to selectAll for "all" tab
+              onSelectAll={() => handleSelectAll(activeFiles)} // Use activeFiles
               viewMode={viewMode}
             />
           </TabsContent>
 
-          {/* Category-specific tab content */}
-          {categories.map(category => (
-            <TabsContent key={category.id} value={category.id} className="mt-6">
-               <Card className="mb-4"> {/* Optional: Card header for category context */}
-                <CardHeader className="pb-3 pt-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    {React.cloneElement(category.icon as React.ReactElement, { className: "h-5 w-5" })}
-                    {category.name} Files
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {category.description}
-                  </p>
-                </CardHeader>
-              </Card>
+          {/*
+            Temporary rendering for category-specific tabs.
+            This will be replaced when CategoryTabs is updated to use DB categories.
+            This section ensures that if a category tab IS active, its files are shown.
+          */}
+          {uniqueCategoryIdsInFiles.map(catId => (
+            <TabsContent key={catId} value={catId} className="mt-6">
+              {/*
+                Optionally, you could fetch and display category details here (name, etc.)
+                For now, just the FileListComponent with filtered files.
+                A proper CardHeader for the category would be added when CategoryTabs is fully integrated.
+              */}
               <FileListComponent 
-                files={category.files}
+                files={activeFiles} // activeFiles is already filtered for the current activeTab (which is catId here)
                 selectedFiles={selectedFiles}
                 onSelectFile={handleSelectFile}
-                onSelectAll={() => handleSelectAll(category.files)}
+                onSelectAll={() => handleSelectAll(activeFiles)}
                 viewMode={viewMode}
               />
             </TabsContent>
           ))}
+          {/*
+            The old mapping:
+            {categories.map(category => (
+              <TabsContent key={category.id} value={category.id} className="mt-6">
+                 <Card className="mb-4">
+                  <CardHeader className="pb-3 pt-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      {React.cloneElement(category.icon as React.ReactElement, { className: "h-5 w-5" })}
+                      {category.name} Files
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {category.description}
+                    </p>
+                  </CardHeader>
+                </Card>
+                <FileListComponent
+                  files={category.files} // This is the problematic part as category.files is from old system
+                  selectedFiles={selectedFiles}
+                  onSelectFile={handleSelectFile}
+                  onSelectAll={() => handleSelectAll(category.files)}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+            ))}
+          */}
         </Tabs>
       </div>
 

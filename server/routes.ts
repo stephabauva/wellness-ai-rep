@@ -21,11 +21,14 @@ import { statSync, unlinkSync } from 'fs';
 
 // Attachment schema for client
 const attachmentSchema = z.object({
-  id: z.string(),
-  fileName: z.string(),
-  displayName: z.string().optional(),
+  id: z.string(), // This is the nanoid generated during upload
+  fileName: z.string(), // This is the unique filename on disk (e.g., nanoid.ext)
+  displayName: z.string().optional(), // This is the original filename
   fileType: z.string(),
-  fileSize: z.number()
+  fileSize: z.number(),
+  url: z.string().optional(), // URL to access the file, e.g., /uploads/fileName
+  retentionInfo: z.any().optional(), // Make sure this is optional if client might not send it
+  categoryId: z.string().optional(), // Optional category ID
 });
 
 // Message payload schema
@@ -482,24 +485,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const retentionInfo = attachmentRetentionService.getRetentionInfo(
             attachment.displayName || attachment.fileName,
             attachment.fileType,
-            message.content
+            message.content // Assuming message content is available here for context
           );
 
-          files.push({
+          const fileEntry: any = {
             id: attachment.fileName, // Use fileName as ID
             fileName: attachment.fileName,
-            displayName: attachment.displayName || attachment.originalName || attachment.fileName,
+            displayName: attachment.displayName || (attachment as any).originalName || attachment.fileName,
             fileType: attachment.fileType,
             fileSize: attachment.fileSize || 0,
-            uploadDate: message.timestamp,
+            uploadDate: message.createdAt || (message as any).timestamp, // Prioritize createdAt
             retentionInfo,
-            url: `/uploads/${attachment.fileName}`
-          });
+            url: `/uploads/${attachment.fileName}`,
+          };
+
+          if (attachment.categoryId) {
+            fileEntry.categoryId = attachment.categoryId;
+          }
+
+          files.push(fileEntry);
         }
       }
 
       // Sort by upload date (newest first)
-      files.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
+      files.sort((a, b) => {
+        const dateA = a.uploadDate ? new Date(a.uploadDate).getTime() : 0;
+        const dateB = b.uploadDate ? new Date(b.uploadDate).getTime() : 0;
+        return dateB - dateA;
+      });
 
       res.json(files);
     } catch (error) {

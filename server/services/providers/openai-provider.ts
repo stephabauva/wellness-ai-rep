@@ -130,10 +130,8 @@ export class OpenAiProvider implements AiProvider {
     const supportedImageFormats = [
       'image/png',
       'image/jpeg', // Covers .jpeg and .jpg
-      'image/gif',
-      'image/webp',
-      'image/avif',
-      'image/bmp'
+      'image/gif',  // Non-animated
+      'image/webp'
     ];
 
     // Add text content first

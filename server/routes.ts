@@ -568,7 +568,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedUser = await storage.updateUserSettings(1, settings); // Default user ID
 
-      res.json(updatedUser.preferences);
+      // Return comprehensive updated settings including AI configuration
+      const updatedSettings = {
+        ...(updatedUser.preferences || {}),
+        aiProvider: updatedUser.aiProvider,
+        aiModel: updatedUser.aiModel,
+        automaticModelSelection: updatedUser.automaticModelSelection,
+        transcriptionProvider: updatedUser.transcriptionProvider,
+        preferredLanguage: updatedUser.preferredLanguage,
+        name: updatedUser.name,
+        email: updatedUser.email
+      };
+      
+      res.json(updatedSettings);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid settings data", errors: error.errors });

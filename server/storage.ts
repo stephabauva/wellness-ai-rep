@@ -85,6 +85,9 @@ export class MemStorage implements IStorage {
       },
       transcriptionProvider: "webspeech",
       preferredLanguage: "en",
+      automaticModelSelection: true,
+      aiProvider: "google",
+      aiModel: "gemini-2.0-flash-exp",
       createdAt: new Date()
     };
     this.users.set(1, defaultUser);

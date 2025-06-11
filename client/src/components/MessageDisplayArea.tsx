@@ -36,7 +36,7 @@ export function MessageDisplayArea({
   isLoading,
   streamingMessage,
   isThinking,
-  enableVirtualScrolling = true,
+  enableVirtualScrolling = false,
   enablePagination = false,
   searchQuery = "",
 }: MessageDisplayAreaProps) {
@@ -173,134 +173,49 @@ export function MessageDisplayArea({
   console.log("[MessageDisplayArea] About to render. Messages:", messagesToRender?.length);
 
   return (
-    <div className="relative flex-1 flex flex-col">
-      {/* Container with ref for height measurement and optimized scrolling */}
-      <div 
-        ref={containerRef}
-        className="flex-1 overflow-y-auto p-4"
-        onScroll={handleScroll}
-        style={enableVirtualScrolling ? { height: containerHeight } : undefined}
-      >
-        {/* Virtual scrolling container */}
-        {enableVirtualScrolling && (
-          <div style={{ height: totalHeight, position: 'relative' }}>
-            <div style={{ transform: `translateY(${offsetY}px)` }}>
-              {messagesToRender && messagesToRender.length > 0 ? (
-                messagesToRender.map((message: Message, index: number) => {
-                  const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
-                  
-                  return (
-                    <div key={message.id} className="mb-6 w-full" style={{ height: 120, minHeight: 120 }}>
-                      <ChatMessage
-                        message={message.content}
-                        isUser={message.isUserMessage}
-                        timestamp={message.timestamp}
-                        isStreaming={isActivelyStreaming}
-                        isStreamingComplete={false}
-                        attachments={message.attachments?.map((att: any) => ({
-                          name: att.name,
-                          type: att.type,
-                        }))}
-                      />
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                  <p>No messages yet. Start a conversation!</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Regular scrolling container */}
-        {!enableVirtualScrolling && (
-          <div className="space-y-6">
-            {messagesToRender && messagesToRender.length > 0 ? (
-              messagesToRender.map((message: Message, index: number) => {
-                const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
-                
-                return (
-                  <div key={message.id} className="w-full">
-                    <ChatMessage
-                      message={message.content}
-                      isUser={message.isUserMessage}
-                      timestamp={message.timestamp}
-                      isStreaming={isActivelyStreaming}
-                      isStreamingComplete={false}
-                      attachments={message.attachments?.map((att: any) => ({
-                        name: att.name,
-                        type: att.type,
-                      }))}
-                    />
-                  </div>
-                );
-              })
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <p>No messages yet. Start a conversation!</p>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* AI thinking indicator */}
-        {isThinking && !allDisplayMessages.some(msg => msg.id.startsWith('ai-streaming-')) && (
-          <div className="flex items-start space-x-3 mt-4">
-            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-              <div className="w-3 h-3 bg-muted-foreground rounded-full"></div>
-            </div>
-            <div className="flex-1 bg-muted/50 rounded-lg p-2 px-3">
-              <div className="flex items-center space-x-1">
-                <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse"></div>
-                <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
-                <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Load More button for pagination */}
-        {enablePagination && hasNextPage && (
-          <div className="flex justify-center mt-4">
-            <Button 
-              onClick={loadMore} 
-              disabled={isPaginationLoading}
-              variant="outline"
-              size="sm"
-            >
-              {isPaginationLoading ? 'Loading...' : 'Load More Messages'}
-            </Button>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Scroll to bottom button */}
-      {showScrollToBottom && (
-        <div className="absolute bottom-4 right-4">
-          <Button
-            onClick={scrollToBottom}
-            size="sm"
-            className="rounded-full shadow-lg"
-            variant="secondary"
-          >
-            <ChevronUp className="h-4 w-4 rotate-180" />
-          </Button>
+    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {allDisplayMessages && allDisplayMessages.length > 0 ? (
+        allDisplayMessages.map((message: Message, index: number) => {
+          const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
+          
+          return (
+            <ChatMessage
+              key={message.id}
+              message={message.content}
+              isUser={message.isUserMessage}
+              timestamp={message.timestamp}
+              isStreaming={isActivelyStreaming}
+              isStreamingComplete={false}
+              attachments={message.attachments?.map((att: any) => ({
+                name: att.name,
+                type: att.type,
+              }))}
+            />
+          );
+        })
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <p>No messages yet. Start a conversation!</p>
         </div>
       )}
-
-      {/* Processing indicator */}
-      {isProcessing && (
-        <div className="absolute top-4 right-4">
-          <div className="bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
-            <div className="animate-spin h-3 w-3 border border-primary border-t-transparent rounded-full"></div>
-            Processing messages...
+      
+      {/* AI thinking indicator */}
+      {isThinking && !allDisplayMessages.some(msg => msg.id.startsWith('ai-streaming-')) && (
+        <div className="flex items-start space-x-3">
+          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+            <div className="w-3 h-3 bg-muted-foreground rounded-full"></div>
+          </div>
+          <div className="flex-1 bg-muted/50 rounded-lg p-2 px-3">
+            <div className="flex items-center space-x-1">
+              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse"></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
+            </div>
           </div>
         </div>
       )}
+      
+      <div ref={messagesEndRef} />
     </div>
   );
 }

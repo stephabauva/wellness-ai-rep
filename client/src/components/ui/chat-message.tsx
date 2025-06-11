@@ -41,7 +41,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(({
 }) => {
   return (
     <div className={cn(
-      "flex items-start w-full mb-4",
+      "flex items-start",
       isUser && "justify-end"
     )}>
       {!isUser && (
@@ -52,7 +52,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(({
         </div>
       )}
       <div className={cn(
-        "message-bubble p-4 shadow-sm clear-both",
+        "message-bubble p-4 shadow-sm",
         isUser ? "user-message" : "ai-message"
       )}>
         {attachments && attachments.length > 0 && (

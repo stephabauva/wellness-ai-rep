@@ -13,6 +13,7 @@ interface StreamingMessage {
 interface StreamingChatOptions {
   onMessageComplete?: (message: any) => void;
   onConversationCreate?: (conversationId: string) => void;
+  onUserMessageSent?: (userMessage: any) => void;
 }
 
 export function useStreamingChat(options: StreamingChatOptions = {}) {
@@ -37,6 +38,26 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
       // Close existing connection
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
+      }
+
+      // Enable streaming mode immediately
+      setStreamingActive(true);
+      setIsThinking(true);
+
+      // CRITICAL FIX: Immediately trigger optimistic user message display
+      if (options.onUserMessageSent) {
+        const optimisticUserMessage = {
+          id: `user-optimistic-${Date.now()}`,
+          content: messageData.content,
+          role: 'user',
+          isUserMessage: true,
+          timestamp: new Date(),
+          attachments: messageData.attachments?.map(att => ({
+            name: att.fileName || 'Unknown file',
+            type: att.fileType || 'application/octet-stream'
+          })) || []
+        };
+        options.onUserMessageSent(optimisticUserMessage);
       }
 
       // Send the message via POST to start streaming

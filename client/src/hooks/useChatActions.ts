@@ -47,18 +47,18 @@ export function useChatActions({
       const aiProvider = appSettings?.aiProvider || "openai";
       const aiModel = appSettings?.aiModel || "gpt-4o";
 
-      const currentAttachedFiles: AttachedFile[] = attachedFiles || []; // Ensure type correctness
+      const currentAttachedFiles: AttachedFile[] = attachedFiles || [];
       const hasImages = currentAttachedFiles.some(file => file.fileType?.startsWith('image/'));
       const automaticModelSelection = appSettings?.automaticModelSelection ?? hasImages;
 
-      console.log("[useChatActions] Effective AI Settings for send:", {
-        contextSettings: appSettings, // Log the whole settings object from context
-        resolvedAiProvider: aiProvider,
-        resolvedAiModel: aiModel,
-        resolvedAutomaticModelSelection: automaticModelSelection
+      console.log("[useChatActions] Starting streaming with:", {
+        aiProvider,
+        aiModel,
+        automaticModelSelection,
+        attachmentsCount: currentAttachedFiles.length
       });
 
-      // Use streaming for real-time AI responses
+      // Use streaming for real-time AI responses - this handles both user and AI messages
       startStreaming({
         content: inputMessage,
         conversationId: currentConversationId || undefined,

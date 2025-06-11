@@ -270,23 +270,31 @@ class AiService {
         memoryService.getContextualMemories(userId, conversationHistory, message)
       ]);
 
-      // For streaming, we'll use the regular method but add streaming hooks
-      // Note: Actual streaming implementation would depend on provider capabilities
-      const { response } = await providerToUse.generateChatResponse(
-        contextMessages, { model: currentAiConfig.model }
-      );
-
-      // Simulate streaming for now (in real implementation, this would be done at provider level)
-      if (onChunk) {
-        const words = response.split(' ');
-        for (let i = 0; i < words.length; i++) {
-          setTimeout(() => {
-            onChunk(words[i] + (i < words.length - 1 ? ' ' : ''));
-            if (i === words.length - 1 && onComplete) {
-              onComplete(response);
-            }
-          }, i * 50); // 50ms delay between words
-        }
+      // Use real streaming from provider
+      let fullResponse = '';
+      
+      if (providerToUse.generateChatResponseStream && onChunk) {
+        await providerToUse.generateChatResponseStream(
+          contextMessages,
+          { model: currentAiConfig.model },
+          (chunk: string) => {
+            fullResponse += chunk;
+            onChunk(chunk);
+          },
+          (complete: string) => {
+            if (onComplete) onComplete(complete);
+          },
+          (error: Error) => {
+            if (onError) onError(error);
+          }
+        );
+      } else {
+        // Fallback to regular response
+        const { response } = await providerToUse.generateChatResponse(
+          contextMessages, { model: currentAiConfig.model }
+        );
+        fullResponse = response;
+        if (onComplete) onComplete(response);
       }
 
       // Log memory usage in parallel
@@ -296,7 +304,7 @@ class AiService {
       }
 
       return {
-        response,
+        response: fullResponse,
         memoryInfo: {
           memoriesUsed: relevantMemoriesFromContext.length,
           newMemoriesProcessing: true

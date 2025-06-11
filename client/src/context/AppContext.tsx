@@ -261,9 +261,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const selectConversationHandler = useCallback((id: string | null) => {
     console.log("[AppContext selectConversationHandler] Setting currentConversationId to:", id);
     setCurrentConversationIdState(id);
-    // Mark this as a newly created conversation to prevent immediate reload
+    // Mark this as a newly created conversation to prevent immediate reload during streaming
     if (id && id !== currentConversationId) {
+      console.log("[AppContext selectConversationHandler] New conversation detected, setting newlyCreatedConvId");
       setNewlyCreatedConvId(id);
+      // Clear any existing messages to prevent showing wrong conversation messages
+      setActiveMessages([]);
     }
   }, [currentConversationId]);
 
@@ -288,35 +291,45 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const maxAttempts = 3;
         
         while (attempt < maxAttempts) {
-          console.log(`[AppContext] Refresh attempt ${attempt + 1}, URL: /api/conversations/${currentConversationId}/messages`);
-          const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}&attempt=${attempt}`);
-          console.log(`[AppContext] Response status: ${response.status}, ok: ${response.ok}`);
-          
-          if (response.ok) {
-            const convMessages = await response.json();
-            console.log("[AppContext] Raw API response:", convMessages);
-            const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-            console.log("[AppContext] Messages array length:", messagesArray.length);
+          try {
+            console.log(`[AppContext] Refresh attempt ${attempt + 1}, URL: /api/conversations/${currentConversationId}/messages`);
+            const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}&attempt=${attempt}`);
+            console.log(`[AppContext] Response status: ${response.status}, ok: ${response.ok}`);
             
-            const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
-              id: msg.id.toString(),
-              content: msg.content,
-              isUserMessage: msg.role === "user",
-              timestamp: new Date(msg.createdAt),
-              attachments: msg.metadata?.attachments?.map((att: any) => ({
-                name: att.fileName || att.name || 'Unknown file',
-                type: att.fileType || att.type || 'application/octet-stream'
-              })) || undefined
-            }));
-            
-            console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
-            setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
-            
-            // Invalidate React Query cache to ensure consistency
-            queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
-            break;
-          } else {
-            console.error(`[AppContext] Refresh attempt ${attempt + 1} failed with status:`, response.status);
+            if (response.ok) {
+              const convMessages = await response.json();
+              console.log("[AppContext] Raw API response:", convMessages);
+              const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+              console.log("[AppContext] Messages array length:", messagesArray.length);
+              
+              if (messagesArray.length > 0) {
+                const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
+                  id: msg.id.toString(),
+                  content: msg.content,
+                  isUserMessage: msg.role === "user",
+                  timestamp: new Date(msg.createdAt),
+                  attachments: msg.metadata?.attachments?.map((att: any) => ({
+                    name: att.fileName || att.name || 'Unknown file',
+                    type: att.fileType || att.type || 'application/octet-stream'
+                  })) || undefined
+                }));
+                
+                console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
+                setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
+                
+                // Invalidate React Query cache to ensure consistency
+                queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
+                return; // Success, exit the function
+              } else {
+                console.warn("[AppContext] Received empty messages array, retrying...");
+              }
+            } else {
+              console.error(`[AppContext] Refresh attempt ${attempt + 1} failed with status:`, response.status);
+              const errorText = await response.text();
+              console.error("[AppContext] Error response:", errorText);
+            }
+          } catch (fetchError) {
+            console.error(`[AppContext] Fetch error on attempt ${attempt + 1}:`, fetchError);
           }
           
           attempt++;

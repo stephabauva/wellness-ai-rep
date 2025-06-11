@@ -174,32 +174,44 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Implement proper message persistence using React best practices
+        // Implement robust message persistence with proper state coordination
         const handleStreamingComplete = async () => {
-          console.log('[Streaming] Handling streaming completion');
+          console.log('[Streaming] Handling streaming completion for conversation:', data.conversationId);
           
-          // Keep streaming message visible while syncing
-          console.log('[Streaming] Keeping streaming message visible during sync');
+          // Extract the conversation ID from the done event
+          const completedConversationId = data.conversationId;
           
-          // Wait for backend database write to complete
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          // Keep streaming message visible during sync
+          console.log('[Streaming] Keeping streaming message visible during database sync');
           
-          // Turn off streaming state to enable database loading
-          console.log('[Streaming] Disabling streaming state');
+          // Wait for backend database operations to complete
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Turn off streaming to enable normal loading
+          console.log('[Streaming] Disabling streaming state to enable database loading');
           setStreamingActive(false);
           
-          // Allow React state update to process
+          // Small delay for React state propagation
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Ensure conversation context is set correctly before refresh
+          if (options.onConversationCreate && completedConversationId) {
+            console.log('[Streaming] Ensuring conversation context is set for:', completedConversationId);
+            options.onConversationCreate(completedConversationId);
+          }
+          
+          // Wait for conversation context to update
           await new Promise(resolve => setTimeout(resolve, 200));
           
-          // Force refresh messages from database
-          console.log('[Streaming] Force refreshing messages from database');
+          // Force database refresh
+          console.log('[Streaming] Refreshing messages from database');
           await refreshMessages();
           
-          // Wait additional time for UI update, then clear streaming message
+          // Final cleanup after ensuring database messages are loaded
           setTimeout(() => {
-            console.log('[Streaming] Clearing streaming message after successful sync');
+            console.log('[Streaming] Database sync complete, clearing streaming message');
             setStreamingMessage(null);
-          }, 800);
+          }, 1000);
         };
         
         // Execute the completion handler

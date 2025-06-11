@@ -2,6 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Zap } from "lucide-react";
+import { SmoothStreamingText } from "@/components/SmoothStreamingText";
 
 interface Attachment {
   name: string;
@@ -13,6 +14,8 @@ interface ChatMessageProps {
   isUser: boolean;
   timestamp: Date;
   attachments?: Attachment[];
+  isStreaming?: boolean;
+  isStreamingComplete?: boolean;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -28,7 +31,14 @@ const getFileIcon = (fileType: string) => {
   return <Zap className="h-4 w-4" />;
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, timestamp, attachments }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, 
+  isUser, 
+  timestamp, 
+  attachments, 
+  isStreaming = false, 
+  isStreamingComplete = false 
+}) => {
   return (
     <div className={cn(
       "flex items-start",
@@ -69,12 +79,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isUser, times
             ))}
           </div>
         )}
-        <div 
-          className="prose prose-sm dark:prose-invert max-w-none" 
-          dangerouslySetInnerHTML={{ 
-            __html: (message || '').replace(/\n/g, '<br>') 
-          }} 
-        />
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          {!isUser && isStreaming ? (
+            <SmoothStreamingText 
+              content={message || ''} 
+              isComplete={isStreamingComplete} 
+            />
+          ) : (
+            <div dangerouslySetInnerHTML={{ 
+              __html: (message || '').replace(/\n/g, '<br>') 
+            }} />
+          )}
+        </div>
 
         {/* Buttons for AI suggestions */}
         {!isUser && message && message.includes("stretching routine") && (

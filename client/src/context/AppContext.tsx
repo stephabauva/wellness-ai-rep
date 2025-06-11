@@ -181,17 +181,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     };
     
-    // CHATGPT-STYLE: Only load messages for genuinely new conversations
-    // Skip loading if we already have messages or are streaming
-    const shouldLoadMessages = currentConversationId && 
-                              !isStreamingActive && 
-                              activeMessages.length <= 1 && 
-                              !newlyCreatedConvId;
-    
-    if (shouldLoadMessages) {
+    // CHATGPT-STYLE: Completely eliminate database reloads after streaming
+    // Only load messages for brand new conversations that have never had messages
+    if (currentConversationId && activeMessages.length === 0) {
+      console.log("[AppContext] CHATGPT-STYLE: Loading messages for brand new conversation");
       loadConversationMessages();
     } else {
-      console.log("[AppContext] CHATGPT-STYLE: Skipping message load to maintain continuity");
+      console.log("[AppContext] CHATGPT-STYLE: Preserving existing messages, no database reload");
       setIsLoadingMessages(false);
     }
   }, [currentConversationId, newlyCreatedConvId, isStreamingActive]);

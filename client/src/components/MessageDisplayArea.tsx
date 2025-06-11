@@ -32,33 +32,11 @@ export function MessageDisplayArea({
   console.log("[MessageDisplayArea] Props received. messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined', "isLoading:", isLoading);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // CHATGPT-STYLE: Combine persisted messages with streaming content (BEFORE any early returns)
+  // CHATGPT-STYLE: Clean message display without duplication
   const allDisplayMessages = React.useMemo(() => {
-    let messages = [...messagesToDisplay];
-    
-    // Add streaming message as a live update, maintaining continuity
-    if (streamingMessage && streamingMessage.content) {
-      const streamingExists = messages.some((msg: Message) => msg.id === streamingMessage.id);
-      if (!streamingExists) {
-        messages.push({
-          id: streamingMessage.id,
-          content: streamingMessage.content,
-          isUserMessage: false,
-          timestamp: new Date(),
-          attachments: []
-        });
-      } else {
-        // Update existing streaming message content
-        messages = messages.map((msg: Message) => 
-          msg.id === streamingMessage.id 
-            ? { ...msg, content: streamingMessage.content }
-            : msg
-        );
-      }
-    }
-    
-    return messages.sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
-  }, [messagesToDisplay, streamingMessage]);
+    // Start with persisted messages only
+    return [...messagesToDisplay].sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [messagesToDisplay]);
 
   useEffect(() => {
     console.log("[MessageDisplayArea useEffect scroll] messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined');
@@ -78,19 +56,28 @@ export function MessageDisplayArea({
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {allDisplayMessages && allDisplayMessages.map((message: Message) => (
-        <ChatMessage
-          key={message.id}
-          message={message.content}
-          isUser={message.isUserMessage}
-          timestamp={message.timestamp}
-          // Map attachments to ChatMessage's expected format
-          attachments={message.attachments?.map(att => ({
-            name: att.name,
-            type: att.type,
-          }))}
-        />
-      ))}
+      {allDisplayMessages && allDisplayMessages.map((message: Message) => {
+        // Check if this is the currently streaming message
+        const isCurrentlyStreaming = streamingMessage && 
+                                   streamingMessage.id === message.id && 
+                                   streamingMessage.isStreaming;
+        
+        return (
+          <ChatMessage
+            key={message.id}
+            message={message.content}
+            isUser={message.isUserMessage}
+            timestamp={message.timestamp}
+            isStreaming={isCurrentlyStreaming}
+            isStreamingComplete={streamingMessage?.isComplete || false}
+            // Map attachments to ChatMessage's expected format
+            attachments={message.attachments?.map((att: any) => ({
+              name: att.name,
+              type: att.type,
+            }))}
+          />
+        );
+      })}
       
       {/* AI thinking indicator - discrete design */}
       {isThinking && (

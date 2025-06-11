@@ -184,40 +184,47 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         setIsConnected(false);
         setIsThinking(false);
         
-        // Mark streaming message as complete but keep it visible
-        if (streamingMessage) {
-          setStreamingMessage(prev => prev ? {
-            ...prev,
-            isComplete: true,
-            isStreaming: false
-          } : null);
+        // Commit both user and AI messages to persistent state
+        if (pendingUserMessage && addOptimisticMessage) {
+          console.log('[Streaming] Committing user message to persistent state');
+          addOptimisticMessage(pendingUserMessage);
+        }
+        
+        if (streamingMessage && streamingMessage.content && addOptimisticMessage) {
+          console.log('[Streaming] Committing AI message to persistent state');
+          const finalAiMessage = {
+            id: `ai-${Date.now()}`,
+            content: streamingMessage.content,
+            isUserMessage: false,
+            timestamp: new Date(),
+            attachments: []
+          };
+          addOptimisticMessage(finalAiMessage);
         }
 
         if (options.onMessageComplete && data.aiMessage) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // CHATGPT-STYLE: Complete streaming without losing messages
+        // CHATGPT-STYLE: Complete streaming without database reload
         const handleStreamingComplete = async () => {
           console.log('[Streaming] CHATGPT-STYLE: Completing stream for conversation:', data.conversationId);
           
-          // Wait for database to settle before disabling streaming
-          await new Promise(resolve => setTimeout(resolve, 50));
+          // Short delay to ensure message persistence
+          await new Promise(resolve => setTimeout(resolve, 100));
           
           console.log('[Streaming] Disabling streaming state');
           setStreamingActive(false);
           
-          // Clear temporary UI states after a short delay to maintain visual continuity
+          // Clear temporary UI states after persistence
           setTimeout(() => {
             console.log('[Streaming] Clearing temporary UI states');
             setPendingUserMessage(null);
             setStreamingMessage(null);
-          }, 200);
+          }, 150);
         };
         
-        // Execute the completion handler
         handleStreamingComplete();
-        
         break;
 
       case 'error':
@@ -234,7 +241,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
       default:
         console.log('[Streaming] Unknown event:', data);
     }
-  }, [streamingMessage, options, queryClient, toast, refreshMessages]);
+  }, [streamingMessage, options, queryClient, toast, refreshMessages, addOptimisticMessage]);
 
   const stopStreaming = useCallback(() => {
     if (eventSourceRef.current) {

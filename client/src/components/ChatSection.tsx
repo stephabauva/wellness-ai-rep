@@ -45,23 +45,11 @@ function ChatSection() {
     pendingUserMessage
   } = chatActions;
 
-  // Generate messages to display - CRITICAL FIX: Include pending user message for instant display
+  // Generate messages to display - unified approach without duplication
   const messagesToDisplay = useMemo(() => {
-    let displayMessages = [...messages];
-    
-    // Add pending user message immediately when streaming starts
-    if (pendingUserMessage && !messages.some(msg => msg.content === pendingUserMessage.content && msg.isUserMessage)) {
-      displayMessages.push({
-        id: pendingUserMessage.id,
-        content: pendingUserMessage.content,
-        isUserMessage: true,
-        timestamp: pendingUserMessage.timestamp,
-        attachments: pendingUserMessage.attachments
-      });
-    }
-    
-    return displayMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-  }, [messages, pendingUserMessage]);
+    // Simply use messages from context - optimistic updates are handled there
+    return [...messages].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [messages]);
 
   const handleConversationSelect = useCallback((conversationId: string) => {
     setCurrentConversationId(conversationId);

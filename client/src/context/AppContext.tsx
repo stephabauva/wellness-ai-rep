@@ -314,7 +314,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (id) {
         console.log("[AppContext selectConversationHandler] New conversation detected, setting newlyCreatedConvId");
         setNewlyCreatedConvId(id);
-        setActiveMessages([]);
+        // DON'T clear messages immediately - let the useEffect handle loading
+        // setActiveMessages([]); // REMOVED - this was causing message disappearing
       }
     } else {
       console.log("[AppContext selectConversationHandler] Same conversation ID, no update needed");

@@ -32,24 +32,11 @@ export function MessageDisplayArea({
   console.log("[MessageDisplayArea] Props received. messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined', "isLoading:", isLoading);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // CHATGPT-STYLE: Clean message display including streaming content
+  // CHATGPT-STYLE: Clean message display without duplication
   const allDisplayMessages = React.useMemo(() => {
-    let messages = [...messagesToDisplay];
-    
-    // Add streaming message if it exists and has content
-    if (streamingMessage && streamingMessage.content) {
-      const streamingAsMessage: Message = {
-        id: streamingMessage.id,
-        content: streamingMessage.content,
-        isUserMessage: false,
-        timestamp: new Date(), // Current time for streaming message
-        attachments: []
-      };
-      messages.push(streamingAsMessage);
-    }
-    
-    return messages.sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
-  }, [messagesToDisplay, streamingMessage]);
+    // Only use messagesToDisplay - streaming is handled separately
+    return [...messagesToDisplay].sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [messagesToDisplay]);
 
   useEffect(() => {
     console.log("[MessageDisplayArea useEffect scroll] messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined');
@@ -69,26 +56,34 @@ export function MessageDisplayArea({
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {allDisplayMessages && allDisplayMessages.map((message: Message) => {
-        // Check if this is the currently streaming message
-        const isCurrentlyStreaming = streamingMessage?.id === message.id && streamingMessage?.isStreaming === true;
-        
-        return (
-          <ChatMessage
-            key={message.id}
-            message={message.content}
-            isUser={message.isUserMessage}
-            timestamp={message.timestamp}
-            isStreaming={Boolean(isCurrentlyStreaming)}
-            isStreamingComplete={Boolean(streamingMessage?.isComplete)}
-            // Map attachments to ChatMessage's expected format
-            attachments={message.attachments?.map((att: any) => ({
-              name: att.name,
-              type: att.type,
-            }))}
-          />
-        );
-      })}
+      {/* Display all persisted messages */}
+      {allDisplayMessages && allDisplayMessages.map((message: Message) => (
+        <ChatMessage
+          key={message.id}
+          message={message.content}
+          isUser={message.isUserMessage}
+          timestamp={message.timestamp}
+          isStreaming={false}
+          isStreamingComplete={false}
+          attachments={message.attachments?.map((att: any) => ({
+            name: att.name,
+            type: att.type,
+          }))}
+        />
+      ))}
+      
+      {/* Display streaming message separately */}
+      {streamingMessage && streamingMessage.content && (
+        <ChatMessage
+          key={`streaming-${streamingMessage.id}`}
+          message={streamingMessage.content}
+          isUser={false}
+          timestamp={new Date()}
+          isStreaming={streamingMessage.isStreaming}
+          isStreamingComplete={streamingMessage.isComplete}
+          attachments={[]}
+        />
+      )}
       
       {/* AI thinking indicator - discrete design */}
       {isThinking && (

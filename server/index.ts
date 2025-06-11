@@ -2,10 +2,25 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage, DatabaseStorage } from "./storage";
+import { databaseMigrationService } from "./services/database-migration-service";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Initialize database with indexes and optimizations
+async function initializeDatabase() {
+  try {
+    console.log('Initializing PostgreSQL database...');
+    await databaseMigrationService.initializeDatabase();
+    
+    const health = await databaseMigrationService.checkDatabaseHealth();
+    console.log(`Database health check: ${health.connectionStatus}, ${health.tableCount} tables, ${health.indexCount} indexes, performance: ${health.performance}`);
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    // Continue startup but log the error
+  }
+}
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -39,10 +54,10 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Initialize sample data in the database if needed
+    // Initialize PostgreSQL database with indexes and sample data
     if (storage instanceof DatabaseStorage) {
-      log("Initializing database...");
-      await storage.initializeSampleData();
+      log("Initializing PostgreSQL database...");
+      await initializeDatabase();
       log("Database initialization completed");
     }
     

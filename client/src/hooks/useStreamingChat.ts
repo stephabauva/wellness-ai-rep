@@ -171,10 +171,12 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
             attachments: []
           };
           
-          // Immediate update - no throttling, no async delays
-          if (addOptimisticMessage) {
-            addOptimisticMessage(streamingAiMessage);
-          }
+          // Schedule update to avoid render-time state updates
+          setTimeout(() => {
+            if (addOptimisticMessage) {
+              addOptimisticMessage(streamingAiMessage);
+            }
+          }, 0);
           
           return {
             id: streamingId,

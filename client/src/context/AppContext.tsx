@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo, useEffect } from "react";
-import { useMutation, QueryClient } from '@tanstack/react-query'; // queryClient might not be directly used here but good for consistency
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CoachingMode } from "@shared/schema";
 import { useUserSettings } from "@/hooks/useUserSettings";
 
@@ -72,10 +72,6 @@ const welcomeMessage: Message = {
   timestamp: new Date(),
 };
 
-// Placeholder for queryClient if not already configured globally for mutations
-// This might be better if queryClient is imported from a central place like @/lib/queryClient
-const queryClient = new QueryClient();
-
 interface AppProviderProps {
   children: ReactNode;
 }
@@ -93,6 +89,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [messageRefreshTrigger, setMessageRefreshTrigger] = useState<number>(0);
 
   const { userSettings, isLoadingSettings } = useUserSettings();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (userSettings) {

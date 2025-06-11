@@ -55,12 +55,6 @@ export function CategorySelector({
             className="flex items-center gap-2"
           >
             <span className="flex-1">{category.name}</span>
-            {category.color && (
-              <div
-                className="w-3 h-3 rounded-full border"
-                style={{ backgroundColor: category.color }}
-              />
-            )}
           </DropdownMenuItem>
         ))}
         {categories.length > 0 && <DropdownMenuSeparator />}

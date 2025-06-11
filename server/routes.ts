@@ -205,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const existingConv = await db
               .select()
               .from(conversations)
-              .where(eq(conversations.id, currentConversationId))
+              .where(eq(conversations.id, currentConversationId!))
               .limit(1);
 
             if (existingConv.length === 0) {
@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const historyFromDb = await db
                 .select()
                 .from(conversationMessages)
-                .where(eq(conversationMessages.conversationId, currentConversationId))
+                .where(eq(conversationMessages.conversationId, currentConversationId!))
                 .orderBy(conversationMessages.createdAt)
                 .limit(20);
               conversationHistory = historyFromDb;
@@ -390,7 +390,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Chat error:', error);
       
-      if (streaming) {
+      const isStreaming = req.body?.streaming || false;
+      if (isStreaming) {
         // Send error via SSE
         res.write(`data: ${JSON.stringify({ 
           type: 'error', 

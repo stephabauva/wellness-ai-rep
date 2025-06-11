@@ -23,6 +23,7 @@ export type AttachedFile = {
   displayName?: string;
 };
 
+
 export type ActiveSection = "chat" | "health" | "devices" | "memory" | "files" | "settings";
 
 export interface AppSettings {
@@ -37,15 +38,15 @@ interface AppContextType {
   setActiveSection: (section: ActiveSection) => void;
   coachingMode: string;
   setCoachingMode: (mode: string) => void;
-  appSettings: AppSettings;
+  appSettings: AppSettings; // Changed from settings to appSettings
   // Chat related context values
   messages: Message[];
   currentConversationId: string | null;
   loadingMessages: boolean;
-  sendMessage: (params: SendMessageParams) => void;
+  sendMessage: (params: SendMessageParams) => void; // Matches mutation's mutate signature
   selectConversation: (conversationId: string | null) => void;
   newChat: () => void;
-  refreshMessages: () => void;
+  refreshMessages: () => void; // New method to trigger message refresh
   // Streaming control methods
   setStreamingActive: (active: boolean) => void;
   isStreamingActive: boolean;
@@ -100,7 +101,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     transcriptionProvider: userSettings?.transcriptionProvider || "webspeech",
   }), [userSettings]);
 
-  // Message Loading useEffect
+  // Message Loading useEffect (adapted from useChatMessages)
   useEffect(() => {
     console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "isStreamingActive:", isStreamingActive);
     
@@ -152,7 +153,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     loadConversationMessages();
   }, [currentConversationId, newlyCreatedConvId, isStreamingActive]);
 
-  // Send Message Mutation
+  // Send Message Mutation (adapted from useChatMessages)
   const sendMessageMutation = useMutation<any, Error, SendMessageParams, { optimisticMessage?: Message }>({
     mutationFn: async ({ content, attachments, conversationId, aiProvider, aiModel, automaticModelSelection }) => {
       const requestBody = {
@@ -230,8 +231,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setCurrentConversationIdState(data.conversationId);
       }
       if (variables.conversationId === null && data.conversationId) {
+        // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to:", data.conversationId);
         setNewlyCreatedConvId(data.conversationId);
       } else {
+        // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to null");
         setNewlyCreatedConvId(null);
       }
     },
@@ -257,16 +260,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const selectConversationHandler = useCallback((id: string | null) => {
     console.log("[AppContext selectConversationHandler] Setting currentConversationId to:", id);
     setCurrentConversationIdState(id);
+    // Mark this as a newly created conversation to prevent immediate reload during streaming
     if (id && id !== currentConversationId) {
       console.log("[AppContext selectConversationHandler] New conversation detected, setting newlyCreatedConvId");
       setNewlyCreatedConvId(id);
+      // Clear any existing messages to prevent showing wrong conversation messages
       setActiveMessages([]);
     }
   }, [currentConversationId]);
 
   const newChatHandler = useCallback(() => {
     console.log("[AppContext newChatHandler] Setting currentConversationId to null");
-    setCurrentConversationIdState(null);
+    setCurrentConversationIdState(null); // useEffect will handle setting welcome message and clearing newlyCreatedConvId
   }, []);
 
   const sendMessageHandler = useCallback((params: SendMessageParams) => {
@@ -281,9 +286,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
     
     try {
+      // Force clear newlyCreatedConvId to ensure loading works
       console.log("[AppContext] Clearing newlyCreatedConvId before refresh");
       setNewlyCreatedConvId(null);
       
+      // Add retry logic to ensure we get the latest messages
       let attempt = 0;
       const maxAttempts = 3;
       
@@ -314,8 +321,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
               setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
               
+              // Invalidate React Query cache to ensure consistency
               queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
-              return;
+              return; // Success, exit the function
             } else {
               console.warn("[AppContext] Received empty messages array, retrying...");
             }

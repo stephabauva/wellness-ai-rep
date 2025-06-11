@@ -101,22 +101,33 @@ POST /api/messages/stream
 
 **Fixes Applied**:
 ```typescript
-// 1. Added streaming state checks to prevent database reloads during streaming
-if (isStreamingActive) {
-  console.log("[AppContext] Skipping message load - streaming is active");
+// 1. CRITICAL: Prevent database reload after streaming completion
+const hasConversationMessages = activeMessages.length > 1 && activeMessages[0].id !== "welcome";
+if (hasConversationMessages) {
+  console.log("[AppContext] CRITICAL FIX: Messages exist, preventing database reload");
   setIsLoadingMessages(false);
   return;
 }
 
-// 2. Google AI safety filter handling to prevent stream interruption
+// 2. Optimistic user message display for immediate visibility
+const messagesToDisplay = useMemo(() => {
+  let displayMessages = [...messages];
+  if (pendingUserMessage && !messages.some(msg => msg.content === pendingUserMessage.content)) {
+    displayMessages.push(pendingUserMessage);
+  }
+  return displayMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+}, [messages, pendingUserMessage]);
+
+// 3. Google AI safety filter graceful handling
 if (error?.message?.includes('SAFETY') || error?.message?.includes('blocked')) {
   const safetyMessage = "I understand you'd like to discuss that topic...";
   onChunk(safetyMessage);
   onComplete(safetyMessage);
 }
 
-// 3. Reduced streaming completion delays from 2000ms to 500ms
-await new Promise(resolve => setTimeout(resolve, 500));
+// 4. Streamlined completion without excessive delays
+await new Promise(resolve => setTimeout(resolve, 100));
+setStreamingActive(false);
 ```
 
 #### C. **Optimize AI Service Architecture** ✅ **COMPLETED**

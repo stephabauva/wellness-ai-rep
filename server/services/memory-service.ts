@@ -30,9 +30,37 @@ interface RelevantMemory extends MemoryEntry {
   retrievalReason: string;
 }
 
+interface BackgroundTask {
+  id: string;
+  type: 'memory_processing' | 'embedding_generation' | 'similarity_calculation';
+  payload: any;
+  priority: number;
+  createdAt: Date;
+}
+
+interface MemoryProcessingQueue {
+  tasks: BackgroundTask[];
+  processing: boolean;
+}
+
 class MemoryService {
   private openai: OpenAI;
   private google: GoogleGenerativeAI;
+  
+  // Tier 2 C: Background processing queue
+  private backgroundQueue: MemoryProcessingQueue = {
+    tasks: [],
+    processing: false
+  };
+  
+  // Tier 2 C: Debounced update registry
+  private updateTimers: Map<string, NodeJS.Timeout> = new Map();
+  
+  // Tier 2 C: Lazy loading cache for user memories
+  private userMemoryCache: Map<string, { memories: MemoryEntry[], lastFetch: Date }> = new Map();
+  
+  // Tier 2 C: Vector similarity cache
+  private similarityCache: Map<string, { score: number, timestamp: Date }> = new Map();
 
   constructor() {
     this.openai = new OpenAI({
@@ -42,6 +70,194 @@ class MemoryService {
     this.google = new GoogleGenerativeAI(
       process.env.GOOGLE_API_KEY || ''
     );
+    
+    // Start background processing
+    this.initializeBackgroundProcessor();
+  }
+
+  // Tier 2 C: Initialize background processor
+  private initializeBackgroundProcessor(): void {
+    setInterval(() => {
+      this.processBackgroundQueue();
+    }, 5000); // Process queue every 5 seconds
+    
+    // Cleanup old cache entries every 30 minutes
+    setInterval(() => {
+      this.cleanupExpiredCaches();
+    }, 30 * 60 * 1000);
+  }
+
+  // Tier 2 C: Process background tasks queue
+  private async processBackgroundQueue(): Promise<void> {
+    if (this.backgroundQueue.processing || this.backgroundQueue.tasks.length === 0) {
+      return;
+    }
+
+    this.backgroundQueue.processing = true;
+    
+    try {
+      // Sort by priority (higher numbers = higher priority)
+      this.backgroundQueue.tasks.sort((a, b) => b.priority - a.priority);
+      
+      const task = this.backgroundQueue.tasks.shift();
+      if (!task) return;
+
+      console.log(`[MemoryService] Processing background task: ${task.type}`);
+      
+      switch (task.type) {
+        case 'memory_processing':
+          await this.processBackgroundMemoryTask(task.payload);
+          break;
+        case 'embedding_generation':
+          await this.processBackgroundEmbeddingTask(task.payload);
+          break;
+        case 'similarity_calculation':
+          await this.processBackgroundSimilarityTask(task.payload);
+          break;
+      }
+    } catch (error) {
+      console.error('[MemoryService] Background task processing error:', error);
+    } finally {
+      this.backgroundQueue.processing = false;
+    }
+  }
+
+  // Tier 2 C: Add task to background queue
+  private addBackgroundTask(type: BackgroundTask['type'], payload: any, priority: number = 1): void {
+    const task: BackgroundTask = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type,
+      payload,
+      priority,
+      createdAt: new Date()
+    };
+    
+    this.backgroundQueue.tasks.push(task);
+  }
+
+  // Tier 2 C: Cleanup expired cache entries
+  private cleanupExpiredCaches(): void {
+    const now = new Date();
+    const cacheExpiry = 60 * 60 * 1000; // 1 hour
+    
+    // Clean user memory cache
+    Array.from(this.userMemoryCache.entries()).forEach(([key, value]) => {
+      if (now.getTime() - value.lastFetch.getTime() > cacheExpiry) {
+        this.userMemoryCache.delete(key);
+      }
+    });
+    
+    // Clean similarity cache
+    Array.from(this.similarityCache.entries()).forEach(([key, value]) => {
+      if (now.getTime() - value.timestamp.getTime() > cacheExpiry) {
+        this.similarityCache.delete(key);
+      }
+    });
+    
+    console.log(`[MemoryService] Cache cleanup completed. Active caches: ${this.userMemoryCache.size + this.similarityCache.size}`);
+  }
+
+  // Tier 2 C: Background memory processing task
+  private async processBackgroundMemoryTask(payload: any): Promise<void> {
+    const { userId, message, conversationId, messageId, conversationHistory } = payload;
+    
+    try {
+      const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
+      if (autoDetection.shouldRemember) {
+        await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
+          category: autoDetection.category,
+          importance_score: autoDetection.importance,
+          sourceConversationId: conversationId,
+          sourceMessageId: messageId,
+          keywords: autoDetection.keywords,
+        });
+        
+        // Invalidate user memory cache
+        this.invalidateUserMemoryCache(userId);
+      }
+    } catch (error) {
+      console.error('[MemoryService] Background memory processing failed:', error);
+    }
+  }
+
+  // Tier 2 C: Background embedding generation task
+  private async processBackgroundEmbeddingTask(payload: any): Promise<void> {
+    const { text, cacheKey } = payload;
+    
+    try {
+      const embedding = await this.generateEmbedding(text);
+      if (embedding.length > 0) {
+        cacheService.setEmbedding(cacheKey, embedding, 'text-embedding-3-small');
+      }
+    } catch (error) {
+      console.error('[MemoryService] Background embedding generation failed:', error);
+    }
+  }
+
+  // Tier 2 C: Background similarity calculation task
+  private async processBackgroundSimilarityTask(payload: any): Promise<void> {
+    const { vectorA, vectorB, cacheKey } = payload;
+    
+    try {
+      const similarity = this.cosineSimilarity(vectorA, vectorB);
+      this.similarityCache.set(cacheKey, {
+        score: similarity,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('[MemoryService] Background similarity calculation failed:', error);
+    }
+  }
+
+  // Tier 2 C: Debounced cache invalidation
+  private invalidateUserMemoryCache(userId: number, delay: number = 2000): void {
+    const key = `user-memory-${userId}`;
+    
+    // Clear existing timer
+    const existingTimer = this.updateTimers.get(key);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+    
+    // Set new debounced timer
+    const timer = setTimeout(() => {
+      this.userMemoryCache.delete(key);
+      this.updateTimers.delete(key);
+      console.log(`[MemoryService] Invalidated memory cache for user ${userId}`);
+    }, delay);
+    
+    this.updateTimers.set(key, timer);
+  }
+
+  // Tier 2 C: Get cached vector similarity with background calculation
+  private getCachedSimilarity(vectorA: number[], vectorB: number[]): number | null {
+    const cacheKey = this.createSimilarityCacheKey(vectorA, vectorB);
+    const cached = this.similarityCache.get(cacheKey);
+    
+    if (cached) {
+      // Check if cache is still valid (1 hour)
+      const maxAge = 60 * 60 * 1000;
+      if (Date.now() - cached.timestamp.getTime() < maxAge) {
+        return cached.score;
+      } else {
+        this.similarityCache.delete(cacheKey);
+      }
+    }
+    
+    // Schedule background calculation if not cached
+    this.addBackgroundTask('similarity_calculation', {
+      vectorA, vectorB, cacheKey
+    }, 2);
+    
+    return null;
+  }
+
+  // Tier 2 C: Create similarity cache key
+  private createSimilarityCacheKey(vectorA: number[], vectorB: number[]): string {
+    // Create a hash-like key from vector data
+    const hashA = vectorA.slice(0, 10).map(v => Math.round(v * 1000)).join(',');
+    const hashB = vectorB.slice(0, 10).map(v => Math.round(v * 1000)).join(',');
+    return `sim-${hashA}-${hashB}`;
   }
 
   // Detect explicit memory triggers like "remember this" or "don't forget"
@@ -233,6 +449,35 @@ Respond with JSON:
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
+  // Tier 2 C: Lazy loading for user memories with caching
+  private async getUserMemoriesLazy(userId: number): Promise<MemoryEntry[]> {
+    const cacheKey = `user-memory-${userId}`;
+    const cached = this.userMemoryCache.get(cacheKey);
+    
+    // Return cached memories if fresh (within 30 minutes)
+    if (cached && (Date.now() - cached.lastFetch.getTime()) < 30 * 60 * 1000) {
+      return cached.memories;
+    }
+    
+    // Fetch from database
+    const memories = await db
+      .select()
+      .from(memoryEntries)
+      .where(and(
+        eq(memoryEntries.userId, userId),
+        eq(memoryEntries.isActive, true)
+      ))
+      .orderBy(desc(memoryEntries.importanceScore));
+    
+    // Cache the results
+    this.userMemoryCache.set(cacheKey, {
+      memories,
+      lastFetch: new Date()
+    });
+    
+    return memories;
+  }
+
   // Retrieve relevant memories based on context
   async getContextualMemories(
     userId: number, 
@@ -255,15 +500,8 @@ Respond with JSON:
       // Generate embedding for current context
       const contextEmbedding = await this.generateEmbedding(context);
 
-      // Get all memories for the user
-      const userMemories = await db
-        .select()
-        .from(memoryEntries)
-        .where(and(
-          eq(memoryEntries.userId, userId),
-          eq(memoryEntries.isActive, true)
-        ))
-        .orderBy(desc(memoryEntries.importanceScore));
+      // Tier 2 C: Use lazy loading for user memories
+      const userMemories = await this.getUserMemoriesLazy(userId);
 
       // Calculate semantic similarity and create relevant memories
       const relevantMemories: RelevantMemory[] = [];
@@ -281,7 +519,13 @@ Respond with JSON:
             }
             
             if (Array.isArray(memoryEmbedding) && memoryEmbedding.length > 0 && Array.isArray(contextEmbedding)) {
-              const similarity = this.cosineSimilarity(contextEmbedding, memoryEmbedding);
+              // Tier 2 C: Use cached similarity if available
+              let similarity = this.getCachedSimilarity(contextEmbedding, memoryEmbedding);
+              
+              // Fall back to synchronous calculation if not cached
+              if (similarity === null) {
+                similarity = this.cosineSimilarity(contextEmbedding, memoryEmbedding);
+              }
               
               if (similarity > 0.7) { // Threshold for relevance
                 relevantMemories.push({
@@ -297,17 +541,15 @@ Respond with JSON:
         }
       }
 
-      // Also get high-importance recent memories
-      const recentImportantMemories = await db
-        .select()
-        .from(memoryEntries)
-        .where(and(
-          eq(memoryEntries.userId, userId),
-          eq(memoryEntries.isActive, true),
-          gt(memoryEntries.importanceScore, 0.8)
-        ))
-        .orderBy(desc(memoryEntries.createdAt))
-        .limit(3);
+      // Also get high-importance recent memories from lazy cache
+      const recentImportantMemories = userMemories
+        .filter(m => m.importanceScore > 0.8)
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, 3);
 
       // Add recent important memories
       for (const memory of recentImportantMemories) {
@@ -336,7 +578,7 @@ Respond with JSON:
     }
   }
 
-  // Process message for memory extraction
+  // Process message for memory extraction with background processing
   async processMessageForMemory(
     userId: number, 
     message: string, 
@@ -355,7 +597,7 @@ Respond with JSON:
     } = { triggers: [] };
 
     try {
-      // Check for explicit triggers
+      // Check for explicit triggers (immediate processing for user-requested saves)
       const explicitTrigger = this.detectExplicitMemoryTriggers(message);
       if (explicitTrigger) {
         // Save explicit memory trigger
@@ -369,7 +611,7 @@ Respond with JSON:
         const [trigger] = await db.insert(memoryTriggers).values(triggerData).returning();
         results.triggers.push(trigger);
 
-        // Save the memory
+        // Save the memory immediately for explicit requests
         const memory = await this.saveMemoryEntry(userId, explicitTrigger.content, {
           category: 'instruction',
           importance_score: 0.9,
@@ -384,45 +626,22 @@ Respond with JSON:
             .update(memoryTriggers)
             .set({ memoryEntryId: memory.id, processed: true })
             .where(eq(memoryTriggers.id, trigger.id));
+          
+          // Tier 2 C: Debounced cache invalidation for immediate updates
+          this.invalidateUserMemoryCache(userId, 500); // Faster invalidation for explicit saves
         }
       }
 
-      // Check for automatic memory detection
-      const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
-      if (autoDetection.shouldRemember) {
-        // Save auto detection trigger
-        // Skip memory processing if messageId is invalid
-        if (!messageId || messageId === 0) {
-          console.log('[MemoryService] Skipping memory processing - invalid messageId:', messageId);
-          return results;
-        }
-
-        const triggerData: InsertMemoryTrigger = {
+      // Tier 2 C: Background processing for automatic memory detection
+      // This prevents blocking the main response flow
+      if (messageId && messageId !== 0) {
+        this.addBackgroundTask('memory_processing', {
+          userId,
+          message,
+          conversationId,
           messageId,
-          triggerType: 'auto_detected',
-          confidence: autoDetection.importance,
-        };
-
-        const [trigger] = await db.insert(memoryTriggers).values(triggerData).returning();
-        results.triggers.push(trigger);
-
-        // Save the memory
-        const memory = await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
-          category: autoDetection.category,
-          importance_score: autoDetection.importance,
-          sourceConversationId: conversationId ? conversationId : undefined,
-          sourceMessageId: messageId ? messageId : undefined,
-          keywords: autoDetection.keywords,
-        });
-
-        if (memory) {
-          results.autoDetectedMemory = memory;
-          // Update trigger with memory ID
-          await db
-            .update(memoryTriggers)
-            .set({ memoryEntryId: memory.id, processed: true })
-            .where(eq(memoryTriggers.id, trigger.id));
-        }
+          conversationHistory
+        }, 3); // Medium priority
       }
 
       return results;
@@ -483,23 +702,27 @@ ${memoryContext}
 Use this information to personalize your responses, but don't explicitly mention that you're using remembered information unless directly relevant to the conversation.`;
   }
 
-  // Get user's memories for management interface
+  // Tier 2 C: Optimized user memories with caching and filtering
   async getUserMemories(userId: number, category?: MemoryCategory): Promise<MemoryEntry[]> {
     try {
-      const whereConditions = [
-        eq(memoryEntries.userId, userId),
-        eq(memoryEntries.isActive, true)
-      ];
+      // Use lazy loading cache for base memories
+      const allMemories = await this.getUserMemoriesLazy(userId);
 
+      // Apply category filter if specified
+      let filteredMemories = allMemories;
       if (category) {
-        whereConditions.push(eq(memoryEntries.category, category));
+        filteredMemories = allMemories.filter(memory => memory.category === category);
       }
 
-      return await db
-        .select()
-        .from(memoryEntries)
-        .where(and(...whereConditions))
-        .orderBy(desc(memoryEntries.importanceScore), desc(memoryEntries.createdAt));
+      // Sort by importance and creation date
+      return filteredMemories.sort((a, b) => {
+        if (a.importanceScore !== b.importanceScore) {
+          return b.importanceScore - a.importanceScore;
+        }
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
     } catch (error) {
       console.error('Error getting user memories:', error);
       return [];

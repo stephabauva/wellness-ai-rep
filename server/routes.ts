@@ -5,6 +5,7 @@ import { aiService } from "./services/ai-service";
 import { memoryService } from "./services/memory-service";
 import { generatePDFReport } from "./services/pdf-service";
 import { transcriptionService } from "./services/transcription-service";
+import { cacheService } from "./services/cache-service";
 import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";

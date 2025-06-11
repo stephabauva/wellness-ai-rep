@@ -519,8 +519,14 @@ export class DatabaseStorage implements IStorage {
     return newMessage;
   }
   
-  // Health data methods
+  // Health data methods with caching
   async getHealthData(userId: number, timeRange: string): Promise<HealthData[]> {
+    // Check cache first
+    const cached = await cacheService.getHealthData(userId, timeRange);
+    if (cached) {
+      return cached;
+    }
+
     const now = new Date();
     let startDate: Date;
     
@@ -553,6 +559,9 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(healthData.timestamp));
     
+    // Cache the results for future requests
+    cacheService.setHealthData(userId, timeRange, data);
+    
     return data;
   }
   
@@ -564,6 +573,9 @@ export class DatabaseStorage implements IStorage {
         timestamp: new Date()
       })
       .returning();
+    
+    // Invalidate health data cache for this user
+    cacheService.invalidateUserData(data.userId);
     
     return newData;
   }
@@ -579,10 +591,21 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getDevice(id: number): Promise<ConnectedDevice | undefined> {
+    // Check cache first
+    const cached = await cacheService.getDeviceSettings(id);
+    if (cached) {
+      return cached;
+    }
+
     const [device] = await db
       .select()
       .from(connectedDevices)
       .where(eq(connectedDevices.id, id));
+    
+    // Cache the device settings
+    if (device) {
+      cacheService.setDeviceSettings(id, device);
+    }
     
     return device;
   }
@@ -605,6 +628,9 @@ export class DatabaseStorage implements IStorage {
     if (!currentDevice) {
       throw new Error(`Device with id ${id} not found`);
     }
+
+    // Invalidate device cache before update
+    cacheService.invalidateDeviceData(id);
     
     // If metadata is being updated, merge it with existing metadata
     let updatedSettings = { ...settings };

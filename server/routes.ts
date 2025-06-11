@@ -127,6 +127,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection } = messageSchema.parse(req.body);
       const userId = 1; // Default user ID
 
+      // Get user's actual AI settings
+      const user = await storage.getUser(userId);
+      const userAiProvider = aiProvider || user?.aiProvider || 'google';
+      const userAiModel = aiModel || user?.aiModel || 'gemini-2.0-flash-exp';
+      const userAutoSelection = automaticModelSelection ?? user?.automaticModelSelection ?? true;
+
+      console.log(`[Streaming] Using user settings: provider=${userAiProvider}, model=${userAiModel}, auto=${userAutoSelection}`);
+
       let currentConversationId = conversationId;
       let conversationHistory: any[] = [];
 
@@ -147,9 +155,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         0, // messageId placeholder
         coachingMode || 'weight-loss',
         conversationHistory,
-        { provider: aiProvider || 'google', model: aiModel || 'gemini-2.0-flash-exp' },
+        { provider: userAiProvider, model: userAiModel },
         attachments || [],
-        automaticModelSelection ?? true,
+        userAutoSelection,
         (chunk: string) => {
           // Send each chunk immediately for smooth streaming
           res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);

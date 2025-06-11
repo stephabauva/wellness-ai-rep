@@ -321,11 +321,23 @@ export class MemStorage implements IStorage {
       throw new Error(`User with id ${id} not found`);
     }
     
+    // Extract AI configuration and other top-level fields
+    const { aiProvider, aiModel, automaticModelSelection, transcriptionProvider, preferredLanguage, name, email, ...preferenceSettings } = settings;
+    
     const updatedUser: User = {
       ...user,
+      // Update top-level user fields
+      ...(aiProvider && { aiProvider }),
+      ...(aiModel && { aiModel }),
+      ...(automaticModelSelection !== undefined && { automaticModelSelection }),
+      ...(transcriptionProvider && { transcriptionProvider }),
+      ...(preferredLanguage && { preferredLanguage }),
+      ...(name && { name }),
+      ...(email && { email }),
+      // Update preferences for other settings
       preferences: {
         ...user.preferences,
-        ...settings
+        ...preferenceSettings
       }
     };
     

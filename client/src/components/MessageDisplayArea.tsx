@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { ChatMessage } from "@/components/ui/chat-message"; // Assuming this is the correct path
 import { AttachedFile } from "@/hooks/useFileManagement"; // For message attachments type
 
@@ -48,9 +48,37 @@ export function MessageDisplayArea({
     );
   }
 
+  // CHATGPT-STYLE: Combine persisted messages with streaming content
+  const allDisplayMessages = React.useMemo(() => {
+    let messages = [...messagesToDisplay];
+    
+    // Add streaming message as a live update, maintaining continuity
+    if (streamingMessage && streamingMessage.content) {
+      const streamingExists = messages.some((msg: Message) => msg.id === streamingMessage.id);
+      if (!streamingExists) {
+        messages.push({
+          id: streamingMessage.id,
+          content: streamingMessage.content,
+          isUserMessage: false,
+          timestamp: new Date(),
+          attachments: []
+        });
+      } else {
+        // Update existing streaming message content
+        messages = messages.map((msg: Message) => 
+          msg.id === streamingMessage.id 
+            ? { ...msg, content: streamingMessage.content }
+            : msg
+        );
+      }
+    }
+    
+    return messages.sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [messagesToDisplay, streamingMessage]);
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {messagesToDisplay && messagesToDisplay.map((message) => (
+      {allDisplayMessages && allDisplayMessages.map((message: Message) => (
         <ChatMessage
           key={message.id}
           message={message.content}

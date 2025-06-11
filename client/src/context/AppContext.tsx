@@ -130,10 +130,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return;
       }
       
-      // CRITICAL FIX: Skip database fetch if messages already exist for this conversation
-      const hasConversationMessages = activeMessages.length > 1 && activeMessages[0].id !== "welcome";
-      if (hasConversationMessages) {
-        console.log("[AppContext] CRITICAL FIX: Messages exist for conversation, preventing database reload");
+      // CRITICAL FIX: Skip database fetch if we have ANY messages for the current conversation
+      // This prevents the visible reload that causes flickering
+      const currentConvMessages = activeMessages.filter(msg => msg.id !== "welcome");
+      if (currentConvMessages.length > 0) {
+        console.log("[AppContext] CRITICAL FIX: Conversation has existing messages, preventing database reload to eliminate flickering");
         setIsLoadingMessages(false);
         return;
       }

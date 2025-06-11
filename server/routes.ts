@@ -1249,7 +1249,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cache monitoring and management endpoints
+  app.get("/api/cache/stats", async (req, res) => {
+    try {
+      const stats = cacheService.getStats();
+      res.json({
+        timestamp: new Date().toISOString(),
+        cacheStats: stats,
+        summary: {
+          totalCaches: Object.keys(stats).length,
+          overallHitRate: calculateOverallHitRate(stats),
+          totalMemoryUsage: calculateTotalMemoryUsage(stats)
+        }
+      });
+    } catch (error: any) {
+      console.error("Error fetching cache stats:", error);
+      res.status(500).json({ message: "Failed to fetch cache statistics", error: error.message });
+    }
+  });
+
+  app.post("/api/cache/clear", async (req, res) => {
+    try {
+      const { category } = req.body;
+      
+      if (category) {
+        cacheService.clearCategory(category);
+        res.json({ message: `Cache category '${category}' cleared successfully` });
+      } else {
+        cacheService.clearAll();
+        res.json({ message: "All caches cleared successfully" });
+      }
+    } catch (error: any) {
+      console.error("Error clearing cache:", error);
+      res.status(500).json({ message: "Failed to clear cache", error: error.message });
+    }
+  });
+
+  app.post("/api/cache/warm/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      await cacheService.warmCache(userId);
+      res.json({ message: `Cache warmed for user ${userId}` });
+    } catch (error: any) {
+      console.error("Error warming cache:", error);
+      res.status(500).json({ message: "Failed to warm cache", error: error.message });
+    }
+  });
+
   return httpServer;
+}
+
+// Helper functions for cache statistics
+function calculateOverallHitRate(stats: Record<string, any>): string {
+  let totalHits = 0;
+  let totalRequests = 0;
+  
+  Object.values(stats).forEach((stat: any) => {
+    totalHits += stat.hits || 0;
+    totalRequests += (stat.hits || 0) + (stat.misses || 0);
+  });
+  
+  return totalRequests > 0 ? (totalHits / totalRequests * 100).toFixed(2) + '%' : '0%';
+}
+
+function calculateTotalMemoryUsage(stats: Record<string, any>): number {
+  return Object.values(stats).reduce((total: number, stat: any) => {
+    return total + (stat.memoryUsage || 0);
+  }, 0);
 }
 
 // Helper function to determine device features based on type

@@ -31,7 +31,7 @@ const getFileIcon = (fileType: string) => {
   return <Zap className="h-4 w-4" />;
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ 
+export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ 
   message, 
   isUser, 
   timestamp, 
@@ -110,4 +110,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison for optimal re-rendering
+  return (
+    prevProps.message === nextProps.message &&
+    prevProps.isUser === nextProps.isUser &&
+    prevProps.timestamp.getTime() === nextProps.timestamp.getTime() &&
+    prevProps.isStreaming === nextProps.isStreaming &&
+    prevProps.isStreamingComplete === nextProps.isStreamingComplete &&
+    JSON.stringify(prevProps.attachments) === JSON.stringify(nextProps.attachments)
+  );
+});

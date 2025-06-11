@@ -14,6 +14,7 @@ import {
   type MemoryCategory
 } from '../../shared/schema';
 import { eq, desc, and, sql, gt } from 'drizzle-orm';
+import { cacheService } from './cache-service';
 
 interface MemoryDetectionResult {
   shouldRemember: boolean;
@@ -147,8 +148,14 @@ Respond with JSON:
     }
   }
 
-  // Generate embeddings for semantic search
+  // Generate embeddings for semantic search with caching
   async generateEmbedding(text: string): Promise<number[]> {
+    // Check cache first
+    const cached = await cacheService.getEmbedding(text);
+    if (cached && cached.embedding.length > 0) {
+      return cached.embedding;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
         console.warn('[MemoryService] Embedding generation (generateEmbedding) timed out after 45 seconds.');
@@ -163,7 +170,12 @@ Respond with JSON:
       }, { signal: controller.signal }); // Pass signal here
       clearTimeout(timeoutId); // Clear the timeout
       
-      return response.data[0].embedding;
+      const embedding = response.data[0].embedding;
+      
+      // Cache the embedding for future use
+      cacheService.setEmbedding(text, embedding, 'text-embedding-3-small');
+      
+      return embedding;
     } catch (error) {
       console.error('Timeout or error generating embedding:', error);
       return [];

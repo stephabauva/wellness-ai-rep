@@ -16,6 +16,8 @@ export const users = pgTable("users", {
   transcriptionProvider: text("transcription_provider").default("webspeech"),
   preferredLanguage: text("preferred_language").default("en"),
   automaticModelSelection: boolean("automatic_model_selection").default(true),
+  aiProvider: text("ai_provider").default("google"),
+  aiModel: text("ai_model").default("gemini-2.0-flash-exp"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -28,6 +30,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   transcriptionProvider: true,
   preferredLanguage: true,
   automaticModelSelection: true,
+  aiProvider: true,
+  aiModel: true,
 });
 
 // Chat message schema

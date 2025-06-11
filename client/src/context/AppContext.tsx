@@ -97,8 +97,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [userSettings]);
 
   const appSettings = useMemo<AppSettings>(() => ({
-    aiProvider: userSettings?.aiProvider || "openai",
-    aiModel: userSettings?.aiModel || "gpt-4o",
+    aiProvider: userSettings?.aiProvider || "google",
+    aiModel: userSettings?.aiModel || "gemini-2.0-flash-exp",
     automaticModelSelection: userSettings?.automaticModelSelection ?? true,
     transcriptionProvider: userSettings?.transcriptionProvider || "webspeech",
   }), [userSettings]);

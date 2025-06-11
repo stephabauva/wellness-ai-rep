@@ -531,7 +531,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      res.json(user.preferences || {});
+      // Return comprehensive user settings including AI configuration
+      const userSettings = {
+        ...(user.preferences || {}),
+        aiProvider: user.aiProvider,
+        aiModel: user.aiModel,
+        automaticModelSelection: user.automaticModelSelection,
+        transcriptionProvider: user.transcriptionProvider,
+        preferredLanguage: user.preferredLanguage,
+        name: user.name,
+        email: user.email
+      };
+      
+      res.json(userSettings);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch settings" });
     }

@@ -40,8 +40,14 @@ function ChatSection() {
     currentConversationId,
   });
 
-  // removeAttachedFile is now part of chatActions
-  const { removeAttachedFile, attachedFiles } = chatActions;
+  // Extract streaming functionality and file management
+  const { 
+    removeAttachedFile, 
+    attachedFiles, 
+    streamingMessage, 
+    isConnected, 
+    isThinking 
+  } = chatActions;
 
 
   // Generate messages to display
@@ -93,6 +99,8 @@ function ChatSection() {
       <MessageDisplayArea
         messagesToDisplay={messagesToDisplay}
         isLoading={loadingMessages && !!currentConversationId} // Show inline loader when switching conversations
+        streamingMessage={streamingMessage}
+        isThinking={isThinking}
       />
 
       {/* Attached Files Preview */}

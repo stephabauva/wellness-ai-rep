@@ -139,15 +139,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Access-Control-Allow-Headers': 'Cache-Control'
       });
 
-      // Send initial events
+      // CHATGPT-STYLE: Start streaming immediately, do database ops in parallel
       res.write(`data: ${JSON.stringify({ type: 'start', message: 'Starting AI response...' })}\n\n`);
-      res.write(`data: ${JSON.stringify({ type: 'thinking' })}\n\n`);
+      
+      // Start AI streaming immediately with minimal context
+      let fullResponse = '';
+      let streamingPromise: Promise<void>;
+      
+      // Immediate AI model selection and provider setup
+      const aiConfig = { provider: aiProvider, model: aiModel };
+      let selectedAiConfig = aiConfig;
 
-      // Process conversation setup (parallel operations from Tier 1 C)
-      const operations = [];
+      if (automaticModelSelection) {
+        const hasImages = attachments?.some(att => att.fileType?.startsWith('image/'));
+        const isComplexQuery = content.toLowerCase().includes('analyze') || content.length > 200;
 
-      if (currentConversationId) {
-        operations.push(async () => {
+        if (hasImages && aiService.hasProvider('google')) {
+          selectedAiConfig = { provider: 'google', model: 'gemini-1.5-pro' };
+        } else if (hasImages && aiService.hasProvider('openai')) {
+          selectedAiConfig = { provider: 'openai', model: 'gpt-4o' };
+        } else if (!hasImages && !isComplexQuery) {
+          if (aiService.hasProvider('google')) {
+            selectedAiConfig = { provider: 'google', model: 'gemini-2.0-flash-exp' };
+          } else if (aiService.hasProvider('openai')) {
+            selectedAiConfig = { provider: 'openai', model: 'gpt-4o-mini' };
+          }
+        }
+      }
+
+      const providerToUse = aiService.getProvider(selectedAiConfig.provider as any);
+      if (!providerToUse) {
+        throw new Error(`Provider ${selectedAiConfig.provider} not available`);
+      }
+
+      res.write(`data: ${JSON.stringify({ 
+        type: 'ai_model_selected',
+        provider: selectedAiConfig.provider,
+        model: selectedAiConfig.model
+      })}\n\n`);
+
+      // Start AI streaming with minimal context (just the current message)
+      const minimalContext = [
+        {
+          role: 'system',
+          content: 'You are a helpful wellness coach. Be encouraging and provide practical advice.'
+        },
+        {
+          role: 'user',
+          content: content
+        }
+      ];
+
+      // Start streaming immediately
+      streamingPromise = (async () => {
+        if (providerToUse.generateChatResponseStream) {
+          await providerToUse.generateChatResponseStream(
+            minimalContext as any,
+            { model: selectedAiConfig.model as any },
+            (chunk: string) => {
+              res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+              fullResponse += chunk;
+            },
+            (complete: string) => {
+              res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`);
+            },
+            (error: Error) => {
+              res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+            }
+          );
+        }
+      })();
+
+      // Handle database operations in parallel (non-blocking)
+      const databasePromise = (async () => {
+        // Process conversation setup
+        if (currentConversationId) {
           const existingConv = await db
             .select()
             .from(conversations)
@@ -166,137 +232,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .limit(20);
             conversationHistory = historyFromDb;
           }
-        });
-      }
-
-      await Promise.all(operations.map(op => op()));
-
-      // Create new conversation if needed
-      if (!currentConversationId) {
-        let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
-        if (!title && attachments && attachments.length > 0) {
-          title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
         }
-        if (!title) title = "New Conversation";
 
-        const [newConversation] = await db.insert(conversations).values({
-          userId,
-          title
+        // Create new conversation if needed
+        if (!currentConversationId) {
+          let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
+          if (!title && attachments && attachments.length > 0) {
+            title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
+          }
+          if (!title) title = "New Conversation";
+
+          const [newConversation] = await db.insert(conversations).values({
+            userId,
+            title
+          }).returning();
+          currentConversationId = newConversation.id;
+          conversationHistory = [];
+        }
+
+        // Save user message
+        const [savedUserMessage] = await db.insert(conversationMessages).values({
+          conversationId: currentConversationId,
+          role: 'user',
+          content,
+          metadata: attachments && attachments.length > 0 ? { attachments } : undefined
         }).returning();
-        currentConversationId = newConversation.id;
-        conversationHistory = [];
-      }
 
-      // Save user message
-      const [savedUserMessage] = await db.insert(conversationMessages).values({
-        conversationId: currentConversationId,
-        role: 'user',
-        content,
-        metadata: attachments && attachments.length > 0 ? { attachments } : undefined
-      }).returning();
+        // Legacy message creation
+        await storage.createMessage({
+          userId,
+          content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
+          isUserMessage: true
+        });
 
-      // Legacy message creation
-      const legacyUserMessage = await storage.createMessage({
-        userId,
-        content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
-        isUserMessage: true
-      });
+        res.write(`data: ${JSON.stringify({ 
+          type: 'user_message_saved',
+          conversationId: currentConversationId,
+          userMessage: savedUserMessage 
+        })}\n\n`);
 
-      res.write(`data: ${JSON.stringify({ 
-        type: 'user_message_saved',
-        conversationId: currentConversationId,
-        userMessage: savedUserMessage 
-      })}\n\n`);
+        return { savedUserMessage, currentConversationId };
+      })();
 
-      // Build context for AI
-      const aiConfig = { provider: aiProvider, model: aiModel };
-      let selectedAiConfig = aiConfig;
+      // Wait for both streaming and database operations to complete
+      const [, { savedUserMessage, currentConversationId: finalConvId }] = await Promise.all([
+        streamingPromise,
+        databasePromise
+      ]);
 
-      // Model selection
-      if (automaticModelSelection) {
-        const hasImages = attachments?.some(att => att.fileType?.startsWith('image/'));
-        const isComplexQuery = content.toLowerCase().includes('analyze') || content.length > 200;
-
-        if (hasImages && aiService.hasProvider('google')) {
-          selectedAiConfig = { provider: 'google', model: 'gemini-1.5-pro' };
-        } else if (hasImages && aiService.hasProvider('openai')) {
-          selectedAiConfig = { provider: 'openai', model: 'gpt-4o' };
-        } else if (!hasImages && !isComplexQuery) {
-          if (aiService.hasProvider('google')) {
-            selectedAiConfig = { provider: 'google', model: 'gemini-2.0-flash-exp' };
-          } else if (aiService.hasProvider('openai')) {
-            selectedAiConfig = { provider: 'openai', model: 'gpt-4o-mini' };
-          }
-        }
-      }
-
-      res.write(`data: ${JSON.stringify({ 
-        type: 'ai_model_selected',
-        provider: selectedAiConfig.provider,
-        model: selectedAiConfig.model
-      })}\n\n`);
-
-      // Get the AI provider
-      const providerToUse = aiService.getProvider(selectedAiConfig.provider as any);
-      if (!providerToUse) {
-        throw new Error(`Provider ${selectedAiConfig.provider} not available`);
-      }
-
-      // Build context messages
-      const contextMessages = await aiService.chatContextService.buildChatContext(
-        userId, content, currentConversationId, coachingMode,
-        conversationHistory, attachments || [], selectedAiConfig.provider as any
-      );
-
-      let fullResponse = '';
-
-      // Stream AI response
-      if (providerToUse.generateChatResponseStream) {
-        await providerToUse.generateChatResponseStream(
-          contextMessages,
-          { model: selectedAiConfig.model as any },
-          (chunk: string) => {
-            // Send each chunk as it arrives
-            res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-            fullResponse += chunk;
-          },
-          (complete: string) => {
-            // AI response complete
-            res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`);
-          },
-          (error: Error) => {
-            // Handle streaming error
-            res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
-          }
-        );
-      } else {
-        // CHATGPT-STYLE FALLBACK: Fast character-based streaming without artificial delays
-        const { response } = await providerToUse.generateChatResponse(
-          contextMessages,
-          { model: selectedAiConfig.model as any }
-        );
-        fullResponse = response;
-        
-        // Fast character-based streaming for smooth experience
-        const chars = response.split('');
-        let currentChunk = '';
-        
-        for (let i = 0; i < chars.length; i++) {
-          currentChunk += chars[i];
-          
-          // Send chunks in small batches for smooth streaming
-          if (i % 3 === 0 || i === chars.length - 1) {
-            res.write(`data: ${JSON.stringify({ type: 'chunk', content: currentChunk })}\n\n`);
-            currentChunk = '';
-            // No artificial delay - let frontend handle smooth rendering
-          }
-        }
-        res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse })}\n\n`);
-      }
-
-      // Save AI response
+      // Save AI response to database
       const [savedAiMessage] = await db.insert(conversationMessages).values({
-        conversationId: currentConversationId,
+        conversationId: finalConvId,
         role: 'assistant',
         content: fullResponse
       }).returning();
@@ -310,8 +296,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send final completion event
       res.write(`data: ${JSON.stringify({ 
         type: 'done',
-        conversationId: currentConversationId,
-        userMessage: legacyUserMessage,
+        conversationId: finalConvId,
+        messageId: savedAiMessage.id,
+        userMessage: savedUserMessage,
         aiMessage: legacyAiMessage
       })}\n\n`);
 

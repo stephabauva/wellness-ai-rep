@@ -49,21 +49,9 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         eventSourceRef.current = null;
       }
 
-      // CHATGPT-STYLE FIX 1: Show user message immediately (optimistic UI)
-      const userMessage = {
-        id: `user-${Date.now()}`,
-        content: messageData.content,
-        isUserMessage: true,
-        timestamp: new Date(),
-        attachments: messageData.attachments?.map(att => ({
-          name: att.fileName || att.name,
-          type: att.fileType || att.type
-        }))
-      };
-      
-      console.log('[Streaming] CHATGPT-STYLE: Adding user message immediately');
-      addOptimisticMessage(userMessage);
-      setPendingUserMessage(userMessage);
+      // User message is already added by useChatActions - don't duplicate
+      console.log('[Streaming] CHATGPT-STYLE: Starting stream without duplicate user message');
+      setPendingUserMessage(null); // Clear any existing pending message
 
       // Reset streaming state and start new stream
       setStreamingMessage(null);

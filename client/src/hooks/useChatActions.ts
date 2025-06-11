@@ -60,22 +60,7 @@ export function useChatActions({
       const hasImages = currentAttachedFiles.some(file => file.fileType?.startsWith('image/'));
       const automaticModelSelection = appSettings?.automaticModelSelection ?? hasImages;
 
-      // CHATGPT-STYLE: Instantly display user message before streaming starts
-      const optimisticUserMessage = {
-        id: `user-instant-${Date.now()}`,
-        content: inputMessage,
-        isUserMessage: true,
-        timestamp: new Date(),
-        attachments: currentAttachedFiles.map(att => ({
-          name: att.fileName || 'Unknown file',
-          type: att.fileType || 'application/octet-stream'
-        }))
-      };
-
-      // Add optimistic message immediately for instant feedback
-      if (addOptimisticMessage) {
-        addOptimisticMessage(optimisticUserMessage);
-      }
+      // Optimistic user message is handled by AppContext sendMessageMutation
 
       console.log("[useChatActions] Starting streaming with optimistic user message:", {
         aiProvider,

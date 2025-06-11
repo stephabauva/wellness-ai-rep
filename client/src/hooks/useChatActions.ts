@@ -16,7 +16,7 @@ export function useChatActions({
   setInputMessage,
   currentConversationId,
 }: UseChatActionsProps) {
-  const { appSettings, setCurrentConversationId }: { appSettings?: AppSettings, setCurrentConversationId?: (id: string) => void } = useAppContext(); // Apply AppSettings type
+  const { appSettings, selectConversation }: { appSettings?: AppSettings, selectConversation?: (id: string | null) => void } = useAppContext(); // Apply AppSettings type
   const { sendMessageMutation } = useChatMessages();
   const {
     attachedFiles, // This will now be Array<AttachedFile>
@@ -35,8 +35,9 @@ export function useChatActions({
     stopStreaming
   } = useStreamingChat({
     onConversationCreate: (conversationId: string) => {
-      if (setCurrentConversationId) {
-        setCurrentConversationId(conversationId);
+      console.log('[useChatActions] onConversationCreate called with:', conversationId);
+      if (selectConversation) {
+        selectConversation(conversationId);
       }
     }
   });

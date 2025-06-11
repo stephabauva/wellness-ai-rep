@@ -121,8 +121,9 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         break;
 
       case 'user_message_saved':
-        console.log('[Streaming] User message saved');
+        console.log('[Streaming] User message saved', data.conversationId);
         if (data.conversationId && options.onConversationCreate) {
+          console.log('[Streaming] Triggering conversation creation callback');
           options.onConversationCreate(data.conversationId);
         }
         break;

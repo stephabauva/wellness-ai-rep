@@ -36,12 +36,21 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
     automaticModelSelection?: boolean;
   }) => {
     try {
-      // Close existing connection
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
+      // Prevent concurrent streaming
+      if (isConnected) {
+        console.log('[Streaming] Stream already active, ignoring request');
+        return;
       }
 
-      // Don't set pending user message here - it's handled by useChatActions
+      // Close existing connection
+      if (eventSourceRef.current) {
+        console.log('[Streaming] Closing existing EventSource');
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+
+      // Reset state and start new stream
+      setStreamingMessage(null);
       setStreamingActive(true);
       setIsThinking(true);
 
@@ -142,31 +151,35 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
       case 'chunk':
         setIsThinking(false);
         
-        // Update streaming message for internal tracking
-        const newStreamingMessage = streamingMessage ? {
-          ...streamingMessage,
-          content: streamingMessage.content + data.content,
-          isStreaming: true
-        } : {
-          id: `ai-streaming-current`,
-          content: data.content,
-          isComplete: false,
-          isStreaming: true
-        };
+        // Ensure clean text accumulation without corruption
+        const cleanChunk = data.content || '';
         
-        setStreamingMessage(newStreamingMessage);
-        
-        // Update the single optimistic AI message in context
-        if (addOptimisticMessage) {
-          const streamingAiMessage = {
+        setStreamingMessage(prev => {
+          const newMessage = prev ? {
+            ...prev,
+            content: prev.content + cleanChunk,
+            isStreaming: true
+          } : {
             id: `ai-streaming-current`,
-            content: newStreamingMessage.content,
-            isUserMessage: false,
-            timestamp: new Date(),
-            attachments: []
+            content: cleanChunk,
+            isComplete: false,
+            isStreaming: true
           };
-          addOptimisticMessage(streamingAiMessage);
-        }
+          
+          // Update the optimistic message with accumulated content
+          if (addOptimisticMessage) {
+            const streamingAiMessage = {
+              id: `ai-streaming-current`,
+              content: newMessage.content,
+              isUserMessage: false,
+              timestamp: new Date(),
+              attachments: []
+            };
+            addOptimisticMessage(streamingAiMessage);
+          }
+          
+          return newMessage;
+        });
         break;
 
       case 'complete':
@@ -183,16 +196,11 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         setIsConnected(false);
         setIsThinking(false);
         
-        // Commit both user and AI messages to persistent state
-        if (pendingUserMessage && addOptimisticMessage) {
-          console.log('[Streaming] Committing user message to persistent state');
-          addOptimisticMessage(pendingUserMessage);
-        }
-        
+        // Replace streaming message with final persistent message
         if (streamingMessage && streamingMessage.content && addOptimisticMessage) {
-          console.log('[Streaming] Committing AI message to persistent state');
+          console.log('[Streaming] Converting streaming message to final message');
           const finalAiMessage = {
-            id: `ai-${Date.now()}`,
+            id: data.messageId || `ai-final-${Date.now()}`,
             content: streamingMessage.content,
             isUserMessage: false,
             timestamp: new Date(),

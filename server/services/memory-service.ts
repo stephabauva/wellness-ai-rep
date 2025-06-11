@@ -368,6 +368,12 @@ Respond with JSON:
       const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
       if (autoDetection.shouldRemember) {
         // Save auto detection trigger
+        // Skip memory processing if messageId is invalid
+        if (!messageId || messageId === 0) {
+          console.log('[MemoryService] Skipping memory processing - invalid messageId:', messageId);
+          return results;
+        }
+
         const triggerData: InsertMemoryTrigger = {
           messageId,
           triggerType: 'auto_detected',
@@ -381,8 +387,8 @@ Respond with JSON:
         const memory = await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
           category: autoDetection.category,
           importance_score: autoDetection.importance,
-          sourceConversationId: conversationId,
-          sourceMessageId: messageId,
+          sourceConversationId: conversationId ? conversationId : undefined,
+          sourceMessageId: messageId ? messageId : undefined,
           keywords: autoDetection.keywords,
         });
 

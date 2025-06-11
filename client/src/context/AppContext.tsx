@@ -339,8 +339,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [currentConversationId]);
 
   const newChatHandler = useCallback(() => {
-    console.log("[AppContext newChatHandler] Setting currentConversationId to null");
+    console.log("[AppContext newChatHandler] Resetting to new chat");
     setCurrentConversationIdState(null);
+    setActiveMessages([welcomeMessage]);
+    setNewlyCreatedConvId(null);
+    setIsStreamingActive(false);
   }, []);
 
   const sendMessageHandler = useCallback((params: SendMessageParams) => {

@@ -60,12 +60,7 @@ export function CategoryDropdown({
         )}
         {categories.map((category) => (
           <SelectItem key={category.id} value={category.id}>
-            <div className="flex items-center gap-2">
-              {category.icon && (
-                <span className="text-sm">{category.icon}</span>
-              )}
-              <span>{category.name}</span>
-            </div>
+            <span>{category.name}</span>
           </SelectItem>
         ))}
         {!isLoadingCategories && categories.length === 0 && (

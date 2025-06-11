@@ -80,8 +80,8 @@ export function MessageDisplayArea({
         </div>
       )}
       
-      {/* Streaming message */}
-      {streamingMessage && (
+      {/* Streaming message - only show if content exists and no regular message with same content */}
+      {streamingMessage && streamingMessage.content && !messagesToDisplay.some(msg => !msg.isUserMessage && msg.content === streamingMessage.content) && (
         <div className="flex items-start space-x-3">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
             <div className="w-4 h-4 bg-white rounded-full"></div>
@@ -93,6 +93,11 @@ export function MessageDisplayArea({
                 <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse"></span>
               )}
             </div>
+            {streamingMessage.isComplete && !streamingMessage.isStreaming && (
+              <div className="text-xs text-muted-foreground mt-1 opacity-60">
+                Saving...
+              </div>
+            )}
           </div>
         </div>
       )}

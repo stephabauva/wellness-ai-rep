@@ -157,6 +157,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         setIsConnected(false);
         setIsThinking(false);
         
+        // Mark streaming message as complete but keep it visible
         if (streamingMessage) {
           setStreamingMessage(prev => prev ? {
             ...prev,
@@ -165,21 +166,21 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           } : null);
         }
 
-        // Invalidate queries to refresh message list
-        queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
-        
-        // Clear streaming message after a longer delay to ensure smooth transition
-        setTimeout(() => {
-          setStreamingMessage(null);
-        }, 2000);
-        
         if (options.onMessageComplete && data.aiMessage) {
           options.onMessageComplete(data.aiMessage);
         }
+
+        // Invalidate queries and wait for new messages to load before clearing
+        Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/messages'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/conversations'] })
+        ]).then(() => {
+          // Wait for queries to refetch, then clear streaming message
+          setTimeout(() => {
+            setStreamingMessage(null);
+          }, 1000);
+        });
         
-        // Keep streaming message visible until new messages are loaded
-        // Don't clear it immediately - let the message refresh handle it
         break;
 
       case 'error':

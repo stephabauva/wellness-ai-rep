@@ -174,24 +174,36 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Wait for database to be fully updated, then refresh and clear
-        setTimeout(async () => {
-          console.log('[Streaming] Starting database sync process');
+        // Implement proper message persistence using React best practices
+        const handleStreamingComplete = async () => {
+          console.log('[Streaming] Handling streaming completion');
           
-          // Wait for database write to complete
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Keep streaming message visible while syncing
+          console.log('[Streaming] Keeping streaming message visible during sync');
           
-          // Refresh messages to get the persisted version
-          console.log('[Streaming] Refreshing messages from database');
+          // Wait for backend database write to complete
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // Turn off streaming state to enable database loading
+          console.log('[Streaming] Disabling streaming state');
+          setStreamingActive(false);
+          
+          // Allow React state update to process
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Force refresh messages from database
+          console.log('[Streaming] Force refreshing messages from database');
           await refreshMessages();
           
-          // Give additional time for React to update the UI
+          // Wait additional time for UI update, then clear streaming message
           setTimeout(() => {
-            console.log('[Streaming] Database message loaded, clearing streaming message');
+            console.log('[Streaming] Clearing streaming message after successful sync');
             setStreamingMessage(null);
-            setStreamingActive(false);
           }, 800);
-        }, 1000);
+        };
+        
+        // Execute the completion handler
+        handleStreamingComplete();
         
         break;
 

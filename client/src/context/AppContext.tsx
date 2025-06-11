@@ -109,9 +109,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   useEffect(() => {
     console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "isStreamingActive:", isStreamingActive);
     
-    // Skip loading if this is a newly created conversation during streaming or if streaming is active
-    if ((newlyCreatedConvId && currentConversationId === newlyCreatedConvId) || isStreamingActive) {
-      console.log("[AppContext] Skipping message load - streaming active or newly created conversation");
+    // Only skip loading for newly created conversations, not during streaming
+    if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId && isStreamingActive) {
+      console.log("[AppContext] Skipping message load - newly created conversation during streaming");
       setIsLoadingMessages(false);
       return;
     }
@@ -280,6 +280,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     console.log("[AppContext] Manual refresh triggered");
     if (currentConversationId) {
       try {
+        // Force clear newlyCreatedConvId to ensure loading works
+        setNewlyCreatedConvId(null);
+        
         // Add retry logic to ensure we get the latest messages
         let attempt = 0;
         const maxAttempts = 3;

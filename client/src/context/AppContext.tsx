@@ -200,18 +200,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     // CHATGPT-STYLE: Completely eliminate database reloads after streaming
     // Only load messages if we truly need to (new conversation with no messages)
-    if (currentConversationId && activeMessages.length === 0 && !isStreamingActive) {
+    if (currentConversationId && activeMessages.length === 0) {
       console.log("[AppContext] CHATGPT-STYLE: Loading messages for brand new conversation");
       loadConversationMessages();
-    } else if (currentConversationId === null) {
-      // Handle welcome message for null conversation
+    } else if (currentConversationId === null && activeMessages.length > 1) {
+      // Handle welcome message for null conversation (but preserve if we have messages)
+      console.log("[AppContext] CHATGPT-STYLE: Resetting to welcome message for null conversation");
+      setActiveMessages([welcomeMessage]);
+      setIsLoadingMessages(false);
+    } else if (currentConversationId === null && activeMessages.length === 0) {
+      // Only set welcome if we have no messages at all
       setActiveMessages([welcomeMessage]);
       setIsLoadingMessages(false);
     } else {
-      console.log("[AppContext] CHATGPT-STYLE: Preserving existing messages, no database reload");
+      console.log("[AppContext] CHATGPT-STYLE: Preserving", activeMessages.length, "messages - no reload needed");
       setIsLoadingMessages(false);
     }
-  }, [currentConversationId, newlyCreatedConvId, isStreamingActive]);
+  }, [currentConversationId, newlyCreatedConvId]);
 
   // Send Message Mutation
   const sendMessageMutation = useMutation<any, Error, SendMessageParams, { optimisticMessage?: Message }>({

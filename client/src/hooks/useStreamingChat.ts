@@ -22,7 +22,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
   const eventSourceRef = useRef<EventSource | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { refreshMessages } = useAppContext();
+  const { refreshMessages, setStreamingActive } = useAppContext();
 
   const startStreaming = useCallback(async (messageData: {
     content: string;

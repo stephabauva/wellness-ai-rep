@@ -47,7 +47,9 @@ interface AppContextType {
   selectConversation: (conversationId: string | null) => void;
   newChat: () => void;
   refreshMessages: () => void; // New method to trigger message refresh
-  // newlyCreatedConvId is internal and doesn't need to be in context type
+  // Streaming control methods
+  setStreamingActive: (active: boolean) => void;
+  isStreamingActive: boolean;
 }
 
 // Define SendMessageParams locally for now
@@ -85,6 +87,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
+  const [isStreamingActive, setIsStreamingActive] = useState<boolean>(false);
 
   const { userSettings, isLoadingSettings } = useUserSettings();
   const queryClient = useQueryClient();
@@ -104,11 +107,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Message Loading useEffect (adapted from useChatMessages)
   useEffect(() => {
-    console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId);
+    console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "isStreamingActive:", isStreamingActive);
     
-    // Skip loading if this is a newly created conversation during streaming
-    if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId) {
-      console.log("[AppContext] Skipping message load for newly created conversation during streaming");
+    // Skip loading if this is a newly created conversation during streaming or if streaming is active
+    if ((newlyCreatedConvId && currentConversationId === newlyCreatedConvId) || isStreamingActive) {
+      console.log("[AppContext] Skipping message load - streaming active or newly created conversation");
       setIsLoadingMessages(false);
       return;
     }
@@ -300,6 +303,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }, [currentConversationId]);
 
+  const setStreamingActiveHandler = useCallback((active: boolean) => {
+    console.log("[AppContext] Setting streaming active:", active);
+    setIsStreamingActive(active);
+  }, []);
+
 
   // Memoize the context value
   const contextValue = useMemo((): AppContextType => ({
@@ -315,10 +323,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     selectConversation: selectConversationHandler,
     newChat: newChatHandler,
     refreshMessages: refreshMessagesHandler,
+    setStreamingActive: setStreamingActiveHandler,
+    isStreamingActive,
   }), [
     activeSection, setActiveSection, coachingMode, setCoachingMode, appSettings,
     activeMessages, currentConversationId, isLoadingMessages,
-    sendMessageHandler, selectConversationHandler, newChatHandler, refreshMessagesHandler
+    sendMessageHandler, selectConversationHandler, newChatHandler, refreshMessagesHandler,
+    setStreamingActiveHandler, isStreamingActive
   ]);
 
   return (

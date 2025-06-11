@@ -325,8 +325,11 @@ export class GoogleProvider implements AiProvider {
 
     } catch (error: any) {
       log('error', 'Error in Google streaming response:', error);
-      if (error?.message?.includes('SAFETY')) {
-        onError(new Error("I'm unable to respond to that request due to safety guidelines."));
+      if (error?.message?.includes('SAFETY') || error?.message?.includes('blocked')) {
+        // Handle safety filter gracefully - provide a helpful response instead of error
+        const safetyMessage = "I understand you'd like to discuss that topic. Let me help you with wellness-related questions instead. What aspects of your health and fitness goals would you like to focus on today?";
+        onChunk(safetyMessage);
+        onComplete(safetyMessage);
       } else {
         onError(error instanceof Error ? error : new Error(String(error)));
       }

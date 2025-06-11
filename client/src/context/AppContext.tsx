@@ -49,6 +49,9 @@ interface AppContextType {
   // Streaming control methods
   setStreamingActive: (active: boolean) => void;
   isStreamingActive: boolean;
+  // Optimistic update methods for smooth streaming
+  addOptimisticMessage: (message: Message) => void;
+  updateOptimisticMessage: (id: string, updates: Partial<Message>) => void;
 }
 
 interface SendMessageParams {
@@ -100,14 +103,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     transcriptionProvider: userSettings?.transcriptionProvider || "webspeech",
   }), [userSettings]);
 
-  // Message Loading useEffect
+  // Message Loading useEffect - CRITICAL PERFORMANCE FIX
   useEffect(() => {
     console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "isStreamingActive:", isStreamingActive);
     
-    // Only skip loading for newly created conversations, not during streaming
-    if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId && isStreamingActive) {
-      console.log("[AppContext] Skipping message load - newly created conversation during streaming");
+    // PERFORMANCE FIX: Skip loading during streaming to prevent conversation reload
+    if (isStreamingActive) {
+      console.log("[AppContext] Skipping message load - streaming is active");
       setIsLoadingMessages(false);
+      return;
+    }
+    
+    // Only load for newly created conversations or conversation switches
+    if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId) {
+      console.log("[AppContext] Skipping message load - newly created conversation, messages already in place");
+      setIsLoadingMessages(false);
+      setNewlyCreatedConvId(null);
       return;
     }
     
@@ -116,6 +127,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setActiveMessages([welcomeMessage]);
         setIsLoadingMessages(false);
         setNewlyCreatedConvId(null);
+        return;
+      }
+      
+      // PERFORMANCE FIX: Only load if we don't have messages for this conversation already
+      if (activeMessages.length > 1 && activeMessages[0].id !== "welcome") {
+        console.log("[AppContext] Messages already loaded, skipping fetch");
+        setIsLoadingMessages(false);
         return;
       }
       
@@ -351,6 +369,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setIsStreamingActive(active);
   }, []);
 
+  // PERFORMANCE FIX: Optimistic update methods for smooth streaming
+  const addOptimisticMessageHandler = useCallback((message: Message) => {
+    console.log("[AppContext] Adding optimistic message:", message.id);
+    setActiveMessages(prevMessages => [...prevMessages, message]);
+  }, []);
+
+  const updateOptimisticMessageHandler = useCallback((id: string, updates: Partial<Message>) => {
+    console.log("[AppContext] Updating optimistic message:", id);
+    setActiveMessages(prevMessages => 
+      prevMessages.map(msg => 
+        msg.id === id ? { ...msg, ...updates } : msg
+      )
+    );
+  }, []);
+
   // Memoize the context value
   const contextValue = useMemo((): AppContextType => ({
     activeSection,
@@ -367,11 +400,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     refreshMessages: refreshMessagesHandler,
     setStreamingActive: setStreamingActiveHandler,
     isStreamingActive,
+    addOptimisticMessage: addOptimisticMessageHandler,
+    updateOptimisticMessage: updateOptimisticMessageHandler,
   }), [
     activeSection, setActiveSection, coachingMode, setCoachingMode, appSettings,
     activeMessages, currentConversationId, isLoadingMessages,
     sendMessageHandler, selectConversationHandler, newChatHandler, refreshMessagesHandler,
-    setStreamingActiveHandler, isStreamingActive
+    setStreamingActiveHandler, isStreamingActive, addOptimisticMessageHandler, updateOptimisticMessageHandler
   ]);
 
   return (

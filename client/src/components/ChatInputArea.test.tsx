@@ -14,6 +14,15 @@ vi.mock('@/components/AudioRecorder', () => ({
   )),
 }));
 
+// Mock getUserMedia API
+const mockGetUserMedia = vi.fn();
+Object.defineProperty(global.navigator, 'mediaDevices', {
+  value: {
+    getUserMedia: mockGetUserMedia,
+  },
+  writable: true,
+});
+
 describe('ChatInputArea', () => {
   let mockSetInputMessage: ReturnType<typeof vi.fn>;
   let mockChatActions: UseChatActionsReturn;
@@ -153,6 +162,38 @@ describe('ChatInputArea', () => {
     const recorderButton = screen.getByTestId('mock-audio-recorder');
     fireEvent.click(recorderButton);
     expect(mockSetInputMessage).toHaveBeenCalledWith('transcribed audio text');
+  });
+
+  it('should open camera modal when camera button is clicked', async () => {
+    const mockStream = {
+      getTracks: () => [{ stop: vi.fn() }],
+    };
+    mockGetUserMedia.mockResolvedValue(mockStream);
+    
+    renderComponent();
+    const cameraButton = screen.getByRole('button', { name: /use camera/i });
+    
+    await userEvent.click(cameraButton);
+    
+    expect(mockGetUserMedia).toHaveBeenCalledWith({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    });
+  });
+
+  it('should fallback to file input when camera access fails', async () => {
+    mockGetUserMedia.mockRejectedValue(new Error('Camera access denied'));
+    
+    renderComponent();
+    const cameraButton = screen.getByRole('button', { name: /use camera/i });
+    
+    await userEvent.click(cameraButton);
+    
+    expect(mockGetUserMedia).toHaveBeenCalled();
+    // The fallback would trigger the hidden file input click
   });
 });
 

@@ -1,7 +1,7 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paperclip, Send, Camera } from "lucide-react"; // Mic removed as AudioRecorder handles its own icon
+import { Paperclip, Send, Camera, X } from "lucide-react"; // Added X for close button
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { UseChatActionsReturn } from "@/hooks/useChatActions";
 import { AppSettings } from "@/context/AppContext"; // Corrected import path
@@ -22,6 +22,11 @@ export function ChatInputArea({
 }: ChatInputAreaProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   // Type assertion for chatActions to ensure correct types from the hook
   const {
@@ -39,6 +44,86 @@ export function ChatInputArea({
       handleSendMessage();
     }
   };
+
+  const openCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "environment", // Use back camera on mobile if available
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        } 
+      });
+      
+      setCameraStream(stream);
+      setIsCameraOpen(true);
+      
+      // Set video stream after state update
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      // Fallback to file input if camera access fails
+      cameraInputRef.current?.click();
+    }
+  };
+
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    const context = canvas.getContext('2d');
+    
+    if (!context) return;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw the video frame to canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+      if (blob) {
+        // Create a file from the blob
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const file = new File([blob], `camera-capture-${timestamp}.png`, { type: 'image/png' });
+        
+        // Create a synthetic event to pass to handleCameraCapture
+        const syntheticEvent = {
+          target: {
+            files: [file]
+          }
+        } as any;
+        
+        handleCameraCapture(syntheticEvent);
+        closeCamera();
+      }
+    }, 'image/png', 0.9);
+  };
+
+  // Cleanup effect to stop camera stream when component unmounts
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   return (
     <div className="border-t p-4">
@@ -58,7 +143,7 @@ export function ChatInputArea({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => cameraInputRef.current?.click()}
+          onClick={openCamera}
           disabled={uploadFileMutation.isPending}
           aria-label="Use camera"
         >
@@ -117,6 +202,50 @@ export function ChatInputArea({
         capture="environment"
         className="hidden"
       />
+
+      {/* Camera Modal */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="relative bg-white rounded-lg p-4 max-w-lg w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Take Photo</h3>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={closeCamera}
+                aria-label="Close camera"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="relative">
+              <video
+                ref={videoRef}
+                className="w-full rounded-lg"
+                autoPlay
+                playsInline
+                muted
+              />
+              <canvas
+                ref={canvasRef}
+                className="hidden"
+              />
+            </div>
+            
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={capturePhoto}
+                disabled={uploadFileMutation.isPending}
+                className="px-8"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Capture Photo
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

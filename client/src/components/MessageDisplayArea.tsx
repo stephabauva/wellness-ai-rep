@@ -80,8 +80,12 @@ export function MessageDisplayArea({
         </div>
       )}
       
-      {/* Streaming message - always show if exists until explicitly cleared */}
-      {streamingMessage && streamingMessage.content && (
+      {/* Streaming message - show with explicit persistence logic */}
+      {streamingMessage && streamingMessage.content && 
+       !messagesToDisplay.some(msg => 
+         !msg.isUserMessage && 
+         msg.content.trim() === streamingMessage.content.trim()
+       ) && (
         <div className="flex items-start space-x-3">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
             <div className="w-4 h-4 bg-white rounded-full"></div>

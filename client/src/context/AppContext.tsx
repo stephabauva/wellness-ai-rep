@@ -288,10 +288,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const maxAttempts = 3;
         
         while (attempt < maxAttempts) {
+          console.log(`[AppContext] Refresh attempt ${attempt + 1}, URL: /api/conversations/${currentConversationId}/messages`);
           const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}&attempt=${attempt}`);
+          console.log(`[AppContext] Response status: ${response.status}, ok: ${response.ok}`);
+          
           if (response.ok) {
             const convMessages = await response.json();
+            console.log("[AppContext] Raw API response:", convMessages);
             const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+            console.log("[AppContext] Messages array length:", messagesArray.length);
+            
             const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
               id: msg.id.toString(),
               content: msg.content,
@@ -309,6 +315,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             // Invalidate React Query cache to ensure consistency
             queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
             break;
+          } else {
+            console.error(`[AppContext] Refresh attempt ${attempt + 1} failed with status:`, response.status);
           }
           
           attempt++;

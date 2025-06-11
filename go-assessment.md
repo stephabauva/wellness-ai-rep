@@ -58,12 +58,14 @@ node dist/server/index.js
 ```
 **Expected Improvement**: 60-80% latency reduction
 
-#### B. **Implement Request Streaming** ✅ **COMPLETED**
+#### B. **Implement Request Streaming** ⚠️ **PARTIALLY COMPLETED**
 - ✅ Implemented real-time AI response streaming with Server-Sent Events
 - ✅ Added word-by-word streaming for both OpenAI and Google providers
 - ✅ Created discrete AI thinking indicator with subtle animations
 - ✅ Built comprehensive streaming hooks for frontend integration
-- ✅ **CRITICAL FIX**: Resolved streaming message persistence and UI flickering issues
+- ⚠️ **PERFORMANCE ISSUE**: User messages don't appear immediately (major UX problem)
+- ⚠️ **DATABASE RELOAD**: Entire conversation reloads after each message (causes flickering)
+- ✅ **SAFETY FIX**: Added graceful handling for Google AI safety filters
 
 **Technical Implementation**:
 ```typescript
@@ -82,22 +84,39 @@ POST /api/messages/stream
 - Real-time chunk processing with proper state management
 - Message persistence logic to prevent abrupt disappearing
 
-**Critical Bug Fixes Applied**:
+**Current Issues Identified**:
 ```typescript
-// 1. Fixed conversation context reset during streaming completion
-// Prevented duplicate conversation ID updates causing message flickering
-if (id !== currentConversationId) {
-  setCurrentConversationIdState(id);
-  // Only update if actually different
+// ISSUE 1: User messages don't appear immediately when sent
+// Current: User types message → waits for streaming to start → message appears
+// Expected: User types message → message appears instantly → AI starts responding
+
+// ISSUE 2: Database reload after each streaming completion
+// Current: Stream completes → fetch entire conversation from DB → UI flickers
+// Expected: Stream completes → optimistic updates persist → no reload
+
+// ISSUE 3: Performance bottleneck in message loading
+// Current: Multiple database fetches during streaming lifecycle
+// Expected: Single fetch only on conversation switch
+```
+
+**Fixes Applied**:
+```typescript
+// 1. Added streaming state checks to prevent database reloads during streaming
+if (isStreamingActive) {
+  console.log("[AppContext] Skipping message load - streaming is active");
+  setIsLoadingMessages(false);
+  return;
 }
 
-// 2. Eliminated redundant refresh calls during streaming completion
-// Removed manual refresh call that was triggering with null conversationId
-// Let AppContext useEffect handle natural message loading
+// 2. Google AI safety filter handling to prevent stream interruption
+if (error?.message?.includes('SAFETY') || error?.message?.includes('blocked')) {
+  const safetyMessage = "I understand you'd like to discuss that topic...";
+  onChunk(safetyMessage);
+  onComplete(safetyMessage);
+}
 
-// 3. Streamlined streaming completion flow
+// 3. Reduced streaming completion delays from 2000ms to 500ms
 await new Promise(resolve => setTimeout(resolve, 500));
-setStreamingMessage(null); // Clean completion without UI jumps
 ```
 
 #### C. **Optimize AI Service Architecture** ✅ **COMPLETED**

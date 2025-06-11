@@ -197,26 +197,20 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // PERFORMANCE FIX: Streamlined completion without excessive delays
+        // PERFORMANCE FIX: Clean completion without database reload
         const handleStreamingComplete = async () => {
           console.log('[Streaming] Handling streaming completion for conversation:', data.conversationId);
           
-          // Immediately clear pending user message since it's now persisted
+          // Clear pending user message and streaming message immediately
           setPendingUserMessage(null);
+          setStreamingMessage(null);
           
-          // Wait minimal time for database sync to complete
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Brief delay for visual stability
+          await new Promise(resolve => setTimeout(resolve, 100));
           
-          // Turn off streaming to enable normal loading
+          // Turn off streaming - the optimistic messages should already be in place
           console.log('[Streaming] Disabling streaming state');
           setStreamingActive(false);
-          
-          // Small delay for state propagation, then cleanup
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          // Clean up streaming message - AppContext will handle message loading
-          console.log('[Streaming] Clearing streaming message');
-          setStreamingMessage(null);
         };
         
         // Execute the completion handler

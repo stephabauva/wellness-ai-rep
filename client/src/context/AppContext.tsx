@@ -130,9 +130,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return;
       }
       
-      // PERFORMANCE FIX: Only load if we don't have messages for this conversation already
-      if (activeMessages.length > 1 && activeMessages[0].id !== "welcome") {
-        console.log("[AppContext] Messages already loaded, skipping fetch");
+      // CRITICAL FIX: Skip database fetch if messages already exist for this conversation
+      const hasConversationMessages = activeMessages.length > 1 && activeMessages[0].id !== "welcome";
+      if (hasConversationMessages) {
+        console.log("[AppContext] CRITICAL FIX: Messages exist for conversation, preventing database reload");
         setIsLoadingMessages(false);
         return;
       }

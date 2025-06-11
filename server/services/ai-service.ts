@@ -195,7 +195,10 @@ class AiService {
         }
       };
     } catch (error) {
-      log('error', 'Error in getChatResponse (AiService):', { message: error.message, config: currentAiConfig });
+      log('error', 'Error in getChatResponse (AiService):', { 
+        message: error instanceof Error ? error.message : String(error), 
+        config: currentAiConfig 
+      });
       return {
         response: "I apologize, but I'm having trouble with my systems. Please try again later.",
         conversationId,
@@ -234,9 +237,13 @@ class AiService {
       let providerToUse = this.providers.get(currentAiConfig.provider);
       if (!providerToUse) {
           if (this.providers.size > 0) {
-              currentAiConfig.provider = this.providers.keys().next().value;
-              currentAiConfig.model = currentAiConfig.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.0-flash-exp';
-              providerToUse = this.providers.get(currentAiConfig.provider);
+              const availableProviders = Array.from(this.providers.keys());
+              const fallbackProvider = availableProviders[0];
+              if (fallbackProvider) {
+                currentAiConfig.provider = fallbackProvider;
+                currentAiConfig.model = currentAiConfig.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.0-flash-exp';
+                providerToUse = this.providers.get(currentAiConfig.provider);
+              }
           } else {
               throw new Error(`Provider ${aiConfigInput.provider} not available and no fallback providers registered.`);
           }
@@ -295,8 +302,9 @@ class AiService {
         }
       };
     } catch (error) {
-      log('error', 'Error in getChatResponseStream:', { message: error.message, config: currentAiConfig });
-      if (onError) onError(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log('error', 'Error in getChatResponseStream:', { message: errorMessage, config: currentAiConfig });
+      if (onError) onError(error instanceof Error ? error : new Error(errorMessage));
       return {
         response: "I apologize, but I'm having trouble with my systems. Please try again later.",
         conversationId,

@@ -179,184 +179,231 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let currentConversationId = conversationId;
       let conversationHistory: any[] = [];
 
-      console.log(`Received message with conversation ID: ${currentConversationId}`);
+      console.log(`Received message with conversation ID: ${currentConversationId}, streaming: ${streaming}`);
 
-      // 1. If we have a conversationId, fetch its history FIRST.
-      if (currentConversationId) {
-        console.log(`Fetching history for conversation: ${currentConversationId}`);
-
-        // Validate that the conversation exists
-        const existingConv = await db
-          .select()
-          .from(conversations)
-          .where(eq(conversations.id, currentConversationId))
-          .limit(1);
-
-        if (existingConv.length === 0) {
-          console.warn(`Conversation ${currentConversationId} not found! Setting to null to create new one.`);
-          currentConversationId = null;
-        } else {
-          const historyFromDb = await db
-            .select()
-            .from(conversationMessages)
-            .where(eq(conversationMessages.conversationId, currentConversationId))
-            .orderBy(conversationMessages.createdAt)
-            .limit(20);
-          conversationHistory = historyFromDb;
-          console.log(`Fetched conversation history: ${conversationHistory.length} messages for conversation ${currentConversationId}`);
-
-          // Debug: Log the conversation history details
-          if (conversationHistory.length > 0) {
-            console.log(`History preview: ${conversationHistory.map(m => `${m.role}: ${m.content?.substring(0, 50)}...`).join(' | ')}`);
-          }
-        }
+      // Set up streaming headers if requested (Tier 1 B optimization)
+      if (streaming) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Cache-Control'
+        });
+        
+        // Send immediate typing indicator
+        res.write(`data: ${JSON.stringify({ type: 'typing_start' })}\n\n`);
       }
 
-      // 2. If no conversationId, create a new one now.
-      if (!currentConversationId) {
-        let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
-        if (!title && attachments && attachments.length > 0) {
-          title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
-        }
-        if (!title) title = "New Conversation";
+      // Tier 1 C: Parallel processing optimization
+      const processOperations = async () => {
+        const operations = [];
 
-        const [newConversation] = await db.insert(conversations).values({
-          userId,
-          title
-        }).returning();
-        currentConversationId = newConversation.id;
-        console.log(`Created new conversation: ${currentConversationId} with title: ${title}`);
-        conversationHistory = []; // Empty history for new conversation
-      }
-
-      // 3. Save the new user message to the database.
-      // This happens AFTER we've fetched the previous history.
-      const [savedUserMessage] = await db.insert(conversationMessages).values({
-        conversationId: currentConversationId,
-        role: 'user',
-        content,
-        metadata: attachments && attachments.length > 0 ? { attachments } : undefined
-      }).returning();
-
-      console.log(`Saved user message ${savedUserMessage.id} to conversation ${currentConversationId}`);
-
-      // Save attachments to files table for file management integration
-      if (attachments && attachments.length > 0) {
-        for (const attachment of attachments) {
-          try {
-            // Auto-categorize the file using the retention service
-            const categorization = await attachmentRetentionService.categorizeAttachment(
-              attachment.displayName || attachment.fileName,
-              attachment.fileType,
-              `Chat upload in conversation: ${currentConversationId}`
-            );
-
-            // Calculate retention settings based on categorization
-            let retentionDays = null;
-            let scheduledDeletion = null;
-            
-            if (categorization.category === 'high') {
-              // Permanent files - no deletion
-              retentionDays = null;
-            } else if (categorization.category === 'medium') {
-              retentionDays = 90;
-              scheduledDeletion = new Date(Date.now() + (90 * 24 * 60 * 60 * 1000));
-            } else if (categorization.category === 'low') {
-              retentionDays = 30;
-              scheduledDeletion = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
-            }
-
-            // Check if file already exists in files table (to avoid duplicates)
-            const existingFile = await db
+        // 1. Conversation validation/creation (parallel when possible)
+        if (currentConversationId) {
+          operations.push(async () => {
+            const existingConv = await db
               .select()
-              .from(files)
-              .where(eq(files.fileName, attachment.fileName))
+              .from(conversations)
+              .where(eq(conversations.id, currentConversationId))
               .limit(1);
 
-            if (existingFile.length === 0) {
-              // Create file record in database
-              await db.insert(files).values({
-                userId,
-                categoryId: categorization.suggestedCategoryId || null,
-                fileName: attachment.fileName,
-                displayName: attachment.displayName || attachment.fileName,
-                filePath: join(process.cwd(), 'uploads', attachment.fileName),
-                fileType: attachment.fileType,
-                fileSize: attachment.fileSize,
-                uploadSource: 'chat', // Mark as chat upload
-                retentionPolicy: categorization.category,
-                retentionDays,
-                scheduledDeletion,
-                metadata: {
-                  uploadContext: 'chat',
-                  conversationId: currentConversationId,
-                  messageId: savedUserMessage.id,
-                  categorization
-                }
-              });
-
-              console.log(`Saved attachment ${attachment.fileName} to files table with category: ${categorization.category}`);
+            if (existingConv.length === 0) {
+              console.warn(`Conversation ${currentConversationId} not found! Setting to null to create new one.`);
+              currentConversationId = null;
+            } else {
+              const historyFromDb = await db
+                .select()
+                .from(conversationMessages)
+                .where(eq(conversationMessages.conversationId, currentConversationId))
+                .orderBy(conversationMessages.createdAt)
+                .limit(20);
+              conversationHistory = historyFromDb;
+              console.log(`Fetched conversation history: ${conversationHistory.length} messages`);
             }
-          } catch (error) {
-            console.error(`Failed to save attachment ${attachment.fileName} to files table:`, error);
-            // Continue processing other attachments even if one fails
-          }
+          });
         }
-      }
 
-      // Also save to legacy messages for compatibility
-      const legacyUserMessage = await storage.createMessage({
-        userId,
-        content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
-        isUserMessage: true
-      });
+        // Execute conversation operations
+        await Promise.all(operations.map(op => op()));
 
-      // 4. Call the AI service with raw, un-formatted data.
-      // The service will handle building the context.
-      const aiConfig = { provider: aiProvider, model: aiModel };
-      const aiResult = await aiService.getChatResponse(
-        content, // Pass the original, raw message content
-        userId,
-        currentConversationId,
-        legacyUserMessage.id,
-        coachingMode,
-        conversationHistory, // Pass the clean history (without the current message)
-        aiConfig,
-        attachments || [], // Pass the raw attachments array
-        automaticModelSelection || false
-      );
+        // 2. Create new conversation if needed
+        if (!currentConversationId) {
+          let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
+          if (!title && attachments && attachments.length > 0) {
+            title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
+          }
+          if (!title) title = "New Conversation";
 
-      // Save AI response to conversation
-      const [savedAiMessage] = await db.insert(conversationMessages).values({
-        conversationId: currentConversationId,
-        role: 'assistant',
-        content: aiResult.response
-      }).returning();
+          const [newConversation] = await db.insert(conversations).values({
+            userId,
+            title
+          }).returning();
+          currentConversationId = newConversation.id;
+          console.log(`Created new conversation: ${currentConversationId} with title: ${title}`);
+          conversationHistory = [];
+        }
 
-      console.log(`Saved AI message ${savedAiMessage.id} to conversation ${currentConversationId}`);
+        // 3. Save user message
+        const [savedUserMessage] = await db.insert(conversationMessages).values({
+          conversationId: currentConversationId,
+          role: 'user',
+          content,
+          metadata: attachments && attachments.length > 0 ? { attachments } : undefined
+        }).returning();
 
-      // Also save to legacy messages for compatibility
-      const legacyAiMessage = await storage.createMessage({
-        userId,
-        content: aiResult.response,
-        isUserMessage: false
-      });
+        console.log(`Saved user message ${savedUserMessage.id} to conversation ${currentConversationId}`);
 
-      const response = { 
-        userMessage: legacyUserMessage, 
-        aiMessage: legacyAiMessage,
-        conversationId: currentConversationId,
-        memoryInfo: aiResult.memoryInfo
+        // 4. Process attachments in parallel
+        const attachmentProcessing = attachments && attachments.length > 0 ? 
+          Promise.all(attachments.map(async (attachment) => {
+            try {
+              const categorization = await attachmentRetentionService.categorizeAttachment(
+                attachment.displayName || attachment.fileName,
+                attachment.fileType,
+                `Chat upload in conversation: ${currentConversationId}`
+              );
+
+              let retentionDays = null;
+              let scheduledDeletion = null;
+              
+              if (categorization.category === 'high') {
+                retentionDays = null;
+              } else if (categorization.category === 'medium') {
+                retentionDays = 90;
+                scheduledDeletion = new Date(Date.now() + (90 * 24 * 60 * 60 * 1000));
+              } else if (categorization.category === 'low') {
+                retentionDays = 30;
+                scheduledDeletion = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+              }
+
+              const existingFile = await db
+                .select()
+                .from(files)
+                .where(eq(files.fileName, attachment.fileName))
+                .limit(1);
+
+              if (existingFile.length === 0) {
+                await db.insert(files).values({
+                  userId,
+                  categoryId: categorization.suggestedCategoryId || null,
+                  fileName: attachment.fileName,
+                  displayName: attachment.displayName || attachment.fileName,
+                  filePath: join(process.cwd(), 'uploads', attachment.fileName),
+                  fileType: attachment.fileType,
+                  fileSize: attachment.fileSize,
+                  uploadSource: 'chat',
+                  retentionPolicy: categorization.category,
+                  retentionDays,
+                  scheduledDeletion,
+                  metadata: {
+                    uploadContext: 'chat',
+                    conversationId: currentConversationId,
+                    messageId: savedUserMessage.id,
+                    categorization
+                  }
+                });
+                console.log(`Saved attachment ${attachment.fileName} with category: ${categorization.category}`);
+              }
+            } catch (error) {
+              console.error(`Failed to save attachment ${attachment.fileName}:`, error);
+            }
+          })) : Promise.resolve();
+
+        // 5. Legacy message creation
+        const legacyUserMessage = await storage.createMessage({
+          userId,
+          content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
+          isUserMessage: true
+        });
+
+        // 6. Stream processing update if enabled
+        if (streaming) {
+          res.write(`data: ${JSON.stringify({ 
+            type: 'processing', 
+            conversationId: currentConversationId,
+            userMessage: savedUserMessage 
+          })}\n\n`);
+        }
+
+        // 7. Parallel AI processing and attachment handling
+        const aiConfig = { provider: aiProvider, model: aiModel };
+        
+        const [aiResult] = await Promise.all([
+          aiService.getChatResponse(
+            content,
+            userId,
+            currentConversationId,
+            legacyUserMessage.id,
+            coachingMode,
+            conversationHistory,
+            aiConfig,
+            attachments || [],
+            automaticModelSelection || false
+          ),
+          attachmentProcessing
+        ]);
+
+        // 8. Save AI response
+        const [savedAiMessage] = await db.insert(conversationMessages).values({
+          conversationId: currentConversationId,
+          role: 'assistant',
+          content: aiResult.response
+        }).returning();
+
+        const legacyAiMessage = await storage.createMessage({
+          userId,
+          content: aiResult.response,
+          isUserMessage: false
+        });
+
+        return {
+          userMessage: legacyUserMessage,
+          aiMessage: legacyAiMessage,
+          conversationId: currentConversationId,
+          memoryInfo: aiResult.memoryInfo,
+          savedUserMessage,
+          savedAiMessage
+        };
       };
 
-      console.log(`Sending response with conversation ID: ${currentConversationId}`);
-      res.status(201).json(response);
+      const result = await processOperations();
+
+      if (streaming) {
+        // Send final response via SSE
+        res.write(`data: ${JSON.stringify({ 
+          type: 'complete', 
+          ...result 
+        })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'typing_end' })}\n\n`);
+        res.end();
+      } else {
+        // Traditional JSON response
+        console.log(`Sending response with conversation ID: ${result.conversationId}`);
+        res.status(201).json({
+          userMessage: result.userMessage,
+          aiMessage: result.aiMessage,
+          conversationId: result.conversationId,
+          memoryInfo: result.memoryInfo
+        });
+      }
     } catch (error) {
       console.error('Chat error:', error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      
+      if (streaming) {
+        // Send error via SSE
+        res.write(`data: ${JSON.stringify({ 
+          type: 'error', 
+          message: error instanceof z.ZodError ? "Invalid request data" : "Failed to process message"
+        })}\n\n`);
+        res.end();
       } else {
-        res.status(500).json({ message: "Failed to process message" });
+        // Traditional error response
+        if (error instanceof z.ZodError) {
+          res.status(400).json({ message: "Invalid request data", errors: error.errors });
+        } else {
+          res.status(500).json({ message: "Failed to process message" });
+        }
       }
     }
   });

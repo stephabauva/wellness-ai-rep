@@ -113,6 +113,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
     switch (data.type) {
       case 'start':
         setIsThinking(true);
+        setStreamingActive(true);
         console.log('[Streaming] Started:', data.message);
         break;
 
@@ -173,17 +174,18 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Keep streaming message visible and refresh in background
+        // Wait longer before refreshing to ensure database has the message
         setTimeout(async () => {
-          console.log('[Streaming] Refreshing messages while keeping streaming message visible');
+          console.log('[Streaming] Refreshing messages from database');
           await refreshMessages();
           
-          // Only clear streaming message after ensuring database message is loaded
+          // Wait longer before clearing streaming message to ensure smooth transition
           setTimeout(() => {
-            console.log('[Streaming] Clearing streaming message after database refresh');
+            console.log('[Streaming] Clearing streaming message and deactivating streaming state');
             setStreamingMessage(null);
-          }, 300);
-        }, 500);
+            setStreamingActive(false);
+          }, 1000);
+        }, 1000);
         
         break;
 

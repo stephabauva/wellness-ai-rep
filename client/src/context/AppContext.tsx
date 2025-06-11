@@ -103,24 +103,28 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     transcriptionProvider: userSettings?.transcriptionProvider || "webspeech",
   }), [userSettings]);
 
-  // Message Loading useEffect - CRITICAL PERFORMANCE FIX
+  // Message Loading useEffect - CHATGPT-STYLE PERFORMANCE FIX
   useEffect(() => {
     console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "isStreamingActive:", isStreamingActive, "activeMessages.length:", activeMessages.length);
     
-    // PERFORMANCE FIX: Skip loading during streaming to prevent conversation reload
+    // CHATGPT-STYLE FIX 1: Skip ALL loading during streaming to prevent reload flickering
     if (isStreamingActive) {
-      console.log("[AppContext] Skipping message load - streaming is active");
+      console.log("[AppContext] CHATGPT-STYLE: Streaming active - preserving current state");
       setIsLoadingMessages(false);
       return;
     }
     
-    // CRITICAL CHATGPT-STYLE FIX: Always preserve existing messages for any conversation
+    // CHATGPT-STYLE FIX 2: Preserve existing messages to avoid database reloads
     if (currentConversationId && activeMessages.length > 0) {
-      const nonWelcomeMessages = activeMessages.filter(msg => msg.id !== "welcome");
-      if (nonWelcomeMessages.length > 0) {
-        console.log("[AppContext] CHATGPT-STYLE: Preserving", nonWelcomeMessages.length, "existing messages, no database reload");
+      const hasRealMessages = activeMessages.some(msg => 
+        msg.id !== "welcome" && 
+        !msg.id.startsWith('user-') && 
+        !msg.id.startsWith('ai-streaming-')
+      );
+      
+      if (hasRealMessages || activeMessages.length > 1) {
+        console.log("[AppContext] CHATGPT-STYLE: Preserving", activeMessages.length, "messages - no reload needed");
         setIsLoadingMessages(false);
-        // Always clear newlyCreatedConvId to prevent any future reload attempts
         if (newlyCreatedConvId) {
           setNewlyCreatedConvId(null);
         }
@@ -128,14 +132,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     }
 
-    // Handle new conversations or conversation switches that truly need message loading
-    if (currentConversationId && activeMessages.length === 0) {
-      console.log("[AppContext] Loading messages for empty conversation:", currentConversationId);
-      // This is the only case where we should load from database
-    } else if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId && activeMessages.length <= 1) {
-      console.log("[AppContext] Skipping load for newly created conversation that already has messages");
+    // Only load from database in these specific cases:
+    // 1. Switching to a different existing conversation with no messages
+    // 2. Starting the app for the first time
+    const shouldLoadFromDatabase = (
+      currentConversationId && 
+      activeMessages.length === 0 &&
+      !newlyCreatedConvId
+    );
+
+    if (!shouldLoadFromDatabase) {
+      console.log("[AppContext] CHATGPT-STYLE: No database load needed");
       setIsLoadingMessages(false);
-      setNewlyCreatedConvId(null);
+      if (newlyCreatedConvId) {
+        setNewlyCreatedConvId(null);
+      }
       return;
     }
     

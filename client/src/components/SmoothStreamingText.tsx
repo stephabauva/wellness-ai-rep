@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SmoothStreamingTextProps {
   content: string;
@@ -15,62 +15,71 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
   const [showCursor, setShowCursor] = useState(true);
   const currentIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
+
+  // ChatGPT-style pacing with consistent timing
+  const getPacingDelay = useCallback((char: string): number => {
+    if (char === '.' || char === '!' || char === '?') return 150;
+    if (char === ',' || char === ';') return 80;
+    if (char === '\n') return 200;
+    if (char === ' ') return 25;
+    return 15; // Fast base typing speed like ChatGPT
+  }, []);
+
+  // Non-blocking character renderer with smart scheduler
+  const typeNextToken = useCallback(() => {
+    if (!isTypingRef.current || currentIndexRef.current >= content.length) {
+      if (isComplete && onComplete && currentIndexRef.current >= content.length) {
+        onComplete();
+      }
+      isTypingRef.current = false;
+      return;
+    }
+
+    const char = content[currentIndexRef.current];
+    
+    // Immediate update for responsiveness
+    setDisplayedText(content.substring(0, currentIndexRef.current + 1));
+    currentIndexRef.current++;
+    
+    // Schedule next character with smart pacing
+    const delay = getPacingDelay(char);
+    timeoutRef.current = setTimeout(typeNextToken, delay);
+  }, [content, isComplete, onComplete, getPacingDelay]);
 
   useEffect(() => {
-    if (!content) return;
+    if (!content) {
+      setDisplayedText('');
+      currentIndexRef.current = 0;
+      return;
+    }
 
-    // Clear any existing timeout
+    // Clear existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    // Reset only if content got shorter (new message)
+    // Reset if content got shorter (new message)
     if (content.length < displayedText.length) {
       currentIndexRef.current = 0;
       setDisplayedText('');
+      isTypingRef.current = false;
     }
 
-    // Smart pacing function for ChatGPT-like rhythm
-    const getPacingDelay = (char: string): number => {
-      if (char === '.' || char === '!' || char === '?') return 300;
-      if (char === ',' || char === ';') return 150;
-      if (char === '\n') return 250;
-      if (char === ' ') return 40;
-      return 20; // Base typing speed
-    };
-
-    // Smooth character-by-character renderer
-    const typeNextCharacter = () => {
-      if (currentIndexRef.current < content.length) {
-        const currentChar = content[currentIndexRef.current];
-        
-        // Immediate state update for responsiveness
-        setDisplayedText(content.substring(0, currentIndexRef.current + 1));
-        currentIndexRef.current++;
-        
-        // Natural typing rhythm with slight randomness
-        const baseDelay = getPacingDelay(currentChar);
-        const jitter = Math.random() * 20 - 10; // ±10ms variation
-        const delay = Math.max(10, baseDelay + jitter);
-        
-        timeoutRef.current = setTimeout(typeNextCharacter, delay);
-      } else if (isComplete && onComplete) {
-        onComplete();
-      }
-    };
-
-    // Only start if there's more content to display
-    if (currentIndexRef.current < content.length) {
-      // Small initial delay to prevent jarring start
-      timeoutRef.current = setTimeout(typeNextCharacter, 50);
+    // Start typing only if there's new content
+    if (currentIndexRef.current < content.length && !isTypingRef.current) {
+      isTypingRef.current = true;
+      // Immediate start for responsiveness
+      timeoutRef.current = setTimeout(typeNextToken, 20);
     }
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      isTypingRef.current = false;
     };
-  }, [content.length, isComplete, onComplete]); // Optimized dependencies
+  }, [content, typeNextToken]);
 
   // Cursor blinking effect
   useEffect(() => {

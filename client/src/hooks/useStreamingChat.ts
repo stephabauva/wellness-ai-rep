@@ -49,7 +49,23 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         eventSourceRef.current = null;
       }
 
-      // Reset state and start new stream
+      // CHATGPT-STYLE FIX 1: Show user message immediately (optimistic UI)
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        content: messageData.content,
+        isUserMessage: true,
+        timestamp: new Date(),
+        attachments: messageData.attachments?.map(att => ({
+          name: att.fileName || att.name,
+          type: att.fileType || att.type
+        }))
+      };
+      
+      console.log('[Streaming] CHATGPT-STYLE: Adding user message immediately');
+      addOptimisticMessage(userMessage);
+      setPendingUserMessage(userMessage);
+
+      // Reset streaming state and start new stream
       setStreamingMessage(null);
       setStreamingActive(true);
       setIsThinking(true);
@@ -213,34 +229,43 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         setIsConnected(false);
         setIsThinking(false);
         
-        // Replace streaming message with final persistent message
-        if (streamingMessage && streamingMessage.content && addOptimisticMessage) {
-          console.log('[Streaming] Converting streaming message to final message');
+        // CHATGPT-STYLE FIX 2: Commit streaming message to persistent state WITHOUT database reload
+        if (streamingMessage && streamingMessage.content) {
+          console.log('[Streaming] CHATGPT-STYLE: Committing streaming message to persistent state');
           const finalAiMessage = {
-            id: data.messageId || `ai-final-${Date.now()}`,
+            id: data.messageId || streamingMessage.id, // Use server ID if available
             content: streamingMessage.content,
             isUserMessage: false,
             timestamp: new Date(),
             attachments: []
           };
+          
+          // Add final message to persistent state
           addOptimisticMessage(finalAiMessage);
+          
+          // Mark streaming as complete but keep message visible
+          setStreamingMessage(prev => prev ? {
+            ...prev,
+            isComplete: true,
+            isStreaming: false
+          } : null);
         }
 
         if (options.onMessageComplete && data.aiMessage) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Clean up streaming state immediately without async operations
-        console.log('[Streaming] CHATGPT-STYLE: Completing stream for conversation:', data.conversationId);
-        console.log('[Streaming] Disabling streaming state');
+        // CHATGPT-STYLE FIX 3: Disable streaming state immediately to prevent DB reload
+        console.log('[Streaming] CHATGPT-STYLE: Disabling streaming state to prevent DB reload');
         setStreamingActive(false);
         
-        // Use requestAnimationFrame for non-blocking cleanup
-        requestAnimationFrame(() => {
-          console.log('[Streaming] Clearing temporary UI states');
+        // CRITICAL: Clear UI states only AFTER persistence is complete
+        setTimeout(() => {
+          console.log('[Streaming] CHATGPT-STYLE: Clearing temporary UI states after persistence');
           setPendingUserMessage(null);
-          setStreamingMessage(null);
-        });
+          // Keep streamingMessage briefly for smooth transition
+          setTimeout(() => setStreamingMessage(null), 100);
+        }, 50); // Minimal delay for persistence
         break;
 
       case 'error':

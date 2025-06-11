@@ -157,27 +157,42 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         setStreamingMessage(prev => {
           // Use a consistent ID for the current streaming session
           const streamingId = prev?.id || `ai-streaming-${Date.now()}`;
-          const newMessage = prev ? {
-            ...prev,
-            content: prev.content + cleanChunk,
-            isStreaming: true
-          } : {
+          const accumulatedContent = prev ? prev.content + cleanChunk : cleanChunk;
+          
+          const newMessage = {
             id: streamingId,
-            content: cleanChunk,
+            content: accumulatedContent,
             isComplete: false,
             isStreaming: true
           };
           
-          // Update optimistic message immediately for smooth streaming
+          // Throttle optimistic updates for smooth performance
           if (addOptimisticMessage) {
-            const streamingAiMessage = {
-              id: streamingId,
-              content: newMessage.content,
-              isUserMessage: false,
-              timestamp: new Date(),
-              attachments: []
-            };
-            addOptimisticMessage(streamingAiMessage);
+            // Use requestIdleCallback for non-blocking updates
+            if (window.requestIdleCallback) {
+              window.requestIdleCallback(() => {
+                const streamingAiMessage = {
+                  id: streamingId,
+                  content: accumulatedContent,
+                  isUserMessage: false,
+                  timestamp: new Date(),
+                  attachments: []
+                };
+                addOptimisticMessage(streamingAiMessage);
+              });
+            } else {
+              // Fallback for browsers without requestIdleCallback
+              setTimeout(() => {
+                const streamingAiMessage = {
+                  id: streamingId,
+                  content: accumulatedContent,
+                  isUserMessage: false,
+                  timestamp: new Date(),
+                  attachments: []
+                };
+                addOptimisticMessage(streamingAiMessage);
+              }, 0);
+            }
           }
           
           return newMessage;

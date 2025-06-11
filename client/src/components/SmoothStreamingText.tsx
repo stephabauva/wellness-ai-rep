@@ -24,47 +24,45 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       clearTimeout(timeoutRef.current);
     }
 
-    // Only reset if content is completely new (smaller than current display)
+    // Reset only if content got shorter (new message)
     if (content.length < displayedText.length) {
       currentIndexRef.current = 0;
       setDisplayedText('');
     }
 
-    // If content hasn't changed or we've already displayed it all, don't restart
-    if (currentIndexRef.current >= content.length && displayedText === content) {
-      return;
-    }
-
-    // Smart pacing function for natural typing rhythm
+    // Smart pacing function for ChatGPT-like rhythm
     const getPacingDelay = (char: string): number => {
-      if (char === '.' || char === '!' || char === '?') return 150;
-      if (char === ',' || char === ';') return 80;
-      if (char === '\n') return 200;
-      if (char === ' ') return 25;
-      return 15;
+      if (char === '.' || char === '!' || char === '?') return 300;
+      if (char === ',' || char === ';') return 150;
+      if (char === '\n') return 250;
+      if (char === ' ') return 40;
+      return 20; // Base typing speed
     };
 
-    // Non-blocking async scheduler for smooth rendering
-    const typeNextToken = async () => {
+    // Smooth character-by-character renderer
+    const typeNextCharacter = () => {
       if (currentIndexRef.current < content.length) {
-        const nextChar = content[currentIndexRef.current];
+        const currentChar = content[currentIndexRef.current];
         
-        // Update display to show one more character
+        // Immediate state update for responsiveness
         setDisplayedText(content.substring(0, currentIndexRef.current + 1));
         currentIndexRef.current++;
         
-        // Schedule next character with natural pacing
-        const delay = getPacingDelay(nextChar);
-        timeoutRef.current = setTimeout(typeNextToken, delay + (Math.random() * 10 - 5));
+        // Natural typing rhythm with slight randomness
+        const baseDelay = getPacingDelay(currentChar);
+        const jitter = Math.random() * 20 - 10; // ±10ms variation
+        const delay = Math.max(10, baseDelay + jitter);
+        
+        timeoutRef.current = setTimeout(typeNextCharacter, delay);
       } else if (isComplete && onComplete) {
-        // Text is fully displayed and streaming is complete
         onComplete();
       }
     };
 
-    // Start streaming if we haven't displayed all the content yet
+    // Only start if there's more content to display
     if (currentIndexRef.current < content.length) {
-      timeoutRef.current = setTimeout(typeNextToken, 30); // Faster initial delay
+      // Small initial delay to prevent jarring start
+      timeoutRef.current = setTimeout(typeNextCharacter, 50);
     }
 
     return () => {
@@ -72,7 +70,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [content, isComplete, onComplete, displayedText]);
+  }, [content.length, isComplete, onComplete]); // Optimized dependencies
 
   // Cursor blinking effect
   useEffect(() => {

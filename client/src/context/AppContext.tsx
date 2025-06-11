@@ -280,28 +280,45 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     console.log("[AppContext] Manual refresh triggered");
     if (currentConversationId) {
       try {
-        const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
-        if (response.ok) {
-          const convMessages = await response.json();
-          const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-          const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
-            id: msg.id.toString(),
-            content: msg.content,
-            isUserMessage: msg.role === "user",
-            timestamp: new Date(msg.createdAt),
-            attachments: msg.metadata?.attachments?.map((att: any) => ({
-              name: att.fileName || att.name || 'Unknown file',
-              type: att.fileType || att.type || 'application/octet-stream'
-            })) || undefined
-          }));
-          console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
-          setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
+        // Add retry logic to ensure we get the latest messages
+        let attempt = 0;
+        const maxAttempts = 3;
+        
+        while (attempt < maxAttempts) {
+          const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}&attempt=${attempt}`);
+          if (response.ok) {
+            const convMessages = await response.json();
+            const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+            const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
+              id: msg.id.toString(),
+              content: msg.content,
+              isUserMessage: msg.role === "user",
+              timestamp: new Date(msg.createdAt),
+              attachments: msg.metadata?.attachments?.map((att: any) => ({
+                name: att.fileName || att.name || 'Unknown file',
+                type: att.fileType || att.type || 'application/octet-stream'
+              })) || undefined
+            }));
+            
+            console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
+            setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
+            
+            // Invalidate React Query cache to ensure consistency
+            queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
+            break;
+          }
+          
+          attempt++;
+          if (attempt < maxAttempts) {
+            console.log(`[AppContext] Refresh attempt ${attempt} failed, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
       } catch (error) {
         console.error("[AppContext] Manual refresh failed:", error);
       }
     }
-  }, [currentConversationId]);
+  }, [currentConversationId, queryClient]);
 
   const setStreamingActiveHandler = useCallback((active: boolean) => {
     console.log("[AppContext] Setting streaming active:", active);

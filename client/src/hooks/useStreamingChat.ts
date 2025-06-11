@@ -174,18 +174,24 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Wait longer before refreshing to ensure database has the message
+        // Keep streaming message and don't clear it until we're absolutely sure database message is loaded
         setTimeout(async () => {
-          console.log('[Streaming] Refreshing messages from database');
-          await refreshMessages();
+          console.log('[Streaming] Starting database refresh process');
           
-          // Wait longer before clearing streaming message to ensure smooth transition
+          // Multiple refresh attempts to ensure database message is loaded
+          for (let i = 0; i < 3; i++) {
+            console.log(`[Streaming] Database refresh attempt ${i + 1}`);
+            await refreshMessages();
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          // Final delay before clearing streaming message
           setTimeout(() => {
-            console.log('[Streaming] Clearing streaming message and deactivating streaming state');
+            console.log('[Streaming] Final cleanup - clearing streaming message');
             setStreamingMessage(null);
             setStreamingActive(false);
-          }, 1000);
-        }, 1000);
+          }, 500);
+        }, 2000);
         
         break;
 

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useAppContext } from '@/context/AppContext';
 
 interface StreamingMessage {
   id: string;
@@ -21,6 +22,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
   const eventSourceRef = useRef<EventSource | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { refreshMessages } = useAppContext();
 
   const startStreaming = useCallback(async (messageData: {
     content: string;
@@ -170,36 +172,24 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Invalidate queries and wait for actual refetch completion
-        const invalidatePromises = [
-          queryClient.invalidateQueries({ queryKey: ['/api/messages'] }),
-          queryClient.invalidateQueries({ queryKey: ['/api/conversations'] })
-        ];
-
-        // Wait for queries to actually refetch their data
-        Promise.all(invalidatePromises).then(async () => {
-          // Wait for conversation messages to refetch if we have a conversation
-          if (data.conversationId) {
-            try {
-              await queryClient.refetchQueries({ 
-                queryKey: [`/api/conversations/${data.conversationId}/messages`] 
-              });
-            } catch (error) {
-              console.warn('[Streaming] Failed to refetch conversation messages:', error);
-            }
-          }
+        // Trigger AppContext to refresh messages and wait for completion
+        try {
+          console.log('[Streaming] Refreshing messages via AppContext');
+          refreshMessages();
           
-          // Additional safety delay to ensure UI has updated
+          // Wait for the refresh to complete before clearing streaming message
+          // Use a longer delay to ensure the useEffect in AppContext has time to complete
           setTimeout(() => {
+            console.log('[Streaming] Clearing streaming message after refresh');
             setStreamingMessage(null);
-          }, 500);
-        }).catch(error => {
-          console.warn('[Streaming] Query invalidation failed:', error);
-          // Fallback: clear streaming message after longer delay if queries fail
+          }, 1000);
+        } catch (error) {
+          console.warn('[Streaming] Message refresh failed:', error);
+          // Fallback: clear streaming message after longer delay if refresh fails
           setTimeout(() => {
             setStreamingMessage(null);
           }, 2000);
-        });
+        }
         
         break;
 
@@ -217,7 +207,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
       default:
         console.log('[Streaming] Unknown event:', data);
     }
-  }, [streamingMessage, options, queryClient, toast]);
+  }, [streamingMessage, options, queryClient, toast, refreshMessages]);
 
   const stopStreaming = useCallback(() => {
     if (eventSourceRef.current) {

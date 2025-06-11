@@ -277,22 +277,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
 
   // Memoize the context value
-  const contextValue = useMemo(() => ({
+  const contextValue = useMemo((): AppContextType => ({
     activeSection,
     setActiveSection,
     coachingMode,
     setCoachingMode,
-    appSettings, // Changed from settings to appSettings
+    appSettings,
     messages: activeMessages,
     currentConversationId,
     loadingMessages: isLoadingMessages,
     sendMessage: sendMessageHandler,
     selectConversation: selectConversationHandler,
     newChat: newChatHandler,
+    refreshMessages: refreshMessagesHandler,
   }), [
-    activeSection, setActiveSection, coachingMode, setCoachingMode, appSettings, // Changed settings to appSettings
+    activeSection, setActiveSection, coachingMode, setCoachingMode, appSettings,
     activeMessages, currentConversationId, isLoadingMessages,
-    sendMessageHandler, selectConversationHandler, newChatHandler
+    sendMessageHandler, selectConversationHandler, newChatHandler, refreshMessagesHandler
   ]);
 
   return (

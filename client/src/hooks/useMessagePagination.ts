@@ -27,13 +27,18 @@ export function useMessagePagination<T>(
 
   const totalPages = Math.ceil(items.length / pageSize);
   
+  // For chat messages, show most recent messages first and load earlier ones
   const currentItems = useMemo(() => {
-    const startIndex = 0;
-    const endIndex = currentPage * pageSize;
-    return items.slice(startIndex, endIndex);
+    if (items.length === 0) return [];
+    
+    // Show the most recent messages up to current page * pageSize
+    const totalItemsToShow = currentPage * pageSize;
+    const startIndex = Math.max(0, items.length - totalItemsToShow);
+    return items.slice(startIndex);
   }, [items, currentPage, pageSize]);
 
-  const hasNextPage = currentPage < totalPages;
+  // For chat pagination, "next page" means loading earlier messages
+  const hasNextPage = currentPage * pageSize < items.length;
   const hasPreviousPage = currentPage > 1;
 
   const goToPage = useCallback((page: number) => {
@@ -57,8 +62,8 @@ export function useMessagePagination<T>(
   const loadMore = useCallback(async () => {
     if (hasNextPage && !isLoading) {
       setIsLoading(true);
-      // Simulate async loading
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Small delay to prevent rapid clicking
+      await new Promise(resolve => setTimeout(resolve, 150));
       setCurrentPage(prev => prev + 1);
       setIsLoading(false);
     }

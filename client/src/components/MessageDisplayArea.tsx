@@ -42,25 +42,33 @@ export function MessageDisplayArea({
 }: MessageDisplayAreaProps) {
   console.log("[MessageDisplayArea] Props received. messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined', "isLoading:", isLoading);
   
+  // All refs first
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // All useState hooks together
   const [containerHeight, setContainerHeight] = useState(400);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [processedMessages, setProcessedMessages] = useState<any[]>([]);
 
-  // Web Worker for heavy computations
+  // All useCallback hooks together
+  const onWorkerMessage = useCallback((data: any) => {
+    if (data.type === 'PARSE_MESSAGES') {
+      setProcessedMessages(data.result);
+    } else if (data.type === 'SEARCH_MESSAGES') {
+      setProcessedMessages(data.result);
+    }
+  }, []);
+
+  const onWorkerError = useCallback((error: any) => {
+    console.error('[MessageDisplayArea] Worker error:', error);
+  }, []);
+
+  // Web Worker for heavy computations - always called
   const { postMessage: processMessages, isLoading: isProcessing } = useWebWorker({
     workerPath: '/src/workers/messageProcessor.ts',
-    onMessage: useCallback((data: any) => {
-      if (data.type === 'PARSE_MESSAGES') {
-        setProcessedMessages(data.result);
-      } else if (data.type === 'SEARCH_MESSAGES') {
-        setProcessedMessages(data.result);
-      }
-    }, []),
-    onError: useCallback((error: any) => {
-      console.error('[MessageDisplayArea] Worker error:', error);
-    }, [])
+    onMessage: onWorkerMessage,
+    onError: onWorkerError
   });
 
   // Process messages with optimizations
@@ -103,7 +111,7 @@ export function MessageDisplayArea({
     initialPage: 1
   });
 
-  // Virtual scrolling for performance
+  // Virtual scrolling for performance - always call the hook
   const {
     visibleItems,
     totalHeight,
@@ -113,7 +121,8 @@ export function MessageDisplayArea({
   } = useVirtualScrolling(enablePagination ? paginatedMessages : allDisplayMessages, {
     itemHeight: 120, // Approximate message height
     containerHeight,
-    overscan: 5
+    overscan: 5,
+    dynamicHeight: true
   });
 
   // Container height measurement
@@ -148,13 +157,16 @@ export function MessageDisplayArea({
   // Auto-scroll effect with performance optimization
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (!showScrollToBottom) {
+      if (!showScrollToBottom && !enableVirtualScrolling) {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else if (enableVirtualScrolling && allDisplayMessages.length > 0) {
+        // For virtual scrolling, scroll to the last message
+        scrollToIndex(allDisplayMessages.length - 1);
       }
     }, 100);
     
     return () => clearTimeout(timeoutId);
-  }, [allDisplayMessages, showScrollToBottom]);
+  }, [allDisplayMessages, showScrollToBottom, enableVirtualScrolling, scrollToIndex]);
 
   if (isLoading) {
     return (
@@ -173,29 +185,96 @@ export function MessageDisplayArea({
   console.log("[MessageDisplayArea] About to render. Messages:", messagesToRender?.length);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {allDisplayMessages && allDisplayMessages.length > 0 ? (
-        allDisplayMessages.map((message: Message, index: number) => {
-          const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
-          
-          return (
-            <ChatMessage
-              key={message.id}
-              message={message.content}
-              isUser={message.isUserMessage}
-              timestamp={message.timestamp}
-              isStreaming={isActivelyStreaming}
-              isStreamingComplete={false}
-              attachments={message.attachments?.map((att: any) => ({
-                name: att.name,
-                type: att.type,
-              }))}
-            />
-          );
-        })
+    <div 
+      ref={containerRef}
+      className="flex-1 overflow-y-auto p-4"
+      onScroll={handleScroll}
+      style={{ position: 'relative' }}
+    >
+      {enableVirtualScrolling ? (
+        // Virtual scrolling implementation
+        <div style={{ height: totalHeight, position: 'relative' }}>
+          <div 
+            style={{ 
+              transform: `translateY(${offsetY}px)`,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0
+            }}
+            className="space-y-4"
+          >
+            {messagesToRender.map((message: Message, index: number) => {
+              const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
+              
+              return (
+                <ChatMessage
+                  key={message.id}
+                  message={message.content}
+                  isUser={message.isUserMessage}
+                  timestamp={message.timestamp}
+                  isStreaming={isActivelyStreaming}
+                  isStreamingComplete={false}
+                  attachments={message.attachments?.map((att: any) => ({
+                    name: att.name,
+                    type: att.type,
+                  }))}
+                />
+              );
+            })}
+          </div>
+        </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          <p>No messages yet. Start a conversation!</p>
+        // Standard rendering with optional pagination
+        <div className="space-y-4">
+          {messagesToRender && messagesToRender.length > 0 ? (
+            messagesToRender.map((message: Message, index: number) => {
+              const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
+              
+              return (
+                <ChatMessage
+                  key={message.id}
+                  message={message.content}
+                  isUser={message.isUserMessage}
+                  timestamp={message.timestamp}
+                  isStreaming={isActivelyStreaming}
+                  isStreamingComplete={false}
+                  attachments={message.attachments?.map((att: any) => ({
+                    name: att.name,
+                    type: att.type,
+                  }))}
+                />
+              );
+            })
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground min-h-[200px]">
+              <p>No messages yet. Start a conversation!</p>
+            </div>
+          )}
+          
+          {/* Load more button for pagination */}
+          {enablePagination && hasNextPage && (
+            <div className="flex justify-center py-4">
+              <Button 
+                onClick={loadMore} 
+                variant="outline" 
+                disabled={isPaginationLoading}
+                className="flex items-center gap-2"
+              >
+                {isPaginationLoading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Load Earlier Messages
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
       
@@ -213,6 +292,18 @@ export function MessageDisplayArea({
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Scroll to bottom button */}
+      {showScrollToBottom && (
+        <Button
+          onClick={scrollToBottom}
+          variant="outline"
+          size="sm"
+          className="fixed bottom-20 right-6 z-10 rounded-full shadow-lg bg-background/95 backdrop-blur-sm border-2"
+        >
+          <ChevronUp className="h-4 w-4 rotate-180" />
+        </Button>
       )}
       
       <div ref={messagesEndRef} />

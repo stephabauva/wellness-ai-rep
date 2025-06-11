@@ -16,6 +16,7 @@ import {
 import { nanoid } from "nanoid";
 import { eq, and, gte, desc } from "drizzle-orm";
 import { db } from "./db";
+import { cacheService } from "./services/cache-service";
 
 // Interface for storage methods
 export interface IStorage {

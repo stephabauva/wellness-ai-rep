@@ -3,6 +3,7 @@ import { memoryService } from "./memory-service";
 import { chatContextService } from "./chat-context-service";
 import { OpenAiProvider } from "./providers/openai-provider";
 import { GoogleProvider } from "./providers/google-provider";
+import { cacheService } from "./cache-service";
 import {
   AiProvider,
   AttachmentData,

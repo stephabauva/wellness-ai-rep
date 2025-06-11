@@ -246,6 +246,12 @@ Respond with JSON:
         { role: 'user', content: currentMessage }
       ].map(m => m.content).join(' ');
 
+      // Check cache for memory search results
+      const cached = await cacheService.getMemorySearchResults(userId, context, 10);
+      if (cached) {
+        return cached as RelevantMemory[];
+      }
+
       // Generate embedding for current context
       const contextEmbedding = await this.generateEmbedding(context);
 
@@ -315,9 +321,14 @@ Respond with JSON:
       }
 
       // Sort by relevance score and return top memories
-      return relevantMemories
+      const results = relevantMemories
         .sort((a, b) => b.relevanceScore - a.relevanceScore)
         .slice(0, 8);
+      
+      // Cache the search results for future use
+      cacheService.setMemorySearchResults(userId, context, 10, results);
+      
+      return results;
         
     } catch (error) {
       console.error('Error retrieving contextual memories:', error);

@@ -15,6 +15,7 @@ import {
 } from '../../shared/schema';
 import { eq, desc, and, sql, gt } from 'drizzle-orm';
 import { cacheService } from './cache-service';
+import { goMemoryService } from './go-memory-service';
 
 interface MemoryDetectionResult {
   shouldRemember: boolean;
@@ -199,7 +200,7 @@ class MemoryService {
     const { vectorA, vectorB, cacheKey } = payload;
     
     try {
-      const similarity = this.cosineSimilarity(vectorA, vectorB);
+      const similarity = await this.cosineSimilarity(vectorA, vectorB);
       this.similarityCache.set(cacheKey, {
         score: similarity,
         timestamp: new Date()
@@ -433,7 +434,23 @@ Respond with JSON:
   }
 
   // Calculate cosine similarity between two vectors
-  cosineSimilarity(a: number[], b: number[]): number {
+  // Tier 3 A: Use Go service for performance-critical similarity calculations
+  async cosineSimilarity(a: number[], b: number[]): Promise<number> {
+    // Try Go service first for better performance
+    if (goMemoryService.isAvailable() && a.length > 100) {
+      try {
+        return await goMemoryService.calculateCosineSimilarity(a, b);
+      } catch (error) {
+        console.warn('[MemoryService] Go service fallback to TypeScript implementation:', error);
+      }
+    }
+    
+    // Fallback to TypeScript implementation
+    return this.cosineSimilaritySync(a, b);
+  }
+
+  // Synchronous cosine similarity for fallback and small vectors
+  cosineSimilaritySync(a: number[], b: number[]): number {
     if (a.length !== b.length) return 0;
     
     let dotProduct = 0;
@@ -522,9 +539,9 @@ Respond with JSON:
               // Tier 2 C: Use cached similarity if available
               let similarity = this.getCachedSimilarity(contextEmbedding, memoryEmbedding);
               
-              // Fall back to synchronous calculation if not cached
+              // Fall back to calculation if not cached
               if (similarity === null) {
-                similarity = this.cosineSimilarity(contextEmbedding, memoryEmbedding);
+                similarity = await this.cosineSimilarity(contextEmbedding, memoryEmbedding);
               }
               
               if (similarity > 0.7) { // Threshold for relevance

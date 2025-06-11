@@ -32,13 +32,18 @@ export function useChatActions({
     isConnected,
     isThinking,
     startStreaming,
-    stopStreaming
+    stopStreaming,
+    pendingUserMessage
   } = useStreamingChat({
     onConversationCreate: (conversationId: string) => {
       console.log('[useChatActions] onConversationCreate called with:', conversationId);
       if (selectConversation) {
         selectConversation(conversationId);
       }
+    },
+    onUserMessageSent: (userMessage: any) => {
+      // CRITICAL FIX: This will be handled by adding a state for pending user message
+      console.log('[useChatActions] User message sent:', userMessage);
     }
   });
 
@@ -131,6 +136,7 @@ export function useChatActions({
     isConnected,
     isThinking,
     stopStreaming,
+    pendingUserMessage,
   };
 
   return actions;

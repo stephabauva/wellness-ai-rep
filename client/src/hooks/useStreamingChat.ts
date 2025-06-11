@@ -20,6 +20,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
   const [streamingMessage, setStreamingMessage] = useState<StreamingMessage | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [pendingUserMessage, setPendingUserMessage] = useState<any>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -40,23 +41,24 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         eventSourceRef.current.close();
       }
 
-      // Enable streaming mode immediately
+      // CRITICAL FIX: Immediately show user message before streaming starts
+      const optimisticUserMessage = {
+        id: `user-optimistic-${Date.now()}`,
+        content: messageData.content,
+        role: 'user',
+        isUserMessage: true,
+        timestamp: new Date(),
+        attachments: messageData.attachments?.map(att => ({
+          name: att.fileName || 'Unknown file',
+          type: att.fileType || 'application/octet-stream'
+        })) || []
+      };
+      
+      setPendingUserMessage(optimisticUserMessage);
       setStreamingActive(true);
       setIsThinking(true);
 
-      // CRITICAL FIX: Immediately trigger optimistic user message display
       if (options.onUserMessageSent) {
-        const optimisticUserMessage = {
-          id: `user-optimistic-${Date.now()}`,
-          content: messageData.content,
-          role: 'user',
-          isUserMessage: true,
-          timestamp: new Date(),
-          attachments: messageData.attachments?.map(att => ({
-            name: att.fileName || 'Unknown file',
-            type: att.fileType || 'application/octet-stream'
-          })) || []
-        };
         options.onUserMessageSent(optimisticUserMessage);
       }
 
@@ -262,6 +264,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
     isConnected,
     isThinking,
     startStreaming,
-    stopStreaming
+    stopStreaming,
+    pendingUserMessage
   };
 }

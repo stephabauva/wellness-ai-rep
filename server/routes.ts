@@ -270,19 +270,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         );
       } else {
-        // Fallback to non-streaming
+        // CHATGPT-STYLE FALLBACK: Fast character-based streaming without artificial delays
         const { response } = await providerToUse.generateChatResponse(
           contextMessages,
           { model: selectedAiConfig.model as any }
         );
         fullResponse = response;
         
-        // Simulate streaming by sending words
-        const words = response.split(' ');
-        for (let i = 0; i < words.length; i++) {
-          const word = words[i] + (i < words.length - 1 ? ' ' : '');
-          res.write(`data: ${JSON.stringify({ type: 'chunk', content: word })}\n\n`);
-          await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay between words
+        // Fast character-based streaming for smooth experience
+        const chars = response.split('');
+        let currentChunk = '';
+        
+        for (let i = 0; i < chars.length; i++) {
+          currentChunk += chars[i];
+          
+          // Send chunks in small batches for smooth streaming
+          if (i % 3 === 0 || i === chars.length - 1) {
+            res.write(`data: ${JSON.stringify({ type: 'chunk', content: currentChunk })}\n\n`);
+            currentChunk = '';
+            // No artificial delay - let frontend handle smooth rendering
+          }
         }
         res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse })}\n\n`);
       }

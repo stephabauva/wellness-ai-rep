@@ -58,9 +58,7 @@ export function MessageDisplayArea({
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {allDisplayMessages && allDisplayMessages.map((message: Message) => {
         // Check if this is the currently streaming message
-        const isCurrentlyStreaming = streamingMessage && 
-                                   streamingMessage.id === message.id && 
-                                   streamingMessage.isStreaming;
+        const isCurrentlyStreaming = streamingMessage?.id === message.id && streamingMessage?.isStreaming === true;
         
         return (
           <ChatMessage
@@ -68,8 +66,8 @@ export function MessageDisplayArea({
             message={message.content}
             isUser={message.isUserMessage}
             timestamp={message.timestamp}
-            isStreaming={isCurrentlyStreaming}
-            isStreamingComplete={streamingMessage?.isComplete || false}
+            isStreaming={Boolean(isCurrentlyStreaming)}
+            isStreamingComplete={Boolean(streamingMessage?.isComplete)}
             // Map attachments to ChatMessage's expected format
             attachments={message.attachments?.map((att: any) => ({
               name: att.name,

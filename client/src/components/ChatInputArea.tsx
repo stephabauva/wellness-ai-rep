@@ -205,9 +205,9 @@ export function ChatInputArea({
 
       {/* Camera Modal */}
       {isCameraOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="relative bg-white rounded-lg p-4 max-w-lg w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="relative bg-white rounded-lg p-4 max-w-lg w-full max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
               <h3 className="text-lg font-semibold">Take Photo</h3>
               <Button
                 variant="outline"
@@ -219,10 +219,10 @@ export function ChatInputArea({
               </Button>
             </div>
             
-            <div className="relative">
+            <div className="relative flex-1 min-h-0 mb-4">
               <video
                 ref={videoRef}
-                className="w-full rounded-lg"
+                className="w-full h-full object-cover rounded-lg"
                 autoPlay
                 playsInline
                 muted
@@ -233,13 +233,14 @@ export function ChatInputArea({
               />
             </div>
             
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center flex-shrink-0 pb-safe">
               <Button
                 onClick={capturePhoto}
                 disabled={uploadFileMutation.isPending}
-                className="px-8"
+                className="px-8 py-3 text-base"
+                size="lg"
               >
-                <Camera className="h-4 w-4 mr-2" />
+                <Camera className="h-5 w-5 mr-2" />
                 Capture Photo
               </Button>
             </div>

@@ -173,24 +173,17 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Trigger AppContext to refresh messages and wait for completion
-        try {
+        // Wait a moment before refreshing to ensure backend has saved the message
+        setTimeout(() => {
           console.log('[Streaming] Refreshing messages via AppContext');
           refreshMessages();
           
-          // Wait for the refresh to complete before clearing streaming message
-          // Use a longer delay to ensure the useEffect in AppContext has time to complete
+          // Clear streaming message after a longer delay to ensure smooth transition
           setTimeout(() => {
             console.log('[Streaming] Clearing streaming message after refresh');
             setStreamingMessage(null);
-          }, 1000);
-        } catch (error) {
-          console.warn('[Streaming] Message refresh failed:', error);
-          // Fallback: clear streaming message after longer delay if refresh fails
-          setTimeout(() => {
-            setStreamingMessage(null);
-          }, 2000);
-        }
+          }, 1500);
+        }, 500);
         
         break;
 

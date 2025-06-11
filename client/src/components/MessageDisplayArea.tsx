@@ -80,8 +80,8 @@ export function MessageDisplayArea({
         </div>
       )}
       
-      {/* Streaming message - only show if content exists and no regular message with same content */}
-      {streamingMessage && streamingMessage.content && !messagesToDisplay.some(msg => !msg.isUserMessage && msg.content === streamingMessage.content) && (
+      {/* Streaming message - show if content exists and either no duplicate regular message or streaming is still active */}
+      {streamingMessage && streamingMessage.content && (streamingMessage.isStreaming || !messagesToDisplay.some(msg => !msg.isUserMessage && msg.content === streamingMessage.content)) && (
         <div className="flex items-start space-x-3">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
             <div className="w-4 h-4 bg-white rounded-full"></div>

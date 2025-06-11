@@ -63,6 +63,7 @@ node dist/server/index.js
 - ✅ Added word-by-word streaming for both OpenAI and Google providers
 - ✅ Created discrete AI thinking indicator with subtle animations
 - ✅ Built comprehensive streaming hooks for frontend integration
+- ✅ **CRITICAL FIX**: Resolved streaming message persistence and UI flickering issues
 
 **Technical Implementation**:
 ```typescript
@@ -81,10 +82,29 @@ POST /api/messages/stream
 - Real-time chunk processing with proper state management
 - Message persistence logic to prevent abrupt disappearing
 
+**Critical Bug Fixes Applied**:
+```typescript
+// 1. Fixed conversation context reset during streaming completion
+// Prevented duplicate conversation ID updates causing message flickering
+if (id !== currentConversationId) {
+  setCurrentConversationIdState(id);
+  // Only update if actually different
+}
+
+// 2. Eliminated redundant refresh calls during streaming completion
+// Removed manual refresh call that was triggering with null conversationId
+// Let AppContext useEffect handle natural message loading
+
+// 3. Streamlined streaming completion flow
+await new Promise(resolve => setTimeout(resolve, 500));
+setStreamingMessage(null); // Clean completion without UI jumps
+```
+
 #### C. **Optimize AI Service Architecture** ✅ **COMPLETED**
 - ✅ Implemented parallel processing for context building and memory retrieval
 - ✅ Added non-blocking memory processing with fire-and-forget pattern
 - ✅ Created public provider access methods for streaming integration
+- ✅ **ROBUSTNESS FIX**: Enhanced streaming message persistence with conversation state coordination
 
 **Technical Implementation**:
 ```typescript
@@ -98,6 +118,17 @@ const [contextMessages, relevantMemoriesFromContext] = await Promise.all([
 const memoryProcessingPromise = memoryService.processMessageForMemory(...)
   .then(memoryResult => { /* async completion */ })
   .catch(error => { /* error handling */ });
+
+// Enhanced conversation context management
+const selectConversationHandler = useCallback((id: string | null) => {
+  if (id !== currentConversationId) {
+    setCurrentConversationIdState(id);
+    if (id) {
+      setNewlyCreatedConvId(id);
+      setActiveMessages([]);
+    }
+  }
+}, [currentConversationId]);
 ```
 
 ### 🔥 **TIER 2: Architectural Improvements (60% speed improvement)**
@@ -171,18 +202,75 @@ const memoryProcessingPromise = memoryService.processMessageForMemory(...)
   .catch(error => log('error', 'Memory processing failed'));
 ```
 
+### **CRITICAL BUG RESOLUTION - Message Persistence & UI Flickering** ✅
+**Problem Identified:**
+- Messages disappeared after streaming completion
+- UI flickered during conversation transitions
+- Multiple redundant refresh calls caused state conflicts
+- Conversation context reset triggered unnecessary message clearing
+
+**Root Cause Analysis:**
+```typescript
+// Issue 1: Duplicate conversation context updates during streaming completion
+selectConversationHandler(existingId) → setNewlyCreatedConvId → clearMessages
+
+// Issue 2: Manual refresh triggered with null conversationId
+refreshMessages() called before conversation context fully established
+
+// Issue 3: Redundant conversation creation callbacks
+onConversationCreate called multiple times during streaming flow
+```
+
+**Technical Fixes Applied:**
+```typescript
+// 1. Fixed selectConversationHandler to prevent unnecessary updates
+const selectConversationHandler = useCallback((id: string | null) => {
+  if (id !== currentConversationId) {  // Only update if different
+    setCurrentConversationIdState(id);
+    if (id) {
+      setNewlyCreatedConvId(id);
+      setActiveMessages([]);
+    }
+  } else {
+    console.log("[AppContext] Same conversation ID, no update needed");
+  }
+}, [currentConversationId]);
+
+// 2. Eliminated redundant refresh calls in streaming completion
+// Removed manual refreshMessages() call that triggered with null ID
+// Let AppContext useEffect handle natural message loading after streaming
+
+// 3. Streamlined streaming completion flow
+const handleStreamingComplete = async () => {
+  await new Promise(resolve => setTimeout(resolve, 2000)); // Database sync
+  setStreamingActive(false); // Enable normal loading
+  await new Promise(resolve => setTimeout(resolve, 500)); // State propagation
+  setStreamingMessage(null); // Clean completion
+};
+```
+
+**Validation Results:**
+- ✅ Messages persist correctly after streaming completion
+- ✅ No UI flickering during conversation transitions  
+- ✅ Smooth streaming flow from null → new conversation ID
+- ✅ Clean message count progression (0 → streaming → final count)
+- ✅ Proper state coordination between streaming and persistence systems
+
 ### **User Experience Improvements**
 1. **Immediate Feedback**: Discrete AI thinking indicator appears instantly
 2. **Progressive Response**: Users see responses forming in real-time
 3. **Smooth Transitions**: Messages persist properly without abrupt disappearing
 4. **Visual Polish**: Subtle pulsing indicators, typing cursors, and "Saving..." states
+5. **Robust Persistence**: Messages survive streaming completion without flickering
+6. **Clean State Management**: No duplicate updates or unnecessary refreshes
 
 ### **Technical Implementation Details**
-- **Files Modified**: 8 key files across frontend/backend
+- **Files Modified**: 10 key files across frontend/backend (including critical bug fixes)
 - **New Components**: `useStreamingChat.ts`, streaming endpoint, provider methods
 - **Streaming Protocol**: Custom SSE implementation with fetch ReadableStream
 - **Error Handling**: Comprehensive connection recovery and error states
 - **Performance**: Word-by-word delivery with proper state management
+- **Persistence**: Robust message persistence with conversation state coordination
 
 ---
 

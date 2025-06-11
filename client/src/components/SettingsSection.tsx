@@ -171,6 +171,15 @@ const SettingsSection: React.FC = () => {
                     aiModels={aiModels}
                     isLoadingAiModels={isLoadingAiModels}
                   />
+                  
+                  <PerformanceSettings
+                    enableVirtualScrolling={enableVirtualScrolling}
+                    enablePagination={enablePagination}
+                    enableWebWorkers={enableWebWorkers}
+                    onVirtualScrollingChange={setEnableVirtualScrolling}
+                    onPaginationChange={setEnablePagination}
+                    onWebWorkersChange={setEnableWebWorkers}
+                  />
 
                   <div className="flex justify-end mt-8"> {/* Added mt-8 for spacing */}
                     <Button

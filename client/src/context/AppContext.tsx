@@ -86,7 +86,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
-  const [messageRefreshTrigger, setMessageRefreshTrigger] = useState<number>(0);
+
 
   const { userSettings, isLoadingSettings } = useUserSettings();
   const queryClient = useQueryClient();
@@ -106,7 +106,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Message Loading useEffect (adapted from useChatMessages)
   useEffect(() => {
-    console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "refreshTrigger:", messageRefreshTrigger);
+    console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId);
     const loadConversationMessages = async () => {
       if (currentConversationId === null) {
         setActiveMessages([welcomeMessage]);
@@ -150,7 +150,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     };
     loadConversationMessages();
-  }, [currentConversationId, newlyCreatedConvId, messageRefreshTrigger]);
+  }, [currentConversationId, newlyCreatedConvId]);
 
   // Send Message Mutation (adapted from useChatMessages)
   const sendMessageMutation = useMutation<any, Error, SendMessageParams, { optimisticMessage?: Message }>({
@@ -267,10 +267,35 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     sendMessageMutation.mutate(params);
   }, [sendMessageMutation]);
 
-  const refreshMessagesHandler = useCallback(() => {
+  const refreshMessagesHandler = useCallback(async () => {
     console.log("[AppContext] Manual refresh triggered");
-    setMessageRefreshTrigger(prev => prev + 1);
-  }, []);
+    if (currentConversationId) {
+      setIsLoadingMessages(true);
+      try {
+        const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
+        if (response.ok) {
+          const convMessages = await response.json();
+          const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+          const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
+            id: msg.id.toString(),
+            content: msg.content,
+            isUserMessage: msg.role === "user",
+            timestamp: new Date(msg.createdAt),
+            attachments: msg.metadata?.attachments?.map((att: any) => ({
+              name: att.fileName || att.name || 'Unknown file',
+              type: att.fileType || att.type || 'application/octet-stream'
+            })) || undefined
+          }));
+          console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
+          setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
+        }
+      } catch (error) {
+        console.error("[AppContext] Manual refresh failed:", error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    }
+  }, [currentConversationId]);
 
 
   // Memoize the context value

@@ -168,7 +168,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
             isStreaming: true
           };
           
-          // Update the optimistic message with accumulated content
+          // Update optimistic message immediately for smooth streaming
           if (addOptimisticMessage) {
             const streamingAiMessage = {
               id: streamingId,
@@ -215,25 +215,17 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // CHATGPT-STYLE: Complete streaming without database reload
-        const handleStreamingComplete = async () => {
-          console.log('[Streaming] CHATGPT-STYLE: Completing stream for conversation:', data.conversationId);
-          
-          // Short delay to ensure message persistence
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          console.log('[Streaming] Disabling streaming state');
-          setStreamingActive(false);
-          
-          // Clear temporary UI states after persistence
-          setTimeout(() => {
-            console.log('[Streaming] Clearing temporary UI states');
-            setPendingUserMessage(null);
-            setStreamingMessage(null);
-          }, 150);
-        };
+        // Clean up streaming state immediately without async operations
+        console.log('[Streaming] CHATGPT-STYLE: Completing stream for conversation:', data.conversationId);
+        console.log('[Streaming] Disabling streaming state');
+        setStreamingActive(false);
         
-        handleStreamingComplete();
+        // Use requestAnimationFrame for non-blocking cleanup
+        requestAnimationFrame(() => {
+          console.log('[Streaming] Clearing temporary UI states');
+          setPendingUserMessage(null);
+          setStreamingMessage(null);
+        });
         break;
 
       case 'error':
@@ -250,7 +242,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
       default:
         console.log('[Streaming] Unknown event:', data);
     }
-  }, [streamingMessage, options, queryClient, toast, refreshMessages, addOptimisticMessage]);
+  }, [streamingMessage?.id, options.onMessageComplete, queryClient, toast, refreshMessages, addOptimisticMessage]);
 
   const stopStreaming = useCallback(() => {
     if (eventSourceRef.current) {

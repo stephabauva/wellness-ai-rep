@@ -178,16 +178,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         model: selectedAiConfig.model
       })}\n\n`);
 
-      // Start AI streaming with minimal context (just the current message)
+      // Build context with attachments for immediate streaming
+      const userMessage: any = {
+        role: 'user',
+        content: content
+      };
+
+      // Add image attachments if present
+      if (attachments && attachments.length > 0) {
+        const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
+        if (imageAttachments.length > 0) {
+          const imageUrls = [];
+          
+          // Load actual file content for images
+          for (const att of imageAttachments) {
+            try {
+              const filePath = join(process.cwd(), 'uploads', att.fileName);
+              console.log(`[Streaming] Loading image: ${filePath}`);
+              if (existsSync(filePath)) {
+                const fileBuffer = fs.readFileSync(filePath);
+                const base64Content = fileBuffer.toString('base64');
+                console.log(`[Streaming] Successfully loaded image ${att.fileName}, size: ${fileBuffer.length} bytes`);
+                imageUrls.push({
+                  type: 'image_url',
+                  image_url: { url: `data:${att.fileType};base64,${base64Content}` }
+                });
+              } else {
+                console.error(`[Streaming] Image file not found: ${filePath}`);
+              }
+            } catch (error) {
+              console.error(`[Streaming] Failed to load image ${att.fileName}:`, error);
+            }
+          }
+          
+          if (imageUrls.length > 0) {
+            userMessage.content = [
+              { type: 'text', text: content },
+              ...imageUrls
+            ];
+          }
+        }
+      }
+
       const minimalContext = [
         {
           role: 'system',
           content: 'You are a helpful wellness coach. Be encouraging and provide practical advice.'
         },
-        {
-          role: 'user',
-          content: content
-        }
+        userMessage
       ];
 
       // Start streaming immediately

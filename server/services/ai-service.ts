@@ -25,6 +25,7 @@ interface AiServiceConfig {
 
 class AiService {
   private providers: Map<AIProviderName, AiProvider>;
+  public chatContextService = chatContextService;
 
   constructor() {
     this.providers = new Map();
@@ -356,6 +357,16 @@ class AiService {
       }
     });
     return allModels;
+  }
+
+  // Public method to access providers (for streaming endpoint)
+  getProvider(providerName: AIProviderName): AiProvider | undefined {
+    return this.providers.get(providerName);
+  }
+
+  // Public method to check if provider exists
+  hasProvider(providerName: AIProviderName): boolean {
+    return this.providers.has(providerName);
   }
 }
 

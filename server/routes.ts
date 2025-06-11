@@ -122,50 +122,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Streaming endpoint for real-time AI responses (Tier 1 B optimization)
-  app.get("/api/messages/stream/:conversationId", async (req, res) => {
-    const conversationId = req.params.conversationId;
-    
-    // Set up Server-Sent Events headers
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control'
-    });
-
+  app.post("/api/messages/stream", async (req, res) => {
     try {
-      // Send initial connection event
-      res.write(`data: ${JSON.stringify({ type: 'connected', conversationId })}\n\n`);
+      const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection } = messageSchema.parse(req.body);
+      const userId = 1; // Default user ID
 
-      // Get conversation history for context
-      const conversationHistory = await db
-        .select()
-        .from(conversationMessages)
-        .where(eq(conversationMessages.conversationId, conversationId))
-        .orderBy(conversationMessages.createdAt)
-        .limit(20);
+      let currentConversationId = conversationId;
+      let conversationHistory: any[] = [];
 
-      // Send conversation history
+      // Set up Server-Sent Events headers
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Cache-Control'
+      });
+
+      // Send initial events
+      res.write(`data: ${JSON.stringify({ type: 'start', message: 'Starting AI response...' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'thinking' })}\n\n`);
+
+      // Process conversation setup (parallel operations from Tier 1 C)
+      const operations = [];
+
+      if (currentConversationId) {
+        operations.push(async () => {
+          const existingConv = await db
+            .select()
+            .from(conversations)
+            .where(eq(conversations.id, currentConversationId!))
+            .limit(1);
+
+          if (existingConv.length === 0) {
+            console.warn(`Conversation ${currentConversationId} not found! Creating new one.`);
+            currentConversationId = null;
+          } else {
+            const historyFromDb = await db
+              .select()
+              .from(conversationMessages)
+              .where(eq(conversationMessages.conversationId, currentConversationId!))
+              .orderBy(conversationMessages.createdAt)
+              .limit(20);
+            conversationHistory = historyFromDb;
+          }
+        });
+      }
+
+      await Promise.all(operations.map(op => op()));
+
+      // Create new conversation if needed
+      if (!currentConversationId) {
+        let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
+        if (!title && attachments && attachments.length > 0) {
+          title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
+        }
+        if (!title) title = "New Conversation";
+
+        const [newConversation] = await db.insert(conversations).values({
+          userId,
+          title
+        }).returning();
+        currentConversationId = newConversation.id;
+        conversationHistory = [];
+      }
+
+      // Save user message
+      const [savedUserMessage] = await db.insert(conversationMessages).values({
+        conversationId: currentConversationId,
+        role: 'user',
+        content,
+        metadata: attachments && attachments.length > 0 ? { attachments } : undefined
+      }).returning();
+
+      // Legacy message creation
+      const legacyUserMessage = await storage.createMessage({
+        userId,
+        content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
+        isUserMessage: true
+      });
+
       res.write(`data: ${JSON.stringify({ 
-        type: 'history', 
-        messages: conversationHistory 
+        type: 'user_message_saved',
+        conversationId: currentConversationId,
+        userMessage: savedUserMessage 
       })}\n\n`);
 
-      // Keep connection alive with heartbeat
-      const heartbeat = setInterval(() => {
-        res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`);
-      }, 30000);
+      // Build context for AI
+      const aiConfig = { provider: aiProvider, model: aiModel };
+      let selectedAiConfig = aiConfig;
 
-      // Clean up on client disconnect
-      req.on('close', () => {
-        clearInterval(heartbeat);
-        res.end();
+      // Model selection
+      if (automaticModelSelection) {
+        const hasImages = attachments?.some(att => att.fileType?.startsWith('image/'));
+        const isComplexQuery = content.toLowerCase().includes('analyze') || content.length > 200;
+
+        if (hasImages && aiService.hasProvider('google')) {
+          selectedAiConfig = { provider: 'google', model: 'gemini-1.5-pro' };
+        } else if (hasImages && aiService.hasProvider('openai')) {
+          selectedAiConfig = { provider: 'openai', model: 'gpt-4o' };
+        } else if (!hasImages && !isComplexQuery) {
+          if (aiService.hasProvider('google')) {
+            selectedAiConfig = { provider: 'google', model: 'gemini-2.0-flash-exp' };
+          } else if (aiService.hasProvider('openai')) {
+            selectedAiConfig = { provider: 'openai', model: 'gpt-4o-mini' };
+          }
+        }
+      }
+
+      res.write(`data: ${JSON.stringify({ 
+        type: 'ai_model_selected',
+        provider: selectedAiConfig.provider,
+        model: selectedAiConfig.model
+      })}\n\n`);
+
+      // Get the AI provider
+      const providerToUse = aiService.getProvider(selectedAiConfig.provider as any);
+      if (!providerToUse) {
+        throw new Error(`Provider ${selectedAiConfig.provider} not available`);
+      }
+
+      // Build context messages
+      const contextMessages = await aiService.chatContextService.buildChatContext(
+        userId, content, currentConversationId, coachingMode,
+        conversationHistory, attachments || [], selectedAiConfig.provider as any
+      );
+
+      let fullResponse = '';
+
+      // Stream AI response
+      if (providerToUse.generateChatResponseStream) {
+        await providerToUse.generateChatResponseStream(
+          contextMessages,
+          { model: selectedAiConfig.model as any },
+          (chunk: string) => {
+            // Send each chunk as it arrives
+            res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+            fullResponse += chunk;
+          },
+          (complete: string) => {
+            // AI response complete
+            res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`);
+          },
+          (error: Error) => {
+            // Handle streaming error
+            res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+          }
+        );
+      } else {
+        // Fallback to non-streaming
+        const { response } = await providerToUse.generateChatResponse(
+          contextMessages,
+          { model: selectedAiConfig.model as any }
+        );
+        fullResponse = response;
+        
+        // Simulate streaming by sending words
+        const words = response.split(' ');
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i] + (i < words.length - 1 ? ' ' : '');
+          res.write(`data: ${JSON.stringify({ type: 'chunk', content: word })}\n\n`);
+          await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay between words
+        }
+        res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse })}\n\n`);
+      }
+
+      // Save AI response
+      const [savedAiMessage] = await db.insert(conversationMessages).values({
+        conversationId: currentConversationId,
+        role: 'assistant',
+        content: fullResponse
+      }).returning();
+
+      const legacyAiMessage = await storage.createMessage({
+        userId,
+        content: fullResponse,
+        isUserMessage: false
       });
+
+      // Send final completion event
+      res.write(`data: ${JSON.stringify({ 
+        type: 'done',
+        conversationId: currentConversationId,
+        userMessage: legacyUserMessage,
+        aiMessage: legacyAiMessage
+      })}\n\n`);
+
+      res.end();
 
     } catch (error) {
       console.error('Streaming error:', error);
-      res.write(`data: ${JSON.stringify({ type: 'error', message: 'Failed to establish stream' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error', 
+        message: error instanceof z.ZodError ? "Invalid request data" : "Failed to process message"
+      })}\n\n`);
       res.end();
     }
   });

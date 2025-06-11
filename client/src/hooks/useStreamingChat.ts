@@ -201,20 +201,33 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         const handleStreamingComplete = async () => {
           console.log('[Streaming] CHATGPT-STYLE: Completing stream for conversation:', data.conversationId);
           
-          // Keep streaming message visible until after state transition
-          // This prevents the "message disappearing" issue
+          // Commit streaming message to persistent state before clearing
+          if (streamingMessage && streamingMessage.content) {
+            const finalMessage = {
+              id: `ai-final-${Date.now()}`,
+              content: streamingMessage.content,
+              isUserMessage: false,
+              timestamp: new Date(),
+              attachments: []
+            };
+            
+            // Use AppContext optimistic updates to persist the message
+            if (options.onMessageComplete) {
+              options.onMessageComplete(finalMessage);
+            }
+          }
           
-          // Minimal delay for stability, then turn off streaming
-          await new Promise(resolve => setTimeout(resolve, 50));
+          // Wait for message persistence, then disable streaming
+          await new Promise(resolve => setTimeout(resolve, 100));
           
           console.log('[Streaming] Disabling streaming state');
           setStreamingActive(false);
           
-          // Clear UI states AFTER streaming is disabled to maintain continuity
+          // Clear temporary UI states only after persistence
           setTimeout(() => {
             setPendingUserMessage(null);
             setStreamingMessage(null);
-          }, 100);
+          }, 150);
         };
         
         // Execute the completion handler

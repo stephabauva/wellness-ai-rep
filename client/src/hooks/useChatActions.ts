@@ -16,7 +16,11 @@ export function useChatActions({
   setInputMessage,
   currentConversationId,
 }: UseChatActionsProps) {
-  const { appSettings, selectConversation }: { appSettings?: AppSettings, selectConversation?: (id: string | null) => void } = useAppContext(); // Apply AppSettings type
+  const { appSettings, selectConversation, addOptimisticMessage }: { 
+    appSettings?: AppSettings, 
+    selectConversation?: (id: string | null) => void,
+    addOptimisticMessage?: (message: any) => void 
+  } = useAppContext();
   const { sendMessageMutation } = useChatMessages();
   const {
     attachedFiles, // This will now be Array<AttachedFile>

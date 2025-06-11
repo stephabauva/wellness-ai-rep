@@ -182,10 +182,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
     
     // CHATGPT-STYLE: Completely eliminate database reloads after streaming
-    // Only load messages for brand new conversations that have never had messages
-    if (currentConversationId && activeMessages.length === 0) {
+    // Only load messages if we truly need to (new conversation with no messages)
+    if (currentConversationId && activeMessages.length === 0 && !isStreamingActive) {
       console.log("[AppContext] CHATGPT-STYLE: Loading messages for brand new conversation");
       loadConversationMessages();
+    } else if (currentConversationId === null) {
+      // Handle welcome message for null conversation
+      setActiveMessages([welcomeMessage]);
+      setIsLoadingMessages(false);
     } else {
       console.log("[AppContext] CHATGPT-STYLE: Preserving existing messages, no database reload");
       setIsLoadingMessages(false);

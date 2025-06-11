@@ -16,7 +16,6 @@ import { ConversationHistory } from "@/components/ConversationHistory";
 
 function ChatSection() {
   const [inputMessage, setInputMessage] = useState("");
-  console.log("[ChatSection] Component body execution (render/re-render). InputMessage state:", inputMessage);
   const [isConversationHistoryOpen, setIsConversationHistoryOpen] = useState(false);
   
   const { appSettings } = useAppContext();
@@ -24,14 +23,10 @@ function ChatSection() {
   const {
     messages,
     currentConversationId,
-    // pendingUserMessage, // Removed
-    // welcomeMessage, // Removed
-    // sendMessageMutation, // Now handled by useChatActions
     setCurrentConversationId,
     handleNewChat,
     loadingMessages
   } = useChatMessages();
-  console.log("[ChatSection] Received from useChatMessages hook:", { messagesCount: messages?.length, currentConversationId, loadingMessages });
 
   // Consolidate actions into useChatActions
   const chatActions = useChatActions({
@@ -49,7 +44,6 @@ function ChatSection() {
     isThinking,
     pendingUserMessage
   } = chatActions;
-
 
   // Generate messages to display - CRITICAL FIX: Include pending user message for instant display
   const messagesToDisplay = useMemo(() => {
@@ -74,9 +68,10 @@ function ChatSection() {
     setIsConversationHistoryOpen(false);
   }, [setCurrentConversationId]);
 
+  console.log("[ChatSection] Component render - Messages:", messages?.length, "ConversationId:", currentConversationId, "Loading:", loadingMessages);
+
   // The loading state from useChatMessages can be passed to MessageDisplayArea
-  if (loadingMessages && !currentConversationId) { // Show full loader only on initial load or new chat
-    console.log("[ChatSection] Rendering full loading screen.");
+  if (loadingMessages && !currentConversationId) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
@@ -141,9 +136,6 @@ function ChatSection() {
       />
     </div>
   );
-  // Log before main return
-  console.log("[ChatSection] Rendering. messagesToDisplay count:", messagesToDisplay.length, "isLoading (inline):", (loadingMessages && !!currentConversationId) );
-  // The duplicated return block below was removed.
 }
 
 export default ChatSection;

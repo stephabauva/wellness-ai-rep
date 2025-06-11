@@ -30,30 +30,27 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       setDisplayedText('');
     }
 
-    const streamText = () => {
+    // Smart pacing function for natural typing rhythm
+    const getPacingDelay = (char: string): number => {
+      if (char === '.' || char === '!' || char === '?') return 150;
+      if (char === ',' || char === ';') return 80;
+      if (char === '\n') return 200;
+      if (char === ' ') return 25;
+      return 15;
+    };
+
+    // Non-blocking async scheduler for smooth rendering
+    const typeNextToken = async () => {
       if (currentIndexRef.current < content.length) {
         const nextChar = content[currentIndexRef.current];
         
-        // ChatGPT-style smart timing based on character type
-        let delay = 15; // Base delay
-        
-        if (nextChar === ' ') {
-          delay = 25; // Slightly longer for spaces
-        } else if (nextChar === '.' || nextChar === '!' || nextChar === '?') {
-          delay = 150; // Pause at sentence endings
-        } else if (nextChar === ',' || nextChar === ';') {
-          delay = 80; // Brief pause at commas
-        } else if (nextChar === '\n') {
-          delay = 200; // Longer pause for line breaks
-        }
-
-        // Add some natural variation (±5ms)
-        delay += Math.random() * 10 - 5;
-
+        // Update display immediately to avoid render blocking
         setDisplayedText(prev => prev + nextChar);
         currentIndexRef.current++;
-
-        timeoutRef.current = setTimeout(streamText, Math.max(delay, 10));
+        
+        // Schedule next character with natural pacing
+        const delay = getPacingDelay(nextChar);
+        timeoutRef.current = setTimeout(typeNextToken, delay + (Math.random() * 10 - 5));
       } else if (isComplete && onComplete) {
         // Text is fully displayed and streaming is complete
         onComplete();
@@ -62,7 +59,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
 
     // Start streaming if we haven't displayed all the content yet
     if (currentIndexRef.current < content.length) {
-      timeoutRef.current = setTimeout(streamText, 100); // Initial delay
+      timeoutRef.current = setTimeout(typeNextToken, 50); // Reduced initial delay
     }
 
     return () => {

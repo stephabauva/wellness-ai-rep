@@ -4,6 +4,7 @@ import { chatContextService } from "./chat-context-service";
 import { OpenAiProvider } from "./providers/openai-provider";
 import { GoogleProvider } from "./providers/google-provider";
 import { cacheService } from "./cache-service";
+import { goAIGatewayService } from "./go-ai-gateway-service";
 import {
   AiProvider,
   AttachmentData,
@@ -127,32 +128,66 @@ class AiService {
         currentAiConfig = this.selectOptimalModel(message, attachments, currentAiConfig);
       }
 
-      let providerToUse = this.providers.get(currentAiConfig.provider);
-      if (!providerToUse) {
-          log('error', `Provider ${currentAiConfig.provider} not found or not registered. Attempting fallback.`);
-          if (this.providers.size > 0) {
-              const fallbackProvider = this.providers.keys().next().value as AIProviderName;
-              currentAiConfig.provider = fallbackProvider;
-              currentAiConfig.model = currentAiConfig.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.0-flash-exp';
-              log('info', `Fell back to provider ${currentAiConfig.provider} with model ${currentAiConfig.model}`);
-              providerToUse = this.providers.get(currentAiConfig.provider);
-          } else {
-              throw new Error(`Provider ${aiConfigInput.provider} not available and no fallback providers registered.`);
-          }
-      }
-      if (!providerToUse) throw new Error(`Critical: Provider ${currentAiConfig.provider} could not be resolved.`);
-
       log('info', `Using AI provider: ${currentAiConfig.provider}, Model: ${currentAiConfig.model}`);
 
-      // Tier 1 C: Parallel processing optimization
-      // Fire and forget memory processing, don't let it block the response
+      // Tier 3 A: Try Go AI Gateway first for optimal performance
+      if (goAIGatewayService.isEnabled()) {
+        try {
+          const goResponse = await this.tryGoAIGateway(
+            message, userId, conversationId, messageId, coachingMode,
+            conversationHistory, currentAiConfig, attachments, automaticModelSelection
+          );
+          if (goResponse) {
+            log('info', '[AiService] Successfully processed request through Go AI Gateway');
+            return goResponse;
+          }
+        } catch (goError) {
+          log('warn', '[AiService] Go AI Gateway failed, falling back to Node.js providers:', {
+            error: goError instanceof Error ? goError.message : String(goError)
+          });
+        }
+      }
+
+      // Fallback to existing Node.js providers
+      return await this.processWithNodeProviders(
+        message, userId, conversationId, messageId, coachingMode,
+        conversationHistory, currentAiConfig, attachments
+      );
+
+    } catch (error) {
+      log('error', 'Error in getChatResponse (AiService):', { 
+        message: error instanceof Error ? error.message : String(error), 
+        config: currentAiConfig 
+      });
+      return {
+        response: "I apologize, but I'm having trouble with my systems. Please try again later.",
+        conversationId,
+        memoryInfo: { memoriesUsed: 0, newMemoriesProcessing: true }
+      };
+    }
+  }
+
+  // Tier 3 A: Go AI Gateway integration method
+  private async tryGoAIGateway(
+    message: string,
+    userId: number,
+    conversationId: string,
+    messageId: number,
+    coachingMode: string,
+    conversationHistory: any[],
+    currentAiConfig: AiServiceConfig,
+    attachments: AttachmentData[],
+    automaticModelSelection: boolean
+  ): Promise<{ response: string; memoryInfo?: any; conversationId?: string } | null> {
+    try {
+      // Fire and forget memory processing (non-blocking)
       const memoryProcessingPromise = memoryService.processMessageForMemory(
         userId, message, conversationId, messageId, conversationHistory
       )
       .then(memoryResult => {
-        log('info', '[AiService] Asynchronous memory processing completed.', {
-          conversationId: conversationId,
-          messageId: messageId,
+        log('info', '[AiService] Go Gateway: Asynchronous memory processing completed.', {
+          conversationId,
+          messageId,
           newMemories: {
             explicit: !!memoryResult?.explicitMemory,
             autoDetected: !!memoryResult?.autoDetectedMemory
@@ -161,9 +196,9 @@ class AiService {
         return memoryResult;
       })
       .catch(error => {
-        log('error', '[AiService] Asynchronous memory processing failed.', {
-          conversationId: conversationId,
-          messageId: messageId,
+        log('error', '[AiService] Go Gateway: Asynchronous memory processing failed.', {
+          conversationId,
+          messageId,
           error: error instanceof Error ? error.message : String(error)
         });
         return null;
@@ -178,10 +213,18 @@ class AiService {
         memoryService.getContextualMemories(userId, conversationHistory, message)
       ]);
 
-      // Execute AI API call
-      const { response } = await providerToUse.generateChatResponse(
-        contextMessages, { model: currentAiConfig.model }
+      // Convert to Go AI Gateway request format
+      const goRequest = goAIGatewayService.convertToGoRequest(
+        message, userId, conversationId, messageId, coachingMode,
+        contextMessages, // Use built context instead of raw history
+        currentAiConfig,
+        attachments,
+        automaticModelSelection,
+        3 // Default priority
       );
+
+      // Process through Go AI Gateway
+      const goResponse = await goAIGatewayService.processRequest(goRequest);
 
       // Log memory usage in parallel (non-blocking)
       if (relevantMemoriesFromContext.length > 0) {
@@ -190,23 +233,105 @@ class AiService {
       }
 
       return {
-        response,
+        response: goResponse.content,
         memoryInfo: {
           memoriesUsed: relevantMemoriesFromContext.length,
-          newMemoriesProcessing: true // Memory processing continues in background
+          newMemoriesProcessing: true,
+          goGatewayUsed: true,
+          processingTime: goResponse.processing_time,
+          cacheHit: goResponse.cache_hit,
+          retryAttempt: goResponse.retry_attempt
         }
       };
+
     } catch (error) {
-      log('error', 'Error in getChatResponse (AiService):', { 
-        message: error instanceof Error ? error.message : String(error), 
-        config: currentAiConfig 
-      });
-      return {
-        response: "I apologize, but I'm having trouble with my systems. Please try again later.",
+      log('error', '[AiService] Go AI Gateway processing failed:', {
+        error: error instanceof Error ? error.message : String(error),
         conversationId,
-        memoryInfo: { memoriesUsed: 0, newMemoriesProcessing: true }
-      };
+        messageId
+      });
+      return null; // Return null to trigger fallback
     }
+  }
+
+  // Existing Node.js provider processing (extracted from original getChatResponse)
+  private async processWithNodeProviders(
+    message: string,
+    userId: number,
+    conversationId: string,
+    messageId: number,
+    coachingMode: string,
+    conversationHistory: any[],
+    currentAiConfig: AiServiceConfig,
+    attachments: AttachmentData[]
+  ): Promise<{ response: string; memoryInfo?: any; conversationId?: string }> {
+    let providerToUse = this.providers.get(currentAiConfig.provider);
+    if (!providerToUse) {
+        log('error', `Provider ${currentAiConfig.provider} not found or not registered. Attempting fallback.`);
+        if (this.providers.size > 0) {
+            const fallbackProvider = this.providers.keys().next().value as AIProviderName;
+            currentAiConfig.provider = fallbackProvider;
+            currentAiConfig.model = currentAiConfig.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.0-flash-exp';
+            log('info', `Fell back to provider ${currentAiConfig.provider} with model ${currentAiConfig.model}`);
+            providerToUse = this.providers.get(currentAiConfig.provider);
+        } else {
+            throw new Error(`Provider ${currentAiConfig.provider} not available and no fallback providers registered.`);
+        }
+    }
+    if (!providerToUse) throw new Error(`Critical: Provider ${currentAiConfig.provider} could not be resolved.`);
+
+    // Fire and forget memory processing, don't let it block the response
+    const memoryProcessingPromise = memoryService.processMessageForMemory(
+      userId, message, conversationId, messageId, conversationHistory
+    )
+    .then(memoryResult => {
+      log('info', '[AiService] Node.js: Asynchronous memory processing completed.', {
+        conversationId: conversationId,
+        messageId: messageId,
+        newMemories: {
+          explicit: !!memoryResult?.explicitMemory,
+          autoDetected: !!memoryResult?.autoDetectedMemory
+        }
+      });
+      return memoryResult;
+    })
+    .catch(error => {
+      log('error', '[AiService] Node.js: Asynchronous memory processing failed.', {
+        conversationId: conversationId,
+        messageId: messageId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return null;
+    });
+
+    // Parallel execution of context building and memory retrieval
+    const [contextMessages, relevantMemoriesFromContext] = await Promise.all([
+      chatContextService.buildChatContext(
+        userId, message, conversationId, coachingMode,
+        conversationHistory, attachments, currentAiConfig.provider
+      ),
+      memoryService.getContextualMemories(userId, conversationHistory, message)
+    ]);
+
+    // Execute AI API call
+    const { response } = await providerToUse.generateChatResponse(
+      contextMessages, { model: currentAiConfig.model }
+    );
+
+    // Log memory usage in parallel (non-blocking)
+    if (relevantMemoriesFromContext.length > 0) {
+      memoryService.logMemoryUsage(relevantMemoriesFromContext, conversationId, true)
+        .catch(error => log('warn', 'Failed to log memory usage:', error));
+    }
+
+    return {
+      response,
+      memoryInfo: {
+        memoriesUsed: relevantMemoriesFromContext.length,
+        newMemoriesProcessing: true,
+        goGatewayUsed: false
+      }
+    };
   }
 
   // New method for streaming responses (Tier 1 B optimization)

@@ -256,11 +256,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const selectConversationHandler = useCallback((id: string | null) => {
     console.log("[AppContext selectConversationHandler] Setting currentConversationId to:", id);
-    setCurrentConversationIdState(id);
-    if (id && id !== currentConversationId) {
-      console.log("[AppContext selectConversationHandler] New conversation detected, setting newlyCreatedConvId");
-      setNewlyCreatedConvId(id);
-      setActiveMessages([]);
+    
+    // Only update if the conversation ID is actually different
+    if (id !== currentConversationId) {
+      setCurrentConversationIdState(id);
+      
+      if (id) {
+        console.log("[AppContext selectConversationHandler] New conversation detected, setting newlyCreatedConvId");
+        setNewlyCreatedConvId(id);
+        setActiveMessages([]);
+      }
+    } else {
+      console.log("[AppContext selectConversationHandler] Same conversation ID, no update needed");
     }
   }, [currentConversationId]);
 

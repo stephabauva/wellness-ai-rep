@@ -194,24 +194,15 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           // Small delay for React state propagation
           await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Ensure conversation context is set correctly before refresh
-          if (options.onConversationCreate && completedConversationId) {
-            console.log('[Streaming] Ensuring conversation context is set for:', completedConversationId);
-            options.onConversationCreate(completedConversationId);
-          }
+          // Skip conversation context reset during completion to prevent flickering
+          // The conversation context is already set correctly from the initial user_message_saved event
           
-          // Wait for conversation context to update
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // Wait for React state updates to propagate, then cleanup
+          await new Promise(resolve => setTimeout(resolve, 500));
           
-          // Force database refresh
-          console.log('[Streaming] Refreshing messages from database');
-          await refreshMessages();
-          
-          // Final cleanup after ensuring database messages are loaded
-          setTimeout(() => {
-            console.log('[Streaming] Database sync complete, clearing streaming message');
-            setStreamingMessage(null);
-          }, 1000);
+          // Clean up streaming message - AppContext useEffect will handle message loading
+          console.log('[Streaming] Database sync complete, clearing streaming message');
+          setStreamingMessage(null);
         };
         
         // Execute the completion handler

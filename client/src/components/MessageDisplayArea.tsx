@@ -64,18 +64,17 @@ export function MessageDisplayArea({
         />
       ))}
       
-      {/* AI thinking indicator */}
+      {/* AI thinking indicator - discrete design */}
       {isThinking && (
-        <div className="flex items-start space-x-3 animate-pulse">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-full"></div>
+        <div className="flex items-start space-x-3">
+          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+            <div className="w-3 h-3 bg-muted-foreground rounded-full"></div>
           </div>
-          <div className="flex-1 bg-muted rounded-lg p-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <span className="text-sm text-muted-foreground ml-2">AI is thinking...</span>
+          <div className="flex-1 bg-muted/50 rounded-lg p-2 px-3">
+            <div className="flex items-center space-x-1">
+              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse"></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
             </div>
           </div>
         </div>

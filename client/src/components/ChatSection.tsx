@@ -19,7 +19,7 @@ function ChatSection() {
   console.log("[ChatSection] Component body execution (render/re-render). InputMessage state:", inputMessage);
   const [isConversationHistoryOpen, setIsConversationHistoryOpen] = useState(false);
   
-  const { settings } = useAppContext();
+  const { appSettings } = useAppContext();
   
   const {
     messages,
@@ -114,7 +114,7 @@ function ChatSection() {
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         chatActions={chatActions}
-        settings={settings}
+        settings={appSettings}
       />
 
       {/* Conversation History Modal */}

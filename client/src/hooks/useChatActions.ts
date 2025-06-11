@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import { useFileManagement, AttachedFile } from "@/hooks/useFileManagement"; // Import AttachedFile
+import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { useAppContext, AppSettings } from "@/context/AppContext"; // Import AppSettings
 
 // Define the props for the hook
@@ -15,7 +16,7 @@ export function useChatActions({
   setInputMessage,
   currentConversationId,
 }: UseChatActionsProps) {
-  const { appSettings }: { appSettings?: AppSettings } = useAppContext(); // Apply AppSettings type
+  const { appSettings, setCurrentConversationId }: { appSettings?: AppSettings, setCurrentConversationId?: (id: string) => void } = useAppContext(); // Apply AppSettings type
   const { sendMessageMutation } = useChatMessages();
   const {
     attachedFiles, // This will now be Array<AttachedFile>
@@ -24,6 +25,21 @@ export function useChatActions({
     uploadFileMutation,
     removeAttachedFile,
   } = useFileManagement();
+
+  // Streaming chat functionality
+  const {
+    streamingMessage,
+    isConnected,
+    isThinking,
+    startStreaming,
+    stopStreaming
+  } = useStreamingChat({
+    onConversationCreate: (conversationId: string) => {
+      if (setCurrentConversationId) {
+        setCurrentConversationId(conversationId);
+      }
+    }
+  });
 
   const handleSendMessage = useCallback(() => {
     if (inputMessage.trim() || (attachedFiles && attachedFiles.length > 0)) {
@@ -41,12 +57,14 @@ export function useChatActions({
         resolvedAutomaticModelSelection: automaticModelSelection
       });
 
-      sendMessageMutation.mutate({
+      // Use streaming for real-time AI responses
+      startStreaming({
         content: inputMessage,
-        attachments: currentAttachedFiles,
-        conversationId: currentConversationId,
+        conversationId: currentConversationId || undefined,
+        coachingMode: "weight-loss",
         aiProvider,
         aiModel,
+        attachments: currentAttachedFiles,
         automaticModelSelection,
       });
 
@@ -55,11 +73,11 @@ export function useChatActions({
     }
   }, [
     inputMessage,
-    setInputMessage, // Added setInputMessage
+    setInputMessage,
     attachedFiles,
     currentConversationId,
     appSettings,
-    sendMessageMutation,
+    startStreaming,
     clearAttachedFiles,
   ]);
 
@@ -107,6 +125,11 @@ export function useChatActions({
     sendMessageMutation, // Exposing for disabled state in UI
     attachedFiles, // Exposing for UI rendering
     clearAttachedFiles, // Exposing for UI interaction (e.g. manually clear all)
+    // Streaming functionality
+    streamingMessage,
+    isConnected,
+    isThinking,
+    stopStreaming,
   };
 
   return actions;

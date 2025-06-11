@@ -64,6 +64,9 @@ export interface ProviderChatMessage extends ChatMessage {
 
 export interface ProviderConfig {
   model: ModelName;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
   // Add other provider-specific configs like temperature, max_tokens if they are generic enough
   // Otherwise, they can be handled within the provider's implementation
 }
@@ -79,6 +82,15 @@ export interface AiProvider {
     // For now, including them to acknowledge their role.
     attachments?: AttachmentData[] // Current message's attachments
   ): Promise<ChatResponse>;
+
+  generateChatResponseStream?(
+    messages: ProviderChatMessage[],
+    config: ProviderConfig,
+    onChunk: (chunk: string) => void,
+    onComplete: (fullResponse: string) => void,
+    onError: (error: Error) => void,
+    attachments?: AttachmentData[]
+  ): Promise<void>;
 
   generateHealthInsights(
     healthData: any,

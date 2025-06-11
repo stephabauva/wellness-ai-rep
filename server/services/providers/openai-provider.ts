@@ -75,6 +75,52 @@ export class OpenAiProvider implements AiProvider {
     }
   }
 
+  async generateChatResponseStream(
+    messages: ProviderChatMessage[],
+    config: ProviderConfig,
+    onChunk: (chunk: string) => void,
+    onComplete: (fullResponse: string) => void,
+    onError: (error: Error) => void
+  ): Promise<void> {
+    log('info', `Generating streaming chat response with model: ${config.model}`, { numMessages: messages.length });
+
+    const model = config.model as OpenAIModel;
+    let fullResponse = '';
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+        log('warn', `OpenAI streaming request timed out after 60 seconds for model: ${config.model}`);
+        controller.abort();
+    }, 60000); // 60 seconds for streaming
+
+    try {
+      const stream = await this.openai.chat.completions.create({
+        model: model,
+        messages: messages as any,
+        temperature: 0.7,
+        max_tokens: 1024,
+        stream: true,
+      }, { signal: controller.signal });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          fullResponse += content;
+          onChunk(content);
+        }
+      }
+
+      log('info', 'OpenAI streaming response completed');
+      onComplete(fullResponse);
+
+    } catch (error) {
+      log('error', 'Error in OpenAI streaming response:', error);
+      onError(error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   async generateHealthInsights(
     healthData: any,
     config: ProviderConfig

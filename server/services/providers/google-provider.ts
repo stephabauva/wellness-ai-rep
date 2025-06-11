@@ -262,6 +262,77 @@ export class GoogleProvider implements AiProvider {
     }
   }
 
+  async generateChatResponseStream(
+    messages: ProviderChatMessage[],
+    config: ProviderConfig,
+    onChunk: (chunk: string) => void,
+    onComplete: (fullResponse: string) => void,
+    onError: (error: Error) => void
+  ): Promise<void> {
+    try {
+      log('info', `Generating streaming chat response with model: ${config.model}`);
+      const model = config.model as GoogleModel;
+      
+      // Extract system message if present and use it as system instruction
+      let systemInstruction = '';
+      const nonSystemMessages = messages.filter(msg => {
+        if (msg.role === 'system') {
+          systemInstruction = typeof msg.content === 'string' ? msg.content : msg.content.map(part => part.type === 'text' ? part.text : '').join('');
+          return false;
+        }
+        return true;
+      });
+
+      const genModel = this.googleAI.getGenerativeModel({
+        model,
+        systemInstruction: systemInstruction || undefined,
+        safetySettings: [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+        ]
+      });
+
+      const fullHistoryForGoogle = this.convertMessagesToGoogleHistory(nonSystemMessages);
+
+      // Map ProviderConfig to Google's GenerationConfig
+      const generationConfig: any = {};
+      if (config.temperature !== undefined) generationConfig.temperature = config.temperature;
+      if (config.maxTokens !== undefined) generationConfig.maxOutputTokens = config.maxTokens;
+      if (config.topP !== undefined) generationConfig.topP = config.topP;
+
+      log('info', `Calling genModel.generateContentStream`, { historyLength: fullHistoryForGoogle.length, generationConfig });
+
+      let fullResponse = '';
+
+      const result = await genModel.generateContentStream({
+        contents: fullHistoryForGoogle,
+        generationConfig,
+        safetySettings: genModel.safetySettings
+      });
+
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        if (chunkText) {
+          fullResponse += chunkText;
+          onChunk(chunkText);
+        }
+      }
+
+      log('info', 'Google streaming response completed');
+      onComplete(fullResponse);
+
+    } catch (error: any) {
+      log('error', 'Error in Google streaming response:', error);
+      if (error?.message?.includes('SAFETY')) {
+        onError(new Error("I'm unable to respond to that request due to safety guidelines."));
+      } else {
+        onError(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+  }
+
   async generateHealthInsights(
     healthData: any,
     config: ProviderConfig

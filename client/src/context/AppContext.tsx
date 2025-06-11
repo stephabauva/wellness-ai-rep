@@ -52,31 +52,27 @@ interface AppContextType {
   isStreamingActive: boolean;
 }
 
-// Define SendMessageParams locally for now
-type SendMessageParams = {
+interface SendMessageParams {
   content: string;
-  attachments: AttachedFile[];
-  conversationId: string | null;
+  attachments?: AttachedFile[];
+  conversationId?: string | null;
   aiProvider?: string;
   aiModel?: string;
   automaticModelSelection?: boolean;
-};
-
+}
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Define welcomeMessage constant locally
-const welcomeMessage: Message = {
-  id: "welcome-message",
-  content:
-    "Welcome to your AI wellness coach! I'm here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you're focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I'm ready to help. What would you like to work on today?",
-  isUserMessage: false,
-  timestamp: new Date(),
-};
 
 interface AppProviderProps {
   children: ReactNode;
 }
+
+const welcomeMessage: Message = {
+  id: "welcome",
+  content: "Hi! I'm your AI wellness coach. How can I help you today?",
+  isUserMessage: false,
+  timestamp: new Date(),
+};
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [activeSection, setActiveSectionState] = useState<ActiveSection>("chat");
@@ -128,25 +124,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setNewlyCreatedConvId(null);
       try {
         const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
-        if (!response.ok) {
-          console.error("[AppContext] Failed to fetch conversation messages");
+        if (response.ok) {
+          const convMessages = await response.json();
+          const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+          const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
+            id: msg.id.toString(),
+            content: msg.content,
+            isUserMessage: msg.role === "user",
+            timestamp: new Date(msg.createdAt),
+            attachments: msg.metadata?.attachments?.map((att: any) => ({
+              name: att.fileName || att.name || 'Unknown file',
+              type: att.fileType || att.type || 'application/octet-stream'
+            })) || undefined
+          }));
+          console.log("[AppContext useEffect messages] Fetched initial messages, about to call setActiveMessages. Count:", formattedMessages.length);
+          setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
+        } else {
+          console.error("[AppContext] Error fetching initial messages:", response.status, response.statusText);
           setActiveMessages([welcomeMessage]);
-          return;
         }
-        const convMessages = await response.json();
-        const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-        const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
-          id: msg.id.toString(),
-          content: msg.content,
-          isUserMessage: msg.role === "user",
-          timestamp: new Date(msg.createdAt),
-          attachments: msg.metadata?.attachments?.map((att: any) => ({
-            name: att.fileName || att.name || 'Unknown file',
-            type: att.fileType || att.type || 'application/octet-stream'
-          })) || undefined
-        }));
-        console.log("[AppContext useEffect messages] Fetched initial messages, about to call setActiveMessages. Count:", formattedMessages.length);
-        setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
       } catch (error) {
         console.error("[AppContext] Error fetching initial messages:", error);
         setActiveMessages([welcomeMessage]);
@@ -155,7 +151,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     };
     loadConversationMessages();
-  }, [currentConversationId, newlyCreatedConvId]);
+  }, [currentConversationId, newlyCreatedConvId, isStreamingActive]);
 
   // Send Message Mutation (adapted from useChatMessages)
   const sendMessageMutation = useMutation<any, Error, SendMessageParams, { optimisticMessage?: Message }>({
@@ -178,24 +174,26 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         console.error("[AppContext mutationFn] Error from /api/messages. Status:", response.status, "StatusText:", response.statusText);
         const errorText = await response.text().catch(() => "Could not read error body.");
         console.error("[AppContext mutationFn] Error response body:", errorText);
-        throw new Error(`Failed to send message. Status: ${response.status}. ${errorText}`);
+        throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log("[AppContext mutationFn] Response from /api/messages:", data);
+      return data;
     },
-    onMutate: async ({ content, attachments }) => {
-      console.log("[AppContext onMutate] Adding optimistic message.");
-      const userMessage: Message = {
-        id: `temp-user-${Date.now()}`,
-        content,
+    onMutate: async (variables) => {
+      console.log("[AppContext onMutate] Setting optimistic message");
+      const optimisticMessage: Message = {
+        id: `temp-${Date.now()}`,
+        content: variables.content,
         isUserMessage: true,
         timestamp: new Date(),
-        attachments: attachments?.map(f => ({
-          name: f.fileName || f.displayName || 'Unknown file',
-          type: f.fileType || 'application/octet-stream'
+        attachments: variables.attachments?.map(att => ({
+          name: att.fileName,
+          type: att.fileType
         }))
       };
-      setActiveMessages(prevMessages => [...prevMessages, userMessage]);
-      return { optimisticMessage: userMessage };
+      setActiveMessages(prevMessages => [...prevMessages, optimisticMessage]);
+      return { optimisticMessage };
     },
     onSuccess: (data, variables, context) => {
       console.log("[AppContext onSuccess] Received server data:", data);
@@ -239,12 +237,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // console.log("[AppContext sendMessage onSuccess] Setting newlyCreatedConvId to null");
         setNewlyCreatedConvId(null);
       }
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (error, variables, context) => {
-      console.error("[AppContext onError] Failed to send message:", error);
+      console.error("[AppContext onError] Mutation failed:", error);
       if (context?.optimisticMessage) {
-        setActiveMessages(prevMessages => prevMessages.filter(msg => msg.id !== context.optimisticMessage!.id));
+        setActiveMessages(prevMessages => 
+          prevMessages.filter(msg => msg.id !== context.optimisticMessage!.id)
+        );
       }
     },
   });
@@ -280,67 +279,71 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [sendMessageMutation]);
 
   const refreshMessagesHandler = useCallback(async () => {
-    console.log("[AppContext] Manual refresh triggered");
-    if (currentConversationId) {
-      try {
-        // Force clear newlyCreatedConvId to ensure loading works
-        setNewlyCreatedConvId(null);
-        
-        // Add retry logic to ensure we get the latest messages
-        let attempt = 0;
-        const maxAttempts = 3;
-        
-        while (attempt < maxAttempts) {
-          try {
-            console.log(`[AppContext] Refresh attempt ${attempt + 1}, URL: /api/conversations/${currentConversationId}/messages`);
-            const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}&attempt=${attempt}`);
-            console.log(`[AppContext] Response status: ${response.status}, ok: ${response.ok}`);
-            
-            if (response.ok) {
-              const convMessages = await response.json();
-              console.log("[AppContext] Raw API response:", convMessages);
-              const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-              console.log("[AppContext] Messages array length:", messagesArray.length);
-              
-              if (messagesArray.length > 0) {
-                const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
-                  id: msg.id.toString(),
-                  content: msg.content,
-                  isUserMessage: msg.role === "user",
-                  timestamp: new Date(msg.createdAt),
-                  attachments: msg.metadata?.attachments?.map((att: any) => ({
-                    name: att.fileName || att.name || 'Unknown file',
-                    type: att.fileType || att.type || 'application/octet-stream'
-                  })) || undefined
-                }));
-                
-                console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
-                setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
-                
-                // Invalidate React Query cache to ensure consistency
-                queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
-                return; // Success, exit the function
-              } else {
-                console.warn("[AppContext] Received empty messages array, retrying...");
-              }
-            } else {
-              console.error(`[AppContext] Refresh attempt ${attempt + 1} failed with status:`, response.status);
-              const errorText = await response.text();
-              console.error("[AppContext] Error response:", errorText);
-            }
-          } catch (fetchError) {
-            console.error(`[AppContext] Fetch error on attempt ${attempt + 1}:`, fetchError);
-          }
+    console.log("[AppContext] Manual refresh triggered for conversation:", currentConversationId);
+    if (!currentConversationId) {
+      console.log("[AppContext] No currentConversationId, skipping refresh");
+      return;
+    }
+    
+    try {
+      // Force clear newlyCreatedConvId to ensure loading works
+      console.log("[AppContext] Clearing newlyCreatedConvId before refresh");
+      setNewlyCreatedConvId(null);
+      
+      // Add retry logic to ensure we get the latest messages
+      let attempt = 0;
+      const maxAttempts = 3;
+      
+      while (attempt < maxAttempts) {
+        try {
+          console.log(`[AppContext] Refresh attempt ${attempt + 1}, URL: /api/conversations/${currentConversationId}/messages`);
+          const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}&attempt=${attempt}`);
+          console.log(`[AppContext] Response status: ${response.status}, ok: ${response.ok}`);
           
-          attempt++;
-          if (attempt < maxAttempts) {
-            console.log(`[AppContext] Refresh attempt ${attempt} failed, retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 500));
+          if (response.ok) {
+            const convMessages = await response.json();
+            console.log("[AppContext] Raw API response:", convMessages);
+            const messagesArray = Array.isArray(convMessages) ? convMessages : [];
+            console.log("[AppContext] Messages array length:", messagesArray.length);
+            
+            if (messagesArray.length > 0) {
+              const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
+                id: msg.id.toString(),
+                content: msg.content,
+                isUserMessage: msg.role === "user",
+                timestamp: new Date(msg.createdAt),
+                attachments: msg.metadata?.attachments?.map((att: any) => ({
+                  name: att.fileName || att.name || 'Unknown file',
+                  type: att.fileType || att.type || 'application/octet-stream'
+                })) || undefined
+              }));
+              
+              console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
+              setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
+              
+              // Invalidate React Query cache to ensure consistency
+              queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
+              return; // Success, exit the function
+            } else {
+              console.warn("[AppContext] Received empty messages array, retrying...");
+            }
+          } else {
+            console.error(`[AppContext] Refresh attempt ${attempt + 1} failed with status:`, response.status);
+            const errorText = await response.text();
+            console.error("[AppContext] Error response:", errorText);
           }
+        } catch (fetchError) {
+          console.error(`[AppContext] Fetch error on attempt ${attempt + 1}:`, fetchError);
         }
-      } catch (error) {
-        console.error("[AppContext] Manual refresh failed:", error);
+        
+        attempt++;
+        if (attempt < maxAttempts) {
+          console.log(`[AppContext] Refresh attempt ${attempt} failed, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
+    } catch (error) {
+      console.error("[AppContext] Outer refresh error:", error);
     }
   }, [currentConversationId, queryClient]);
 
@@ -348,7 +351,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     console.log("[AppContext] Setting streaming active:", active);
     setIsStreamingActive(active);
   }, []);
-
 
   // Memoize the context value
   const contextValue = useMemo((): AppContextType => ({

@@ -406,14 +406,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const addOptimisticMessageHandler = useCallback((message: Message) => {
     console.log("[AppContext] CHATGPT-STYLE: Adding optimistic message:", message.id);
     setActiveMessages(prevMessages => {
-      // Avoid duplicates by checking if message already exists
-      const exists = prevMessages.some(msg => msg.id === message.id);
+      // Remove any existing streaming AI messages to prevent duplicates
+      const filteredMessages = prevMessages.filter(msg => 
+        !(msg.id.startsWith('ai-streaming-') && !msg.isUserMessage)
+      );
+      
+      // Check if this exact message already exists
+      const exists = filteredMessages.some(msg => msg.id === message.id);
       if (exists) {
-        return prevMessages.map(msg => 
+        return filteredMessages.map(msg => 
           msg.id === message.id ? { ...msg, ...message } : msg
         );
       }
-      return [...prevMessages, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      return [...filteredMessages, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     });
   }, []);
 

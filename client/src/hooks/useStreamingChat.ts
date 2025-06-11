@@ -41,26 +41,9 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         eventSourceRef.current.close();
       }
 
-      // CRITICAL FIX: Immediately show user message before streaming starts
-      const optimisticUserMessage = {
-        id: `user-optimistic-${Date.now()}`,
-        content: messageData.content,
-        role: 'user',
-        isUserMessage: true,
-        timestamp: new Date(),
-        attachments: messageData.attachments?.map(att => ({
-          name: att.fileName || 'Unknown file',
-          type: att.fileType || 'application/octet-stream'
-        })) || []
-      };
-      
-      setPendingUserMessage(optimisticUserMessage);
+      // Don't set pending user message here - it's handled by useChatActions
       setStreamingActive(true);
       setIsThinking(true);
-
-      if (options.onUserMessageSent) {
-        options.onUserMessageSent(optimisticUserMessage);
-      }
 
       // Send the message via POST to start streaming
       const response = await fetch('/api/messages/stream', {
@@ -158,16 +141,32 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
 
       case 'chunk':
         setIsThinking(false);
-        setStreamingMessage(prev => prev ? {
-          ...prev,
-          content: prev.content + data.content,
+        
+        // Update streaming message for internal tracking
+        const newStreamingMessage = streamingMessage ? {
+          ...streamingMessage,
+          content: streamingMessage.content + data.content,
           isStreaming: true
         } : {
-          id: Date.now().toString(),
+          id: `ai-streaming-current`,
           content: data.content,
           isComplete: false,
           isStreaming: true
-        });
+        };
+        
+        setStreamingMessage(newStreamingMessage);
+        
+        // Update the single optimistic AI message in context
+        if (addOptimisticMessage) {
+          const streamingAiMessage = {
+            id: `ai-streaming-current`,
+            content: newStreamingMessage.content,
+            isUserMessage: false,
+            timestamp: new Date(),
+            attachments: []
+          };
+          addOptimisticMessage(streamingAiMessage);
+        }
         break;
 
       case 'complete':

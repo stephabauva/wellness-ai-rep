@@ -219,10 +219,10 @@ export function ChatInputArea({
               </Button>
             </div>
             
-            <div className="relative flex-1 min-h-0 mb-4">
+            <div className="relative flex-1 min-h-0 mb-4 overflow-hidden rounded-lg">
               <video
                 ref={videoRef}
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-cover"
                 autoPlay
                 playsInline
                 muted
@@ -231,18 +231,19 @@ export function ChatInputArea({
                 ref={canvasRef}
                 className="hidden"
               />
-            </div>
-            
-            <div className="flex justify-center flex-shrink-0 pb-safe">
-              <Button
-                onClick={capturePhoto}
-                disabled={uploadFileMutation.isPending}
-                className="px-8 py-3 text-base"
-                size="lg"
-              >
-                <Camera className="h-5 w-5 mr-2" />
-                Capture Photo
-              </Button>
+              
+              {/* Overlay button positioned over video */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+                <Button
+                  onClick={capturePhoto}
+                  disabled={uploadFileMutation.isPending}
+                  className="px-8 py-3 text-base bg-white/90 hover:bg-white text-black border shadow-lg backdrop-blur-sm"
+                  size="lg"
+                >
+                  <Camera className="h-5 w-5 mr-2" />
+                  Capture Photo
+                </Button>
+              </div>
             </div>
           </div>
         </div>

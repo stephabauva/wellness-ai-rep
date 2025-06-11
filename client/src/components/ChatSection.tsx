@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { History } from "lucide-react"; // Only History is needed from lucide-react here
 import { useChatMessages } from "@/hooks/useChatMessages";
@@ -46,12 +46,28 @@ function ChatSection() {
     attachedFiles, 
     streamingMessage, 
     isConnected, 
-    isThinking 
+    isThinking,
+    pendingUserMessage
   } = chatActions;
 
 
-  // Generate messages to display
-  const messagesToDisplay = messages; // Simplified
+  // Generate messages to display - CRITICAL FIX: Include pending user message for instant display
+  const messagesToDisplay = useMemo(() => {
+    let displayMessages = [...messages];
+    
+    // Add pending user message immediately when streaming starts
+    if (pendingUserMessage && !messages.some(msg => msg.content === pendingUserMessage.content && msg.isUserMessage)) {
+      displayMessages.push({
+        id: pendingUserMessage.id,
+        content: pendingUserMessage.content,
+        isUserMessage: true,
+        timestamp: pendingUserMessage.timestamp,
+        attachments: pendingUserMessage.attachments
+      });
+    }
+    
+    return displayMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [messages, pendingUserMessage]);
 
   const handleConversationSelect = useCallback((conversationId: string) => {
     setCurrentConversationId(conversationId);

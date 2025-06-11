@@ -197,34 +197,25 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Implement robust message persistence with proper state coordination
+        // PERFORMANCE FIX: Streamlined completion without excessive delays
         const handleStreamingComplete = async () => {
           console.log('[Streaming] Handling streaming completion for conversation:', data.conversationId);
           
-          // Extract the conversation ID from the done event
-          const completedConversationId = data.conversationId;
+          // Immediately clear pending user message since it's now persisted
+          setPendingUserMessage(null);
           
-          // Keep streaming message visible during sync
-          console.log('[Streaming] Keeping streaming message visible during database sync');
-          
-          // Wait for backend database operations to complete
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Turn off streaming to enable normal loading
-          console.log('[Streaming] Disabling streaming state to enable database loading');
-          setStreamingActive(false);
-          
-          // Small delay for React state propagation
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // Skip conversation context reset during completion to prevent flickering
-          // The conversation context is already set correctly from the initial user_message_saved event
-          
-          // Wait for React state updates to propagate, then cleanup
+          // Wait minimal time for database sync to complete
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // Clean up streaming message - AppContext useEffect will handle message loading
-          console.log('[Streaming] Database sync complete, clearing streaming message');
+          // Turn off streaming to enable normal loading
+          console.log('[Streaming] Disabling streaming state');
+          setStreamingActive(false);
+          
+          // Small delay for state propagation, then cleanup
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Clean up streaming message - AppContext will handle message loading
+          console.log('[Streaming] Clearing streaming message');
           setStreamingMessage(null);
         };
         

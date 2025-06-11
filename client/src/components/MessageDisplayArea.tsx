@@ -32,11 +32,24 @@ export function MessageDisplayArea({
   console.log("[MessageDisplayArea] Props received. messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined', "isLoading:", isLoading);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // CHATGPT-STYLE: Clean message display without duplication
+  // CHATGPT-STYLE: Clean message display including streaming content
   const allDisplayMessages = React.useMemo(() => {
-    // Start with persisted messages only
-    return [...messagesToDisplay].sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
-  }, [messagesToDisplay]);
+    let messages = [...messagesToDisplay];
+    
+    // Add streaming message if it exists and has content
+    if (streamingMessage && streamingMessage.content) {
+      const streamingAsMessage: Message = {
+        id: streamingMessage.id,
+        content: streamingMessage.content,
+        isUserMessage: false,
+        timestamp: new Date(), // Current time for streaming message
+        attachments: []
+      };
+      messages.push(streamingAsMessage);
+    }
+    
+    return messages.sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
+  }, [messagesToDisplay, streamingMessage]);
 
   useEffect(() => {
     console.log("[MessageDisplayArea useEffect scroll] messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined');

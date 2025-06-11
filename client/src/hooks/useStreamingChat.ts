@@ -24,7 +24,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
   const eventSourceRef = useRef<EventSource | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { refreshMessages, setStreamingActive } = useAppContext();
+  const { refreshMessages, setStreamingActive, addOptimisticMessage } = useAppContext();
 
   const startStreaming = useCallback(async (messageData: {
     content: string;
@@ -201,33 +201,18 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         const handleStreamingComplete = async () => {
           console.log('[Streaming] CHATGPT-STYLE: Completing stream for conversation:', data.conversationId);
           
-          // Commit streaming message to persistent state before clearing
-          if (streamingMessage && streamingMessage.content) {
-            const finalMessage = {
-              id: `ai-final-${Date.now()}`,
-              content: streamingMessage.content,
-              isUserMessage: false,
-              timestamp: new Date(),
-              attachments: []
-            };
-            
-            // Use AppContext optimistic updates to persist the message
-            if (options.onMessageComplete) {
-              options.onMessageComplete(finalMessage);
-            }
-          }
-          
-          // Wait for message persistence, then disable streaming
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Wait for database to settle before disabling streaming
+          await new Promise(resolve => setTimeout(resolve, 50));
           
           console.log('[Streaming] Disabling streaming state');
           setStreamingActive(false);
           
-          // Clear temporary UI states only after persistence
+          // Clear temporary UI states after a short delay to maintain visual continuity
           setTimeout(() => {
+            console.log('[Streaming] Clearing temporary UI states');
             setPendingUserMessage(null);
             setStreamingMessage(null);
-          }, 150);
+          }, 200);
         };
         
         // Execute the completion handler

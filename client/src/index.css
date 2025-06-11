@@ -97,6 +97,71 @@
   @apply scale-95; /* Give a slight push effect when clicked */
 }
 
+/* Virtual scrolling container styles */
+.virtual-scroll-container {
+  @apply relative overflow-hidden;
+}
+
+.virtual-scroll-content {
+  @apply absolute top-0 left-0 right-0;
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.virtual-scroll-item {
+  @apply relative;
+  contain: layout style paint;
+}
+
+/* Message container improvements */
+.message-container {
+  @apply relative;
+  min-height: 60px;
+  contain: layout style paint;
+}
+
+.message-container-virtual {
+  @apply absolute left-0 right-0;
+  contain: layout style paint;
+}
+
+/* Prevent layout shift during streaming */
+.streaming-message {
+  @apply min-h-[60px];
+}
+
+/* Scroll to bottom button positioning */
+.scroll-to-bottom {
+  @apply fixed z-50;
+  bottom: 5rem;
+  right: 1.5rem;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.scroll-to-bottom:hover {
+  @apply scale-110;
+}
+
+/* Pagination loading states */
+.pagination-loading {
+  @apply opacity-70 pointer-events-none;
+}
+
+/* Chat message spacing improvements */
+.message-spacing {
+  @apply space-y-4;
+}
+
+.message-spacing > * + * {
+  @apply mt-4;
+}
+
+/* Performance optimizations for chat messages */
+.chat-message-optimized {
+  @apply transform-gpu;
+  contain: layout style paint;
+}
+
 .nav-icon.active {
   @apply text-primary bg-primary/20;
 }

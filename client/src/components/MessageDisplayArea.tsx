@@ -193,8 +193,12 @@ export function MessageDisplayArea({
     >
       {enableVirtualScrolling ? (
         // Virtual scrolling implementation
-        <div style={{ height: totalHeight, position: 'relative' }}>
+        <div 
+          className="virtual-scroll-container" 
+          style={{ height: totalHeight, position: 'relative' }}
+        >
           <div 
+            className="virtual-scroll-content message-spacing"
             style={{ 
               transform: `translateY(${offsetY}px)`,
               position: 'absolute',
@@ -202,24 +206,28 @@ export function MessageDisplayArea({
               left: 0,
               right: 0
             }}
-            className="space-y-4"
           >
             {messagesToRender.map((message: Message, index: number) => {
               const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
               
               return (
-                <ChatMessage
+                <div 
                   key={message.id}
-                  message={message.content}
-                  isUser={message.isUserMessage}
-                  timestamp={message.timestamp}
-                  isStreaming={isActivelyStreaming}
-                  isStreamingComplete={false}
-                  attachments={message.attachments?.map((att: any) => ({
-                    name: att.name,
-                    type: att.type,
-                  }))}
-                />
+                  className="virtual-scroll-item chat-message-optimized"
+                  data-index={index}
+                >
+                  <ChatMessage
+                    message={message.content}
+                    isUser={message.isUserMessage}
+                    timestamp={message.timestamp}
+                    isStreaming={isActivelyStreaming}
+                    isStreamingComplete={false}
+                    attachments={message.attachments?.map((att: any) => ({
+                      name: att.name,
+                      type: att.type,
+                    }))}
+                  />
+                </div>
               );
             })}
           </div>
@@ -259,12 +267,12 @@ export function MessageDisplayArea({
                 onClick={loadMore} 
                 variant="outline" 
                 disabled={isPaginationLoading}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${isPaginationLoading ? 'pagination-loading' : ''}`}
               >
                 {isPaginationLoading ? (
                   <>
                     <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                    Loading...
+                    Loading earlier messages...
                   </>
                 ) : (
                   <>
@@ -300,7 +308,7 @@ export function MessageDisplayArea({
           onClick={scrollToBottom}
           variant="outline"
           size="sm"
-          className="fixed bottom-20 right-6 z-10 rounded-full shadow-lg bg-background/95 backdrop-blur-sm border-2"
+          className="scroll-to-bottom rounded-full shadow-lg bg-background/95 backdrop-blur-sm border-2"
         >
           <ChevronUp className="h-4 w-4 rotate-180" />
         </Button>

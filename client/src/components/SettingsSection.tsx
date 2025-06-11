@@ -18,6 +18,7 @@ import { CoachingPreferencesSettings } from "./settings/CoachingPreferencesSetti
 import { AppPreferencesSettings } from "./settings/AppPreferencesSettings";
 import { FileManagementSettings } from "./settings/FileManagementSettings";
 import { AiConfigurationSettings } from "./settings/AiConfigurationSettings";
+import { PerformanceSettings } from "./settings/PerformanceSettings";
 
 // Define the combined Zod schema for the entire settings form
 // This should be compatible with UserSettingsFormValues and RetentionSettingsFormValues
@@ -51,6 +52,11 @@ const SettingsSection: React.FC = () => {
   const { userSettings, isLoadingSettings, updateUserSettings, isUpdatingSettings } = useUserSettings();
   const { retentionSettings, isLoadingRetentionSettings, updateRetentionSettings, isUpdatingRetentionSettings } = useRetentionSettings();
   const { aiModels, isLoadingAiModels } = useAiModels();
+
+  // Performance settings state (local state for now)
+  const [enableVirtualScrolling, setEnableVirtualScrolling] = React.useState(false);
+  const [enablePagination, setEnablePagination] = React.useState(false);
+  const [enableWebWorkers, setEnableWebWorkers] = React.useState(false);
 
   const form = useForm<CombinedSettingsFormValues>({
     resolver: zodResolver(settingsSchema),

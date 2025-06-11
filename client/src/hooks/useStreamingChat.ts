@@ -173,16 +173,16 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Wait a moment before refreshing to ensure backend has saved the message
-        setTimeout(() => {
-          console.log('[Streaming] Refreshing messages via AppContext');
-          refreshMessages();
+        // Keep streaming message visible and refresh in background
+        setTimeout(async () => {
+          console.log('[Streaming] Refreshing messages while keeping streaming message visible');
+          await refreshMessages();
           
-          // Clear streaming message after a longer delay to ensure smooth transition
+          // Only clear streaming message after ensuring database message is loaded
           setTimeout(() => {
-            console.log('[Streaming] Clearing streaming message after refresh');
+            console.log('[Streaming] Clearing streaming message after database refresh');
             setStreamingMessage(null);
-          }, 1500);
+          }, 300);
         }, 500);
         
         break;

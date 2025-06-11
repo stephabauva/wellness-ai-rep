@@ -77,7 +77,6 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  console.log("[AppContext] AppProvider body execution.");
   const [activeSection, setActiveSectionState] = useState<ActiveSection>("chat");
   const [coachingMode, setCoachingModeState] = useState<string>("weight-loss");
 
@@ -86,7 +85,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
-
 
   const { userSettings, isLoadingSettings } = useUserSettings();
   const queryClient = useQueryClient();
@@ -107,6 +105,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Message Loading useEffect (adapted from useChatMessages)
   useEffect(() => {
     console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId);
+    
+    // Skip loading if this is a newly created conversation during streaming
+    if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId) {
+      console.log("[AppContext] Skipping message load for newly created conversation during streaming");
+      setIsLoadingMessages(false);
+      return;
+    }
+    
     const loadConversationMessages = async () => {
       if (currentConversationId === null) {
         setActiveMessages([welcomeMessage]);
@@ -114,11 +120,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setNewlyCreatedConvId(null);
         return;
       }
-      if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId) {
-        setIsLoadingMessages(false);
-        setNewlyCreatedConvId(null);
-        return;
-      }
+      
       setIsLoadingMessages(true);
       setNewlyCreatedConvId(null);
       try {
@@ -256,7 +258,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const selectConversationHandler = useCallback((id: string | null) => {
     console.log("[AppContext selectConversationHandler] Setting currentConversationId to:", id);
     setCurrentConversationIdState(id);
-  }, []);
+    // Mark this as a newly created conversation to prevent immediate reload
+    if (id && id !== currentConversationId) {
+      setNewlyCreatedConvId(id);
+    }
+  }, [currentConversationId]);
 
   const newChatHandler = useCallback(() => {
     console.log("[AppContext newChatHandler] Setting currentConversationId to null");
@@ -270,7 +276,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const refreshMessagesHandler = useCallback(async () => {
     console.log("[AppContext] Manual refresh triggered");
     if (currentConversationId) {
-      setIsLoadingMessages(true);
       try {
         const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}`);
         if (response.ok) {
@@ -291,8 +296,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error("[AppContext] Manual refresh failed:", error);
-      } finally {
-        setIsLoadingMessages(false);
       }
     }
   }, [currentConversationId]);

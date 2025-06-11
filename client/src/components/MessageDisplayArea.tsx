@@ -190,7 +190,7 @@ export function MessageDisplayArea({
                   const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
                   
                   return (
-                    <div key={message.id} className="mb-4" style={{ height: 120 }}>
+                    <div key={message.id} className="mb-6 w-full" style={{ height: 120, minHeight: 120 }}>
                       <ChatMessage
                         message={message.content}
                         isUser={message.isUserMessage}
@@ -216,24 +216,25 @@ export function MessageDisplayArea({
 
         {/* Regular scrolling container */}
         {!enableVirtualScrolling && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {messagesToRender && messagesToRender.length > 0 ? (
               messagesToRender.map((message: Message, index: number) => {
                 const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
                 
                 return (
-                  <ChatMessage
-                    key={message.id}
-                    message={message.content}
-                    isUser={message.isUserMessage}
-                    timestamp={message.timestamp}
-                    isStreaming={isActivelyStreaming}
-                    isStreamingComplete={false}
-                    attachments={message.attachments?.map((att: any) => ({
-                      name: att.name,
-                      type: att.type,
-                    }))}
-                  />
+                  <div key={message.id} className="w-full">
+                    <ChatMessage
+                      message={message.content}
+                      isUser={message.isUserMessage}
+                      timestamp={message.timestamp}
+                      isStreaming={isActivelyStreaming}
+                      isStreamingComplete={false}
+                      attachments={message.attachments?.map((att: any) => ({
+                        name: att.name,
+                        type: att.type,
+                      }))}
+                    />
+                  </div>
                 );
               })
             ) : (

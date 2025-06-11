@@ -278,7 +278,8 @@ export class MemStorage implements IStorage {
       isActive: true,
       metadata: {
         features: ["Step tracking", "Heart rate", "Sleep tracking", "Exercise detection"]
-      }
+      },
+      createdAt: new Date()
     };
     
     const scale: ConnectedDevice = {
@@ -290,7 +291,8 @@ export class MemStorage implements IStorage {
       isActive: true,
       metadata: {
         features: ["Weight", "Body fat", "Muscle mass", "BMI"]
-      }
+      },
+      createdAt: new Date()
     };
     
     this.devices.set(smartwatch.id, smartwatch);
@@ -775,4 +777,4 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Initialize in-memory storage (fallback for when database is not available)
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

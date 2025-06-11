@@ -46,6 +46,7 @@ interface AppContextType {
   sendMessage: (params: SendMessageParams) => void; // Matches mutation's mutate signature
   selectConversation: (conversationId: string | null) => void;
   newChat: () => void;
+  refreshMessages: () => void; // New method to trigger message refresh
   // newlyCreatedConvId is internal and doesn't need to be in context type
 }
 
@@ -89,8 +90,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [activeMessages, setActiveMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
   const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
+  const [messageRefreshTrigger, setMessageRefreshTrigger] = useState<number>(0);
 
-  const { userSettings, isLoading: isLoadingSettings } = useUserSettings();
+  const { userSettings, isLoadingSettings } = useUserSettings();
 
   useEffect(() => {
     if (userSettings) {
@@ -107,7 +109,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Message Loading useEffect (adapted from useChatMessages)
   useEffect(() => {
-    console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId);
+    console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "refreshTrigger:", messageRefreshTrigger);
     const loadConversationMessages = async () => {
       if (currentConversationId === null) {
         setActiveMessages([welcomeMessage]);
@@ -151,7 +153,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     };
     loadConversationMessages();
-  }, [currentConversationId, newlyCreatedConvId]);
+  }, [currentConversationId, newlyCreatedConvId, messageRefreshTrigger]);
 
   // Send Message Mutation (adapted from useChatMessages)
   const sendMessageMutation = useMutation<any, Error, SendMessageParams, { optimisticMessage?: Message }>({
@@ -267,6 +269,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const sendMessageHandler = useCallback((params: SendMessageParams) => {
     sendMessageMutation.mutate(params);
   }, [sendMessageMutation]);
+
+  const refreshMessagesHandler = useCallback(() => {
+    console.log("[AppContext] Manual refresh triggered");
+    setMessageRefreshTrigger(prev => prev + 1);
+  }, []);
 
 
   // Memoize the context value

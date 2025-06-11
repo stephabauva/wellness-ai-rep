@@ -170,15 +170,35 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // Invalidate queries and wait for new messages to load before clearing
-        Promise.all([
+        // Invalidate queries and wait for actual refetch completion
+        const invalidatePromises = [
           queryClient.invalidateQueries({ queryKey: ['/api/messages'] }),
           queryClient.invalidateQueries({ queryKey: ['/api/conversations'] })
-        ]).then(() => {
-          // Wait for queries to refetch, then clear streaming message
+        ];
+
+        // Wait for queries to actually refetch their data
+        Promise.all(invalidatePromises).then(async () => {
+          // Wait for conversation messages to refetch if we have a conversation
+          if (data.conversationId) {
+            try {
+              await queryClient.refetchQueries({ 
+                queryKey: [`/api/conversations/${data.conversationId}/messages`] 
+              });
+            } catch (error) {
+              console.warn('[Streaming] Failed to refetch conversation messages:', error);
+            }
+          }
+          
+          // Additional safety delay to ensure UI has updated
           setTimeout(() => {
             setStreamingMessage(null);
-          }, 1000);
+          }, 500);
+        }).catch(error => {
+          console.warn('[Streaming] Query invalidation failed:', error);
+          // Fallback: clear streaming message after longer delay if queries fail
+          setTimeout(() => {
+            setStreamingMessage(null);
+          }, 2000);
         });
         
         break;

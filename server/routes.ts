@@ -139,205 +139,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Access-Control-Allow-Headers': 'Cache-Control'
       });
 
-      // CHATGPT-STYLE: Start streaming immediately, do database ops in parallel
-      res.write(`data: ${JSON.stringify({ type: 'start', message: 'Starting AI response...' })}\n\n`);
-      
-      // Start AI streaming immediately with minimal context
-      let fullResponse = '';
-      let streamingPromise: Promise<void>;
-      
-      // Immediate AI model selection and provider setup
-      const aiConfig = { provider: aiProvider, model: aiModel };
-      let selectedAiConfig = aiConfig;
-
-      if (automaticModelSelection) {
-        const hasImages = attachments?.some(att => att.fileType?.startsWith('image/'));
-        const isComplexQuery = content.toLowerCase().includes('analyze') || content.length > 200;
-
-        if (hasImages && aiService.hasProvider('google')) {
-          selectedAiConfig = { provider: 'google', model: 'gemini-1.5-pro' };
-        } else if (hasImages && aiService.hasProvider('openai')) {
-          selectedAiConfig = { provider: 'openai', model: 'gpt-4o' };
-        } else if (!hasImages && !isComplexQuery) {
-          if (aiService.hasProvider('google')) {
-            selectedAiConfig = { provider: 'google', model: 'gemini-2.0-flash-exp' };
-          } else if (aiService.hasProvider('openai')) {
-            selectedAiConfig = { provider: 'openai', model: 'gpt-4o-mini' };
-          }
-        }
-      }
-
-      const providerToUse = aiService.getProvider(selectedAiConfig.provider as any);
-      if (!providerToUse) {
-        throw new Error(`Provider ${selectedAiConfig.provider} not available`);
-      }
-
-      res.write(`data: ${JSON.stringify({ 
-        type: 'ai_model_selected',
-        provider: selectedAiConfig.provider,
-        model: selectedAiConfig.model
-      })}\n\n`);
-
-      // Build context with attachments for immediate streaming
-      const userMessage: any = {
-        role: 'user',
-        content: content
-      };
-
-      // Add image attachments if present
-      if (attachments && attachments.length > 0) {
-        const imageAttachments = attachments.filter(att => att.fileType?.startsWith('image/'));
-        if (imageAttachments.length > 0) {
-          const imageUrls = [];
-          
-          // Load actual file content for images
-          for (const att of imageAttachments) {
-            try {
-              const filePath = join(process.cwd(), 'uploads', att.fileName);
-              console.log(`[Streaming] Loading image: ${filePath}`);
-              if (existsSync(filePath)) {
-                const fileBuffer = fs.readFileSync(filePath);
-                const base64Content = fileBuffer.toString('base64');
-                console.log(`[Streaming] Successfully loaded image ${att.fileName}, size: ${fileBuffer.length} bytes`);
-                imageUrls.push({
-                  type: 'image_url',
-                  image_url: { url: `data:${att.fileType};base64,${base64Content}` }
-                });
-              } else {
-                console.error(`[Streaming] Image file not found: ${filePath}`);
-              }
-            } catch (error) {
-              console.error(`[Streaming] Failed to load image ${att.fileName}:`, error);
-            }
-          }
-          
-          if (imageUrls.length > 0) {
-            userMessage.content = [
-              { type: 'text', text: content },
-              ...imageUrls
-            ];
-          }
-        }
-      }
-
-      const minimalContext = [
-        {
-          role: 'system',
-          content: 'You are a helpful wellness coach. Be encouraging and provide practical advice.'
-        },
-        userMessage
-      ];
-
-      // Start streaming immediately
-      streamingPromise = (async () => {
-        if (providerToUse.generateChatResponseStream) {
-          await providerToUse.generateChatResponseStream(
-            minimalContext as any,
-            { model: selectedAiConfig.model as any },
-            (chunk: string) => {
-              res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-              fullResponse += chunk;
-            },
-            (complete: string) => {
-              res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`);
-            },
-            (error: Error) => {
-              res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
-            }
-          );
-        }
-      })();
-
-      // Handle database operations in parallel (non-blocking)
-      const databasePromise = (async () => {
-        // Process conversation setup
-        if (currentConversationId) {
-          const existingConv = await db
-            .select()
-            .from(conversations)
-            .where(eq(conversations.id, currentConversationId!))
-            .limit(1);
-
-          if (existingConv.length === 0) {
-            console.warn(`Conversation ${currentConversationId} not found! Creating new one.`);
-            currentConversationId = null;
-          } else {
-            const historyFromDb = await db
-              .select()
-              .from(conversationMessages)
-              .where(eq(conversationMessages.conversationId, currentConversationId!))
-              .orderBy(conversationMessages.createdAt)
-              .limit(20);
-            conversationHistory = historyFromDb;
-          }
-        }
-
-        // Create new conversation if needed
-        if (!currentConversationId) {
-          let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
-          if (!title && attachments && attachments.length > 0) {
-            title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
-          }
-          if (!title) title = "New Conversation";
-
-          const [newConversation] = await db.insert(conversations).values({
-            userId,
-            title
-          }).returning();
-          currentConversationId = newConversation.id;
-          conversationHistory = [];
-        }
-
-        // Save user message
-        const [savedUserMessage] = await db.insert(conversationMessages).values({
-          conversationId: currentConversationId,
-          role: 'user',
-          content,
-          metadata: attachments && attachments.length > 0 ? { attachments } : undefined
-        }).returning();
-
-        // Legacy message creation
-        await storage.createMessage({
-          userId,
-          content: content + (attachments && attachments.length > 0 ? ` [${attachments.length} attachment(s)]` : ''),
-          isUserMessage: true
-        });
-
-        res.write(`data: ${JSON.stringify({ 
-          type: 'user_message_saved',
-          conversationId: currentConversationId,
-          userMessage: savedUserMessage 
-        })}\n\n`);
-
-        return { savedUserMessage, currentConversationId };
-      })();
-
-      // Wait for both streaming and database operations to complete
-      const [, { savedUserMessage, currentConversationId: finalConvId }] = await Promise.all([
-        streamingPromise,
-        databasePromise
-      ]);
-
-      // Save AI response to database
-      const [savedAiMessage] = await db.insert(conversationMessages).values({
-        conversationId: finalConvId,
-        role: 'assistant',
-        content: fullResponse
-      }).returning();
-
-      const legacyAiMessage = await storage.createMessage({
+      // Use the existing aiService streaming system for smooth streaming
+      const result = await aiService.getChatResponseStream(
+        content,
         userId,
-        content: fullResponse,
-        isUserMessage: false
-      });
+        currentConversationId || '',
+        0, // messageId placeholder
+        coachingMode || 'weight-loss',
+        conversationHistory,
+        { provider: aiProvider || 'google', model: aiModel || 'gemini-2.0-flash-exp' },
+        attachments || [],
+        automaticModelSelection ?? true,
+        (chunk: string) => {
+          // Send each chunk immediately for smooth streaming
+          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+        },
+        (complete: string) => {
+          res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`);
+        },
+        (error: Error) => {
+          res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        }
+      );
 
-      // Send final completion event
+      // Send conversation data and end stream
       res.write(`data: ${JSON.stringify({ 
         type: 'done',
-        conversationId: finalConvId,
-        messageId: savedAiMessage.id,
-        userMessage: savedUserMessage,
-        aiMessage: legacyAiMessage
+        conversationId: result.conversationId
       })}\n\n`);
 
       res.end();

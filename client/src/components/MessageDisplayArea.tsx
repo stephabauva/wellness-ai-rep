@@ -32,23 +32,7 @@ export function MessageDisplayArea({
   console.log("[MessageDisplayArea] Props received. messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined', "isLoading:", isLoading);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    console.log("[MessageDisplayArea useEffect scroll] messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined');
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messagesToDisplay, streamingMessage]);
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading conversation...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // CHATGPT-STYLE: Combine persisted messages with streaming content
+  // CHATGPT-STYLE: Combine persisted messages with streaming content (BEFORE any early returns)
   const allDisplayMessages = React.useMemo(() => {
     let messages = [...messagesToDisplay];
     
@@ -75,6 +59,22 @@ export function MessageDisplayArea({
     
     return messages.sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
   }, [messagesToDisplay, streamingMessage]);
+
+  useEffect(() => {
+    console.log("[MessageDisplayArea useEffect scroll] messagesToDisplay count:", messagesToDisplay ? messagesToDisplay.length : 'undefined');
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [allDisplayMessages]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading conversation...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">

@@ -114,12 +114,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       return;
     }
     
-    // Only load for newly created conversations or conversation switches
+    // PERFORMANCE OPTIMIZATION: Skip loading for newly created conversations
     if (newlyCreatedConvId && currentConversationId === newlyCreatedConvId) {
       console.log("[AppContext] Skipping message load - newly created conversation, messages already in place");
       setIsLoadingMessages(false);
       setNewlyCreatedConvId(null);
       return;
+    }
+
+    // CRITICAL CHATGPT-STYLE FIX: Prevent any database reload after streaming
+    // If we have messages and this is an existing conversation, never reload
+    if (currentConversationId && activeMessages.length > 0) {
+      const nonWelcomeMessages = activeMessages.filter(msg => msg.id !== "welcome");
+      if (nonWelcomeMessages.length > 0) {
+        console.log("[AppContext] CHATGPT-STYLE: Preserving existing messages, no database reload");
+        setIsLoadingMessages(false);
+        return;
+      }
     }
     
     const loadConversationMessages = async () => {
@@ -169,7 +180,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setIsLoadingMessages(false);
       }
     };
-    loadConversationMessages();
+    
+    // CHATGPT-STYLE: Only load messages for genuinely new conversations
+    // Skip loading if we already have messages or are streaming
+    const shouldLoadMessages = currentConversationId && 
+                              !isStreamingActive && 
+                              activeMessages.length <= 1 && 
+                              !newlyCreatedConvId;
+    
+    if (shouldLoadMessages) {
+      loadConversationMessages();
+    } else {
+      console.log("[AppContext] CHATGPT-STYLE: Skipping message load to maintain continuity");
+      setIsLoadingMessages(false);
+    }
   }, [currentConversationId, newlyCreatedConvId, isStreamingActive]);
 
   // Send Message Mutation
@@ -371,14 +395,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setIsStreamingActive(active);
   }, []);
 
-  // PERFORMANCE FIX: Optimistic update methods for smooth streaming
+  // CHATGPT-STYLE: Optimistic message management for seamless streaming
   const addOptimisticMessageHandler = useCallback((message: Message) => {
-    console.log("[AppContext] Adding optimistic message:", message.id);
-    setActiveMessages(prevMessages => [...prevMessages, message]);
+    console.log("[AppContext] CHATGPT-STYLE: Adding optimistic message:", message.id);
+    setActiveMessages(prevMessages => {
+      // Avoid duplicates by checking if message already exists
+      const exists = prevMessages.some(msg => msg.id === message.id);
+      if (exists) {
+        return prevMessages.map(msg => 
+          msg.id === message.id ? { ...msg, ...message } : msg
+        );
+      }
+      return [...prevMessages, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    });
   }, []);
 
   const updateOptimisticMessageHandler = useCallback((id: string, updates: Partial<Message>) => {
-    console.log("[AppContext] Updating optimistic message:", id);
+    console.log("[AppContext] CHATGPT-STYLE: Updating optimistic message:", id);
     setActiveMessages(prevMessages => 
       prevMessages.map(msg => 
         msg.id === id ? { ...msg, ...updates } : msg

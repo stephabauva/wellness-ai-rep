@@ -197,20 +197,24 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           options.onMessageComplete(data.aiMessage);
         }
 
-        // PERFORMANCE FIX: Clean completion without database reload
+        // CHATGPT-STYLE: Complete streaming without losing messages
         const handleStreamingComplete = async () => {
-          console.log('[Streaming] Handling streaming completion for conversation:', data.conversationId);
+          console.log('[Streaming] CHATGPT-STYLE: Completing stream for conversation:', data.conversationId);
           
-          // Clear pending user message and streaming message immediately
-          setPendingUserMessage(null);
-          setStreamingMessage(null);
+          // Keep streaming message visible until after state transition
+          // This prevents the "message disappearing" issue
           
-          // Brief delay for visual stability
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Minimal delay for stability, then turn off streaming
+          await new Promise(resolve => setTimeout(resolve, 50));
           
-          // Turn off streaming - the optimistic messages should already be in place
           console.log('[Streaming] Disabling streaming state');
           setStreamingActive(false);
+          
+          // Clear UI states AFTER streaming is disabled to maintain continuity
+          setTimeout(() => {
+            setPendingUserMessage(null);
+            setStreamingMessage(null);
+          }, 100);
         };
         
         // Execute the completion handler

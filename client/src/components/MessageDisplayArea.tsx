@@ -34,8 +34,20 @@ export function MessageDisplayArea({
 
   // CHATGPT-STYLE: Clean message display without duplication
   const allDisplayMessages = React.useMemo(() => {
-    // Only use messagesToDisplay - streaming is handled separately
-    return [...messagesToDisplay].sort((a: Message, b: Message) => a.timestamp.getTime() - b.timestamp.getTime());
+    console.log("[MessageDisplayArea] Processing messages:", messagesToDisplay?.length, messagesToDisplay);
+    if (!messagesToDisplay || messagesToDisplay.length === 0) {
+      console.log("[MessageDisplayArea] No messages to display");
+      return [];
+    }
+    
+    const sortedMessages = [...messagesToDisplay].sort((a: Message, b: Message) => {
+      const aTime = new Date(a.timestamp).getTime();
+      const bTime = new Date(b.timestamp).getTime();
+      return aTime - bTime;
+    });
+    
+    console.log("[MessageDisplayArea] Sorted messages:", sortedMessages.length, sortedMessages);
+    return sortedMessages;
   }, [messagesToDisplay]);
 
   useEffect(() => {
@@ -54,28 +66,40 @@ export function MessageDisplayArea({
     );
   }
 
+  // Debug logging (moved outside JSX)
+  console.log("[MessageDisplayArea] About to render. allDisplayMessages:", allDisplayMessages?.length, allDisplayMessages);
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {/* CHATGPT-STYLE: Simple message display with streaming detection */}
-      {allDisplayMessages && allDisplayMessages.map((message: Message) => {
-        // Detect if this message is currently being streamed
-        const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
-        
-        return (
-          <ChatMessage
-            key={message.id}
-            message={message.content}
-            isUser={message.isUserMessage}
-            timestamp={message.timestamp}
-            isStreaming={isActivelyStreaming}
-            isStreamingComplete={false}
-            attachments={message.attachments?.map((att: any) => ({
-              name: att.name,
-              type: att.type,
-            }))}
-          />
-        );
-      })}
+      {allDisplayMessages && allDisplayMessages.length > 0 ? (
+        allDisplayMessages.map((message: Message, index: number) => {
+          // Detect if this message is currently being streamed
+          const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
+          
+          // Log render outside return
+          console.log("[MessageDisplayArea] Rendering message", index, ":", message.id, message.content?.substring(0, 50));
+          
+          return (
+            <ChatMessage
+              key={message.id}
+              message={message.content}
+              isUser={message.isUserMessage}
+              timestamp={message.timestamp}
+              isStreaming={isActivelyStreaming}
+              isStreamingComplete={false}
+              attachments={message.attachments?.map((att: any) => ({
+                name: att.name,
+                type: att.type,
+              }))}
+            />
+          );
+        })
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <p>No messages yet. Start a conversation!</p>
+        </div>
+      )}
       
       {/* AI thinking indicator - only show when no streaming message exists */}
       {isThinking && !allDisplayMessages.some(msg => msg.id.startsWith('ai-streaming-')) && (

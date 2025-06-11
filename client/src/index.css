@@ -73,11 +73,11 @@
 }
 
 .user-message {
-  @apply bg-secondary text-white rounded-[18px] rounded-br-none;
+  @apply bg-blue-500 text-white rounded-[18px] rounded-br-none;
 }
 
 .ai-message {
-  @apply bg-muted text-foreground rounded-[18px] rounded-bl-none;
+  @apply bg-gray-100 dark:bg-gray-800 text-foreground rounded-[18px] rounded-bl-none border border-border;
 }
 
 .nav-icon {

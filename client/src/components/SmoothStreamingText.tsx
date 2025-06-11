@@ -28,7 +28,9 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
 
   // Non-blocking character renderer with smart scheduler
   const typeNextToken = useCallback(() => {
-    if (!isTypingRef.current || currentIndexRef.current >= content.length) {
+    if (!isTypingRef.current) return;
+    
+    if (currentIndexRef.current >= content.length) {
       if (isComplete && onComplete && currentIndexRef.current >= content.length) {
         onComplete();
       }
@@ -44,8 +46,8 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
     
     // Schedule next character with smart pacing
     const delay = getPacingDelay(char);
-    timeoutRef.current = setTimeout(typeNextToken, delay);
-  }, [content, isComplete, onComplete, getPacingDelay]);
+    timeoutRef.current = setTimeout(() => typeNextToken(), delay);
+  }, [getPacingDelay, isComplete, onComplete]);
 
   useEffect(() => {
     if (!content) {
@@ -54,32 +56,25 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       return;
     }
 
-    // Clear existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Reset if content got shorter (new message)
-    if (content.length < displayedText.length) {
+    // CHATGPT-STYLE: Only reset if content got shorter (new message)
+    if (content.length < currentIndexRef.current) {
       currentIndexRef.current = 0;
       setDisplayedText('');
       isTypingRef.current = false;
     }
 
-    // Start typing only if there's new content
+    // CRITICAL: Continue typing from where we left off, don't restart
     if (currentIndexRef.current < content.length && !isTypingRef.current) {
       isTypingRef.current = true;
-      // Immediate start for responsiveness
-      timeoutRef.current = setTimeout(typeNextToken, 20);
+      typeNextToken();
     }
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      isTypingRef.current = false;
     };
-  }, [content, typeNextToken]);
+  }, [content.length]); // Only depend on content length, not full content
 
   // Cursor blinking effect
   useEffect(() => {

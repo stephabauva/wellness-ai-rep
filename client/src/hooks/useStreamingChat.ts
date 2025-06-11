@@ -167,51 +167,33 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
       case 'chunk':
         setIsThinking(false);
         
-        // Ensure clean text accumulation without corruption
+        // CHATGPT-STYLE: Direct, immediate content accumulation
         const cleanChunk = data.content || '';
         
         setStreamingMessage(prev => {
-          // Use a consistent ID for the current streaming session
           const streamingId = prev?.id || `ai-streaming-${Date.now()}`;
           const accumulatedContent = prev ? prev.content + cleanChunk : cleanChunk;
           
-          const newMessage = {
+          // CRITICAL: Update optimistic message immediately on every chunk
+          const streamingAiMessage = {
+            id: streamingId,
+            content: accumulatedContent,
+            isUserMessage: false,
+            timestamp: new Date(),
+            attachments: []
+          };
+          
+          // Immediate update - no throttling, no async delays
+          if (addOptimisticMessage) {
+            addOptimisticMessage(streamingAiMessage);
+          }
+          
+          return {
             id: streamingId,
             content: accumulatedContent,
             isComplete: false,
             isStreaming: true
           };
-          
-          // Throttle optimistic updates for smooth performance
-          if (addOptimisticMessage) {
-            // Use requestIdleCallback for non-blocking updates
-            if (window.requestIdleCallback) {
-              window.requestIdleCallback(() => {
-                const streamingAiMessage = {
-                  id: streamingId,
-                  content: accumulatedContent,
-                  isUserMessage: false,
-                  timestamp: new Date(),
-                  attachments: []
-                };
-                addOptimisticMessage(streamingAiMessage);
-              });
-            } else {
-              // Fallback for browsers without requestIdleCallback
-              setTimeout(() => {
-                const streamingAiMessage = {
-                  id: streamingId,
-                  content: accumulatedContent,
-                  isUserMessage: false,
-                  timestamp: new Date(),
-                  attachments: []
-                };
-                addOptimisticMessage(streamingAiMessage);
-              }, 0);
-            }
-          }
-          
-          return newMessage;
         });
         break;
 

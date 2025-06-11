@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Zap } from "lucide-react";
-import { SmoothStreamingText } from "@/components/SmoothStreamingText";
+import { StreamingText } from "@/components/StreamingText";
 
 interface Attachment {
   name: string;
@@ -81,7 +81,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         )}
         <div className="prose prose-sm dark:prose-invert max-w-none">
           {!isUser && isStreaming ? (
-            <SmoothStreamingText 
+            <StreamingText 
               content={message || ''} 
               isComplete={isStreamingComplete} 
             />

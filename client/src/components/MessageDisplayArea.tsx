@@ -56,11 +56,10 @@ export function MessageDisplayArea({
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {/* Display all persisted messages */}
+      {/* CHATGPT-STYLE: Simple message display with streaming detection */}
       {allDisplayMessages && allDisplayMessages.map((message: Message) => {
-        // Check if this is the currently streaming message
-        const isCurrentlyStreaming = message.id.startsWith('ai-streaming-') && streamingMessage?.isStreaming && message.id === streamingMessage.id;
-        const isStreamingCompleted = message.id.startsWith('ai-streaming-') && streamingMessage?.isComplete && message.id === streamingMessage.id;
+        // Detect if this message is currently being streamed
+        const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
         
         return (
           <ChatMessage
@@ -68,8 +67,8 @@ export function MessageDisplayArea({
             message={message.content}
             isUser={message.isUserMessage}
             timestamp={message.timestamp}
-            isStreaming={Boolean(isCurrentlyStreaming)}
-            isStreamingComplete={Boolean(isStreamingCompleted)}
+            isStreaming={isActivelyStreaming}
+            isStreamingComplete={false}
             attachments={message.attachments?.map((att: any) => ({
               name: att.name,
               type: att.type,
@@ -78,10 +77,8 @@ export function MessageDisplayArea({
         );
       })}
       
-      {/* Streaming message display removed - handled through optimistic messages */}
-      
-      {/* AI thinking indicator - discrete design */}
-      {isThinking && (
+      {/* AI thinking indicator - only show when no streaming message exists */}
+      {isThinking && !allDisplayMessages.some(msg => msg.id.startsWith('ai-streaming-')) && (
         <div className="flex items-start space-x-3">
           <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
             <div className="w-3 h-3 bg-muted-foreground rounded-full"></div>
@@ -92,32 +89,6 @@ export function MessageDisplayArea({
               <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
               <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Streaming message - show with explicit persistence logic */}
-      {streamingMessage && streamingMessage.content && 
-       !messagesToDisplay.some(msg => 
-         !msg.isUserMessage && 
-         msg.content.trim() === streamingMessage.content.trim()
-       ) && (
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-full"></div>
-          </div>
-          <div className="flex-1 bg-muted rounded-lg p-3">
-            <div className="text-sm whitespace-pre-wrap">
-              {streamingMessage.content}
-              {streamingMessage.isStreaming && (
-                <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse"></span>
-              )}
-            </div>
-            {streamingMessage.isComplete && !streamingMessage.isStreaming && (
-              <div className="text-xs text-muted-foreground mt-1 opacity-60">
-                Saving...
-              </div>
-            )}
           </div>
         </div>
       )}

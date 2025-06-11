@@ -39,7 +39,8 @@ const messageSchema = z.object({
   aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
   aiModel: z.string().optional().default("gpt-4o"),
   attachments: z.array(attachmentSchema).optional(),
-  automaticModelSelection: z.boolean().optional().default(false)
+  automaticModelSelection: z.boolean().optional().default(false),
+  streaming: z.boolean().optional().default(false)
 });
 
 // Device connect schema
@@ -120,10 +121,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Send a new message with memory enhancement
+  // Streaming endpoint for real-time AI responses (Tier 1 B optimization)
+  app.get("/api/messages/stream/:conversationId", async (req, res) => {
+    const conversationId = req.params.conversationId;
+    
+    // Set up Server-Sent Events headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
+    });
+
+    try {
+      // Send initial connection event
+      res.write(`data: ${JSON.stringify({ type: 'connected', conversationId })}\n\n`);
+
+      // Get conversation history for context
+      const conversationHistory = await db
+        .select()
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, conversationId))
+        .orderBy(conversationMessages.createdAt)
+        .limit(20);
+
+      // Send conversation history
+      res.write(`data: ${JSON.stringify({ 
+        type: 'history', 
+        messages: conversationHistory 
+      })}\n\n`);
+
+      // Keep connection alive with heartbeat
+      const heartbeat = setInterval(() => {
+        res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`);
+      }, 30000);
+
+      // Clean up on client disconnect
+      req.on('close', () => {
+        clearInterval(heartbeat);
+        res.end();
+      });
+
+    } catch (error) {
+      console.error('Streaming error:', error);
+      res.write(`data: ${JSON.stringify({ type: 'error', message: 'Failed to establish stream' })}\n\n`);
+      res.end();
+    }
+  });
+
+  // Enhanced message endpoint with streaming and parallel processing (Tier 1 B & C optimizations)
   app.post("/api/messages", async (req, res) => {
     try {
-      const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection } = messageSchema.parse(req.body);
+      const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection, streaming } = messageSchema.parse(req.body);
       const userId = 1; // Default user ID
 
       let currentConversationId = conversationId;

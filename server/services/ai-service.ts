@@ -129,7 +129,8 @@ class AiService {
       if (!providerToUse) {
           log('error', `Provider ${currentAiConfig.provider} not found or not registered. Attempting fallback.`);
           if (this.providers.size > 0) {
-              currentAiConfig.provider = this.providers.keys().next().value;
+              const fallbackProvider = this.providers.keys().next().value as AIProviderName;
+              currentAiConfig.provider = fallbackProvider;
               currentAiConfig.model = currentAiConfig.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.0-flash-exp';
               log('info', `Fell back to provider ${currentAiConfig.provider} with model ${currentAiConfig.model}`);
               providerToUse = this.providers.get(currentAiConfig.provider);
@@ -141,12 +142,12 @@ class AiService {
 
       log('info', `Using AI provider: ${currentAiConfig.provider}, Model: ${currentAiConfig.model}`);
 
+      // Tier 1 C: Parallel processing optimization
       // Fire and forget memory processing, don't let it block the response
-      memoryService.processMessageForMemory(
+      const memoryProcessingPromise = memoryService.processMessageForMemory(
         userId, message, conversationId, messageId, conversationHistory
       )
       .then(memoryResult => {
-        // Log success or any relevant info from memoryResult if needed
         log('info', '[AiService] Asynchronous memory processing completed.', {
           conversationId: conversationId,
           messageId: messageId,
@@ -155,38 +156,42 @@ class AiService {
             autoDetected: !!memoryResult?.autoDetectedMemory
           }
         });
+        return memoryResult;
       })
       .catch(error => {
-        // Log any errors from the async memory processing
         log('error', '[AiService] Asynchronous memory processing failed.', {
           conversationId: conversationId,
           messageId: messageId,
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         });
+        return null;
       });
 
-      const contextMessages: ProviderChatMessage[] = await chatContextService.buildChatContext(
-        userId, message, conversationId, coachingMode,
-        conversationHistory, attachments, currentAiConfig.provider
-      );
+      // Parallel execution of context building and memory retrieval
+      const [contextMessages, relevantMemoriesFromContext] = await Promise.all([
+        chatContextService.buildChatContext(
+          userId, message, conversationId, coachingMode,
+          conversationHistory, attachments, currentAiConfig.provider
+        ),
+        memoryService.getContextualMemories(userId, conversationHistory, message)
+      ]);
 
+      // Execute AI API call
       const { response } = await providerToUse.generateChatResponse(
         contextMessages, { model: currentAiConfig.model }
       );
 
-      // TODO: Accurately calculate memoriesUsed. This might involve ChatContextService returning info,
-      // or memoryService providing a method to get used memories for a session.
-      const relevantMemoriesFromContext = await memoryService.getContextualMemories(userId, conversationHistory, message);
+      // Log memory usage in parallel (non-blocking)
       if (relevantMemoriesFromContext.length > 0) {
-        await memoryService.logMemoryUsage(relevantMemoriesFromContext, conversationId, true);
+        memoryService.logMemoryUsage(relevantMemoriesFromContext, conversationId, true)
+          .catch(error => log('warn', 'Failed to log memory usage:', error));
       }
-
 
       return {
         response,
         memoryInfo: {
-          memoriesUsed: relevantMemoriesFromContext.length, // This is from getContextualMemories, which is still awaited
-          newMemoriesProcessing: true // Indicate that processing for new memories from current message is ongoing
+          memoriesUsed: relevantMemoriesFromContext.length,
+          newMemoriesProcessing: true // Memory processing continues in background
         }
       };
     } catch (error) {
@@ -194,7 +199,108 @@ class AiService {
       return {
         response: "I apologize, but I'm having trouble with my systems. Please try again later.",
         conversationId,
-        memoryInfo: { memoriesUsed: 0, newMemoriesProcessing: true } // Updated here as well for consistency
+        memoryInfo: { memoriesUsed: 0, newMemoriesProcessing: true }
+      };
+    }
+  }
+
+  // New method for streaming responses (Tier 1 B optimization)
+  async getChatResponseStream(
+    message: string,
+    userId: number,
+    conversationId: string,
+    messageId: number,
+    coachingMode: string = "weight-loss",
+    conversationHistory: any[] = [],
+    aiConfigInput: { provider: string; model: string } = { provider: "openai", model: "gpt-4o" },
+    attachments: AttachmentData[] = [],
+    automaticModelSelection: boolean = false,
+    onChunk?: (chunk: string) => void,
+    onComplete?: (response: string) => void,
+    onError?: (error: Error) => void
+  ): Promise<{ response: string; memoryInfo?: any; conversationId?: string }> {
+    let currentAiConfig: AiServiceConfig = {
+        provider: aiConfigInput.provider as AIProviderName,
+        model: aiConfigInput.model as ModelName
+    };
+
+    try {
+      if (this.providers.size === 0) throw new Error("No AI providers registered.");
+
+      if (automaticModelSelection) {
+        currentAiConfig = this.selectOptimalModel(message, attachments, currentAiConfig);
+      }
+
+      let providerToUse = this.providers.get(currentAiConfig.provider);
+      if (!providerToUse) {
+          if (this.providers.size > 0) {
+              currentAiConfig.provider = this.providers.keys().next().value;
+              currentAiConfig.model = currentAiConfig.provider === 'openai' ? 'gpt-4o-mini' : 'gemini-2.0-flash-exp';
+              providerToUse = this.providers.get(currentAiConfig.provider);
+          } else {
+              throw new Error(`Provider ${aiConfigInput.provider} not available and no fallback providers registered.`);
+          }
+      }
+      if (!providerToUse) throw new Error(`Critical: Provider ${currentAiConfig.provider} could not be resolved.`);
+
+      log('info', `Using AI provider for streaming: ${currentAiConfig.provider}, Model: ${currentAiConfig.model}`);
+
+      // Start memory processing in parallel (non-blocking)
+      const memoryProcessingPromise = memoryService.processMessageForMemory(
+        userId, message, conversationId, messageId, conversationHistory
+      ).catch(error => {
+        log('error', '[AiService] Stream memory processing failed:', error);
+        return null;
+      });
+
+      // Parallel execution of context building and memory retrieval
+      const [contextMessages, relevantMemoriesFromContext] = await Promise.all([
+        chatContextService.buildChatContext(
+          userId, message, conversationId, coachingMode,
+          conversationHistory, attachments, currentAiConfig.provider
+        ),
+        memoryService.getContextualMemories(userId, conversationHistory, message)
+      ]);
+
+      // For streaming, we'll use the regular method but add streaming hooks
+      // Note: Actual streaming implementation would depend on provider capabilities
+      const { response } = await providerToUse.generateChatResponse(
+        contextMessages, { model: currentAiConfig.model }
+      );
+
+      // Simulate streaming for now (in real implementation, this would be done at provider level)
+      if (onChunk) {
+        const words = response.split(' ');
+        for (let i = 0; i < words.length; i++) {
+          setTimeout(() => {
+            onChunk(words[i] + (i < words.length - 1 ? ' ' : ''));
+            if (i === words.length - 1 && onComplete) {
+              onComplete(response);
+            }
+          }, i * 50); // 50ms delay between words
+        }
+      }
+
+      // Log memory usage in parallel
+      if (relevantMemoriesFromContext.length > 0) {
+        memoryService.logMemoryUsage(relevantMemoriesFromContext, conversationId, true)
+          .catch(error => log('warn', 'Failed to log memory usage:', error));
+      }
+
+      return {
+        response,
+        memoryInfo: {
+          memoriesUsed: relevantMemoriesFromContext.length,
+          newMemoriesProcessing: true
+        }
+      };
+    } catch (error) {
+      log('error', 'Error in getChatResponseStream:', { message: error.message, config: currentAiConfig });
+      if (onError) onError(error);
+      return {
+        response: "I apologize, but I'm having trouble with my systems. Please try again later.",
+        conversationId,
+        memoryInfo: { memoriesUsed: 0, newMemoriesProcessing: true }
       };
     }
   }

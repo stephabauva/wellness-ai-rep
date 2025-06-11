@@ -407,20 +407,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     console.log("[AppContext] CHATGPT-STYLE: Adding optimistic message:", message.id);
     setActiveMessages(prevMessages => {
       // Check if this exact message already exists
-      const exists = prevMessages.some(msg => msg.id === message.id);
-      if (exists) {
-        return prevMessages.map(msg => 
-          msg.id === message.id ? { ...msg, ...message } : msg
-        );
+      const existingIndex = prevMessages.findIndex(msg => msg.id === message.id);
+      if (existingIndex !== -1) {
+        // Update existing message
+        const updated = [...prevMessages];
+        updated[existingIndex] = { ...updated[existingIndex], ...message };
+        return updated;
       }
       
-      // Only remove the current streaming message if we're adding a replacement
-      let filteredMessages = prevMessages;
-      if (message.id === 'ai-streaming-current') {
-        filteredMessages = prevMessages.filter(msg => msg.id !== 'ai-streaming-current');
-      }
-      
-      return [...filteredMessages, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      // Add new message without removing others
+      return [...prevMessages, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     });
   }, []);
 

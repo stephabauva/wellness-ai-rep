@@ -59,8 +59,8 @@ export function MessageDisplayArea({
       {/* Display all persisted messages */}
       {allDisplayMessages && allDisplayMessages.map((message: Message) => {
         // Check if this is the currently streaming message
-        const isCurrentlyStreaming = message.id === 'ai-streaming-current' && streamingMessage?.isStreaming;
-        const isStreamingCompleted = message.id === 'ai-streaming-current' && streamingMessage?.isComplete;
+        const isCurrentlyStreaming = message.id.startsWith('ai-streaming-') && streamingMessage?.isStreaming && message.id === streamingMessage.id;
+        const isStreamingCompleted = message.id.startsWith('ai-streaming-') && streamingMessage?.isComplete && message.id === streamingMessage.id;
         
         return (
           <ChatMessage

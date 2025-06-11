@@ -24,10 +24,15 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       clearTimeout(timeoutRef.current);
     }
 
-    // Reset if content changed
-    if (currentIndexRef.current === 0 || content.length < displayedText.length) {
+    // Only reset if content is completely new (smaller than current display)
+    if (content.length < displayedText.length) {
       currentIndexRef.current = 0;
       setDisplayedText('');
+    }
+
+    // If content hasn't changed or we've already displayed it all, don't restart
+    if (currentIndexRef.current >= content.length && displayedText === content) {
+      return;
     }
 
     // Smart pacing function for natural typing rhythm
@@ -44,8 +49,8 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       if (currentIndexRef.current < content.length) {
         const nextChar = content[currentIndexRef.current];
         
-        // Update display immediately to avoid render blocking
-        setDisplayedText(prev => prev + nextChar);
+        // Update display to show one more character
+        setDisplayedText(content.substring(0, currentIndexRef.current + 1));
         currentIndexRef.current++;
         
         // Schedule next character with natural pacing
@@ -59,7 +64,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
 
     // Start streaming if we haven't displayed all the content yet
     if (currentIndexRef.current < content.length) {
-      timeoutRef.current = setTimeout(typeNextToken, 50); // Reduced initial delay
+      timeoutRef.current = setTimeout(typeNextToken, 30); // Faster initial delay
     }
 
     return () => {
@@ -67,7 +72,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [content, isComplete, onComplete]);
+  }, [content, isComplete, onComplete, displayedText]);
 
   // Cursor blinking effect
   useEffect(() => {

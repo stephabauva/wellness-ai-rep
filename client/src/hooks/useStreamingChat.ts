@@ -155,12 +155,14 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
         const cleanChunk = data.content || '';
         
         setStreamingMessage(prev => {
+          // Use a consistent ID for the current streaming session
+          const streamingId = prev?.id || `ai-streaming-${Date.now()}`;
           const newMessage = prev ? {
             ...prev,
             content: prev.content + cleanChunk,
             isStreaming: true
           } : {
-            id: `ai-streaming-current`,
+            id: streamingId,
             content: cleanChunk,
             isComplete: false,
             isStreaming: true
@@ -169,7 +171,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
           // Update the optimistic message with accumulated content
           if (addOptimisticMessage) {
             const streamingAiMessage = {
-              id: `ai-streaming-current`,
+              id: streamingId,
               content: newMessage.content,
               isUserMessage: false,
               timestamp: new Date(),

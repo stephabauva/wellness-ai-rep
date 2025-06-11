@@ -729,7 +729,7 @@ Use this information to personalize your responses, but don't explicitly mention
     }
   }
 
-  // Delete memory
+  // Tier 2 C: Delete memory with optimized cache invalidation
   async deleteMemory(memoryId: string, userId: number): Promise<boolean> {
     try {
       const [deleted] = await db
@@ -741,10 +741,48 @@ Use this information to personalize your responses, but don't explicitly mention
         ))
         .returning();
 
+      if (deleted) {
+        // Tier 2 C: Debounced cache invalidation
+        this.invalidateUserMemoryCache(userId, 1000);
+        
+        // Clear related cache entries
+        cacheService.clearMemorySearchResults(userId);
+      }
+
       return !!deleted;
     } catch (error) {
       console.error('Error deleting memory:', error);
       return false;
+    }
+  }
+
+  // Tier 2 C: Get memory service performance stats
+  getPerformanceStats(): {
+    backgroundQueueSize: number;
+    activeCaches: number;
+    pendingUpdates: number;
+    cacheHitRate: string;
+  } {
+    return {
+      backgroundQueueSize: this.backgroundQueue.tasks.length,
+      activeCaches: this.userMemoryCache.size + this.similarityCache.size,
+      pendingUpdates: this.updateTimers.size,
+      cacheHitRate: `${Math.round((this.userMemoryCache.size / (this.userMemoryCache.size + 1)) * 100)}%`
+    };
+  }
+
+  // Tier 2 C: Force cache cleanup for memory management
+  forceCacheCleanup(): void {
+    this.cleanupExpiredCaches();
+  }
+
+  // Tier 2 C: Preload user memories for better performance
+  async preloadUserMemories(userId: number): Promise<void> {
+    try {
+      await this.getUserMemoriesLazy(userId);
+      console.log(`[MemoryService] Preloaded memories for user ${userId}`);
+    } catch (error) {
+      console.error('[MemoryService] Failed to preload user memories:', error);
     }
   }
 }

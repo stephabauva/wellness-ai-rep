@@ -408,6 +408,19 @@ export class IntelligentCacheService {
     cache.delete(generalKey);
   }
 
+  // Tier 2 C: Clear memory search results for user
+  clearMemorySearchResults(userId: number): void {
+    const cache = this.getCache('contextualMemories');
+    const keys = Array.from(cache.keys());
+    
+    // Remove all memory search result keys for this user
+    keys.forEach(key => {
+      if (key.includes(`memories:search:${userId}:`) || key.includes(`user:${userId}`)) {
+        cache.delete(key);
+      }
+    });
+  }
+
   // Cache statistics and monitoring
   getStats(): Record<string, any> {
     const stats: Record<string, any> = {};

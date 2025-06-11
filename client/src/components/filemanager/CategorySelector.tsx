@@ -54,9 +54,6 @@ export function CategorySelector({
             onClick={() => handleCategorize(category.id)}
             className="flex items-center gap-2"
           >
-            {category.icon && (
-              <span className="text-sm">{category.icon}</span>
-            )}
             <span className="flex-1">{category.name}</span>
             {category.color && (
               <div

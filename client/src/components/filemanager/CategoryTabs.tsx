@@ -53,7 +53,6 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
-          const TabIcon = tab.icon ? getIconFromName(tab.icon) : null;
           
           return (
             <button
@@ -68,7 +67,6 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
               )}
               aria-controls={`tabpanel-${tab.id}`}
             >
-              {TabIcon && <TabIcon className="h-4 w-4 flex-shrink-0" />}
               <span className="truncate max-w-[120px]">{tab.label}</span>
               <span className={cn(
                 "text-xs px-1.5 py-0.5 rounded-full",

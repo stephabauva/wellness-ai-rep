@@ -65,12 +65,6 @@ export function CategoryDropdown({
                 <span className="text-sm">{category.icon}</span>
               )}
               <span>{category.name}</span>
-              {category.color && (
-                <div
-                  className="w-3 h-3 rounded-full border ml-auto"
-                  style={{ backgroundColor: category.color }}
-                />
-              )}
             </div>
           </SelectItem>
         ))}

@@ -31,7 +31,7 @@ const getFileIcon = (fileType: string) => {
   return <Zap className="h-4 w-4" />;
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ 
+export const ChatMessage = React.memo<ChatMessageProps>(({ 
   message, 
   isUser, 
   timestamp, 

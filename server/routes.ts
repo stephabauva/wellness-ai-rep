@@ -473,6 +473,203 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Configure multer for health data file uploads
+  const healthDataUpload = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadsDir = join(process.cwd(), 'uploads');
+        if (!existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        cb(null, uploadsDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueName = `health-${nanoid()}-${file.originalname}`;
+        cb(null, uniqueName);
+      }
+    }),
+    limits: {
+      fileSize: 100 * 1024 * 1024, // 100MB limit for health data files
+    },
+    fileFilter: (req, file, cb) => {
+      // Accept health data file formats
+      const allowedMimeTypes = [
+        'text/xml',
+        'application/xml',
+        'application/json',
+        'text/csv',
+        'application/csv',
+        'text/plain'
+      ];
+      
+      const allowedExtensions = ['.xml', '.json', '.csv'];
+      const fileExtension = path.extname(file.originalname).toLowerCase();
+      
+      if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Please upload XML, JSON, or CSV files.'));
+      }
+    }
+  });
+
+  // Health Data Import API endpoints
+  
+  // Parse and preview health data file
+  app.post("/api/health-data/parse", healthDataUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      const parseResult = await HealthDataParser.parseFile(fileContent, req.file.originalname);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Failed to parse health data file",
+          errors: parseResult.errors
+        });
+      }
+
+      res.json({
+        success: true,
+        summary: parseResult.summary,
+        preview: parseResult.data?.slice(0, 10), // Return first 10 records for preview
+        errors: parseResult.errors
+      });
+    } catch (error) {
+      console.error('Health data parse error:', error);
+      res.status(500).json({ message: "Failed to parse health data file" });
+    }
+  });
+
+  // Import health data with duplicate checking
+  app.post("/api/health-data/import", healthDataUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      const parseResult = await HealthDataParser.parseFile(fileContent, req.file.originalname);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      if (!parseResult.success || !parseResult.data) {
+        return res.status(400).json({
+          message: "Failed to parse health data file",
+          errors: parseResult.errors
+        });
+      }
+
+      // Convert parsed data to insertable format
+      const insertData = parseResult.data.map(point => ({
+        userId: 1, // Default user ID
+        dataType: point.dataType,
+        value: point.value,
+        unit: point.unit,
+        source: point.source,
+        category: point.category,
+        metadata: point.metadata
+      }));
+
+      // Check for duplicates
+      const duplicationOptions = {
+        timeWindowHours: parseInt(req.body.timeWindowHours as string) || 1,
+        exactValueMatch: req.body.exactValueMatch !== 'false',
+        checkSource: req.body.checkSource !== 'false'
+      };
+
+      const duplicateCheck = await HealthDataDeduplicationService.filterDuplicates(
+        insertData,
+        duplicationOptions
+      );
+
+      // Import unique records
+      const importedRecords = [];
+      for (const uniqueData of duplicateCheck.unique) {
+        try {
+          const record = await storage.createHealthData(uniqueData);
+          importedRecords.push(record);
+        } catch (error) {
+          console.error('Error importing health data record:', error);
+        }
+      }
+
+      res.json({
+        success: true,
+        imported: {
+          count: importedRecords.length,
+          records: importedRecords
+        },
+        duplicates: {
+          count: duplicateCheck.duplicates.length,
+          records: duplicateCheck.duplicates.map(d => ({
+            dataPoint: d.dataPoint,
+            confidence: d.duplicateCheck.confidence,
+            reason: d.duplicateCheck.reason,
+            suggestedAction: HealthDataDeduplicationService.getSuggestedAction(d.duplicateCheck.confidence)
+          }))
+        },
+        summary: parseResult.summary,
+        errors: parseResult.errors
+      });
+    } catch (error) {
+      console.error('Health data import error:', error);
+      res.status(500).json({ message: "Failed to import health data" });
+    }
+  });
+
+  // Get import history (placeholder for future implementation)
+  app.get("/api/health-data/import-history", async (req, res) => {
+    try {
+      // For now, return empty array - can be extended later
+      res.json([]);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch import history" });
+    }
+  });
+
+  // Force import duplicates with user confirmation
+  app.post("/api/health-data/import-duplicates", async (req, res) => {
+    try {
+      const { duplicates } = req.body;
+      
+      if (!Array.isArray(duplicates)) {
+        return res.status(400).json({ message: "Invalid duplicates data" });
+      }
+
+      const importedRecords = [];
+      for (const duplicate of duplicates) {
+        try {
+          const record = await storage.createHealthData({
+            ...duplicate.dataPoint,
+            userId: 1 // Default user ID
+          });
+          importedRecords.push(record);
+        } catch (error) {
+          console.error('Error force importing duplicate:', error);
+        }
+      }
+
+      res.json({
+        success: true,
+        imported: {
+          count: importedRecords.length,
+          records: importedRecords
+        }
+      });
+    } catch (error) {
+      console.error('Force import error:', error);
+      res.status(500).json({ message: "Failed to force import duplicates" });
+    }
+  });
+
   // Get connected devices
   app.get("/api/devices", async (req, res) => {
     try {

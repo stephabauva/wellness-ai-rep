@@ -18,6 +18,7 @@ import { SleepQualityChart } from "./health/SleepQualityChart";
 import { NutritionSummary } from "./health/NutritionSummary";
 import { HydrationCard } from "./health/HydrationCard";
 import { CoachingInsights } from "./health/CoachingInsights";
+import { HealthDataImport } from "./health/HealthDataImport";
 
 // Define types for chart data (can be moved to a types file if they grow)
 interface ActivityDataPoint { day: string; steps?: number; active?: number; calories?: number; }

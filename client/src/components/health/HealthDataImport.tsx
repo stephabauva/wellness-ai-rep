@@ -71,9 +71,9 @@ export function HealthDataImport() {
   });
   const [selectedDuplicates, setSelectedDuplicates] = useState<number[]>([]);
   
-  // Go service integration
-  const [useGoProcessor, setUseGoProcessor] = useState(true);
-  const [processingProgress, setProcessingProgress] = useState<any>(null);
+  // New optimization states
+  const [compressionEnabled, setCompressionEnabled] = useState(true);
+  const [compressionResult, setCompressionResult] = useState<any>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();

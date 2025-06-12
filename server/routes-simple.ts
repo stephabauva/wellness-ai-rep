@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { z } from "zod";
 import { db } from "./db";
-import { conversations, conversationMessages, insertConversationSchema, insertConversationMessageSchema } from "@shared/schema";
+import { conversations, conversationMessages } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { storage } from "./storage";
 
 // Simple message schema for testing
@@ -90,19 +91,13 @@ export function registerSimpleRoutes(app: Express) {
   // Get conversations for testing
   app.get("/api/conversations/simple", async (req, res) => {
     try {
-      const conversationsWithMessages = await db
-        .select({
-          id: conversations.id,
-          title: conversations.title,
-          userId: conversations.userId,
-          createdAt: conversations.createdAt,
-          messageCount: db.$count(conversationMessages, eq => eq.conversationId === conversations.id)
-        })
+      const allConversations = await db
+        .select()
         .from(conversations)
         .orderBy(conversations.createdAt)
         .limit(10);
       
-      res.json(conversationsWithMessages);
+      res.json(allConversations);
     } catch (error) {
       console.error('Get conversations error:', error);
       res.status(500).json({ message: "Failed to fetch conversations" });

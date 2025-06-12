@@ -527,15 +527,12 @@ class AiService {
     coachingMode: string
   ): Promise<any> {
     try {
-      // For now, skip enhanced memory detection due to OpenAI rate limits
-      // Use only traditional memory processing to ensure conversation recording works
-      log('info', '[AiService] Skipping enhanced memory detection due to API rate limits, using traditional method');
-      
+      // Use traditional memory processing for now to ensure stability
       const traditionalResult = await memoryService.processMessageForMemory(
         userId, message, conversationId, messageId, conversationHistory
       );
 
-      log('info', '[AiService] Traditional memory processing completed:', {
+      log('info', '[AiService] Memory processing completed:', {
         explicitMemory: !!traditionalResult?.explicitMemory,
         autoDetectedMemory: !!traditionalResult?.autoDetectedMemory
       });

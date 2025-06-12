@@ -1,5 +1,6 @@
 import { CoachingMode, coachingModes } from "@shared/schema";
 import { memoryService } from "./memory-service";
+import { enhancedMemoryService } from "./enhanced-memory-service";
 import { chatContextService } from "./chat-context-service";
 import { OpenAiProvider } from "./providers/openai-provider";
 import { GoogleProvider } from "./providers/google-provider";

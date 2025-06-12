@@ -21,6 +21,9 @@ import fs from 'fs';
 import { attachmentRetentionService } from "./services/attachment-retention-service";
 import { goFileService } from "./services/go-file-service";
 import { statSync, unlinkSync } from 'fs';
+import { HealthDataParser } from "./services/health-data-parser";
+import { HealthDataDeduplicationService } from "./services/health-data-deduplication";
+import { insertHealthDataSchema } from "@shared/schema";
 
 // Attachment schema for client
 const attachmentSchema = z.object({

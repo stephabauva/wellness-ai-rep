@@ -750,8 +750,18 @@ Use this information to personalize your responses, but don't explicitly mention
         filteredMemories = allMemories.filter(memory => memory.category === category);
       }
 
+      // Map database fields to frontend expected format
+      const mappedMemories = filteredMemories.map(memory => ({
+        ...memory,
+        importanceScore: memory.importanceScore,
+        accessCount: memory.accessCount || 0,
+        lastAccessed: memory.lastAccessed || memory.createdAt,
+        createdAt: memory.createdAt,
+        keywords: memory.keywords || []
+      }));
+
       // Sort by importance and creation date
-      return filteredMemories.sort((a, b) => {
+      return mappedMemories.sort((a, b) => {
         if (a.importanceScore !== b.importanceScore) {
           return b.importanceScore - a.importanceScore;
         }

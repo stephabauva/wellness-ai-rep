@@ -231,6 +231,90 @@ export type InsertMemoryTrigger = z.infer<typeof insertMemoryTriggerSchema>;
 export type MemoryAccessLog = typeof memoryAccessLog.$inferSelect;
 export type InsertMemoryAccessLog = z.infer<typeof insertMemoryAccessLogSchema>;
 
+// Atomic facts schema for Phase 2: Semantic Memory Graph
+export const atomicFacts = pgTable("atomic_facts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  memoryEntryId: uuid("memory_entry_id").notNull().references(() => memoryEntries.id, { onDelete: 'cascade' }),
+  factContent: text("fact_content").notNull(),
+  factType: text("fact_type").notNull(), // preference, attribute, relationship, behavior, goal
+  confidence: real("confidence").notNull().default(0.8),
+  isVerified: boolean("is_verified").default(false),
+  sourceContext: text("source_context"), // Original message context
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAtomicFactSchema = createInsertSchema(atomicFacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Memory relationships schema for Phase 2: Semantic Memory Graph
+export const memoryRelationships = pgTable("memory_relationships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sourceMemoryId: uuid("source_memory_id").notNull().references(() => memoryEntries.id, { onDelete: 'cascade' }),
+  targetMemoryId: uuid("target_memory_id").notNull().references(() => memoryEntries.id, { onDelete: 'cascade' }),
+  relationshipType: text("relationship_type").notNull(), // contradicts, supports, elaborates, supersedes, related
+  strength: real("strength").notNull().default(0.5), // 0.0 to 1.0
+  confidence: real("confidence").notNull().default(0.7),
+  detectedAt: timestamp("detected_at").defaultNow(),
+  lastValidated: timestamp("last_validated").defaultNow(),
+  isActive: boolean("is_active").default(true),
+  validationCount: integer("validation_count").default(1),
+  metadata: jsonb("metadata"), // Additional context about the relationship
+});
+
+export const insertMemoryRelationshipSchema = createInsertSchema(memoryRelationships).omit({
+  id: true,
+  detectedAt: true,
+  lastValidated: true,
+  isActive: true,
+  validationCount: true,
+});
+
+// Memory consolidation log schema for tracking merge operations
+export const memoryConsolidationLog = pgTable("memory_consolidation_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull(),
+  consolidationType: text("consolidation_type").notNull(), // merge, supersede, resolve_contradiction, cluster
+  sourceMemoryIds: text("source_memory_ids").array().notNull(),
+  resultMemoryId: uuid("result_memory_id"),
+  confidence: real("confidence").notNull(),
+  reasonDescription: text("reason_description"),
+  automaticProcess: boolean("automatic_process").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMemoryConsolidationLogSchema = createInsertSchema(memoryConsolidationLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Memory graph metrics for performance tracking
+export const memoryGraphMetrics = pgTable("memory_graph_metrics", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull(),
+  totalMemories: integer("total_memories").notNull(),
+  totalRelationships: integer("total_relationships").notNull(),
+  avgRelationshipsPerMemory: real("avg_relationships_per_memory"),
+  contradictionCount: integer("contradiction_count").default(0),
+  consolidationCount: integer("consolidation_count").default(0),
+  graphDensity: real("graph_density"), // relationships / possible_relationships
+  lastCalculated: timestamp("last_calculated").defaultNow(),
+});
+
+export type AtomicFact = typeof atomicFacts.$inferSelect;
+export type InsertAtomicFact = z.infer<typeof insertAtomicFactSchema>;
+
+export type MemoryRelationship = typeof memoryRelationships.$inferSelect;
+export type InsertMemoryRelationship = z.infer<typeof insertMemoryRelationshipSchema>;
+
+export type MemoryConsolidationLog = typeof memoryConsolidationLog.$inferSelect;
+export type InsertMemoryConsolidationLog = z.infer<typeof insertMemoryConsolidationLogSchema>;
+
+export type MemoryGraphMetrics = typeof memoryGraphMetrics.$inferSelect;
+
 export type ConversationMessage = typeof conversationMessages.$inferSelect;
 export type InsertConversationMessage = z.infer<typeof insertConversationMessageSchema>;
 

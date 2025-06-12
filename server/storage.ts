@@ -11,7 +11,11 @@ import {
   connectedDevices,
   type ConnectedDevice,
   type InsertConnectedDevice,
-  coachingModes
+  coachingModes,
+  type AtomicFact,
+  type MemoryRelationship,
+  type MemoryConsolidationLog,
+  type MemoryGraphMetrics
 } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { eq, and, gte, desc } from "drizzle-orm";

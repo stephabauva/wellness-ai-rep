@@ -393,11 +393,11 @@ class AiService {
 
       log('info', `Using AI provider for streaming: ${currentAiConfig.provider}, Model: ${currentAiConfig.model}`);
 
-      // Start memory processing in parallel (non-blocking)
-      const memoryProcessingPromise = memoryService.processMessageForMemory(
-        userId, message, conversationId, messageId, conversationHistory
+      // Start enhanced memory processing in parallel (non-blocking)
+      const memoryProcessingPromise = this.processEnhancedMemory(
+        userId, message, conversationHistory, conversationId, messageId, coachingMode
       ).catch(error => {
-        log('error', '[AiService] Stream memory processing failed:', error);
+        log('error', '[AiService] Enhanced stream memory processing failed:', error);
         return null;
       });
 
@@ -558,8 +558,33 @@ class AiService {
         atomicFacts: enhancedDetection.atomicFacts.length
       });
 
+      // Create actual memory entries if enhanced detection determines content is memory-worthy
+      let createdMemory = null;
+      if (enhancedDetection.shouldRemember && enhancedDetection.extractedInfo) {
+        try {
+          createdMemory = await memoryService.createMemory(
+            userId,
+            enhancedDetection.extractedInfo,
+            enhancedDetection.category,
+            enhancedDetection.importance,
+            conversationId,
+            messageId,
+            enhancedDetection.keywords
+          );
+          
+          log('info', '[AiService] Enhanced memory entry created:', {
+            memoryId: createdMemory.id,
+            category: enhancedDetection.category,
+            importance: enhancedDetection.importance
+          });
+        } catch (memoryError) {
+          log('error', '[AiService] Failed to create enhanced memory entry:', memoryError);
+        }
+      }
+
       return {
         enhancedDetection,
+        createdMemory,
         explicitMemory: traditionalResult?.explicitMemory,
         autoDetectedMemory: traditionalResult?.autoDetectedMemory
       };

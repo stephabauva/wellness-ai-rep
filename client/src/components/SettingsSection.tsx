@@ -8,15 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/context/AppContext";
 import { 
   User, 
-  Settings, 
-  MousePointer, 
-  Stethoscope, 
-  Bell, 
-  Database, 
-  Terminal, 
-  MessageSquare, 
-  TestTube, 
-  Globe 
+  Heart, 
+  Palette, 
+  FolderOpen, 
+  Bot, 
+  Zap
 } from "lucide-react";
 
 // Import hooks
@@ -61,11 +57,11 @@ export type CombinedSettingsFormValues = z.infer<typeof settingsSchema>;
 // Define settings sections with icons
 const settingsSections = [
   { id: 'account', label: 'Account', icon: User },
-  { id: 'coaching', label: 'Coaching', icon: Stethoscope },
-  { id: 'preferences', label: 'App Preferences', icon: Settings },
-  { id: 'files', label: 'File Management', icon: Database },
-  { id: 'ai', label: 'AI Configuration', icon: MessageSquare },
-  { id: 'performance', label: 'Performance', icon: Terminal },
+  { id: 'coaching', label: 'Coaching', icon: Heart },
+  { id: 'preferences', label: 'App Preferences', icon: Palette },
+  { id: 'files', label: 'File Management', icon: FolderOpen },
+  { id: 'ai', label: 'AI Configuration', icon: Bot },
+  { id: 'performance', label: 'Performance', icon: Zap },
 ];
 
 const SettingsSection: React.FC = () => {
@@ -204,7 +200,7 @@ const SettingsSection: React.FC = () => {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Vertical Navigation Sidebar */}
-      <div className="w-16 bg-gradient-to-b from-purple-600 to-slate-800 dark:from-purple-700 dark:to-slate-900 flex flex-col items-center py-4 space-y-4 overflow-y-auto">
+      <div className="w-16 bg-gradient-to-b from-primary to-secondary dark:from-primary dark:to-secondary flex flex-col items-center py-4 space-y-4 overflow-y-auto">
         {settingsSections.map((section) => {
           const IconComponent = section.icon;
           const isActive = activeSection === section.id;
@@ -214,15 +210,16 @@ const SettingsSection: React.FC = () => {
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               className={`
-                p-3 rounded-lg transition-all duration-200 
+                group relative p-3 rounded-xl transition-all duration-300 ease-out
                 ${isActive 
-                  ? 'bg-white/20 text-white shadow-lg scale-110' 
-                  : 'text-white/70 hover:text-white hover:bg-white/10 hover:scale-105'
+                  ? 'bg-white/25 text-white shadow-xl scale-110 ring-2 ring-white/30' 
+                  : 'text-white/60 hover:text-white hover:bg-white/15 hover:scale-105 hover:shadow-lg'
                 }
+                before:absolute before:inset-0 before:rounded-xl before:bg-gradient-radial before:from-white/10 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-300
               `}
               title={section.label}
             >
-              <IconComponent className="h-6 w-6" />
+              <IconComponent className={`h-6 w-6 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
             </button>
           );
         })}

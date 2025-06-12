@@ -63,14 +63,18 @@ export class MemoryGraphService {
     const extractionPrompt = this.buildFactExtractionPrompt(memoryEntry, sourceContext);
     
     try {
-      const response = await this.aiService.generateResponse([
-        { role: 'system', content: extractionPrompt },
-        { role: 'user', content: memoryEntry.content }
-      ], {
-        model: 'gpt-4o',
-        temperature: 0.1,
-        maxTokens: 1000
-      });
+      const chatResponse = await aiService.getChatResponse(
+        memoryEntry.content,
+        memoryEntry.userId,
+        'memory-graph-extraction',
+        1,
+        'general',
+        [{ role: 'system', content: extractionPrompt }],
+        { provider: 'openai', model: 'gpt-4o' },
+        [],
+        false
+      );
+      const response = chatResponse.response;
 
       const factsData = this.parseFactsResponse(response);
       const insertedFacts: AtomicFact[] = [];
@@ -237,14 +241,18 @@ export class MemoryGraphService {
     const analysisPrompt = this.buildRelationshipAnalysisPrompt();
 
     try {
-      const response = await this.aiService.generateResponse([
-        { role: 'system', content: analysisPrompt },
-        { role: 'user', content: `Memory 1: ${memory1.content}\n\nMemory 2: ${memory2.content}` }
-      ], {
-        model: 'gpt-4o',
-        temperature: 0.1,
-        maxTokens: 500
-      });
+      const chatResponse = await aiService.getChatResponse(
+        `Memory 1: ${memory1.content}\n\nMemory 2: ${memory2.content}`,
+        memory1.userId,
+        'memory-relationship-analysis',
+        1,
+        'general',
+        [{ role: 'system', content: analysisPrompt }],
+        { provider: 'openai', model: 'gpt-4o' },
+        [],
+        false
+      );
+      const response = chatResponse.response;
 
       return this.parseRelationshipResponse(response);
     } catch (error) {
@@ -263,17 +271,18 @@ export class MemoryGraphService {
     const resolutionPrompt = this.buildContradictionResolutionPrompt();
 
     try {
-      const response = await this.aiService.generateResponse([
-        { role: 'system', content: resolutionPrompt },
-        { 
-          role: 'user', 
-          content: `Memory 1 (${memory1.createdAt}): ${memory1.content}\n\nMemory 2 (${memory2.createdAt}): ${memory2.content}`
-        }
-      ], {
-        model: 'gpt-4o',
-        temperature: 0.2,
-        maxTokens: 800
-      });
+      const chatResponse = await aiService.getChatResponse(
+        `Memory 1 (${memory1.createdAt}): ${memory1.content}\n\nMemory 2 (${memory2.createdAt}): ${memory2.content}`,
+        memory1.userId,
+        'memory-contradiction-resolution',
+        1,
+        'general',
+        [{ role: 'system', content: resolutionPrompt }],
+        { provider: 'openai', model: 'gpt-4o' },
+        [],
+        false
+      );
+      const response = chatResponse.response;
 
       const resolution = this.parseResolutionResponse(response);
       
@@ -354,23 +363,27 @@ export class MemoryGraphService {
   private async mergeMemoryCluster(cluster: MemoryEntry[]): Promise<ConsolidationResult | null> {
     if (cluster.length < 2) return null;
 
+    const primaryMemory = cluster[0];
     const mergePrompt = this.buildMergePrompt();
     const memoryContents = cluster.map((m, i) => `Memory ${i + 1}: ${m.content}`).join('\n\n');
 
     try {
-      const response = await this.aiService.generateResponse([
-        { role: 'system', content: mergePrompt },
-        { role: 'user', content: memoryContents }
-      ], {
-        model: 'gpt-4o',
-        temperature: 0.2,
-        maxTokens: 1000
-      });
+      const chatResponse = await aiService.getChatResponse(
+        memoryContents,
+        primaryMemory.userId,
+        'memory-merge',
+        1,
+        'general',
+        [{ role: 'system', content: mergePrompt }],
+        { provider: 'openai', model: 'gpt-4o' },
+        [],
+        false
+      );
+      const response = chatResponse.response;
 
       const mergedContent = response.trim();
       
       // Create the merged memory
-      const primaryMemory = cluster[0];
       const [mergedMemory] = await db.insert(memoryEntries)
         .values({
           userId: primaryMemory.userId,

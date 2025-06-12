@@ -1,4 +1,4 @@
-import LRUCache from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import { MemoryEntry, User, ChatMessage, HealthData, ConnectedDevice, File } from '@shared/schema';
 
 // Cache configuration interface

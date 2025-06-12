@@ -4,6 +4,7 @@ import { db } from "./db";
 import { conversations, conversationMessages } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { storage } from "./storage";
+import { simpleMemoryDetection } from './services/simple-memory-detection';
 
 // Simple message schema for testing
 const simpleMessageSchema = z.object({

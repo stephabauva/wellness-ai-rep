@@ -517,7 +517,7 @@ class AiService {
     return this.providers.has(providerName);
   }
 
-  // Phase 1: Enhanced memory processing with context-aware detection
+  // Simplified memory processing - disabled enhanced detection to prevent API quota exhaustion
   private async processEnhancedMemory(
     userId: number,
     message: string,
@@ -527,12 +527,12 @@ class AiService {
     coachingMode: string
   ): Promise<any> {
     try {
-      // Use traditional memory processing for now to ensure stability
+      // Only use traditional memory processing - no AI calls to prevent quota burn
       const traditionalResult = await memoryService.processMessageForMemory(
         userId, message, conversationId, messageId, conversationHistory
       );
 
-      log('info', '[AiService] Memory processing completed:', {
+      log('info', '[AiService] Traditional memory processing completed:', {
         explicitMemory: !!traditionalResult?.explicitMemory,
         autoDetectedMemory: !!traditionalResult?.autoDetectedMemory
       });

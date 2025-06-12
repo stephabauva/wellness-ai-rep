@@ -18,6 +18,8 @@ export const users = pgTable("users", {
   automaticModelSelection: boolean("automatic_model_selection").default(true),
   aiProvider: text("ai_provider").default("google"),
   aiModel: text("ai_model").default("gemini-2.0-flash-exp"),
+  memoryDetectionProvider: text("memory_detection_provider").default("google"),
+  memoryDetectionModel: text("memory_detection_model").default("gemini-2.0-flash-lite"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

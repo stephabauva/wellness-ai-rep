@@ -34,6 +34,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   automaticModelSelection: true,
   aiProvider: true,
   aiModel: true,
+  memoryDetectionProvider: true,
+  memoryDetectionModel: true,
 });
 
 // Chat message schema

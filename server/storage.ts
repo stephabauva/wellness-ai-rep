@@ -93,6 +93,8 @@ export class MemStorage implements IStorage {
       automaticModelSelection: true,
       aiProvider: "google",
       aiModel: "gemini-2.0-flash-exp",
+      memoryDetectionProvider: "google",
+      memoryDetectionModel: "gemini-2.0-flash-lite",
       createdAt: new Date()
     };
     this.users.set(1, defaultUser);

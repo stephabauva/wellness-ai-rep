@@ -162,6 +162,81 @@ export function AiConfigurationSettings({ aiModels, isLoadingAiModels }: AiConfi
             </FormItem>
           )}
         />
+
+        <div className="pt-4 border-t border-border">
+          <h4 className="text-md font-medium mb-4">Memory Detection Settings</h4>
+          
+          <FormField
+            control={control}
+            name="memoryDetectionProvider"
+            render={({ field }) => (
+              <FormItem className="mb-4">
+                <FormLabel>Memory Detection Provider</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select memory detection provider" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="google">Google Gemini (Recommended)</SelectItem>
+                    <SelectItem value="openai">OpenAI</SelectItem>
+                    <SelectItem value="none">Disabled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose AI provider for analyzing conversations to create memories. Google Gemini Flash Lite is most cost-effective.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="memoryDetectionModel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Memory Detection Model</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={watch("memoryDetectionProvider") === "none"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select memory detection model" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {watch("memoryDetectionProvider") === "google" && (
+                      <>
+                        <SelectItem value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Cheapest)</SelectItem>
+                        <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                      </>
+                    )}
+                    {watch("memoryDetectionProvider") === "openai" && (
+                      <>
+                        <SelectItem value="gpt-4o-mini">GPT-4o Mini (Recommended)</SelectItem>
+                        <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                      </>
+                    )}
+                    {watch("memoryDetectionProvider") === "none" && (
+                      <SelectItem value="none" disabled>Memory detection disabled</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {watch("memoryDetectionProvider") === "none" 
+                    ? "Memory detection is disabled. Simple keyword-based memory will be used instead."
+                    : "Select the specific model for analyzing conversations to detect important information worth remembering."
+                  }
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </CardContent>
     </Card>
   );

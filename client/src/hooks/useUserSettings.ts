@@ -21,6 +21,8 @@ const settingsFormSchema = z.object({
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]),
   preferredLanguage: z.string(),
   automaticModelSelection: z.boolean(),
+  memoryDetectionProvider: z.enum(["google", "openai", "none"]),
+  memoryDetectionModel: z.string(),
   // Retention settings might be handled by a separate hook/mutation if their API endpoint is different
   highValueRetentionDays: z.number().optional(), // Made optional if handled separately
   mediumValueRetentionDays: z.number().optional(),

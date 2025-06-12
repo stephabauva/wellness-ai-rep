@@ -572,11 +572,13 @@ class AiService {
             enhancedDetection.keywords
           );
           
-          log('info', '[AiService] Enhanced memory entry created:', {
-            memoryId: createdMemory.id,
-            category: enhancedDetection.category,
-            importance: enhancedDetection.importance
-          });
+          if (createdMemory) {
+            log('info', '[AiService] Enhanced memory entry created:', {
+              memoryId: createdMemory.id,
+              category: enhancedDetection.category,
+              importance: enhancedDetection.importance
+            });
+          }
         } catch (memoryError) {
           log('error', '[AiService] Failed to create enhanced memory entry:', memoryError);
         }

@@ -399,6 +399,25 @@ Respond with JSON:
     }
   }
 
+  // Create memory entry (wrapper for enhanced memory service compatibility)
+  async createMemory(
+    userId: number,
+    content: string,
+    category: string,
+    importance: number,
+    conversationId?: string,
+    messageId?: number,
+    keywords?: string[]
+  ): Promise<MemoryEntry | null> {
+    return this.saveMemoryEntry(userId, content, {
+      category: category as MemoryCategory,
+      importance_score: importance,
+      sourceConversationId: conversationId,
+      sourceMessageId: messageId,
+      keywords: keywords
+    });
+  }
+
   // Save memory entry to database
   async saveMemoryEntry(
     userId: number, 
@@ -421,8 +440,8 @@ Respond with JSON:
         importanceScore: options.importance_score,
         keywords: options.keywords || [],
         embedding: JSON.stringify(embedding),
-        sourceConversationId: options.sourceConversationId,
-        sourceMessageId: options.sourceMessageId,
+        sourceConversationId: options.sourceConversationId || null,
+        sourceMessageId: options.sourceMessageId || null,
       };
 
       const [memory] = await db.insert(memoryEntries).values(memoryData).returning();

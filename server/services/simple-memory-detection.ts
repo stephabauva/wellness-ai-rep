@@ -39,16 +39,50 @@ Return JSON only:
       const response = await model.generateContent(prompt);
       const content = response.response.text();
       
-      // Parse JSON response
-      const cleanContent = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+      // Parse JSON response - handle various Gemini response formats
+      let cleanContent = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
       
-      if (!jsonMatch) {
-        console.warn('[SimpleMemoryDetection] No valid JSON found in response');
+      // Try multiple extraction methods
+      let jsonStr = '';
+      
+      // Method 1: Look for complete JSON object
+      const jsonMatch = cleanContent.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[0];
+      }
+      
+      // Method 2: Find JSON in lines
+      if (!jsonStr) {
+        const lines = cleanContent.split('\n');
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('{') && trimmed.includes('}')) {
+            jsonStr = trimmed;
+            break;
+          }
+        }
+      }
+      
+      // Method 3: Extract everything between first { and last }
+      if (!jsonStr) {
+        const firstBrace = cleanContent.indexOf('{');
+        const lastBrace = cleanContent.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonStr = cleanContent.substring(firstBrace, lastBrace + 1);
+        }
+      }
+      
+      if (!jsonStr) {
+        console.warn('[SimpleMemoryDetection] No valid JSON found in response:', content);
         return;
       }
 
-      const result: SimpleMemoryResult = JSON.parse(jsonMatch[0]);
+      console.log('[SimpleMemoryDetection] Attempting to parse JSON:', jsonStr.substring(0, 200) + '...');
+      
+      // Clean up common JSON formatting issues
+      jsonStr = jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+      
+      const result: SimpleMemoryResult = JSON.parse(jsonStr);
 
       if (result.shouldRemember && result.summary && result.importance > 0.5) {
         // Store memory in database

@@ -743,12 +743,15 @@ Use this information to personalize your responses, but don't explicitly mention
     try {
       console.log(`[MemoryService] Getting memories for user ${userId}, category: ${category}`);
       
-      // Clear cache to ensure we get fresh data
-      const cacheKey = `user-memory-${userId}`;
-      this.userMemoryCache.delete(cacheKey);
-      
-      // Use lazy loading cache for base memories
-      const allMemories = await this.getUserMemoriesLazy(userId);
+      // Force fresh data by bypassing cache
+      const allMemories = await db
+        .select()
+        .from(memoryEntries)
+        .where(and(
+          eq(memoryEntries.userId, userId),
+          eq(memoryEntries.isActive, true)
+        ))
+        .orderBy(desc(memoryEntries.importanceScore));
       
       console.log(`[MemoryService] Retrieved ${allMemories.length} memories from database`);
 
@@ -800,11 +803,14 @@ Use this information to personalize your responses, but don't explicitly mention
         .returning();
 
       if (deleted) {
-        // Tier 2 C: Debounced cache invalidation
-        this.invalidateUserMemoryCache(userId, 1000);
+        // Immediate cache invalidation
+        const cacheKey = `user-memory-${userId}`;
+        this.userMemoryCache.delete(cacheKey);
         
         // Clear related cache entries
         cacheService.clearMemorySearchResults(userId);
+        
+        console.log(`[MemoryService] Memory ${memoryId} marked as inactive and cache cleared`);
       }
 
       return !!deleted;

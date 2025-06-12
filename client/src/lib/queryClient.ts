@@ -7,7 +7,7 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export const apiRequest = async (method: string, url: string, data?: any) => {
+export const apiRequest = async (url: string, method: string, data?: any) => {
   const config: RequestInit = {
     method,
     headers: {
@@ -25,9 +25,20 @@ export const apiRequest = async (method: string, url: string, data?: any) => {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const responseData = await response.json();
-  console.log('API Response data:', responseData);
-  return responseData;
+  // Handle 204 No Content responses (common for DELETE operations)
+  if (response.status === 204) {
+    return null;
+  }
+
+  // Check if response has content before parsing as JSON
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    const responseData = await response.json();
+    console.log('API Response data:', responseData);
+    return responseData;
+  }
+
+  return null;
 };
 
 type UnauthorizedBehavior = "returnNull" | "throw";

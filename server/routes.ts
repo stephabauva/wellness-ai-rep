@@ -69,6 +69,8 @@ const settingsUpdateSchema = z.object({
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional(),
   preferredLanguage: z.string().optional(),
   automaticModelSelection: z.boolean().optional(),
+  memoryDetectionProvider: z.enum(["google", "openai", "none"]).optional(),
+  memoryDetectionModel: z.string().optional(),
   // Attachment retention settings
   highValueRetentionDays: z.number().optional(),
   mediumValueRetentionDays: z.number().optional(),
@@ -550,6 +552,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         automaticModelSelection: user.automaticModelSelection,
         transcriptionProvider: user.transcriptionProvider,
         preferredLanguage: user.preferredLanguage,
+        memoryDetectionProvider: user.memoryDetectionProvider,
+        memoryDetectionModel: user.memoryDetectionModel,
         name: user.name,
         email: user.email
       };
@@ -587,6 +591,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         automaticModelSelection: updatedUser.automaticModelSelection,
         transcriptionProvider: updatedUser.transcriptionProvider,
         preferredLanguage: updatedUser.preferredLanguage,
+        memoryDetectionProvider: updatedUser.memoryDetectionProvider,
+        memoryDetectionModel: updatedUser.memoryDetectionModel,
         name: updatedUser.name,
         email: updatedUser.email
       };

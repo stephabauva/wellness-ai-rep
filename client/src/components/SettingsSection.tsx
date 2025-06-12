@@ -97,6 +97,8 @@ const SettingsSection: React.FC = () => {
       transcriptionProvider: "webspeech",
       preferredLanguage: "en",
       automaticModelSelection: true,
+      memoryDetectionProvider: "google",
+      memoryDetectionModel: "gemini-2.0-flash-lite",
       highValueRetentionDays: -1,
       mediumValueRetentionDays: 90,
       lowValueRetentionDays: 30,
@@ -148,6 +150,8 @@ const SettingsSection: React.FC = () => {
       transcriptionProvider: data.transcriptionProvider,
       preferredLanguage: data.preferredLanguage,
       automaticModelSelection: data.automaticModelSelection,
+      memoryDetectionProvider: data.memoryDetectionProvider,
+      memoryDetectionModel: data.memoryDetectionModel,
     };
     updateUserSettings(userSettingsData);
 

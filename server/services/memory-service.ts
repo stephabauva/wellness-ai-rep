@@ -741,13 +741,22 @@ Use this information to personalize your responses, but don't explicitly mention
   // Tier 2 C: Optimized user memories with caching and filtering
   async getUserMemories(userId: number, category?: MemoryCategory): Promise<MemoryEntry[]> {
     try {
+      console.log(`[MemoryService] Getting memories for user ${userId}, category: ${category}`);
+      
+      // Clear cache to ensure we get fresh data
+      const cacheKey = `user-memory-${userId}`;
+      this.userMemoryCache.delete(cacheKey);
+      
       // Use lazy loading cache for base memories
       const allMemories = await this.getUserMemoriesLazy(userId);
+      
+      console.log(`[MemoryService] Retrieved ${allMemories.length} memories from database`);
 
       // Apply category filter if specified
       let filteredMemories = allMemories;
       if (category) {
         filteredMemories = allMemories.filter(memory => memory.category === category);
+        console.log(`[MemoryService] Filtered to ${filteredMemories.length} memories for category ${category}`);
       }
 
       // Map database fields to frontend expected format
@@ -761,7 +770,7 @@ Use this information to personalize your responses, but don't explicitly mention
       }));
 
       // Sort by importance and creation date
-      return mappedMemories.sort((a, b) => {
+      const sortedMemories = mappedMemories.sort((a, b) => {
         if (a.importanceScore !== b.importanceScore) {
           return b.importanceScore - a.importanceScore;
         }
@@ -769,6 +778,9 @@ Use this information to personalize your responses, but don't explicitly mention
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
       });
+      
+      console.log(`[MemoryService] Returning ${sortedMemories.length} sorted memories`);
+      return sortedMemories;
     } catch (error) {
       console.error('Error getting user memories:', error);
       return [];

@@ -116,17 +116,18 @@ export default function MemorySection() {
     queryKey: ["memories", selectedCategory],
     queryFn: async () => {
       if (selectedCategory === "all") {
-        return allMemories;
+        const response = await fetch(`/api/memories`);
+        if (!response.ok) throw new Error("Failed to fetch memories");
+        return response.json();
       }
       const response = await fetch(`/api/memories?category=${selectedCategory}`);
       if (!response.ok) throw new Error("Failed to fetch filtered memories");
       return response.json();
-    },
-    enabled: selectedCategory !== "all" || allMemories.length > 0
+    }
   });
 
-  const memories = selectedCategory === "all" ? allMemories : filteredMemories;
-  const isLoading = allMemoriesLoading || (selectedCategory !== "all" && filteredLoading);
+  const memories = filteredMemories;
+  const isLoading = allMemoriesLoading || filteredLoading;
 
   const deleteMemoryMutation = useMutation({
     mutationFn: (memoryId: string) => apiRequest(`/api/memories/${memoryId}`, "DELETE"),

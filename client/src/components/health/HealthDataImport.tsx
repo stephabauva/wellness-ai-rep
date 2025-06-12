@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, AlertTriangle, CheckCircle, X, Download, Compress, Info } from 'lucide-react';
+import { Upload, FileText, AlertTriangle, CheckCircle, X, Download, Archive, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -12,8 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { useOptimizedUpload } from '@/hooks/useOptimizedUpload';
-import { UploadProgressIndicator, CompressionResult } from '@/components/ui/upload-progress';
 import { FileCompressionService } from '@/services/file-compression';
 import { formatBytes } from '@/utils/upload-progress';
 
@@ -73,6 +71,10 @@ export function HealthDataImport() {
   });
   const [selectedDuplicates, setSelectedDuplicates] = useState<number[]>([]);
   
+  // New optimization states
+  const [compressionEnabled, setCompressionEnabled] = useState(true);
+  const [compressionResult, setCompressionResult] = useState<any>(null);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -82,6 +84,7 @@ export function HealthDataImport() {
     setParseResult(null);
     setImportResult(null);
     setSelectedDuplicates([]);
+    setCompressionResult(null);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {

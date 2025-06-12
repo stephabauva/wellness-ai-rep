@@ -21,6 +21,7 @@ class SimpleMemoryDetectionService {
   }
 
   async analyzeMessage(message: string, userId: number): Promise<void> {
+    console.log(`[SimpleMemoryDetection] Analyzing message for user ${userId}: ${message.substring(0, 100)}...`);
     try {
       // Use Google Gemini Flash Lite for cost-effective memory detection
       const model = this.google.getGenerativeModel({ 
@@ -59,10 +60,7 @@ Return JSON only:
           keywords: result.keywords,
           embedding: [], // Simple implementation without embeddings
           sourceConversationId: null,
-          sourceMessageId: null,
-          contextTags: result.keywords,
-          relatedMemoryIds: [],
-          isActive: true
+          sourceMessageId: null
         };
 
         await db.insert(memoryEntries).values(memoryEntry);

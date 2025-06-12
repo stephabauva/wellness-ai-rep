@@ -69,6 +69,13 @@ export function registerSimpleRoutes(app: Express) {
         content: simpleResponse,
         isUserMessage: false
       });
+
+      // Analyze user message for memory detection using Google Gemini Flash Lite
+      try {
+        await simpleMemoryDetection.analyzeMessage(content, userId);
+      } catch (memoryError) {
+        console.warn('Memory analysis failed:', memoryError);
+      }
       
       res.status(201).json({
         success: true,

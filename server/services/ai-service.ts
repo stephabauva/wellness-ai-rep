@@ -527,72 +527,33 @@ class AiService {
     coachingMode: string
   ): Promise<any> {
     try {
-      // Build user profile for context-aware detection
-      const userProfile = {
-        primaryGoal: "weight-loss", // Default, should be fetched from user settings
-        coachStyle: "motivational",
-        focusAreas: ["nutrition", "exercise", "sleep"],
-        preferredLanguage: "en",
-        currentCoachingMode: coachingMode
-      };
-
-      // Use enhanced memory detection
-      const enhancedDetection = await enhancedMemoryService.detectMemoryWorthy(
-        message,
-        conversationHistory,
-        userProfile,
-        conversationId
-      );
-
-      // Also process with traditional method for comparison
+      // For now, skip enhanced memory detection due to OpenAI rate limits
+      // Use only traditional memory processing to ensure conversation recording works
+      log('info', '[AiService] Skipping enhanced memory detection due to API rate limits, using traditional method');
+      
       const traditionalResult = await memoryService.processMessageForMemory(
         userId, message, conversationId, messageId, conversationHistory
       );
 
-      log('info', '[AiService] Enhanced memory detection results:', {
-        shouldRemember: enhancedDetection.shouldRemember,
-        category: enhancedDetection.category,
-        importance: enhancedDetection.importance,
-        confidenceLevel: enhancedDetection.confidenceLevel,
-        contradictionCheck: enhancedDetection.contradictionCheck,
-        atomicFacts: enhancedDetection.atomicFacts.length
+      log('info', '[AiService] Traditional memory processing completed:', {
+        explicitMemory: !!traditionalResult?.explicitMemory,
+        autoDetectedMemory: !!traditionalResult?.autoDetectedMemory
       });
 
-      // Create actual memory entries if enhanced detection determines content is memory-worthy
-      let createdMemory = null;
-      if (enhancedDetection.shouldRemember && enhancedDetection.extractedInfo) {
-        try {
-          createdMemory = await memoryService.createMemory(
-            userId,
-            enhancedDetection.extractedInfo,
-            enhancedDetection.category,
-            enhancedDetection.importance,
-            conversationId,
-            messageId,
-            enhancedDetection.keywords
-          );
-          
-          if (createdMemory) {
-            log('info', '[AiService] Enhanced memory entry created:', {
-              memoryId: createdMemory.id,
-              category: enhancedDetection.category,
-              importance: enhancedDetection.importance
-            });
-          }
-        } catch (memoryError) {
-          log('error', '[AiService] Failed to create enhanced memory entry:', memoryError);
-        }
-      }
-
       return {
-        enhancedDetection,
-        createdMemory,
+        enhancedDetection: null,
+        createdMemory: null,
         explicitMemory: traditionalResult?.explicitMemory,
         autoDetectedMemory: traditionalResult?.autoDetectedMemory
       };
     } catch (error) {
-      log('error', '[AiService] Enhanced memory processing failed:', error);
-      return null;
+      log('error', '[AiService] Memory processing failed:', error);
+      return {
+        enhancedDetection: null,
+        createdMemory: null,
+        explicitMemory: null,
+        autoDetectedMemory: null
+      };
     }
   }
 

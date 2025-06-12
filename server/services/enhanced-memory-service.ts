@@ -94,28 +94,38 @@ class EnhancedMemoryService {
     conversationId?: string
   ): Promise<EnhancedMemoryDetection> {
     
-    // Build conversation state
-    const conversationState = await this.buildConversationState(
-      message, 
-      conversationHistory, 
-      userProfile, 
-      conversationId
-    );
-
-    // Generate dynamic, context-aware prompt
-    const contextualPrompt = this.generateContextualPrompt(
-      message,
-      conversationState,
-      userProfile
-    );
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.warn('[EnhancedMemoryService] Enhanced memory detection timed out after 45 seconds.');
-      controller.abort();
-    }, 45000);
-
     try {
+      // Build conversation state with fallback
+      const conversationState = await this.buildConversationState(
+        message, 
+        conversationHistory, 
+        userProfile, 
+        conversationId
+      ).catch(error => {
+        console.warn('[EnhancedMemoryService] Failed to build conversation state, using fallback:', error.message);
+        return {
+          currentTurn: conversationHistory.length || 0,
+          recentTopics: [],
+          userIntent: 'general_conversation',
+          emotionalContext: 'neutral',
+          coachingMode: userProfile.currentCoachingMode,
+          previousMemories: []
+        };
+      });
+
+      // Generate dynamic, context-aware prompt
+      const contextualPrompt = this.generateContextualPrompt(
+        message,
+        conversationState,
+        userProfile
+      );
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.warn('[EnhancedMemoryService] Enhanced memory detection timed out after 15 seconds.');
+        controller.abort();
+      }, 15000); // Reduced timeout to prevent rate limit accumulation
+
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: contextualPrompt }],

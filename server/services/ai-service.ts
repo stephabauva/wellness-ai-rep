@@ -181,23 +181,24 @@ class AiService {
     automaticModelSelection: boolean
   ): Promise<{ response: string; memoryInfo?: any; conversationId?: string } | null> {
     try {
-      // Fire and forget memory processing (non-blocking)
-      const memoryProcessingPromise = memoryService.processMessageForMemory(
-        userId, message, conversationId, messageId, conversationHistory
+      // Phase 1: Enhanced memory processing with context-aware detection
+      const memoryProcessingPromise = this.processEnhancedMemory(
+        userId, message, conversationHistory, conversationId, messageId, coachingMode
       )
       .then(memoryResult => {
-        log('info', '[AiService] Go Gateway: Asynchronous memory processing completed.', {
+        log('info', '[AiService] Go Gateway: Enhanced memory processing completed.', {
           conversationId,
           messageId,
           newMemories: {
             explicit: !!memoryResult?.explicitMemory,
-            autoDetected: !!memoryResult?.autoDetectedMemory
+            autoDetected: !!memoryResult?.autoDetectedMemory,
+            enhanced: !!memoryResult?.enhancedDetection
           }
         });
         return memoryResult;
       })
       .catch(error => {
-        log('error', '[AiService] Go Gateway: Asynchronous memory processing failed.', {
+        log('error', '[AiService] Go Gateway: Enhanced memory processing failed.', {
           conversationId,
           messageId,
           error: error instanceof Error ? error.message : String(error)
@@ -281,23 +282,24 @@ class AiService {
     }
     if (!providerToUse) throw new Error(`Critical: Provider ${currentAiConfig.provider} could not be resolved.`);
 
-    // Fire and forget memory processing, don't let it block the response
-    const memoryProcessingPromise = memoryService.processMessageForMemory(
-      userId, message, conversationId, messageId, conversationHistory
+    // Phase 1: Enhanced memory processing for Node.js providers
+    const memoryProcessingPromise = this.processEnhancedMemory(
+      userId, message, conversationHistory, conversationId, messageId, coachingMode
     )
-    .then(memoryResult => {
-      log('info', '[AiService] Node.js: Asynchronous memory processing completed.', {
+    .then((memoryResult: any) => {
+      log('info', '[AiService] Node.js: Enhanced memory processing completed.', {
         conversationId: conversationId,
         messageId: messageId,
         newMemories: {
           explicit: !!memoryResult?.explicitMemory,
-          autoDetected: !!memoryResult?.autoDetectedMemory
+          autoDetected: !!memoryResult?.autoDetectedMemory,
+          enhanced: !!memoryResult?.enhancedDetection
         }
       });
       return memoryResult;
     })
-    .catch(error => {
-      log('error', '[AiService] Node.js: Asynchronous memory processing failed.', {
+    .catch((error: any) => {
+      log('error', '[AiService] Node.js: Enhanced memory processing failed.', {
         conversationId: conversationId,
         messageId: messageId,
         error: error instanceof Error ? error.message : String(error)
@@ -305,13 +307,13 @@ class AiService {
       return null;
     });
 
-    // Parallel execution of context building and memory retrieval
+    // Phase 1: Parallel execution of context building and enhanced memory retrieval
     const [contextMessages, relevantMemoriesFromContext] = await Promise.all([
       chatContextService.buildChatContext(
         userId, message, conversationId, coachingMode,
         conversationHistory, attachments, currentAiConfig.provider
       ),
-      memoryService.getContextualMemories(userId, conversationHistory, message)
+      enhancedMemoryService.getRelevantMemories(message, userId, 5, this.extractContextualHints(conversationHistory, coachingMode))
     ]);
 
     // Execute AI API call
@@ -502,6 +504,77 @@ class AiService {
   // Public method to check if provider exists
   hasProvider(providerName: AIProviderName): boolean {
     return this.providers.has(providerName);
+  }
+
+  // Phase 1: Enhanced memory processing with context-aware detection
+  private async processEnhancedMemory(
+    userId: number,
+    message: string,
+    conversationHistory: any[],
+    conversationId: string,
+    messageId: number,
+    coachingMode: string
+  ): Promise<any> {
+    try {
+      // Build user profile for context-aware detection
+      const userProfile = {
+        primaryGoal: "weight-loss", // Default, should be fetched from user settings
+        coachStyle: "motivational",
+        focusAreas: ["nutrition", "exercise", "sleep"],
+        preferredLanguage: "en",
+        currentCoachingMode: coachingMode
+      };
+
+      // Use enhanced memory detection
+      const enhancedDetection = await enhancedMemoryService.detectMemoryWorthy(
+        message,
+        conversationHistory,
+        userProfile,
+        conversationId
+      );
+
+      // Also process with traditional method for comparison
+      const traditionalResult = await memoryService.processMessageForMemory(
+        userId, message, conversationId, messageId, conversationHistory
+      );
+
+      log('info', '[AiService] Enhanced memory detection results:', {
+        shouldRemember: enhancedDetection.shouldRemember,
+        category: enhancedDetection.category,
+        importance: enhancedDetection.importance,
+        confidenceLevel: enhancedDetection.confidenceLevel,
+        contradictionCheck: enhancedDetection.contradictionCheck,
+        atomicFacts: enhancedDetection.atomicFacts.length
+      });
+
+      return {
+        enhancedDetection,
+        explicitMemory: traditionalResult?.explicitMemory,
+        autoDetectedMemory: traditionalResult?.autoDetectedMemory
+      };
+    } catch (error) {
+      log('error', '[AiService] Enhanced memory processing failed:', error);
+      return null;
+    }
+  }
+
+  // Phase 1: Extract contextual hints for enhanced memory retrieval
+  private extractContextualHints(conversationHistory: any[], coachingMode: string): string[] {
+    const hints: string[] = [coachingMode];
+    
+    // Extract recent topics from conversation history
+    const recentMessages = conversationHistory.slice(-3);
+    for (const msg of recentMessages) {
+      if (msg.content) {
+        // Extract key health/wellness terms
+        const healthTerms = msg.content.match(/\b(workout|exercise|diet|nutrition|weight|sleep|stress|goal|progress)\w*\b/gi);
+        if (healthTerms) {
+          hints.push(...healthTerms.slice(0, 3)); // Limit to 3 terms per message
+        }
+      }
+    }
+    
+    return hints.slice(0, 10); // Limit total hints
   }
 }
 

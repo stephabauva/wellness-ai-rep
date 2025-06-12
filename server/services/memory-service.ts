@@ -412,7 +412,7 @@ Respond with JSON:
     return this.saveMemoryEntry(userId, content, {
       category: category as MemoryCategory,
       importance_score: importance,
-      sourceConversationId: conversationId,
+      sourceConversationId: conversationId && conversationId.trim() !== '' ? conversationId : undefined,
       sourceMessageId: messageId,
       keywords: keywords
     });

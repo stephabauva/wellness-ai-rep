@@ -113,12 +113,8 @@ class EnhancedMemoryService {
         };
       });
 
-      // Generate dynamic, context-aware prompt
-      const contextualPrompt = this.generateContextualPrompt(
-        message,
-        conversationState,
-        userProfile
-      );
+      // Generate simple, efficient prompt
+      const contextualPrompt = this.generateContextualPrompt(message);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
@@ -126,16 +122,19 @@ class EnhancedMemoryService {
         controller.abort();
       }, 15000); // Reduced timeout to prevent rate limit accumulation
 
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: contextualPrompt }],
-        temperature: 0.1,
-        response_format: { type: "json_object" }
-      }, { signal: controller.signal });
+      // Use Google Gemini Flash Lite for cost-effective memory detection
+      const model = this.google.getGenerativeModel({ 
+        model: "gemini-2.0-flash-lite",
+        generationConfig: {
+          temperature: 0.1
+        }
+      });
+
+      const response = await model.generateContent(contextualPrompt);
       
       clearTimeout(timeoutId);
 
-      let content = response.choices[0].message.content || '{}';
+      let content = response.response.text() || '{}';
       content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
       
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -226,66 +225,12 @@ class EnhancedMemoryService {
     return state;
   }
 
-  // Phase 1: Generate dynamic, context-aware prompts
-  private generateContextualPrompt(
-    message: string,
-    conversationState: ConversationState,
-    userProfile: UserProfile
-  ): string {
-    const basePrompt = `You are an intelligent memory system for a wellness coaching AI. Analyze this message with full context awareness.
+  // Simple, efficient memory detection prompt for Google Gemini Flash Lite
+  private generateContextualPrompt(message: string): string {
+    return `Is this wellness message worth remembering? "${message}"
 
-USER PROFILE:
-- Primary Goal: ${userProfile.primaryGoal}
-- Coach Style: ${userProfile.coachStyle}
-- Focus Areas: ${userProfile.focusAreas.join(', ')}
-- Current Mode: ${userProfile.currentCoachingMode}
-
-CONVERSATION CONTEXT:
-- User Intent: ${conversationState.userIntent}
-- Recent Topics: ${conversationState.recentTopics.join(', ')}
-- Emotional Context: ${conversationState.emotionalContext}
-- Turn Number: ${conversationState.currentTurn}
-
-EXISTING MEMORIES (for contradiction check):
-${conversationState.previousMemories.slice(0, 5).map(m => `- ${m.content} (${m.category})`).join('\n')}
-
-CURRENT MESSAGE: "${message}"
-
-ENHANCED ANALYSIS INSTRUCTIONS:
-1. Determine if this information should be remembered based on:
-   - Relevance to user's goals and coaching mode
-   - Likelihood of future reference
-   - Contradiction with existing memories
-   - Specificity and actionability
-
-2. Extract atomic facts (break complex information into simple, verifiable statements)
-
-3. Map relationships to existing memories
-
-4. Assess temporal relevance (how time-sensitive is this information?)
-
-5. Provide confidence level in your assessment
-
-Categories:
-- "preference": Personal likes, dislikes, workout/food preferences
-- "personal_info": Health conditions, medical info, demographics
-- "context": Life circumstances, progress updates, situational info
-- "instruction": Coaching rules, specific user instructions
-
-Respond with JSON:
-{
-    "shouldRemember": boolean,
-    "category": "preference|personal_info|context|instruction",
-    "importance": 0.0-1.0,
-    "extractedInfo": "clean version of the information to remember",
-    "keywords": ["keyword1", "keyword2", ...],
-    "reasoning": "detailed reasoning for the decision",
-    "confidenceLevel": 0.0-1.0,
-    "relationshipMapping": ["memory_id_or_description", ...],
-    "atomicFacts": ["fact1", "fact2", ...]
-}`;
-
-    return basePrompt;
+Respond with JSON only:
+{"shouldRemember": true/false, "category": "personal_info|preference|context|goal", "importance": 0.1-1.0, "summary": "brief summary", "keywords": ["key", "words"]}`;
   }
 
   // Phase 1: Calculate temporal relevance

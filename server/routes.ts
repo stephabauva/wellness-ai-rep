@@ -1434,6 +1434,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Phase 3: Advanced Retrieval Intelligence API endpoints
+  app.post("/api/memory/intelligent-retrieve", async (req, res) => {
+    try {
+      const { intelligentMemoryRetrieval } = await import("./services/intelligent-memory-retrieval.js");
+      const { query, userId, conversationContext, maxResults = 8 } = req.body;
+
+      if (!query || !userId) {
+        res.status(400).json({ message: "Query and userId are required" });
+        return;
+      }
+
+      const contextualMemories = await intelligentMemoryRetrieval.getContextualMemories(
+        userId,
+        query,
+        conversationContext || {
+          userId,
+          coachingMode: 'general',
+          recentTopics: [],
+          userIntent: 'general',
+          temporalContext: 'recent',
+          sessionLength: 1
+        },
+        maxResults
+      );
+
+      res.json({
+        memories: contextualMemories,
+        meta: {
+          totalResults: contextualMemories.length,
+          retrievalTime: Date.now(),
+          intelligentRetrieval: true
+        }
+      });
+    } catch (error: any) {
+      console.error("Error in intelligent memory retrieval:", error);
+      res.status(500).json({ message: "Failed to retrieve memories", error: error.message });
+    }
+  });
+
+  app.post("/api/memory/query-expansion", async (req, res) => {
+    try {
+      const { intelligentMemoryRetrieval } = await import("./services/intelligent-memory-retrieval.js");
+      const { query, conversationContext } = req.body;
+
+      if (!query) {
+        res.status(400).json({ message: "Query is required" });
+        return;
+      }
+
+      // Use private method via reflection for testing
+      const expansion = await (intelligentMemoryRetrieval as any).expandQuery(
+        query,
+        conversationContext || {
+          userId: 1,
+          coachingMode: 'general',
+          recentTopics: [],
+          userIntent: 'general',
+          temporalContext: 'recent',
+          sessionLength: 1
+        }
+      );
+
+      res.json(expansion);
+    } catch (error: any) {
+      console.error("Error in query expansion:", error);
+      res.status(500).json({ message: "Failed to expand query", error: error.message });
+    }
+  });
+
+  app.post("/api/memory/adaptive-thresholds", async (req, res) => {
+    try {
+      const { intelligentMemoryRetrieval } = await import("./services/intelligent-memory-retrieval.js");
+      const { query, conversationContext } = req.body;
+
+      if (!query) {
+        res.status(400).json({ message: "Query is required" });
+        return;
+      }
+
+      const expandedQuery = {
+        originalQuery: query,
+        expandedTerms: [query],
+        synonyms: [],
+        relatedConcepts: [],
+        semanticClusters: [query]
+      };
+
+      // Use private method via reflection for testing
+      const thresholds = await (intelligentMemoryRetrieval as any).calculateAdaptiveThreshold(
+        expandedQuery,
+        conversationContext || {
+          userId: 1,
+          coachingMode: 'general',
+          recentTopics: [],
+          userIntent: 'general',
+          temporalContext: 'recent',
+          sessionLength: 1
+        }
+      );
+
+      res.json(thresholds);
+    } catch (error: any) {
+      console.error("Error calculating adaptive thresholds:", error);
+      res.status(500).json({ message: "Failed to calculate thresholds", error: error.message });
+    }
+  });
+
   app.post("/api/memory/extract-facts/:memoryId", async (req, res) => {
     try {
       const { memoryGraphService } = await import("./services/memory-graph-service-instance.js");

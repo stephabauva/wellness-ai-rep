@@ -307,13 +307,24 @@ class AiService {
       return null;
     });
 
-    // Phase 1: Parallel execution of context building and enhanced memory retrieval
+    // Phase 3: Enhanced retrieval with intelligent memory system
+    const contextualHints = this.extractContextualHints(conversationHistory, coachingMode);
+    const conversationContext = {
+      userId,
+      conversationId,
+      coachingMode,
+      recentTopics: contextualHints.slice(1), // Remove coaching mode from topics
+      userIntent: this.classifyUserIntent(message),
+      temporalContext: this.determineTemporalContext(conversationHistory),
+      sessionLength: conversationHistory.length
+    };
+
     const [contextMessages, relevantMemoriesFromContext] = await Promise.all([
       chatContextService.buildChatContext(
         userId, message, conversationId, coachingMode,
         conversationHistory, attachments, currentAiConfig.provider
       ),
-      enhancedMemoryService.getRelevantMemories(message, userId, 5, this.extractContextualHints(conversationHistory, coachingMode))
+      this.getIntelligentMemories(message, conversationContext)
     ]);
 
     // Execute AI API call
@@ -575,6 +586,70 @@ class AiService {
     }
     
     return hints.slice(0, 10); // Limit total hints
+  }
+
+  // Phase 3: Classify user intent for intelligent retrieval
+  private classifyUserIntent(message: string): string {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('?') || lowerMessage.startsWith('how') || lowerMessage.startsWith('what') || lowerMessage.startsWith('when') || lowerMessage.startsWith('where') || lowerMessage.startsWith('why')) {
+      return 'question';
+    }
+    if (lowerMessage.includes('goal') || lowerMessage.includes('target') || lowerMessage.includes('aim') || lowerMessage.includes('want to')) {
+      return 'goal_setting';
+    }
+    if (lowerMessage.includes('progress') || lowerMessage.includes('achievement') || lowerMessage.includes('result') || lowerMessage.includes('improvement')) {
+      return 'progress_check';
+    }
+    if (lowerMessage.includes('advice') || lowerMessage.includes('suggestion') || lowerMessage.includes('recommend') || lowerMessage.includes('help')) {
+      return 'advice_seeking';
+    }
+    
+    return 'general';
+  }
+
+  // Phase 3: Determine temporal context from conversation history
+  private determineTemporalContext(conversationHistory: any[]): 'immediate' | 'recent' | 'historical' {
+    if (conversationHistory.length <= 2) {
+      return 'immediate';
+    }
+    if (conversationHistory.length <= 10) {
+      return 'recent';
+    }
+    return 'historical';
+  }
+
+  // Phase 3: Get intelligent memories using the new retrieval system
+  private async getIntelligentMemories(message: string, conversationContext: any): Promise<any[]> {
+    try {
+      const { intelligentMemoryRetrieval } = await import('./intelligent-memory-retrieval.js');
+      
+      const intelligentMemories = await intelligentMemoryRetrieval.getContextualMemories(
+        conversationContext.userId,
+        message,
+        conversationContext,
+        5 // Limit to 5 most relevant memories
+      );
+
+      log('info', '[AiService] Phase 3 intelligent retrieval results:', {
+        totalMemories: intelligentMemories.length,
+        avgRelevanceScore: intelligentMemories.reduce((sum, m) => sum + m.relevanceScore, 0) / intelligentMemories.length || 0,
+        avgConfidence: intelligentMemories.reduce((sum, m) => sum + m.confidenceLevel, 0) / intelligentMemories.length || 0,
+        retrievalReasons: intelligentMemories.map(m => m.retrievalReason).join(', ')
+      });
+
+      return intelligentMemories;
+    } catch (error) {
+      log('error', '[AiService] Phase 3 intelligent retrieval failed, falling back to enhanced retrieval:', error);
+      
+      // Fallback to Phase 1 enhanced memory retrieval
+      return enhancedMemoryService.getRelevantMemories(
+        message, 
+        conversationContext.userId, 
+        5, 
+        conversationContext.recentTopics
+      );
+    }
   }
 }
 

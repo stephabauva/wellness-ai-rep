@@ -11,9 +11,9 @@ import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema } from "@shared/schema";
+import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics } from "@shared/schema";
 import { categoryService } from "./services/category-service";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, or } from "drizzle-orm";
 import { join } from 'path';
 import { existsSync } from 'fs';
 import path from 'path';
@@ -1413,6 +1413,186 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error warming cache:", error);
       res.status(500).json({ message: "Failed to warm cache", error: error.message });
+    }
+  });
+
+  // Phase 2: Semantic Memory Graph API endpoints
+  app.get("/api/memory/graph/:memoryId", async (req, res) => {
+    try {
+      const { memoryGraphService } = await import("./services/memory-graph-service-instance.js");
+      const memoryNode = await memoryGraphService.getMemoryNode(req.params.memoryId);
+      
+      if (!memoryNode) {
+        res.status(404).json({ message: "Memory not found" });
+        return;
+      }
+      
+      res.json(memoryNode);
+    } catch (error: any) {
+      console.error("Error fetching memory node:", error);
+      res.status(500).json({ message: "Failed to fetch memory node", error: error.message });
+    }
+  });
+
+  app.post("/api/memory/extract-facts/:memoryId", async (req, res) => {
+    try {
+      const { memoryGraphService } = await import("./services/memory-graph-service-instance.js");
+      const memoryId = req.params.memoryId;
+      
+      // Get the memory entry
+      const memory = await db.select()
+        .from(memoryEntries)
+        .where(eq(memoryEntries.id, memoryId))
+        .limit(1);
+      
+      if (memory.length === 0) {
+        res.status(404).json({ message: "Memory not found" });
+        return;
+      }
+      
+      const { sourceContext } = req.body;
+      const facts = await memoryGraphService.extractAtomicFacts(memory[0], sourceContext);
+      
+      res.json({
+        memoryId,
+        factsExtracted: facts.length,
+        facts
+      });
+    } catch (error: any) {
+      console.error("Error extracting atomic facts:", error);
+      res.status(500).json({ message: "Failed to extract atomic facts", error: error.message });
+    }
+  });
+
+  app.post("/api/memory/detect-relationships/:memoryId", async (req, res) => {
+    try {
+      const { memoryGraphService } = await import("./services/memory-graph-service-instance.js");
+      const memoryId = req.params.memoryId;
+      
+      // Get the new memory
+      const newMemory = await db.select()
+        .from(memoryEntries)
+        .where(eq(memoryEntries.id, memoryId))
+        .limit(1);
+      
+      if (newMemory.length === 0) {
+        res.status(404).json({ message: "Memory not found" });
+        return;
+      }
+      
+      // Get existing memories for the same user
+      const existingMemories = await db.select()
+        .from(memoryEntries)
+        .where(and(
+          eq(memoryEntries.userId, newMemory[0].userId),
+          eq(memoryEntries.isActive, true)
+        ))
+        .limit(50); // Limit for performance
+      
+      const relationships = await memoryGraphService.detectMemoryRelationships(
+        newMemory[0], 
+        existingMemories.filter(m => m.id !== memoryId)
+      );
+      
+      res.json({
+        memoryId,
+        relationshipsDetected: relationships.length,
+        relationships
+      });
+    } catch (error: any) {
+      console.error("Error detecting relationships:", error);
+      res.status(500).json({ message: "Failed to detect relationships", error: error.message });
+    }
+  });
+
+  app.post("/api/memory/consolidate/:userId", async (req, res) => {
+    try {
+      const { memoryGraphService } = await import("./services/memory-graph-service-instance.js");
+      const userId = parseInt(req.params.userId);
+      
+      const results = await memoryGraphService.consolidateRelatedMemories(userId);
+      
+      res.json({
+        userId,
+        consolidationResults: results.length,
+        results
+      });
+    } catch (error: any) {
+      console.error("Error consolidating memories:", error);
+      res.status(500).json({ message: "Failed to consolidate memories", error: error.message });
+    }
+  });
+
+  app.get("/api/memory/graph-metrics/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      const metrics = await db.select()
+        .from(memoryGraphMetrics)
+        .where(eq(memoryGraphMetrics.userId, userId))
+        .orderBy(desc(memoryGraphMetrics.lastCalculated))
+        .limit(1);
+      
+      if (metrics.length === 0) {
+        res.status(404).json({ message: "No metrics found for user" });
+        return;
+      }
+      
+      res.json(metrics[0]);
+    } catch (error: any) {
+      console.error("Error fetching graph metrics:", error);
+      res.status(500).json({ message: "Failed to fetch graph metrics", error: error.message });
+    }
+  });
+
+  app.get("/api/memory/relationships/:memoryId", async (req, res) => {
+    try {
+      const memoryId = req.params.memoryId;
+      
+      const relationships = await db.select()
+        .from(memoryRelationships)
+        .where(or(
+          eq(memoryRelationships.sourceMemoryId, memoryId),
+          eq(memoryRelationships.targetMemoryId, memoryId)
+        ));
+      
+      res.json(relationships);
+    } catch (error: any) {
+      console.error("Error fetching memory relationships:", error);
+      res.status(500).json({ message: "Failed to fetch relationships", error: error.message });
+    }
+  });
+
+  app.get("/api/memory/atomic-facts/:memoryId", async (req, res) => {
+    try {
+      const memoryId = req.params.memoryId;
+      
+      const facts = await db.select()
+        .from(atomicFacts)
+        .where(eq(atomicFacts.memoryEntryId, memoryId));
+      
+      res.json(facts);
+    } catch (error: any) {
+      console.error("Error fetching atomic facts:", error);
+      res.status(500).json({ message: "Failed to fetch atomic facts", error: error.message });
+    }
+  });
+
+  app.get("/api/memory/consolidation-log/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const logs = await db.select()
+        .from(memoryConsolidationLog)
+        .where(eq(memoryConsolidationLog.userId, userId))
+        .orderBy(desc(memoryConsolidationLog.createdAt))
+        .limit(limit);
+      
+      res.json(logs);
+    } catch (error: any) {
+      console.error("Error fetching consolidation log:", error);
+      res.status(500).json({ message: "Failed to fetch consolidation log", error: error.message });
     }
   });
 

@@ -69,11 +69,60 @@ export function useHealthDataApi(timeRange: string) {
     refetchAll();
   }
 
+  // Add optimistic health data creation mutation
+  const createHealthDataMutation = useMutation({
+    mutationFn: async (newData: any) => {
+      return await apiRequest('/api/health-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newData),
+      });
+    },
+    onMutate: async (newData) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ['healthDataCategories', timeRange] });
+      await queryClient.cancelQueries({ queryKey: ['allHealthData', timeRange] });
+      
+      // Snapshot the previous values
+      const previousCategorized = queryClient.getQueryData(['healthDataCategories', timeRange]);
+      const previousAll = queryClient.getQueryData(['allHealthData', timeRange]);
+      
+      // Optimistically update to the new value
+      const optimisticData = {
+        id: Date.now(),
+        ...newData,
+        timestamp: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData(['allHealthData', timeRange], (old: any) => 
+        old ? [...old, optimisticData] : [optimisticData]
+      );
+      
+      return { previousCategorized, previousAll };
+    },
+    onError: (err, newData, context) => {
+      // Rollback on error
+      if (context?.previousCategorized) {
+        queryClient.setQueryData(['healthDataCategories', timeRange], context.previousCategorized);
+      }
+      if (context?.previousAll) {
+        queryClient.setQueryData(['allHealthData', timeRange], context.previousAll);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['healthDataCategories', timeRange] });
+      queryClient.invalidateQueries({ queryKey: ['allHealthData', timeRange] });
+    },
+  });
+
   return {
     categorizedData,
     allHealthData,
     isLoading,
     error,
-    refetchHealthData: refetchAllData, // Provide a single refetch function
+    refetchHealthData: refetchAllData,
+    createHealthData: createHealthDataMutation.mutate,
+    isCreating: createHealthDataMutation.isPending,
   };
 }

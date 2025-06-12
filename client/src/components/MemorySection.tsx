@@ -340,8 +340,8 @@ export default function MemorySection() {
                   {memories.length > 0 && (
                     <Card className="bg-gray-50 border-dashed">
                       <CardContent className="py-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 checked={selectedMemoryIds.size === memories.length && memories.length > 0}
@@ -374,9 +374,11 @@ export default function MemorySection() {
                               size="sm"
                               onClick={handleBulkDelete}
                               disabled={bulkDeleteMutation.isPending}
+                              className="w-full sm:w-auto"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Selected ({selectedMemoryIds.size})
+                              <span className="hidden sm:inline">Delete Selected ({selectedMemoryIds.size})</span>
+                              <span className="sm:hidden">Delete ({selectedMemoryIds.size})</span>
                             </Button>
                           )}
                         </div>

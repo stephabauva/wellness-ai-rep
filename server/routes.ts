@@ -926,25 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete a memory
-  app.delete("/api/memories/:id", async (req, res) => {
-    try {
-      const userId = 1; // Default user ID
-      const memoryId = req.params.id;
-
-      const success = await memoryService.deleteMemory(memoryId, userId);
-      if (success) {
-        res.status(204).send();
-      } else {
-        res.status(404).json({ message: "Memory not found" });
-      }
-    } catch (error) {
-      console.error('Error deleting memory:', error);
-      res.status(500).json({ message: "Failed to delete memory" });
-    }
-  });
-
-  // Bulk delete memories
+  // Bulk delete memories (must come before single delete route)
   app.delete("/api/memories/bulk", async (req, res) => {
     try {
       const userId = 1; // Default user ID
@@ -979,6 +961,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error in bulk delete memories:', error);
       res.status(500).json({ message: "Failed to bulk delete memories" });
+    }
+  });
+
+  // Delete a single memory
+  app.delete("/api/memories/:id", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const memoryId = req.params.id;
+
+      const success = await memoryService.deleteMemory(memoryId, userId);
+      if (success) {
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: "Memory not found" });
+      }
+    } catch (error) {
+      console.error('Error deleting memory:', error);
+      res.status(500).json({ message: "Failed to delete memory" });
     }
   });
 

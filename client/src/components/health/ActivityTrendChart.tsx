@@ -35,8 +35,8 @@ export const ActivityTrendChart: React.FC<ActivityTrendChartProps> = ({ data }) 
         <CardDescription>Steps and active minutes comparison</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full"> {/* Ensure width is responsive */}
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="chart-responsive"> {/* Use standardized chart sizing */}
+          <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={200}>
             <BarChart
               data={chartData}
               margin={{ top: 5, right: 20, left: -10, bottom: 5 }} // Adjusted margins

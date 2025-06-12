@@ -131,9 +131,10 @@ export default function MemorySection() {
   const deleteMemoryMutation = useMutation({
     mutationFn: (memoryId: string) => apiRequest(`/api/memories/${memoryId}`, "DELETE"),
     onSuccess: async () => {
-      // Force refetch of all memory queries
+      // Force refetch of all memory queries including the overview query
       await queryClient.invalidateQueries({ queryKey: ["memories"] });
       await queryClient.refetchQueries({ queryKey: ["memories"] });
+      await queryClient.refetchQueries({ queryKey: ["memories", selectedCategory] });
       toast({
         title: "Memory deleted",
         description: "The memory has been successfully removed.",
@@ -151,9 +152,10 @@ export default function MemorySection() {
   const bulkDeleteMutation = useMutation({
     mutationFn: (memoryIds: string[]) => apiRequest("/api/memories/bulk", "DELETE", { memoryIds }),
     onSuccess: async (data) => {
-      // Force refetch of all memory queries
+      // Force refetch of all memory queries including the overview query
       await queryClient.invalidateQueries({ queryKey: ["memories"] });
       await queryClient.refetchQueries({ queryKey: ["memories"] });
+      await queryClient.refetchQueries({ queryKey: ["memories", selectedCategory] });
       setSelectedMemoryIds(new Set());
       toast({
         title: "Memories deleted",

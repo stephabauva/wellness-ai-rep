@@ -944,6 +944,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk delete memories
+  app.delete("/api/memories/bulk", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const { memoryIds } = req.body;
+
+      if (!memoryIds || !Array.isArray(memoryIds) || memoryIds.length === 0) {
+        return res.status(400).json({ message: "Invalid memory IDs array" });
+      }
+
+      let successCount = 0;
+      let errors = [];
+
+      for (const memoryId of memoryIds) {
+        try {
+          const success = await memoryService.deleteMemory(memoryId, userId);
+          if (success) {
+            successCount++;
+          } else {
+            errors.push({ memoryId, error: "Memory not found" });
+          }
+        } catch (error) {
+          console.error(`Error deleting memory ${memoryId}:`, error);
+          errors.push({ memoryId, error: "Failed to delete memory" });
+        }
+      }
+
+      res.json({
+        successCount,
+        totalRequested: memoryIds.length,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error('Error in bulk delete memories:', error);
+      res.status(500).json({ message: "Failed to bulk delete memories" });
+    }
+  });
+
   // Get conversations with metadata
   app.get("/api/conversations", async (req, res) => {
     try {

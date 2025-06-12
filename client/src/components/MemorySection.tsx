@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -97,6 +98,7 @@ const explanationCards = {
 export default function MemorySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
+  const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Fetch all memories for overview counts
@@ -144,9 +146,59 @@ export default function MemorySection() {
     }
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (memoryIds: string[]) => apiRequest("/api/memories/bulk", "DELETE", { memoryIds }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
+      setSelectedMemoryIds(new Set());
+      toast({
+        title: "Memories deleted",
+        description: `Successfully deleted ${data.successCount} of ${data.totalRequested} memories.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete memories. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleDeleteMemory = (memoryId: string) => {
     if (confirm("Are you sure you want to delete this memory?")) {
       deleteMemoryMutation.mutate(memoryId);
+    }
+  };
+
+  const handleToggleMemorySelection = (memoryId: string) => {
+    const newSelected = new Set(selectedMemoryIds);
+    if (newSelected.has(memoryId)) {
+      newSelected.delete(memoryId);
+    } else {
+      newSelected.add(memoryId);
+    }
+    setSelectedMemoryIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedMemoryIds.size === memories.length) {
+      setSelectedMemoryIds(new Set());
+    } else {
+      setSelectedMemoryIds(new Set(memories.map((memory: MemoryEntry) => memory.id)));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedMemoryIds(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedMemoryIds.size === 0) return;
+    
+    const count = selectedMemoryIds.size;
+    if (confirm(`Are you sure you want to delete ${count} selected ${count === 1 ? 'memory' : 'memories'}?`)) {
+      bulkDeleteMutation.mutate(Array.from(selectedMemoryIds));
     }
   };
 
@@ -283,30 +335,89 @@ export default function MemorySection() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-4">
-                  {memories.map((memory: MemoryEntry) => (
-                    <Card key={memory.id} className="relative">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            {categoryIcons[memory.category as keyof typeof categoryIcons]}
-                            <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
-                              {categoryLabels[memory.category as keyof typeof categoryLabels]}
-                            </Badge>
-                            <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
-                              {getImportanceLabel(memory.importanceScore)}
-                            </Badge>
+                <>
+                  {/* Bulk Actions Bar */}
+                  {memories.length > 0 && (
+                    <Card className="bg-gray-50 border-dashed">
+                      <CardContent className="py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={selectedMemoryIds.size === memories.length && memories.length > 0}
+                                onCheckedChange={handleSelectAll}
+                                disabled={memories.length === 0}
+                              />
+                              <span className="text-sm font-medium">
+                                Select All ({memories.length})
+                              </span>
+                            </div>
+                            {selectedMemoryIds.size > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">
+                                  {selectedMemoryIds.size} selected
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleClearSelection}
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  Clear
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteMemory(memory.id)}
-                            disabled={deleteMemoryMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {selectedMemoryIds.size > 0 && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={handleBulkDelete}
+                              disabled={bulkDeleteMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Selected ({selectedMemoryIds.size})
+                            </Button>
+                          )}
                         </div>
-                      </CardHeader>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <div className="grid gap-4">
+                    {memories.map((memory: MemoryEntry) => (
+                      <Card key={memory.id} className="relative">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start gap-3">
+                            <div className="pt-1">
+                              <Checkbox
+                                checked={selectedMemoryIds.has(memory.id)}
+                                onCheckedChange={() => handleToggleMemorySelection(memory.id)}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-2">
+                                  {categoryIcons[memory.category as keyof typeof categoryIcons]}
+                                  <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
+                                    {categoryLabels[memory.category as keyof typeof categoryLabels]}
+                                  </Badge>
+                                  <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
+                                    {getImportanceLabel(memory.importanceScore)}
+                                  </Badge>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteMemory(memory.id)}
+                                  disabled={deleteMemoryMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
                       <CardContent>
                         <p className="text-gray-700 mb-3">{memory.content}</p>
                         
@@ -327,7 +438,8 @@ export default function MemorySection() {
                       </CardContent>
                     </Card>
                   ))}
-                </div>
+                  </div>
+                </>
               )}
             </TabsContent>
           </Tabs>

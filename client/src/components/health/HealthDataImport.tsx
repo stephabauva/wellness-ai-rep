@@ -91,6 +91,11 @@ export function HealthDataImport() {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      
+      // Auto-enable compression for large files
+      if (file.size > 10 * 1024 * 1024 && FileCompressionService.shouldCompressFile(file)) {
+        setCompressionEnabled(true);
+      }
     }
   };
 
@@ -99,10 +104,44 @@ export function HealthDataImport() {
 
     setUploadStep('parsing');
     
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
+    let fileToUpload = selectedFile;
+    
     try {
+      // Phase 1: Compression (if enabled and file is large)
+      if (compressionEnabled && 
+          selectedFile.size > 10 * 1024 * 1024 && 
+          FileCompressionService.shouldCompressFile(selectedFile)) {
+        
+        try {
+          const compressionResult = await FileCompressionService.compressFile(selectedFile);
+          fileToUpload = compressionResult.compressedFile;
+          setCompressionResult(compressionResult);
+          
+          toast({
+            title: "Compression Complete",
+            description: `File compressed by ${compressionResult.compressionRatio.toFixed(1)}% (${formatBytes(compressionResult.originalSize - compressionResult.compressedSize)} saved)`,
+          });
+        } catch (compressionError) {
+          console.warn('Compression failed, using original file:', compressionError);
+          toast({
+            title: "Compression Warning",
+            description: "File compression failed, proceeding with original file",
+            variant: "default"
+          });
+        }
+      }
+      
+      // Phase 2: Upload and Parse
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      
+      // Add compression metadata if file was compressed
+      if (compressionResult) {
+        formData.append('compressed', 'true');
+        formData.append('originalFileName', selectedFile.name);
+        formData.append('originalSize', selectedFile.size.toString());
+      }
+
       const response = await fetch('/api/health-data/parse', {
         method: 'POST',
         body: formData
@@ -116,6 +155,7 @@ export function HealthDataImport() {
 
       setParseResult(result);
       setUploadStep('preview');
+      
     } catch (error) {
       toast({
         title: "Parse Error",
@@ -302,6 +342,51 @@ export function HealthDataImport() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            <Separator />
+
+            {/* Compression Settings Panel */}
+            {selectedFile && selectedFile.size > 10 * 1024 * 1024 && (
+              <div className="space-y-4">
+                <h4 className="font-medium">Upload Optimization</h4>
+                <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="compression"
+                          checked={compressionEnabled}
+                          onCheckedChange={(checked) => setCompressionEnabled(!!checked)}
+                        />
+                        <Label htmlFor="compression" className="text-sm font-medium">
+                          Compress file before upload (recommended for large files)
+                        </Label>
+                      </div>
+                      
+                      {compressionEnabled && (
+                        <div className="ml-6 space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Archive className="h-3 w-3" />
+                            <span>
+                              Estimated compression: {FileCompressionService.estimateCompressionRatio(selectedFile)}% 
+                              ({formatBytes(selectedFile.size * (1 - FileCompressionService.estimateCompressionRatio(selectedFile) / 100))} saved)
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          Large file detected ({formatBytes(selectedFile.size)}). 
+                          Compression will reduce upload time and improve performance.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             <Separator />

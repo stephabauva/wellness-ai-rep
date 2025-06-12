@@ -65,8 +65,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes - optimized from Infinity for better cache warming
-      cacheTime: 10 * 60 * 1000, // 10 minutes - keep data in cache longer
+      staleTime: 5 * 60 * 1000, // 5 minutes - optimized cache warming
       retry: 1, // Allow one retry for transient failures
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     },

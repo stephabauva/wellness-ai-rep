@@ -418,25 +418,25 @@ export default function MemorySection() {
                             </div>
                           </div>
                         </CardHeader>
-                      <CardContent>
-                        <p className="text-gray-700 mb-3">{memory.content}</p>
-                        
-                        {memory.keywords && memory.keywords.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {memory.keywords.map((keyword: string, index: number) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {keyword}
-                              </Badge>
-                            ))}
+                        <CardContent>
+                          <p className="text-gray-700 mb-3">{memory.content}</p>
+                          
+                          {memory.keywords && memory.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {memory.keywords.map((keyword: string, index: number) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {keyword}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Created: {new Date(memory.createdAt).toLocaleDateString()}</span>
+                            <span>Used {memory.accessCount} times</span>
                           </div>
-                        )}
-                        
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>Created: {new Date(memory.createdAt).toLocaleDateString()}</span>
-                          <span>Used {memory.accessCount} times</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
                   ))}
                   </div>
                 </>

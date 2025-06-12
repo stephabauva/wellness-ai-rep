@@ -618,6 +618,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Phase 1: Enhanced Memory Detection API
+  app.post("/api/memory/enhanced-detect", async (req, res) => {
+    try {
+      const { message, conversationHistory, coachingMode } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      const userProfile = {
+        primaryGoal: "weight-loss",
+        coachStyle: "motivational", 
+        focusAreas: ["nutrition", "exercise", "sleep"],
+        preferredLanguage: "en",
+        currentCoachingMode: coachingMode || "weight-loss"
+      };
+
+      const enhancedDetection = await enhancedMemoryService.detectMemoryWorthy(
+        message,
+        conversationHistory || [],
+        userProfile
+      );
+
+      res.json({
+        enhancedDetection,
+        phase: "1",
+        features: {
+          contextAwareDetection: true,
+          atomicFactExtraction: true,
+          contradictionCheck: true,
+          temporalRelevance: true,
+          confidenceScoring: true
+        }
+      });
+    } catch (error) {
+      console.error('Enhanced memory detection error:', error);
+      res.status(500).json({ error: "Failed to process enhanced memory detection" });
+    }
+  });
+
+  // Phase 1: Enhanced Memory Retrieval API  
+  app.post("/api/memory/enhanced-retrieve", async (req, res) => {
+    try {
+      const { query, limit, contextualHints } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: "Query is required" });
+      }
+
+      const memories = await enhancedMemoryService.getRelevantMemories(
+        query,
+        1, // Default user ID
+        limit || 5,
+        contextualHints || []
+      );
+
+      res.json({
+        memories,
+        count: memories.length,
+        phase: "1",
+        features: {
+          dynamicThresholds: true,
+          temporalWeighting: true,
+          diversityFiltering: true,
+          contextualHints: true
+        }
+      });
+    } catch (error) {
+      console.error('Enhanced memory retrieval error:', error);
+      res.status(500).json({ error: "Failed to retrieve enhanced memories" });
+    }
+  });
+
   // Get available AI models
   app.get("/api/ai-models", async (req, res) => {
     try {

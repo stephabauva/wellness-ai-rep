@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,6 +6,18 @@ import { Form } from "@/components/ui/form"; // Only Form component needed at to
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppContext } from "@/context/AppContext";
+import { 
+  User, 
+  Settings, 
+  MousePointer, 
+  Stethoscope, 
+  Bell, 
+  Database, 
+  Terminal, 
+  MessageSquare, 
+  TestTube, 
+  Globe 
+} from "lucide-react";
 
 // Import hooks
 import { useUserSettings, UserSettingsFormValues } from "@/hooks/useUserSettings";
@@ -46,8 +58,19 @@ const settingsSchema = z.object({
 // This type will be used by the form
 export type CombinedSettingsFormValues = z.infer<typeof settingsSchema>;
 
+// Define settings sections with icons
+const settingsSections = [
+  { id: 'account', label: 'Account', icon: User },
+  { id: 'coaching', label: 'Coaching', icon: Stethoscope },
+  { id: 'preferences', label: 'App Preferences', icon: Settings },
+  { id: 'files', label: 'File Management', icon: Database },
+  { id: 'ai', label: 'AI Configuration', icon: MessageSquare },
+  { id: 'performance', label: 'Performance', icon: Terminal },
+];
+
 const SettingsSection: React.FC = () => {
   const { coachingMode, setCoachingMode } = useAppContext();
+  const [activeSection, setActiveSection] = useState('account');
   
   const { userSettings, isLoadingSettings, updateUserSettings, isUpdatingSettings } = useUserSettings();
   const { retentionSettings, isLoadingRetentionSettings, updateRetentionSettings, isUpdatingRetentionSettings } = useRetentionSettings();
@@ -145,55 +168,111 @@ const SettingsSection: React.FC = () => {
   
   const isLoading = isLoadingSettings || isLoadingRetentionSettings;
 
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'account':
+        return <AccountSettings />;
+      case 'coaching':
+        return <CoachingPreferencesSettings />;
+      case 'preferences':
+        return <AppPreferencesSettings />;
+      case 'files':
+        return <FileManagementSettings />;
+      case 'ai':
+        return (
+          <AiConfigurationSettings
+            aiModels={aiModels}
+            isLoadingAiModels={isLoadingAiModels}
+          />
+        );
+      case 'performance':
+        return (
+          <PerformanceSettings
+            enableVirtualScrolling={enableVirtualScrolling}
+            enablePagination={enablePagination}
+            enableWebWorkers={enableWebWorkers}
+            onVirtualScrollingChange={setEnableVirtualScrolling}
+            onPaginationChange={setEnablePagination}
+            onWebWorkersChange={setEnableWebWorkers}
+          />
+        );
+      default:
+        return <AccountSettings />;
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto">
-      <div className="flex-1 p-4 md:p-6">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-semibold text-foreground mb-6">Settings</h1>
+    <div className="flex-1 flex overflow-hidden">
+      {/* Vertical Navigation Sidebar */}
+      <div className="w-16 bg-gradient-to-b from-purple-600 to-slate-800 dark:from-purple-700 dark:to-slate-900 flex flex-col items-center py-4 space-y-4 overflow-y-auto">
+        {settingsSections.map((section) => {
+          const IconComponent = section.icon;
+          const isActive = activeSection === section.id;
+          
+          return (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`
+                p-3 rounded-lg transition-all duration-200 
+                ${isActive 
+                  ? 'bg-white/20 text-white shadow-lg scale-110' 
+                  : 'text-white/70 hover:text-white hover:bg-white/10 hover:scale-105'
+                }
+              `}
+              title={section.label}
+            >
+              <IconComponent className="h-6 w-6" />
+            </button>
+          );
+        })}
+      </div>
 
-          {isLoading ? (
-            <>
-              <Skeleton className="h-[200px] w-full mb-8" />
-              <Skeleton className="h-[300px] w-full mb-8" />
-              <Skeleton className="h-[250px] w-full mb-8" />
-              <Skeleton className="h-[350px] w-full mb-8" />
-              <Skeleton className="h-[400px] w-full mb-8" />
-            </>
-          ) : (
-            <FormProvider {...form}> {/* Pass all form methods to children */}
-              <Form {...form}> {/* This Form is from ui/form, for Shadcn layout */}
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                  <AccountSettings />
-                  <CoachingPreferencesSettings />
-                  <AppPreferencesSettings />
-                  <FileManagementSettings />
-                  <AiConfigurationSettings
-                    aiModels={aiModels}
-                    isLoadingAiModels={isLoadingAiModels}
-                  />
-                  
-                  <PerformanceSettings
-                    enableVirtualScrolling={enableVirtualScrolling}
-                    enablePagination={enablePagination}
-                    enableWebWorkers={enableWebWorkers}
-                    onVirtualScrollingChange={setEnableVirtualScrolling}
-                    onPaginationChange={setEnablePagination}
-                    onWebWorkersChange={setEnableWebWorkers}
-                  />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            <div className="max-w-4xl mx-auto">
+              {/* Header with section title */}
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold text-foreground">
+                  {settingsSections.find(s => s.id === activeSection)?.label || 'Settings'}
+                </h1>
+                <p className="text-muted-foreground mt-2">
+                  Configure your {settingsSections.find(s => s.id === activeSection)?.label.toLowerCase()} settings
+                </p>
+              </div>
 
-                  <div className="flex justify-end mt-8"> {/* Added mt-8 for spacing */}
-                    <Button
-                      type="submit"
-                      className="bg-primary hover:bg-primary/90"
-                      disabled={isUpdatingSettings || isUpdatingRetentionSettings}
-                    >
-                      Save Changes
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </FormProvider>
-          )}
+              {isLoading ? (
+                <div className="space-y-6">
+                  <Skeleton className="h-[200px] w-full" />
+                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-[250px] w-full" />
+                </div>
+              ) : (
+                <FormProvider {...form}>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      {renderActiveSection()}
+                      
+                      {/* Save Button - Fixed at bottom */}
+                      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t pt-4 mt-8">
+                        <div className="flex justify-end">
+                          <Button
+                            type="submit"
+                            className="bg-primary hover:bg-primary/90 px-8"
+                            disabled={isUpdatingSettings || isUpdatingRetentionSettings}
+                          >
+                            {(isUpdatingSettings || isUpdatingRetentionSettings) ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  </Form>
+                </FormProvider>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -118,6 +118,7 @@ const HealthDataSection: React.FC = () => {
                   {/* <SelectItem value="custom">Custom range</SelectItem> */}
                 </SelectContent>
               </Select>
+              <HealthDataImport />
               <Button 
                 onClick={() => downloadHealthReport()}
                 disabled={isDownloadingReport}

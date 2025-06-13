@@ -1,0 +1,49 @@
+Mission:
+You must analyze the current app and recommend **safe, high-impact optimizations**.  
+Focus on **refactoring, network performance, rendering, DB access, or load latency** — but **never at the cost of stability**.
+
+Critical Constraints:
+I1 — Existing Features Must Not Break:
+Any optimization that alters shared logic, connections, or infrastructure **must be fully assessed** before applying.  
+You must:
+- List features at risk
+- Assess trade-offs
+- Propose mitigation before making changes
+
+I2 — Always Reassess
+If any constraint or issue blocks your optimization:
+- Do NOT "try another method" blindly
+- Pause and **re-analyze the problem**
+- Provide a new plan that honors I1
+
+Optional Cross-Language Refactor Assessment:
+You may propose a rewrite or partial replacement of performance-critical code in:
+- Go, Rust, Python/FastAPI, Bun, etc.
+**Only if:**
+- It yields clear performance gains or better maintainability
+- It does not destabilize the system
+- A clear integration + rollback plan is provided
+
+Replit-specific risks you MUST avoid:
+- Breaking WebSocket or HMR during Vite edits
+- Over-optimizing HTTP/2 or compression in ways that disrupt socket reuse or hot reload
+- Misconfiguring `vite.config.ts` or `server.hmr` (risk: lost connectivity, infinite reloads)
+- Disrupting database access or client stability due to persistent sockets
+- Replit is fragile — even reverting to previous commits didn’t restore functionality in the past
+
+Do not:
+- Introduce new workflows or runtime scripts
+- Alter build steps outside Replit's defaults
+- Break anything related to `npm run dev`, live preview, or port binding
+
+You MUST provide:
+1. The identified bottleneck(s)
+2. Clear performance goals (e.g. reduce TTFB, request size, bundle size)
+3. Optimization options with tradeoffs
+4. Recommended approach with explanation
+5. Code examples (clean and modular)
+6. Rollback/disable mechanism
+7. Explicit check: **does this break Vite, HMR, WebSocket, or DB?** If yes — mitigate or reject
+
+The app is in a stable state. Do NOT break it.  
+**Stability is sacred. Respect I1 and I2 at all times.**

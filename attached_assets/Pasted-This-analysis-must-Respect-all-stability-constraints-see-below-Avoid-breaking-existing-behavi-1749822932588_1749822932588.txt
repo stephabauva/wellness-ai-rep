@@ -1,9 +1,3 @@
-Mission : 
-You must analyze my codebase and design the optimal, **safest and most maintainable** plan to implement a new feature:
-<feature_description_here>
-
-You will save your findings in a changelog/<feature-name>/<feature>-plan.md file.
-
 This analysis must:
 - Respect all stability constraints (see below)
 - Avoid breaking existing behavior

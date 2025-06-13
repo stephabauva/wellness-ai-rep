@@ -44,6 +44,8 @@ You MUST provide:
 5. Code examples (clean and modular)
 6. Rollback/disable mechanism
 7. Explicit check: **does this break Vite, HMR, WebSocket, or DB?** If yes — mitigate or reject
+8. Ensure that are no unused pieces of code
+9. Ensure there are no conflicts between pieces of code.
 
 The app is in a stable state. Do NOT break it.  
 **Stability is sacred. Respect I1 and I2 at all times.**

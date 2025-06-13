@@ -1,0 +1,27 @@
+# CONTEXT CONTINUATION — Do NOT Forget
+
+You are continuing work on the previous task.
+
+You MUST still follow the critical rules from the initial prompt:
+
+## Stability Rules (MANDATORY)
+
+- Respect I1: DO NOT break or alter any existing feature’s behavior unless explicitly assessed
+- Respect I2: If something blocks your current plan, DO NOT guess — re-analyze from scratch
+- All changes must include safety tests or rollback paths
+- Confirm that HMR, WebSocket, Vite dev server, and DB connection remain fully stable
+
+## Replit-Specific Risks (DO NOT BREAK)
+
+- Avoid editing `vite.config.ts`, HMR, WebSocket, compression or persistent connections unless strictly necessary
+- NEVER introduce new workflows or bypass Replit tools
+- The Replit environment is delicate — even previously working commits didn’t fix broken states
+- Never alter DB schema unless asked — use ORM migrations (Drizzle) only
+
+## During This Phase
+
+You must:
+1. Generate clean, modular, safe code
+2. at the end, update the changelog/<feature>/<feature-name>-implementation-and-fixes.md.
+
+Never skip safety steps. Stability is sacred.

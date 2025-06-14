@@ -667,12 +667,8 @@ export class HealthDataParser {
           try {
             console.log(`Decompression complete. Total size: ${totalSize} bytes`);
             
-            // Combine all chunks into XML content
-            const xmlContent = Buffer.concat(chunks).toString('utf8');
-            console.log(`XML content length: ${xmlContent.length} characters`);
-            
-            // Use chunked processing for the decompressed XML
-            const result = await this.parseAppleHealthXMLChunked(xmlContent, progressCallback);
+            // Process chunks without converting to string to avoid memory limits
+            const result = await this.parseAppleHealthXMLFromChunks(chunks, progressCallback);
             resolve(result);
           } catch (parseError) {
             console.error('Error parsing decompressed XML:', parseError);
@@ -694,6 +690,171 @@ export class HealthDataParser {
       return {
         success: false,
         errors: [`Streaming processing error: ${error instanceof Error ? error.message : 'Unknown error'}`]
+      };
+    }
+  }
+
+  // Process XML chunks without converting entire buffer to string
+  private static async parseAppleHealthXMLFromChunks(
+    chunks: Buffer[], 
+    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void
+  ): Promise<ParseResult> {
+    try {
+      console.log('Processing Apple Health XML from buffer chunks...');
+      
+      const parsedData: ParsedHealthDataPoint[] = [];
+      const errors: string[] = [];
+      const categories: Record<string, number> = {};
+      let processedBytes = 0;
+      const totalBytes = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      
+      // Process chunks sequentially to find XML records without loading all into memory
+      let xmlBuffer = '';
+      let recordCount = 0;
+      let validRecords = 0;
+      
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        processedBytes += chunk.length;
+        
+        // Convert chunk to string and append to buffer
+        const chunkStr = chunk.toString('utf8');
+        xmlBuffer += chunkStr;
+        
+        // Process complete records found in current buffer
+        let recordStart = 0;
+        let recordMatch;
+        
+        // Find complete Record elements in the buffer
+        const recordRegex = /<Record[^>]*>(?:[^<]|<(?!\/Record>))*<\/Record>/g;
+        
+        while ((recordMatch = recordRegex.exec(xmlBuffer)) !== null) {
+          try {
+            const recordXml = recordMatch[0];
+            recordCount++;
+            
+            // Extract attributes using regex (memory efficient)
+            const typeMatch = recordXml.match(/type="([^"]+)"/);
+            const valueMatch = recordXml.match(/value="([^"]+)"/);
+            const unitMatch = recordXml.match(/unit="([^"]+)"/);
+            
+            // Try multiple date fields
+            let dateMatch = recordXml.match(/creationDate="([^"]+)"/);
+            if (!dateMatch) dateMatch = recordXml.match(/startDate="([^"]+)"/);
+            if (!dateMatch) dateMatch = recordXml.match(/endDate="([^"]+)"/);
+            
+            const sourceMatch = recordXml.match(/sourceName="([^"]+)"/);
+
+            if (!typeMatch || !valueMatch || !dateMatch) {
+              continue; // Skip invalid records
+            }
+
+            const type = typeMatch[1];
+            let mapping = this.appleHealthTypeMapping[type];
+
+            // Handle sleep analysis with value-based types
+            if (!mapping && type === 'HKCategoryTypeIdentifierSleepAnalysis') {
+              const value = valueMatch[1];
+              const sleepType = `HKCategoryValueSleepAnalysis${value}`;
+              mapping = this.appleHealthTypeMapping[sleepType];
+            }
+
+            if (!mapping) {
+              continue; // Skip unsupported types
+            }
+
+            const timestamp = new Date(dateMatch[1]);
+            if (isNaN(timestamp.getTime())) {
+              continue; // Skip invalid timestamps
+            }
+
+            const dataPoint: ParsedHealthDataPoint = {
+              dataType: mapping.dataType,
+              value: valueMatch[1],
+              unit: unitMatch ? unitMatch[1] : undefined,
+              timestamp,
+              source: sourceMatch ? sourceMatch[1] : 'Apple Health',
+              category: mapping.category,
+              metadata: {
+                originalType: type,
+                source: 'apple_health'
+              }
+            };
+
+            parsedData.push(dataPoint);
+            validRecords++;
+
+            // Track categories
+            const categoryKey = mapping.category || 'other';
+            categories[categoryKey] = (categories[categoryKey] || 0) + 1;
+
+          } catch (recordError) {
+            if (errors.length < 10) {
+              errors.push(`Error processing record ${recordCount}: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
+            }
+          }
+        }
+        
+        // Keep only the remainder after the last complete record for next iteration
+        const lastRecordEnd = recordRegex.lastIndex || 0;
+        xmlBuffer = xmlBuffer.substring(lastRecordEnd);
+        recordRegex.lastIndex = 0; // Reset regex
+        
+        // Update progress
+        if (progressCallback && i % 10 === 0) { // Update every 10 chunks
+          const percentage = Math.round((processedBytes / totalBytes) * 100);
+          progressCallback({
+            processed: processedBytes,
+            total: totalBytes,
+            percentage
+          });
+        }
+        
+        // Log progress for large files
+        if (i > 0 && i % 100 === 0) {
+          console.log(`Processed ${i}/${chunks.length} chunks, found ${validRecords} valid records`);
+        }
+      }
+
+      console.log(`Chunk processing complete: ${validRecords} valid records from ${recordCount} total`);
+
+      // Final progress update
+      if (progressCallback) {
+        progressCallback({
+          processed: totalBytes,
+          total: totalBytes,
+          percentage: 100
+        });
+      }
+
+      if (validRecords === 0) {
+        return {
+          success: false,
+          errors: [
+            'No valid health records were found in the file.',
+            'Please ensure this is a valid Apple Health export.',
+            ...errors.slice(0, 3)
+          ]
+        };
+      }
+
+      return {
+        success: true,
+        data: parsedData,
+        errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
+        summary: {
+          totalRecords: recordCount,
+          validRecords,
+          skippedRecords: recordCount - validRecords,
+          categories
+        }
+      };
+
+    } catch (error) {
+      console.error('Chunk processing error:', error);
+      return {
+        success: false,
+        errors: [`Chunk processing error: ${error instanceof Error ? error.message : 'Unknown error'}`]
       };
     }
   }

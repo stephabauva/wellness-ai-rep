@@ -177,6 +177,13 @@ Changelog:
   - Enhanced progress tracking during streaming decompression phase
   - Fixed user's 28.4MB compressed Apple Health export file parsing (estimated 500MB+ decompressed)
   - Maintained backward compatibility with smaller files using standard decompression
+- June 14, 2025. **True Streaming XML Processing for Massive Health Files**:
+  - Implemented parseAppleHealthXMLFromChunks to process 830MB decompressed Apple Health exports
+  - Added chunk-by-chunk XML parsing that never loads entire file into memory as string
+  - Enhanced regex-based record extraction to process records progressively from buffer chunks
+  - Fixed memory overflow issues for files exceeding Node.js string limits (>536MB)
+  - Maintained parsing accuracy while processing hundreds of thousands of health records
+  - Added detailed progress tracking and logging for large file processing operations
 
 # User Preferences
 

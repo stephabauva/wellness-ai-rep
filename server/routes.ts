@@ -656,7 +656,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read as buffer to handle compressed files properly
       const fileBuffer = fs.readFileSync(req.file.path);
-      const parseResult = await HealthDataParser.parseFile(fileBuffer, req.file.originalname);
+      
+      // Create a progress callback that logs progress updates
+      const parseResult = await HealthDataParser.parseFile(fileBuffer, req.file.originalname, (progress) => {
+        console.log(`Import progress: ${progress.processed}/${progress.total} records (${Math.round(progress.percentage)}%)`);
+      });
 
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);

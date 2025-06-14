@@ -39,6 +39,12 @@ export class HealthDataParser {
     'HKQuantityTypeIdentifierActiveEnergyBurned': { dataType: 'calories_burned', category: 'lifestyle' },
     'HKQuantityTypeIdentifierBasalEnergyBurned': { dataType: 'bmr', category: 'body_composition' },
     'HKCategoryTypeIdentifierSleepAnalysis': { dataType: 'sleep_duration', category: 'lifestyle' },
+    'HKCategoryValueSleepAnalysisInBed': { dataType: 'sleep_duration', category: 'lifestyle' },
+    'HKCategoryValueSleepAnalysisAsleep': { dataType: 'sleep_duration', category: 'lifestyle' },
+    'HKCategoryValueSleepAnalysisAsleepCore': { dataType: 'sleep_duration', category: 'lifestyle' },
+    'HKCategoryValueSleepAnalysisAsleepDeep': { dataType: 'sleep_duration', category: 'lifestyle' },
+    'HKCategoryValueSleepAnalysisAsleepREM': { dataType: 'sleep_duration', category: 'lifestyle' },
+    'HKCategoryValueSleepAnalysisAwake': { dataType: 'sleep_duration', category: 'lifestyle' },
     'HKQuantityTypeIdentifierVO2Max': { dataType: 'vo2_max', category: 'advanced' },
     'HKQuantityTypeIdentifierOxygenSaturation': { dataType: 'oxygen_saturation', category: 'cardiovascular' },
     'HKQuantityTypeIdentifierBloodGlucose': { dataType: 'blood_glucose_random', category: 'medical' },
@@ -58,7 +64,7 @@ export class HealthDataParser {
     'com.google.oxygen_saturation': { dataType: 'oxygen_saturation', category: 'cardiovascular' },
   };
 
-  static async parseFile(fileContent: string | Buffer, fileName: string): Promise<ParseResult> {
+  static async parseFile(fileContent: string | Buffer, fileName: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
     try {
       // Handle compressed files
       let content: string;
@@ -88,7 +94,7 @@ export class HealthDataParser {
       
       switch (fileExtension) {
         case 'xml':
-          return await this.parseAppleHealthXML(content);
+          return await this.parseAppleHealthXML(content, progressCallback);
         case 'json':
           return await this.parseGoogleFitJSON(content);
         case 'csv':
@@ -107,7 +113,7 @@ export class HealthDataParser {
     }
   }
 
-  private static async parseAppleHealthXML(xmlContent: string): Promise<ParseResult> {
+  private static async parseAppleHealthXML(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
     // For very large files, implement chunked processing to prevent memory issues
     if (xmlContent.length > 50 * 1024 * 1024) { // 50MB threshold
       return this.parseAppleHealthXMLChunked(xmlContent);
@@ -200,7 +206,7 @@ export class HealthDataParser {
       console.log('Processing large Apple Health file with chunked processing...');
       
       // Extract records in smaller chunks to prevent memory issues
-      const recordMatches = xmlContent.match(/<Record[^>]*>.*?<\/Record>/gs);
+      const recordMatches = xmlContent.match(/<Record[^>]*>.*?<\/Record>/g);
       
       if (!recordMatches) {
         return {
@@ -219,6 +225,11 @@ export class HealthDataParser {
       // Process records in chunks to prevent memory overload
       for (let i = 0; i < recordMatches.length; i += chunkSize) {
         const chunk = recordMatches.slice(i, i + chunkSize);
+        
+        // Report progress every 10,000 records
+        if (i % 10000 === 0) {
+          console.log(`Processed ${Math.min(i + chunkSize, recordMatches.length)} of ${recordMatches.length} records`);
+        }
         
         // Force garbage collection between chunks for large files
         if (global.gc && i > 0 && i % (chunkSize * 5) === 0) {
@@ -240,7 +251,14 @@ export class HealthDataParser {
             }
 
             const type = typeMatch[1];
-            const mapping = this.appleHealthTypeMapping[type];
+            let mapping = this.appleHealthTypeMapping[type];
+
+            // Handle Apple Health sleep analysis with value-based types
+            if (!mapping && type === 'HKCategoryTypeIdentifierSleepAnalysis') {
+              const value = valueMatch[1];
+              const sleepType = `HKCategoryValueSleepAnalysis${value}`;
+              mapping = this.appleHealthTypeMapping[sleepType];
+            }
 
             if (!mapping) {
               continue; // Skip unsupported types

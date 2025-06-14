@@ -1202,10 +1202,20 @@ export class HealthDataParser {
         xmlBuffer = xmlBuffer.substring(lastRecordEnd);
         recordRegex.lastIndex = 0;
         
-        // Clear buffer more aggressively for massive files
-        const bufferLimit = totalBytes > 500 * 1024 * 1024 ? 100 * 1024 : 1024 * 1024; // 100KB for >500MB files, 1MB otherwise
+        // Ultra-aggressive buffer clearing for time-filtered massive files
+        let bufferLimit;
+        if (cutoffDate && totalBytes > 500 * 1024 * 1024) {
+          bufferLimit = 50 * 1024; // 50KB for massive files with time filter
+        } else if (cutoffDate && totalBytes > 100 * 1024 * 1024) {
+          bufferLimit = 100 * 1024; // 100KB for large files with time filter
+        } else if (totalBytes > 500 * 1024 * 1024) {
+          bufferLimit = 100 * 1024; // 100KB for >500MB files without time filter
+        } else {
+          bufferLimit = 1024 * 1024; // 1MB otherwise
+        }
+        
         if (xmlBuffer.length > bufferLimit) {
-          xmlBuffer = xmlBuffer.substring(xmlBuffer.length - Math.min(50000, bufferLimit / 2)); // Keep smaller remainder
+          xmlBuffer = xmlBuffer.substring(xmlBuffer.length - Math.min(10000, bufferLimit / 4)); // Keep very small remainder for time filtering
         }
         
         // Progress updates
@@ -1218,8 +1228,21 @@ export class HealthDataParser {
           });
         }
         
-        // Periodic logging and garbage collection with time filtering stats
-        if (i > 0 && i % 200 === 0) {
+        // Ultra-aggressive memory management for time-filtered large files
+        if (cutoffDate && i > 0 && i % 50 === 0) {
+          // Force garbage collection every 50 chunks for time filtering
+          if (global.gc) {
+            global.gc();
+          }
+          
+          const filterEffectiveness = recordCount > 0 ? ((skippedRecords / recordCount) * 100).toFixed(1) : 'N/A';
+          console.log(`Processed ${i}/${chunks.length} chunks, ${validRecords} valid records from ${recordCount} total, ${skippedRecords} skipped by time filter (${filterEffectiveness}% filtered)`);
+          
+          // Early termination if we're processing too many old records without finding recent ones
+          if (validRecords < 10 && recordCount > 50000) {
+            console.log(`Memory protection: Found only ${validRecords} valid records after processing ${recordCount} total records. Consider using a longer time range.`);
+          }
+        } else if (i > 0 && i % 200 === 0) {
           const filterEffectiveness = cutoffDate && recordCount > 0 ? ((skippedRecords / recordCount) * 100).toFixed(1) : 'N/A';
           console.log(`Processed ${i}/${chunks.length} chunks, ${validRecords} valid records from ${recordCount} total${cutoffDate ? `, ${skippedRecords} skipped by time filter (${filterEffectiveness}% filtered)` : ''}`);
           

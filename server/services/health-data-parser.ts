@@ -1074,15 +1074,21 @@ export class HealthDataParser {
       
       // Set up time filtering if enabled
       let cutoffDate: Date | null = null;
+      let consecutiveOldRecords = 0;
+      const MAX_CONSECUTIVE_OLD_RECORDS = 1000; // Stop if we hit 1k consecutive old records (much more aggressive)
+      
       if (timeFilterMonths && timeFilterMonths > 0) {
         cutoffDate = new Date();
         cutoffDate.setMonth(cutoffDate.getMonth() - timeFilterMonths);
         console.log(`Time filter enabled: Only processing records from ${cutoffDate.toISOString()} onwards (last ${timeFilterMonths} months)`);
+        console.log(`Early termination: Will stop if ${MAX_CONSECUTIVE_OLD_RECORDS} consecutive records are older than cutoff`);
       }
       
       console.log(`Processing ${chunks.length} chunks (${Math.round(totalBytes / 1024 / 1024)}MB total)`);
       
-      for (let i = 0; i < chunks.length; i++) {
+      let earlyTermination = false;
+      
+      for (let i = 0; i < chunks.length && !earlyTermination; i++) {
         const chunk = chunks[i];
         processedBytes += chunk.length;
         
@@ -1099,15 +1105,26 @@ export class HealthDataParser {
             const recordXml = recordMatch[0];
             recordCount++;
             
-            // For very large files (>100MB), sample every 50th record to reduce memory usage
-            // For massive files (>500MB), sample every 100th record
+            // For very large files with time filtering, use aggressive sampling to prevent memory crashes
             let sampleRate = 1;
-            if (totalBytes > 500 * 1024 * 1024) {
-              sampleRate = 100;
-            } else if (totalBytes > 100 * 1024 * 1024) {
-              sampleRate = 50;
-            } else if (totalBytes > 50 * 1024 * 1024) {
-              sampleRate = 10;
+            if (cutoffDate) {
+              // When time filtering is enabled, use much more aggressive sampling
+              if (totalBytes > 500 * 1024 * 1024) {
+                sampleRate = 1000; // Sample every 1000th record for massive files with time filter
+              } else if (totalBytes > 100 * 1024 * 1024) {
+                sampleRate = 500; // Sample every 500th record for large files with time filter
+              } else if (totalBytes > 50 * 1024 * 1024) {
+                sampleRate = 100; // Sample every 100th record for medium files with time filter
+              }
+            } else {
+              // Original sampling rates when no time filter
+              if (totalBytes > 500 * 1024 * 1024) {
+                sampleRate = 100;
+              } else if (totalBytes > 100 * 1024 * 1024) {
+                sampleRate = 50;
+              } else if (totalBytes > 50 * 1024 * 1024) {
+                sampleRate = 10;
+              }
             }
             
             if (recordCount % sampleRate === 0) {
@@ -1127,7 +1144,19 @@ export class HealthDataParser {
                 // Apply early time filtering - skip record if outside time range
                 if (cutoffDate && timestamp < cutoffDate) {
                   skippedRecords++;
+                  consecutiveOldRecords++;
+                  
+                  // Early termination if we hit too many consecutive old records
+                  if (consecutiveOldRecords >= MAX_CONSECUTIVE_OLD_RECORDS) {
+                    console.log(`Early termination: Found ${consecutiveOldRecords} consecutive records older than ${cutoffDate.toISOString()}. Stopping processing to save memory.`);
+                    console.log(`Processed ${i}/${chunks.length} chunks before early termination`);
+                    earlyTermination = true;
+                    break; // Break out of the record processing loop
+                  }
                   continue; // Skip this record entirely
+                } else if (cutoffDate) {
+                  // Reset counter when we find a recent record
+                  consecutiveOldRecords = 0;
                 }
                 
                 const type = typeMatch[1];

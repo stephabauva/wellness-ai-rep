@@ -1947,6 +1947,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Phase 3: Go File Acceleration Service Proxy Routes
+  // Non-intrusive proxy routes that forward requests to Go acceleration service
+  
+  // Health check for Go acceleration service
+  app.get('/api/accelerate/health', async (req, res) => {
+    try {
+      const response = await fetch('http://localhost:5001/accelerate/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+      
+      if (response.ok) {
+        const healthData = await response.json();
+        res.json({ 
+          available: true, 
+          service: healthData,
+          proxyStatus: 'active'
+        });
+      } else {
+        res.json({ 
+          available: false, 
+          error: `Service returned ${response.status}`,
+          proxyStatus: 'service_error'
+        });
+      }
+    } catch (error) {
+      console.warn('Go acceleration service not available:', error);
+      res.json({ 
+        available: false, 
+        error: 'Service unavailable',
+        proxyStatus: 'offline'
+      });
+    }
+  });
+
+  // Large file compression acceleration endpoint
+  app.post('/api/accelerate/compress-large', async (req, res) => {
+    try {
+      console.log('Forwarding large file compression request to Go service');
+      
+      // Forward the request to Go service with proper headers
+      const response = await fetch('http://localhost:5001/accelerate/compress-large', {
+        method: 'POST',
+        body: req.body,
+        headers: {
+          ...req.headers,
+          'host': undefined, // Remove host header to avoid conflicts
+        },
+        signal: AbortSignal.timeout(120000) // 2 minute timeout for large files
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Go acceleration service error:', response.status, errorText);
+        return res.status(500).json({ 
+          error: 'Go acceleration service failed',
+          details: errorText,
+          fallback: 'Use TypeScript compression'
+        });
+      }
+      
+      const result = await response.json();
+      console.log('Go acceleration successful:', {
+        originalSize: result.originalSize,
+        compressedSize: result.compressedSize,
+        ratio: result.compressionRatio,
+        time: result.processingTime
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Go acceleration proxy error:', error);
+      res.status(500).json({ 
+        error: 'Acceleration service unavailable',
+        fallback: 'Use TypeScript compression',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Batch processing acceleration endpoint
+  app.post('/api/accelerate/batch-process', async (req, res) => {
+    try {
+      console.log('Forwarding batch processing request to Go service');
+      
+      const response = await fetch('http://localhost:5001/accelerate/batch-process', {
+        method: 'POST',
+        body: req.body,
+        headers: {
+          ...req.headers,
+          'host': undefined,
+        },
+        signal: AbortSignal.timeout(300000) // 5 minute timeout for batch processing
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Go batch processing error:', response.status, errorText);
+        return res.status(500).json({ 
+          error: 'Batch processing failed',
+          details: errorText,
+          fallback: 'Process files individually'
+        });
+      }
+      
+      const result = await response.json();
+      console.log('Go batch processing successful:', {
+        totalFiles: result.totalFiles,
+        processedFiles: result.processedFiles,
+        time: result.processingTime
+      });
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Batch processing proxy error:', error);
+      res.status(500).json({ 
+        error: 'Batch processing service unavailable',
+        fallback: 'Process files individually',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   return httpServer;
 }
 

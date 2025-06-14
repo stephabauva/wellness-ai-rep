@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { UniversalFileService } from '../services/universal-file-service';
 
 interface UploadResponse {
   success: boolean;
@@ -28,18 +29,47 @@ export function useFileUpload(): UseFileUploadReturn {
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  // Initialize Universal File Service on first use
+  useEffect(() => {
+    UniversalFileService.initialize().catch(err => {
+      console.warn('Universal File Service initialization failed:', err);
+    });
+  }, []);
+
   const uploadFile = async (file: File, categoryId?: string): Promise<UploadResponse | null> => {
     setIsUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    if (categoryId) {
-      formData.append('categoryId', categoryId);
-    }
-
     try {
+      // Compress using universal service (with Go acceleration where beneficial)
+      console.log(`Starting upload for ${file.name} (${file.size} bytes)`);
+      
+      let fileToUpload = file;
+      
+      // Apply compression for suitable files
+      try {
+        const compressionResult = await UniversalFileService.compressFile(file);
+        fileToUpload = compressionResult.compressedFile;
+        
+        console.log(`Compression completed for ${file.name}:`, {
+          originalSize: compressionResult.originalSize,
+          compressedSize: compressionResult.compressedSize,
+          ratio: compressionResult.compressionRatio,
+          algorithm: compressionResult.algorithm
+        });
+      } catch (compressionError) {
+        console.warn(`Compression failed for ${file.name}, uploading original:`, compressionError);
+        // Continue with original file if compression fails
+      }
+
+      // Upload the (potentially compressed) file
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+
+      if (categoryId) {
+        formData.append('categoryId', categoryId);
+      }
+
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,

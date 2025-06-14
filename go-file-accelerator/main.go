@@ -5,6 +5,7 @@ import (
         "compress/gzip"
         "io"
         "log"
+        "mime/multipart"
         "net/http"
         "runtime"
         "strings"

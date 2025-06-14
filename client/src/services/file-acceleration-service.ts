@@ -18,6 +18,8 @@ export interface CompressionResult {
   compressedSize: number;
   processingTime?: number;
   algorithm?: string;
+  compressionLevel?: number;
+  throughput?: number; // MB/s
 }
 
 export interface AccelerationCapabilities {
@@ -34,7 +36,7 @@ export class FileAccelerationService {
     isAvailable: false,
     lastHealthCheck: 0,
     supportedFormats: ['.xml', '.json', '.csv'],
-    minimumFileSize: 10 * 1024 * 1024, // 10MB
+    minimumFileSize: 5 * 1024 * 1024, // 5MB - Enhanced threshold for better acceleration
   };
   
   private static readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
@@ -171,7 +173,9 @@ export class FileAccelerationService {
         originalSize: result.originalSize,
         compressedSize: result.compressedSize,
         processingTime: result.processingTime || processingTime,
-        algorithm: result.algorithm || 'gzip-go',
+        algorithm: result.algorithm || 'gzip-optimized',
+        compressionLevel: result.compressionLevel,
+        throughput: result.throughput,
       };
 
     } catch (error) {

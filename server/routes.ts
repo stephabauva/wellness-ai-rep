@@ -1391,7 +1391,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'text/plain',
+        'text/xml',
+        'application/xml',
+        'text/csv',
+        'application/json'
       ];
 
       const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
@@ -1408,6 +1412,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
+      }
+
+      // Check file size and automatically start Go service for large files (same as health dashboard)
+      const fileSizeInMB = req.file.size / (1024 * 1024);
+      if (fileSizeInMB > 5) { // 5MB threshold - same as health dashboard
+        console.log(`Large file detected for upload (${fileSizeInMB.toFixed(1)}MB). Attempting to start Go acceleration service...`);
+        try {
+          await startGoAccelerationService();
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log('Go service auto-start failed, continuing with standard processing:', errorMessage);
+        }
       }
 
       const uploadStartTime = Date.now();

@@ -252,6 +252,14 @@ Changelog:
   - **Database Cleared**: Removed corrupted timestamp data to enable clean re-import with preserved dates
   - **Complete Solution**: Apple Health data now imports with original timestamps within selected time range
   - System ready for memory-safe Apple Health import with preserved original dates from selected time period
+- June 14, 2025. **Critical Dashboard Data Display Fix - Complete Solution**:
+  - **ROOT CAUSE IDENTIFIED**: JavaScript date calculation bug in storage layer causing incorrect time filtering
+  - **Date Calculation Fix**: Fixed both MemStorage and DatabaseStorage classes to use millisecond-based date arithmetic
+  - **Apple Health Identifier Mapping**: Added missing mappings for HKQuantityTypeIdentifierHeartRateVariabilitySDNN, HKQuantityTypeIdentifierPhysicalEffort, and HKQuantityTypeIdentifierDistanceCycling
+  - **Database Data Correction**: Updated existing records to replace technical identifiers with user-friendly names
+  - **Dashboard Chart Enhancement**: Updated chart components to map available data types (daily_activity → steps, physical_effort → active_minutes)
+  - **Nutrition Data Integration**: Enhanced nutrition processing to include calories_burned and BMR data from imported health files
+  - **Complete Solution**: Dashboard now correctly displays imported Apple Health data with proper time filtering and user-friendly metric names
 
 # User Preferences
 

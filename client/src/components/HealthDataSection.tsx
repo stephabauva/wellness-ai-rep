@@ -48,7 +48,9 @@ const HealthDataSection: React.FC = () => {
     // Process actual health data for activity metrics
     const activityData = allHealthData.filter(item => 
       item.dataType === 'steps' || 
+      item.dataType === 'daily_activity' ||
       item.dataType === 'active_minutes' || 
+      item.dataType === 'physical_effort' ||
       item.dataType === 'calories_burned'
     );
     
@@ -69,7 +71,9 @@ const HealthDataSection: React.FC = () => {
       
       const dayData = dayMap.get(day)!;
       if (item.dataType === 'steps') dayData.steps = value;
+      if (item.dataType === 'daily_activity') dayData.steps = value; // Map daily_activity to steps
       if (item.dataType === 'active_minutes') dayData.active = value;
+      if (item.dataType === 'physical_effort') dayData.active = value; // Map physical_effort to active minutes
       if (item.dataType === 'calories_burned') dayData.calories = value;
     });
     
@@ -126,7 +130,10 @@ const HealthDataSection: React.FC = () => {
       item.dataType === 'fat' ||
       item.dataType === 'fiber' ||
       item.dataType === 'calories' ||
-      item.dataType === 'sugar'
+      item.dataType === 'calories_burned' ||
+      item.dataType === 'calories_intake' ||
+      item.dataType === 'sugar' ||
+      item.dataType === 'bmr'
     );
     
     if (nutritionData.length === 0) {

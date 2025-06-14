@@ -247,8 +247,18 @@ export function HealthDataImport() {
       setUploadStep('complete');
       
       // Invalidate health data cache to refresh dashboard
-      queryClient.invalidateQueries({ queryKey: ['/api/health-data'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/health-data/categories'] });
+      // Use a small delay to ensure database operations are fully committed
+      setTimeout(() => {
+        // Invalidate all health data related queries
+        queryClient.invalidateQueries({ queryKey: ['healthDataCategories'] });
+        queryClient.invalidateQueries({ queryKey: ['allHealthData'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/health-data'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/health-data/categories'] });
+        
+        // Force refetch to ensure immediate UI update
+        queryClient.refetchQueries({ queryKey: ['healthDataCategories'] });
+        queryClient.refetchQueries({ queryKey: ['allHealthData'] });
+      }, 500);
 
       toast({
         title: "Import Successful",

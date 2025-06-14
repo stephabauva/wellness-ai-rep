@@ -29,6 +29,61 @@ import { spawn } from 'child_process';
 // Go service auto-start functionality
 let goServiceProcess: any = null;
 
+async function startGoAccelerationService(): Promise<void> {
+  try {
+    // Check if service is already running
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    try {
+      const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (healthCheck?.ok) {
+        console.log('Go acceleration service already running');
+        return;
+      }
+    } catch {
+      clearTimeout(timeoutId);
+      // Service not running, need to start it
+    }
+
+    console.log('Starting Go acceleration service automatically...');
+    
+    // Start the Go service - install dependencies and run
+    spawn('bash', ['-c', 'cd go-file-accelerator && go mod download && go run main.go'], {
+      detached: true,
+      stdio: ['ignore', 'ignore', 'ignore']
+    });
+
+    // Give it time to start and check if successful
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    
+    const finalController = new AbortController();
+    const finalTimeoutId = setTimeout(() => finalController.abort(), 2000);
+    
+    try {
+      const finalCheck = await fetch('http://localhost:5001/accelerate/health', {
+        signal: finalController.signal
+      });
+      clearTimeout(finalTimeoutId);
+      
+      if (finalCheck?.ok) {
+        console.log('Go acceleration service started successfully for large file processing');
+      } else {
+        console.log('Go service startup completed but not responding - continuing with TypeScript processing');
+      }
+    } catch {
+      clearTimeout(finalTimeoutId);
+      console.log('Go service not responding after startup - continuing with TypeScript processing');
+    }
+  } catch (error) {
+    console.log('Go service startup failed:', error instanceof Error ? error.message : 'Unknown error');
+  }
+}
+
 // Attachment schema for client
 const attachmentSchema = z.object({
   id: z.string(), // This is the nanoid generated during upload

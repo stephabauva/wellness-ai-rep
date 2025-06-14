@@ -94,6 +94,8 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
         unit={getLatestMetricUnit(healthData, 'heart_rate', "bpm")}
         {...getHeartRateStatus(getLatestMetricValue(healthData, 'heart_rate', "N/A"))}
         icon={<Heart className="h-4 w-4" />}
+        goalValue="Normal Range"
+        progress={getLatestMetricValue(healthData, 'heart_rate', "N/A") !== "N/A" ? 100 : undefined}
       />
 
       <StatCard

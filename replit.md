@@ -163,6 +163,13 @@ Changelog:
   - Implemented proper progress logging for large import operations (>1000 records)
   - Enhanced cache invalidation to handle multiple users efficiently during batch operations
   - Import performance improved from 155,265 individual queries to ~155 batch operations for large health files
+- June 14, 2025. **Critical Server Crash Fix & Health Data Parsing Enhancement**:
+  - Fixed critical server crash caused by corrupted routes.ts file with missing function closing braces
+  - Resolved duplicate export declarations preventing server startup
+  - Added comprehensive chart container CSS styling to prevent dimension warnings in health dashboard
+  - Enhanced health data parser with better error logging and improved timestamp handling for Apple Health exports
+  - Fixed gzipped file decompression with proper error handling and logging
+  - Server now starts successfully and health dashboard displays correctly with imported data
 
 # User Preferences
 

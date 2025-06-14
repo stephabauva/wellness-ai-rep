@@ -130,7 +130,7 @@ export class FileAccelerationService {
   }
 
   /**
-   * Accelerate file compression using Go service
+   * Accelerate file compression using Go service (integrated with upload endpoint)
    */
   static async accelerateCompression(file: File): Promise<CompressionResult> {
     if (!this.shouldAccelerate(file)) {
@@ -142,7 +142,8 @@ export class FileAccelerationService {
     formData.append('file', file);
 
     try {
-      const response = await fetch(`${this.GO_SERVICE_URL}/compress-large`, {
+      // Use the regular upload endpoint which handles Go acceleration internally
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
         signal: AbortSignal.timeout(120000), // 2 minute timeout for large files
@@ -155,27 +156,24 @@ export class FileAccelerationService {
 
       const result = await response.json();
       
-      // Convert compressed data back to File object
-      const compressedBlob = new Blob([new Uint8Array(result.compressedData)], {
-        type: file.type || 'application/octet-stream',
-      });
-      
-      const compressedFile = new File([compressedBlob], file.name, {
-        type: file.type,
-        lastModified: file.lastModified,
-      });
+      // Extract compression stats from upload result
+      const compressionStats = result.compressionStats;
+      if (!compressionStats) {
+        throw new Error('Go acceleration was not used for this file');
+      }
 
+      // Return file directly since it's already saved by the upload endpoint
       const processingTime = Date.now() - startTime;
 
       return {
-        compressedFile,
-        compressionRatio: result.compressionRatio,
-        originalSize: result.originalSize,
-        compressedSize: result.compressedSize,
-        processingTime: result.processingTime || processingTime,
-        algorithm: result.algorithm || 'gzip-optimized',
-        compressionLevel: result.compressionLevel,
-        throughput: result.throughput,
+        compressedFile: file, // File is already processed and saved
+        compressionRatio: compressionStats.ratio,
+        originalSize: compressionStats.originalSize,
+        compressedSize: compressionStats.compressedSize,
+        processingTime: compressionStats.time || processingTime,
+        algorithm: 'gzip-optimized',
+        compressionLevel: 9,
+        throughput: compressionStats.originalSize / (compressionStats.time || processingTime),
       };
 
     } catch (error) {

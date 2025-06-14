@@ -29,6 +29,61 @@ import { spawn } from 'child_process';
 // Go service auto-start functionality
 let goServiceProcess: any = null;
 
+async function startGoAccelerationService(): Promise<void> {
+  try {
+    // Check if service is already running
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    try {
+      const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (healthCheck?.ok) {
+        console.log('Go acceleration service already running');
+        return;
+      }
+    } catch {
+      clearTimeout(timeoutId);
+      // Service not running, need to start it
+    }
+
+    console.log('Starting Go acceleration service automatically...');
+    
+    // Start the Go service - install dependencies and run
+    spawn('bash', ['-c', 'cd go-file-accelerator && go mod download && go run main.go'], {
+      detached: true,
+      stdio: ['ignore', 'ignore', 'ignore']
+    });
+
+    // Give it time to start and check if successful
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    
+    const finalController = new AbortController();
+    const finalTimeoutId = setTimeout(() => finalController.abort(), 2000);
+    
+    try {
+      const finalCheck = await fetch('http://localhost:5001/accelerate/health', {
+        signal: finalController.signal
+      });
+      clearTimeout(finalTimeoutId);
+      
+      if (finalCheck?.ok) {
+        console.log('Go acceleration service started successfully for large file processing');
+      } else {
+        console.log('Go service startup completed but not responding - continuing with TypeScript processing');
+      }
+    } catch {
+      clearTimeout(finalTimeoutId);
+      console.log('Go service not responding after startup - continuing with TypeScript processing');
+    }
+  } catch (error) {
+    console.log('Go service startup failed:', error instanceof Error ? error.message : 'Unknown error');
+  }
+}
+
 // Attachment schema for client
 const attachmentSchema = z.object({
   id: z.string(), // This is the nanoid generated during upload
@@ -1383,7 +1438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 50 * 1024 * 1024, // 50MB limit for general files
     },
     fileFilter: (req, file, cb) => {
-      // Accept various file types
+      // Accept various file types including XML, JSON, CSV for data files
       const allowedTypes = [
         'image/',
         'video/',
@@ -1391,10 +1446,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'text/plain',
+        'text/xml',
+        'application/xml',
+        'application/json',
+        'text/csv',
+        'application/csv',
+        'application/gzip', // Required for compressed Apple Health exports
+        'application/x-gzip', // Alternative gzip MIME type
+        'application/octet-stream' // Allow binary files which may include XML exports
       ];
 
-      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
+      // Also check file extension for cases where MIME type detection fails
+      const fileName = file.originalname.toLowerCase();
+      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.pdf', '.doc', '.docx', '.gz'];
+      const hasAllowedExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+      
+      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type)) || hasAllowedExtension;
+      
+      if (!isAllowed) {
+        console.error(`File rejected - MIME type: ${file.mimetype}, filename: ${file.originalname}`);
+      }
+      
       if (isAllowed) {
         cb(null, true);
       } else {
@@ -1408,6 +1481,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
+      }
+
+      // Check file size and automatically start Go service for large data files (XML, JSON, CSV)
+      const fileSizeInMB = req.file.size / (1024 * 1024);
+      const lowerFileName = req.file.originalname.toLowerCase();
+      const isLargeDataFile = fileSizeInMB > 5 && (
+        lowerFileName.endsWith('.xml') || 
+        lowerFileName.endsWith('.json') || 
+        lowerFileName.endsWith('.csv') ||
+        req.file.mimetype.includes('xml') ||
+        req.file.mimetype.includes('json') ||
+        req.file.mimetype.includes('csv')
+      );
+
+      if (isLargeDataFile) {
+        console.log(`Large data file detected in file management (${fileSizeInMB.toFixed(1)}MB): ${req.file.originalname}`);
+        console.log('Attempting to start Go acceleration service for file management...');
+        try {
+          await startGoAccelerationService();
+          console.log('Go acceleration service started successfully for file management');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log('Go service auto-start failed, continuing with TypeScript processing:', errorMessage);
+        }
       }
 
       const uploadStartTime = Date.now();
@@ -1425,12 +1522,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileName = `${fileId}.${fileExtension}`;
       const filePath = join(uploadsDir, fileName);
 
+      // Check if we should try Go acceleration for large data files
+      let finalFileBuffer = req.file.buffer;
+      let goServiceUsed = false;
+      let compressionStats = null;
+
+      if (isLargeDataFile) {
+        try {
+          // Try Go acceleration service for compression
+          const FormData = (await import('form-data')).default;
+          const nodeFetch = (await import('node-fetch')).default;
+          const formData = new FormData();
+          formData.append('file', req.file.buffer, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+            knownLength: req.file.size
+          });
+          
+          const response = await nodeFetch('http://localhost:5001/accelerate/compress-large', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              ...formData.getHeaders(),
+            },
+            timeout: 120000
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.compressedData) {
+              // Use compressed data from Go service
+              finalFileBuffer = Buffer.from(result.compressedData, 'base64');
+              goServiceUsed = true;
+              compressionStats = {
+                originalSize: result.originalSize,
+                compressedSize: result.compressedSize,
+                ratio: result.ratio,
+                time: result.time
+              };
+              console.log(`Go acceleration successful for ${req.file.originalname}: ${result.originalSize} → ${result.compressedSize} bytes (${(result.ratio * 100).toFixed(1)}% compression)`);
+            }
+          }
+        } catch (error) {
+          console.log('Go acceleration failed, using original file:', error);
+        }
+      }
+
       // TIER 3 OPTIMIZATION: Parallel processing with Go microservice
       const [fileWriteResult, goProcessingResult] = await Promise.all([
-        // File write operation
+        // File write operation (using potentially compressed data)
         (async () => {
           const { writeFileSync } = await import('fs');
-          writeFileSync(filePath, req.file.buffer);
+          writeFileSync(filePath, finalFileBuffer);
           return { success: true };
         })(),
         
@@ -1439,7 +1582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const result = await goFileService.processFile(
               req.file.originalname, 
-              req.file.buffer, 
+              finalFileBuffer, 
               req.file.mimetype.startsWith('image/') // Generate thumbnails for images only
             );
             console.log(`[TIER 3] Go service processed ${req.file.originalname} in ${result.processingTime}ms`);
@@ -1451,12 +1594,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })()
       ]);
 
-      const originalFileName = req.file.originalname;
+      const uploadedFileName = req.file.originalname;
       const uniqueFileName = fileName;
 
       // Get retention information for the uploaded file
       const retentionInfo = attachmentRetentionService.getRetentionInfo(
-        originalFileName,
+        uploadedFileName,
         req.file.mimetype
       );
 
@@ -1482,10 +1625,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileData: any = {
         id: fileId,
         fileName: uniqueFileName,
-        displayName: originalFileName,
-        originalName: originalFileName,
+        displayName: uploadedFileName,
+        originalName: uploadedFileName,
         fileType: req.file.mimetype,
-        fileSize: req.file.size,
+        fileSize: goServiceUsed && compressionStats ? compressionStats.compressedSize : req.file.size,
         url: `/uploads/${uniqueFileName}`,
         retentionInfo,
       };
@@ -1499,7 +1642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate retention settings
       const fileRetentionInfo = await attachmentRetentionService.getRetentionInfo(
-        originalFileName,
+        uploadedFileName,
         req.file.mimetype
       );
 
@@ -1514,16 +1657,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (goProcessingResult && goProcessingResult.success) {
         enhancedMetadata = {
           ...enhancedMetadata,
-          goProcessingTime: goProcessingResult.processingTime,
-          md5Hash: goProcessingResult.original.md5Hash,
-          perceptualHash: goProcessingResult.original.perceptualHash,
-          exifData: goProcessingResult.original.exifData,
-          dimensions: goProcessingResult.original.width && goProcessingResult.original.height ? {
+          processingTime: goProcessingResult.processingTime || enhancedMetadata.processingTime,
+          md5Hash: goProcessingResult.original?.md5Hash,
+          perceptualHash: goProcessingResult.original?.perceptualHash,
+          exifData: goProcessingResult.original?.exifData,
+          dimensions: goProcessingResult.original?.width && goProcessingResult.original?.height ? {
             width: goProcessingResult.original.width,
             height: goProcessingResult.original.height
           } : undefined,
           thumbnails: goProcessingResult.thumbnails,
-          colorProfile: goProcessingResult.original.colorProfile
+          colorProfile: goProcessingResult.original?.colorProfile
         };
       }
       
@@ -1546,7 +1689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         categoryId: validatedCategoryId || fileRetentionInfo.suggestedCategoryId || null,
         fileName: uniqueFileName,
-        displayName: originalFileName,
+        displayName: uploadedFileName,
         filePath: filePath,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
@@ -1557,10 +1700,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: enhancedMetadata
       }).returning();
 
-      res.json({
+      const response: any = {
         success: true,
         file: fileData
-      });
+      };
+
+      // Add compression statistics if Go service was used
+      if (goServiceUsed && compressionStats) {
+        response.compressionStats = {
+          ratio: compressionStats.ratio,
+          originalSize: compressionStats.originalSize,
+          compressedSize: compressionStats.compressedSize,
+          time: compressionStats.time
+        };
+      }
+
+      res.json(response);
     } catch (error: any) {
       console.error('File upload error:', error);
       res.status(500).json({ 
@@ -2117,16 +2272,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Service not running, continue with start attempt
       }
 
-      // For now, provide guidance for manual start
-      console.log('Go acceleration auto-start requested - providing manual guidance');
+      // Actually start the Go service automatically
+      console.log('Go acceleration auto-start requested - starting service automatically');
       
-      return res.json({
-        success: false,
-        error: 'Auto-start requires manual intervention',
-        guidance: 'To start Go acceleration service manually, run: cd go-file-accelerator && ./start-go-accelerator.sh',
-        autoStartSupported: false,
-        reason: reason
-      });
+      try {
+        // Start the Go service using the same logic as health dashboard
+        console.log('Starting Go acceleration service automatically...');
+        
+        // Start the Go service - install dependencies and run
+        spawn('bash', ['-c', 'cd go-file-accelerator && go mod download && go run main.go'], {
+          detached: true,
+          stdio: ['ignore', 'ignore', 'ignore']
+        });
+
+        // Give it time to start and check if successful
+        await new Promise(resolve => setTimeout(resolve, 4000));
+        
+        const finalController = new AbortController();
+        const finalTimeoutId = setTimeout(() => finalController.abort(), 2000);
+        
+        try {
+          const finalCheck = await fetch('http://localhost:5001/accelerate/health', {
+            signal: finalController.signal
+          });
+          clearTimeout(finalTimeoutId);
+          
+          if (finalCheck?.ok) {
+            console.log('Go acceleration service started successfully via API');
+            return res.json({
+              success: true,
+              message: 'Go acceleration service started successfully',
+              autoStartSupported: true,
+              reason: reason
+            });
+          } else {
+            console.log('Go service startup completed but not responding via API');
+            return res.json({
+              success: false,
+              error: 'Service started but not responding',
+              autoStartSupported: true,
+              reason: reason
+            });
+          }
+        } catch {
+          clearTimeout(finalTimeoutId);
+          console.log('Go service not responding after startup via API');
+          return res.json({
+            success: false,
+            error: 'Service started but not responding',
+            autoStartSupported: true,
+            reason: reason
+          });
+        }
+      } catch (startError) {
+        console.log('Go service startup failed via API:', startError);
+        return res.json({
+          success: false,
+          error: 'Failed to start Go service',
+          guidance: 'To start Go acceleration service manually, run: cd go-file-accelerator && ./start-go-accelerator.sh',
+          autoStartSupported: true,
+          reason: reason
+        });
+      }
       
     } catch (error: any) {
       console.error('Failed to start Go acceleration service:', error);
@@ -2138,50 +2345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Large file compression acceleration endpoint
-  app.post('/api/accelerate/compress-large', async (req, res) => {
-    try {
-      console.log('Forwarding large file compression request to Go service');
-      
-      // Forward the request to Go service with proper headers
-      const response = await fetch('http://localhost:5001/accelerate/compress-large', {
-        method: 'POST',
-        body: req.body,
-        headers: {
-          ...req.headers,
-          'host': undefined, // Remove host header to avoid conflicts
-        },
-        signal: AbortSignal.timeout(120000) // 2 minute timeout for large files
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Go acceleration service error:', response.status, errorText);
-        return res.status(500).json({ 
-          error: 'Go acceleration service failed',
-          details: errorText,
-          fallback: 'Use TypeScript compression'
-        });
-      }
-      
-      const result = await response.json();
-      console.log('Go acceleration successful:', {
-        originalSize: result.originalSize,
-        compressedSize: result.compressedSize,
-        ratio: result.compressionRatio,
-        time: result.processingTime
-      });
-      
-      res.json(result);
-    } catch (error) {
-      console.error('Go acceleration proxy error:', error);
-      res.status(500).json({ 
-        error: 'Acceleration service unavailable',
-        fallback: 'Use TypeScript compression',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+
 
   // Batch processing acceleration endpoint
   app.post('/api/accelerate/batch-process', async (req, res) => {

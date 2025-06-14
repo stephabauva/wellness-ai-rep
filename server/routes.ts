@@ -1380,7 +1380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const fileUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: 50 * 1024 * 1024, // 50MB limit for general files
+      fileSize: 500 * 1024 * 1024, // 500MB limit for general files (increased for large XML files)
     },
     fileFilter: (req, file, cb) => {
       // Accept various file types including XML for file management
@@ -1405,13 +1405,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.html', '.log', '.sql', '.yaml', '.yml'];
       const fileExtension = path.extname(file.originalname).toLowerCase();
 
+      console.log(`File upload filter - Name: ${file.originalname}, MIME: ${file.mimetype}, Extension: ${fileExtension}`);
+
       const isAllowedByType = allowedTypes.some(type => file.mimetype.startsWith(type));
       const isAllowedByExtension = allowedExtensions.includes(fileExtension);
 
       if (isAllowedByType || isAllowedByExtension) {
+        console.log(`File accepted: ${file.originalname}`);
         cb(null, true);
       } else {
-        cb(new Error('File type not supported'));
+        console.log(`File rejected: ${file.originalname} - MIME: ${file.mimetype}, Extension: ${fileExtension}`);
+        cb(new Error(`File type not supported: ${file.mimetype} (${fileExtension})`));
       }
     }
   });

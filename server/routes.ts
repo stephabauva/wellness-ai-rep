@@ -664,6 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fs.unlinkSync(req.file.path);
 
       if (!parseResult.success || !parseResult.data) {
+        console.error('Health data parsing failed:', parseResult.errors);
         return res.status(400).json({
           message: "Failed to parse health data file",
           errors: parseResult.errors

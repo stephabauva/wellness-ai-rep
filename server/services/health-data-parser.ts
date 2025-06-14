@@ -204,14 +204,46 @@ export class HealthDataParser {
   private static async parseAppleHealthXMLChunked(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
     try {
       console.log('Processing large Apple Health file with chunked processing...');
+      console.log(`XML content length: ${xmlContent.length} characters`);
+      
+      // Check if content looks like Apple Health XML
+      if (!xmlContent.includes('<HealthData') && !xmlContent.includes('<Record')) {
+        return {
+          success: false,
+          errors: ['File does not appear to be a valid Apple Health export. Missing required XML structure.']
+        };
+      }
       
       // Extract records in smaller chunks to prevent memory issues
-      const recordMatches = xmlContent.match(/<Record[^>]*>.*?<\/Record>/g);
+      // Apple Health uses self-closing Record tags
+      let recordMatches = xmlContent.match(/<Record[^>]*\/>/g);
+      console.log(`Found ${recordMatches?.length || 0} self-closing Record tags`);
       
+      if (!recordMatches || recordMatches.length === 0) {
+        // Try alternative pattern for records with closing tags
+        recordMatches = xmlContent.match(/<Record[^>]*>.*?<\/Record>/g);
+        console.log(`Found ${recordMatches?.length || 0} Record tags with closing tags`);
+        
+        if (!recordMatches || recordMatches.length === 0) {
+          // Try extracting sample content for debugging
+          const sampleContent = xmlContent.substring(0, 1000);
+          console.log('Sample XML content:', sampleContent);
+          
+          return {
+            success: false,
+            errors: [
+              'No health records found in XML file. Please ensure this is a valid Apple Health export.',
+              'Expected to find <Record> tags in the XML content.'
+            ]
+          };
+        }
+      }
+      
+      // Ensure recordMatches is not null for TypeScript
       if (!recordMatches) {
         return {
           success: false,
-          errors: ['No health records found in XML file']
+          errors: ['Failed to parse health records from XML file.']
         };
       }
 

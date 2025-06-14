@@ -145,7 +145,7 @@ export class FileAccelerationService {
       const response = await fetch(`${this.GO_SERVICE_URL}/compress-large`, {
         method: 'POST',
         body: formData,
-        signal: AbortSignal.timeout(30000), // Reduced timeout to 30 seconds for faster fallback
+        signal: AbortSignal.timeout(120000), // 2 minute timeout for large files
       });
 
       if (!response.ok) {

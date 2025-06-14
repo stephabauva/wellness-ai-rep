@@ -129,36 +129,38 @@ export class UniversalFileService {
 
     const startTime = Date.now();
     
-    // Proactively check if we should use Go acceleration for large files
+    // Try Go acceleration for suitable files
     if (FileAccelerationService.shouldAccelerate(file)) {
-      console.log(`Large file detected (${file.size} bytes): ${file.name}`);
-      console.log(`Attempting Go acceleration for ${file.name}`);
-      
-      // Check Go service availability first
-      const goCapabilities = FileAccelerationService.getCapabilities();
-      
-      // If Go service is not available, try to start it proactively
-      if (!goCapabilities.isAvailable) {
+      try {
+        console.log(`Large file detected (${file.size} bytes): ${file.name}`);
+        console.log(`Attempting Go acceleration for ${file.name}`);
+        
+        // First attempt - try existing service
+        const result = await FileAccelerationService.accelerateCompression(file);
+        
+        console.log(`Go acceleration successful: ${file.name}`, {
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
+          ratio: result.compressionRatio,
+          time: result.processingTime
+        });
+        
+        return result;
+      } catch (error) {
+        console.warn(`Go acceleration failed for ${file.name}, attempting to start Go service:`, error);
+        
+        // Attempt to start Go service automatically
         try {
-          console.log(`Go acceleration service not available, attempting auto-start for ${file.name}`);
-          await this.startGoAccelerationService();
+          console.log(`Starting Go acceleration service for large file: ${file.name}`);
+          await UniversalFileService.startGoAccelerationService();
           
-          // Wait for service to start and refresh capabilities
+          // Wait a moment for service to start
           await new Promise(resolve => setTimeout(resolve, 3000));
-          await FileAccelerationService.initialize(); // Refresh service status
-        } catch (startError) {
-          console.warn(`Failed to start Go service automatically, using TypeScript fallback:`, startError);
-          // Skip Go acceleration and go directly to TypeScript
-        }
-      }
-      
-      // Attempt Go acceleration only if service is now available
-      const refreshedCapabilities = FileAccelerationService.getCapabilities();
-      if (refreshedCapabilities.isAvailable) {
-        try {
+          
+          // Retry acceleration after starting service
           const result = await FileAccelerationService.accelerateCompression(file);
           
-          console.log(`Go acceleration successful: ${file.name}`, {
+          console.log(`Go acceleration successful after auto-start: ${file.name}`, {
             originalSize: result.originalSize,
             compressedSize: result.compressedSize,
             ratio: result.compressionRatio,
@@ -166,12 +168,10 @@ export class UniversalFileService {
           });
           
           return result;
-        } catch (error) {
-          console.warn(`Go acceleration failed for ${file.name}, falling back to TypeScript:`, error);
+        } catch (startError) {
+          console.warn(`Failed to start Go service automatically:`, startError);
           // Continue to TypeScript implementation below
         }
-      } else {
-        console.log(`Go service still unavailable after startup attempt, using TypeScript for ${file.name}`);
       }
     }
 

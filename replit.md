@@ -198,21 +198,6 @@ Changelog:
   - Added forced garbage collection every 100 chunks for sustained processing
   - Fixed JavaScript heap out of memory errors for user's 3+ million record Apple Health export
   - Balanced data completeness with memory stability through intelligent sampling
-- June 14, 2025. **File Management Go Acceleration Integration**:
-  - Added XML, JSON, CSV file type support to file management with proper icons and categorization
-  - Enhanced file categorization to automatically detect health data files based on name and extension
-  - Implemented automatic Go acceleration service startup for large data files (>5MB) in file management
-  - Integrated same auto-start logic from health dashboard into general file upload endpoint
-  - Added graceful fallback to TypeScript processing when Go service unavailable
-  - Successfully tested with 331.8MB XML file showing proper detection and auto-start attempts
-- June 14, 2025. **Complete Automatic Go Service Startup Implementation**:
-  - Fixed `/api/accelerate/start` endpoint to actually spawn Go service instead of rejecting requests
-  - Implemented identical Go service startup functionality in file management as health dashboard
-  - Added proper multipart file forwarding using node-fetch to prevent content-length mismatch errors
-  - File management now has complete parity with health dashboard for Go acceleration
-  - Large XML/JSON/CSV files >5MB automatically trigger Go service startup with graceful fallback
-  - Zero breaking changes maintained while achieving full feature integration
-  - **Successfully tested with 830MB Apple Health export**: Automatic startup → 95.2% compression (830MB→39MB) in 6.5 seconds
 
 # User Preferences
 

@@ -41,29 +41,6 @@ export function useFileUpload(): UseFileUploadReturn {
     setError(null);
 
     try {
-      // Check if this is a large file that should trigger go acceleration service
-      const fileSizeInMB = file.size / (1024 * 1024);
-      const fileName = file.name.toLowerCase();
-      const isLargeDataFile = fileSizeInMB > 5 && (
-        fileName.endsWith('.xml') || 
-        fileName.endsWith('.json') || 
-        fileName.endsWith('.csv')
-      );
-
-      if (isLargeDataFile) {
-        console.log(`Large data file detected (${fileSizeInMB.toFixed(1)}MB): ${file.name}`);
-        console.log('Attempting to start Go acceleration service for file management...');
-        
-        try {
-          // Attempt to start go acceleration service automatically
-          await UniversalFileService.startGoAccelerationService();
-          console.log('Go acceleration service started successfully for file management');
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.log('Go service auto-start failed, continuing with TypeScript processing:', errorMessage);
-        }
-      }
-
       // Compress using universal service (with Go acceleration where beneficial)
       console.log(`Starting upload for ${file.name} (${file.size} bytes)`);
       

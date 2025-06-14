@@ -1,30 +1,13 @@
 import React from 'react';
-import { Image, FileText, Stethoscope, Activity, Folder, Heart, Apple, Dumbbell, FileImage, Camera, Users, Settings, Database } from 'lucide-react';
+import { Image, FileText, Stethoscope, Activity, Folder, Heart, Apple, Dumbbell, FileImage, Camera, Users, Settings } from 'lucide-react';
 import { FileItem, FileCategory } from '@/types/fileManager';
 
 export const getFileIcon = (fileType: string, fileName: string): React.ReactNode => {
   const lowerFileType = fileType.toLowerCase();
-  const lowerFileName = fileName.toLowerCase();
 
   if (lowerFileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
     return React.createElement(Image, { className: "h-4 w-4" });
   }
-  
-  // XML files
-  if (lowerFileType.includes('xml') || lowerFileName.endsWith('.xml')) {
-    return React.createElement(Database, { className: "h-4 w-4" });
-  }
-  
-  // JSON files
-  if (lowerFileType.includes('json') || lowerFileName.endsWith('.json')) {
-    return React.createElement(Database, { className: "h-4 w-4" });
-  }
-  
-  // CSV files
-  if (lowerFileType.includes('csv') || lowerFileName.endsWith('.csv')) {
-    return React.createElement(Database, { className: "h-4 w-4" });
-  }
-  
   return React.createElement(FileText, { className: "h-4 w-4" });
 };
 
@@ -57,43 +40,26 @@ export const getRetentionBadgeColor = (category?: string): string => {
 };
 
 export const categorizeFiles = (files: FileItem[]): FileCategory[] => {
-  const medical = files.filter(f => {
-    const fileName = f.fileName.toLowerCase();
-    const fileType = f.fileType.toLowerCase();
-    
-    return f.retentionInfo?.category === 'high' ||
-      fileName.includes('medical') ||
-      fileName.includes('lab') ||
-      fileName.includes('prescription') ||
-      fileName.includes('health') ||
-      fileName.includes('export') ||
-      (fileType.includes('xml') && (fileName.includes('health') || fileName.includes('export'))) ||
-      fileName.includes('apple_health') ||
-      fileName.includes('healthkit');
-  });
+  const medical = files.filter(f =>
+    f.retentionInfo?.category === 'high' ||
+    f.fileName.toLowerCase().includes('medical') ||
+    f.fileName.toLowerCase().includes('lab') ||
+    f.fileName.toLowerCase().includes('prescription')
+  );
 
-  const fitness = files.filter(f => {
-    const fileName = f.fileName.toLowerCase();
-    const fileType = f.fileType.toLowerCase();
-    
-    return fileName.includes('workout') ||
-      fileName.includes('exercise') ||
-      fileName.includes('fitness') ||
-      fileName.includes('routine') ||
-      fileName.includes('activity') ||
-      (fileType.includes('csv') && fileName.includes('workout'));
-  });
+  const fitness = files.filter(f =>
+    f.fileName.toLowerCase().includes('workout') ||
+    f.fileName.toLowerCase().includes('exercise') ||
+    f.fileName.toLowerCase().includes('fitness') ||
+    f.fileName.toLowerCase().includes('routine')
+  );
 
-  const nutrition = files.filter(f => {
-    const fileName = f.fileName.toLowerCase();
-    
-    return fileName.includes('food') ||
-      fileName.includes('meal') ||
-      fileName.includes('nutrition') ||
-      f.fileType.startsWith('image/') || // Assume images are mostly food photos
-      fileName.includes('diet') ||
-      fileName.includes('calorie');
-  });
+  const nutrition = files.filter(f =>
+    f.fileName.toLowerCase().includes('food') ||
+    f.fileName.toLowerCase().includes('meal') ||
+    f.fileName.toLowerCase().includes('nutrition') ||
+    f.fileType.startsWith('image/') // Assume images are mostly food photos
+  );
 
   const other = files.filter(f =>
     !medical.some(m => m.id === f.id) &&

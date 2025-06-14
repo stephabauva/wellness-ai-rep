@@ -97,6 +97,14 @@
   @apply scale-95; /* Give a slight push effect when clicked */
 }
 
+/* Chart container styles */
+.chart-responsive {
+  width: 100%;
+  height: 350px;
+  min-height: 300px;
+  min-width: 300px;
+}
+
 /* Virtual scrolling container styles */
 .virtual-scroll-container {
   @apply relative overflow-hidden;

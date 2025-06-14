@@ -723,15 +723,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Read as buffer to handle compressed files properly
       const fileBuffer = fs.readFileSync(req.file.path);
       
-      // Extract time filtering parameters for early filtering during XML parsing
+      // Extract time filtering parameters - MANDATORY for large files
       const timeRangeEnabled = req.body.timeRangeEnabled === 'true';
-      const timeRangeMonths = timeRangeEnabled ? (parseInt(req.body.timeRangeMonths) || 12) : undefined;
+      let timeRangeMonths = timeRangeEnabled ? (parseInt(req.body.timeRangeMonths) || 12) : undefined;
       
-      if (timeRangeEnabled) {
-        console.log(`Early time filtering enabled: Only processing records from last ${timeRangeMonths} months during XML parsing`);
+      // Force time filtering for large files to prevent memory crashes
+      if (!timeRangeMonths && fileSizeInMB > 100) {
+        timeRangeMonths = 1; // Default to 1 month for safety
+        console.log(`MANDATORY TIME FILTERING: Large file (${fileSizeInMB.toFixed(1)}MB) requires time filtering. Using 1 month default.`);
       }
       
-      // Pass time filter directly to parser for early filtering during XML processing
+      if (timeRangeMonths) {
+        console.log(`SMART TIME FILTERING ENABLED: Only processing records from last ${timeRangeMonths} months during import`);
+      }
+      
+      // Use smart timestamp-based parsing for large files
       const parseResult = await HealthDataParser.parseFile(fileBuffer, req.file.originalname, undefined, timeRangeMonths);
 
       // Clean up uploaded file

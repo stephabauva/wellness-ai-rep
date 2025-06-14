@@ -1452,12 +1452,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/json',
         'text/csv',
         'application/csv',
+        'application/gzip', // Required for compressed Apple Health exports
+        'application/x-gzip', // Alternative gzip MIME type
         'application/octet-stream' // Allow binary files which may include XML exports
       ];
 
       // Also check file extension for cases where MIME type detection fails
       const fileName = file.originalname.toLowerCase();
-      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.pdf', '.doc', '.docx'];
+      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.pdf', '.doc', '.docx', '.gz'];
       const hasAllowedExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
       
       const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type)) || hasAllowedExtension;

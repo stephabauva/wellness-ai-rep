@@ -285,10 +285,20 @@ export class HealthDataParser {
             const typeMatch = recordXml.match(/type="([^"]+)"/);
             const valueMatch = recordXml.match(/value="([^"]+)"/);
             const unitMatch = recordXml.match(/unit="([^"]+)"/);
-            const creationDateMatch = recordXml.match(/creationDate="([^"]+)"/);
+            
+            // Try both creationDate and startDate for compatibility
+            let creationDateMatch = recordXml.match(/creationDate="([^"]+)"/);
+            if (!creationDateMatch) {
+              creationDateMatch = recordXml.match(/startDate="([^"]+)"/);
+            }
+            
             const sourceNameMatch = recordXml.match(/sourceName="([^"]+)"/);
 
             if (!typeMatch || !valueMatch || !creationDateMatch) {
+              // Log detailed error for debugging
+              if (errors.length < 10) { // Limit error logging to prevent spam
+                errors.push(`Skipping record: missing required fields (type: ${!!typeMatch}, value: ${!!valueMatch}, date: ${!!creationDateMatch})`);
+              }
               continue; // Skip invalid records
             }
 
@@ -332,7 +342,9 @@ export class HealthDataParser {
             categories[categoryKey] = (categories[categoryKey] || 0) + 1;
 
           } catch (recordError) {
-            errors.push(`Error processing record: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
+            if (errors.length < 5) { // Limit error logging
+              errors.push(`Error processing record: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
+            }
           }
         }
 
@@ -353,10 +365,22 @@ export class HealthDataParser {
         });
       }
 
+      // Ensure we have some valid data
+      if (validRecords === 0) {
+        return {
+          success: false,
+          errors: [
+            'No valid health records were found in the file.',
+            'Please ensure this is a valid Apple Health export.',
+            ...errors.slice(0, 3) // Include first few parsing errors for debugging
+          ]
+        };
+      }
+
       return {
         success: true,
         data: parsedData,
-        errors: errors.length > 0 ? errors : undefined,
+        errors: errors.length > 0 ? errors.slice(0, 5) : undefined, // Limit errors shown
         summary: {
           totalRecords,
           validRecords,

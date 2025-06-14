@@ -1383,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 50 * 1024 * 1024, // 50MB limit for general files
     },
     fileFilter: (req, file, cb) => {
-      // Accept various file types
+      // Accept various file types including XML for file management
       const allowedTypes = [
         'image/',
         'video/',
@@ -1391,11 +1391,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'text/plain',
+        'text/xml',
+        'application/xml',
+        'text/csv',
+        'application/json',
+        'text/json',
+        'text/html',
+        'application/octet-stream' // For files with generic MIME types
       ];
 
-      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
-      if (isAllowed) {
+      // Also check file extensions for better compatibility
+      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.html', '.log', '.sql', '.yaml', '.yml'];
+      const fileExtension = path.extname(file.originalname).toLowerCase();
+
+      const isAllowedByType = allowedTypes.some(type => file.mimetype.startsWith(type));
+      const isAllowedByExtension = allowedExtensions.includes(fileExtension);
+
+      if (isAllowedByType || isAllowedByExtension) {
         cb(null, true);
       } else {
         cb(new Error('File type not supported'));
@@ -1434,18 +1447,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { success: true };
         })(),
         
-        // Ultra-fast Go microservice processing (concurrent metadata extraction & optimization)
+        // Go acceleration service for large files (XML, JSON, CSV, etc.)
         (async () => {
           try {
-            const result = await goFileService.processFile(
-              req.file.originalname, 
-              req.file.buffer, 
-              req.file.mimetype.startsWith('image/') // Generate thumbnails for images only
-            );
-            console.log(`[TIER 3] Go service processed ${req.file.originalname} in ${result.processingTime}ms`);
-            return result;
+            // Check if file qualifies for Go acceleration
+            const fileSizeInMB = req.file.size / (1024 * 1024);
+            const filename = req.file.originalname.toLowerCase();
+            const supportedTypes = ['.xml', '.json', '.csv', '.txt', '.html', '.log', '.sql', '.yaml', '.yml'];
+            const isSupported = supportedTypes.some(ext => filename.endsWith(ext));
+            
+            if (fileSizeInMB > 5 && isSupported) {
+              console.log(`Large file detected (${fileSizeInMB.toFixed(1)}MB). Using Go acceleration for ${req.file.originalname}`);
+              
+              // Try Go acceleration service for general file processing
+              const formData = new FormData();
+              const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
+              formData.append('file', fileBlob, req.file.originalname);
+              
+              const response = await fetch('http://localhost:5001/accelerate/process-file', {
+                method: 'POST',
+                body: formData,
+                timeout: 30000
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                console.log(`Go acceleration processed ${req.file.originalname}: ${result.originalSize} -> ${result.compressedSize} bytes (${((1-result.compressionRatio)*100).toFixed(1)}% reduction) in ${result.processingTime}ms`);
+                return {
+                  success: true,
+                  accelerated: true,
+                  compressionResult: result,
+                  processingTime: result.processingTime
+                };
+              } else {
+                console.log('Go acceleration failed, continuing with standard processing');
+                return null;
+              }
+            } else {
+              // File doesn't qualify for Go acceleration
+              return null;
+            }
           } catch (error) {
-            console.warn('[TIER 3] Go service unavailable, using Node.js fallback:', error);
+            console.log('Go acceleration failed:', error);
             return null;
           }
         })()

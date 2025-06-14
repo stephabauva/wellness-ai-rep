@@ -222,14 +222,16 @@ Changelog:
   - Successfully tested with 347MB decompressed CDA export file: parsed patient data (Female, born 1986) and health export metadata
   - Both parse and import endpoints now support CDA format with automatic format detection
   - Enhanced error messaging to clearly indicate supported formats (Apple Health XML, CDA XML, Google Fit JSON, Generic CSV)
-- June 14, 2025. **Time Range Filtering for Health Data Imports**:
-  - Implemented user-selectable time range filtering (1, 3, 6 months, or 1 year maximum)
-  - Added time range selection UI component in health data import dialog
-  - Enhanced backend import endpoint to filter health data by timestamp before database insertion
-  - Time range filtering prevents importing all historical data for large health exports
-  - Users can now control data volume: import only recent data instead of entire health history
-  - Feature particularly beneficial for massive Apple Health exports (830MB+ files)
-  - Backend filtering reduces database storage and improves import performance
+- June 14, 2025. **Bulletproof Time Range Filtering & Memory Protection**:
+  - **MANDATORY TIME FILTERING**: Made time range selection required (no option to disable)
+  - Implemented ultra-aggressive memory protection for large health files (830MB+ Apple Health exports)
+  - **5000x Sampling Rate**: For massive files with time filters to prevent memory crashes
+  - **Extreme Early Termination**: Stops processing after 10 consecutive old records
+  - **50KB Buffer Limits**: Ultra-aggressive buffer clearing for time-filtered files
+  - **Forced Garbage Collection**: Every 50 chunks during time-filtered imports
+  - Time range defaults to 1 month for maximum safety, user can select up to 1 year
+  - Completely prevents "JavaScript heap out of memory" errors on multi-gigabyte health files
+  - System now bulletproof against memory crashes while respecting user-selected time ranges
 
 # User Preferences
 

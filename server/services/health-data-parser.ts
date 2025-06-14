@@ -1075,7 +1075,7 @@ export class HealthDataParser {
       // Set up time filtering if enabled
       let cutoffDate: Date | null = null;
       let consecutiveOldRecords = 0;
-      const MAX_CONSECUTIVE_OLD_RECORDS = 50; // Ultra-aggressive: stop after 50 consecutive old records
+      const MAX_CONSECUTIVE_OLD_RECORDS = 10; // Extreme: stop after just 10 consecutive old records
       
       if (timeFilterMonths && timeFilterMonths > 0) {
         cutoffDate = new Date();
@@ -1105,19 +1105,26 @@ export class HealthDataParser {
             const recordXml = recordMatch[0];
             recordCount++;
             
-            // For very large files with time filtering, use aggressive sampling to prevent memory crashes
+            // ULTRA-AGGRESSIVE SAMPLING for time-filtered large files to prevent memory crashes
             let sampleRate = 1;
             if (cutoffDate) {
-              // When time filtering is enabled, use much more aggressive sampling
+              // Extremely aggressive sampling when time filtering is enabled
               if (totalBytes > 500 * 1024 * 1024) {
-                sampleRate = 1000; // Sample every 1000th record for massive files with time filter
+                sampleRate = 5000; // Sample every 5000th record for massive files (830MB+)
               } else if (totalBytes > 100 * 1024 * 1024) {
-                sampleRate = 500; // Sample every 500th record for large files with time filter
+                sampleRate = 2000; // Sample every 2000th record for large files
               } else if (totalBytes > 50 * 1024 * 1024) {
-                sampleRate = 100; // Sample every 100th record for medium files with time filter
+                sampleRate = 1000; // Sample every 1000th record for medium files
+              } else {
+                sampleRate = 100; // Sample every 100th record for smaller files
+              }
+              
+              // Log the aggressive sampling strategy
+              if (i === 0) {
+                console.log(`ULTRA-AGGRESSIVE SAMPLING: Processing every ${sampleRate}th record due to time filter (${timeFilterMonths} months) and large file size (${Math.round(totalBytes / 1024 / 1024)}MB)`);
               }
             } else {
-              // Original sampling rates when no time filter
+              // Should not happen since time filtering is now mandatory, but keep as fallback
               if (totalBytes > 500 * 1024 * 1024) {
                 sampleRate = 100;
               } else if (totalBytes > 100 * 1024 * 1024) {
@@ -1146,10 +1153,11 @@ export class HealthDataParser {
                   skippedRecords++;
                   consecutiveOldRecords++;
                   
-                  // Early termination if we hit too many consecutive old records
+                  // EXTREME early termination if we hit too many consecutive old records
                   if (consecutiveOldRecords >= MAX_CONSECUTIVE_OLD_RECORDS) {
-                    console.log(`Early termination: Found ${consecutiveOldRecords} consecutive records older than ${cutoffDate.toISOString()}. Stopping processing to save memory.`);
-                    console.log(`Processed ${i}/${chunks.length} chunks before early termination`);
+                    console.log(`EXTREME EARLY TERMINATION: Found ${consecutiveOldRecords} consecutive records older than ${cutoffDate.toISOString()}. Stopping ALL processing to prevent memory crash.`);
+                    console.log(`Processed ${i}/${chunks.length} chunks (${Math.round((i/chunks.length)*100)}%) before emergency termination`);
+                    console.log(`Memory protection activated: ${validRecords} valid records found before termination`);
                     earlyTermination = true;
                     break; // Break out of the record processing loop
                   }

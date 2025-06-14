@@ -723,8 +723,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Read as buffer to handle compressed files properly
       const fileBuffer = fs.readFileSync(req.file.path);
       
-      // Create a progress callback that logs progress updates
-      const parseResult = await HealthDataParser.parseFile(fileBuffer, req.file.originalname);
+      // Extract time filtering parameters for early filtering during XML parsing
+      const timeRangeEnabled = req.body.timeRangeEnabled === 'true';
+      const timeRangeMonths = timeRangeEnabled ? (parseInt(req.body.timeRangeMonths) || 12) : undefined;
+      
+      if (timeRangeEnabled) {
+        console.log(`Early time filtering enabled: Only processing records from last ${timeRangeMonths} months during XML parsing`);
+      }
+      
+      // Pass time filter directly to parser for early filtering during XML processing
+      const parseResult = await HealthDataParser.parseFile(fileBuffer, req.file.originalname, undefined, timeRangeMonths);
 
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
@@ -737,22 +745,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Apply time range filtering if enabled
-      let filteredData = parseResult.data;
-      const timeRangeEnabled = req.body.timeRangeEnabled === 'true';
-      const timeRangeMonths = parseInt(req.body.timeRangeMonths) || 12;
-      
-      if (timeRangeEnabled) {
-        const cutoffDate = new Date();
-        cutoffDate.setMonth(cutoffDate.getMonth() - timeRangeMonths);
-        
-        filteredData = parseResult.data.filter(point => {
-          const pointDate = new Date(point.timestamp);
-          return pointDate >= cutoffDate;
-        });
-        
-        console.log(`Time range filter applied: ${filteredData.length}/${parseResult.data.length} records from last ${timeRangeMonths} months`);
-      }
+      // Data is already filtered during parsing, no post-processing filter needed
+      const filteredData = parseResult.data;
 
       // Convert filtered data to insertable format
       const insertData = filteredData.map(point => ({

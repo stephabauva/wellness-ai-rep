@@ -144,10 +144,10 @@ export class HealthDataParser {
     }
   }
 
-  private static async parseAppleHealthXML(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
+  private static async parseAppleHealthXML(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void, timeFilterMonths?: number): Promise<ParseResult> {
     // For large files, use optimized chunked processing
     if (xmlContent.length > 50 * 1024 * 1024) { // 50MB threshold
-      return this.parseAppleHealthXMLOptimized(xmlContent, progressCallback);
+      return this.parseAppleHealthXMLOptimized(xmlContent, progressCallback, timeFilterMonths);
     }
     
     return new Promise((resolve) => {
@@ -187,7 +187,7 @@ export class HealthDataParser {
     });
   }
 
-  private static async parseAppleHealthXMLOptimized(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
+  private static async parseAppleHealthXMLOptimized(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void, timeFilterMonths?: number): Promise<ParseResult> {
     try {
       console.log('Processing large Apple Health file with optimized parsing...');
       console.log(`XML content length: ${xmlContent.length} characters`);

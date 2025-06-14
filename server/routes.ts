@@ -1443,7 +1443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // File write operation
         (async () => {
           const { writeFileSync } = await import('fs');
-          writeFileSync(filePath, req.file.buffer);
+          writeFileSync(filePath, req.file!.buffer);
           return { success: true };
         })(),
         
@@ -1451,28 +1451,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (async () => {
           try {
             // Check if file qualifies for Go acceleration
-            const fileSizeInMB = req.file.size / (1024 * 1024);
-            const filename = req.file.originalname.toLowerCase();
+            const fileSizeInMB = req.file!.size / (1024 * 1024);
+            const filename = req.file!.originalname.toLowerCase();
             const supportedTypes = ['.xml', '.json', '.csv', '.txt', '.html', '.log', '.sql', '.yaml', '.yml'];
             const isSupported = supportedTypes.some(ext => filename.endsWith(ext));
             
             if (fileSizeInMB > 5 && isSupported) {
-              console.log(`Large file detected (${fileSizeInMB.toFixed(1)}MB). Using Go acceleration for ${req.file.originalname}`);
+              console.log(`Large file detected (${fileSizeInMB.toFixed(1)}MB). Attempting to start Go acceleration service...`);
+              
+              // Try to start Go service if not running
+              try {
+                await startGoAccelerationService();
+              } catch (error) {
+                console.log('Go service auto-start failed, continuing with standard processing');
+                return null;
+              }
               
               // Try Go acceleration service for general file processing
               const formData = new FormData();
-              const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
-              formData.append('file', fileBlob, req.file.originalname);
+              const fileBlob = new Blob([req.file!.buffer], { type: req.file!.mimetype });
+              formData.append('file', fileBlob, req.file!.originalname);
+              
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 30000);
               
               const response = await fetch('http://localhost:5001/accelerate/process-file', {
                 method: 'POST',
                 body: formData,
-                timeout: 30000
+                signal: controller.signal
               });
+              
+              clearTimeout(timeoutId);
               
               if (response.ok) {
                 const result = await response.json();
-                console.log(`Go acceleration processed ${req.file.originalname}: ${result.originalSize} -> ${result.compressedSize} bytes (${((1-result.compressionRatio)*100).toFixed(1)}% reduction) in ${result.processingTime}ms`);
+                console.log(`Go acceleration processed ${req.file!.originalname}: ${result.originalSize} -> ${result.compressedSize} bytes (${((1-result.compressionRatio)*100).toFixed(1)}% reduction) in ${result.processingTime}ms`);
                 return {
                   success: true,
                   accelerated: true,
@@ -1494,7 +1507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })()
       ]);
 
-      const originalFileName = req.file.originalname;
+      const originalFileName = req.file!.originalname;
       const uniqueFileName = fileName;
 
       // Get retention information for the uploaded file
@@ -1547,7 +1560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Enhanced metadata from Go service (TIER 3 optimization)
-      let enhancedMetadata = {
+      let enhancedMetadata: any = {
         retentionInfo: fileRetentionInfo,
         uploadContext: 'file_manager',
         processingTime: Date.now() - uploadStartTime,
@@ -1555,19 +1568,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       if (goProcessingResult && goProcessingResult.success) {
-        enhancedMetadata = {
-          ...enhancedMetadata,
-          goProcessingTime: goProcessingResult.processingTime,
-          md5Hash: goProcessingResult.original.md5Hash,
-          perceptualHash: goProcessingResult.original.perceptualHash,
-          exifData: goProcessingResult.original.exifData,
-          dimensions: goProcessingResult.original.width && goProcessingResult.original.height ? {
-            width: goProcessingResult.original.width,
-            height: goProcessingResult.original.height
-          } : undefined,
-          thumbnails: goProcessingResult.thumbnails,
-          colorProfile: goProcessingResult.original.colorProfile
-        };
+        if (goProcessingResult.accelerated) {
+          // Go acceleration results for file compression
+          enhancedMetadata.goAccelerated = true;
+          enhancedMetadata.goProcessingTime = goProcessingResult.processingTime;
+          enhancedMetadata.compressionResults = {
+            originalSize: goProcessingResult.compressionResult.originalSize,
+            compressedSize: goProcessingResult.compressionResult.compressedSize,
+            compressionRatio: goProcessingResult.compressionResult.compressionRatio,
+            algorithm: goProcessingResult.compressionResult.algorithm,
+            throughput: goProcessingResult.compressionResult.throughput
+          };
+        }
       }
       
       let retentionDays = null;

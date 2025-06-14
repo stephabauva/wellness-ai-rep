@@ -71,7 +71,7 @@ const HealthDataSection: React.FC = () => {
       
       const dayData = dayMap.get(day)!;
       if (item.dataType === 'steps') dayData.steps = value;
-      if (item.dataType === 'daily_activity') dayData.steps = value; // Map daily_activity to steps
+      // Don't map daily_activity to steps since they are different metrics
       if (item.dataType === 'active_minutes') dayData.active = value;
       if (item.dataType === 'physical_effort') dayData.active = value; // Map physical_effort to active minutes
       if (item.dataType === 'calories_burned') dayData.calories = value;

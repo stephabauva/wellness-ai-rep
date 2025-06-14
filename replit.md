@@ -260,6 +260,13 @@ Changelog:
   - **Dashboard Chart Enhancement**: Updated chart components to map available data types (daily_activity → steps, physical_effort → active_minutes)
   - **Nutrition Data Integration**: Enhanced nutrition processing to include calories_burned and BMR data from imported health files
   - **Complete Solution**: Dashboard now correctly displays imported Apple Health data with proper time filtering and user-friendly metric names
+- June 14, 2025. **Chart Display Accuracy Fixes for Authentic Data Only**:
+  - **Activity Chart Steps Issue Fixed**: Removed incorrect mapping of daily_activity to steps data in chart processing
+  - **Empty State Implementation**: Activity chart now shows "No activity data available" message when no real data exists instead of misleading default values
+  - **Heart Rate Chart Enhancement**: Created comprehensive HeartRateChart component with trend lines, min/max/average values, and summary statistics
+  - **Cardiovascular Section Integration**: Added dedicated heart rate trend chart to cardiovascular health category tab
+  - **Data Integrity Enforcement**: All charts now display only authentic imported health data, never placeholder or mock values
+  - **Chart Processing Logic**: Fixed activity data processing to respect actual data types (steps vs daily_activity vs physical_effort) without incorrect assumptions
 
 # User Preferences
 

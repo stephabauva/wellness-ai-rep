@@ -2201,16 +2201,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Service not running, continue with start attempt
       }
 
-      // For now, provide guidance for manual start
-      console.log('Go acceleration auto-start requested - providing manual guidance');
+      // Actually start the Go service automatically
+      console.log('Go acceleration auto-start requested - starting service automatically');
       
-      return res.json({
-        success: false,
-        error: 'Auto-start requires manual intervention',
-        guidance: 'To start Go acceleration service manually, run: cd go-file-accelerator && ./start-go-accelerator.sh',
-        autoStartSupported: false,
-        reason: reason
-      });
+      try {
+        // Start the Go service using the same logic as health dashboard
+        console.log('Starting Go acceleration service automatically...');
+        
+        // Start the Go service - install dependencies and run
+        spawn('bash', ['-c', 'cd go-file-accelerator && go mod download && go run main.go'], {
+          detached: true,
+          stdio: ['ignore', 'ignore', 'ignore']
+        });
+
+        // Give it time to start and check if successful
+        await new Promise(resolve => setTimeout(resolve, 4000));
+        
+        const finalController = new AbortController();
+        const finalTimeoutId = setTimeout(() => finalController.abort(), 2000);
+        
+        try {
+          const finalCheck = await fetch('http://localhost:5001/accelerate/health', {
+            signal: finalController.signal
+          });
+          clearTimeout(finalTimeoutId);
+          
+          if (finalCheck?.ok) {
+            console.log('Go acceleration service started successfully via API');
+            return res.json({
+              success: true,
+              message: 'Go acceleration service started successfully',
+              autoStartSupported: true,
+              reason: reason
+            });
+          } else {
+            console.log('Go service startup completed but not responding via API');
+            return res.json({
+              success: false,
+              error: 'Service started but not responding',
+              autoStartSupported: true,
+              reason: reason
+            });
+          }
+        } catch {
+          clearTimeout(finalTimeoutId);
+          console.log('Go service not responding after startup via API');
+          return res.json({
+            success: false,
+            error: 'Service started but not responding',
+            autoStartSupported: true,
+            reason: reason
+          });
+        }
+      } catch (startError) {
+        console.log('Go service startup failed via API:', startError);
+        return res.json({
+          success: false,
+          error: 'Failed to start Go service',
+          guidance: 'To start Go acceleration service manually, run: cd go-file-accelerator && ./start-go-accelerator.sh',
+          autoStartSupported: true,
+          reason: reason
+        });
+      }
       
     } catch (error: any) {
       console.error('Failed to start Go acceleration service:', error);

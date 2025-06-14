@@ -1451,10 +1451,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/xml',
         'application/json',
         'text/csv',
-        'application/csv'
+        'application/csv',
+        'application/octet-stream' // Allow binary files which may include XML exports
       ];
 
-      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
+      // Also check file extension for cases where MIME type detection fails
+      const fileName = file.originalname.toLowerCase();
+      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.pdf', '.doc', '.docx'];
+      const hasAllowedExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+      
+      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type)) || hasAllowedExtension;
+      
+      if (!isAllowed) {
+        console.error(`File rejected - MIME type: ${file.mimetype}, filename: ${file.originalname}`);
+      }
+      
       if (isAllowed) {
         cb(null, true);
       } else {

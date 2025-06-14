@@ -37,6 +37,7 @@ export interface IStorage {
   // Health data methods
   getHealthData(userId: number, timeRange: string): Promise<HealthData[]>;
   createHealthData(data: InsertHealthData): Promise<HealthData>;
+  createHealthDataBatch(data: InsertHealthData[]): Promise<HealthData[]>;
   clearAllHealthData(userId: number): Promise<void>;
   
   // Device methods
@@ -415,6 +416,27 @@ export class MemStorage implements IStorage {
     return newHealthData;
   }
 
+  async createHealthDataBatch(dataArray: InsertHealthData[]): Promise<HealthData[]> {
+    const results: HealthData[] = [];
+    
+    for (const data of dataArray) {
+      const id = this.healthDataId++;
+      const userHealthData = this.healthData.get(data.userId) || [];
+      
+      const newHealthData: HealthData = {
+        id,
+        ...data,
+        timestamp: new Date()
+      };
+      
+      userHealthData.push(newHealthData);
+      this.healthData.set(data.userId, userHealthData);
+      results.push(newHealthData);
+    }
+    
+    return results;
+  }
+
   async clearAllHealthData(userId: number): Promise<void> {
     this.healthData.delete(userId);
   }
@@ -589,6 +611,38 @@ export class DatabaseStorage implements IStorage {
     cacheService.invalidateUserData(data.userId);
     
     return newData;
+  }
+
+  async createHealthDataBatch(dataArray: InsertHealthData[]): Promise<HealthData[]> {
+    const BATCH_SIZE = 1000; // Process in chunks to avoid memory issues
+    const results: HealthData[] = [];
+    
+    for (let i = 0; i < dataArray.length; i += BATCH_SIZE) {
+      const batch = dataArray.slice(i, i + BATCH_SIZE);
+      
+      const batchResults = await db
+        .insert(healthData)
+        .values(
+          batch.map(data => ({
+            ...data,
+            timestamp: new Date()
+          }))
+        )
+        .returning();
+      
+      results.push(...batchResults);
+      
+      // Log progress for large imports
+      if (dataArray.length > 1000) {
+        console.log(`Batch insert progress: ${Math.min(i + BATCH_SIZE, dataArray.length)}/${dataArray.length} records`);
+      }
+    }
+    
+    // Invalidate health data cache for all affected users
+    const userIds = Array.from(new Set(dataArray.map(d => d.userId)));
+    userIds.forEach(userId => cacheService.invalidateUserData(userId));
+    
+    return results;
   }
 
   async clearAllHealthData(userId: number): Promise<void> {

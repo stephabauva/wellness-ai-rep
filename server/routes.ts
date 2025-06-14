@@ -705,16 +705,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         duplicationOptions
       );
 
-      // Import unique records
-      const importedRecords = [];
-      for (const uniqueData of duplicateCheck.unique) {
-        try {
-          const record = await storage.createHealthData(uniqueData);
-          importedRecords.push(record);
-        } catch (error) {
-          console.error('Error importing health data record:', error);
-        }
-      }
+      // Import unique records using batch insert for better performance
+      console.log(`Starting batch import of ${duplicateCheck.unique.length} unique records...`);
+      const importedRecords = await storage.createHealthDataBatch(duplicateCheck.unique);
 
       res.json({
         success: true,

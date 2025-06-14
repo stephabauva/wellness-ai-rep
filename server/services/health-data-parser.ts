@@ -102,6 +102,11 @@ export class HealthDataParser {
           throw new Error(`Failed to decompress .gz file: ${decompressionError instanceof Error ? decompressionError.message : 'Unknown decompression error'}`);
         }
       } else {
+        // For large buffers, skip string conversion and use streaming approach directly
+        if (typeof fileContent !== 'string' && fileContent.length > 100 * 1024 * 1024) { // 100MB threshold
+          console.log('Large uncompressed buffer detected, using streaming approach to avoid string conversion...');
+          return await this.parseAppleHealthXMLFromBuffer(fileContent, fileName, progressCallback, timeFilterMonths);
+        }
         content = typeof fileContent === 'string' ? fileContent : fileContent.toString('utf8');
       }
 

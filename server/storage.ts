@@ -408,7 +408,7 @@ export class MemStorage implements IStorage {
     const newHealthData: HealthData = {
       id,
       ...data,
-      timestamp: new Date()
+      timestamp: data.timestamp || new Date()
     };
     
     userHealthData.push(newHealthData);
@@ -426,7 +426,7 @@ export class MemStorage implements IStorage {
       const newHealthData: HealthData = {
         id,
         ...data,
-        timestamp: new Date()
+        timestamp: data.timestamp || new Date()
       };
       
       userHealthData.push(newHealthData);
@@ -603,7 +603,7 @@ export class DatabaseStorage implements IStorage {
       .insert(healthData)
       .values({
         ...data,
-        timestamp: new Date()
+        timestamp: data.timestamp || new Date()
       })
       .returning();
     
@@ -625,7 +625,7 @@ export class DatabaseStorage implements IStorage {
         .values(
           batch.map(data => ({
             ...data,
-            timestamp: new Date()
+            timestamp: data.timestamp || new Date()
           }))
         )
         .returning();

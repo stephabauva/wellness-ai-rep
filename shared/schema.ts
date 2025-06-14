@@ -71,6 +71,7 @@ export const insertHealthDataSchema = createInsertSchema(healthData).pick({
   dataType: true,
   value: true,
   unit: true,
+  timestamp: true,
   source: true,
   category: true,
   metadata: true,

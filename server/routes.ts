@@ -1417,11 +1417,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check file size and automatically start Go service for large data files (XML, JSON, CSV)
       const fileSizeInMB = req.file.size / (1024 * 1024);
-      const originalFileName = req.file.originalname.toLowerCase();
+      const lowerFileName = req.file.originalname.toLowerCase();
       const isLargeDataFile = fileSizeInMB > 5 && (
-        originalFileName.endsWith('.xml') || 
-        originalFileName.endsWith('.json') || 
-        originalFileName.endsWith('.csv') ||
+        lowerFileName.endsWith('.xml') || 
+        lowerFileName.endsWith('.json') || 
+        lowerFileName.endsWith('.csv') ||
         req.file.mimetype.includes('xml') ||
         req.file.mimetype.includes('json') ||
         req.file.mimetype.includes('csv')
@@ -1480,12 +1480,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })()
       ]);
 
-      const originalFileName = req.file.originalname;
+      const uploadedFileName = req.file.originalname;
       const uniqueFileName = fileName;
 
       // Get retention information for the uploaded file
       const retentionInfo = attachmentRetentionService.getRetentionInfo(
-        originalFileName,
+        uploadedFileName,
         req.file.mimetype
       );
 

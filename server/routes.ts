@@ -2009,35 +2009,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Service not running, continue with start attempt
       }
 
-      // Attempt to start the Go service
-      const { spawn } = require('child_process');
-      const path = require('path');
-      
-      const servicePath = path.join(process.cwd(), 'go-file-accelerator');
-      const startScript = path.join(servicePath, 'start-go-accelerator.sh');
+      // Attempt to start the Go service using simplified approach
+      const servicePath = process.cwd() + '/go-file-accelerator';
+      const startScript = servicePath + '/start-go-accelerator.sh';
       
       console.log(`Starting Go acceleration service from: ${startScript}`);
       
-      // Make script executable
-      const { exec } = require('child_process');
-      await new Promise((resolve, reject) => {
-        exec(`chmod +x "${startScript}"`, (error: any) => {
-          if (error) reject(error);
-          else resolve(true);
+      // Use a simpler approach to start the service
+      const { exec } = await import('child_process');
+      
+      // Make script executable and run it
+      const startCommand = `cd "${servicePath}" && chmod +x start-go-accelerator.sh && ./start-go-accelerator.sh > /dev/null 2>&1 &`;
+      
+      const startProcess = new Promise((resolve, reject) => {
+        exec(startCommand, (error: any, stdout: string, stderr: string) => {
+          if (error) {
+            console.error('Start command error:', error);
+            reject(error);
+          } else {
+            console.log('Go service start command executed');
+            resolve(stdout);
+          }
         });
       });
-
-      // Start the service in background
-      const child = spawn('bash', [startScript], {
-        cwd: servicePath,
-        detached: true,
-        stdio: 'ignore'
-      });
       
-      child.unref(); // Allow parent to exit independently
+      // Execute the start command
+      await startProcess;
       
       // Wait a moment for service to potentially start
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Verify service started
       try {

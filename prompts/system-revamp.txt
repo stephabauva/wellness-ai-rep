@@ -1,0 +1,191 @@
+Mission:  
+You must design and execute the safest, most maintainable, and most reversible plan to **replace or fundamentally change** how a currently working feature or system behaves.
+
+This means altering existing, functioning code, which comes with **high risk**. Your job is to:
+- Minimize disruption
+- Preserve developer workflows
+- Prevent any harm to the Replit development environment
+
+You will save your findings and the migration plan in:  
+changelog/<feature-name>/<feature>-refactor-plan.md
+
+This analysis must:
+- Respect all stability constraints (see below)
+- Contain detailed risk analysis and rollback plans
+- Include **rigorous validation before, during, and after** refactor
+- Avoid breaking unrelated features or behavior
+
+---
+
+## Critical Constraints
+
+### I1 — Safe Refactoring:
+When replacing a working system:
+- You must **map** all dependencies and usages of the existing system
+- Your plan must include:
+  - Full **before/after behavior comparison**
+  - A **temporary fallback mechanism** (feature flag, toggle, or sandboxing)
+  - A **step-by-step migration path**
+  - Full test coverage (unit, integration, runtime validation)
+
+### I2 — Re-Evaluation Loop:
+If during the process you hit unexpected issues:
+- You are forbidden from improvising fixes
+- You must stop, reassess your entire plan using this new constraint
+- Then produce an updated, safer version of the refactor plan that:
+  - Still includes rollback options
+  - Is verifiably safer than the original approach
+
+---
+
+## Additional Safeguards
+
+- **Post-Refactor Self-Check**:
+  - You must **re-audit all code you wrote**, checking for:
+    - Leaks
+    - Missed dependencies
+    - Impact on `vite.config.ts`, `server.hmr`, persistent sockets, or WebSocket layers
+    - Any code that affects HMR, bundling, or startup logic
+  - Flag anything fragile or uncertain
+
+- **Stability Snapshot**:
+  - Capture the key stability behaviors (HMR working, DB intact, WebSocket flows working)
+  - Compare them **before and after refactor**
+
+- **Rollback Plan Required**:
+  - Define a precise and safe way to revert to the previous behavior if the new one fails
+  - Prefer **non-destructive refactors** where old behavior can co-exist temporarily (via flag or file split)
+
+---
+
+## Required Output
+
+1. Feature scope and technical context  
+2. Existing behavior map and usage diagram  
+3. Dependency and risk assessment  
+4. Option comparison (including fallback strategies)  
+5. Recommended refactor plan  
+6. Code examples (clean, modular, and commented)  
+7. Test plan (unit, integration, regression, manual QA steps)  
+8. Post-implementation verification checklist  
+9. Rollback path  
+10. Confirmation that:
+    - Vite config, HMR, WebSockets, and DB state remain intact
+    - There are no unused, leftover, or orphaned code paths
+    - No build or dev server instability is introduced
+    - Replit tooling and dev UX remain fully operational
+
+---
+
+## Replit-specific rules (DO NOT BREAK):
+
+Your feature **must not compromise** the integrity of Replit’s development environment. The following elements are known to be **fragile and sensitive** — treat them as protected areas.
+
+Any modification must:
+- Be explicitly justified
+- Include a `diff` with explanation
+- Include a **manual rollback path**
+- Pass a **full dev env verification checklist**
+
+---
+
+### 🔄 1. Vite Configuration (`vite.config.ts`)
+Do NOT:
+- Modify `vite.config.ts` plugins, aliases, or HMR setup without reason
+- Add new transforms (e.g., SSR, React Refresh overrides)
+- Alter output format, minifiers, or target environments
+
+If unavoidable:
+- Provide the **minimal diff**
+- List affected plugins and lifecycle hooks
+- Explain how HMR will remain stable
+- Include a “revert-to-original” config snapshot
+
+---
+
+### 🌐 2. WebSocket and HMR Behavior
+Do NOT:
+- Inject logic into `server.hmr`, `wsServer`, or WebSocket handlers unless **isolated**
+- Add middleware or interceptors before HMR boot
+- Modify WebSocket message format or channels
+
+If modification is required:
+- Use **feature flags** to isolate experimental behavior
+- Confirm HMR still works by editing a UI component and verifying hot reload
+- Confirm that no sockets hang or fail to reconnect
+
+---
+
+### 📦 3. Compression Logic (e.g., Gzip)
+ALLOWED:
+- File-level compression (e.g., Gzip a file to `.gz`)
+- Temporary, local-only compression during processing (with `zlib`, `pako`, etc.)
+
+FORBIDDEN:
+- Global `compression()` middleware in Express or Fastify
+- Changing `Content-Encoding` headers server-wide
+- Modifying build outputs to `.gz` automatically (unless behind a flag)
+
+If compression is required for networking:
+- Only compress custom endpoints, not HMR/WebSocket/dev routes
+- Include fallback if the client does not support `gzip`
+
+---
+
+### 🔧 4. Build Tools and Server Behavior
+Do NOT:
+- Add or replace build tools (e.g., Webpack, Rollup, esbuild) — Vite is already in use
+- Enable SSR, streaming render, or hydration hacks unless fully isolated
+- Add new CLI build steps unless optional and safe for dev mode
+
+If experimentation is needed:
+- Create a parallel build or start script
+- Never replace `npm run dev` behavior directly
+
+---
+
+### 🔁 5. Persistent Sockets / Long-lived Connections
+DO:
+- Use short-lived fetch or `axios` calls when possible
+- Clean up all sockets on disconnect or page unload
+
+DO NOT:
+- Create global, always-on sockets unless essential
+- Rely on non-standard socket protocols (e.g., raw TCP, custom transports)
+
+Verify:
+- No socket errors in browser devtools after a cold reload
+- No zombie connections remain when user stops and restarts app
+
+---
+
+### 📱 6. React Native, PWA, or Cross-Platform Features (Future-Proofing)
+If you plan to add:
+- React Native support
+- PWA capabilities (e.g., Service Workers, manifest.json)
+- Mobile-first build targets
+
+Then:
+- **Do not inject** mobile-specific behavior into dev mode unconditionally
+- Use separate `entry.mobile.tsx` or runtime detection
+- Ensure dev-only build still behaves identically on desktop
+- Avoid Service Worker auto-installation during development
+
+---
+
+### ✅ Final Replit Dev Environment Stability Checklist
+
+Every major change must confirm:
+- [ ] Vite `npm run dev` starts cleanly with no new warnings
+- [ ] HMR works (edit a component, verify live update)
+- [ ] WebSockets reconnect and do not persist errors
+- [ ] `vite.config.ts` integrity is preserved or safely restorable
+- [ ] No compression headers or response interference on dev mode
+- [ ] DB, API routes, and static file serving still behave identically
+- [ ] Logs show no startup regressions
+- [ ] New logic is behind flags or modularized
+- [ ] Rollback plan is documented
+
+---
+
+**Stability is sacred. If it’s fragile, assume it’s broken — and prove it’s not.**

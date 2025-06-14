@@ -1687,10 +1687,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: enhancedMetadata
       }).returning();
 
-      res.json({
+      const response: any = {
         success: true,
         file: fileData
-      });
+      };
+
+      // Add compression statistics if Go service was used
+      if (goServiceUsed && compressionStats) {
+        response.compressionStats = {
+          ratio: compressionStats.ratio,
+          originalSize: compressionStats.originalSize,
+          compressedSize: compressionStats.compressedSize,
+          time: compressionStats.time
+        };
+      }
+
+      res.json(response);
     } catch (error: any) {
       console.error('File upload error:', error);
       res.status(500).json({ 

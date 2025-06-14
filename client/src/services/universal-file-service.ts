@@ -129,49 +129,17 @@ export class UniversalFileService {
 
     const startTime = Date.now();
     
-    // Try Go acceleration for suitable files
-    if (FileAccelerationService.shouldAccelerate(file)) {
+    // For large files that benefit from Go acceleration, attempt to start the service
+    if (file.size > 5 * 1024 * 1024 && (file.name.toLowerCase().endsWith('.xml') || 
+        file.name.toLowerCase().endsWith('.json') || file.name.toLowerCase().endsWith('.csv'))) {
       try {
-        console.log(`Large file detected (${file.size} bytes): ${file.name}`);
-        console.log(`Attempting Go acceleration for ${file.name}`);
-        
-        // First attempt - try existing service
-        const result = await FileAccelerationService.accelerateCompression(file);
-        
-        console.log(`Go acceleration successful: ${file.name}`, {
-          originalSize: result.originalSize,
-          compressedSize: result.compressedSize,
-          ratio: result.compressionRatio,
-          time: result.processingTime
-        });
-        
-        return result;
-      } catch (error) {
-        console.warn(`Go acceleration failed for ${file.name}, attempting to start Go service:`, error);
-        
-        // Attempt to start Go service automatically
-        try {
-          console.log(`Starting Go acceleration service for large file: ${file.name}`);
-          await UniversalFileService.startGoAccelerationService();
-          
-          // Wait a moment for service to start
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          // Retry acceleration after starting service
-          const result = await FileAccelerationService.accelerateCompression(file);
-          
-          console.log(`Go acceleration successful after auto-start: ${file.name}`, {
-            originalSize: result.originalSize,
-            compressedSize: result.compressedSize,
-            ratio: result.compressionRatio,
-            time: result.processingTime
-          });
-          
-          return result;
-        } catch (startError) {
-          console.warn(`Failed to start Go service automatically:`, startError);
-          // Continue to TypeScript implementation below
-        }
+        console.log(`Large data file detected (${(file.size / (1024 * 1024)).toFixed(1)}MB): ${file.name}`);
+        console.log(`Attempting to start Go acceleration service for file management...`);
+        await UniversalFileService.startGoAccelerationService();
+        console.log(`Go acceleration service started successfully for file management`);
+      } catch (startError) {
+        console.warn('Could not start Go acceleration service:', startError);
+        // Continue - upload endpoint will handle graceful fallback
       }
     }
 
@@ -191,9 +159,21 @@ export class UniversalFileService {
         processingTime,
         algorithm: 'typescript-compression',
       };
-    } catch (error) {
-      console.error('Both Go and TypeScript compression failed:', error);
-      throw new Error(`File compression failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (tsError) {
+      console.error('Compression failed for', file.name, ':', tsError);
+      console.warn(`Compression failed for ${file.name}, uploading original:`, tsError);
+      
+      // Return original file when compression fails
+      return {
+        compressedFile: file,
+        compressionRatio: 1.0,
+        originalSize: file.size,
+        compressedSize: file.size,
+        processingTime: Date.now() - startTime,
+        algorithm: 'none',
+        compressionLevel: 0,
+        throughput: 0,
+      };
     }
   }
 

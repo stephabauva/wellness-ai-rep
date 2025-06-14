@@ -143,9 +143,9 @@ export class PlatformFileService {
     switch (platform) {
       case 'capacitor':
         return {
-          useNativeCompression: capabilities.nativeCompression && file.size > 50 * 1024 * 1024,
+          useNativeCompression: capabilities.nativeCompression && file.size > 10 * 1024 * 1024,
           compressionLevel: 6, // Balanced for mobile CPU
-          streamingThreshold: 100 * 1024 * 1024, // 100MB
+          streamingThreshold: 50 * 1024 * 1024, // 50MB
         };
         
       case 'react-native':

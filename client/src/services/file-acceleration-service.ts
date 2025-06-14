@@ -34,7 +34,7 @@ export class FileAccelerationService {
     isAvailable: false,
     lastHealthCheck: 0,
     supportedFormats: ['.xml', '.json', '.csv'],
-    minimumFileSize: 100 * 1024 * 1024, // 100MB
+    minimumFileSize: 10 * 1024 * 1024, // 10MB
   };
   
   private static readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
@@ -249,7 +249,7 @@ export class FileAccelerationService {
   static async testAcceleration(): Promise<boolean> {
     try {
       // Create a test file that meets minimum requirements
-      const testContent = 'x'.repeat(101 * 1024 * 1024); // 101MB test file
+      const testContent = 'x'.repeat(11 * 1024 * 1024); // 11MB test file
       const testFile = new File([testContent], 'test.xml', { type: 'application/xml' });
       
       await this.accelerateCompression(testFile);

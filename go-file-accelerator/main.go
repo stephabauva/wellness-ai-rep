@@ -84,12 +84,12 @@ func handleLargeFileCompression(c *gin.Context) {
         }
         defer file.Close()
 
-        // Check file size - only process large files (>100MB)
-        if header.Size < 100*1024*1024 {
+        // Check file size - only process large files (>10MB)
+        if header.Size < 10*1024*1024 {
                 c.JSON(http.StatusBadRequest, gin.H{
                         "error": "File too small for acceleration",
                         "size":  header.Size,
-                        "minimum": 100 * 1024 * 1024,
+                        "minimum": 10 * 1024 * 1024,
                 })
                 return
         }
@@ -185,7 +185,7 @@ func handleBatchProcessing(c *gin.Context) {
                 }
 
                 // Check if file qualifies for acceleration
-                if fileHeader.Size < 100*1024*1024 {
+                if fileHeader.Size < 10*1024*1024 {
                         file.Close()
                         results = append(results, map[string]interface{}{
                                 "filename": fileHeader.Filename,

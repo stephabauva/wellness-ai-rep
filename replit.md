@@ -125,7 +125,7 @@ Changelog:
   - Phase 4: Platform abstraction layer for Capacitor/React Native readiness
   - Zero breaking changes maintained - TypeScript compression remains primary with Go as enhancement
   - Complete rollback capability via single flag
-  - Progressive enhancement only for files >100MB (XML, JSON, CSV)
+  - Progressive enhancement only for files >10MB (XML, JSON, CSV)
 
 # User Preferences
 

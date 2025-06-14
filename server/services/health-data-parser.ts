@@ -65,7 +65,7 @@ export class HealthDataParser {
     'com.google.oxygen_saturation': { dataType: 'oxygen_saturation', category: 'cardiovascular' },
   };
 
-  static async parseFile(fileContent: string | Buffer, fileName: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
+  static async parseFile(fileContent: string | Buffer, fileName: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void, timeFilterMonths?: number): Promise<ParseResult> {
     try {
       // Handle compressed files
       let content: string;
@@ -80,7 +80,7 @@ export class HealthDataParser {
             } catch (stringError: any) {
               if (stringError.code === 'ERR_STRING_TOO_LONG') {
                 console.log('File too large for standard decompression, using streaming approach...');
-                return await this.parseAppleHealthXMLFromBuffer(buffer, fileName.slice(0, -3), progressCallback);
+                return await this.parseAppleHealthXMLFromBuffer(buffer, fileName.slice(0, -3), progressCallback, timeFilterMonths);
               }
               throw stringError;
             }
@@ -90,7 +90,7 @@ export class HealthDataParser {
             } catch (stringError: any) {
               if (stringError.code === 'ERR_STRING_TOO_LONG') {
                 console.log('File too large for standard decompression, using streaming approach...');
-                return await this.parseAppleHealthXMLFromBuffer(fileContent, fileName.slice(0, -3), progressCallback);
+                return await this.parseAppleHealthXMLFromBuffer(fileContent, fileName.slice(0, -3), progressCallback, timeFilterMonths);
               }
               throw stringError;
             }
@@ -119,7 +119,7 @@ export class HealthDataParser {
             return await HealthDataParser.parseCDADocumentOptimized(content, progressCallback);
           } else {
             console.log('Detected Apple Health XML format');
-            return await this.parseAppleHealthXML(content, progressCallback);
+            return await this.parseAppleHealthXML(content, progressCallback, timeFilterMonths);
           }
         case 'json':
           return await this.parseGoogleFitJSON(content);
@@ -989,7 +989,8 @@ export class HealthDataParser {
   private static async parseAppleHealthXMLFromBuffer(
     compressedBuffer: Buffer, 
     fileName: string, 
-    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void
+    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void,
+    timeFilterMonths?: number
   ): Promise<ParseResult> {
     try {
       console.log('Starting streaming decompression for large Apple Health file...');

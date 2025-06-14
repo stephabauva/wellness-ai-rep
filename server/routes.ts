@@ -608,7 +608,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (fileSizeInMB > 10) {
         console.log(`Large file detected (${fileSizeInMB.toFixed(1)}MB). Attempting to start Go acceleration service...`);
         try {
-          await startGoAccelerationService();
+          // Check if service is already running
+          const healthCheck = await fetch('http://localhost:5001/accelerate/health').catch(() => null);
+          
+          if (!healthCheck) {
+            console.log('Starting Go acceleration service...');
+            
+            // Start the Go service
+            spawn('go', ['run', 'main.go'], {
+              cwd: path.join(process.cwd(), 'go-file-accelerator'),
+              detached: true,
+              stdio: ['ignore', 'ignore', 'ignore']
+            });
+            
+            // Give it a moment to start
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log('Go acceleration service startup initiated');
+          } else {
+            console.log('Go acceleration service already running');
+          }
         } catch (error) {
           console.log('Go service auto-start failed, continuing with TypeScript processing');
         }

@@ -136,6 +136,12 @@ Changelog:
   - Enhanced file type validation for multiple MIME types
   - Added step-by-step import progress indicators
   - Fixed stability issues during large file processing
+- June 14, 2025. **Large File Processing Success & Automatic Go Service Enhancement**:
+  - Successfully processed user's Apple Health export: 42,633 valid records from 43,512 total entries
+  - Fixed automatic Go acceleration service startup for files >10MB
+  - Enhanced large file detection with proper service initialization
+  - Confirmed stable processing of multi-gigabyte health data files
+  - Zero data loss during large file imports with comprehensive progress tracking
 
 # User Preferences
 

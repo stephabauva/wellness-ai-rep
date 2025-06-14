@@ -1088,8 +1088,18 @@ export class HealthDataParser {
             const recordXml = recordMatch[0];
             recordCount++;
             
-            // For very large files, sample every 10th record to reduce memory usage
-            if (recordCount % 10 === 0 || totalBytes < 100 * 1024 * 1024) {
+            // For very large files (>100MB), sample every 50th record to reduce memory usage
+            // For massive files (>500MB), sample every 100th record
+            let sampleRate = 1;
+            if (totalBytes > 500 * 1024 * 1024) {
+              sampleRate = 100;
+            } else if (totalBytes > 100 * 1024 * 1024) {
+              sampleRate = 50;
+            } else if (totalBytes > 50 * 1024 * 1024) {
+              sampleRate = 10;
+            }
+            
+            if (recordCount % sampleRate === 0) {
               const typeMatch = recordXml.match(/\btype="([^"]+)"/);
               const valueMatch = recordXml.match(/\bvalue="([^"]+)"/);
               const unitMatch = recordXml.match(/\bunit="([^"]+)"/);
@@ -1145,9 +1155,10 @@ export class HealthDataParser {
         xmlBuffer = xmlBuffer.substring(lastRecordEnd);
         recordRegex.lastIndex = 0;
         
-        // Clear buffer if it gets too large
-        if (xmlBuffer.length > 1024 * 1024) { // 1MB buffer limit
-          xmlBuffer = xmlBuffer.substring(xmlBuffer.length - 100000); // Keep last 100KB
+        // Clear buffer more aggressively for massive files
+        const bufferLimit = totalBytes > 500 * 1024 * 1024 ? 100 * 1024 : 1024 * 1024; // 100KB for >500MB files, 1MB otherwise
+        if (xmlBuffer.length > bufferLimit) {
+          xmlBuffer = xmlBuffer.substring(xmlBuffer.length - Math.min(50000, bufferLimit / 2)); // Keep smaller remainder
         }
         
         // Progress updates

@@ -115,64 +115,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Go service auto-start functionality
   async function startGoAccelerationService(): Promise<void> {
-    return new Promise((resolve) => {
+    try {
       // Check if service is already running
-      fetch('http://localhost:5001/accelerate/health')
-        .then(() => {
-          console.log('Go acceleration service already running');
-          resolve();
-        })
-        .catch(() => {
-          console.log('Starting Go acceleration service...');
-          
-          // Start the Go service
-          const goProcess = spawn('go', ['run', 'main.go'], {
-            cwd: path.join(process.cwd(), 'go-file-accelerator'),
-            detached: true,
-            stdio: ['ignore', 'pipe', 'pipe']
-          });
+      const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
+        timeout: 2000
+      }).catch(() => null);
+      
+      if (healthCheck?.ok) {
+        console.log('Go acceleration service already running');
+        return;
+      }
 
-          let startupTimeout: NodeJS.Timeout;
-          let serviceStarted = false;
+      console.log('Starting Go acceleration service...');
+      
+      // Start the Go service using the shell script for proper environment setup
+      const goProcess = spawn('bash', ['start-go-accelerator.sh'], {
+        cwd: path.join(process.cwd(), 'go-file-accelerator'),
+        detached: true,
+        stdio: ['ignore', 'ignore', 'ignore']
+      });
 
-          // Set a timeout for service startup
-          startupTimeout = setTimeout(() => {
-            if (!serviceStarted) {
-              console.log('Go service startup timeout, continuing with TypeScript processing');
-              resolve();
-            }
-          }, 5000);
-
-          // Monitor service startup
-          const checkService = async () => {
-            try {
-              await fetch('http://localhost:5001/accelerate/health');
-              if (!serviceStarted) {
-                serviceStarted = true;
-                clearTimeout(startupTimeout);
-                console.log('Go acceleration service started successfully');
-                resolve();
-              }
-            } catch {
-              if (!serviceStarted) {
-                setTimeout(checkService, 500);
-              }
-            }
-          };
-
-          // Start checking after a brief delay
-          setTimeout(checkService, 1000);
-
-          goProcess.on('error', (error: Error) => {
-            console.log('Go service startup error:', error.message);
-            if (!serviceStarted) {
-              serviceStarted = true;
-              clearTimeout(startupTimeout);
-              resolve(); // Continue with TypeScript processing
-            }
-          });
-        });
-    });
+      // Give it time to start
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Check if it started successfully
+      const finalCheck = await fetch('http://localhost:5001/accelerate/health', {
+        timeout: 2000
+      }).catch(() => null);
+      
+      if (finalCheck?.ok) {
+        console.log('Go acceleration service started successfully');
+      } else {
+        console.log('Go service startup completed but not responding - will continue with TypeScript processing');
+      }
+    } catch (error) {
+      console.log('Go service startup failed:', error instanceof Error ? error.message : 'Unknown error');
+    }
   }
 
   // Serve uploaded files
@@ -608,27 +586,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (fileSizeInMB > 10) {
         console.log(`Large file detected (${fileSizeInMB.toFixed(1)}MB). Attempting to start Go acceleration service...`);
         try {
-          // Check if service is already running
-          const healthCheck = await fetch('http://localhost:5001/accelerate/health').catch(() => null);
-          
-          if (!healthCheck) {
-            console.log('Starting Go acceleration service...');
-            
-            // Start the Go service
-            spawn('go', ['run', 'main.go'], {
-              cwd: path.join(process.cwd(), 'go-file-accelerator'),
-              detached: true,
-              stdio: ['ignore', 'ignore', 'ignore']
-            });
-            
-            // Give it a moment to start
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            console.log('Go acceleration service startup initiated');
-          } else {
-            console.log('Go acceleration service already running');
-          }
+          await startGoAccelerationService();
         } catch (error) {
-          console.log('Go service auto-start failed, continuing with TypeScript processing');
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log('Go service auto-start failed, continuing with TypeScript processing:', errorMessage);
         }
       }
 

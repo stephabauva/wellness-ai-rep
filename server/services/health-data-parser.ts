@@ -998,6 +998,22 @@ export class HealthDataParser {
     timeFilterMonths?: number
   ): Promise<ParseResult> {
     try {
+      // Check if buffer is actually gzip compressed by examining magic bytes
+      const isGzipCompressed = compressedBuffer.length >= 2 && compressedBuffer[0] === 0x1f && compressedBuffer[1] === 0x8b;
+      
+      if (!isGzipCompressed) {
+        console.log('Buffer is not gzip compressed, processing as raw XML with smart chunking...');
+        // Process as uncompressed XML directly with chunking
+        const chunkSize = 2 * 1024 * 1024; // 2MB chunks
+        const chunks: Buffer[] = [];
+        
+        for (let i = 0; i < compressedBuffer.length; i += chunkSize) {
+          chunks.push(compressedBuffer.slice(i, i + chunkSize));
+        }
+        
+        return await this.parseAppleHealthXMLWithSmartChunking(chunks, progressCallback, timeFilterMonths);
+      }
+      
       console.log('Starting streaming decompression for large Apple Health file...');
       
       return new Promise((resolve, reject) => {

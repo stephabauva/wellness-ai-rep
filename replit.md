@@ -128,6 +128,14 @@ Changelog:
   - Complete rollback capability via single flag
   - Progressive enhancement only for files >10MB (XML, JSON, CSV)
   - Automatic service startup with graceful fallback guidance when auto-start requires manual intervention
+- June 14, 2025. **Compressed Health Data Support & Progress Bar Implementation** completed:
+  - Added native support for gzipped Apple Health exports (.gz files)
+  - Implemented automatic decompression using Node.js zlib
+  - Added detailed progress bar with time estimation during imports
+  - Implemented chunked processing for large files (>50MB) to prevent app restarts
+  - Enhanced file type validation for multiple MIME types
+  - Added step-by-step import progress indicators
+  - Fixed stability issues during large file processing
 
 # User Preferences
 

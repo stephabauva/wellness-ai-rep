@@ -2283,19 +2283,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file provided' });
       }
       
-      // Create FormData for proper multipart forwarding
+      // Create proper FormData for Go service using node-fetch compatible approach
       const FormData = (await import('form-data')).default;
+      const nodeFetch = (await import('node-fetch')).default;
       const formData = new FormData();
       formData.append('file', req.file.buffer, {
         filename: req.file.originalname,
-        contentType: req.file.mimetype
+        contentType: req.file.mimetype,
+        knownLength: req.file.size
       });
       
-      // Forward the request to Go service with proper multipart data
-      const response = await fetch('http://localhost:5001/accelerate/compress-large', {
+      // Forward the request to Go service with proper headers using node-fetch
+      const response = await nodeFetch('http://localhost:5001/accelerate/compress-large', {
         method: 'POST',
         body: formData,
-        signal: AbortSignal.timeout(120000) // 2 minute timeout for large files
+        headers: {
+          ...formData.getHeaders(),
+        },
+        timeout: 120000 // 2 minute timeout for large files
       });
       
       if (!response.ok) {

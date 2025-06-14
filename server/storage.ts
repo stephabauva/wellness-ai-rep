@@ -386,16 +386,16 @@ export class MemStorage implements IStorage {
     
     switch (timeRange) {
       case "7days":
-        startDate = new Date(now.setDate(now.getDate() - 7));
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case "30days":
-        startDate = new Date(now.setDate(now.getDate() - 30));
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
       case "90days":
-        startDate = new Date(now.setDate(now.getDate() - 90));
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
         break;
       default:
-        startDate = new Date(now.setDate(now.getDate() - 7));
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
     
     return allData.filter(data => data.timestamp >= startDate);

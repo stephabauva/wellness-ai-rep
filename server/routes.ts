@@ -492,23 +492,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 100 * 1024 * 1024, // 100MB limit for health data files
     },
     fileFilter: (req, file, cb) => {
-      // Accept health data file formats
+      // Accept health data file formats - more flexible validation
       const allowedMimeTypes = [
         'text/xml',
         'application/xml',
         'application/json',
+        'text/json',
         'text/csv',
         'application/csv',
-        'text/plain'
+        'text/plain',
+        'application/octet-stream', // Some browsers send this for various file types
+        'text/tab-separated-values',
+        'application/vnd.ms-excel' // Excel files that might contain health data
       ];
       
-      const allowedExtensions = ['.xml', '.json', '.csv'];
+      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.tsv'];
       const fileExtension = path.extname(file.originalname).toLowerCase();
       
-      if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
+      // Be more permissive - accept if either MIME type matches OR extension matches
+      // Also accept files with no extension if they have a valid MIME type
+      const isValidMimeType = allowedMimeTypes.includes(file.mimetype);
+      const isValidExtension = allowedExtensions.includes(fileExtension);
+      const hasNoExtension = fileExtension === '';
+      
+      if (isValidMimeType || isValidExtension || (hasNoExtension && isValidMimeType)) {
+        console.log(`Health data file accepted: ${file.originalname} (${file.mimetype})`);
         cb(null, true);
       } else {
-        cb(new Error('Invalid file type. Please upload XML, JSON, or CSV files.'));
+        console.log(`Health data file rejected: ${file.originalname} (${file.mimetype}), extension: ${fileExtension}`);
+        cb(new Error(`Invalid file type. Please upload XML, JSON, CSV, or TXT files. Received: ${file.mimetype} with extension ${fileExtension}`));
       }
     }
   });

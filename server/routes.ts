@@ -2009,66 +2009,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Service not running, continue with start attempt
       }
 
-      // Attempt to start the Go service using simplified approach
-      const servicePath = process.cwd() + '/go-file-accelerator';
-      const startScript = servicePath + '/start-go-accelerator.sh';
+      // For now, provide guidance for manual start
+      console.log('Go acceleration auto-start requested - providing manual guidance');
       
-      console.log(`Starting Go acceleration service from: ${startScript}`);
-      
-      // Use a simpler approach to start the service
-      const { exec } = await import('child_process');
-      
-      // Make script executable and run it
-      const startCommand = `cd "${servicePath}" && chmod +x start-go-accelerator.sh && ./start-go-accelerator.sh > /dev/null 2>&1 &`;
-      
-      const startProcess = new Promise((resolve, reject) => {
-        exec(startCommand, (error: any, stdout: string, stderr: string) => {
-          if (error) {
-            console.error('Start command error:', error);
-            reject(error);
-          } else {
-            console.log('Go service start command executed');
-            resolve(stdout);
-          }
-        });
+      return res.json({
+        success: false,
+        error: 'Auto-start requires manual intervention',
+        guidance: 'To start Go acceleration service manually, run: cd go-file-accelerator && ./start-go-accelerator.sh',
+        autoStartSupported: false,
+        reason: reason
       });
-      
-      // Execute the start command
-      await startProcess;
-      
-      // Wait a moment for service to potentially start
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Verify service started
-      try {
-        const verifyResponse = await fetch('http://localhost:5001/accelerate/health', {
-          method: 'GET',
-          signal: AbortSignal.timeout(3000)
-        });
-        
-        if (verifyResponse.ok) {
-          const healthData = await verifyResponse.json();
-          res.json({
-            success: true,
-            message: 'Go acceleration service started successfully',
-            serviceHealth: healthData,
-            startReason: reason
-          });
-        } else {
-          res.json({
-            success: false,
-            error: 'Service started but health check failed',
-            startAttempted: true
-          });
-        }
-      } catch (verifyError) {
-        res.json({
-          success: false,
-          error: 'Service start attempted but verification failed',
-          startAttempted: true,
-          verifyError: verifyError instanceof Error ? verifyError.message : 'Unknown error'
-        });
-      }
       
     } catch (error: any) {
       console.error('Failed to start Go acceleration service:', error);

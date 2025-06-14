@@ -123,9 +123,11 @@ Changelog:
   - Phase 2: Universal File Service with smart routing between TypeScript and Go acceleration
   - Phase 3: Server proxy routes for seamless Go service integration
   - Phase 4: Platform abstraction layer for Capacitor/React Native readiness
+  - **Phase 5: Automatic Go service startup detection** - System detects large files >10MB and automatically attempts to start Go acceleration service
   - Zero breaking changes maintained - TypeScript compression remains primary with Go as enhancement
   - Complete rollback capability via single flag
   - Progressive enhancement only for files >10MB (XML, JSON, CSV)
+  - Automatic service startup with graceful fallback guidance when auto-start requires manual intervention
 
 # User Preferences
 

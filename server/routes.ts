@@ -1402,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       // Also check file extensions for better compatibility
-      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.html', '.log', '.sql', '.yaml', '.yml'];
+      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.html', '.log', '.sql', '.yaml', '.yml', '.gz'];
       const fileExtension = path.extname(file.originalname).toLowerCase();
 
       console.log(`File upload filter - Name: ${file.originalname}, MIME: ${file.mimetype}, Extension: ${fileExtension}`);

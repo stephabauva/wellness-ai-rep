@@ -1,5 +1,5 @@
 import { parseString } from 'xml2js';
-import { gunzipSync, unzipSync, createGunzip } from 'zlib';
+import { gunzipSync, createGunzip } from 'zlib';
 import { Readable } from 'stream';
 import { InsertHealthData, HealthDataCategory, HealthMetricType } from '@shared/schema';
 
@@ -70,15 +70,11 @@ export class HealthDataParser {
       // Handle compressed files
       let content: string;
       const isGzipped = fileName.toLowerCase().endsWith('.gz');
-      const isZipped = fileName.toLowerCase().endsWith('.zip');
       
       if (isGzipped) {
         try {
-          // For very large compressed files, use streaming decompression
           if (typeof fileContent === 'string') {
-            // Convert string to buffer for decompression
             const buffer = Buffer.from(fileContent, 'binary');
-            // Check if decompressed content would be too large
             try {
               content = gunzipSync(buffer).toString('utf8');
             } catch (stringError: any) {
@@ -99,18 +95,12 @@ export class HealthDataParser {
               throw stringError;
             }
           }
-          // Remove .gz extension to get the actual file type
           fileName = fileName.slice(0, -3);
           console.log(`Successfully decompressed .gz file: ${fileName}, content length: ${content.length}`);
         } catch (decompressionError) {
           console.error('Failed to decompress .gz file:', decompressionError);
           throw new Error(`Failed to decompress .gz file: ${decompressionError instanceof Error ? decompressionError.message : 'Unknown decompression error'}`);
         }
-      } else if (isZipped) {
-        return {
-          success: false,
-          errors: ['ZIP files are not yet supported. Please extract the file and upload the XML/JSON/CSV directly.']
-        };
       } else {
         content = typeof fileContent === 'string' ? fileContent : fileContent.toString('utf8');
       }
@@ -140,9 +130,9 @@ export class HealthDataParser {
   }
 
   private static async parseAppleHealthXML(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
-    // For very large files, implement chunked processing to prevent memory issues
+    // For large files, use optimized chunked processing
     if (xmlContent.length > 50 * 1024 * 1024) { // 50MB threshold
-      return this.parseAppleHealthXMLChunked(xmlContent, progressCallback);
+      return this.parseAppleHealthXMLOptimized(xmlContent, progressCallback);
     }
     
     return new Promise((resolve) => {
@@ -228,7 +218,7 @@ export class HealthDataParser {
     });
   }
 
-  private static async parseAppleHealthXMLChunked(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
+  private static async parseAppleHealthXMLOptimized(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
     try {
       console.log('Processing large Apple Health file with optimized parsing...');
       console.log(`XML content length: ${xmlContent.length} characters`);
@@ -241,7 +231,7 @@ export class HealthDataParser {
         };
       }
 
-      // For extremely large files (>300MB), use streaming approach
+      // For extremely large files (>300MB), use streaming chunk processing
       if (xmlContent.length > 300 * 1024 * 1024) {
         console.log('File extremely large, switching to streaming processing...');
         const buffer = Buffer.from(xmlContent, 'utf8');
@@ -255,7 +245,7 @@ export class HealthDataParser {
         return await this.parseAppleHealthXMLFromChunks(chunks, progressCallback);
       }
       
-      // Optimized parsing for large files
+      // Optimized regex-based parsing for large files
       const parsedData: ParsedHealthDataPoint[] = [];
       const errors: string[] = [];
       const categories: Record<string, number> = {};
@@ -380,7 +370,7 @@ export class HealthDataParser {
         }
       };
     } catch (error) {
-      console.error('Chunked XML parsing error:', error);
+      console.error('Optimized XML parsing error:', error);
       return {
         success: false,
         errors: [`Failed to parse large XML file: ${error instanceof Error ? error.message : 'Unknown error'}`]

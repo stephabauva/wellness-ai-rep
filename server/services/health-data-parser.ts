@@ -1075,7 +1075,7 @@ export class HealthDataParser {
       // Set up time filtering if enabled
       let cutoffDate: Date | null = null;
       let consecutiveOldRecords = 0;
-      const MAX_CONSECUTIVE_OLD_RECORDS = 1000; // Stop if we hit 1k consecutive old records (much more aggressive)
+      const MAX_CONSECUTIVE_OLD_RECORDS = 50; // Ultra-aggressive: stop after 50 consecutive old records
       
       if (timeFilterMonths && timeFilterMonths > 0) {
         cutoffDate = new Date();

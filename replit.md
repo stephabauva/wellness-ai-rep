@@ -213,6 +213,15 @@ Changelog:
   - Large XML/JSON/CSV files >5MB automatically trigger Go service startup with graceful fallback
   - Zero breaking changes maintained while achieving full feature integration
   - **Successfully tested with 830MB Apple Health export**: Automatic startup → 95.2% compression (830MB→39MB) in 6.5 seconds
+- June 14, 2025. **CDA (Clinical Document Architecture) Health Data Support**:
+  - Enhanced health data parser to support CDA XML format in addition to Apple Health exports
+  - Added content-based file format detection instead of relying only on filename extensions
+  - Implemented optimized CDA document parsing with regex-based extraction for large files
+  - Fixed filename handling issues when files are uploaded through file management system
+  - Added comprehensive CDA metadata extraction (patient demographics, document timestamps)
+  - Successfully tested with 347MB decompressed CDA export file: parsed patient data (Female, born 1986) and health export metadata
+  - Both parse and import endpoints now support CDA format with automatic format detection
+  - Enhanced error messaging to clearly indicate supported formats (Apple Health XML, CDA XML, Google Fit JSON, Generic CSV)
 
 # User Preferences
 

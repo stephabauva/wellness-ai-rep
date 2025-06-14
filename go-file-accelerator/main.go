@@ -57,11 +57,8 @@ func main() {
         // Health check endpoint
         r.GET("/accelerate/health", handleHealthCheck)
         
-        // Large file compression endpoint (health data)
+        // Large file compression endpoint
         r.POST("/accelerate/compress-large", handleLargeFileCompression)
-        
-        // General file processing endpoint (file management)
-        r.POST("/accelerate/process-file", handleGeneralFileProcessing)
         
         // Batch processing endpoint
         r.POST("/accelerate/batch-process", handleBatchProcessing)
@@ -70,7 +67,6 @@ func main() {
         log.Println("Endpoints available:")
         log.Println("  GET  /accelerate/health")
         log.Println("  POST /accelerate/compress-large")
-        log.Println("  POST /accelerate/process-file")
         log.Println("  POST /accelerate/batch-process")
         
         r.Run(":5001")
@@ -119,7 +115,7 @@ func handleLargeFileCompression(c *gin.Context) {
            !strings.HasSuffix(filename, ".json") && 
            !strings.HasSuffix(filename, ".csv") {
                 c.JSON(http.StatusBadRequest, gin.H{
-                        "error": "Unsupported file type for health data",
+                        "error": "Unsupported file type",
                         "filename": header.Filename,
                         "supported": []string{".xml", ".json", ".csv"},
                 })
@@ -192,156 +188,6 @@ func handleLargeFileCompression(c *gin.Context) {
                 (1-compressionRatio)*100, processingTime, throughputMBps)
 
         c.JSON(http.StatusOK, result)
-}
-
-// handleGeneralFileProcessing handles file processing for general file management (not just health data)
-func handleGeneralFileProcessing(c *gin.Context) {
-        startTime := time.Now()
-        
-        // Parse multipart form
-        err := c.Request.ParseMultipartForm(200 << 20) // 200MB max memory
-        if err != nil {
-                c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form"})
-                return
-        }
-
-        file, header, err := c.Request.FormFile("file")
-        if err != nil {
-                c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
-                return
-        }
-        defer file.Close()
-
-        // Check file size - process files >5MB for acceleration
-        if header.Size < 5*1024*1024 {
-                c.JSON(http.StatusBadRequest, gin.H{
-                        "error": "File too small for acceleration",
-                        "size":  header.Size,
-                        "minimum": 5 * 1024 * 1024,
-                })
-                return
-        }
-
-        // Support broader file types for general file management
-        filename := strings.ToLower(header.Filename)
-        supportedTypes := []string{".xml", ".json", ".csv", ".txt", ".html", ".log", ".sql", ".yaml", ".yml"}
-        
-        isSupported := false
-        for _, ext := range supportedTypes {
-                if strings.HasSuffix(filename, ext) {
-                        isSupported = true
-                        break
-                }
-        }
-        
-        if !isSupported {
-                c.JSON(http.StatusBadRequest, gin.H{
-                        "error": "Unsupported file type for acceleration",
-                        "filename": header.Filename,
-                        "supported": supportedTypes,
-                })
-                return
-        }
-
-        // Read file content
-        content, err := io.ReadAll(file)
-        if err != nil {
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file"})
-                return
-        }
-
-        // Determine optimal compression level based on file size and type
-        compressionLevel := getOptimalCompressionLevelForGeneral(content, filename)
-        
-        // Use optimized compression with adaptive level
-        var compressedBuffer bytes.Buffer
-        gzipWriter, err := gzip.NewWriterLevel(&compressedBuffer, compressionLevel)
-        if err != nil {
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create compressor"})
-                return
-        }
-        
-        // Use chunked writing for better memory efficiency on large files
-        chunkSize := 64 * 1024 // 64KB chunks
-        contentLen := len(content)
-        
-        for i := 0; i < contentLen; i += chunkSize {
-                end := i + chunkSize
-                if end > contentLen {
-                        end = contentLen
-                }
-                
-                _, err = gzipWriter.Write(content[i:end])
-                if err != nil {
-                        c.JSON(http.StatusInternalServerError, gin.H{"error": "Compression failed"})
-                        return
-                }
-        }
-        
-        err = gzipWriter.Close()
-        if err != nil {
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to finalize compression"})
-                return
-        }
-
-        compressedData := compressedBuffer.Bytes()
-        processingTime := time.Since(startTime).Milliseconds()
-        
-        // Calculate compression ratio and throughput
-        originalSize := int64(len(content))
-        compressedSize := int64(len(compressedData))
-        compressionRatio := float64(compressedSize) / float64(originalSize)
-        throughputMBps := float64(originalSize) / (1024 * 1024) / (float64(processingTime) / 1000)
-
-        result := CompressionResult{
-                CompressedData:   compressedData,
-                CompressionRatio: compressionRatio,
-                OriginalSize:     originalSize,
-                CompressedSize:   compressedSize,
-                ProcessingTime:   processingTime,
-                Algorithm:        "gzip-optimized-general",
-                CompressionLevel: compressionLevel,
-                Throughput:       throughputMBps,
-        }
-
-        log.Printf("Processed file %s: %d -> %d bytes (%.2f%% reduction) in %dms (%.1f MB/s)",
-                header.Filename, originalSize, compressedSize, 
-                (1-compressionRatio)*100, processingTime, throughputMBps)
-
-        c.JSON(http.StatusOK, result)
-}
-
-// getOptimalCompressionLevelForGeneral determines compression level for general files
-func getOptimalCompressionLevelForGeneral(content []byte, filename string) int {
-        size := len(content)
-        
-        // For very large files (>100MB), use faster compression
-        if size > 100*1024*1024 {
-                return gzip.BestSpeed // Level 1 - fastest
-        }
-        
-        // Optimize for different file types
-        if strings.Contains(filename, ".xml") || strings.Contains(filename, ".html") {
-                if size > 50*1024*1024 {
-                        return 3 // Fast but good compression for large XML/HTML
-                }
-                return 6 // Default level for medium XML/HTML files
-        }
-        
-        if strings.Contains(filename, ".json") || strings.Contains(filename, ".yaml") || strings.Contains(filename, ".yml") {
-                return 7 // Good compression for structured data
-        }
-        
-        if strings.Contains(filename, ".csv") || strings.Contains(filename, ".txt") || strings.Contains(filename, ".log") {
-                return 5 // Balanced for text data
-        }
-        
-        if strings.Contains(filename, ".sql") {
-                return 6 // Good compression for SQL files
-        }
-        
-        // Default to standard compression
-        return gzip.DefaultCompression // Level 6
 }
 
 // getOptimalCompressionLevel determines the best compression level based on file characteristics

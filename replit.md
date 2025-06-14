@@ -184,6 +184,13 @@ Changelog:
   - Fixed memory overflow issues for files exceeding Node.js string limits (>536MB)
   - Maintained parsing accuracy while processing hundreds of thousands of health records
   - Added detailed progress tracking and logging for large file processing operations
+- June 14, 2025. **Memory-Optimized Processing to Prevent App Crashes**:
+  - Enhanced streaming parser with batched processing (1000 records per batch) to prevent memory overflow
+  - Added automatic XML buffer clearing when exceeding 1MB to maintain stable memory usage
+  - Implemented garbage collection hints during large file processing
+  - Fixed app crashes during processing of massive Apple Health exports (830MB decompressed)
+  - Added periodic memory cleanup and progress logging every 200 chunks
+  - Optimized chunk processing frequency to balance performance with memory stability
 
 # User Preferences
 

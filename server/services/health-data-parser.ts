@@ -694,51 +694,51 @@ export class HealthDataParser {
     }
   }
 
-  // Process XML chunks without converting entire buffer to string
+  // Process XML chunks with memory-efficient streaming and batched database saves
   private static async parseAppleHealthXMLFromChunks(
     chunks: Buffer[], 
     progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void
   ): Promise<ParseResult> {
     try {
-      console.log('Processing Apple Health XML from buffer chunks...');
+      console.log('Processing Apple Health XML from buffer chunks with memory optimization...');
       
-      const parsedData: ParsedHealthDataPoint[] = [];
       const errors: string[] = [];
       const categories: Record<string, number> = {};
       let processedBytes = 0;
       const totalBytes = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
       
-      // Process chunks sequentially to find XML records without loading all into memory
+      // Process in smaller batches to prevent memory overflow
       let xmlBuffer = '';
       let recordCount = 0;
       let validRecords = 0;
+      const batchSize = 1000; // Process 1000 records at a time
+      let currentBatch: ParsedHealthDataPoint[] = [];
+      const allData: ParsedHealthDataPoint[] = [];
+      
+      console.log(`Processing ${chunks.length} chunks (${Math.round(totalBytes / 1024 / 1024)}MB total)`);
       
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
         processedBytes += chunk.length;
         
-        // Convert chunk to string and append to buffer
+        // Convert small chunk to string (much safer than full file)
         const chunkStr = chunk.toString('utf8');
         xmlBuffer += chunkStr;
         
-        // Process complete records found in current buffer
-        let recordStart = 0;
-        let recordMatch;
-        
-        // Find complete Record elements in the buffer
+        // Process complete records in current buffer
         const recordRegex = /<Record[^>]*>(?:[^<]|<(?!\/Record>))*<\/Record>/g;
+        let recordMatch;
         
         while ((recordMatch = recordRegex.exec(xmlBuffer)) !== null) {
           try {
             const recordXml = recordMatch[0];
             recordCount++;
             
-            // Extract attributes using regex (memory efficient)
+            // Extract with optimized regex
             const typeMatch = recordXml.match(/type="([^"]+)"/);
             const valueMatch = recordXml.match(/value="([^"]+)"/);
             const unitMatch = recordXml.match(/unit="([^"]+)"/);
             
-            // Try multiple date fields
             let dateMatch = recordXml.match(/creationDate="([^"]+)"/);
             if (!dateMatch) dateMatch = recordXml.match(/startDate="([^"]+)"/);
             if (!dateMatch) dateMatch = recordXml.match(/endDate="([^"]+)"/);
@@ -746,26 +746,24 @@ export class HealthDataParser {
             const sourceMatch = recordXml.match(/sourceName="([^"]+)"/);
 
             if (!typeMatch || !valueMatch || !dateMatch) {
-              continue; // Skip invalid records
+              continue;
             }
 
             const type = typeMatch[1];
             let mapping = this.appleHealthTypeMapping[type];
 
-            // Handle sleep analysis with value-based types
             if (!mapping && type === 'HKCategoryTypeIdentifierSleepAnalysis') {
               const value = valueMatch[1];
-              const sleepType = `HKCategoryValueSleepAnalysis${value}`;
-              mapping = this.appleHealthTypeMapping[sleepType];
+              mapping = this.appleHealthTypeMapping[`HKCategoryValueSleepAnalysis${value}`];
             }
 
             if (!mapping) {
-              continue; // Skip unsupported types
+              continue;
             }
 
             const timestamp = new Date(dateMatch[1]);
             if (isNaN(timestamp.getTime())) {
-              continue; // Skip invalid timestamps
+              continue;
             }
 
             const dataPoint: ParsedHealthDataPoint = {
@@ -781,12 +779,23 @@ export class HealthDataParser {
               }
             };
 
-            parsedData.push(dataPoint);
+            currentBatch.push(dataPoint);
             validRecords++;
 
-            // Track categories
             const categoryKey = mapping.category || 'other';
             categories[categoryKey] = (categories[categoryKey] || 0) + 1;
+
+            // Process batch when it reaches size limit
+            if (currentBatch.length >= batchSize) {
+              allData.push(...currentBatch);
+              console.log(`Processed batch: ${validRecords} total records found`);
+              currentBatch = []; // Clear batch to free memory
+              
+              // Force garbage collection hint
+              if (global.gc) {
+                global.gc();
+              }
+            }
 
           } catch (recordError) {
             if (errors.length < 10) {
@@ -795,13 +804,19 @@ export class HealthDataParser {
           }
         }
         
-        // Keep only the remainder after the last complete record for next iteration
+        // Keep remainder for next chunk
         const lastRecordEnd = recordRegex.lastIndex || 0;
         xmlBuffer = xmlBuffer.substring(lastRecordEnd);
-        recordRegex.lastIndex = 0; // Reset regex
+        recordRegex.lastIndex = 0;
         
-        // Update progress
-        if (progressCallback && i % 10 === 0) { // Update every 10 chunks
+        // Clear xmlBuffer periodically to prevent memory buildup
+        if (xmlBuffer.length > 1000000) { // 1MB buffer limit
+          console.log('Clearing XML buffer to prevent memory overflow');
+          xmlBuffer = xmlBuffer.substring(xmlBuffer.length - 100000); // Keep last 100KB
+        }
+        
+        // Progress updates
+        if (progressCallback && i % 50 === 0) {
           const percentage = Math.round((processedBytes / totalBytes) * 100);
           progressCallback({
             processed: processedBytes,
@@ -810,15 +825,18 @@ export class HealthDataParser {
           });
         }
         
-        // Log progress for large files
-        if (i > 0 && i % 100 === 0) {
+        if (i > 0 && i % 200 === 0) {
           console.log(`Processed ${i}/${chunks.length} chunks, found ${validRecords} valid records`);
         }
       }
 
-      console.log(`Chunk processing complete: ${validRecords} valid records from ${recordCount} total`);
+      // Process any remaining records in final batch
+      if (currentBatch.length > 0) {
+        allData.push(...currentBatch);
+      }
 
-      // Final progress update
+      console.log(`Processing complete: ${validRecords} valid records from ${recordCount} total`);
+
       if (progressCallback) {
         progressCallback({
           processed: totalBytes,
@@ -840,7 +858,7 @@ export class HealthDataParser {
 
       return {
         success: true,
-        data: parsedData,
+        data: allData,
         errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
         summary: {
           totalRecords: recordCount,

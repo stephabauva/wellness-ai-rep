@@ -80,6 +80,12 @@ export function HealthDataImport() {
   const [compressionEnabled, setCompressionEnabled] = useState(true);
   const [compressionResult, setCompressionResult] = useState<any>(null);
   
+  // Time range selection for large health data files
+  const [timeRangeSettings, setTimeRangeSettings] = useState({
+    enabled: false,
+    months: 12 // Default to 1 year maximum
+  });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -185,6 +191,12 @@ export function HealthDataImport() {
     formData.append('timeWindowHours', duplicateSettings.timeWindowHours.toString());
     formData.append('exactValueMatch', duplicateSettings.exactValueMatch.toString());
     formData.append('checkSource', duplicateSettings.checkSource.toString());
+    
+    // Add time range filtering parameters
+    if (timeRangeSettings.enabled) {
+      formData.append('timeRangeEnabled', 'true');
+      formData.append('timeRangeMonths', timeRangeSettings.months.toString());
+    }
 
     try {
       // Create a more realistic progress tracking interval for large files
@@ -449,6 +461,66 @@ export function HealthDataImport() {
                         <AlertDescription>
                           Large file detected ({formatBytes(selectedFile.size)}). 
                           Compression will reduce upload time and improve performance.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            <Separator />
+
+            {/* Time Range Selection Panel */}
+            {selectedFile && (
+              <div className="space-y-4">
+                <h4 className="font-medium">Data Time Range</h4>
+                <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="time-range"
+                          checked={timeRangeSettings.enabled}
+                          onCheckedChange={(checked) => setTimeRangeSettings(prev => ({
+                            ...prev,
+                            enabled: !!checked
+                          }))}
+                        />
+                        <Label htmlFor="time-range" className="text-sm font-medium">
+                          Import only recent data (recommended for large files)
+                        </Label>
+                      </div>
+                      
+                      {timeRangeSettings.enabled && (
+                        <div className="ml-6 space-y-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="time-months">Import data from the last:</Label>
+                            <select
+                              id="time-months"
+                              value={timeRangeSettings.months}
+                              onChange={(e) => setTimeRangeSettings(prev => ({
+                                ...prev,
+                                months: parseInt(e.target.value)
+                              }))}
+                              className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                            >
+                              <option value={1}>1 month</option>
+                              <option value={3}>3 months</option>
+                              <option value={6}>6 months</option>
+                              <option value={12}>1 year (maximum)</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          {timeRangeSettings.enabled 
+                            ? `Only health data from the last ${timeRangeSettings.months} month${timeRangeSettings.months > 1 ? 's' : ''} will be imported.`
+                            : 'All health data will be imported. For large files, consider enabling time range filtering.'
+                          }
                         </AlertDescription>
                       </Alert>
                     </div>

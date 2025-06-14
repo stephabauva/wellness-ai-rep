@@ -350,7 +350,7 @@ export class UniversalFileService {
   /**
    * Automatically start Go acceleration service when needed
    */
-  private static async startGoAccelerationService(): Promise<void> {
+  static async startGoAccelerationService(): Promise<void> {
     try {
       console.log('Attempting to start Go acceleration service...');
       

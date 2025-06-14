@@ -1383,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 50 * 1024 * 1024, // 50MB limit for general files
     },
     fileFilter: (req, file, cb) => {
-      // Accept various file types
+      // Accept various file types including XML, JSON, CSV for data files
       const allowedTypes = [
         'image/',
         'video/',
@@ -1391,7 +1391,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain'
+        'text/plain',
+        'text/xml',
+        'application/xml',
+        'application/json',
+        'text/csv',
+        'application/csv'
       ];
 
       const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
@@ -1408,6 +1413,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
+      }
+
+      // Check file size and automatically start Go service for large data files (XML, JSON, CSV)
+      const fileSizeInMB = req.file.size / (1024 * 1024);
+      const originalFileName = req.file.originalname.toLowerCase();
+      const isLargeDataFile = fileSizeInMB > 5 && (
+        originalFileName.endsWith('.xml') || 
+        originalFileName.endsWith('.json') || 
+        originalFileName.endsWith('.csv') ||
+        req.file.mimetype.includes('xml') ||
+        req.file.mimetype.includes('json') ||
+        req.file.mimetype.includes('csv')
+      );
+
+      if (isLargeDataFile) {
+        console.log(`Large data file detected in file management (${fileSizeInMB.toFixed(1)}MB): ${req.file.originalname}`);
+        console.log('Attempting to start Go acceleration service for file management...');
+        try {
+          await startGoAccelerationService();
+          console.log('Go acceleration service started successfully for file management');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log('Go service auto-start failed, continuing with TypeScript processing:', errorMessage);
+        }
       }
 
       const uploadStartTime = Date.now();

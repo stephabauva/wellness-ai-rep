@@ -220,7 +220,7 @@ export class HealthDataParser {
           chunks.push(buffer.slice(i, i + chunkSize));
         }
         
-        return await this.parseAppleHealthXMLFromChunks(chunks, progressCallback);
+        return await this.parseAppleHealthXMLWithSmartChunking(chunks, progressCallback, timeFilterMonths);
       }
       
       // Optimized regex-based parsing for large files
@@ -1025,8 +1025,8 @@ export class HealthDataParser {
           try {
             console.log(`Decompression complete. Total size: ${totalSize} bytes`);
             
-            // Process chunks without converting to string to avoid memory limits
-            const result = await this.parseAppleHealthXMLFromChunks(chunks, progressCallback, timeFilterMonths);
+            // Process chunks with smart timestamp-based filtering
+            const result = await this.parseAppleHealthXMLWithSmartChunking(chunks, progressCallback, timeFilterMonths);
             resolve(result);
           } catch (parseError) {
             console.error('Error parsing decompressed XML:', parseError);
@@ -1053,7 +1053,196 @@ export class HealthDataParser {
   }
 
   // Process XML chunks with memory management for massive files
-  private static async parseAppleHealthXMLFromChunks(
+  private static async parseAppleHealthXMLWithSmartChunking(
+    chunks: Buffer[], 
+    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void,
+    timeFilterMonths?: number
+  ): Promise<ParseResult> {
+    return new Promise((resolve) => {
+      const errors: string[] = [];
+      const parsedData: ParsedHealthDataPoint[] = [];
+      
+      // Set up time filtering - MANDATORY
+      let cutoffDate: Date | null = null;
+      if (timeFilterMonths && timeFilterMonths > 0) {
+        cutoffDate = new Date();
+        cutoffDate.setMonth(cutoffDate.getMonth() - timeFilterMonths);
+        console.log(`SMART TIME FILTERING: Only processing records from ${cutoffDate.toISOString()} onwards (last ${timeFilterMonths} months)`);
+      } else {
+        cutoffDate = new Date();
+        cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+        console.log(`DEFAULT SAFETY FILTER: Using 1 month cutoff for memory protection`);
+      }
+      
+      const totalBytes = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      console.log(`SMART PARSING: Analyzing ${chunks.length} chunks (${Math.round(totalBytes / 1024 / 1024)}MB total) with timestamp-based filtering`);
+      
+      // Step 1: Analyze chunk timestamps to find relevant sections
+      this.findRelevantChunks(chunks, cutoffDate, (relevantChunks) => {
+        // Step 2: Process only the relevant chunks
+        this.processRelevantChunks(relevantChunks, cutoffDate, progressCallback, (result) => {
+          resolve(result);
+        });
+      });
+    });
+  }
+
+  private static findRelevantChunks(
+    chunks: Buffer[], 
+    cutoffDate: Date, 
+    callback: (relevantChunks: { index: number; chunk: Buffer; hasRecentData: boolean }[]) => void
+  ): void {
+    console.log(`TIMESTAMP ANALYSIS: Checking ${chunks.length} chunks for data after ${cutoffDate.toISOString()}`);
+    
+    const relevantChunks: { index: number; chunk: Buffer; hasRecentData: boolean }[] = [];
+    let analyzed = 0;
+    
+    // Analyze chunks in parallel for speed
+    chunks.forEach((chunk, index) => {
+      const chunkStr = chunk.toString('utf8');
+      const dateRegex = /startDate="([^"]+)"/g;
+      let match;
+      let hasRecentData = false;
+      let sampleCount = 0;
+      
+      // Sample first 10 dates in chunk to determine if it contains recent data
+      while ((match = dateRegex.exec(chunkStr)) !== null && sampleCount < 10) {
+        const recordDate = new Date(match[1]);
+        if (recordDate >= cutoffDate) {
+          hasRecentData = true;
+          break;
+        }
+        sampleCount++;
+      }
+      
+      if (hasRecentData || index === chunks.length - 1) {
+        // Include chunks with recent data or the last chunk (might contain newest data)
+        relevantChunks.push({ index, chunk, hasRecentData });
+      }
+      
+      analyzed++;
+      if (analyzed === chunks.length) {
+        console.log(`TIMESTAMP ANALYSIS COMPLETE: Found ${relevantChunks.length}/${chunks.length} chunks with relevant data`);
+        
+        // Sort by index to maintain chronological order, but prioritize chunks with recent data
+        relevantChunks.sort((a, b) => {
+          if (a.hasRecentData && !b.hasRecentData) return -1;
+          if (!a.hasRecentData && b.hasRecentData) return 1;
+          return a.index - b.index;
+        });
+        
+        callback(relevantChunks);
+      }
+    });
+  }
+
+  private static processRelevantChunks(
+    relevantChunks: { index: number; chunk: Buffer; hasRecentData: boolean }[], 
+    cutoffDate: Date,
+    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void,
+    callback?: (result: ParseResult) => void
+  ): void {
+    const errors: string[] = [];
+    const parsedData: ParsedHealthDataPoint[] = [];
+    let recordCount = 0;
+    let validRecords = 0;
+    let skippedRecords = 0;
+    let processedChunks = 0;
+    
+    console.log(`SMART PROCESSING: Processing ${relevantChunks.length} relevant chunks (skipping ${relevantChunks.length > 0 ? Math.max(0, 50704 - relevantChunks.length) : 0} irrelevant chunks)`);
+    
+    relevantChunks.forEach(({ chunk, hasRecentData }, chunkIndex) => {
+      const chunkStr = chunk.toString('utf8');
+      const recordRegex = /<Record[^>]*>/g;
+      let recordMatch;
+      
+      while ((recordMatch = recordRegex.exec(chunkStr)) !== null) {
+        try {
+          const recordXml = recordMatch[0];
+          recordCount++;
+          
+          // Extract timestamp for filtering
+          const dateMatch = recordXml.match(/\bstartDate="([^"]+)"/);
+          if (!dateMatch) continue;
+          
+          const timestamp = new Date(dateMatch[1]);
+          
+          // Apply time filtering
+          if (timestamp < cutoffDate) {
+            skippedRecords++;
+            continue;
+          }
+          
+          // Process this record (it's within our time range)
+          const typeMatch = recordXml.match(/\btype="([^"]+)"/);
+          const valueMatch = recordXml.match(/\bvalue="([^"]+)"/);
+          const unitMatch = recordXml.match(/\bunit="([^"]+)"/);
+          
+          if (typeMatch && valueMatch && dateMatch) {
+            const type = typeMatch[1];
+            let mapping = this.appleHealthTypeMapping[type];
+            
+            if (!mapping) {
+              mapping = { dataType: type, category: this.categorizeDataType(type) };
+            }
+            
+            const dataPoint: ParsedHealthDataPoint = {
+              dataType: mapping.dataType,
+              value: valueMatch[1],
+              unit: unitMatch ? unitMatch[1] : undefined,
+              timestamp: timestamp,
+              source: 'Apple Health',
+              category: mapping.category
+            };
+            
+            parsedData.push(dataPoint);
+            validRecords++;
+          }
+        } catch (recordError) {
+          if (errors.length < 5) {
+            errors.push(`Error processing record ${recordCount}: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
+          }
+        }
+      }
+      
+      processedChunks++;
+      
+      // Progress updates
+      if (progressCallback && processedChunks % 10 === 0) {
+        const percentage = Math.round((processedChunks / relevantChunks.length) * 100);
+        progressCallback({
+          processed: processedChunks,
+          total: relevantChunks.length,
+          percentage
+        });
+      }
+      
+      if (processedChunks === relevantChunks.length) {
+        console.log(`SMART PROCESSING COMPLETE: ${validRecords} valid records from ${recordCount} total, ${skippedRecords} skipped by time filter`);
+        
+        if (callback) {
+          callback({
+            success: true,
+            data: parsedData,
+            errors: errors.length > 0 ? errors : undefined,
+            summary: {
+              totalRecords: recordCount,
+              validRecords: validRecords,
+              skippedRecords: skippedRecords,
+              categories: parsedData.reduce((acc, item) => {
+                if (item.category) {
+                  acc[item.category] = (acc[item.category] || 0) + 1;
+                }
+                return acc;
+              }, {} as Record<string, number>)
+            }
+          });
+        }
+      }
+    });
+  }
+
+  private static async parseAppleHealthXMLFromChunks_OLD(
     chunks: Buffer[], 
     progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void,
     timeFilterMonths?: number

@@ -20,34 +20,24 @@ export const HealthCategoryView: React.FC<HealthCategoryViewProps> = ({
   metrics,
   icon,
 }) => {
-  // The HealthMetricsCard is expected to handle an array of metrics and display them.
-  // If metrics is undefined or empty, HealthMetricsCard should ideally handle this gracefully (e.g., show "No data").
+  // Filter heart rate data for cardiovascular category
+  const heartRateData = categoryKey === 'cardiovascular' 
+    ? (metrics || []).filter(metric => metric.dataType === 'heart_rate')
+    : [];
 
   return (
-    <div className="space-y-6"> {/* Matches spacing from original HealthDataSection */}
+    <div className="space-y-6">
       <HealthMetricsCard
-        title={title} // Pass title to HealthMetricsCard, or it generates its own
-        category={categoryKey as string} // Pass category key
-        metrics={metrics || []} // Pass the filtered metrics
-        icon={icon} // Pass icon
+        title={title}
+        category={categoryKey as string}
+        metrics={metrics || []}
+        icon={icon}
       />
-      {/*
-        Placeholder for future trend chart specific to this category.
-        This could be another component that takes 'metrics' as a prop.
-      */}
-      {/*
-      <Card>
-        <CardHeader>
-          <CardTitle>{title} Trends</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Trend analysis for {title.toLowerCase()} coming soon...</p>
-          // Here you could insert a specific chart component for this category
-          // e.g., <BodyCompositionChart data={metrics} />
-        </CardContent>
-      </Card>
-      */}
+      
+      {/* Add heart rate chart for cardiovascular category */}
+      {categoryKey === 'cardiovascular' && (
+        <HeartRateChart data={heartRateData} />
+      )}
     </div>
   );
 };

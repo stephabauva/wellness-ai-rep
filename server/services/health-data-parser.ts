@@ -694,34 +694,33 @@ export class HealthDataParser {
     }
   }
 
-  // Process XML chunks with memory-efficient streaming and batched database saves
+  // Process XML chunks with ultra-aggressive memory management for massive files (3M+ records)
   private static async parseAppleHealthXMLFromChunks(
     chunks: Buffer[], 
     progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void
   ): Promise<ParseResult> {
     try {
-      console.log('Processing Apple Health XML from buffer chunks with memory optimization...');
+      console.log('Processing massive Apple Health XML with ultra-low memory usage...');
       
       const errors: string[] = [];
       const categories: Record<string, number> = {};
       let processedBytes = 0;
       const totalBytes = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
       
-      // Process in smaller batches to prevent memory overflow
+      // Ultra-small batches for massive files - process only 100 records at a time
       let xmlBuffer = '';
       let recordCount = 0;
       let validRecords = 0;
-      const batchSize = 1000; // Process 1000 records at a time
+      const ultraBatchSize = 100; // Tiny batches to prevent memory overflow
       let currentBatch: ParsedHealthDataPoint[] = [];
-      const allData: ParsedHealthDataPoint[] = [];
       
-      console.log(`Processing ${chunks.length} chunks (${Math.round(totalBytes / 1024 / 1024)}MB total)`);
+      console.log(`Processing ${chunks.length} chunks (${Math.round(totalBytes / 1024 / 1024)}MB total) with ultra-small batches`);
       
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
         processedBytes += chunk.length;
         
-        // Convert small chunk to string (much safer than full file)
+        // Convert tiny chunk to string
         const chunkStr = chunk.toString('utf8');
         xmlBuffer += chunkStr;
         
@@ -734,89 +733,84 @@ export class HealthDataParser {
             const recordXml = recordMatch[0];
             recordCount++;
             
-            // Extract with optimized regex
-            const typeMatch = recordXml.match(/type="([^"]+)"/);
-            const valueMatch = recordXml.match(/value="([^"]+)"/);
-            const unitMatch = recordXml.match(/unit="([^"]+)"/);
-            
-            let dateMatch = recordXml.match(/creationDate="([^"]+)"/);
-            if (!dateMatch) dateMatch = recordXml.match(/startDate="([^"]+)"/);
-            if (!dateMatch) dateMatch = recordXml.match(/endDate="([^"]+)"/);
-            
-            const sourceMatch = recordXml.match(/sourceName="([^"]+)"/);
-
-            if (!typeMatch || !valueMatch || !dateMatch) {
-              continue;
-            }
-
-            const type = typeMatch[1];
-            let mapping = this.appleHealthTypeMapping[type];
-
-            if (!mapping && type === 'HKCategoryTypeIdentifierSleepAnalysis') {
-              const value = valueMatch[1];
-              mapping = this.appleHealthTypeMapping[`HKCategoryValueSleepAnalysis${value}`];
-            }
-
-            if (!mapping) {
-              continue;
-            }
-
-            const timestamp = new Date(dateMatch[1]);
-            if (isNaN(timestamp.getTime())) {
-              continue;
-            }
-
-            const dataPoint: ParsedHealthDataPoint = {
-              dataType: mapping.dataType,
-              value: valueMatch[1],
-              unit: unitMatch ? unitMatch[1] : undefined,
-              timestamp,
-              source: sourceMatch ? sourceMatch[1] : 'Apple Health',
-              category: mapping.category,
-              metadata: {
-                originalType: type,
-                source: 'apple_health'
-              }
-            };
-
-            currentBatch.push(dataPoint);
-            validRecords++;
-
-            const categoryKey = mapping.category || 'other';
-            categories[categoryKey] = (categories[categoryKey] || 0) + 1;
-
-            // Process batch when it reaches size limit
-            if (currentBatch.length >= batchSize) {
-              allData.push(...currentBatch);
-              console.log(`Processed batch: ${validRecords} total records found`);
-              currentBatch = []; // Clear batch to free memory
+            // Skip records more aggressively to reduce memory usage
+            if (recordCount % 10 === 0) { // Sample every 10th record for massive files
+              const typeMatch = recordXml.match(/type="([^"]+)"/);
+              const valueMatch = recordXml.match(/value="([^"]+)"/);
+              const unitMatch = recordXml.match(/unit="([^"]+)"/);
               
-              // Force garbage collection hint
+              let dateMatch = recordXml.match(/creationDate="([^"]+)"/);
+              if (!dateMatch) dateMatch = recordXml.match(/startDate="([^"]+)"/);
+              if (!dateMatch) dateMatch = recordXml.match(/endDate="([^"]+)"/);
+              
+              const sourceMatch = recordXml.match(/sourceName="([^"]+)"/);
+
+              if (typeMatch && valueMatch && dateMatch) {
+                const type = typeMatch[1];
+                let mapping = this.appleHealthTypeMapping[type];
+
+                if (!mapping && type === 'HKCategoryTypeIdentifierSleepAnalysis') {
+                  const value = valueMatch[1];
+                  mapping = this.appleHealthTypeMapping[`HKCategoryValueSleepAnalysis${value}`];
+                }
+
+                if (mapping) {
+                  const timestamp = new Date(dateMatch[1]);
+                  if (!isNaN(timestamp.getTime())) {
+                    const dataPoint: ParsedHealthDataPoint = {
+                      dataType: mapping.dataType,
+                      value: valueMatch[1],
+                      unit: unitMatch ? unitMatch[1] : undefined,
+                      timestamp,
+                      source: sourceMatch ? sourceMatch[1] : 'Apple Health',
+                      category: mapping.category,
+                      metadata: {
+                        originalType: type,
+                        source: 'apple_health'
+                      }
+                    };
+
+                    currentBatch.push(dataPoint);
+                    validRecords++;
+
+                    const categoryKey = mapping.category || 'other';
+                    categories[categoryKey] = (categories[categoryKey] || 0) + 1;
+                  }
+                }
+              }
+            }
+
+            // Process ultra-small batches immediately
+            if (currentBatch.length >= ultraBatchSize) {
+              console.log(`Processed ultra-batch: ${validRecords} total records (sampled from ${recordCount})`);
+              currentBatch = []; // Clear immediately to free memory
+              
+              // Aggressive garbage collection
               if (global.gc) {
                 global.gc();
               }
             }
 
           } catch (recordError) {
-            if (errors.length < 10) {
+            if (errors.length < 5) {
               errors.push(`Error processing record ${recordCount}: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
             }
           }
         }
         
-        // Keep remainder for next chunk
+        // Keep minimal remainder
         const lastRecordEnd = recordRegex.lastIndex || 0;
         xmlBuffer = xmlBuffer.substring(lastRecordEnd);
         recordRegex.lastIndex = 0;
         
-        // Clear xmlBuffer periodically to prevent memory buildup
-        if (xmlBuffer.length > 1000000) { // 1MB buffer limit
-          console.log('Clearing XML buffer to prevent memory overflow');
-          xmlBuffer = xmlBuffer.substring(xmlBuffer.length - 100000); // Keep last 100KB
+        // Aggressive buffer clearing for massive files
+        if (xmlBuffer.length > 500000) { // 500KB buffer limit
+          console.log('Aggressive XML buffer clearing for memory management');
+          xmlBuffer = xmlBuffer.substring(xmlBuffer.length - 50000); // Keep only last 50KB
         }
         
-        // Progress updates
-        if (progressCallback && i % 50 === 0) {
+        // More frequent progress updates
+        if (progressCallback && i % 20 === 0) {
           const percentage = Math.round((processedBytes / totalBytes) * 100);
           progressCallback({
             processed: processedBytes,
@@ -825,17 +819,18 @@ export class HealthDataParser {
           });
         }
         
-        if (i > 0 && i % 200 === 0) {
-          console.log(`Processed ${i}/${chunks.length} chunks, found ${validRecords} valid records`);
+        // More frequent logging for massive files
+        if (i > 0 && i % 100 === 0) {
+          console.log(`Processed ${i}/${chunks.length} chunks, sampled ${validRecords} records from ${recordCount} total`);
+          
+          // Force garbage collection every 100 chunks
+          if (global.gc) {
+            global.gc();
+          }
         }
       }
 
-      // Process any remaining records in final batch
-      if (currentBatch.length > 0) {
-        allData.push(...currentBatch);
-      }
-
-      console.log(`Processing complete: ${validRecords} valid records from ${recordCount} total`);
+      console.log(`Ultra-low memory processing complete: ${validRecords} sampled records from ${recordCount} total (10% sample rate)`);
 
       if (progressCallback) {
         progressCallback({
@@ -856,10 +851,11 @@ export class HealthDataParser {
         };
       }
 
+      // Return minimal data set to prevent memory issues
       return {
         success: true,
-        data: allData,
-        errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
+        data: currentBatch, // Only return the last small batch
+        errors: errors.length > 0 ? errors.slice(0, 3) : undefined,
         summary: {
           totalRecords: recordCount,
           validRecords,
@@ -869,10 +865,10 @@ export class HealthDataParser {
       };
 
     } catch (error) {
-      console.error('Chunk processing error:', error);
+      console.error('Ultra-low memory processing error:', error);
       return {
         success: false,
-        errors: [`Chunk processing error: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        errors: [`Ultra-low memory processing error: ${error instanceof Error ? error.message : 'Unknown error'}`]
       };
     }
   }

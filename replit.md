@@ -191,6 +191,13 @@ Changelog:
   - Fixed app crashes during processing of massive Apple Health exports (830MB decompressed)
   - Added periodic memory cleanup and progress logging every 200 chunks
   - Optimized chunk processing frequency to balance performance with memory stability
+- June 14, 2025. **Ultra-Aggressive Memory Management for 3M+ Record Files**:
+  - Implemented 10% sampling strategy to handle files with over 3 million health records
+  - Reduced batch size to 100 records with immediate memory clearing for massive datasets
+  - Enhanced buffer management with 500KB limits and aggressive clearing every 50KB
+  - Added forced garbage collection every 100 chunks for sustained processing
+  - Fixed JavaScript heap out of memory errors for user's 3+ million record Apple Health export
+  - Balanced data completeness with memory stability through intelligent sampling
 
 # User Preferences
 

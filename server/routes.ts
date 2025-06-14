@@ -1511,8 +1511,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileData: any = {
         id: fileId,
         fileName: uniqueFileName,
-        displayName: originalFileName,
-        originalName: originalFileName,
+        displayName: uploadedFileName,
+        originalName: uploadedFileName,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         url: `/uploads/${uniqueFileName}`,
@@ -1528,7 +1528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate retention settings
       const fileRetentionInfo = await attachmentRetentionService.getRetentionInfo(
-        originalFileName,
+        uploadedFileName,
         req.file.mimetype
       );
 
@@ -1543,16 +1543,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (goProcessingResult && goProcessingResult.success) {
         enhancedMetadata = {
           ...enhancedMetadata,
-          goProcessingTime: goProcessingResult.processingTime,
-          md5Hash: goProcessingResult.original.md5Hash,
-          perceptualHash: goProcessingResult.original.perceptualHash,
-          exifData: goProcessingResult.original.exifData,
-          dimensions: goProcessingResult.original.width && goProcessingResult.original.height ? {
+          processingTime: goProcessingResult.processingTime || enhancedMetadata.processingTime,
+          md5Hash: goProcessingResult.original?.md5Hash,
+          perceptualHash: goProcessingResult.original?.perceptualHash,
+          exifData: goProcessingResult.original?.exifData,
+          dimensions: goProcessingResult.original?.width && goProcessingResult.original?.height ? {
             width: goProcessingResult.original.width,
             height: goProcessingResult.original.height
           } : undefined,
           thumbnails: goProcessingResult.thumbnails,
-          colorProfile: goProcessingResult.original.colorProfile
+          colorProfile: goProcessingResult.original?.colorProfile
         };
       }
       
@@ -1575,7 +1575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         categoryId: validatedCategoryId || fileRetentionInfo.suggestedCategoryId || null,
         fileName: uniqueFileName,
-        displayName: originalFileName,
+        displayName: uploadedFileName,
         filePath: filePath,
         fileType: req.file.mimetype,
         fileSize: req.file.size,

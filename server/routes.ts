@@ -737,8 +737,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Convert parsed data to insertable format
-      const insertData = parseResult.data.map(point => ({
+      // Apply time range filtering if enabled
+      let filteredData = parseResult.data;
+      const timeRangeEnabled = req.body.timeRangeEnabled === 'true';
+      const timeRangeMonths = parseInt(req.body.timeRangeMonths) || 12;
+      
+      if (timeRangeEnabled) {
+        const cutoffDate = new Date();
+        cutoffDate.setMonth(cutoffDate.getMonth() - timeRangeMonths);
+        
+        filteredData = parseResult.data.filter(point => {
+          const pointDate = new Date(point.timestamp);
+          return pointDate >= cutoffDate;
+        });
+        
+        console.log(`Time range filter applied: ${filteredData.length}/${parseResult.data.length} records from last ${timeRangeMonths} months`);
+      }
+
+      // Convert filtered data to insertable format
+      const insertData = filteredData.map(point => ({
         userId: 1, // Default user ID
         dataType: point.dataType,
         value: point.value,

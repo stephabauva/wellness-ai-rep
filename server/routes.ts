@@ -1958,7 +1958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(5000) // 5 second timeout
+        signal: AbortSignal.timeout(2000) // Reduced timeout to 2 seconds
       });
       
       if (response.ok) {
@@ -1976,7 +1976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
     } catch (error) {
-      console.warn('Go acceleration service not available:', error);
+      // Silently handle the error - this is expected when Go service isn't running
       res.json({ 
         available: false, 
         error: 'Service unavailable',

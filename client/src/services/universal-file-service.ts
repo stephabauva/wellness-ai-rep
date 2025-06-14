@@ -42,8 +42,12 @@ export class UniversalFileService {
 
   private static async performInitialization(): Promise<void> {
     try {
-      // Initialize Go acceleration service
-      await FileAccelerationService.initialize();
+      // Try to initialize Go acceleration service (non-blocking)
+      // This is optional - the service works fine without it
+      await Promise.race([
+        FileAccelerationService.initialize(),
+        new Promise(resolve => setTimeout(resolve, 1000)) // 1 second timeout
+      ]);
       
       // Log platform capabilities
       const platform = this.detectPlatform();
@@ -57,7 +61,13 @@ export class UniversalFileService {
 
       this.initialized = true;
     } catch (error) {
-      console.warn('Universal File Service initialization warning:', error);
+      // Silently continue - Go acceleration is optional
+      const platform = this.detectPlatform();
+      console.log('Universal File Service initialized:', {
+        platform,
+        goAcceleration: false,
+        version: '1.0.0'
+      });
       this.initialized = true; // Continue with TypeScript-only mode
     }
   }

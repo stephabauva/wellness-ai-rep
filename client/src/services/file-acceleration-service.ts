@@ -62,7 +62,7 @@ export class FileAccelerationService {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(5000), // 5 second timeout
+        signal: AbortSignal.timeout(2000), // 2 second timeout - faster for better UX
       });
 
       if (response.ok) {

@@ -32,9 +32,11 @@ interface HydrationChartData { consumed: number; goal: number; unit?: string; }
 const HealthDataSection: React.FC = () => {
   const [timeRange, setTimeRange] = useState("7days");
   const [activeCategory, setActiveCategory] = useState("overview");
+  const [isResetting, setIsResetting] = useState(false);
   
   const { categorizedData, allHealthData, isLoading, refetchHealthData } = useHealthDataApi(timeRange);
   const { downloadHealthReport, isDownloadingReport } = useHealthReport();
+  const { toast } = useToast();
 
   // Memoize processed data for charts to prevent re-computation on every render
   // These are examples; actual data processing would depend on the structure of HealthMetric[]
@@ -72,6 +74,37 @@ const HealthDataSection: React.FC = () => {
     // TODO: Process 'allHealthData' for hydration
     return { consumed: 1.3, goal: 2, unit: 'L' };
   }, [allHealthData]);
+
+  // Reset health data function
+  const handleResetHealthData = async () => {
+    setIsResetting(true);
+    try {
+      const response = await fetch('/api/health-data/reset', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset health data');
+      }
+
+      // Refresh the health data after successful reset
+      refetchHealthData();
+      
+      toast({
+        title: "Health Data Reset",
+        description: "All health data has been successfully cleared. You can now import fresh data.",
+      });
+    } catch (error) {
+      console.error('Error resetting health data:', error);
+      toast({
+        title: "Reset Failed",
+        description: "Failed to reset health data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Define categories for tabs - this could also come from a config or be derived
   const healthCategories = [
@@ -121,6 +154,36 @@ const HealthDataSection: React.FC = () => {
                 </SelectContent>
               </Select>
               <HealthDataImport />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    disabled={isResetting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Reset Data
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reset All Health Data</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all your health data from the system. This action cannot be undone. 
+                      You'll be able to import fresh data afterwards.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleResetHealthData}
+                      disabled={isResetting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isResetting ? "Resetting..." : "Reset All Data"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button 
                 onClick={() => downloadHealthReport()}
                 disabled={isDownloadingReport}

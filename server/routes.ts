@@ -1509,12 +1509,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileName = `${fileId}.${fileExtension}`;
       const filePath = join(uploadsDir, fileName);
 
+      // Check if we should try Go acceleration for large data files
+      let finalFileBuffer = req.file.buffer;
+      let goServiceUsed = false;
+      let compressionStats = null;
+
+      if (isLargeDataFile) {
+        try {
+          // Try Go acceleration service for compression
+          const FormData = (await import('form-data')).default;
+          const nodeFetch = (await import('node-fetch')).default;
+          const formData = new FormData();
+          formData.append('file', req.file.buffer, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+            knownLength: req.file.size
+          });
+          
+          const response = await nodeFetch('http://localhost:5001/accelerate/compress-large', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              ...formData.getHeaders(),
+            },
+            timeout: 120000
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.compressedData) {
+              // Use compressed data from Go service
+              finalFileBuffer = Buffer.from(result.compressedData, 'base64');
+              goServiceUsed = true;
+              compressionStats = {
+                originalSize: result.originalSize,
+                compressedSize: result.compressedSize,
+                ratio: result.ratio,
+                time: result.time
+              };
+              console.log(`Go acceleration successful for ${req.file.originalname}: ${result.originalSize} → ${result.compressedSize} bytes (${(result.ratio * 100).toFixed(1)}% compression)`);
+            }
+          }
+        } catch (error) {
+          console.log('Go acceleration failed, using original file:', error);
+        }
+      }
+
       // TIER 3 OPTIMIZATION: Parallel processing with Go microservice
       const [fileWriteResult, goProcessingResult] = await Promise.all([
-        // File write operation
+        // File write operation (using potentially compressed data)
         (async () => {
           const { writeFileSync } = await import('fs');
-          writeFileSync(filePath, req.file.buffer);
+          writeFileSync(filePath, finalFileBuffer);
           return { success: true };
         })(),
         
@@ -1523,7 +1569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const result = await goFileService.processFile(
               req.file.originalname, 
-              req.file.buffer, 
+              finalFileBuffer, 
               req.file.mimetype.startsWith('image/') // Generate thumbnails for images only
             );
             console.log(`[TIER 3] Go service processed ${req.file.originalname} in ${result.processingTime}ms`);
@@ -1569,7 +1615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         displayName: uploadedFileName,
         originalName: uploadedFileName,
         fileType: req.file.mimetype,
-        fileSize: req.file.size,
+        fileSize: goServiceUsed && compressionStats ? compressionStats.compressedSize : req.file.size,
         url: `/uploads/${uniqueFileName}`,
         retentionInfo,
       };
@@ -2274,63 +2320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Large file compression acceleration endpoint
-  app.post('/api/accelerate/compress-large', multer().single('file'), async (req, res) => {
-    try {
-      console.log('Forwarding large file compression request to Go service');
-      
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file provided' });
-      }
-      
-      // Create proper FormData for Go service using node-fetch compatible approach
-      const FormData = (await import('form-data')).default;
-      const nodeFetch = (await import('node-fetch')).default;
-      const formData = new FormData();
-      formData.append('file', req.file.buffer, {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype,
-        knownLength: req.file.size
-      });
-      
-      // Forward the request to Go service with proper headers using node-fetch
-      const response = await nodeFetch('http://localhost:5001/accelerate/compress-large', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          ...formData.getHeaders(),
-        },
-        timeout: 120000 // 2 minute timeout for large files
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Go acceleration service error:', response.status, errorText);
-        return res.status(500).json({ 
-          error: 'Go acceleration service failed',
-          details: errorText,
-          fallback: 'Use TypeScript compression'
-        });
-      }
-      
-      const result = await response.json();
-      console.log('Go acceleration successful:', {
-        originalSize: result.originalSize,
-        compressedSize: result.compressedSize,
-        ratio: result.compressionRatio,
-        time: result.processingTime
-      });
-      
-      res.json(result);
-    } catch (error) {
-      console.error('Go acceleration proxy error:', error);
-      res.status(500).json({ 
-        error: 'Acceleration service unavailable',
-        fallback: 'Use TypeScript compression',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+
 
   // Batch processing acceleration endpoint
   app.post('/api/accelerate/batch-process', async (req, res) => {

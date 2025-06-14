@@ -156,6 +156,13 @@ Changelog:
   - Fixed all chart components to use real health data instead of mock values (activity, sleep, nutrition, hydration)
   - Charts now properly show empty states when no data is available after reset
   - Enhanced data processing logic to aggregate health metrics by day and type for accurate visualizations
+- June 14, 2025. **Critical Import Performance Fix - Batch Insert Implementation**:
+  - Fixed critical 95% import hang issue by implementing high-performance batch insert functionality
+  - Replaced inefficient one-by-one record insertion with batched database operations (1000 records per batch)
+  - Added comprehensive batch insert methods to both MemStorage and DatabaseStorage classes
+  - Implemented proper progress logging for large import operations (>1000 records)
+  - Enhanced cache invalidation to handle multiple users efficiently during batch operations
+  - Import performance improved from 155,265 individual queries to ~155 batch operations for large health files
 
 # User Preferences
 

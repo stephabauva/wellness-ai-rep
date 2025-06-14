@@ -1,0 +1,124 @@
+# Overview
+
+This is a sophisticated AI-powered wellness chat application built with a modern full-stack architecture. The system implements ChatGPT-style streaming conversations with advanced memory management, file processing, and health data integration. The application focuses on wellness coaching with multiple modes (weight-loss, muscle-gain, fitness, mental-wellness, nutrition) and features real-time AI streaming, intelligent memory detection, and comprehensive health data tracking.
+
+# System Architecture
+
+## Frontend Architecture
+- **Framework**: React with TypeScript using Vite for development and bundling
+- **UI Components**: Shadcn/ui components built on Radix UI primitives with Tailwind CSS
+- **State Management**: React Query (@tanstack/react-query) for server state with custom hooks
+- **Streaming**: Custom `SmoothStreamingText` component with natural typing rhythm simulation
+- **Real-time Communication**: Server-Sent Events (SSE) via fetch with ReadableStream for AI response streaming
+
+## Backend Architecture
+- **Runtime**: Node.js with Express and TypeScript using `tsx` for development
+- **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
+- **Database Connection**: Neon Serverless with connection pooling and graceful shutdown handling
+- **AI Integration**: Multi-provider support (OpenAI GPT-4o, Google Gemini 2.0 Flash) with automatic model selection
+- **Memory System**: Three-tier intelligent memory detection and retrieval with graph relationships
+- **File Processing**: Go-based microservice for high-performance file processing and thumbnail generation
+- **Caching**: Multi-level LRU caching with intelligent TTL management
+
+## Microservices Architecture
+- **Go Memory Service**: High-performance vector similarity calculations and memory processing
+- **Go File Service**: Optimized file processing, thumbnail generation, and metadata extraction
+- **Go AI Gateway**: Request queuing, batching, and provider load balancing (planned)
+
+# Key Components
+
+## AI Streaming System
+- **Provider Abstraction**: Clean interface supporting OpenAI and Google AI with unified message format
+- **Streaming Protocol**: Server-Sent Events with chunk-based token delivery
+- **Chat Context Service**: Intelligent context building with memory integration and coaching persona management
+- **Automatic Model Selection**: Dynamic model selection based on message complexity and attachments
+
+## Memory Intelligence System
+- **Phase 1**: Basic memory detection with importance scoring and categorization
+- **Phase 2**: Semantic memory graph with atomic facts and relationship mapping
+- **Phase 3**: Advanced retrieval with contextual re-ranking and query expansion
+- **Background Processing**: Non-blocking memory updates with priority queue management
+
+## File Management System
+- **Upload Handling**: Multer-based file uploads with category assignment
+- **Retention Policies**: Intelligent file retention based on content type and user settings
+- **Thumbnail Generation**: Go-service powered image processing with multiple size variants
+- **Health Data Parsing**: Apple Health XML and CSV parsing with deduplication
+
+## Database Schema Design
+- **Conversations**: Hierarchical conversation and message structure
+- **Memory System**: Graph-based memory with atomic facts and relationships
+- **Health Data**: Comprehensive health metrics with categorization
+- **Files**: Rich file metadata with retention and category management
+- **Performance**: Strategic indexing for optimal query performance
+
+# Data Flow
+
+## Chat Message Processing
+1. User message received and stored optimistically
+2. Context building (memories + conversation history) runs in parallel
+3. AI provider processes request with streaming response
+4. Memory detection runs in background (non-blocking)
+5. Response chunks streamed to client with natural typing simulation
+6. Final message persisted with relationship mapping
+
+## Memory Processing Pipeline
+1. **Detection**: AI-powered analysis determines memory worthiness
+2. **Extraction**: Atomic facts extracted with importance scoring
+3. **Graph Building**: Relationships detected and mapped between memories
+4. **Consolidation**: Duplicate/contradictory memories resolved
+5. **Retrieval**: Context-aware memory retrieval for future conversations
+
+## File Processing Workflow
+1. Upload to Express server with immediate metadata extraction
+2. Go service handles thumbnail generation and advanced processing
+3. Category assignment (automatic or manual) with retention policy
+4. Background cleanup based on retention rules and user settings
+
+# External Dependencies
+
+## AI Providers
+- **OpenAI**: GPT-4o and GPT-4o-mini models with vision capabilities
+- **Google AI**: Gemini 2.0 Flash and Gemini 1.5 Pro with multimodal support
+
+## Database & Infrastructure
+- **Neon PostgreSQL**: Serverless PostgreSQL with WebSocket support
+- **Drizzle ORM**: Type-safe database operations with migration support
+
+## Processing Services
+- **Go Runtime**: High-performance microservices for compute-intensive operations
+- **Image Processing**: Advanced thumbnail generation and metadata extraction
+- **Health Data**: Apple Health XML parsing and fitness data integration
+
+## External APIs
+- **Transcription**: OpenAI Whisper for voice message processing
+- **Embeddings**: Provider-native embedding generation for memory similarity
+
+# Deployment Strategy
+
+## Development Environment
+- **Replit Integration**: Optimized for Replit development with proper port configuration
+- **Hot Module Replacement**: Vite-powered HMR with stable WebSocket connections
+- **Database**: Auto-provisioned PostgreSQL with migration on startup
+- **Microservices**: Independent Go services with health checking
+
+## Production Configuration
+- **Build Process**: Vite client build + esbuild server bundle
+- **Service Management**: Express server with graceful shutdown and connection pooling
+- **Port Configuration**: Automated port mapping (5000 → 80) for Replit deployment
+- **Environment**: Environment-based configuration with fallback defaults
+
+## Performance Optimizations
+- **Connection Pooling**: PostgreSQL connection limits with idle timeout
+- **Prepared Statements**: Pre-compiled queries for frequent operations
+- **Caching Layers**: Multi-level caching with intelligent invalidation
+- **Background Processing**: Non-blocking operations with priority queues
+
+# Changelog
+
+Changelog:
+- June 14, 2025. Initial setup
+
+# User Preferences
+
+Preferred communication style: Simple, everyday language.

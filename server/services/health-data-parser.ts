@@ -72,15 +72,21 @@ export class HealthDataParser {
       const isZipped = fileName.toLowerCase().endsWith('.zip');
       
       if (isGzipped) {
-        if (typeof fileContent === 'string') {
-          // Convert string to buffer for decompression
-          const buffer = Buffer.from(fileContent, 'binary');
-          content = gunzipSync(buffer).toString('utf8');
-        } else {
-          content = gunzipSync(fileContent).toString('utf8');
+        try {
+          if (typeof fileContent === 'string') {
+            // Convert string to buffer for decompression
+            const buffer = Buffer.from(fileContent, 'binary');
+            content = gunzipSync(buffer).toString('utf8');
+          } else {
+            content = gunzipSync(fileContent).toString('utf8');
+          }
+          // Remove .gz extension to get the actual file type
+          fileName = fileName.slice(0, -3);
+          console.log(`Successfully decompressed .gz file: ${fileName}, content length: ${content.length}`);
+        } catch (decompressionError) {
+          console.error('Failed to decompress .gz file:', decompressionError);
+          throw new Error(`Failed to decompress .gz file: ${decompressionError instanceof Error ? decompressionError.message : 'Unknown decompression error'}`);
         }
-        // Remove .gz extension to get the actual file type
-        fileName = fileName.slice(0, -3);
       } else if (isZipped) {
         return {
           success: false,
@@ -106,6 +112,7 @@ export class HealthDataParser {
           };
       }
     } catch (error) {
+      console.error('Health data parsing error:', error);
       return {
         success: false,
         errors: [`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`]
@@ -290,6 +297,10 @@ export class HealthDataParser {
             let creationDateMatch = recordXml.match(/creationDate="([^"]+)"/);
             if (!creationDateMatch) {
               creationDateMatch = recordXml.match(/startDate="([^"]+)"/);
+            }
+            // Also try endDate as fallback
+            if (!creationDateMatch) {
+              creationDateMatch = recordXml.match(/endDate="([^"]+)"/);
             }
             
             const sourceNameMatch = recordXml.match(/sourceName="([^"]+)"/);

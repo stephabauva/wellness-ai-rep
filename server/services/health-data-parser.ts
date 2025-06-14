@@ -154,67 +154,21 @@ export class HealthDataParser {
         }
 
         try {
+          // Check for Apple Health format
           const healthData = result?.HealthData;
-          if (!healthData?.Record) {
-            resolve({
-              success: false,
-              errors: ['No health records found in XML file']
-            });
-            return;
+          if (healthData?.Record) {
+            return HealthDataParser.parseAppleHealthRecords(healthData, resolve);
           }
-
-          const records = Array.isArray(healthData.Record) ? healthData.Record : [healthData.Record];
-          const parsedData: ParsedHealthDataPoint[] = [];
-          const errors: string[] = [];
-          const categories: Record<string, number> = {};
-
-          for (const record of records) {
-            try {
-              const type = record.$.type;
-              const mapping = this.appleHealthTypeMapping[type];
-              
-              if (!mapping) {
-                continue; // Skip unsupported types
-              }
-
-              const dataPoint: ParsedHealthDataPoint = {
-                dataType: mapping.dataType,
-                value: record.$.value,
-                unit: record.$.unit || undefined,
-                timestamp: new Date(record.$.startDate || record.$.creationDate),
-                source: record.$.sourceName || 'apple_health',
-                category: mapping.category,
-                metadata: {
-                  originalType: type,
-                  endDate: record.$.endDate,
-                  device: record.$.device
-                }
-              };
-
-              // Validate timestamp
-              if (isNaN(dataPoint.timestamp.getTime())) {
-                errors.push(`Invalid timestamp for ${type}: ${record.$.startDate}`);
-                continue;
-              }
-
-              parsedData.push(dataPoint);
-              categories[mapping.category] = (categories[mapping.category] || 0) + 1;
-
-            } catch (recordError) {
-              errors.push(`Error parsing record: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
-            }
+          
+          // Check for CDA format
+          const clinicalDocument = result?.ClinicalDocument;
+          if (clinicalDocument) {
+            return HealthDataParser.parseCDADocument(clinicalDocument, resolve);
           }
-
+          
           resolve({
-            success: true,
-            data: parsedData,
-            errors: errors.length > 0 ? errors : undefined,
-            summary: {
-              totalRecords: records.length,
-              validRecords: parsedData.length,
-              skippedRecords: records.length - parsedData.length,
-              categories
-            }
+            success: false,
+            errors: ['File does not appear to be a valid health data export. Supported formats: Apple Health XML, CDA XML, Google Fit JSON, Generic CSV.']
           });
         } catch (processingError) {
           resolve({
@@ -567,6 +521,254 @@ export class HealthDataParser {
     }
   }
 
+  private static parseAppleHealthRecords(healthData: any, resolve: (value: ParseResult) => void): void {
+    const records = Array.isArray(healthData.Record) ? healthData.Record : [healthData.Record];
+    const parsedData: ParsedHealthDataPoint[] = [];
+    const errors: string[] = [];
+    const categories: Record<string, number> = {};
+
+    for (const record of records) {
+      try {
+        const type = record.$.type;
+        const mapping = this.appleHealthTypeMapping[type];
+        
+        if (!mapping) {
+          continue; // Skip unsupported types
+        }
+
+        const dataPoint: ParsedHealthDataPoint = {
+          dataType: mapping.dataType,
+          value: record.$.value,
+          unit: record.$.unit || undefined,
+          timestamp: new Date(record.$.startDate || record.$.creationDate),
+          source: record.$.sourceName || 'apple_health',
+          category: mapping.category,
+          metadata: {
+            originalType: type,
+            endDate: record.$.endDate,
+            device: record.$.device
+          }
+        };
+
+        // Validate timestamp
+        if (isNaN(dataPoint.timestamp.getTime())) {
+          errors.push(`Invalid timestamp for ${type}: ${record.$.startDate}`);
+          continue;
+        }
+
+        parsedData.push(dataPoint);
+        categories[mapping.category] = (categories[mapping.category] || 0) + 1;
+
+      } catch (recordError) {
+        errors.push(`Error parsing record: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
+      }
+    }
+
+    resolve({
+      success: true,
+      data: parsedData,
+      errors: errors.length > 0 ? errors : undefined,
+      summary: {
+        totalRecords: records.length,
+        validRecords: parsedData.length,
+        skippedRecords: records.length - parsedData.length,
+        categories
+      }
+    });
+  }
+
+  private static parseCDADocument(clinicalDocument: any, resolve: (value: ParseResult) => void): void {
+    try {
+      const parsedData: ParsedHealthDataPoint[] = [];
+      const errors: string[] = [];
+      const categories: Record<string, number> = {};
+
+      // Extract patient information
+      const patientInfo = this.extractCDAPatientInfo(clinicalDocument);
+      
+      // Extract health observations from CDA sections
+      const observations = this.extractCDAObservations(clinicalDocument);
+      
+      for (const obs of observations) {
+        try {
+          const dataPoint: ParsedHealthDataPoint = {
+            dataType: obs.dataType,
+            value: obs.value,
+            unit: obs.unit,
+            timestamp: obs.timestamp,
+            source: 'cda_export',
+            category: this.categorizeDataType(obs.dataType),
+            metadata: {
+              patientInfo,
+              originalCode: obs.code,
+              codeSystem: obs.codeSystem
+            }
+          };
+
+          parsedData.push(dataPoint);
+          categories[dataPoint.category] = (categories[dataPoint.category] || 0) + 1;
+
+        } catch (obsError) {
+          errors.push(`Error parsing observation: ${obsError instanceof Error ? obsError.message : 'Unknown error'}`);
+        }
+      }
+
+      resolve({
+        success: true,
+        data: parsedData,
+        errors: errors.length > 0 ? errors : undefined,
+        summary: {
+          totalRecords: observations.length,
+          validRecords: parsedData.length,
+          skippedRecords: observations.length - parsedData.length,
+          categories
+        }
+      });
+
+    } catch (cdaError) {
+      resolve({
+        success: false,
+        errors: [`Error parsing CDA document: ${cdaError instanceof Error ? cdaError.message : 'Unknown error'}`]
+      });
+    }
+  }
+
+  private static extractCDAPatientInfo(clinicalDocument: any): any {
+    try {
+      const recordTarget = clinicalDocument.recordTarget?.[0]?.patientRole?.[0];
+      const patient = recordTarget?.patient?.[0];
+      
+      return {
+        gender: patient?.administrativeGenderCode?.[0]?.$.displayName || patient?.administrativeGenderCode?.[0]?.$.code,
+        birthDate: patient?.birthTime?.[0]?.$.value
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  private static extractCDAObservations(clinicalDocument: any): Array<{
+    dataType: string;
+    value: string;
+    unit?: string;
+    timestamp: Date;
+    code?: string;
+    codeSystem?: string;
+  }> {
+    const observations: Array<{
+      dataType: string;
+      value: string;
+      unit?: string;
+      timestamp: Date;
+      code?: string;
+      codeSystem?: string;
+    }> = [];
+
+    try {
+      // CDA documents can have complex nested structures
+      // For now, extract basic document metadata as health data points
+      const effectiveTime = clinicalDocument.effectiveTime?.[0]?.$.value;
+      if (effectiveTime) {
+        observations.push({
+          dataType: 'health_export_date',
+          value: effectiveTime,
+          timestamp: this.parseCDADateTime(effectiveTime),
+          code: 'HEALTH_EXPORT',
+          codeSystem: 'CDA'
+        });
+      }
+
+      // Try to extract any structured data from component sections
+      const component = clinicalDocument.component?.[0]?.structuredBody?.[0]?.component;
+      if (component && Array.isArray(component)) {
+        for (const section of component) {
+          const entries = section.section?.[0]?.entry;
+          if (entries && Array.isArray(entries)) {
+            for (const entry of entries) {
+              const obs = this.extractCDAEntryObservation(entry);
+              if (obs) {
+                observations.push(obs);
+              }
+            }
+          }
+        }
+      }
+
+    } catch (extractError) {
+      console.error('Error extracting CDA observations:', extractError);
+    }
+
+    return observations;
+  }
+
+  private static extractCDAEntryObservation(entry: any): {
+    dataType: string;
+    value: string;
+    unit?: string;
+    timestamp: Date;
+    code?: string;
+    codeSystem?: string;
+  } | null {
+    try {
+      const observation = entry.observation?.[0];
+      if (!observation) return null;
+
+      const code = observation.code?.[0]?.$.code;
+      const value = observation.value?.[0]?.$.value;
+      const unit = observation.value?.[0]?.$.unit;
+      const effectiveTime = observation.effectiveTime?.[0]?.$.value;
+
+      if (!value || !effectiveTime) return null;
+
+      return {
+        dataType: this.mapCDACodeToDataType(code),
+        value: value,
+        unit: unit,
+        timestamp: this.parseCDADateTime(effectiveTime),
+        code: code,
+        codeSystem: observation.code?.[0]?.$.codeSystem
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private static mapCDACodeToDataType(code: string): string {
+    // Map common CDA/LOINC codes to our data types
+    const codeMapping: Record<string, string> = {
+      '29463-7': 'weight',
+      '8302-2': 'height',
+      '39156-5': 'bmi',
+      '8867-4': 'heart_rate',
+      '55284-4': 'blood_pressure_systolic',
+      '8462-4': 'blood_pressure_diastolic',
+      '2093-3': 'cholesterol_total',
+      '33747-0': 'blood_glucose_random'
+    };
+
+    return codeMapping[code] || 'health_observation';
+  }
+
+  private static parseCDADateTime(dateTimeStr: string): Date {
+    // CDA datetime format: YYYYMMDDHHMMSS+ZZZZ
+    try {
+      if (dateTimeStr.length >= 8) {
+        const year = parseInt(dateTimeStr.substring(0, 4));
+        const month = parseInt(dateTimeStr.substring(4, 6)) - 1; // Month is 0-indexed
+        const day = parseInt(dateTimeStr.substring(6, 8));
+        const hour = dateTimeStr.length > 8 ? parseInt(dateTimeStr.substring(8, 10)) : 0;
+        const minute = dateTimeStr.length > 10 ? parseInt(dateTimeStr.substring(10, 12)) : 0;
+        const second = dateTimeStr.length > 12 ? parseInt(dateTimeStr.substring(12, 14)) : 0;
+        
+        return new Date(year, month, day, hour, minute, second);
+      }
+    } catch {
+      // Fallback to current date if parsing fails
+    }
+    
+    return new Date();
+  }
+
   private static detectFileFormat(content: string, fileExtension?: string): string | null {
     // First check file extension if available
     if (fileExtension === 'xml' || fileExtension === 'json' || fileExtension === 'csv') {
@@ -579,6 +781,7 @@ export class HealthDataParser {
     // Check for XML format
     if (trimmedContent.startsWith('<?xml') || 
         trimmedContent.includes('<HealthData') || 
+        trimmedContent.includes('<ClinicalDocument') ||
         trimmedContent.includes('<Record') ||
         (trimmedContent.startsWith('<') && trimmedContent.includes('>'))) {
       return 'xml';

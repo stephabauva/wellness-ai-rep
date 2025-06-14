@@ -6,7 +6,9 @@ import (
         "io"
         "log"
         "net/http"
+        "runtime"
         "strings"
+        "sync"
         "time"
 
         "github.com/gin-contrib/cors"
@@ -20,6 +22,18 @@ type CompressionResult struct {
         CompressedSize   int64   `json:"compressedSize"`
         ProcessingTime   int64   `json:"processingTime"`
         Algorithm        string  `json:"algorithm"`
+        CompressionLevel int     `json:"compressionLevel"`
+        Throughput       float64 `json:"throughput"` // MB/s
+}
+
+type OptimizedGzipWriter struct {
+        *gzip.Writer
+        level int
+}
+
+func NewOptimizedGzipWriter(w io.Writer, level int) *OptimizedGzipWriter {
+        gw, _ := gzip.NewWriterLevel(w, level)
+        return &OptimizedGzipWriter{Writer: gw, level: level}
 }
 
 type HealthCheckResponse struct {
@@ -84,12 +98,12 @@ func handleLargeFileCompression(c *gin.Context) {
         }
         defer file.Close()
 
-        // Check file size - only process large files (>10MB)
-        if header.Size < 10*1024*1024 {
+        // Check file size - lowered threshold for better acceleration (>5MB)
+        if header.Size < 5*1024*1024 {
                 c.JSON(http.StatusBadRequest, gin.H{
                         "error": "File too small for acceleration",
                         "size":  header.Size,
-                        "minimum": 10 * 1024 * 1024,
+                        "minimum": 5 * 1024 * 1024,
                 })
                 return
         }
@@ -114,14 +128,32 @@ func handleLargeFileCompression(c *gin.Context) {
                 return
         }
 
-        // Compress using gzip
-        var compressedBuffer bytes.Buffer
-        gzipWriter := gzip.NewWriter(&compressedBuffer)
+        // Determine optimal compression level based on file size and type
+        compressionLevel := getOptimalCompressionLevel(content, filename)
         
-        _, err = gzipWriter.Write(content)
+        // Use optimized compression with adaptive level
+        var compressedBuffer bytes.Buffer
+        gzipWriter, err := gzip.NewWriterLevel(&compressedBuffer, compressionLevel)
         if err != nil {
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "Compression failed"})
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create compressor"})
                 return
+        }
+        
+        // Use chunked writing for better memory efficiency on large files
+        chunkSize := 64 * 1024 // 64KB chunks
+        contentLen := len(content)
+        
+        for i := 0; i < contentLen; i += chunkSize {
+                end := i + chunkSize
+                if end > contentLen {
+                        end = contentLen
+                }
+                
+                _, err = gzipWriter.Write(content[i:end])
+                if err != nil {
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": "Compression failed"})
+                        return
+                }
         }
         
         err = gzipWriter.Close()
@@ -133,10 +165,11 @@ func handleLargeFileCompression(c *gin.Context) {
         compressedData := compressedBuffer.Bytes()
         processingTime := time.Since(startTime).Milliseconds()
         
-        // Calculate compression ratio
+        // Calculate compression ratio and throughput
         originalSize := int64(len(content))
         compressedSize := int64(len(compressedData))
         compressionRatio := float64(compressedSize) / float64(originalSize)
+        throughputMBps := float64(originalSize) / (1024 * 1024) / (float64(processingTime) / 1000)
 
         result := CompressionResult{
                 CompressedData:   compressedData,
@@ -144,14 +177,47 @@ func handleLargeFileCompression(c *gin.Context) {
                 OriginalSize:     originalSize,
                 CompressedSize:   compressedSize,
                 ProcessingTime:   processingTime,
-                Algorithm:        "gzip",
+                Algorithm:        "gzip-optimized",
+                CompressionLevel: compressionLevel,
+                Throughput:       throughputMBps,
         }
 
-        log.Printf("Compressed %s: %d -> %d bytes (%.2f%% reduction) in %dms",
+        log.Printf("Compressed %s: %d -> %d bytes (%.2f%% reduction) in %dms (%.1f MB/s)",
                 header.Filename, originalSize, compressedSize, 
-                (1-compressionRatio)*100, processingTime)
+                (1-compressionRatio)*100, processingTime, throughputMBps)
 
         c.JSON(http.StatusOK, result)
+}
+
+// getOptimalCompressionLevel determines the best compression level based on file characteristics
+func getOptimalCompressionLevel(content []byte, filename string) int {
+        size := len(content)
+        
+        // For very large files (>100MB), use faster compression
+        if size > 100*1024*1024 {
+                return gzip.BestSpeed // Level 1 - fastest
+        }
+        
+        // For Apple Health XML files, use balanced compression
+        if strings.Contains(filename, ".xml") {
+                if size > 50*1024*1024 {
+                        return 3 // Fast but good compression for large XML
+                }
+                return 6 // Default level for medium XML files
+        }
+        
+        // For JSON files, use higher compression (they compress well)
+        if strings.Contains(filename, ".json") {
+                return 7 // Good compression for JSON
+        }
+        
+        // For CSV files, use moderate compression
+        if strings.Contains(filename, ".csv") {
+                return 5 // Balanced for tabular data
+        }
+        
+        // Default to standard compression
+        return gzip.DefaultCompression // Level 6
 }
 
 func handleBatchProcessing(c *gin.Context) {
@@ -170,74 +236,159 @@ func handleBatchProcessing(c *gin.Context) {
                 return
         }
 
-        results := make([]map[string]interface{}, 0, len(files))
+        // Use parallel processing for batch operations
+        numWorkers := runtime.NumCPU()
+        if numWorkers > len(files) {
+                numWorkers = len(files)
+        }
+        
+        type fileJob struct {
+                header *multipart.FileHeader
+                index  int
+        }
+        
+        type fileResult struct {
+                result map[string]interface{}
+                index  int
+        }
+        
+        jobs := make(chan fileJob, len(files))
+        results := make(chan fileResult, len(files))
+        
         startTime := time.Now()
-
+        
+        // Start workers
+        var wg sync.WaitGroup
+        for w := 0; w < numWorkers; w++ {
+                wg.Add(1)
+                go func() {
+                        defer wg.Done()
+                        for job := range jobs {
+                                result := processFileJob(job.header, job.index)
+                                results <- fileResult{result: result, index: job.index}
+                        }
+                }()
+        }
+        
+        // Send jobs
         for i, fileHeader := range files {
-                file, err := fileHeader.Open()
-                if err != nil {
-                        results = append(results, map[string]interface{}{
-                                "filename": fileHeader.Filename,
-                                "error":    "Failed to open file",
-                                "index":    i,
-                        })
-                        continue
-                }
-
-                // Check if file qualifies for acceleration
-                if fileHeader.Size < 10*1024*1024 {
-                        file.Close()
-                        results = append(results, map[string]interface{}{
-                                "filename": fileHeader.Filename,
-                                "error":    "File too small for acceleration",
-                                "size":     fileHeader.Size,
-                                "index":    i,
-                        })
-                        continue
-                }
-
-                // Process the file
-                content, err := io.ReadAll(file)
-                file.Close()
-                
-                if err != nil {
-                        results = append(results, map[string]interface{}{
-                                "filename": fileHeader.Filename,
-                                "error":    "Failed to read file",
-                                "index":    i,
-                        })
-                        continue
-                }
-
-                // Compress
-                var compressedBuffer bytes.Buffer
-                gzipWriter := gzip.NewWriter(&compressedBuffer)
-                gzipWriter.Write(content)
-                gzipWriter.Close()
-
-                compressedData := compressedBuffer.Bytes()
-                originalSize := int64(len(content))
-                compressedSize := int64(len(compressedData))
-                compressionRatio := float64(compressedSize) / float64(originalSize)
-
-                results = append(results, map[string]interface{}{
-                        "filename":         fileHeader.Filename,
-                        "originalSize":     originalSize,
-                        "compressedSize":   compressedSize,
-                        "compressionRatio": compressionRatio,
-                        "compressedData":   compressedData,
-                        "algorithm":        "gzip",
-                        "index":            i,
-                })
+                jobs <- fileJob{header: fileHeader, index: i}
+        }
+        close(jobs)
+        
+        // Wait for completion
+        go func() {
+                wg.Wait()
+                close(results)
+        }()
+        
+        // Collect results
+        finalResults := make([]map[string]interface{}, len(files))
+        for result := range results {
+                finalResults[result.index] = result.result
         }
 
         totalProcessingTime := time.Since(startTime).Milliseconds()
 
         c.JSON(http.StatusOK, gin.H{
-                "results":        results,
+                "results":        finalResults,
                 "totalFiles":     len(files),
-                "processedFiles": len(results),
+                "processedFiles": len(finalResults),
                 "processingTime": totalProcessingTime,
                 "service":        "go-file-accelerator",
+                "parallelWorkers": numWorkers,
         })
+}
+
+// processFileJob handles individual file compression in parallel workers
+func processFileJob(fileHeader *multipart.FileHeader, index int) map[string]interface{} {
+        file, err := fileHeader.Open()
+        if err != nil {
+                return map[string]interface{}{
+                        "filename": fileHeader.Filename,
+                        "error":    "Failed to open file",
+                        "index":    index,
+                }
+        }
+        defer file.Close()
+
+        // Check if file qualifies for acceleration (lowered threshold)
+        if fileHeader.Size < 5*1024*1024 {
+                return map[string]interface{}{
+                        "filename": fileHeader.Filename,
+                        "error":    "File too small for acceleration",
+                        "size":     fileHeader.Size,
+                        "index":    index,
+                }
+        }
+
+        // Read file content
+        content, err := io.ReadAll(file)
+        if err != nil {
+                return map[string]interface{}{
+                        "filename": fileHeader.Filename,
+                        "error":    "Failed to read file",
+                        "index":    index,
+                }
+        }
+
+        // Get optimal compression level for this file
+        filename := strings.ToLower(fileHeader.Filename)
+        compressionLevel := getOptimalCompressionLevel(content, filename)
+
+        // Compress with optimized level
+        var compressedBuffer bytes.Buffer
+        gzipWriter, err := gzip.NewWriterLevel(&compressedBuffer, compressionLevel)
+        if err != nil {
+                return map[string]interface{}{
+                        "filename": fileHeader.Filename,
+                        "error":    "Failed to create compressor",
+                        "index":    index,
+                }
+        }
+
+        // Use chunked writing for better performance
+        chunkSize := 64 * 1024 // 64KB chunks
+        contentLen := len(content)
+        
+        for i := 0; i < contentLen; i += chunkSize {
+                end := i + chunkSize
+                if end > contentLen {
+                        end = contentLen
+                }
+                
+                _, err = gzipWriter.Write(content[i:end])
+                if err != nil {
+                        return map[string]interface{}{
+                                "filename": fileHeader.Filename,
+                                "error":    "Compression failed",
+                                "index":    index,
+                        }
+                }
+        }
+        
+        err = gzipWriter.Close()
+        if err != nil {
+                return map[string]interface{}{
+                        "filename": fileHeader.Filename,
+                        "error":    "Failed to finalize compression",
+                        "index":    index,
+                }
+        }
+
+        compressedData := compressedBuffer.Bytes()
+        originalSize := int64(len(content))
+        compressedSize := int64(len(compressedData))
+        compressionRatio := float64(compressedSize) / float64(originalSize)
+
+        return map[string]interface{}{
+                "filename":         fileHeader.Filename,
+                "originalSize":     originalSize,
+                "compressedSize":   compressedSize,
+                "compressionRatio": compressionRatio,
+                "compressedData":   compressedData,
+                "algorithm":        "gzip-optimized",
+                "compressionLevel": compressionLevel,
+                "index":            index,
+        }
 }

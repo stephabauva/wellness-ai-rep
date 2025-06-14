@@ -105,9 +105,13 @@ export class HealthDataParser {
         content = typeof fileContent === 'string' ? fileContent : fileContent.toString('utf8');
       }
 
+      // Extract file extension, but also detect format from content
       const fileExtension = fileName.split('.').pop()?.toLowerCase();
       
-      switch (fileExtension) {
+      // Detect format from content if extension is not clear
+      const detectedFormat = HealthDataParser.detectFileFormat(content, fileExtension);
+      
+      switch (detectedFormat) {
         case 'xml':
           return await this.parseAppleHealthXML(content, progressCallback);
         case 'json':
@@ -117,7 +121,11 @@ export class HealthDataParser {
         default:
           return {
             success: false,
-            errors: [`Unsupported file format: ${fileExtension}`]
+            errors: [
+              `Unsupported file format detected. Expected XML, JSON, or CSV health data file.`,
+              `File extension: ${fileExtension || 'unknown'}`,
+              `Content analysis: ${detectedFormat || 'unrecognized'}`
+            ]
           };
       }
     } catch (error) {
@@ -557,6 +565,59 @@ export class HealthDataParser {
         errors: [`CSV parsing error: ${error instanceof Error ? error.message : 'Unknown error'}`]
       };
     }
+  }
+
+  private static detectFileFormat(content: string, fileExtension?: string): string | null {
+    // First check file extension if available
+    if (fileExtension === 'xml' || fileExtension === 'json' || fileExtension === 'csv') {
+      return fileExtension;
+    }
+    
+    // Analyze content to detect format
+    const trimmedContent = content.trim();
+    
+    // Check for XML format
+    if (trimmedContent.startsWith('<?xml') || 
+        trimmedContent.includes('<HealthData') || 
+        trimmedContent.includes('<Record') ||
+        (trimmedContent.startsWith('<') && trimmedContent.includes('>'))) {
+      return 'xml';
+    }
+    
+    // Check for JSON format
+    if ((trimmedContent.startsWith('{') && trimmedContent.endsWith('}')) ||
+        (trimmedContent.startsWith('[') && trimmedContent.endsWith(']'))) {
+      try {
+        JSON.parse(trimmedContent);
+        return 'json';
+      } catch {
+        // Not valid JSON, continue checking
+      }
+    }
+    
+    // Check for CSV format
+    const lines = trimmedContent.split('\n');
+    if (lines.length > 1) {
+      const firstLine = lines[0];
+      const secondLine = lines[1];
+      
+      // Look for comma-separated values with consistent column counts
+      const firstLineCols = firstLine.split(',').length;
+      const secondLineCols = secondLine.split(',').length;
+      
+      if (firstLineCols > 1 && firstLineCols === secondLineCols) {
+        // Check if first line looks like headers
+        const potentialHeaders = firstLine.toLowerCase();
+        if (potentialHeaders.includes('date') || 
+            potentialHeaders.includes('time') ||
+            potentialHeaders.includes('value') ||
+            potentialHeaders.includes('type')) {
+          return 'csv';
+        }
+      }
+    }
+    
+    return null;
   }
 
   private static categorizeDataType(dataType: string): HealthDataCategory {

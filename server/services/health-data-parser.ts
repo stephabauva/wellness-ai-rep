@@ -108,6 +108,11 @@ export class HealthDataParser {
   }
 
   private static async parseAppleHealthXML(xmlContent: string): Promise<ParseResult> {
+    // For very large files, implement chunked processing to prevent memory issues
+    if (xmlContent.length > 50 * 1024 * 1024) { // 50MB threshold
+      return this.parseAppleHealthXMLChunked(xmlContent);
+    }
+    
     return new Promise((resolve) => {
       parseString(xmlContent, (err, result) => {
         if (err) {
@@ -188,6 +193,115 @@ export class HealthDataParser {
         }
       });
     });
+  }
+
+  private static async parseAppleHealthXMLChunked(xmlContent: string): Promise<ParseResult> {
+    try {
+      console.log('Processing large Apple Health file with chunked processing...');
+      
+      // Extract records in smaller chunks to prevent memory issues
+      const recordMatches = xmlContent.match(/<Record[^>]*>.*?<\/Record>/gs);
+      
+      if (!recordMatches) {
+        return {
+          success: false,
+          errors: ['No health records found in XML file']
+        };
+      }
+
+      const parsedData: ParsedHealthDataPoint[] = [];
+      const errors: string[] = [];
+      const categories: Record<string, number> = {};
+      const chunkSize = 1000; // Process 1000 records at a time
+      let totalRecords = recordMatches.length;
+      let validRecords = 0;
+
+      // Process records in chunks to prevent memory overload
+      for (let i = 0; i < recordMatches.length; i += chunkSize) {
+        const chunk = recordMatches.slice(i, i + chunkSize);
+        
+        // Force garbage collection between chunks for large files
+        if (global.gc && i > 0 && i % (chunkSize * 5) === 0) {
+          global.gc();
+        }
+        
+        // Process each record in the chunk
+        for (const recordXml of chunk) {
+          try {
+            // Extract attributes from XML using regex (faster than full XML parsing)
+            const typeMatch = recordXml.match(/type="([^"]+)"/);
+            const valueMatch = recordXml.match(/value="([^"]+)"/);
+            const unitMatch = recordXml.match(/unit="([^"]+)"/);
+            const creationDateMatch = recordXml.match(/creationDate="([^"]+)"/);
+            const sourceNameMatch = recordXml.match(/sourceName="([^"]+)"/);
+
+            if (!typeMatch || !valueMatch || !creationDateMatch) {
+              continue; // Skip invalid records
+            }
+
+            const type = typeMatch[1];
+            const mapping = this.appleHealthTypeMapping[type];
+
+            if (!mapping) {
+              continue; // Skip unsupported types
+            }
+
+            const timestamp = new Date(creationDateMatch[1]);
+            if (isNaN(timestamp.getTime())) {
+              continue; // Skip invalid timestamps
+            }
+
+            const dataPoint: ParsedHealthDataPoint = {
+              dataType: mapping.dataType,
+              value: valueMatch[1],
+              unit: unitMatch ? unitMatch[1] : undefined,
+              timestamp,
+              source: sourceNameMatch ? sourceNameMatch[1] : 'Apple Health',
+              category: mapping.category,
+              metadata: {
+                originalType: type,
+                source: 'apple_health'
+              }
+            };
+
+            parsedData.push(dataPoint);
+            validRecords++;
+
+            // Track categories
+            const categoryKey = mapping.category || 'other';
+            categories[categoryKey] = (categories[categoryKey] || 0) + 1;
+
+          } catch (recordError) {
+            errors.push(`Error processing record: ${recordError instanceof Error ? recordError.message : 'Unknown error'}`);
+          }
+        }
+
+        // Log progress for very large files
+        if (i > 0 && i % (chunkSize * 10) === 0) {
+          console.log(`Processed ${Math.min(i + chunkSize, recordMatches.length)} of ${recordMatches.length} records`);
+        }
+      }
+
+      console.log(`Chunked processing complete: ${validRecords} valid records from ${totalRecords} total`);
+
+      return {
+        success: true,
+        data: parsedData,
+        errors: errors.length > 0 ? errors : undefined,
+        summary: {
+          totalRecords,
+          validRecords,
+          skippedRecords: totalRecords - validRecords,
+          categories
+        }
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        errors: [`Chunked XML processing error: ${error instanceof Error ? error.message : 'Unknown error'}`]
+      };
+    }
   }
 
   private static async parseGoogleFitJSON(jsonContent: string): Promise<ParseResult> {

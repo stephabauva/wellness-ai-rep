@@ -71,6 +71,11 @@ export function HealthDataImport() {
   });
   const [selectedDuplicates, setSelectedDuplicates] = useState<number[]>([]);
   
+  // Progress tracking states
+  const [importProgress, setImportProgress] = useState(0);
+  const [processingMessage, setProcessingMessage] = useState('');
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number | null>(null);
+  
   // New optimization states
   const [compressionEnabled, setCompressionEnabled] = useState(true);
   const [compressionResult, setCompressionResult] = useState<any>(null);
@@ -170,6 +175,10 @@ export function HealthDataImport() {
     if (!selectedFile) return;
 
     setUploadStep('importing');
+    setImportProgress(0);
+    setProcessingMessage('Starting import...');
+    
+    const startTime = Date.now();
     
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -178,16 +187,49 @@ export function HealthDataImport() {
     formData.append('checkSource', duplicateSettings.checkSource.toString());
 
     try {
+      // Create a progress tracking interval
+      const progressInterval = setInterval(() => {
+        setImportProgress(prev => {
+          if (prev >= 90) return prev; // Cap at 90% until completion
+          const elapsed = Date.now() - startTime;
+          const expectedTime = Math.max(10000, parseResult?.summary?.totalRecords ? parseResult.summary.totalRecords * 20 : 10000);
+          const calculatedProgress = Math.min(90, (elapsed / expectedTime) * 100);
+          
+          // Update processing message based on progress
+          if (calculatedProgress < 30) {
+            setProcessingMessage('Processing health data...');
+          } else if (calculatedProgress < 60) {
+            setProcessingMessage('Checking for duplicates...');
+          } else {
+            setProcessingMessage('Saving to database...');
+          }
+          
+          // Calculate estimated time remaining
+          if (calculatedProgress > 10) {
+            const remainingTime = Math.round((expectedTime - elapsed) / 1000);
+            setEstimatedTimeRemaining(Math.max(0, remainingTime));
+          }
+          
+          return calculatedProgress;
+        });
+      }, 500);
+
       const response = await fetch('/api/health-data/import', {
         method: 'POST',
         body: formData
       });
 
+      clearInterval(progressInterval);
       const result = await response.json();
       
       if (!response.ok) {
         throw new Error(result.message || 'Failed to import data');
       }
+
+      // Complete the progress bar
+      setImportProgress(100);
+      setProcessingMessage('Import complete!');
+      setEstimatedTimeRemaining(0);
 
       setImportResult(result);
       setUploadStep('complete');
@@ -201,6 +243,10 @@ export function HealthDataImport() {
         description: `Imported ${result.imported.count} health records successfully`,
       });
     } catch (error) {
+      setImportProgress(0);
+      setProcessingMessage('');
+      setEstimatedTimeRemaining(null);
+      
       toast({
         title: "Import Error",
         description: error instanceof Error ? error.message : 'Failed to import health data',
@@ -559,13 +605,50 @@ export function HealthDataImport() {
         )}
 
         {uploadStep === 'importing' && (
-          <div className="space-y-6 text-center py-8">
-            <div className="mx-auto w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-6 py-8">
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <div className="space-y-3">
+                <p className="text-lg font-medium">Importing health data...</p>
+                <p className="text-sm text-muted-foreground">
+                  {processingMessage || 'Processing your health data...'}
+                </p>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-medium">{Math.round(importProgress)}%</span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
+                  style={{ width: `${importProgress}%` }}
+                />
+              </div>
+              {estimatedTimeRemaining !== null && estimatedTimeRemaining > 0 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Estimated time remaining: {estimatedTimeRemaining}s
+                </p>
+              )}
+            </div>
+            
+            {/* Processing Steps Indicator */}
             <div className="space-y-2">
-              <p className="text-lg font-medium">Importing health data...</p>
-              <p className="text-sm text-muted-foreground">
-                Checking for duplicates and importing new records
-              </p>
+              <div className={`flex items-center gap-2 text-sm ${importProgress > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                <div className={`w-2 h-2 rounded-full ${importProgress > 0 ? 'bg-green-600' : 'bg-muted'}`} />
+                Processing health data file
+              </div>
+              <div className={`flex items-center gap-2 text-sm ${importProgress > 30 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                <div className={`w-2 h-2 rounded-full ${importProgress > 30 ? 'bg-green-600' : 'bg-muted'}`} />
+                Checking for duplicate records
+              </div>
+              <div className={`flex items-center gap-2 text-sm ${importProgress > 60 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                <div className={`w-2 h-2 rounded-full ${importProgress > 60 ? 'bg-green-600' : 'bg-muted'}`} />
+                Saving to database
+              </div>
             </div>
           </div>
         )}

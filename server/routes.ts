@@ -1985,6 +1985,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-start Go acceleration service endpoint
+  app.post('/api/accelerate/start', async (req, res) => {
+    try {
+      const { reason, autoStart } = req.body;
+      console.log(`Auto-start request received: ${reason || 'Manual start'}`);
+
+      // Check if service is already running
+      try {
+        const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
+          method: 'GET',
+          signal: AbortSignal.timeout(2000)
+        });
+        
+        if (healthCheck.ok) {
+          return res.json({
+            success: true,
+            message: 'Go acceleration service is already running',
+            alreadyRunning: true
+          });
+        }
+      } catch {
+        // Service not running, continue with start attempt
+      }
+
+      // Attempt to start the Go service
+      const { spawn } = require('child_process');
+      const path = require('path');
+      
+      const servicePath = path.join(process.cwd(), 'go-file-accelerator');
+      const startScript = path.join(servicePath, 'start-go-accelerator.sh');
+      
+      console.log(`Starting Go acceleration service from: ${startScript}`);
+      
+      // Make script executable
+      const { exec } = require('child_process');
+      await new Promise((resolve, reject) => {
+        exec(`chmod +x "${startScript}"`, (error: any) => {
+          if (error) reject(error);
+          else resolve(true);
+        });
+      });
+
+      // Start the service in background
+      const child = spawn('bash', [startScript], {
+        cwd: servicePath,
+        detached: true,
+        stdio: 'ignore'
+      });
+      
+      child.unref(); // Allow parent to exit independently
+      
+      // Wait a moment for service to potentially start
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify service started
+      try {
+        const verifyResponse = await fetch('http://localhost:5001/accelerate/health', {
+          method: 'GET',
+          signal: AbortSignal.timeout(3000)
+        });
+        
+        if (verifyResponse.ok) {
+          const healthData = await verifyResponse.json();
+          res.json({
+            success: true,
+            message: 'Go acceleration service started successfully',
+            serviceHealth: healthData,
+            startReason: reason
+          });
+        } else {
+          res.json({
+            success: false,
+            error: 'Service started but health check failed',
+            startAttempted: true
+          });
+        }
+      } catch (verifyError) {
+        res.json({
+          success: false,
+          error: 'Service start attempted but verification failed',
+          startAttempted: true,
+          verifyError: verifyError instanceof Error ? verifyError.message : 'Unknown error'
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('Failed to start Go acceleration service:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to start Go acceleration service',
+        startAttempted: false
+      });
+    }
+  });
+
   // Large file compression acceleration endpoint
   app.post('/api/accelerate/compress-large', async (req, res) => {
     try {

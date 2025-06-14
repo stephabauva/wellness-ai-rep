@@ -615,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }),
     limits: {
-      fileSize: 100 * 1024 * 1024, // 100MB limit for health data files
+      fileSize: 1000 * 1024 * 1024, // 1GB limit for health data files (supports large Apple Health exports)
     },
     fileFilter: (req, file, cb) => {
       // Accept health data file formats - more flexible validation

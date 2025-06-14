@@ -1025,7 +1025,7 @@ export class HealthDataParser {
             console.log(`Decompression complete. Total size: ${totalSize} bytes`);
             
             // Process chunks without converting to string to avoid memory limits
-            const result = await this.parseAppleHealthXMLFromChunks(chunks, progressCallback);
+            const result = await this.parseAppleHealthXMLFromChunks(chunks, progressCallback, timeFilterMonths);
             resolve(result);
           } catch (parseError) {
             console.error('Error parsing decompressed XML:', parseError);
@@ -1054,7 +1054,8 @@ export class HealthDataParser {
   // Process XML chunks with memory management for massive files
   private static async parseAppleHealthXMLFromChunks(
     chunks: Buffer[], 
-    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void
+    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void,
+    timeFilterMonths?: number
   ): Promise<ParseResult> {
     try {
       console.log('Processing Apple Health XML with chunk-based streaming...');
@@ -1067,7 +1068,16 @@ export class HealthDataParser {
       let xmlBuffer = '';
       let recordCount = 0;
       let validRecords = 0;
+      let skippedRecords = 0;
       const parsedData: ParsedHealthDataPoint[] = [];
+      
+      // Set up time filtering if enabled
+      let cutoffDate: Date | null = null;
+      if (timeFilterMonths && timeFilterMonths > 0) {
+        cutoffDate = new Date();
+        cutoffDate.setMonth(cutoffDate.getMonth() - timeFilterMonths);
+        console.log(`Time filter enabled: Only processing records from ${cutoffDate.toISOString()} onwards (last ${timeFilterMonths} months)`);
+      }
       
       console.log(`Processing ${chunks.length} chunks (${Math.round(totalBytes / 1024 / 1024)}MB total)`);
       
@@ -1111,6 +1121,14 @@ export class HealthDataParser {
               const sourceMatch = recordXml.match(/\bsourceName="([^"]+)"/);
 
               if (typeMatch && valueMatch && dateMatch) {
+                const timestamp = new Date(dateMatch[1]);
+                
+                // Apply early time filtering - skip record if outside time range
+                if (cutoffDate && timestamp < cutoffDate) {
+                  skippedRecords++;
+                  continue; // Skip this record entirely
+                }
+                
                 const type = typeMatch[1];
                 let mapping = this.appleHealthTypeMapping[type];
 
@@ -1120,7 +1138,6 @@ export class HealthDataParser {
                 }
 
                 if (mapping) {
-                  const timestamp = new Date(dateMatch[1]);
                   if (!isNaN(timestamp.getTime())) {
                     const dataPoint: ParsedHealthDataPoint = {
                       dataType: mapping.dataType,
@@ -1171,9 +1188,10 @@ export class HealthDataParser {
           });
         }
         
-        // Periodic logging and garbage collection
+        // Periodic logging and garbage collection with time filtering stats
         if (i > 0 && i % 200 === 0) {
-          console.log(`Processed ${i}/${chunks.length} chunks, ${validRecords} valid records from ${recordCount} total`);
+          const filterEffectiveness = cutoffDate && recordCount > 0 ? ((skippedRecords / recordCount) * 100).toFixed(1) : 'N/A';
+          console.log(`Processed ${i}/${chunks.length} chunks, ${validRecords} valid records from ${recordCount} total${cutoffDate ? `, ${skippedRecords} skipped by time filter (${filterEffectiveness}% filtered)` : ''}`);
           
           if (global.gc) {
             global.gc();
@@ -1181,7 +1199,8 @@ export class HealthDataParser {
         }
       }
 
-      console.log(`Chunk processing complete: ${validRecords} valid records from ${recordCount} total`);
+      const filterSummary = cutoffDate ? `, ${skippedRecords} skipped by time filter (${((skippedRecords / recordCount) * 100).toFixed(1)}% filtered)` : '';
+      console.log(`Chunk processing complete: ${validRecords} valid records from ${recordCount} total${filterSummary}`);
 
       if (progressCallback) {
         progressCallback({

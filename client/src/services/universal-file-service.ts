@@ -140,32 +140,38 @@ export class UniversalFileService {
       // If Go service is not available, try to start it proactively
       if (!goCapabilities.isAvailable) {
         try {
-          console.log(`Go acceleration service not available, starting automatically for ${file.name}`);
+          console.log(`Go acceleration service not available, attempting auto-start for ${file.name}`);
           await this.startGoAccelerationService();
           
           // Wait for service to start and refresh capabilities
-          await new Promise(resolve => setTimeout(resolve, 4000));
+          await new Promise(resolve => setTimeout(resolve, 3000));
           await FileAccelerationService.initialize(); // Refresh service status
         } catch (startError) {
-          console.warn(`Failed to start Go service automatically:`, startError);
+          console.warn(`Failed to start Go service automatically, using TypeScript fallback:`, startError);
+          // Skip Go acceleration and go directly to TypeScript
         }
       }
       
-      // Now attempt Go acceleration
-      try {
-        const result = await FileAccelerationService.accelerateCompression(file);
-        
-        console.log(`Go acceleration successful: ${file.name}`, {
-          originalSize: result.originalSize,
-          compressedSize: result.compressedSize,
-          ratio: result.compressionRatio,
-          time: result.processingTime
-        });
-        
-        return result;
-      } catch (error) {
-        console.warn(`Go acceleration failed for ${file.name}, falling back to TypeScript:`, error);
-        // Continue to TypeScript implementation below
+      // Attempt Go acceleration only if service is now available
+      const refreshedCapabilities = FileAccelerationService.getCapabilities();
+      if (refreshedCapabilities.isAvailable) {
+        try {
+          const result = await FileAccelerationService.accelerateCompression(file);
+          
+          console.log(`Go acceleration successful: ${file.name}`, {
+            originalSize: result.originalSize,
+            compressedSize: result.compressedSize,
+            ratio: result.compressionRatio,
+            time: result.processingTime
+          });
+          
+          return result;
+        } catch (error) {
+          console.warn(`Go acceleration failed for ${file.name}, falling back to TypeScript:`, error);
+          // Continue to TypeScript implementation below
+        }
+      } else {
+        console.log(`Go service still unavailable after startup attempt, using TypeScript for ${file.name}`);
       }
     }
 

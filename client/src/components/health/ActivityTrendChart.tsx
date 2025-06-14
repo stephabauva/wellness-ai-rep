@@ -15,18 +15,26 @@ interface ActivityTrendChartProps {
 }
 
 export const ActivityTrendChart: React.FC<ActivityTrendChartProps> = ({ data }) => {
-  // Default data if none is provided, to prevent chart errors and show structure
-  const defaultData: ActivityDataPoint[] = [
-    { day: 'Mon', steps: 0, active: 0 },
-    { day: 'Tue', steps: 0, active: 0 },
-    { day: 'Wed', steps: 0, active: 0 },
-    { day: 'Thu', steps: 0, active: 0 },
-    { day: 'Fri', steps: 0, active: 0 },
-    { day: 'Sat', steps: 0, active: 0 },
-    { day: 'Sun', steps: 0, active: 0 },
-  ];
+  // Only show chart if real data is available
+  const hasRealData = data && data.length > 0;
+  
+  if (!hasRealData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly Activity Trend</CardTitle>
+          <CardDescription>No activity data available for the selected time period</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-48 text-muted-foreground">
+            <p>Import health data to see your activity trends</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const chartData = data && data.length > 0 ? data : defaultData;
+  const chartData = data;
 
   return (
     <Card>

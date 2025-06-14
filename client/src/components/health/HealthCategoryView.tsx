@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import HealthMetricsCard from '@/components/HealthMetricsCard'; // Assuming this path is correct
 import { HealthMetric } from '@/hooks/useHealthDataApi';
+import { HeartRateChart } from '@/components/health/HeartRateChart';
 
 interface HealthCategoryViewProps {
   title: string;

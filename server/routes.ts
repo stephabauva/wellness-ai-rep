@@ -723,18 +723,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Read as buffer to handle compressed files properly
       const fileBuffer = fs.readFileSync(req.file.path);
       
-      // Extract time filtering parameters - MANDATORY for large files
+      // Extract time filtering parameters - Optional for user choice
       const timeRangeEnabled = req.body.timeRangeEnabled === 'true';
       let timeRangeMonths = timeRangeEnabled ? (parseInt(req.body.timeRangeMonths) || 12) : undefined;
       
-      // Force time filtering for large files to prevent memory crashes
-      if (!timeRangeMonths && fileSizeInMB > 100) {
-        timeRangeMonths = 1; // Default to 1 month for safety
-        console.log(`MANDATORY TIME FILTERING: Large file (${fileSizeInMB.toFixed(1)}MB) requires time filtering. Using 1 month default.`);
-      }
-      
       if (timeRangeMonths) {
-        console.log(`SMART TIME FILTERING ENABLED: Only processing records from last ${timeRangeMonths} months during import`);
+        console.log(`USER-SELECTED TIME FILTERING: Processing records from last ${timeRangeMonths} months during import`);
+      } else {
+        console.log(`FULL HISTORICAL IMPORT: Processing all available health data records`);
       }
       
       // Use smart timestamp-based parsing for large files
@@ -760,6 +756,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dataType: point.dataType,
         value: point.value,
         unit: point.unit,
+        timestamp: point.timestamp, // ✅ CRITICAL FIX: Preserve original Apple Health timestamps
         source: point.source,
         category: point.category,
         metadata: point.metadata

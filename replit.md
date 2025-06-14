@@ -245,6 +245,13 @@ Changelog:
   - **Smart Chunking Preserved**: Bulletproof processing still uses intelligent chunk analysis for performance
   - **Complete Historical Access**: System now processes all Apple Health data from any date range
   - Ready for complete historical data import with original timestamps and full date range coverage
+- June 14, 2025. **FINAL TIMESTAMP PRESERVATION FIX - Complete Solution**:
+  - **ROOT CAUSE FOUND**: Import route was stripping timestamp field during conversion to database format
+  - **Critical Fix**: Added `timestamp: point.timestamp` to route conversion mapping in `/api/health-data/import`
+  - **Time Filter Made Optional**: Removed mandatory 1-month filtering, now respects user choice for full historical import
+  - **Database Cleared**: Removed corrupted timestamp data to enable clean re-import with preserved dates
+  - **Complete Solution**: Apple Health data now imports with original timestamps for accurate historical chart display
+  - System ready for full historical Apple Health import with preserved original dates from any time period
 
 # User Preferences
 

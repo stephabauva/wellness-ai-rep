@@ -116,7 +116,7 @@ export class HealthDataParser {
   private static async parseAppleHealthXML(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
     // For very large files, implement chunked processing to prevent memory issues
     if (xmlContent.length > 50 * 1024 * 1024) { // 50MB threshold
-      return this.parseAppleHealthXMLChunked(xmlContent);
+      return this.parseAppleHealthXMLChunked(xmlContent, progressCallback);
     }
     
     return new Promise((resolve) => {
@@ -201,7 +201,7 @@ export class HealthDataParser {
     });
   }
 
-  private static async parseAppleHealthXMLChunked(xmlContent: string): Promise<ParseResult> {
+  private static async parseAppleHealthXMLChunked(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
     try {
       console.log('Processing large Apple Health file with chunked processing...');
       
@@ -226,9 +226,19 @@ export class HealthDataParser {
       for (let i = 0; i < recordMatches.length; i += chunkSize) {
         const chunk = recordMatches.slice(i, i + chunkSize);
         
-        // Report progress every 10,000 records
+        // Report progress every 10,000 records and call progress callback
         if (i % 10000 === 0) {
-          console.log(`Processed ${Math.min(i + chunkSize, recordMatches.length)} of ${recordMatches.length} records`);
+          const processed = Math.min(i + chunkSize, recordMatches.length);
+          const percentage = (processed / recordMatches.length) * 100;
+          console.log(`Processed ${processed} of ${recordMatches.length} records`);
+          
+          if (progressCallback) {
+            progressCallback({
+              processed,
+              total: recordMatches.length,
+              percentage
+            });
+          }
         }
         
         // Force garbage collection between chunks for large files
@@ -301,6 +311,15 @@ export class HealthDataParser {
       }
 
       console.log(`Chunked processing complete: ${validRecords} valid records from ${totalRecords} total`);
+
+      // Report 100% completion
+      if (progressCallback) {
+        progressCallback({
+          processed: totalRecords,
+          total: totalRecords,
+          percentage: 100
+        });
+      }
 
       return {
         success: true,

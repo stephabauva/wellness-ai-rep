@@ -187,32 +187,44 @@ export function HealthDataImport() {
     formData.append('checkSource', duplicateSettings.checkSource.toString());
 
     try {
-      // Create a progress tracking interval
+      // Create a more realistic progress tracking interval for large files
       const progressInterval = setInterval(() => {
         setImportProgress(prev => {
-          if (prev >= 90) return prev; // Cap at 90% until completion
+          if (prev >= 95) return prev; // Cap at 95% until completion
           const elapsed = Date.now() - startTime;
-          const expectedTime = Math.max(10000, parseResult?.summary?.totalRecords ? parseResult.summary.totalRecords * 20 : 10000);
-          const calculatedProgress = Math.min(90, (elapsed / expectedTime) * 100);
+          
+          // For large files (>10MB), use slower progress to match actual processing time
+          const fileSize = selectedFile?.size || 0;
+          const isLargeFile = fileSize > 10 * 1024 * 1024;
+          const totalRecords = parseResult?.summary?.totalRecords || 1000;
+          
+          // Estimate based on file size and record count
+          const expectedTime = isLargeFile 
+            ? Math.max(30000, totalRecords * 0.8) // Large files: ~0.8ms per record
+            : Math.max(5000, totalRecords * 0.3);  // Small files: ~0.3ms per record
+          
+          const calculatedProgress = Math.min(95, (elapsed / expectedTime) * 100);
           
           // Update processing message based on progress
-          if (calculatedProgress < 30) {
-            setProcessingMessage('Processing health data...');
-          } else if (calculatedProgress < 60) {
+          if (calculatedProgress < 20) {
+            setProcessingMessage('Reading and parsing health data...');
+          } else if (calculatedProgress < 50) {
+            setProcessingMessage('Processing health records...');
+          } else if (calculatedProgress < 80) {
             setProcessingMessage('Checking for duplicates...');
           } else {
             setProcessingMessage('Saving to database...');
           }
           
           // Calculate estimated time remaining
-          if (calculatedProgress > 10) {
+          if (calculatedProgress > 5) {
             const remainingTime = Math.round((expectedTime - elapsed) / 1000);
             setEstimatedTimeRemaining(Math.max(0, remainingTime));
           }
           
           return calculatedProgress;
         });
-      }, 500);
+      }, 1000); // Update every second for smoother progress
 
       const response = await fetch('/api/health-data/import', {
         method: 'POST',

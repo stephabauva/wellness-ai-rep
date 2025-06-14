@@ -144,6 +144,12 @@ Changelog:
   - Confirmed stable processing of multi-gigabyte health data files with zero data loss
   - Go service now automatically attempts startup for any health file >5MB with graceful TypeScript fallback
   - Comprehensive progress tracking and chunked processing prevents app restarts during large imports
+- June 14, 2025. **Progress Bar & Apple Health Sleep Data Fixes**:
+  - Fixed progress bar stopping at 4% by improving time estimation based on actual file size and record count
+  - Added proper Apple Health sleep analysis parsing for all sleep stages (InBed, Asleep, AsleepCore, AsleepDeep, AsleepREM, Awake)
+  - Enhanced progress tracking with realistic timing estimates for large health files (0.8ms per record for >10MB files)
+  - Improved progress messages to show actual processing stages: parsing → processing → duplicate checking → database saving
+  - Fixed chunked processing to report 100% completion and prevent progress bar freezing
 
 # User Preferences
 

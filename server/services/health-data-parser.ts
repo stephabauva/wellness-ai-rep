@@ -113,7 +113,14 @@ export class HealthDataParser {
       
       switch (detectedFormat) {
         case 'xml':
-          return await this.parseAppleHealthXML(content, progressCallback);
+          // Determine if it's Apple Health or CDA format
+          if (content.includes('<ClinicalDocument')) {
+            console.log('Detected CDA document format');
+            return await HealthDataParser.parseCDADocumentOptimized(content, progressCallback);
+          } else {
+            console.log('Detected Apple Health XML format');
+            return await this.parseAppleHealthXML(content, progressCallback);
+          }
         case 'json':
           return await this.parseGoogleFitJSON(content);
         case 'csv':
@@ -185,12 +192,21 @@ export class HealthDataParser {
       console.log('Processing large Apple Health file with optimized parsing...');
       console.log(`XML content length: ${xmlContent.length} characters`);
       
-      // Check if content looks like Apple Health XML
-      if (!xmlContent.includes('<HealthData') && !xmlContent.includes('<Record')) {
+      // Check if content looks like Apple Health XML or CDA XML
+      const isAppleHealth = xmlContent.includes('<HealthData') || xmlContent.includes('<Record');
+      const isCDA = xmlContent.includes('<ClinicalDocument');
+      
+      if (!isAppleHealth && !isCDA) {
         return {
           success: false,
-          errors: ['File does not appear to be a valid Apple Health export. Missing required XML structure.']
+          errors: ['File does not appear to be a valid health data export. Expected Apple Health XML or CDA XML format.']
         };
+      }
+      
+      // Handle CDA documents with different parsing logic
+      if (isCDA) {
+        console.log('Detected CDA document, using CDA parsing logic...');
+        return await HealthDataParser.parseCDADocumentOptimized(xmlContent, progressCallback);
       }
 
       // For extremely large files (>300MB), use streaming chunk processing
@@ -606,7 +622,8 @@ export class HealthDataParser {
           };
 
           parsedData.push(dataPoint);
-          categories[dataPoint.category] = (categories[dataPoint.category] || 0) + 1;
+          const category = dataPoint.category;
+          categories[category] = (categories[category] || 0) + 1;
 
         } catch (obsError) {
           errors.push(`Error parsing observation: ${obsError instanceof Error ? obsError.message : 'Unknown error'}`);
@@ -767,6 +784,135 @@ export class HealthDataParser {
     }
     
     return new Date();
+  }
+
+  private static async parseCDADocumentOptimized(xmlContent: string, progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void): Promise<ParseResult> {
+    try {
+      const parsedData: ParsedHealthDataPoint[] = [];
+      const errors: string[] = [];
+      const categories: Record<string, number> = {};
+
+      // Extract basic document information using regex (more efficient than full XML parsing)
+      const effectiveTimeMatch = xmlContent.match(/<effectiveTime[^>]*value="([^"]+)"/);
+      const patientGenderMatch = xmlContent.match(/<administrativeGenderCode[^>]*(?:displayName="([^"]+)"|code="([^"]+)")/);
+      const patientBirthMatch = xmlContent.match(/<birthTime[^>]*value="([^"]+)"/);
+
+      let recordCount = 0;
+
+      // Extract document metadata as health data point
+      if (effectiveTimeMatch) {
+        recordCount++;
+        try {
+          const dataPoint: ParsedHealthDataPoint = {
+            dataType: 'health_export_date',
+            value: effectiveTimeMatch[1],
+            timestamp: HealthDataParser.parseCDADateTime(effectiveTimeMatch[1]),
+            source: 'cda_export',
+            category: this.categorizeDataType('health_export_date'),
+            metadata: {
+              documentType: 'CDA_EXPORT',
+              patientGender: patientGenderMatch ? (patientGenderMatch[1] || patientGenderMatch[2]) : undefined,
+              patientBirthDate: patientBirthMatch ? patientBirthMatch[1] : undefined
+            }
+          };
+
+          parsedData.push(dataPoint);
+          const category = dataPoint.category;
+          categories[category] = (categories[category] || 0) + 1;
+
+          if (progressCallback) {
+            progressCallback({
+              processed: recordCount,
+              total: recordCount * 2,
+              percentage: 50
+            });
+          }
+        } catch (error) {
+          errors.push(`Error parsing document metadata: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      // Look for observation entries using regex patterns
+      const observationRegex = /<observation[^>]*>.*?<\/observation>/g;
+      let obsMatch;
+      let observationCount = 0;
+
+      while ((obsMatch = observationRegex.exec(xmlContent)) !== null) {
+        observationCount++;
+        recordCount++;
+
+        try {
+          const obsXml = obsMatch[0];
+          
+          // Extract observation data using regex
+          const codeMatch = obsXml.match(/<code[^>]*code="([^"]+)"/);
+          const valueMatch = obsXml.match(/<value[^>]*value="([^"]+)"/);
+          const unitMatch = obsXml.match(/<value[^>]*unit="([^"]+)"/);
+          const timeMatch = obsXml.match(/<effectiveTime[^>]*value="([^"]+)"/);
+
+          if (codeMatch && valueMatch && timeMatch) {
+            const dataPoint: ParsedHealthDataPoint = {
+              dataType: this.mapCDACodeToDataType(codeMatch[1]),
+              value: valueMatch[1],
+              unit: unitMatch ? unitMatch[1] : undefined,
+              timestamp: this.parseCDADateTime(timeMatch[1]),
+              source: 'cda_export',
+              category: this.categorizeDataType(this.mapCDACodeToDataType(codeMatch[1])),
+              metadata: {
+                originalCode: codeMatch[1],
+                codeSystem: 'CDA'
+              }
+            };
+
+            parsedData.push(dataPoint);
+            const category = dataPoint.category;
+            categories[category] = (categories[category] || 0) + 1;
+          }
+
+          // Progress reporting for large files
+          if (observationCount % 100 === 0 && progressCallback) {
+            const progress = Math.min((observationRegex.lastIndex / xmlContent.length) * 90 + 10, 95);
+            progressCallback({
+              processed: recordCount,
+              total: recordCount * 2,
+              percentage: progress
+            });
+          }
+
+        } catch (error) {
+          errors.push(`Error parsing observation ${observationCount}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      // Final progress update
+      if (progressCallback) {
+        progressCallback({
+          processed: recordCount,
+          total: recordCount,
+          percentage: 100
+        });
+      }
+
+      console.log(`CDA parsing completed: ${recordCount} total items processed, ${parsedData.length} valid data points`);
+
+      return {
+        success: true,
+        data: parsedData,
+        errors: errors.length > 0 ? errors : undefined,
+        summary: {
+          totalRecords: recordCount,
+          validRecords: parsedData.length,
+          skippedRecords: recordCount - parsedData.length,
+          categories
+        }
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        errors: [`Error parsing CDA document: ${error instanceof Error ? error.message : 'Unknown error'}`]
+      };
+    }
   }
 
   private static detectFileFormat(content: string, fileExtension?: string): string | null {

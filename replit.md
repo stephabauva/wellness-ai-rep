@@ -138,10 +138,12 @@ Changelog:
   - Fixed stability issues during large file processing
 - June 14, 2025. **Large File Processing Success & Automatic Go Service Enhancement**:
   - Successfully processed user's Apple Health export: 42,633 valid records from 43,512 total entries
-  - Fixed automatic Go acceleration service startup for files >10MB
-  - Enhanced large file detection with proper service initialization
-  - Confirmed stable processing of multi-gigabyte health data files
-  - Zero data loss during large file imports with comprehensive progress tracking
+  - Fixed automatic Go acceleration service startup for files >5MB (lowered from 10MB threshold)
+  - Enhanced large file detection with proper service initialization on both parse and import endpoints
+  - Implemented AbortController-based timeout handling for service health checks
+  - Confirmed stable processing of multi-gigabyte health data files with zero data loss
+  - Go service now automatically attempts startup for any health file >5MB with graceful TypeScript fallback
+  - Comprehensive progress tracking and chunked processing prevents app restarts during large imports
 
 # User Preferences
 

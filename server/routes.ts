@@ -117,36 +117,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function startGoAccelerationService(): Promise<void> {
     try {
       // Check if service is already running
-      const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
-        timeout: 2000
-      }).catch(() => null);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
       
-      if (healthCheck?.ok) {
-        console.log('Go acceleration service already running');
-        return;
+      try {
+        const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (healthCheck?.ok) {
+          console.log('Go acceleration service already running');
+          return;
+        }
+      } catch {
+        clearTimeout(timeoutId);
+        // Service not running, need to start it
       }
 
-      console.log('Starting Go acceleration service...');
+      console.log('Starting Go acceleration service automatically...');
       
-      // Start the Go service using the shell script for proper environment setup
-      const goProcess = spawn('bash', ['start-go-accelerator.sh'], {
-        cwd: path.join(process.cwd(), 'go-file-accelerator'),
+      // Start the Go service - install dependencies and run
+      spawn('bash', ['-c', 'cd go-file-accelerator && go mod download && go run main.go'], {
         detached: true,
         stdio: ['ignore', 'ignore', 'ignore']
       });
 
-      // Give it time to start
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Give it time to start and check if successful
+      await new Promise(resolve => setTimeout(resolve, 4000));
       
-      // Check if it started successfully
-      const finalCheck = await fetch('http://localhost:5001/accelerate/health', {
-        timeout: 2000
-      }).catch(() => null);
+      const finalController = new AbortController();
+      const finalTimeoutId = setTimeout(() => finalController.abort(), 2000);
       
-      if (finalCheck?.ok) {
-        console.log('Go acceleration service started successfully');
-      } else {
-        console.log('Go service startup completed but not responding - will continue with TypeScript processing');
+      try {
+        const finalCheck = await fetch('http://localhost:5001/accelerate/health', {
+          signal: finalController.signal
+        });
+        clearTimeout(finalTimeoutId);
+        
+        if (finalCheck?.ok) {
+          console.log('Go acceleration service started successfully for large file processing');
+        } else {
+          console.log('Go service startup completed but not responding - continuing with TypeScript processing');
+        }
+      } catch {
+        clearTimeout(finalTimeoutId);
+        console.log('Go service not responding after startup - continuing with TypeScript processing');
       }
     } catch (error) {
       console.log('Go service startup failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -624,6 +640,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Check file size and automatically start Go service for large files
+      const fileSizeInMB = req.file.size / (1024 * 1024);
+      if (fileSizeInMB > 5) { // Lower threshold for import endpoint
+        console.log(`Large file detected for import (${fileSizeInMB.toFixed(1)}MB). Attempting to start Go acceleration service...`);
+        try {
+          await startGoAccelerationService();
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log('Go service auto-start failed, continuing with TypeScript processing:', errorMessage);
+        }
       }
 
       // Read as buffer to handle compressed files properly

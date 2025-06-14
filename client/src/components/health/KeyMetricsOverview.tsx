@@ -33,8 +33,38 @@ const getLatestMetricUnit = (
 }
 
 export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthData }) => {
-  // TODO: Replace hardcoded change, goalValue, progress, status, startValue with dynamic data if available
-  // These might come from calculations based on healthData history or user goals.
+  // Helper function to calculate percentage change between recent values
+  const calculateChange = (dataType: string): number | undefined => {
+    if (!healthData) return undefined;
+    const metrics = healthData
+      .filter(m => m.dataType === dataType)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    if (metrics.length < 2) return undefined;
+    
+    const current = parseFloat(metrics[0].value);
+    const previous = parseFloat(metrics[1].value);
+    
+    if (previous === 0) return undefined;
+    return ((current - previous) / previous) * 100;
+  };
+
+  // Helper function to calculate progress towards goal
+  const calculateProgress = (dataType: string, goal: number): number | undefined => {
+    if (!healthData) return undefined;
+    const value = parseFloat(getLatestMetricValue(healthData, dataType, "0"));
+    if (value === 0) return undefined;
+    return Math.min((value / goal) * 100, 100);
+  };
+
+  // Helper function to determine heart rate status
+  const getHeartRateStatus = (value: string): { status?: string; statusColor?: 'green' | 'yellow' | 'red' } => {
+    if (value === "N/A") return {};
+    const hr = parseFloat(value);
+    if (hr < 60) return { status: "Low", statusColor: "yellow" };
+    if (hr > 100) return { status: "High", statusColor: "red" };
+    return { status: "Normal", statusColor: "green" };
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -42,9 +72,9 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
         title="Daily Steps"
         value={getLatestMetricValue(healthData, 'steps', "N/A")}
         unit={getLatestMetricUnit(healthData, 'steps', "steps")}
-        change={12} // Placeholder
-        goalValue={10000} // Placeholder
-        progress={parseFloat(getLatestMetricValue(healthData, 'steps', "0")) / 10000 * 100} // Example progress
+        change={calculateChange('steps')}
+        goalValue={healthData && getLatestMetricValue(healthData, 'steps') !== "N/A" ? 10000 : undefined}
+        progress={calculateProgress('steps', 10000)}
         icon={<Activity className="h-4 w-4" />}
       />
 
@@ -52,9 +82,9 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
         title="Sleep Duration"
         value={getLatestMetricValue(healthData, 'sleep_duration', "N/A")}
         unit={getLatestMetricUnit(healthData, 'sleep_duration', "hours")}
-        change={-5} // Placeholder
-        goalValue={8} // Placeholder
-        progress={parseFloat(getLatestMetricValue(healthData, 'sleep_duration', "0")) / 8 * 100} // Example progress
+        change={calculateChange('sleep_duration')}
+        goalValue={healthData && getLatestMetricValue(healthData, 'sleep_duration') !== "N/A" ? 8 : undefined}
+        progress={calculateProgress('sleep_duration', 8)}
         icon={<Brain className="h-4 w-4" />}
       />
 
@@ -62,8 +92,7 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
         title="Heart Rate"
         value={getLatestMetricValue(healthData, 'heart_rate', "N/A")}
         unit={getLatestMetricUnit(healthData, 'heart_rate', "bpm")}
-        status="Normal" // Placeholder - this might need logic based on value ranges
-        statusColor="green" // Placeholder
+        {...getHeartRateStatus(getLatestMetricValue(healthData, 'heart_rate', "N/A"))}
         icon={<Heart className="h-4 w-4" />}
       />
 
@@ -71,9 +100,7 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
         title="Current Weight"
         value={getLatestMetricValue(healthData, 'weight', "N/A")}
         unit={getLatestMetricUnit(healthData, 'weight', "lbs")}
-        change={-2.5} // Placeholder
-        startValue="167.5 lbs" // Placeholder
-        goalValue={150} // Placeholder
+        change={calculateChange('weight')}
         icon={<CalendarIcon className="h-4 w-4" />}
       />
     </div>

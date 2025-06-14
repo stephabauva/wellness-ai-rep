@@ -94,10 +94,10 @@ export const StatCard: React.FC<StatCardProps> = ({
         </div>
       )}
       
-      {!progress && !startValue && !goalValue && (
+      {!progress && !startValue && !goalValue && value !== "N/A" && (
         <div className="mt-4">
           <div className="flex items-end space-x-1">
-            {/* Mini chart representation */}
+            {/* Mini chart representation - only show when there's actual data */}
             <div className="w-1/12 bg-muted rounded-t h-4"></div>
             <div className="w-1/12 bg-muted rounded-t h-6"></div>
             <div className="w-1/12 bg-muted rounded-t h-8"></div>

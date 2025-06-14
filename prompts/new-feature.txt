@@ -12,11 +12,11 @@ This analysis must:
 Critical Constraints:
 
 I1 — Feature Isolation:
-It is strictly forbidden for any new feature to alter code linked to other features **if it risks modifying or breaking their behavior**.  
-If alteration is required, you **must**:
-- Assess the **full impact** on all dependent features
-- Anticipate cascade effects
-- Propose **safe mitigation plans** before proceeding
+It is strictly forbidden for any new feature to alter code linked to other features **if it risks modifying or breaking their behavior**, unless you do the following :  
+  If alteration is required, you **must**:
+  - Assess the **full impact** on all dependent features
+  - Anticipate cascade effects
+  - Propose **safe mitigation plans** before proceeding
 
 I2 — Adaptive Re-evaluation:
 If you encounter any obstacle forcing you to change your approach:

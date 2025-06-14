@@ -37,6 +37,7 @@ export interface IStorage {
   // Health data methods
   getHealthData(userId: number, timeRange: string): Promise<HealthData[]>;
   createHealthData(data: InsertHealthData): Promise<HealthData>;
+  clearAllHealthData(userId: number): Promise<void>;
   
   // Device methods
   getDevices(userId: number): Promise<ConnectedDevice[]>;
@@ -413,6 +414,10 @@ export class MemStorage implements IStorage {
     this.healthData.set(data.userId, userHealthData);
     return newHealthData;
   }
+
+  async clearAllHealthData(userId: number): Promise<void> {
+    this.healthData.delete(userId);
+  }
   
   // Device methods
   async getDevices(userId: number): Promise<ConnectedDevice[]> {
@@ -584,6 +589,15 @@ export class DatabaseStorage implements IStorage {
     cacheService.invalidateUserData(data.userId);
     
     return newData;
+  }
+
+  async clearAllHealthData(userId: number): Promise<void> {
+    await db
+      .delete(healthData)
+      .where(eq(healthData.userId, userId));
+    
+    // Invalidate health data cache for this user
+    cacheService.invalidateUserData(userId);
   }
   
   // Device methods

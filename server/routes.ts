@@ -533,6 +533,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear all health data for the user
+  app.delete("/api/health-data/reset", async (req, res) => {
+    try {
+      await storage.clearAllHealthData(1); // Default user ID
+      res.json({ message: "All health data has been cleared successfully" });
+    } catch (error) {
+      console.error('Error clearing health data:', error);
+      res.status(500).json({ message: "Failed to clear health data" });
+    }
+  });
+
   // Configure multer for health data file uploads
   const healthDataUpload = multer({
     storage: multer.diskStorage({

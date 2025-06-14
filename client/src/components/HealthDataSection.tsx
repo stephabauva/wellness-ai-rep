@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { Download, Activity, Heart, Brain, Stethoscope, Zap } from "lucide-react";
+import { Download, Activity, Heart, Brain, Stethoscope, Zap, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import HealthMetricsCard from "@/components/HealthMetricsCard"; // This is an existing component
 
 // Import hooks

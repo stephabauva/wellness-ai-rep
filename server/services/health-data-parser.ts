@@ -50,6 +50,12 @@ export class HealthDataParser {
     'HKQuantityTypeIdentifierOxygenSaturation': { dataType: 'oxygen_saturation', category: 'cardiovascular' },
     'HKQuantityTypeIdentifierBloodGlucose': { dataType: 'blood_glucose_random', category: 'medical' },
     'HKQuantityTypeIdentifierBodyTemperature': { dataType: 'body_temperature', category: 'medical' },
+    'HKQuantityTypeIdentifierHeartRateVariabilitySDNN': { dataType: 'heart_rate_variability', category: 'cardiovascular' },
+    'HKQuantityTypeIdentifierPhysicalEffort': { dataType: 'physical_effort', category: 'lifestyle' },
+    'HKQuantityTypeIdentifierDistanceCycling': { dataType: 'cycling_distance', category: 'lifestyle' },
+    'HKQuantityTypeIdentifierFlightsClimbed': { dataType: 'flights_climbed', category: 'lifestyle' },
+    'HKQuantityTypeIdentifierAppleExerciseTime': { dataType: 'active_minutes', category: 'lifestyle' },
+    'HKQuantityTypeIdentifierAppleStandTime': { dataType: 'stand_time', category: 'lifestyle' },
   };
 
   private static googleFitTypeMapping: Record<string, { dataType: string; category: HealthDataCategory }> = {

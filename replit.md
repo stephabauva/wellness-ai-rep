@@ -239,6 +239,12 @@ Changelog:
   - **Database Reset**: Cleared corrupted timestamp data to enable proper re-import
   - Charts now display historical Apple Health data with correct dates instead of import timestamps
   - System ready for re-import with preserved original Apple Health dates for meaningful visualizations
+- June 14, 2025. **Time Filter Removal for Complete Historical Data Import**:
+  - **SECONDARY ISSUE IDENTIFIED**: Mandatory 1-month time filter was rejecting all historical Apple Health data
+  - **Time Filter Fix**: Removed forced 1-month cutoff, system now imports all historical data by default
+  - **Smart Chunking Preserved**: Bulletproof processing still uses intelligent chunk analysis for performance
+  - **Complete Historical Access**: System now processes all Apple Health data from any date range
+  - Ready for complete historical data import with original timestamps and full date range coverage
 
 # User Preferences
 

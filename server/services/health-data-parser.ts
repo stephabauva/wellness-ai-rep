@@ -1083,7 +1083,7 @@ export class HealthDataParser {
       const errors: string[] = [];
       const parsedData: ParsedHealthDataPoint[] = [];
       
-      // Set up time filtering - MANDATORY
+      // Set up time filtering - MANDATORY for large files
       let cutoffDate: Date | null = null;
       if (timeFilterMonths && timeFilterMonths > 0) {
         cutoffDate = new Date();

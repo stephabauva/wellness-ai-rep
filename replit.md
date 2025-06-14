@@ -248,10 +248,10 @@ Changelog:
 - June 14, 2025. **FINAL TIMESTAMP PRESERVATION FIX - Complete Solution**:
   - **ROOT CAUSE FOUND**: Import route was stripping timestamp field during conversion to database format
   - **Critical Fix**: Added `timestamp: point.timestamp` to route conversion mapping in `/api/health-data/import`
-  - **Time Filter Made Optional**: Removed mandatory 1-month filtering, now respects user choice for full historical import
+  - **Mandatory Time Filter Restored**: Kept essential memory protection for files >100MB (defaults to 1 month)
   - **Database Cleared**: Removed corrupted timestamp data to enable clean re-import with preserved dates
-  - **Complete Solution**: Apple Health data now imports with original timestamps for accurate historical chart display
-  - System ready for full historical Apple Health import with preserved original dates from any time period
+  - **Complete Solution**: Apple Health data now imports with original timestamps within selected time range
+  - System ready for memory-safe Apple Health import with preserved original dates from selected time period
 
 # User Preferences
 

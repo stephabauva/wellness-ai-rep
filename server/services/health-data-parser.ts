@@ -1,4 +1,5 @@
 import { parseString } from 'xml2js';
+import { gunzipSync, unzipSync } from 'zlib';
 import { InsertHealthData, HealthDataCategory, HealthMetricType } from '@shared/schema';
 
 export interface ParsedHealthDataPoint {
@@ -57,17 +58,41 @@ export class HealthDataParser {
     'com.google.oxygen_saturation': { dataType: 'oxygen_saturation', category: 'cardiovascular' },
   };
 
-  static async parseFile(fileContent: string, fileName: string): Promise<ParseResult> {
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    
+  static async parseFile(fileContent: string | Buffer, fileName: string): Promise<ParseResult> {
     try {
+      // Handle compressed files
+      let content: string;
+      const isGzipped = fileName.toLowerCase().endsWith('.gz');
+      const isZipped = fileName.toLowerCase().endsWith('.zip');
+      
+      if (isGzipped) {
+        if (typeof fileContent === 'string') {
+          // Convert string to buffer for decompression
+          const buffer = Buffer.from(fileContent, 'binary');
+          content = gunzipSync(buffer).toString('utf8');
+        } else {
+          content = gunzipSync(fileContent).toString('utf8');
+        }
+        // Remove .gz extension to get the actual file type
+        fileName = fileName.slice(0, -3);
+      } else if (isZipped) {
+        return {
+          success: false,
+          errors: ['ZIP files are not yet supported. Please extract the file and upload the XML/JSON/CSV directly.']
+        };
+      } else {
+        content = typeof fileContent === 'string' ? fileContent : fileContent.toString('utf8');
+      }
+
+      const fileExtension = fileName.split('.').pop()?.toLowerCase();
+      
       switch (fileExtension) {
         case 'xml':
-          return await this.parseAppleHealthXML(fileContent);
+          return await this.parseAppleHealthXML(content);
         case 'json':
-          return await this.parseGoogleFitJSON(fileContent);
+          return await this.parseGoogleFitJSON(content);
         case 'csv':
-          return await this.parseGenericCSV(fileContent);
+          return await this.parseGenericCSV(content);
         default:
           return {
             success: false,

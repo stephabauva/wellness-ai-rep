@@ -503,10 +503,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'text/plain',
         'application/octet-stream', // Some browsers send this for various file types
         'text/tab-separated-values',
-        'application/vnd.ms-excel' // Excel files that might contain health data
+        'application/vnd.ms-excel', // Excel files that might contain health data
+        'application/gzip', // Compressed files (Apple Health exports)
+        'application/x-gzip',
+        'application/zip'
       ];
       
-      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.tsv'];
+      const allowedExtensions = ['.xml', '.json', '.csv', '.txt', '.tsv', '.gz', '.zip'];
       const fileExtension = path.extname(file.originalname).toLowerCase();
       
       // Be more permissive - accept if either MIME type matches OR extension matches
@@ -534,8 +537,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const fileContent = fs.readFileSync(req.file.path, 'utf8');
-      const parseResult = await HealthDataParser.parseFile(fileContent, req.file.originalname);
+      // Read as buffer to handle compressed files properly
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const parseResult = await HealthDataParser.parseFile(fileBuffer, req.file.originalname);
 
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
@@ -566,8 +570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const fileContent = fs.readFileSync(req.file.path, 'utf8');
-      const parseResult = await HealthDataParser.parseFile(fileContent, req.file.originalname);
+      // Read as buffer to handle compressed files properly
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const parseResult = await HealthDataParser.parseFile(fileBuffer, req.file.originalname);
 
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);

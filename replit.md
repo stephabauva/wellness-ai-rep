@@ -205,6 +205,13 @@ Changelog:
   - Integrated same auto-start logic from health dashboard into general file upload endpoint
   - Added graceful fallback to TypeScript processing when Go service unavailable
   - Successfully tested with 331.8MB XML file showing proper detection and auto-start attempts
+- June 14, 2025. **Complete Automatic Go Service Startup Implementation**:
+  - Fixed `/api/accelerate/start` endpoint to actually spawn Go service instead of rejecting requests
+  - Implemented identical Go service startup functionality in file management as health dashboard
+  - Added proper multipart file forwarding to prevent content-length mismatch errors
+  - File management now has complete parity with health dashboard for Go acceleration
+  - Large XML/JSON/CSV files >5MB automatically trigger Go service startup with graceful fallback
+  - Zero breaking changes maintained while achieving full feature integration
 
 # User Preferences
 

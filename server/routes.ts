@@ -2275,18 +2275,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Large file compression acceleration endpoint
-  app.post('/api/accelerate/compress-large', async (req, res) => {
+  app.post('/api/accelerate/compress-large', multer().single('file'), async (req, res) => {
     try {
       console.log('Forwarding large file compression request to Go service');
       
-      // Forward the request to Go service with proper headers
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file provided' });
+      }
+      
+      // Create FormData for proper multipart forwarding
+      const FormData = (await import('form-data')).default;
+      const formData = new FormData();
+      formData.append('file', req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype
+      });
+      
+      // Forward the request to Go service with proper multipart data
       const response = await fetch('http://localhost:5001/accelerate/compress-large', {
         method: 'POST',
-        body: req.body,
-        headers: {
-          ...req.headers,
-          'host': undefined, // Remove host header to avoid conflicts
-        },
+        body: formData,
         signal: AbortSignal.timeout(120000) // 2 minute timeout for large files
       });
       

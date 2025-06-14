@@ -24,6 +24,10 @@ import { statSync, unlinkSync } from 'fs';
 import { HealthDataParser } from "./services/health-data-parser";
 import { HealthDataDeduplicationService } from "./services/health-data-deduplication";
 import { insertHealthDataSchema } from "@shared/schema";
+import { spawn } from 'child_process';
+
+// Go service auto-start functionality
+let goServiceProcess: any = null;
 
 // Attachment schema for client
 const attachmentSchema = z.object({
@@ -108,6 +112,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   const FIXED_USER_ID = 1; // Assuming fixed user ID for now
+
+  // Go service auto-start functionality
+  async function startGoAccelerationService(): Promise<void> {
+    return new Promise((resolve) => {
+      // Check if service is already running
+      fetch('http://localhost:5001/accelerate/health')
+        .then(() => {
+          console.log('Go acceleration service already running');
+          resolve();
+        })
+        .catch(() => {
+          console.log('Starting Go acceleration service...');
+          
+          // Start the Go service
+          const goProcess = spawn('go', ['run', 'main.go'], {
+            cwd: path.join(process.cwd(), 'go-file-accelerator'),
+            detached: true,
+            stdio: ['ignore', 'pipe', 'pipe']
+          });
+
+          let startupTimeout: NodeJS.Timeout;
+          let serviceStarted = false;
+
+          // Set a timeout for service startup
+          startupTimeout = setTimeout(() => {
+            if (!serviceStarted) {
+              console.log('Go service startup timeout, continuing with TypeScript processing');
+              resolve();
+            }
+          }, 5000);
+
+          // Monitor service startup
+          const checkService = async () => {
+            try {
+              await fetch('http://localhost:5001/accelerate/health');
+              if (!serviceStarted) {
+                serviceStarted = true;
+                clearTimeout(startupTimeout);
+                console.log('Go acceleration service started successfully');
+                resolve();
+              }
+            } catch {
+              if (!serviceStarted) {
+                setTimeout(checkService, 500);
+              }
+            }
+          };
+
+          // Start checking after a brief delay
+          setTimeout(checkService, 1000);
+
+          goProcess.on('error', (error: Error) => {
+            console.log('Go service startup error:', error.message);
+            if (!serviceStarted) {
+              serviceStarted = true;
+              clearTimeout(startupTimeout);
+              resolve(); // Continue with TypeScript processing
+            }
+          });
+        });
+    });
+  }
 
   // Serve uploaded files
   app.use('/uploads', (req, res, next) => {
@@ -535,6 +601,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Check file size and automatically start Go service for large files
+      const fileSizeInMB = req.file.size / (1024 * 1024);
+      if (fileSizeInMB > 10) {
+        console.log(`Large file detected (${fileSizeInMB.toFixed(1)}MB). Attempting to start Go acceleration service...`);
+        try {
+          await startGoAccelerationService();
+        } catch (error) {
+          console.log('Go service auto-start failed, continuing with TypeScript processing');
+        }
       }
 
       // Read as buffer to handle compressed files properly

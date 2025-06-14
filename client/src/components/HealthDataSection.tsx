@@ -41,38 +41,159 @@ const HealthDataSection: React.FC = () => {
   // Memoize processed data for charts to prevent re-computation on every render
   // These are examples; actual data processing would depend on the structure of HealthMetric[]
   const activityChartData: ActivityDataPoint[] = useMemo(() => {
-    // TODO: Process 'allHealthData' or 'categorizedData.lifestyle' to fit ActivityDataPoint[] structure
-    // For now, using the mock data structure from the original component
-    return [
-      { day: 'Mon', steps: 5240, active: 45 }, { day: 'Tue', steps: 7800, active: 60 },
-      { day: 'Wed', steps: 5900, active: 50 }, { day: 'Thu', steps: 9500, active: 85 },
-      { day: 'Fri', steps: 8200, active: 70 }, { day: 'Sat', steps: 6300, active: 55 },
-      { day: 'Sun', steps: 8700, active: 75 },
-    ];
-  }, [allHealthData, categorizedData]); // Add dependencies if data comes from these
+    if (!allHealthData || allHealthData.length === 0) {
+      return [];
+    }
+    
+    // Process actual health data for activity metrics
+    const activityData = allHealthData.filter(item => 
+      item.dataType === 'steps' || 
+      item.dataType === 'active_minutes' || 
+      item.dataType === 'calories_burned'
+    );
+    
+    if (activityData.length === 0) {
+      return [];
+    }
+    
+    // Group by day and aggregate
+    const dayMap = new Map<string, { steps?: number; active?: number; calories?: number }>();
+    
+    activityData.forEach(item => {
+      const day = new Date(item.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+      const value = parseFloat(item.value);
+      
+      if (!dayMap.has(day)) {
+        dayMap.set(day, {});
+      }
+      
+      const dayData = dayMap.get(day)!;
+      if (item.dataType === 'steps') dayData.steps = value;
+      if (item.dataType === 'active_minutes') dayData.active = value;
+      if (item.dataType === 'calories_burned') dayData.calories = value;
+    });
+    
+    return Array.from(dayMap.entries()).map(([day, data]) => ({ day, ...data }));
+  }, [allHealthData]);
 
   const sleepChartData: SleepDataPoint[] = useMemo(() => {
-    // TODO: Process 'allHealthData' or 'categorizedData.lifestyle' for sleep
-    return [
-      { day: 'Mon', deep: 1.8, light: 4.5, rem: 1.2 }, { day: 'Tue', deep: 2.0, light: 4.0, rem: 1.5 },
-      { day: 'Wed', deep: 1.5, light: 5.0, rem: 1.0 }, { day: 'Thu', deep: 2.2, light: 3.5, rem: 1.8 },
-      { day: 'Fri', deep: 1.9, light: 4.2, rem: 1.3 }, { day: 'Sat', deep: 2.5, light: 4.5, rem: 1.5 },
-      { day: 'Sun', deep: 2.1, light: 4.0, rem: 1.4 },
-    ];
-  }, [allHealthData, categorizedData]);
+    if (!allHealthData || allHealthData.length === 0) {
+      return [];
+    }
+    
+    // Process actual health data for sleep metrics
+    const sleepData = allHealthData.filter(item => 
+      item.dataType === 'sleep_deep' || 
+      item.dataType === 'sleep_light' || 
+      item.dataType === 'sleep_rem' ||
+      item.dataType === 'sleep_total'
+    );
+    
+    if (sleepData.length === 0) {
+      return [];
+    }
+    
+    // Group by day and aggregate
+    const dayMap = new Map<string, { deep?: number; light?: number; rem?: number; total?: number }>();
+    
+    sleepData.forEach(item => {
+      const day = new Date(item.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+      const value = parseFloat(item.value);
+      
+      if (!dayMap.has(day)) {
+        dayMap.set(day, {});
+      }
+      
+      const dayData = dayMap.get(day)!;
+      if (item.dataType === 'sleep_deep') dayData.deep = value;
+      if (item.dataType === 'sleep_light') dayData.light = value;
+      if (item.dataType === 'sleep_rem') dayData.rem = value;
+      if (item.dataType === 'sleep_total') dayData.total = value;
+    });
+    
+    return Array.from(dayMap.entries()).map(([day, data]) => ({ day, ...data }));
+  }, [allHealthData]);
 
   const nutritionSummaryData: NutritionItemData[] = useMemo(() => {
-     // TODO: Process 'allHealthData' or relevant category for nutrition
-    return [
-      { name: 'Protein', value: 76, goal: 110, unit: 'g' }, { name: 'Carbs', value: 215, goal: 250, unit: 'g' },
-      { name: 'Fat', value: 62, goal: 73, unit: 'g' }, { name: 'Fiber', value: 18, goal: 30, unit: 'g' },
-      { name: 'Calories', value: 1842, goal: 2200, unit: 'kcal'}, { name: 'Sugar', value: 42, goal: 50, unit: 'g', color: 'hsl(var(--destructive))' },
-    ];
-  }, [allHealthData, categorizedData]);
+    if (!allHealthData || allHealthData.length === 0) {
+      return [];
+    }
+    
+    // Process actual health data for nutrition metrics
+    const nutritionData = allHealthData.filter(item => 
+      item.dataType === 'protein' || 
+      item.dataType === 'carbs' || 
+      item.dataType === 'fat' ||
+      item.dataType === 'fiber' ||
+      item.dataType === 'calories' ||
+      item.dataType === 'sugar'
+    );
+    
+    if (nutritionData.length === 0) {
+      return [];
+    }
+    
+    // Aggregate nutrition data by type (sum for the time period)
+    const nutritionMap = new Map<string, { value: number; unit: string }>();
+    
+    nutritionData.forEach(item => {
+      const value = parseFloat(item.value);
+      const unit = item.unit || '';
+      
+      if (nutritionMap.has(item.dataType)) {
+        nutritionMap.get(item.dataType)!.value += value;
+      } else {
+        nutritionMap.set(item.dataType, { value, unit });
+      }
+    });
+    
+    // Convert to nutrition items with goals (these would ideally come from user settings)
+    const nutritionGoals = {
+      protein: 110,
+      carbs: 250,
+      fat: 73,
+      fiber: 30,
+      calories: 2200,
+      sugar: 50
+    };
+    
+    return Array.from(nutritionMap.entries()).map(([type, data]) => ({
+      name: type.charAt(0).toUpperCase() + type.slice(1),
+      value: Math.round(data.value),
+      goal: nutritionGoals[type as keyof typeof nutritionGoals] || 100,
+      unit: data.unit,
+      color: type === 'sugar' ? 'hsl(var(--destructive))' : undefined
+    }));
+  }, [allHealthData]);
 
   const hydrationChartData: HydrationChartData = useMemo(() => {
-    // TODO: Process 'allHealthData' for hydration
-    return { consumed: 1.3, goal: 2, unit: 'L' };
+    if (!allHealthData || allHealthData.length === 0) {
+      return { consumed: 0, goal: 8, unit: 'glasses' };
+    }
+    
+    // Process actual health data for hydration metrics
+    const hydrationData = allHealthData.filter(item => 
+      item.dataType === 'water_intake' || 
+      item.dataType === 'hydration'
+    );
+    
+    if (hydrationData.length === 0) {
+      return { consumed: 0, goal: 8, unit: 'glasses' };
+    }
+    
+    // Sum up hydration for the time period
+    const totalConsumed = hydrationData.reduce((sum, item) => {
+      return sum + parseFloat(item.value);
+    }, 0);
+    
+    const unit = hydrationData[0]?.unit || 'glasses';
+    const goal = unit === 'L' ? 2 : 8; // Default goals based on unit
+    
+    return { 
+      consumed: Math.round(totalConsumed * 10) / 10, // Round to 1 decimal
+      goal, 
+      unit 
+    };
   }, [allHealthData]);
 
   // Reset health data function

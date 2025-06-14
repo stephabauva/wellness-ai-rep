@@ -150,6 +150,12 @@ Changelog:
   - Enhanced progress tracking with realistic timing estimates for large health files (0.8ms per record for >10MB files)
   - Improved progress messages to show actual processing stages: parsing → processing → duplicate checking → database saving
   - Fixed chunked processing to report 100% completion and prevent progress bar freezing
+- June 14, 2025. **Health Data Reset Button & Chart Data Integration**:
+  - Added comprehensive health data reset functionality with backend API endpoint (DELETE /api/health-data/reset)
+  - Implemented reset button in health dashboard with confirmation dialog to prevent accidental data loss
+  - Fixed all chart components to use real health data instead of mock values (activity, sleep, nutrition, hydration)
+  - Charts now properly show empty states when no data is available after reset
+  - Enhanced data processing logic to aggregate health metrics by day and type for accurate visualizations
 
 # User Preferences
 

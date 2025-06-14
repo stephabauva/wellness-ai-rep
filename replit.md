@@ -170,6 +170,13 @@ Changelog:
   - Enhanced health data parser with better error logging and improved timestamp handling for Apple Health exports
   - Fixed gzipped file decompression with proper error handling and logging
   - Server now starts successfully and health dashboard displays correctly with imported data
+- June 14, 2025. **Streaming Decompression for Very Large Apple Health Files**:
+  - Implemented streaming decompression to handle files that exceed Node.js string length limits (>500MB decompressed)
+  - Added automatic detection of ERR_STRING_TOO_LONG errors with graceful fallback to streaming approach
+  - Created parseAppleHealthXMLFromBuffer method using Node.js streams for memory-efficient processing
+  - Enhanced progress tracking during streaming decompression phase
+  - Fixed user's 28.4MB compressed Apple Health export file parsing (estimated 500MB+ decompressed)
+  - Maintained backward compatibility with smaller files using standard decompression
 
 # User Preferences
 

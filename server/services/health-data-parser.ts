@@ -1,5 +1,6 @@
 import { parseString } from 'xml2js';
-import { gunzipSync, unzipSync } from 'zlib';
+import { gunzipSync, unzipSync, createGunzip } from 'zlib';
+import { Readable } from 'stream';
 import { InsertHealthData, HealthDataCategory, HealthMetricType } from '@shared/schema';
 
 export interface ParsedHealthDataPoint {
@@ -73,12 +74,30 @@ export class HealthDataParser {
       
       if (isGzipped) {
         try {
+          // For very large compressed files, use streaming decompression
           if (typeof fileContent === 'string') {
             // Convert string to buffer for decompression
             const buffer = Buffer.from(fileContent, 'binary');
-            content = gunzipSync(buffer).toString('utf8');
+            // Check if decompressed content would be too large
+            try {
+              content = gunzipSync(buffer).toString('utf8');
+            } catch (stringError: any) {
+              if (stringError.code === 'ERR_STRING_TOO_LONG') {
+                console.log('File too large for standard decompression, using streaming approach...');
+                return await this.parseAppleHealthXMLFromBuffer(buffer, fileName.slice(0, -3), progressCallback);
+              }
+              throw stringError;
+            }
           } else {
-            content = gunzipSync(fileContent).toString('utf8');
+            try {
+              content = gunzipSync(fileContent).toString('utf8');
+            } catch (stringError: any) {
+              if (stringError.code === 'ERR_STRING_TOO_LONG') {
+                console.log('File too large for standard decompression, using streaming approach...');
+                return await this.parseAppleHealthXMLFromBuffer(fileContent, fileName.slice(0, -3), progressCallback);
+              }
+              throw stringError;
+            }
           }
           // Remove .gz extension to get the actual file type
           fileName = fileName.slice(0, -3);
@@ -607,5 +626,75 @@ export class HealthDataParser {
     if (advancedTypes.includes(dataType)) return 'advanced';
     
     return 'lifestyle'; // Default category
+  }
+
+  // Streaming decompression method for very large compressed files
+  private static async parseAppleHealthXMLFromBuffer(
+    compressedBuffer: Buffer, 
+    fileName: string, 
+    progressCallback?: (progress: { processed: number; total: number; percentage: number }) => void
+  ): Promise<ParseResult> {
+    try {
+      console.log('Starting streaming decompression for large Apple Health file...');
+      
+      return new Promise((resolve, reject) => {
+        const gunzip = createGunzip();
+        const chunks: Buffer[] = [];
+        let totalSize = 0;
+        
+        // Create readable stream from buffer
+        const inputStream = new Readable();
+        inputStream.push(compressedBuffer);
+        inputStream.push(null);
+        
+        // Handle decompressed chunks
+        gunzip.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+          totalSize += chunk.length;
+          
+          // Progress callback for decompression
+          if (progressCallback && totalSize > 0) {
+            const estimatedProgress = Math.min(20, (totalSize / (1024 * 1024)) * 2); // Estimate based on MB processed
+            progressCallback({
+              processed: totalSize,
+              total: totalSize * 5, // Rough estimate
+              percentage: estimatedProgress
+            });
+          }
+        });
+        
+        gunzip.on('end', async () => {
+          try {
+            console.log(`Decompression complete. Total size: ${totalSize} bytes`);
+            
+            // Combine all chunks into XML content
+            const xmlContent = Buffer.concat(chunks).toString('utf8');
+            console.log(`XML content length: ${xmlContent.length} characters`);
+            
+            // Use chunked processing for the decompressed XML
+            const result = await this.parseAppleHealthXMLChunked(xmlContent, progressCallback);
+            resolve(result);
+          } catch (parseError) {
+            console.error('Error parsing decompressed XML:', parseError);
+            reject(parseError);
+          }
+        });
+        
+        gunzip.on('error', (error) => {
+          console.error('Streaming decompression error:', error);
+          reject(new Error(`Streaming decompression failed: ${error.message}`));
+        });
+        
+        // Start the decompression
+        inputStream.pipe(gunzip);
+      });
+      
+    } catch (error) {
+      console.error('Buffer parsing error:', error);
+      return {
+        success: false,
+        errors: [`Streaming processing error: ${error instanceof Error ? error.message : 'Unknown error'}`]
+      };
+    }
   }
 }

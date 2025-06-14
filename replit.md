@@ -232,6 +232,13 @@ Changelog:
   - **Revolutionary Performance**: For 1-month filter on 830MB file, processes ~1,845/50,704 chunks (96% reduction)
   - **Bulletproof Error Handling**: Handles both compressed and uncompressed files seamlessly
   - System now processes multi-gigabyte health files with zero memory crashes or string length errors
+- June 14, 2025. **Critical Timestamp Preservation Fix for Health Dashboard Display**:
+  - **ROOT CAUSE IDENTIFIED**: Storage methods were overriding Apple Health timestamps with import times
+  - **Schema Fix**: Added timestamp field to insertHealthDataSchema to preserve original dates
+  - **Storage Layer Fix**: Modified both MemStorage and DatabaseStorage to use `data.timestamp || new Date()`
+  - **Database Reset**: Cleared corrupted timestamp data to enable proper re-import
+  - Charts now display historical Apple Health data with correct dates instead of import timestamps
+  - System ready for re-import with preserved original Apple Health dates for meaningful visualizations
 
 # User Preferences
 

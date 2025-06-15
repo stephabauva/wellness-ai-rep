@@ -23,7 +23,6 @@ import {
   XCircle,
   AlertCircle,
   Info,
-  Sync,
   RefreshCw,
   Clock
 } from "lucide-react";

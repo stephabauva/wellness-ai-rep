@@ -223,11 +223,69 @@ export function NativeHealthIntegration({ onDataImported, onError }: NativeHealt
 
         <Separator />
 
-        {/* Native Health Access */}
+        {/* Test Sync Section - Available on all platforms */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Health Data Sync Testing
+          </h4>
+          
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Test the health data synchronization system with sample data generation.
+            </p>
+            
+            <div className="flex gap-2">
+              <Button 
+                onClick={performTestSync}
+                disabled={isLoading}
+                size="sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Test Sync
+              </Button>
+              
+              {platform !== 'web' && (
+                <Button 
+                  onClick={requestPermissions}
+                  disabled={isLoading}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Request Permissions
+                </Button>
+              )}
+            </div>
+            
+            {syncProgress > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Sync Progress</span>
+                  <span>{syncProgress}%</span>
+                </div>
+                <Progress value={syncProgress} className="h-2" />
+              </div>
+            )}
+            
+            {lastSyncResult && (
+              <div className="text-sm">
+                <span className="text-muted-foreground">Last sync: </span>
+                <Badge variant={lastSyncResult.success ? "default" : "destructive"} className="text-xs">
+                  {lastSyncResult.success ? `${lastSyncResult.recordsProcessed} records` : 'Failed'}
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Native Health Access (Mobile Only) */}
         {capabilities?.healthDataAccess ? (
           <div className="space-y-4">
             <h4 className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4" />
+              <Heart className="h-4 w-4" />
               Native Health Access
             </h4>
             
@@ -252,45 +310,11 @@ export function NativeHealthIntegration({ onDataImported, onError }: NativeHealt
                     </div>
                   </div>
                 )}
-                
-                <div className="flex gap-2">
-                  {!permissions.granted && (
-                    <Button 
-                      onClick={requestPermissions}
-                      disabled={isLoading}
-                      size="sm"
-                    >
-                      <Shield className="h-4 w-4 mr-2" />
-                      Request Permissions
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    onClick={performTestSync}
-                    disabled={isLoading || !permissions.granted}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Heart className="h-4 w-4 mr-2" />
-                    Test Sync
-                  </Button>
-                </div>
               </div>
             ) : (
-              <Button onClick={requestPermissions} disabled={isLoading}>
-                <Download className="h-4 w-4 mr-2" />
-                Initialize Native Access
-              </Button>
-            )}
-            
-            {syncProgress > 0 && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Sync Progress</span>
-                  <span>{syncProgress}%</span>
-                </div>
-                <Progress value={syncProgress} className="h-2" />
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Native health permissions not yet requested.
+              </p>
             )}
           </div>
         ) : (

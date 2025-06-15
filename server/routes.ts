@@ -1282,6 +1282,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Native health data synchronization endpoint
+  app.post("/api/health-data/native-sync", async (req, res) => {
+    try {
+      const { data, platform, provider, syncTimestamp } = req.body;
+      
+      if (!data || !Array.isArray(data)) {
+        return res.status(400).json({ error: "Invalid health data format" });
+      }
+
+      console.log(`[Native Health Sync] Processing ${data.length} records from ${provider} on ${platform}`);
+      
+      // Convert native health data to our internal format
+      const convertedData = data.map((point: any) => ({
+        userId: 1, // Default user for now
+        dataType: point.type,
+        value: point.value,
+        unit: point.unit,
+        timestamp: new Date(point.timestamp),
+        source: point.source || provider,
+        metadata: {
+          platform,
+          provider,
+          syncTimestamp,
+          ...point.metadata
+        }
+      }));
+
+      // Use existing health data batch import functionality
+      const importedRecords = await storage.createHealthDataBatch(convertedData);
+      
+      // Clear cache to refresh dashboard data
+      cacheService.delete(`health_data_1`);
+      cacheService.delete(`health_categories_1`);
+
+      console.log(`[Native Health Sync] Successfully imported ${importedRecords.length} records`);
+      
+      res.json({
+        success: true,
+        imported: importedRecords.length,
+        processed: data.length,
+        errors: [],
+        syncTimestamp,
+        platform,
+        provider
+      });
+    } catch (error) {
+      console.error('Native health sync error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: "Native health sync failed",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Background sync endpoint for automatic synchronization
+  app.post("/api/health-data/background-sync", async (req, res) => {
+    try {
+      const { data, platform, provider } = req.body;
+      
+      if (!data || !Array.isArray(data)) {
+        return res.status(400).json({ error: "Invalid background sync data format" });
+      }
+
+      console.log(`[Background Sync] Processing ${data.length} records from ${provider}`);
+      
+      // Process background sync with lower priority
+      const convertedData = data.map((point: any) => ({
+        userId: 1,
+        dataType: point.type,
+        value: point.value,
+        unit: point.unit,
+        timestamp: new Date(point.timestamp),
+        source: `${point.source || provider} (Background)`,
+        metadata: {
+          platform,
+          provider,
+          syncType: 'background',
+          backgroundSyncTimestamp: new Date().toISOString(),
+          ...point.metadata
+        }
+      }));
+
+      // Use batch import for efficiency
+      const importedRecords = await storage.createHealthDataBatch(convertedData);
+      
+      // Selective cache clearing for background sync
+      if (cacheService.has(`health_data_1`)) {
+        cacheService.del(`health_data_1`);
+      }
+
+      res.json({
+        success: true,
+        imported: importedRecords.length,
+        processed: data.length
+      });
+    } catch (error) {
+      console.error('Background sync error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: "Background sync failed"
+      });
+    }
+  });
+
   // Update attachment retention settings
   app.patch("/api/retention-settings", async (req, res) => {
     try {

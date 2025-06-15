@@ -1282,8 +1282,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Sample data generation function for testing
-  function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: number = 30): any[] {
+// Sample data generation function for testing
+function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: number = 30): any[] {
     const sampleData = [];
     const now = new Date();
     const requestedTypes = dataTypes.length > 0 ? dataTypes : ['steps', 'heart_rate', 'sleep', 'weight'];

@@ -1,6 +1,6 @@
 /**
- * Native Health Integration Component - Phase 1
- * Provides UI for native health data access with fallback to file upload
+ * Native Health Integration Component - Phase 2 Implementation
+ * Provides real native health data access with full synchronization capabilities
  * Part of the Capacitor Mobile Health Data Integration Plan
  */
 
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Smartphone, 
   Upload, 
@@ -21,10 +22,13 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Info
+  Info,
+  Sync,
+  RefreshCw,
+  Clock
 } from "lucide-react";
 import { PlatformDetectionService, Platform, PlatformCapabilities } from "@/services/platform-detection";
-import { nativeHealthService, HealthPermissions, HealthSyncResult } from "@/services/native-health-service";
+import { nativeHealthService, HealthPermissions, HealthSyncResult, HealthDataQuery } from "@/services/native-health-service";
 
 interface NativeHealthIntegrationProps {
   onDataImported?: (result: HealthSyncResult) => void;
@@ -39,6 +43,10 @@ export function NativeHealthIntegration({ onDataImported, onError }: NativeHealt
   const [syncProgress, setSyncProgress] = useState(0);
   const [supportedDataTypes, setSupportedDataTypes] = useState<string[]>([]);
   const [providerInfo, setProviderInfo] = useState<any>(null);
+  const [selectedDataTypes, setSelectedDataTypes] = useState<string[]>([]);
+  const [timeRangeDays, setTimeRangeDays] = useState<number>(30);
+  const [lastSyncResult, setLastSyncResult] = useState<HealthSyncResult | null>(null);
+  const [isRequestingPermissions, setIsRequestingPermissions] = useState(false);
 
   useEffect(() => {
     initializePlatformInfo();

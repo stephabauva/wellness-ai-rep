@@ -1311,10 +1311,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use existing health data batch import functionality
       const importedRecords = await storage.createHealthDataBatch(convertedData);
-      
-      // Clear cache to refresh dashboard data
-      cacheService.delete(`health_data_1`);
-      cacheService.delete(`health_categories_1`);
 
       console.log(`[Native Health Sync] Successfully imported ${importedRecords.length} records`);
       
@@ -1367,11 +1363,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use batch import for efficiency
       const importedRecords = await storage.createHealthDataBatch(convertedData);
-      
-      // Selective cache clearing for background sync
-      if (cacheService.has(`health_data_1`)) {
-        cacheService.del(`health_data_1`);
-      }
 
       res.json({
         success: true,

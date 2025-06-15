@@ -678,13 +678,43 @@ export class NativeHealthService {
     const startTime = Date.now();
     
     try {
+      // For web platform, call the backend API directly
+      const platform = PlatformDetectionService.getPlatform();
+      
+      if (platform === 'web') {
+        const response = await fetch('/api/health-data/native-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataTypes: ['steps', 'heart_rate', 'sleep'],
+            timeRangeDays: 7,
+            platform: 'web'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Test sync failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        return {
+          success: result.success,
+          recordsProcessed: result.recordsProcessed || 0,
+          recordsImported: result.recordsImported || 0,
+          errors: result.errors || [],
+          duration: Date.now() - startTime
+        };
+      }
+
+      // For native platforms, check availability and permissions
       const isAvailable = await this.isAvailable();
       if (!isAvailable) {
         return {
           success: false,
           recordsProcessed: 0,
           recordsImported: 0,
-          errors: ['Native health service not available'],
+          errors: ['Native health service not available on this platform'],
           duration: Date.now() - startTime
         };
       }
@@ -695,18 +725,18 @@ export class NativeHealthService {
           success: false,
           recordsProcessed: 0,
           recordsImported: 0,
-          errors: ['Health permissions not granted'],
+          errors: ['Health permissions not granted - please request permissions first'],
           duration: Date.now() - startTime
         };
       }
 
-      // Phase 2: Actually test with sample data
+      // For native platforms with permissions, query actual health data
       const supportedTypes = await this.getSupportedDataTypes();
-      const testTypes = supportedTypes.slice(0, 3); // Test with first 3 supported types
+      const testTypes = supportedTypes.slice(0, 3);
       
       const testQuery: HealthDataQuery = {
         dataTypes: testTypes,
-        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         endDate: new Date(),
         limit: 100
       };
@@ -725,7 +755,7 @@ export class NativeHealthService {
         success: false,
         recordsProcessed: 0,
         recordsImported: 0,
-        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        errors: [error instanceof Error ? error.message : 'Test sync failed'],
         duration: Date.now() - startTime
       };
     }

@@ -1098,6 +1098,190 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Native Health Integration API endpoints - Phase 1
+  
+  // Get platform capabilities
+  app.get("/api/native-health/capabilities", async (req, res) => {
+    try {
+      // Return capabilities based on request headers (Capacitor will set specific headers)
+      const userAgent = req.headers['user-agent'] || '';
+      const isCapacitor = req.headers['x-capacitor-platform'] !== undefined;
+      const platform = req.headers['x-capacitor-platform'] || 'web';
+      
+      const capabilities = {
+        platform: isCapacitor ? platform : 'web',
+        isCapacitor,
+        healthDataAccess: isCapacitor && ['ios', 'android'].includes(platform as string),
+        backgroundSync: isCapacitor && ['ios', 'android'].includes(platform as string),
+        bluetoothLE: isCapacitor && ['ios', 'android'].includes(platform as string),
+        fileUpload: true, // Always available as fallback
+        pushNotifications: isCapacitor && ['ios', 'android'].includes(platform as string),
+        supportedProviders: isCapacitor 
+          ? (platform === 'ios' ? ['HealthKit'] : platform === 'android' ? ['Google Fit', 'Health Connect'] : ['File Upload'])
+          : ['File Upload']
+      };
+      
+      res.json(capabilities);
+    } catch (error) {
+      console.error('Native health capabilities error:', error);
+      res.status(500).json({ error: "Failed to get platform capabilities" });
+    }
+  });
+
+  // Check native health permissions
+  app.get("/api/native-health/permissions", async (req, res) => {
+    try {
+      const isCapacitor = req.headers['x-capacitor-platform'] !== undefined;
+      const platform = req.headers['x-capacitor-platform'];
+      
+      if (!isCapacitor || !['ios', 'android'].includes(platform as string)) {
+        return res.json({
+          granted: false,
+          permissions: { read: [], write: [] },
+          reason: 'Native health access not available on this platform'
+        });
+      }
+      
+      // Phase 1: Return stub data - actual permission checking will be implemented in Phase 2
+      res.json({
+        granted: false,
+        permissions: { read: [], write: [] },
+        reason: 'Phase 1: Permission checking not yet implemented',
+        phase: 1,
+        nextSteps: 'Will be implemented in Phase 2 with actual Capacitor plugins'
+      });
+    } catch (error) {
+      console.error('Native health permissions error:', error);
+      res.status(500).json({ error: "Failed to check permissions" });
+    }
+  });
+
+  // Request native health permissions
+  app.post("/api/native-health/permissions", async (req, res) => {
+    try {
+      const { dataTypes } = req.body;
+      const isCapacitor = req.headers['x-capacitor-platform'] !== undefined;
+      const platform = req.headers['x-capacitor-platform'];
+      
+      if (!isCapacitor || !['ios', 'android'].includes(platform as string)) {
+        return res.status(400).json({
+          error: 'Native health access not available on this platform'
+        });
+      }
+      
+      if (!dataTypes || !Array.isArray(dataTypes)) {
+        return res.status(400).json({
+          error: 'dataTypes array is required'
+        });
+      }
+      
+      // Phase 1: Return stub response - actual permission request will be implemented in Phase 2
+      res.json({
+        granted: false,
+        permissions: { read: [], write: [] },
+        requestedDataTypes: dataTypes,
+        phase: 1,
+        message: 'Phase 1: Permission requests will be implemented in Phase 2',
+        nextSteps: 'Capacitor health plugins integration required'
+      });
+    } catch (error) {
+      console.error('Native health permission request error:', error);
+      res.status(500).json({ error: "Failed to request permissions" });
+    }
+  });
+
+  // Get supported data types
+  app.get("/api/native-health/supported-types", async (req, res) => {
+    try {
+      const platform = req.headers['x-capacitor-platform'] || 'web';
+      
+      let supportedTypes: string[] = [];
+      
+      switch (platform) {
+        case 'ios':
+          supportedTypes = [
+            'steps',
+            'heart_rate',
+            'active_energy',
+            'distance_walking',
+            'sleep_analysis',
+            'body_mass',
+            'height',
+            'blood_pressure',
+            'respiratory_rate'
+          ];
+          break;
+        case 'android':
+          supportedTypes = [
+            'steps',
+            'heart_rate',
+            'calories_burned',
+            'distance',
+            'sleep',
+            'weight',
+            'height',
+            'blood_pressure',
+            'move_minutes'
+          ];
+          break;
+        default:
+          supportedTypes = ['file_upload']; // Web fallback
+      }
+      
+      res.json({
+        platform,
+        supportedDataTypes: supportedTypes,
+        phase: 1,
+        note: 'Phase 1: Data type definitions ready for Phase 2 implementation'
+      });
+    } catch (error) {
+      console.error('Native health supported types error:', error);
+      res.status(500).json({ error: "Failed to get supported data types" });
+    }
+  });
+
+  // Test native health sync
+  app.post("/api/native-health/test-sync", async (req, res) => {
+    try {
+      const isCapacitor = req.headers['x-capacitor-platform'] !== undefined;
+      const platform = req.headers['x-capacitor-platform'] || 'web';
+      
+      const startTime = Date.now();
+      
+      // Phase 1: Simulate a test sync
+      const testResult = {
+        success: true,
+        recordsProcessed: 0,
+        recordsImported: 0,
+        errors: [],
+        duration: Date.now() - startTime,
+        platform,
+        isCapacitor,
+        phase: 1,
+        message: isCapacitor 
+          ? 'Phase 1: Platform detection successful. Native health sync will be implemented in Phase 2.'
+          : 'Phase 1: Running on web platform. File upload remains the primary data import method.',
+        capabilities: {
+          detected: true,
+          platformSupport: isCapacitor && ['ios', 'android'].includes(platform as string),
+          readyForPhase2: true
+        }
+      };
+      
+      res.json(testResult);
+    } catch (error) {
+      console.error('Native health test sync error:', error);
+      res.status(500).json({ 
+        success: false,
+        recordsProcessed: 0,
+        recordsImported: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        duration: 0,
+        phase: 1
+      });
+    }
+  });
+
   // Update attachment retention settings
   app.patch("/api/retention-settings", async (req, res) => {
     try {

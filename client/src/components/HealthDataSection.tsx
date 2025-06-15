@@ -21,6 +21,7 @@ import { NutritionSummary } from "./health/NutritionSummary";
 import { HydrationCard } from "./health/HydrationCard";
 import { CoachingInsights } from "./health/CoachingInsights";
 import { HealthDataImport } from "./health/HealthDataImport";
+import { NativeHealthIntegration } from "./health/NativeHealthIntegration";
 
 // Define types for chart data (can be moved to a types file if they grow)
 interface ActivityDataPoint { day: string; steps?: number; active?: number; calories?: number; }
@@ -369,6 +370,28 @@ const HealthDataSection: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <NutritionSummary data={nutritionSummaryData} />
             <HydrationCard data={hydrationChartData} />
+          </div>
+
+          {/* Native Health Integration - Phase 1 */}
+          <div className="mb-8">
+            <NativeHealthIntegration 
+              onDataImported={(result) => {
+                if (result.success) {
+                  refetchHealthData();
+                  toast({
+                    title: "Native Health Sync",
+                    description: `Successfully processed ${result.recordsProcessed} records.`,
+                  });
+                }
+              }}
+              onError={(error) => {
+                toast({
+                  title: "Native Health Error",
+                  description: error,
+                  variant: "destructive",
+                });
+              }}
+            />
           </div>
           
           <CoachingInsights />

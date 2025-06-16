@@ -209,8 +209,14 @@ export class HealthKitProvider extends NativeHealthProvider {
   // Native bridge communication methods
   private async callNativeHealthKit(method: string, args: any): Promise<any> {
     try {
-      // This would use a real HealthKit plugin in production
-      const result = await Capacitor.isPluginAvailable('HealthKit')
+      // Use the actual HealthKit plugin for iOS
+      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+        const { HealthKitManager } = Capacitor.Plugins;
+        return await (HealthKitManager as any)[method](args);
+      }
+      
+      // Fallback for development/web
+      const result = await Capacitor.isPluginAvailable('HealthKitManager')
         ? (window as any).CapacitorHealthKit?.[method]?.(args)
         : null;
       

@@ -81,18 +81,31 @@ export class HealthKitProvider extends NativeHealthProvider {
         return { granted: false, permissions: { read: [], write: [] } };
       }
 
-      // Use Capacitor native bridge to check HealthKit permissions
-      const result = await Capacitor.isPluginAvailable('HealthKit') 
-        ? await this.callNativeHealthKit('checkPermissions', {})
-        : await this.getStoredPermissions();
+      // On real iOS device, check HealthKit permissions
+      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+        try {
+          // Use native iOS HealthKit API
+          const result = await this.callNativeHealthKit('checkPermissions', {});
+          return {
+            granted: result.granted || false,
+            permissions: {
+              read: result.readPermissions || [],
+              write: result.writePermissions || []
+            }
+          };
+        } catch (error) {
+          console.error('[HealthKit] Native permission check failed:', error);
+          return { granted: false, permissions: { read: [], write: [] } };
+        }
+      }
 
-      console.log('[HealthKit] Permission check result:', result);
-      
+      // For web/development, return stored permissions
+      const stored = await this.getStoredPermissions();
       return {
-        granted: result.granted || false,
+        granted: stored.granted || false,
         permissions: {
-          read: result.readPermissions || [],
-          write: result.writePermissions || []
+          read: stored.readPermissions || [],
+          write: stored.writePermissions || []
         }
       };
     } catch (error) {

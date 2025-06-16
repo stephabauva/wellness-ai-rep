@@ -1,4 +1,16 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { Capacitor } from "@capacitor/core";
+
+function getApiBaseUrl(): string {
+  // For native mobile apps, use the production server URL
+  if (Capacitor.isNativePlatform()) {
+    // You'll need to replace this with your actual server URL when deploying
+    return 'http://localhost:5000';
+  }
+  
+  // For web development, use relative URLs (handled by Vite proxy)
+  return '';
+}
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -8,18 +20,23 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export const apiRequest = async (url: string, method: string, data?: any) => {
+  // Get the correct base URL for mobile environments
+  const baseUrl = getApiBaseUrl();
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+  
   const config: RequestInit = {
     method,
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include', // Important for session management
   };
 
   if (data) {
     config.body = JSON.stringify(data);
   }
 
-  const response = await fetch(url, config);
+  const response = await fetch(fullUrl, config);
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -47,7 +64,11 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const baseUrl = getApiBaseUrl();
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 

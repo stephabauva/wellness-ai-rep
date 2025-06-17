@@ -404,7 +404,12 @@ const HealthDataSection: React.FC = () => {
             </div>
           </div>
 
-          <KeyMetricsOverview healthData={allHealthData} />
+          <KeyMetricsOverview 
+            healthData={allHealthData}
+            isRemovalMode={isRemovalMode}
+            selectedMetricsForRemoval={selectedMetricsForRemoval}
+            onMetricSelectionChange={setSelectedMetricsForRemoval}
+          />
 
           <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto gap-1">

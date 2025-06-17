@@ -3,9 +3,13 @@ import { StatCard } from '@/components/ui/stat-card'; // Assuming StatCard is a 
 import { HealthMetric } from '@/hooks/useHealthDataApi'; // Import the HealthMetric type
 import { Activity, Brain, Heart, Calendar as CalendarIcon, Zap, Moon, Stethoscope, Droplets, Users, Shield, Eye } from 'lucide-react'; // Renamed Calendar to CalendarIcon
 import { useQuery } from '@tanstack/react-query';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface KeyMetricsOverviewProps {
   healthData: HealthMetric[] | undefined | null; // Can be undefined while loading or null if no data
+  isRemovalMode?: boolean;
+  selectedMetricsForRemoval?: string[];
+  onMetricSelectionChange?: (selectedMetrics: string[]) => void;
 }
 
 interface MetricsVisibilitySettings {
@@ -43,7 +47,21 @@ const getLatestMetricUnit = (
   return metric?.unit || defaultUnit;
 }
 
-export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthData }) => {
+export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ 
+  healthData, 
+  isRemovalMode = false,
+  selectedMetricsForRemoval = [],
+  onMetricSelectionChange = () => {}
+}) => {
+  // Handle metric selection for removal
+  const handleMetricSelection = (metricId: string, isSelected: boolean) => {
+    if (isSelected) {
+      onMetricSelectionChange([...selectedMetricsForRemoval, metricId]);
+    } else {
+      onMetricSelectionChange(selectedMetricsForRemoval.filter(id => id !== metricId));
+    }
+  };
+
   // Get current visibility settings
   const { data: visibilitySettings } = useQuery({
     queryKey: ['/api/health-consent/visibility'],
@@ -229,14 +247,24 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
         if (!config) {
           // Fallback for unknown metrics
           return (
-            <StatCard
-              key={metricId}
-              title={metricId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              value={getLatestMetricValue(healthData, metricId, "N/A")}
-              unit={getLatestMetricUnit(healthData, metricId, "")}
-              change={calculateChange(metricId)}
-              icon={<Eye className="h-4 w-4" />}
-            />
+            <div key={metricId} className="relative">
+              {isRemovalMode && (
+                <div className="absolute top-2 right-2 z-10">
+                  <Checkbox
+                    checked={selectedMetricsForRemoval.includes(metricId)}
+                    onCheckedChange={(checked) => handleMetricSelection(metricId, !!checked)}
+                    className="bg-background border-2"
+                  />
+                </div>
+              )}
+              <StatCard
+                title={metricId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                value={getLatestMetricValue(healthData, metricId, "N/A")}
+                unit={getLatestMetricUnit(healthData, metricId, "")}
+                change={calculateChange(metricId)}
+                icon={<Eye className="h-4 w-4" />}
+              />
+            </div>
           );
         }
 
@@ -268,15 +296,25 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
         }
 
         return (
-          <StatCard
-            key={metricId}
-            title={config.title}
-            value={value}
-            unit={unit}
-            change={change}
-            icon={config.icon}
-            {...additionalProps}
-          />
+          <div key={metricId} className="relative">
+            {isRemovalMode && (
+              <div className="absolute top-2 right-2 z-10">
+                <Checkbox
+                  checked={selectedMetricsForRemoval.includes(metricId)}
+                  onCheckedChange={(checked) => handleMetricSelection(metricId, !!checked)}
+                  className="bg-background border-2"
+                />
+              </div>
+            )}
+            <StatCard
+              title={config.title}
+              value={value}
+              unit={unit}
+              change={change}
+              icon={config.icon}
+              {...additionalProps}
+            />
+          </div>
         );
       })}
     </div>

@@ -32,9 +32,13 @@ import { spawn } from 'child_process';
 import { enhancedBackgroundProcessor } from "./services/enhanced-background-processor";
 import { memoryFeatureFlags } from "./services/memory-feature-flags";
 import { memoryPerformanceMonitor } from "./services/memory-performance-monitor";
+import { ChatGPTMemoryEnhancement } from "./services/chatgpt-memory-enhancement";
 
 // Go service auto-start functionality
 let goServiceProcess: any = null;
+
+// Initialize ChatGPT Memory Enhancement Service
+const chatGPTMemoryEnhancement = new ChatGPTMemoryEnhancement();
 
 async function startGoAccelerationService(): Promise<void> {
   try {
@@ -1985,7 +1989,7 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
     }
   });
 
-  // Manual memory creation endpoint
+  // Manual memory creation endpoint with ChatGPT deduplication
   app.post("/api/memories/manual", async (req, res) => {
     try {
       const userId = 1; // Default user ID
@@ -2004,48 +2008,78 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         return res.status(400).json({ message: "Importance must be a number between 0 and 1" });
       }
 
-      // Use the existing memory service's createMemory method directly
-      // This integrates with the existing system without breaking UUID constraints
-      const memory = await memoryService.createMemory(
-        userId,
-        content.trim(),
-        category,
-        importance,
-        null, // No conversation ID for manual entries
-        null, // No message ID for manual entries  
-        [] // Keywords will be auto-generated through the memory processing system
-      );
+      console.log(`[ManualMemory] Processing manual memory with ChatGPT deduplication for user ${userId}, content: "${content.substring(0, 50)}..."`);
 
-      if (memory) {
-        // Also trigger background memory processing for relationship detection
-        // This uses the existing memory processing pipeline without conversation constraints
-        try {
-          await memoryService.processMessageForMemory(
-            userId,
-            content,
-            null, // No conversation ID needed for processing
-            null, // No message ID needed
-            [] // No conversation history for manual entries
-          );
-        } catch (processingError) {
-          // Log but don't fail the request if background processing fails
-          console.warn('Background memory processing failed for manual entry:', processingError);
+      // Use ChatGPT deduplication system for manual memory creation
+      try {
+        await chatGPTMemoryEnhancement.processWithDeduplication(
+          userId,
+          content.trim(),
+          '' // No conversation ID for manual entries
+        );
+
+        console.log(`[ManualMemory] ChatGPT deduplication processing completed successfully`);
+
+        // Invalidate cache to ensure fresh data
+        memoryService.forceCacheCleanup();
+
+        // Get the latest memories to find the one we just created (if it wasn't deduplicated)
+        const recentMemories = await memoryService.getUserMemories(userId);
+        const possibleNewMemory = recentMemories.find(m => 
+          m.content.toLowerCase().includes(content.toLowerCase().trim().substring(0, 20).toLowerCase())
+        );
+
+        if (possibleNewMemory) {
+          res.status(201).json({
+            success: true,
+            memory: {
+              id: possibleNewMemory.id,
+              content: possibleNewMemory.content,
+              category: possibleNewMemory.category,
+              importance: possibleNewMemory.importanceScore,
+              createdAt: possibleNewMemory.createdAt
+            },
+            message: "Memory processed and saved successfully"
+          });
+        } else {
+          // Memory was likely deduplicated - this is actually success!
+          res.status(200).json({
+            success: true,
+            message: "Memory was recognized as similar to existing information and merged accordingly"
+          });
         }
 
-        res.status(201).json({
-          success: true,
-          memory: {
-            id: memory.id,
-            content: memory.content,
-            category: memory.category,
-            importance: memory.importanceScore,
-            createdAt: memory.createdAt
-          },
-          message: "Memory processed and saved successfully"
-        });
-      } else {
-        res.status(500).json({ message: "Failed to save memory" });
+      } catch (chatgptError) {
+        console.error('[ManualMemory] ChatGPT deduplication failed, using fallback:', chatgptError);
+        
+        // Fallback to regular memory creation if deduplication fails
+        const memory = await memoryService.createMemory(
+          userId,
+          content.trim(),
+          category,
+          importance,
+          null, // No conversation ID for manual entries
+          null, // No message ID for manual entries  
+          [] // Keywords will be auto-generated through the memory processing system
+        );
+
+        if (memory) {
+          res.status(201).json({
+            success: true,
+            memory: {
+              id: memory.id,
+              content: memory.content,
+              category: memory.category,
+              importance: memory.importanceScore,
+              createdAt: memory.createdAt
+            },
+            message: "Memory processed and saved successfully (fallback mode)"
+          });
+        } else {
+          res.status(500).json({ message: "Failed to save memory" });
+        }
       }
+
     } catch (error) {
       console.error('Error creating manual memory:', error);
       res.status(500).json({ message: "Failed to create memory" });

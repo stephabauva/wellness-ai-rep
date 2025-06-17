@@ -158,53 +158,81 @@ class MemoryService {
     console.log(`[MemoryService] Cache cleanup completed. Active caches: ${this.userMemoryCache.size + this.similarityCache.size}`);
   }
 
-  // Tier 2 C: Background memory processing task
+  // Tier 2 C: Background memory processing task with ChatGPT deduplication
   private async processBackgroundMemoryTask(payload: any): Promise<void> {
     const { userId, message, conversationId, messageId, conversationHistory } = payload;
     
     try {
-      console.log(`[MemoryService] Processing background memory task for user ${userId}, message: "${message.substring(0, 50)}..."`);
+      console.log(`[MemoryService] Processing background memory task with ChatGPT deduplication for user ${userId}, message: "${message.substring(0, 50)}..."`);
       
-      const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
-      console.log(`[MemoryService] Memory detection result:`, { 
-        shouldRemember: autoDetection.shouldRemember, 
-        category: autoDetection.category, 
-        importance: autoDetection.importance 
-      });
+      // Use ChatGPT deduplication system for enhanced memory processing
+      const { ChatGPTMemoryEnhancement } = require('./chatgpt-memory-enhancement');
+      const chatGPTMemoryEnhancement = new ChatGPTMemoryEnhancement();
       
-      if (autoDetection.shouldRemember) {
-        // Validate conversationId format - must be valid UUID or null
-        let validConversationId = null;
-        if (conversationId && typeof conversationId === 'string') {
-          // Check if it's a valid UUID format (36 characters with dashes)
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          if (uuidRegex.test(conversationId)) {
-            validConversationId = conversationId;
-          }
-        }
-        
-        const savedMemory = await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
-          category: autoDetection.category,
-          importance_score: autoDetection.importance,
-          sourceConversationId: validConversationId,
-          sourceMessageId: messageId,
-          keywords: autoDetection.keywords,
-        });
-        
-        if (savedMemory) {
-          console.log(`[MemoryService] Successfully saved memory: "${autoDetection.extractedInfo}" (ID: ${savedMemory.id})`);
-          // Invalidate user memory cache immediately for real-time updates
-          this.invalidateUserMemoryCache(userId, 100); // Fast invalidation
-          
-          // Force immediate cache cleanup to ensure fresh data
-          this.forceCacheCleanup();
-          console.log(`[MemoryService] Cache forcefully invalidated for immediate UI refresh`);
-        } else {
-          console.error('[MemoryService] Failed to save memory - saveMemoryEntry returned null');
+      // Validate conversationId format - must be valid UUID or null  
+      let validConversationId = conversationId;
+      if (conversationId && typeof conversationId === 'string') {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(conversationId)) {
+          validConversationId = null;
         }
       }
+      
+      // Process with ChatGPT-style deduplication
+      await chatGPTMemoryEnhancement.processWithDeduplication(
+        userId,
+        message,
+        validConversationId || ''
+      );
+      
+      console.log(`[MemoryService] ChatGPT deduplication processing completed for user ${userId}`);
+      
+      // Invalidate user memory cache immediately for real-time updates
+      this.invalidateUserMemoryCache(userId, 100); // Fast invalidation
+      
+      // Force immediate cache cleanup to ensure fresh data
+      this.forceCacheCleanup();
+      console.log(`[MemoryService] Cache forcefully invalidated for immediate UI refresh`);
+      
     } catch (error) {
-      console.error('[MemoryService] Background memory processing failed:', error);
+      console.error('[MemoryService] ChatGPT deduplication processing failed, falling back to standard processing:', error);
+      
+      // Fallback to original memory processing if deduplication fails
+      try {
+        const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
+        console.log(`[MemoryService] Fallback memory detection result:`, { 
+          shouldRemember: autoDetection.shouldRemember, 
+          category: autoDetection.category, 
+          importance: autoDetection.importance 
+        });
+        
+        if (autoDetection.shouldRemember) {
+          // Validate conversationId format - must be valid UUID or null
+          let validConversationId = null;
+          if (conversationId && typeof conversationId === 'string') {
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (uuidRegex.test(conversationId)) {
+              validConversationId = conversationId;
+            }
+          }
+          
+          const savedMemory = await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
+            category: autoDetection.category,
+            importance_score: autoDetection.importance,
+            sourceConversationId: validConversationId,
+            sourceMessageId: messageId,
+            keywords: autoDetection.keywords,
+          });
+          
+          if (savedMemory) {
+            console.log(`[MemoryService] Fallback - Successfully saved memory: "${autoDetection.extractedInfo}" (ID: ${savedMemory.id})`);
+            this.invalidateUserMemoryCache(userId, 100);
+            this.forceCacheCleanup();
+          }
+        }
+      } catch (fallbackError) {
+        console.error('[MemoryService] Both ChatGPT and fallback memory processing failed:', fallbackError);
+      }
     }
   }
 

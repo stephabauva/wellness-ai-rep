@@ -346,6 +346,15 @@ Changelog:
   - **Production Validation**: Successfully tested with dark chocolate preferences - system detects duplicates and updates existing memories instead of creating new ones
   - **Performance Optimized**: Recent memory lookup (72-hour window) with embedding similarity calculation maintains <3s response times
   - **Zero Breaking Changes**: All existing memory functionality preserved while eliminating duplicate memory creation across all entry points
+- June 17, 2025. **Health Dashboard Metrics Control System - Complete Implementation**:
+  - **Dashboard Metrics Management**: Moved metrics visibility controls from Settings to dedicated modal interface at top of Health Dashboard
+  - **Add Metrics Modal**: Created comprehensive modal with search functionality, category organization, and '+' icons for adding metrics to dashboard
+  - **Remove Metrics Modal**: Implemented checkbox-based removal system allowing users to select and remove multiple metrics from dashboard
+  - **Dynamic Key Metrics Display**: Transformed hardcoded KeyMetricsOverview to use visibility settings with comprehensive metric configuration mapping
+  - **User-Controlled Dashboard**: Users can now fully customize which health metrics appear on their dashboard through intuitive modal interfaces
+  - **Real-time Updates**: Proper cache invalidation ensures metrics appear/disappear immediately after adding/removing without page refresh
+  - **Comprehensive Metric Support**: Added configuration for 15+ health metrics including ECG, HRV, blood oxygen, water intake, and more
+  - **Zero Breaking Changes**: All existing health data functionality preserved while adding powerful customization capabilities
 
 # User Preferences
 

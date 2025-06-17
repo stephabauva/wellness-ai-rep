@@ -23,6 +23,7 @@ import { CoachingInsights } from "./health/CoachingInsights";
 import { HealthDataImport } from "./health/HealthDataImport";
 import { NativeHealthIntegration } from "./health/NativeHealthIntegration";
 import { AddMetricsModal } from "./health/AddMetricsModal";
+import { RemoveMetricsModal } from "./health/RemoveMetricsModal";
 
 // Define types for chart data (can be moved to a types file if they grow)
 interface ActivityDataPoint { day: string; steps?: number; active?: number; calories?: number; }
@@ -273,6 +274,7 @@ const HealthDataSection: React.FC = () => {
             <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
             <div className="mt-4 md:mt-0 flex space-x-2">
               <AddMetricsModal />
+              <RemoveMetricsModal />
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select time range" />

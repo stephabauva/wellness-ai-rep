@@ -171,7 +171,7 @@ class MemoryService {
       console.log(`[MemoryService] Processing background memory task with ChatGPT deduplication for user ${userId}, message: "${message.substring(0, 50)}..."`);
       
       // Use ChatGPT deduplication system for enhanced memory processing
-      const { ChatGPTMemoryEnhancement } = require('./chatgpt-memory-enhancement');
+      const { ChatGPTMemoryEnhancement } = await import('./chatgpt-memory-enhancement.js');
       const chatGPTMemoryEnhancement = new ChatGPTMemoryEnhancement();
       
       // Validate conversationId format - must be valid UUID or null  

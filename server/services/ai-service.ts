@@ -256,6 +256,54 @@ class AiService {
     }
   }
 
+  // ChatGPT-style memory deduplication processing for streaming responses
+  private async processChatGPTMemoryDeduplication(
+    userId: number,
+    message: string,
+    conversationId: string,
+    conversationHistory: any[]
+  ): Promise<void> {
+    try {
+      log('info', '[AiService] Starting ChatGPT memory deduplication processing', {
+        userId,
+        conversationId,
+        messageLength: message.length
+      });
+
+      // Import and use ChatGPT deduplication system
+      const { ChatGPTMemoryEnhancement } = await import('./chatgpt-memory-enhancement.js');
+      const chatGPTMemoryEnhancement = new ChatGPTMemoryEnhancement();
+      
+      // Process with deduplication
+      await chatGPTMemoryEnhancement.processWithDeduplication(
+        userId,
+        message,
+        conversationId,
+        conversationHistory
+      );
+      
+      log('info', '[AiService] ChatGPT memory deduplication completed successfully', {
+        userId,
+        conversationId
+      });
+      
+    } catch (error) {
+      log('error', '[AiService] ChatGPT memory deduplication failed:', {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+        conversationId
+      });
+      
+      // Fallback to standard memory processing
+      try {
+        await memoryService.processMessageForMemory(userId, message, conversationId, 0, conversationHistory);
+        log('info', '[AiService] Fallback to standard memory processing completed');
+      } catch (fallbackError) {
+        log('error', '[AiService] Fallback memory processing also failed:', fallbackError);
+      }
+    }
+  }
+
   // Existing Node.js provider processing (extracted from original getChatResponse)
   private async processWithNodeProviders(
     message: string,
@@ -393,11 +441,11 @@ class AiService {
 
       log('info', `Using AI provider for streaming: ${currentAiConfig.provider}, Model: ${currentAiConfig.model}`);
 
-      // Start enhanced memory processing in parallel (non-blocking)
-      const memoryProcessingPromise = this.processEnhancedMemory(
-        userId, message, conversationHistory, conversationId, messageId, coachingMode
-      ).catch(error => {
-        log('error', '[AiService] Enhanced stream memory processing failed:', error);
+      // Start ChatGPT deduplication memory processing in parallel (non-blocking)
+      const memoryProcessingPromise = this.processChatGPTMemoryDeduplication(
+        userId, message, conversationId, conversationHistory
+      ).catch((error: any) => {
+        log('error', '[AiService] ChatGPT memory deduplication failed:', error);
         return null;
       });
 

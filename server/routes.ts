@@ -15,7 +15,7 @@ import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog, users } from "@shared/schema";
+import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog, users, settingsUpdateSchema } from "@shared/schema";
 import { categoryService } from "./services/category-service";
 import { eq, desc, and, or } from "drizzle-orm";
 import { join } from 'path';

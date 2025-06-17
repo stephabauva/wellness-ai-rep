@@ -65,6 +65,7 @@ const settingsSections = [
   { id: 'preferences', label: 'App Preferences', icon: Palette },
   { id: 'files', label: 'File Management', icon: FolderOpen },
   { id: 'ai', label: 'AI Configuration', icon: Bot },
+  { id: 'health-consent', label: 'Health Data Privacy', icon: Shield },
   { id: 'performance', label: 'Performance', icon: Zap },
 ];
 
@@ -189,6 +190,18 @@ const SettingsSection: React.FC = () => {
           <AiConfigurationSettings
             aiModels={aiModels}
             isLoadingAiModels={isLoadingAiModels}
+          />
+        );
+      case 'health-consent':
+        return (
+          <HealthDataConsentSettings
+            settings={userSettings}
+            onSettingsUpdate={(newSettings) => {
+              // Update settings via the existing handler
+              const data = { ...form.getValues(), ...newSettings };
+              onSubmit(data);
+            }}
+            isLoading={isUpdatingSettings}
           />
         );
       case 'performance':

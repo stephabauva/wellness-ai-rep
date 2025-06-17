@@ -375,7 +375,8 @@ export class AdvancedMemoryAIService {
   private async getUserRecentMemories(userId: number, limit: number = 10): Promise<any[]> {
     try {
       // Use existing memory service to get recent memories
-      return await memoryService.getMemories(userId, undefined, limit);
+      const allMemories = await memoryService.getUserMemories(userId);
+      return allMemories.slice(0, limit);
     } catch (error) {
       console.error('[AdvancedMemoryAI] Failed to get user memories:', error);
       return [];

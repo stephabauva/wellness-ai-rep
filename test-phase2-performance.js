@@ -3,7 +3,7 @@
  * Tests relationship mapping, atomic facts, semantic clustering, and enhanced prompts
  */
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 class Phase2PerformanceTest {
   constructor() {

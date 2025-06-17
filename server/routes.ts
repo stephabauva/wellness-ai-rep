@@ -1209,7 +1209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get user memories for relationship analysis
-      const userMemories = await memoryService.getMemories(userId, undefined, 10);
+      const userMemories = await memoryService.getUserMemories(userId);
       
       // Discover relationships
       const relationships = await memoryRelationshipEngine.discoverRelationships(memoryId, userMemories);
@@ -1258,7 +1258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId = 1 } = req.body;
       
-      const userMemories = await memoryService.getMemories(userId, undefined, 20);
+      const userMemories = await memoryService.getUserMemories(userId);
       const clusters = await memoryRelationshipEngine.buildSemanticClusters(userMemories);
       
       res.json({

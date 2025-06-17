@@ -78,7 +78,12 @@ class MemoryService {
 
   // Tier 2 C: Initialize background processor
   private initializeBackgroundProcessor(): void {
+    console.log('[MemoryService] Initializing background processor with 5-second intervals');
+    
     setInterval(() => {
+      if (this.backgroundQueue.tasks.length > 0) {
+        console.log(`[MemoryService] Background processor checking queue: ${this.backgroundQueue.tasks.length} tasks pending`);
+      }
       this.processBackgroundQueue();
     }, 5000); // Process queue every 5 seconds
     

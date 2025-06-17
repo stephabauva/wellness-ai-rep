@@ -23,7 +23,9 @@ import { CoachingInsights } from "./health/CoachingInsights";
 import { HealthDataImport } from "./health/HealthDataImport";
 import { NativeHealthIntegration } from "./health/NativeHealthIntegration";
 import { AddMetricsModal } from "./health/AddMetricsModal";
-import { RemoveMetricsModal } from "./health/RemoveMetricsModal";
+import { Minus } from "lucide-react";
+import { useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 
 // Define types for chart data (can be moved to a types file if they grow)
 interface ActivityDataPoint { day: string; steps?: number; active?: number; calories?: number; }
@@ -36,10 +38,69 @@ const HealthDataSection: React.FC = () => {
   const [timeRange, setTimeRange] = useState("7days");
   const [activeCategory, setActiveCategory] = useState("overview");
   const [isResetting, setIsResetting] = useState(false);
+  const [isRemovalMode, setIsRemovalMode] = useState<boolean>(false);
+  const [selectedMetricsForRemoval, setSelectedMetricsForRemoval] = useState<string[]>([]);
   
   const { categorizedData, allHealthData, isLoading, refetchHealthData } = useHealthDataApi(timeRange);
   const { downloadHealthReport, isDownloadingReport } = useHealthReport();
   const { toast } = useToast();
+
+  // Mutation for removing metrics
+  const removeMetricsMutation = useMutation({
+    mutationFn: async (metricsToRemove: string[]) => {
+      const response = await fetch('/api/health-consent/visibility');
+      if (!response.ok) throw new Error('Failed to fetch current settings');
+      
+      const currentSettings = await response.json();
+      
+      const updatedSettings = {
+        ...currentSettings,
+        dashboard_preferences: {
+          ...currentSettings.dashboard_preferences,
+          visible_metrics: currentSettings.dashboard_preferences.visible_metrics.filter(
+            (id: string) => !metricsToRemove.includes(id)
+          ),
+          hidden_metrics: [
+            ...currentSettings.dashboard_preferences.hidden_metrics,
+            ...metricsToRemove.filter((id: string) => 
+              !currentSettings.dashboard_preferences.hidden_metrics.includes(id)
+            )
+          ]
+        }
+      };
+
+      const updateResponse = await fetch('/api/health-consent/visibility', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings),
+      });
+      
+      if (!updateResponse.ok) throw new Error('Failed to update settings');
+      return updateResponse.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/health-consent/visibility'] });
+      toast({
+        title: "Metrics Removed",
+        description: `${selectedMetricsForRemoval.length} metric(s) removed from dashboard.`,
+      });
+      setSelectedMetricsForRemoval([]);
+      setIsRemovalMode(false);
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Remove Metrics",
+        description: "Unable to remove metrics. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRemoveSelectedMetrics = () => {
+    if (selectedMetricsForRemoval.length > 0) {
+      removeMetricsMutation.mutate(selectedMetricsForRemoval);
+    }
+  };
 
   // Memoize processed data for charts to prevent re-computation on every render
   // These are examples; actual data processing would depend on the structure of HealthMetric[]
@@ -274,7 +335,23 @@ const HealthDataSection: React.FC = () => {
             <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
             <div className="mt-4 md:mt-0 flex space-x-2">
               <AddMetricsModal />
-              <RemoveMetricsModal />
+              <Button 
+                variant="outline" 
+                onClick={() => setIsRemovalMode(!isRemovalMode)}
+                className={isRemovalMode ? "bg-destructive/10 border-destructive" : ""}
+              >
+                <Minus className="h-4 w-4 mr-2" />
+                {isRemovalMode ? "Cancel" : "Remove Metrics"}
+              </Button>
+              {isRemovalMode && selectedMetricsForRemoval.length > 0 && (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleRemoveSelectedMetrics}
+                  disabled={removeMetricsMutation.isPending}
+                >
+                  {removeMetricsMutation.isPending ? "Removing..." : `Remove Selected (${selectedMetricsForRemoval.length})`}
+                </Button>
+              )}
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select time range" />

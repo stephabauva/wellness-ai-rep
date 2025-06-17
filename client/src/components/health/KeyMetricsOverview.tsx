@@ -107,21 +107,24 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
       unit: "steps",
       icon: <Activity className="h-4 w-4" />,
       goalValue: 10000,
-      hasGoal: true
+      hasGoal: true,
+      hasStatus: false
     },
     distance_walked: {
       title: "Distance Walked",
       unit: "miles",
       icon: <Activity className="h-4 w-4" />,
       goalValue: 5,
-      hasGoal: true
+      hasGoal: true,
+      hasStatus: false
     },
     active_energy: {
       title: "Active Calories",
       unit: "cal",
       icon: <Zap className="h-4 w-4" />,
       goalValue: 500,
-      hasGoal: true
+      hasGoal: true,
+      hasStatus: false
     },
     heart_rate: {
       title: "Heart Rate",
@@ -136,63 +139,72 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ healthDa
       unit: "bpm",
       icon: <Heart className="h-4 w-4" />,
       goalValue: "Normal Range",
-      hasGoal: false
+      hasGoal: false,
+      hasStatus: false
     },
     sleep_duration: {
       title: "Sleep Duration",
       unit: "hours",
       icon: <Moon className="h-4 w-4" />,
       goalValue: 8,
-      hasGoal: true
+      hasGoal: true,
+      hasStatus: false
     },
     weight: {
       title: "Weight",
       unit: "lbs",
       icon: <CalendarIcon className="h-4 w-4" />,
       goalValue: undefined,
-      hasGoal: false
+      hasGoal: false,
+      hasStatus: false
     },
     body_weight: {
       title: "Body Weight",
       unit: "lbs",
       icon: <CalendarIcon className="h-4 w-4" />,
       goalValue: undefined,
-      hasGoal: false
+      hasGoal: false,
+      hasStatus: false
     },
     blood_oxygen: {
       title: "Blood Oxygen",
       unit: "%",
       icon: <Droplets className="h-4 w-4" />,
       goalValue: 95,
-      hasGoal: true
+      hasGoal: true,
+      hasStatus: false
     },
     ecg: {
       title: "ECG",
       unit: "reading",
       icon: <Stethoscope className="h-4 w-4" />,
       goalValue: "Normal",
-      hasGoal: false
+      hasGoal: false,
+      hasStatus: false
     },
     hrv: {
       title: "Heart Rate Variability",
       unit: "ms",
       icon: <Heart className="h-4 w-4" />,
       goalValue: undefined,
-      hasGoal: false
+      hasGoal: false,
+      hasStatus: false
     },
     blood_pressure: {
       title: "Blood Pressure",
       unit: "mmHg",
       icon: <Heart className="h-4 w-4" />,
       goalValue: "Normal",
-      hasGoal: false
+      hasGoal: false,
+      hasStatus: false
     },
     water_intake: {
       title: "Water Intake",
       unit: "oz",
       icon: <Droplets className="h-4 w-4" />,
       goalValue: 64,
-      hasGoal: true
+      hasGoal: true,
+      hasStatus: false
     }
   };
 

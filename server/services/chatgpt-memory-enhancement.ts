@@ -248,12 +248,54 @@ Use this information naturally in your responses to provide personalized guidanc
         };
       }
 
-      // Skip expensive similarity computation for new content - default to create
-      return {
-        action: 'create',
-        confidence: 1.0,
-        reasoning: 'No duplicates found - creating new entry'
-      };
+      // Get recent memories to check for semantic similarity
+      const recentMemories = await this.getRecentMemories(userId, 72); // Check last 3 days
+      
+      if (recentMemories.length === 0) {
+        return {
+          action: 'create',
+          confidence: 1.0,
+          reasoning: 'No existing memories to compare against'
+        };
+      }
+
+      // Find semantically similar memory using existing similarity logic
+      const similarMemory = await this.findSimilarMemory(messageContent, recentMemories);
+      
+      if (similarMemory && similarMemory.similarity > 0.8) {
+        // High similarity - merge instead of creating duplicate
+        const result = {
+          action: 'merge' as const,
+          existingMemoryId: similarMemory.id,
+          confidence: similarMemory.similarity,
+          reasoning: `High similarity (${(similarMemory.similarity * 100).toFixed(1)}%) with existing memory: "${similarMemory.content.substring(0, 50)}..."`
+        };
+        
+        // Cache the result
+        this.deduplicationCache.set(cacheKey, similarMemory.id);
+        return result;
+      } else if (similarMemory && similarMemory.similarity > 0.6) {
+        // Medium similarity - update existing memory
+        const result = {
+          action: 'update' as const,
+          existingMemoryId: similarMemory.id,
+          confidence: similarMemory.similarity,
+          reasoning: `Medium similarity (${(similarMemory.similarity * 100).toFixed(1)}%) with existing memory: "${similarMemory.content.substring(0, 50)}..."`
+        };
+        
+        // Cache the result
+        this.deduplicationCache.set(cacheKey, similarMemory.id);
+        return result;
+      } else {
+        // Low or no similarity - create new memory
+        return {
+          action: 'create',
+          confidence: 1.0,
+          reasoning: similarMemory 
+            ? `Low similarity (${(similarMemory.similarity * 100).toFixed(1)}%) - creating new memory`
+            : 'No similar memories found - creating new memory'
+        };
+      }
 
     } catch (error) {
       console.error('[ChatGPTMemoryEnhancement] Deduplication check failed:', error);

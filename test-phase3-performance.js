@@ -3,7 +3,7 @@
  * Tests circuit breakers, batch processing, and queue management
  */
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 class Phase3PerformanceTest {
   constructor() {
@@ -309,8 +309,8 @@ async function main() {
   await tester.runAllTests();
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error);
 }
 
-module.exports = Phase3PerformanceTest;
+export default Phase3PerformanceTest;

@@ -3028,11 +3028,6 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
   });
 
   // Phase 3 & 4 API Endpoints for Performance Testing
-  
-  // Import enhanced services
-  const { enhancedBackgroundProcessor } = await import('./services/enhanced-background-processor');
-  const { memoryFeatureFlags } = await import('./services/memory-feature-flags');
-  const { memoryPerformanceMonitor } = await import('./services/memory-performance-monitor');
 
   // Phase 3: Enhanced Background Processing Tests
   app.post('/api/memory/background-processing-test', async (req, res) => {

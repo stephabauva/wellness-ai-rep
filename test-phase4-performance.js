@@ -3,7 +3,7 @@
  * Tests feature flags, gradual rollout, performance monitoring, and production readiness
  */
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 class Phase4PerformanceTest {
   constructor() {
@@ -337,8 +337,8 @@ async function main() {
   await tester.runAllTests();
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error);
 }
 
-module.exports = Phase4PerformanceTest;
+export default Phase4PerformanceTest;

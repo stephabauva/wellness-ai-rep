@@ -48,35 +48,24 @@ const HealthDataSection: React.FC = () => {
   // Mutation for removing metrics
   const removeMetricsMutation = useMutation({
     mutationFn: async (metricsToRemove: string[]) => {
-      const response = await fetch('/api/health-consent/visibility');
-      if (!response.ok) throw new Error('Failed to fetch current settings');
-      
-      const currentSettings = await response.json();
-      
-      const updatedSettings = {
-        ...currentSettings,
-        dashboard_preferences: {
-          ...currentSettings.dashboard_preferences,
-          visible_metrics: currentSettings.dashboard_preferences.visible_metrics.filter(
-            (id: string) => !metricsToRemove.includes(id)
-          ),
-          hidden_metrics: [
-            ...currentSettings.dashboard_preferences.hidden_metrics,
-            ...metricsToRemove.filter((id: string) => 
-              !currentSettings.dashboard_preferences.hidden_metrics.includes(id)
-            )
-          ]
+      // Instead of removing from visibility settings, delete the actual health data records
+      const deletePromises = metricsToRemove.map(async (dataType) => {
+        const response = await fetch(`/api/health-data/delete-by-type`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataType }),
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to delete ${dataType}:`, await response.text());
+          throw new Error(`Failed to delete ${dataType}`);
         }
-      };
-
-      const updateResponse = await fetch('/api/health-consent/visibility', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedSettings),
+        
+        return response.json();
       });
-      
-      if (!updateResponse.ok) throw new Error('Failed to update settings');
-      return updateResponse.json();
+
+      await Promise.all(deletePromises);
+      return { success: true, deletedTypes: metricsToRemove };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/health-consent/visibility'] });
@@ -98,6 +87,7 @@ const HealthDataSection: React.FC = () => {
 
   const handleRemoveSelectedMetrics = () => {
     if (selectedMetricsForRemoval.length > 0) {
+      console.log("Removing selected metrics:", selectedMetricsForRemoval);
       removeMetricsMutation.mutate(selectedMetricsForRemoval);
     }
   };

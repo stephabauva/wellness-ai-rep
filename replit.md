@@ -346,15 +346,6 @@ Changelog:
   - **Production Validation**: Successfully tested with dark chocolate preferences - system detects duplicates and updates existing memories instead of creating new ones
   - **Performance Optimized**: Recent memory lookup (72-hour window) with embedding similarity calculation maintains <3s response times
   - **Zero Breaking Changes**: All existing memory functionality preserved while eliminating duplicate memory creation across all entry points
-- June 17, 2025. **User-Controlled Health Data Management System - Phase 1 Complete**:
-  - **GDPR-Compliant Health Consent Framework**: Complete implementation of granular user consent controls for AI access, data retention, dashboard visibility, and export settings
-  - **AI Chat Health Data Integration**: Chat context service now respects user consent settings - only accesses health data from explicitly consented categories with GDPR-compliant access logging
-  - **Health Consent Service**: Full backend service with database schema, API endpoints, and consent validation methods for all health data operations
-  - **Dashboard Visibility Controls**: Fixed critical HTTP token error - users can now successfully hide/show health categories in dashboard with proper state management
-  - **Data Type to Category Mapping**: Comprehensive mapping system linking health data types (steps, heart rate, weight) to consent categories (lifestyle, cardiovascular, body composition, medical, advanced)
-  - **Health Data Context Builder**: AI system prompts automatically include personalized health summaries based only on user-consented categories with category-specific insights
-  - **GDPR Compliance Features**: Access logging, data minimization, user control, and transparency requirements fully implemented for health data AI access
-  - **Zero Breaking Changes**: All existing health data functionality preserved while adding comprehensive user control and privacy protection
 
 # User Preferences
 

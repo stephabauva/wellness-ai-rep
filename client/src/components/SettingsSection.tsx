@@ -135,48 +135,41 @@ const SettingsSection: React.FC = () => {
     }
   }, [userSettings, retentionSettings, form.reset]);
   
-  const onSubmit = async (data: CombinedSettingsFormValues) => {
-    try {
-      // Separate data for different update functions if necessary
-      const userSettingsData: Partial<UserSettingsFormValues> = {
-        name: data.name,
-        email: data.email,
-        primaryGoal: data.primaryGoal,
-        coachStyle: data.coachStyle,
-        reminderFrequency: data.reminderFrequency,
-        focusAreas: data.focusAreas,
-        darkMode: data.darkMode,
-        pushNotifications: data.pushNotifications,
-        emailSummaries: data.emailSummaries,
-        dataSharing: data.dataSharing,
-        aiProvider: data.aiProvider,
-        aiModel: data.aiModel,
-        transcriptionProvider: data.transcriptionProvider,
-        preferredLanguage: data.preferredLanguage,
-        automaticModelSelection: data.automaticModelSelection,
-        memoryDetectionProvider: data.memoryDetectionProvider,
-        memoryDetectionModel: data.memoryDetectionModel,
-      };
-      
-      await updateUserSettings(userSettingsData);
+  const onSubmit = (data: CombinedSettingsFormValues) => {
+    // Separate data for different update functions if necessary
+    const userSettingsData: Partial<UserSettingsFormValues> = {
+      name: data.name,
+      email: data.email,
+      primaryGoal: data.primaryGoal,
+      coachStyle: data.coachStyle,
+      reminderFrequency: data.reminderFrequency,
+      focusAreas: data.focusAreas,
+      darkMode: data.darkMode,
+      pushNotifications: data.pushNotifications,
+      emailSummaries: data.emailSummaries,
+      dataSharing: data.dataSharing,
+      aiProvider: data.aiProvider,
+      aiModel: data.aiModel,
+      transcriptionProvider: data.transcriptionProvider,
+      preferredLanguage: data.preferredLanguage,
+      automaticModelSelection: data.automaticModelSelection,
+      memoryDetectionProvider: data.memoryDetectionProvider,
+      memoryDetectionModel: data.memoryDetectionModel,
+    };
+    updateUserSettings(userSettingsData);
 
-      const retentionData: RetentionSettingsFormValues = {
-        highValueRetentionDays: data.highValueRetentionDays,
-        mediumValueRetentionDays: data.mediumValueRetentionDays,
-        lowValueRetentionDays: data.lowValueRetentionDays,
-      };
-      
-      // Only update retention if values are present (could be refined)
-      if (data.highValueRetentionDays !== undefined) {
-        await updateRetentionSettings(retentionData);
-      }
-      
-      if (data.primaryGoal !== coachingMode) {
-        setCoachingMode(data.primaryGoal);
-      }
-    } catch (error) {
-      console.error('Error updating settings:', error);
-      // Handle the error gracefully without throwing
+    const retentionData: RetentionSettingsFormValues = {
+      highValueRetentionDays: data.highValueRetentionDays,
+      mediumValueRetentionDays: data.mediumValueRetentionDays,
+      lowValueRetentionDays: data.lowValueRetentionDays,
+    };
+    // Only update retention if values are present (could be refined)
+    if (data.highValueRetentionDays !== undefined) {
+        updateRetentionSettings(retentionData);
+    }
+    
+    if (data.primaryGoal !== coachingMode) {
+      setCoachingMode(data.primaryGoal);
     }
   };
   

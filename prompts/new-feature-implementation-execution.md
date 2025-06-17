@@ -45,6 +45,6 @@ Avoid:
 - Over-aggressive deduplication or HTTP/2 changes
 - Modifying HMR setup or WebSocket handling
 - Introducing new workflows or bypassing Replit's own tooling
-- Do NOT alter anything related to the memory system which currently optimal, you can user element of that system for other features but do not alter that system.
+- Do NOT alter anything that could alter the memory system which currently optimal, you can integrate to it, you can user element of that system for other features but do not alter this working system.
 
 Stability is sacred. Never assume it's safe. **Prove it.**

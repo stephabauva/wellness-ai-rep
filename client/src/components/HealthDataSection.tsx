@@ -429,6 +429,9 @@ const HealthDataSection: React.FC = () => {
                       category={cat.id}
                       metrics={categorizedData[cat.id as keyof CategorizedHealthData] as HealthMetric[]}
                       icon={React.cloneElement(cat.icon as React.ReactElement, {className: "h-5 w-5"})}
+                      isRemovalMode={isRemovalMode}
+                      selectedMetricsForRemoval={selectedMetricsForRemoval}
+                      onMetricSelectionChange={setSelectedMetricsForRemoval}
                     />
                   )
                 ))}
@@ -443,6 +446,9 @@ const HealthDataSection: React.FC = () => {
                   categoryKey={cat.id as keyof CategorizedHealthData}
                   metrics={categorizedData?.[cat.id as keyof CategorizedHealthData]}
                   icon={React.cloneElement(cat.icon as React.ReactElement, {className: "h-5 w-5"})}
+                  isRemovalMode={isRemovalMode}
+                  selectedMetricsForRemoval={selectedMetricsForRemoval}
+                  onMetricSelectionChange={setSelectedMetricsForRemoval}
                 />
               </TabsContent>
             ))}

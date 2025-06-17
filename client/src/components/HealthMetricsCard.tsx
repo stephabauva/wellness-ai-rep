@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TrendingUp, TrendingDown, Activity, Heart, Brain, Droplets, Thermometer } from "lucide-react";
 
 interface HealthMetric {
@@ -19,6 +20,9 @@ interface HealthMetricsCardProps {
   metrics: HealthMetric[];
   icon?: React.ReactNode;
   color?: string;
+  isRemovalMode?: boolean;
+  selectedMetricsForRemoval?: string[];
+  onMetricSelectionChange?: (selectedMetrics: string[]) => void;
 }
 
 const getMetricIcon = (dataType: string) => {

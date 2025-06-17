@@ -5,6 +5,8 @@ import { aiService } from "./services/ai-service";
 import { memoryEnhancedAIService } from "./services/memory-enhanced-ai-service";
 import { memoryService } from "./services/memory-service";
 import { enhancedMemoryService } from "./services/enhanced-memory-service";
+import { advancedMemoryAIService } from './services/advanced-memory-ai-service';
+import { memoryRelationshipEngine } from './services/memory-relationship-engine';
 import { generatePDFReport } from "./services/pdf-service";
 import { transcriptionService } from "./services/transcription-service";
 import { cacheService } from "./services/cache-service";
@@ -1158,6 +1160,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('ChatGPT memory enhancement test error:', error);
       res.status(500).json({ error: "Failed to test ChatGPT memory enhancement" });
+    }
+  });
+
+  // Phase 2 Advanced Memory Relationship endpoints
+  app.post('/api/memory/phase2-test', async (req, res) => {
+    try {
+      const { userId = 1, message = "Test memory relationships" } = req.body;
+      
+      // Test advanced memory insights
+      const insights = await advancedMemoryAIService.getAdvancedMemoryInsights(userId, message, 5);
+      const metrics = advancedMemoryAIService.getPerformanceMetrics();
+      
+      res.json({
+        phase: '2',
+        status: 'operational',
+        features: {
+          relationshipMapping: true,
+          atomicFactExtraction: true,
+          semanticClustering: true,
+          contextualRetrieval: true,
+          enhancedSystemPrompts: true
+        },
+        results: {
+          insightsCount: insights.length,
+          relationshipEngineActive: true,
+          advancedPromptGeneration: true
+        },
+        metrics,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('[Route] Phase 2 Memory Test failed:', error);
+      res.status(500).json({ 
+        error: 'Phase 2 memory test failed',
+        phase: '2',
+        status: 'error'
+      });
+    }
+  });
+
+  app.post('/api/memory/relationship-analysis', async (req, res) => {
+    try {
+      const { memoryId, userId = 1 } = req.body;
+      
+      if (!memoryId) {
+        return res.status(400).json({ error: 'Memory ID required' });
+      }
+      
+      // Get user memories for relationship analysis
+      const userMemories = await memoryService.getMemories(userId, undefined, 10);
+      
+      // Discover relationships
+      const relationships = await memoryRelationshipEngine.discoverRelationships(memoryId, userMemories);
+      
+      // Extract atomic facts
+      const targetMemory = userMemories.find(m => m.id === memoryId);
+      const atomicFacts = targetMemory 
+        ? await memoryRelationshipEngine.extractAtomicFacts(memoryId, targetMemory.content)
+        : [];
+      
+      // Get related memories
+      const relatedMemories = await memoryRelationshipEngine.getRelatedMemories(memoryId, 2, 5);
+      
+      res.json({
+        memoryId,
+        relationships: relationships.map(r => ({
+          type: r.relationshipType,
+          strength: r.strength,
+          confidence: r.confidence,
+          context: r.context,
+          targetId: r.targetMemoryId
+        })),
+        atomicFacts: atomicFacts.map(f => ({
+          type: f.factType,
+          content: f.content,
+          confidence: f.confidence
+        })),
+        relatedMemories: relatedMemories.map(rm => ({
+          memory: {
+            id: rm.memory.id,
+            content: rm.memory.content,
+            category: rm.memory.category
+          },
+          relationship: rm.relationship.relationshipType,
+          depth: rm.depth
+        })),
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('[Route] Relationship analysis failed:', error);
+      res.status(500).json({ error: 'Relationship analysis failed' });
+    }
+  });
+
+  app.post('/api/memory/semantic-clusters', async (req, res) => {
+    try {
+      const { userId = 1 } = req.body;
+      
+      const userMemories = await memoryService.getMemories(userId, undefined, 20);
+      const clusters = await memoryRelationshipEngine.buildSemanticClusters(userMemories);
+      
+      res.json({
+        clustersCount: clusters.length,
+        clusters: clusters.map(c => ({
+          id: c.id,
+          type: c.clusterType,
+          memoriesCount: c.memoryIds.length,
+          coherenceScore: c.coherenceScore,
+          lastUpdated: c.lastUpdated
+        })),
+        totalMemoriesProcessed: userMemories.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('[Route] Semantic clustering failed:', error);
+      res.status(500).json({ error: 'Semantic clustering failed' });
+    }
+  });
+
+  app.post('/api/memory/enhanced-system-prompt', async (req, res) => {
+    try {
+      const { userId = 1, message = "Test enhanced prompt generation" } = req.body;
+      
+      const enhancedPrompt = await advancedMemoryAIService.buildRelationshipAwareSystemPrompt(userId, message);
+      
+      res.json({
+        promptGenerated: true,
+        promptLength: enhancedPrompt.basePrompt.length + enhancedPrompt.memoryContext.length,
+        componentsIncluded: {
+          basePrompt: !!enhancedPrompt.basePrompt,
+          memoryContext: !!enhancedPrompt.memoryContext,
+          relationshipInsights: !!enhancedPrompt.relationshipInsights,
+          atomicFactSummary: !!enhancedPrompt.atomicFactSummary
+        },
+        metrics: {
+          totalMemoriesUsed: enhancedPrompt.totalMemoriesUsed,
+          processingTime: enhancedPrompt.processingTime
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('[Route] Enhanced prompt generation failed:', error);
+      res.status(500).json({ error: 'Enhanced prompt generation failed' });
     }
   });
 

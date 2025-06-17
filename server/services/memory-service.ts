@@ -581,55 +581,78 @@ Respond with JSON:
     currentMessage: string
   ): Promise<RelevantMemory[]> {
     try {
+      console.log(`[MemoryService] getContextualMemories called for user ${userId}, message: "${currentMessage}"`);
+      
       // Combine recent conversation + current message for context (current session only)
       const context = [
         ...conversationHistory.slice(-3),
         { role: 'user', content: currentMessage }
       ].map(m => m.content).join(' ');
 
-      // Check cache for memory search results
-      const cached = await cacheService.getMemorySearchResults(userId, context, 10);
-      if (cached) {
-        return cached as RelevantMemory[];
+      console.log(`[MemoryService] Context built: "${context}"`);
+
+      // Skip cache for debugging
+      // const cached = await cacheService.getMemorySearchResults(userId, context, 10);
+      // if (cached) {
+      //   return cached as RelevantMemory[];
+      // }
+
+      // Get user memories directly for debugging
+      const userMemories = await this.getUserMemoriesLazy(userId);
+      console.log(`[MemoryService] Retrieved ${userMemories.length} user memories from database`);
+
+      // For memory-related queries, return ALL memories with basic scoring
+      if (currentMessage.toLowerCase().includes('memor') || currentMessage.toLowerCase().includes('about me')) {
+        console.log(`[MemoryService] Memory query detected, returning all active memories`);
+        
+        const allRelevantMemories: RelevantMemory[] = userMemories.map(memory => ({
+          ...memory,
+          relevanceScore: memory.importanceScore,
+          retrievalReason: 'direct_memory_query'
+        }));
+
+        console.log(`[MemoryService] Returning ${allRelevantMemories.length} memories for memory query`);
+        return allRelevantMemories.sort((a, b) => b.relevanceScore - a.relevanceScore);
       }
 
       // Generate embedding for current context
       const contextEmbedding = await this.generateEmbedding(context);
-
-      // Tier 2 C: Use lazy loading for user memories
-      const userMemories = await this.getUserMemoriesLazy(userId);
+      console.log(`[MemoryService] Generated context embedding of length ${contextEmbedding.length}`);
 
       // Calculate semantic similarity and create relevant memories
       const relevantMemories: RelevantMemory[] = [];
 
       for (const memory of userMemories) {
-        if (!memory.embedding) continue;
+        if (!memory.embedding) {
+          console.log(`[MemoryService] Memory ${memory.id} has no embedding, skipping`);
+          continue;
+        }
 
         try {
-          if (memory.embedding) {
-            let memoryEmbedding;
-            if (typeof memory.embedding === 'string') {
-              memoryEmbedding = JSON.parse(memory.embedding);
-            } else {
-              memoryEmbedding = memory.embedding;
+          let memoryEmbedding;
+          if (typeof memory.embedding === 'string') {
+            memoryEmbedding = JSON.parse(memory.embedding);
+          } else {
+            memoryEmbedding = memory.embedding;
+          }
+          
+          if (Array.isArray(memoryEmbedding) && memoryEmbedding.length > 0 && Array.isArray(contextEmbedding)) {
+            // Use cached similarity if available
+            let similarity = this.getCachedSimilarity(contextEmbedding, memoryEmbedding);
+            
+            // Fall back to calculation if not cached
+            if (similarity === null) {
+              similarity = await this.cosineSimilarity(contextEmbedding, memoryEmbedding);
             }
             
-            if (Array.isArray(memoryEmbedding) && memoryEmbedding.length > 0 && Array.isArray(contextEmbedding)) {
-              // Tier 2 C: Use cached similarity if available
-              let similarity = this.getCachedSimilarity(contextEmbedding, memoryEmbedding);
-              
-              // Fall back to calculation if not cached
-              if (similarity === null) {
-                similarity = await this.cosineSimilarity(contextEmbedding, memoryEmbedding);
-              }
-              
-              if (similarity > 0.7) { // Threshold for relevance
-                relevantMemories.push({
-                  ...memory,
-                  relevanceScore: similarity * memory.importanceScore,
-                  retrievalReason: 'semantic_similarity'
-                });
-              }
+            console.log(`[MemoryService] Memory "${memory.content}" similarity: ${similarity}`);
+            
+            if (similarity > 0.5) { // Lowered threshold for better retrieval
+              relevantMemories.push({
+                ...memory,
+                relevanceScore: similarity * memory.importanceScore,
+                retrievalReason: 'semantic_similarity'
+              });
             }
           }
         } catch (error) {
@@ -637,24 +660,26 @@ Respond with JSON:
         }
       }
 
-      // Also get high-importance recent memories from lazy cache
-      const recentImportantMemories = userMemories
-        .filter(m => m.importanceScore > 0.8)
+      // Always include high-importance memories (0.7+ instead of 0.8+)
+      const importantMemories = userMemories
+        .filter(m => m.importanceScore >= 0.7)
         .sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return dateB - dateA;
-        })
-        .slice(0, 3);
+        });
 
-      // Add recent important memories
-      for (const memory of recentImportantMemories) {
+      console.log(`[MemoryService] Found ${importantMemories.length} important memories (importance >= 0.7)`);
+
+      // Add important memories that aren't already included
+      for (const memory of importantMemories) {
         if (!relevantMemories.find(rm => rm.id === memory.id)) {
           relevantMemories.push({
             ...memory,
             relevanceScore: memory.importanceScore,
             retrievalReason: 'high_importance'
           });
+          console.log(`[MemoryService] Added important memory: "${memory.content}"`);
         }
       }
 
@@ -663,8 +688,10 @@ Respond with JSON:
         .sort((a, b) => b.relevanceScore - a.relevanceScore)
         .slice(0, 8);
       
-      // Cache the search results for future use
-      cacheService.setMemorySearchResults(userId, context, 10, results);
+      console.log(`[MemoryService] Final results: ${results.length} memories, reasons: ${results.map(r => r.retrievalReason).join(', ')}`);
+      
+      // Don't cache during debugging
+      // cacheService.setMemorySearchResults(userId, context, 10, results);
       
       return results;
         

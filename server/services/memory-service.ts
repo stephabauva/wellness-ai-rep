@@ -693,15 +693,19 @@ Respond with JSON:
 
       // Tier 2 C: Background processing for automatic memory detection
       // This prevents blocking the main response flow
-      if (messageId && messageId !== 0) {
-        this.addBackgroundTask('memory_processing', {
-          userId,
-          message,
-          conversationId,
-          messageId,
-          conversationHistory
-        }, 3); // Medium priority
-      }
+      console.log(`[MemoryService] processMessageForMemory - messageId: ${messageId}, type: ${typeof messageId}`);
+      
+      // Always queue background memory processing for user messages (messageId can be undefined during streaming)
+      this.addBackgroundTask('memory_processing', {
+        userId,
+        message,
+        conversationId,
+        messageId: messageId || null,
+        conversationHistory
+      }, 3); // Medium priority
+      
+      console.log(`[MemoryService] Background memory detection task queued for user ${userId}`);
+      console.log(`[MemoryService] Current queue length: ${this.backgroundQueue.tasks.length}`);
 
       return results;
     } catch (error) {

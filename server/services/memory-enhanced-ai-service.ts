@@ -8,7 +8,7 @@ import { AttachmentData } from './providers/ai-provider.interface';
  * Phase 1: Core memory enhancement with real-time deduplication
  */
 export class MemoryEnhancedAIService {
-  private chatGPTMemory = chatGPTMemoryEnhancement;
+  public chatGPTMemory = chatGPTMemoryEnhancement;
 
   /**
    * Enhanced chat response with memory integration

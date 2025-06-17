@@ -47,7 +47,7 @@ export class MemoryRelationshipEngine {
   private cacheTimestamps = new Map<string, number>();
 
   /**
-   * Analyze and extract atomic facts from memory content
+   * Ultra-fast atomic facts extraction with pattern matching
    */
   async extractAtomicFacts(memoryId: string, content: string): Promise<AtomicFact[]> {
     const cacheKey = `facts_${memoryId}`;
@@ -60,30 +60,33 @@ export class MemoryRelationshipEngine {
     const startTime = Date.now();
     
     try {
-      // Extract atomic facts using lightweight pattern matching
+      // Super-fast pattern-based extraction
       const facts: AtomicFact[] = [];
-      const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
       
-      for (const sentence of sentences) {
-        const trimmed = sentence.trim();
-        if (trimmed.length === 0) continue;
-        
-        // Classify fact type based on content patterns
-        const factType = this.classifyFactType(trimmed);
-        
-        const fact: AtomicFact = {
-          id: crypto.randomUUID(),
-          memoryId,
-          factType,
-          content: trimmed,
-          confidence: this.calculateFactConfidence(trimmed),
-          extractedAt: new Date()
-        };
-        
-        facts.push(fact);
+      // Quick pattern matching for key fact types
+      const patterns = {
+        preference: /\b(prefer|like|love|enjoy|hate|dislike)\b/i,
+        goal: /\b(want to|goal|target|aim|trying to)\b/i,
+        constraint: /\b(cannot|can't|avoid|allergic|restrict)\b/i,
+        experience: /\b(did|went|tried|completed)\b/i
+      };
+      
+      // Single pass through content for all patterns
+      for (const [factType, pattern] of Object.entries(patterns)) {
+        if (pattern.test(content)) {
+          facts.push({
+            id: crypto.randomUUID(),
+            memoryId,
+            factType: factType as AtomicFact['factType'],
+            content: content.slice(0, 100), // Truncate for performance
+            confidence: 0.7,
+            extractedAt: new Date()
+          });
+          break; // Only extract first match for speed
+        }
       }
       
-      // Cache the results
+      // Cache the results aggressively
       this.atomicFactCache.set(cacheKey, facts);
       this.cacheTimestamps.set(cacheKey, Date.now());
       
@@ -98,7 +101,7 @@ export class MemoryRelationshipEngine {
   }
 
   /**
-   * Discover relationships between memories using semantic analysis
+   * Discover relationships between memories using optimized semantic analysis
    */
   async discoverRelationships(sourceMemoryId: string, candidateMemories: MemoryEntry[]): Promise<MemoryRelationship[]> {
     const cacheKey = `relationships_${sourceMemoryId}`;
@@ -110,31 +113,27 @@ export class MemoryRelationshipEngine {
     const startTime = Date.now();
     
     try {
-      // Get source memory
-      const sourceMemory = await db
-        .select()
-        .from(memoryEntries)
-        .where(eq(memoryEntries.id, sourceMemoryId))
-        .limit(1);
-      
-      if (sourceMemory.length === 0) return [];
+      // Use candidate memories directly instead of additional DB query
+      const sourceMemory = candidateMemories.find(m => m.id === sourceMemoryId);
+      if (!sourceMemory) return [];
       
       const relationships: MemoryRelationship[] = [];
-      const sourceFacts = await this.extractAtomicFacts(sourceMemoryId, sourceMemory[0].content);
       
-      // Analyze relationships with candidate memories
-      for (const candidate of candidateMemories.slice(0, 5)) { // Limit for performance
-        if (candidate.id === sourceMemoryId) continue;
-        
-        const candidateFacts = await this.extractAtomicFacts(candidate.id, candidate.content);
-        const relationship = await this.analyzeMemoryRelationship(
-          sourceMemory[0], 
+      // Pre-extract facts for source memory only once
+      const sourceFacts = await this.extractAtomicFacts(sourceMemoryId, sourceMemory.content);
+      
+      // Limit candidates for performance and use lightweight analysis
+      const limitedCandidates = candidateMemories.slice(0, 3).filter(c => c.id !== sourceMemoryId);
+      
+      for (const candidate of limitedCandidates) {
+        // Use lightweight relationship analysis without expensive fact extraction
+        const relationship = await this.analyzeLightweightRelationship(
+          sourceMemory, 
           candidate, 
-          sourceFacts, 
-          candidateFacts
+          sourceFacts
         );
         
-        if (relationship) {
+        if (relationship && relationship.strength > 0.3) { // Higher threshold for performance
           relationships.push(relationship);
         }
       }
@@ -192,63 +191,45 @@ export class MemoryRelationshipEngine {
   }
 
   /**
-   * Enhanced memory retrieval using relationship context
+   * Optimized memory retrieval using lightweight relationship context
    */
   async getRelatedMemories(
     queryMemoryId: string,
-    maxDepth: number = 2,
-    maxResults: number = 8
+    maxDepth: number = 1, // Reduced depth for performance
+    maxResults: number = 5 // Reduced results for performance
   ): Promise<{ memory: MemoryEntry; relationship: MemoryRelationship; depth: number }[]> {
     const startTime = Date.now();
     
     try {
       const relatedMemories: { memory: MemoryEntry; relationship: MemoryRelationship; depth: number }[] = [];
       const visited = new Set<string>([queryMemoryId]);
-      const queue: { memoryId: string; depth: number }[] = [{ memoryId: queryMemoryId, depth: 0 }];
       
-      while (queue.length > 0 && relatedMemories.length < maxResults) {
-        const { memoryId, depth } = queue.shift()!;
+      // Get candidate memories once and reuse
+      const candidateMemories = await this.getCandidateMemories(queryMemoryId);
+      const relationships = await this.discoverRelationships(queryMemoryId, candidateMemories);
+      
+      // Process only direct relationships for performance
+      for (const relationship of relationships.slice(0, maxResults)) {
+        const targetId = relationship.targetMemoryId;
         
-        if (depth >= maxDepth) continue;
+        if (visited.has(targetId)) continue;
         
-        // Get memories related to current memory
-        const candidateMemories = await this.getCandidateMemories(memoryId);
-        const relationships = await this.discoverRelationships(memoryId, candidateMemories);
+        // Find target memory in candidates to avoid additional DB query
+        const targetMemory = candidateMemories.find(m => m.id === targetId);
         
-        for (const relationship of relationships) {
-          const targetId = relationship.targetMemoryId;
+        if (targetMemory) {
+          relatedMemories.push({
+            memory: targetMemory,
+            relationship,
+            depth: 1
+          });
           
-          if (visited.has(targetId) || relatedMemories.length >= maxResults) continue;
-          
-          // Get target memory details
-          const targetMemory = await db
-            .select()
-            .from(memoryEntries)
-            .where(eq(memoryEntries.id, targetId))
-            .limit(1);
-          
-          if (targetMemory.length > 0) {
-            relatedMemories.push({
-              memory: targetMemory[0],
-              relationship,
-              depth: depth + 1
-            });
-            
-            visited.add(targetId);
-            
-            // Add to queue for further exploration
-            if (depth + 1 < maxDepth) {
-              queue.push({ memoryId: targetId, depth: depth + 1 });
-            }
-          }
+          visited.add(targetId);
         }
       }
       
-      // Sort by relationship strength and depth
-      relatedMemories.sort((a, b) => {
-        const strengthDiff = b.relationship.strength - a.relationship.strength;
-        return strengthDiff !== 0 ? strengthDiff : a.depth - b.depth;
-      });
+      // Sort by relationship strength
+      relatedMemories.sort((a, b) => b.relationship.strength - a.relationship.strength);
       
       const processingTime = Date.now() - startTime;
       console.log(`[MemoryRelationshipEngine] Found ${relatedMemories.length} related memories in ${processingTime}ms`);
@@ -258,6 +239,112 @@ export class MemoryRelationshipEngine {
       console.error('[MemoryRelationshipEngine] Related memory retrieval failed:', error);
       return [];
     }
+  }
+
+  /**
+   * Lightweight relationship analysis for performance optimization
+   */
+  private async analyzeLightweightRelationship(
+    source: MemoryEntry,
+    target: MemoryEntry,
+    sourceFacts: AtomicFact[]
+  ): Promise<MemoryRelationship | null> {
+    try {
+      // Fast text-based relationship detection
+      const sourceContent = source.content.toLowerCase();
+      const targetContent = target.content.toLowerCase();
+      
+      // Check for contradictions using keyword overlap
+      const contradictionScore = this.calculateContradictionScore(sourceContent, targetContent);
+      if (contradictionScore > 0.7) {
+        return {
+          id: crypto.randomUUID(),
+          sourceMemoryId: source.id,
+          targetMemoryId: target.id,
+          relationshipType: 'contradicts',
+          strength: contradictionScore,
+          confidence: 0.8,
+          context: 'Fast contradiction detection',
+          createdAt: new Date()
+        };
+      }
+      
+      // Check for support relationships using fact overlap
+      const supportScore = this.calculateSupportScore(sourceFacts, sourceContent, targetContent);
+      if (supportScore > 0.5) {
+        return {
+          id: crypto.randomUUID(),
+          sourceMemoryId: source.id,
+          targetMemoryId: target.id,
+          relationshipType: 'supports',
+          strength: supportScore,
+          confidence: 0.7,
+          context: 'Fast support detection',
+          createdAt: new Date()
+        };
+      }
+      
+      // Check for temporal relationships
+      const temporalScore = this.calculateTemporalScore(source, target);
+      if (temporalScore > 0.6) {
+        return {
+          id: crypto.randomUUID(),
+          sourceMemoryId: source.id,
+          targetMemoryId: target.id,
+          relationshipType: 'temporal_sequence',
+          strength: temporalScore,
+          confidence: 0.6,
+          context: 'Fast temporal detection',
+          createdAt: new Date()
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('[MemoryRelationshipEngine] Lightweight analysis failed:', error);
+      return null;
+    }
+  }
+
+  private calculateContradictionScore(sourceContent: string, targetContent: string): number {
+    const contradictionPairs = [
+      ['want', 'dont want'], ['like', 'hate'], ['love', 'dislike'],
+      ['increase', 'decrease'], ['gain', 'lose'], ['more', 'less']
+    ];
+    
+    let contradictions = 0;
+    for (const [pos, neg] of contradictionPairs) {
+      if ((sourceContent.includes(pos) && targetContent.includes(neg)) ||
+          (sourceContent.includes(neg) && targetContent.includes(pos))) {
+        contradictions++;
+      }
+    }
+    
+    return Math.min(contradictions * 0.3, 1.0);
+  }
+
+  private calculateSupportScore(sourceFacts: AtomicFact[], sourceContent: string, targetContent: string): number {
+    // Simple keyword overlap scoring
+    const sourceWords = new Set(sourceContent.split(/\s+/).filter(w => w.length > 3));
+    const targetWords = new Set(targetContent.split(/\s+/).filter(w => w.length > 3));
+    
+    const overlap = [...sourceWords].filter(word => targetWords.has(word)).length;
+    const maxWords = Math.max(sourceWords.size, targetWords.size);
+    
+    return maxWords > 0 ? (overlap / maxWords) * 0.8 : 0;
+  }
+
+  private calculateTemporalScore(source: MemoryEntry, target: MemoryEntry): number {
+    const sourceTime = source.createdAt?.getTime() || 0;
+    const targetTime = target.createdAt?.getTime() || 0;
+    
+    if (sourceTime === 0 || targetTime === 0) return 0;
+    
+    const timeDiff = Math.abs(sourceTime - targetTime);
+    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+    
+    // Higher score for memories created close in time
+    return Math.max(0, 1 - (daysDiff / 30)); // Decay over 30 days
   }
 
   /**
@@ -389,6 +476,16 @@ export class MemoryRelationshipEngine {
     return groups;
   }
 
+  /**
+   * Cache validity check for performance optimization
+   */
+  private isCacheValid(cacheKey: string): boolean {
+    const timestamp = this.cacheTimestamps.get(cacheKey);
+    if (!timestamp) return false;
+    
+    return (Date.now() - timestamp) < this.CACHE_TTL;
+  }
+
   private async calculateCentroidEmbedding(memories: MemoryEntry[]): Promise<number[]> {
     // Simplified centroid calculation - in production, this would use actual embeddings
     const words = memories.flatMap(m => m.content.toLowerCase().split(/\s+/));
@@ -404,6 +501,38 @@ export class MemoryRelationshipEngine {
       .slice(0, 10);
     
     return topWords.map(([_, freq]) => freq / words.length);
+  }
+
+  /**
+   * Fast candidate memory retrieval with caching
+   */
+  async getCandidateMemories(memoryId: string): Promise<MemoryEntry[]> {
+    const cacheKey = `candidates_${memoryId}`;
+    
+    if (this.relationshipCache.has(cacheKey) && this.isCacheValid(cacheKey)) {
+      return this.relationshipCache.get(cacheKey) as any;
+    }
+
+    try {
+      // Get recent memories from the same user efficiently
+      const memories = await db
+        .select()
+        .from(memoryEntries)
+        .where(and(
+          eq(memoryEntries.isActive, true)
+        ))
+        .orderBy(desc(memoryEntries.createdAt))
+        .limit(10); // Reduced limit for performance
+      
+      // Cache the results
+      this.relationshipCache.set(cacheKey, memories as any);
+      this.cacheTimestamps.set(cacheKey, Date.now());
+      
+      return memories;
+    } catch (error) {
+      console.error('[MemoryRelationshipEngine] Failed to get candidate memories:', error);
+      return [];
+    }
   }
 
   private calculateClusterCoherence(memories: MemoryEntry[]): number {

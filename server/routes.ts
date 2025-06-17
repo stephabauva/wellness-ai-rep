@@ -1110,6 +1110,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get health dashboard metrics visibility settings
+  app.get("/api/health-consent/visibility", async (req, res) => {
+    try {
+      const defaultVisibility = {
+        visible_categories: ['Activity', 'Cardiovascular', 'Sleep'],
+        hidden_categories: ['Medical', 'Reproductive Health', 'Integration'],
+        dashboard_preferences: {
+          visible_metrics: ['steps', 'heart_rate', 'sleep_duration', 'active_energy'],
+          hidden_metrics: [],
+          metric_order: ['steps', 'heart_rate', 'sleep_duration', 'active_energy']
+        }
+      };
+      
+      // For Phase 1, return default settings (in Phase 2, this would query user preferences)
+      res.json(defaultVisibility);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch visibility settings" });
+    }
+  });
+
+  // Update health dashboard metrics visibility settings
+  app.patch("/api/health-consent/visibility", async (req, res) => {
+    try {
+      const visibilitySettings = req.body;
+      
+      // Validate basic structure
+      if (!visibilitySettings.visible_categories || !visibilitySettings.dashboard_preferences) {
+        return res.status(400).json({ message: "Invalid visibility settings structure" });
+      }
+      
+      // Log the visibility change for GDPR compliance
+      await healthConsentService.logDataAccess(1, 'dashboard_visibility', 'update', true);
+      
+      // For Phase 1, just return the updated settings (in Phase 2, this would persist to database)
+      res.json(visibilitySettings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update visibility settings" });
+    }
+  });
+
   // Phase 1: Enhanced Memory Detection API
   app.post("/api/memory/enhanced-detect", async (req, res) => {
     try {

@@ -22,6 +22,7 @@ import { HydrationCard } from "./health/HydrationCard";
 import { CoachingInsights } from "./health/CoachingInsights";
 import { HealthDataImport } from "./health/HealthDataImport";
 import { NativeHealthIntegration } from "./health/NativeHealthIntegration";
+import { MetricsVisibilityCard } from "./health/MetricsVisibilityCard";
 
 // Define types for chart data (can be moved to a types file if they grow)
 interface ActivityDataPoint { day: string; steps?: number; active?: number; calories?: number; }
@@ -392,6 +393,11 @@ const HealthDataSection: React.FC = () => {
                 });
               }}
             />
+          </div>
+
+          {/* Health Dashboard Metrics Visibility - Phase 1 User Control */}
+          <div className="mb-8">
+            <MetricsVisibilityCard />
           </div>
           
           <CoachingInsights />

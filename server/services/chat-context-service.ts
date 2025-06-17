@@ -1,4 +1,6 @@
 import { memoryService } from "./memory-service";
+import { healthConsentService } from "./health-consent-service";
+import { storage } from "../storage";
 import { CoachingMode, coachingModes } from "@shared/schema";
 import {
   ProviderChatMessage,
@@ -52,6 +54,163 @@ export class ChatContextService {
     }
   }
 
+  /**
+   * Build health data context based on user consent settings
+   */
+  private async buildHealthDataContext(userId: number): Promise<string> {
+    try {
+      // Check what health categories user has consented to AI access
+      const allowedCategories = await healthConsentService.getAllowedCategories(userId, 'ai_access');
+      
+      if (allowedCategories.length === 0) {
+        log('info', `No health data access consent for user ${userId}`);
+        return '';
+      }
+
+      // Log consent check for GDPR compliance
+      await healthConsentService.logDataAccess(userId, allowedCategories.join(','), 'ai_chat_context', true);
+
+      // Get recent health data from consented categories
+      const healthData = await storage.getHealthData(userId, '7d'); // Last 7 days
+      
+      if (!healthData || healthData.length === 0) {
+        log('info', `No health data found for user ${userId}`);
+        return '';
+      }
+
+      // Filter health data based on consent categories
+      const consentedHealthData = healthData.filter(data => {
+        // Map data types to categories
+        const dataTypeToCategory: Record<string, string> = {
+          'steps': 'lifestyle',
+          'calories_burned': 'lifestyle', 
+          'calories_intake': 'lifestyle',
+          'sleep_duration': 'lifestyle',
+          'sleep_quality': 'lifestyle',
+          'heart_rate': 'cardiovascular',
+          'resting_heart_rate': 'cardiovascular',
+          'blood_pressure_systolic': 'cardiovascular',
+          'blood_pressure_diastolic': 'cardiovascular',
+          'weight': 'body_composition',
+          'bmi': 'body_composition',
+          'body_fat_percentage': 'body_composition',
+          'blood_glucose_fasting': 'medical',
+          'body_temperature': 'medical',
+          'vo2_max': 'advanced',
+          'hrv': 'advanced'
+        };
+
+        const category = dataTypeToCategory[data.dataType];
+        return category && allowedCategories.includes(category);
+      });
+
+      if (consentedHealthData.length === 0) {
+        log('info', `No consented health data found for user ${userId} in categories: ${allowedCategories.join(', ')}`);
+        return '';
+      }
+
+      // Build contextual health summary
+      const healthSummary = this.buildHealthSummary(consentedHealthData, allowedCategories);
+      
+      log('info', `Built health context for user ${userId} with ${consentedHealthData.length} data points from categories: ${allowedCategories.join(', ')}`);
+      
+      return `
+
+=== HEALTH DATA CONTEXT (User Consented) ===
+You have access to the following health data categories based on user consent: ${allowedCategories.join(', ')}
+
+${healthSummary}
+
+Use this health data to provide personalized insights and recommendations. Always respect that this data was shared with explicit user consent.`;
+
+    } catch (error) {
+      log('error', 'Error building health data context:', error);
+      return ''; // Graceful fallback - no health context if error
+    }
+  }
+
+  /**
+   * Build a summary of health data for AI context
+   */
+  private buildHealthSummary(healthData: any[], allowedCategories: string[]): string {
+    const summaryParts: string[] = [];
+
+    // Group data by type for analysis
+    const dataByType: Record<string, any[]> = {};
+    healthData.forEach(data => {
+      if (!dataByType[data.dataType]) {
+        dataByType[data.dataType] = [];
+      }
+      dataByType[data.dataType].push(data);
+    });
+
+    // Build category-specific summaries
+    if (allowedCategories.includes('lifestyle')) {
+      const lifestyleSummary = this.buildLifestyleSummary(dataByType);
+      if (lifestyleSummary) summaryParts.push(lifestyleSummary);
+    }
+
+    if (allowedCategories.includes('cardiovascular')) {
+      const cardioSummary = this.buildCardiovascularSummary(dataByType);
+      if (cardioSummary) summaryParts.push(cardioSummary);
+    }
+
+    if (allowedCategories.includes('body_composition')) {
+      const bodySummary = this.buildBodyCompositionSummary(dataByType);
+      if (bodySummary) summaryParts.push(bodySummary);
+    }
+
+    return summaryParts.join('\n\n');
+  }
+
+  private buildLifestyleSummary(dataByType: Record<string, any[]>): string {
+    const parts: string[] = [];
+    
+    if (dataByType.steps?.length > 0) {
+      const avgSteps = Math.round(dataByType.steps.reduce((sum, d) => sum + parseFloat(d.value), 0) / dataByType.steps.length);
+      parts.push(`Average daily steps: ${avgSteps}`);
+    }
+    
+    if (dataByType.sleep_duration?.length > 0) {
+      const avgSleep = (dataByType.sleep_duration.reduce((sum, d) => sum + parseFloat(d.value), 0) / dataByType.sleep_duration.length).toFixed(1);
+      parts.push(`Average sleep duration: ${avgSleep} hours`);
+    }
+
+    return parts.length > 0 ? `Lifestyle Data:\n${parts.join('\n')}` : '';
+  }
+
+  private buildCardiovascularSummary(dataByType: Record<string, any[]>): string {
+    const parts: string[] = [];
+    
+    if (dataByType.heart_rate?.length > 0) {
+      const avgHR = Math.round(dataByType.heart_rate.reduce((sum, d) => sum + parseFloat(d.value), 0) / dataByType.heart_rate.length);
+      parts.push(`Average heart rate: ${avgHR} bpm`);
+    }
+    
+    if (dataByType.resting_heart_rate?.length > 0) {
+      const latest = dataByType.resting_heart_rate[0];
+      parts.push(`Latest resting heart rate: ${latest.value} bpm`);
+    }
+
+    return parts.length > 0 ? `Cardiovascular Data:\n${parts.join('\n')}` : '';
+  }
+
+  private buildBodyCompositionSummary(dataByType: Record<string, any[]>): string {
+    const parts: string[] = [];
+    
+    if (dataByType.weight?.length > 0) {
+      const latest = dataByType.weight[0];
+      parts.push(`Current weight: ${latest.value} ${latest.unit || 'kg'}`);
+    }
+    
+    if (dataByType.bmi?.length > 0) {
+      const latest = dataByType.bmi[0];
+      parts.push(`Current BMI: ${latest.value}`);
+    }
+
+    return parts.length > 0 ? `Body Composition Data:\n${parts.join('\n')}` : '';
+  }
+
   public async buildChatContext(
     userId: number,
     rawMessage: string,
@@ -76,6 +235,9 @@ export class ChatContextService {
 
     const basePersona = this.getCoachingPersona(coachingMode);
     const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
+
+    // Build health data context based on user consent
+    const healthDataContext = await this.buildHealthDataContext(userId);
 
     // Determine if current attachments contain images to adjust prompt priority
     const hasCurrentImages = currentAttachments.some(att => att.fileType?.startsWith('image/'));

@@ -159,7 +159,27 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
   };
 
   const toggleCategoryVisibility = (category: string, makeVisible: boolean) => {
-    handleConsentUpdate(category, makeVisible);
+    const updatedConsent: HealthConsentSettings = {
+      ...currentHealthConsent,
+      data_visibility: {
+        ...currentHealthConsent.data_visibility,
+        visible_categories: makeVisible 
+          ? [...currentHealthConsent.data_visibility.visible_categories.filter((c: string) => c !== category), category]
+          : currentHealthConsent.data_visibility.visible_categories.filter((c: string) => c !== category),
+        hidden_categories: makeVisible
+          ? currentHealthConsent.data_visibility.hidden_categories.filter((c: string) => c !== category)
+          : [...currentHealthConsent.data_visibility.hidden_categories.filter((c: string) => c !== category), category]
+      }
+    };
+
+    onSettingsUpdate({
+      health_consent: updatedConsent
+    });
+
+    toast({
+      title: makeVisible ? "Category shown" : "Category hidden",
+      description: `${category.replace('_', ' ')} ${makeVisible ? 'will now appear' : 'is now hidden'} in your dashboard.`
+    });
   };
 
   const getCategoryDescription = (category: string): string => {

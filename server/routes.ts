@@ -15,7 +15,7 @@ import multer from "multer";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { db } from "./db";
-import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog, users, settingsUpdateSchema } from "@shared/schema";
+import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog, users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema } from "@shared/schema";
 import { categoryService } from "./services/category-service";
 import { eq, desc, and, or } from "drizzle-orm";
 import { join } from 'path';
@@ -34,6 +34,8 @@ import { memoryFeatureFlags } from "./services/memory-feature-flags";
 import { memoryPerformanceMonitor } from "./services/memory-performance-monitor";
 import { ChatGPTMemoryEnhancement } from "./services/chatgpt-memory-enhancement";
 import { healthConsentService } from "./services/health-consent-service";
+
+
 
 // Go service auto-start functionality
 let goServiceProcess: any = null;
@@ -174,38 +176,7 @@ const updateCategoryBodySchema = insertFileCategorySchema.pick({
   color: true
 }).partial();
 
-// Health consent settings schema
-const healthConsentSettingsSchema = z.object({
-  data_visibility: z.object({
-    visible_categories: z.array(z.string()),
-    hidden_categories: z.array(z.string()),
-    dashboard_preferences: z.record(z.any()).optional().default({})
-  }),
-  ai_access_consent: z.object({
-    lifestyle: z.boolean(),
-    cardiovascular: z.boolean(),
-    body_composition: z.boolean(),
-    medical: z.boolean(),
-    advanced: z.boolean()
-  }),
-  retention_policies: z.object({
-    lifestyle_days: z.number(),
-    cardiovascular_days: z.number(),
-    body_composition_days: z.number(),
-    medical_days: z.number(),
-    advanced_days: z.number()
-  }),
-  export_controls: z.object({
-    auto_export_enabled: z.boolean(),
-    export_format: z.enum(['pdf', 'json', 'csv']),
-    include_ai_interactions: z.boolean()
-  })
-});
 
-// Enhanced settings schema to include health consent
-const enhancedSettingsUpdateSchema = settingsUpdateSchema.extend({
-  health_consent: healthConsentSettingsSchema.optional()
-});
 
 
 export async function registerRoutes(app: Express): Promise<Server> {

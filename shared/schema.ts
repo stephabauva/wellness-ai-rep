@@ -568,6 +568,64 @@ export interface HealthConsentSettings {
   };
 }
 
+// Settings update schema (moved from routes.ts)
+export const settingsUpdateSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  primaryGoal: z.string().optional(),
+  coachStyle: z.string().optional(),
+  reminderFrequency: z.string().optional(),
+  focusAreas: z.array(z.string()).optional(),
+  darkMode: z.boolean().optional(),
+  pushNotifications: z.boolean().optional(),
+  emailSummaries: z.boolean().optional(),
+  dataSharing: z.boolean().optional(),
+  aiProvider: z.enum(["openai", "google"]).optional(),
+  aiModel: z.string().optional(),
+  transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional(),
+  preferredLanguage: z.string().optional(),
+  automaticModelSelection: z.boolean().optional(),
+  memoryDetectionProvider: z.enum(["google", "openai", "none"]).optional(),
+  memoryDetectionModel: z.string().optional(),
+  // Attachment retention settings
+  highValueRetentionDays: z.number().optional(),
+  mediumValueRetentionDays: z.number().optional(),
+  lowValueRetentionDays: z.number().optional()
+});
+
+// Health consent settings validation schema
+export const healthConsentSettingsSchema = z.object({
+  data_visibility: z.object({
+    visible_categories: z.array(z.string()),
+    hidden_categories: z.array(z.string()),
+    dashboard_preferences: z.record(z.any()).default({}),
+  }),
+  ai_access_consent: z.object({
+    lifestyle: z.boolean(),
+    cardiovascular: z.boolean(),
+    body_composition: z.boolean(),
+    medical: z.boolean(),
+    advanced: z.boolean(),
+  }),
+  retention_policies: z.object({
+    lifestyle_days: z.number(),
+    cardiovascular_days: z.number(),
+    body_composition_days: z.number(),
+    medical_days: z.number(),
+    advanced_days: z.number(),
+  }),
+  export_controls: z.object({
+    auto_export_enabled: z.boolean(),
+    export_format: z.enum(['pdf', 'json', 'csv']),
+    include_ai_interactions: z.boolean(),
+  }),
+});
+
+// Enhanced settings update schema with health consent
+export const enhancedSettingsUpdateSchema = settingsUpdateSchema.extend({
+  health_consent: healthConsentSettingsSchema.optional(),
+});
+
 // Extended user settings type
 export interface UserSettingsFormValues {
   username: string;

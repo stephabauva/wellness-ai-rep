@@ -326,23 +326,42 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Find similar memory using existing similarity logic
+   * Find similar memory using semantic similarity calculation
    */
   private async findSimilarMemory(
     content: string, 
     memories: MemoryEntry[]
-  ): Promise<RelevantMemory | null> {
+  ): Promise<{ id: string; content: string; similarity: number } | null> {
     if (memories.length === 0) return null;
 
     try {
-      // Use existing contextual memory retrieval
-      const contextualMemories = await memoryService.getContextualMemories(
-        memories[0].userId,
-        [],
-        content
-      );
+      // Generate embedding for the new content
+      const contentEmbedding = await memoryService.generateEmbedding(content);
+      
+      let bestMatch: { id: string; content: string; similarity: number } | null = null;
+      let highestSimilarity = 0;
 
-      return contextualMemories.length > 0 ? contextualMemories[0] : null;
+      // Compare against existing memories
+      for (const memory of memories) {
+        if (!memory.embedding) continue;
+        
+        // Calculate cosine similarity
+        const similarity = await memoryService.cosineSimilarity(
+          contentEmbedding, 
+          memory.embedding as number[]
+        );
+
+        if (similarity > highestSimilarity) {
+          highestSimilarity = similarity;
+          bestMatch = {
+            id: memory.id,
+            content: memory.content,
+            similarity: similarity
+          };
+        }
+      }
+
+      return bestMatch;
     } catch (error) {
       console.error('[ChatGPTMemoryEnhancement] Similarity check failed:', error);
       return null;

@@ -129,7 +129,7 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
       ...currentHealthConsent,
       retention_policies: {
         ...currentHealthConsent.retention_policies,
-        [`${category}_days`]: days
+        [`${category}_days` as keyof typeof currentHealthConsent.retention_policies]: days
       }
     };
 
@@ -329,7 +329,7 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
                 Visible Categories
               </Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {currentHealthConsent.data_visibility.visible_categories.map((category) => (
+                {currentHealthConsent.data_visibility.visible_categories.map((category: string) => (
                   <Badge key={category} variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                     {getCategoryIcon(category)} {category.replace('_', ' ')}
                     <button
@@ -349,7 +349,7 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
                 Hidden Categories
               </Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {currentHealthConsent.data_visibility.hidden_categories.map((category) => (
+                {currentHealthConsent.data_visibility.hidden_categories.map((category: string) => (
                   <Badge key={category} variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {getCategoryIcon(category)} {category.replace('_', ' ')}
                     <button
@@ -384,7 +384,7 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
             <Switch
               id="auto-export"
               checked={currentHealthConsent.export_controls.auto_export_enabled}
-              onCheckedChange={(checked) => handleExportSettingUpdate('auto_export_enabled', checked)}
+              onCheckedChange={(checked: boolean) => handleExportSettingUpdate('auto_export_enabled', checked)}
             />
           </div>
           
@@ -392,7 +392,7 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
             <Label>Export format</Label>
             <Select
               value={currentHealthConsent.export_controls.export_format}
-              onValueChange={(value) => handleExportSettingUpdate('export_format', value)}
+              onValueChange={(value: string) => handleExportSettingUpdate('export_format', value)}
             >
               <SelectTrigger className="w-24">
                 <SelectValue />
@@ -410,7 +410,7 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
             <Switch
               id="include-ai"
               checked={currentHealthConsent.export_controls.include_ai_interactions}
-              onCheckedChange={(checked) => handleExportSettingUpdate('include_ai_interactions', checked)}
+              onCheckedChange={(checked: boolean) => handleExportSettingUpdate('include_ai_interactions', checked)}
             />
           </div>
 

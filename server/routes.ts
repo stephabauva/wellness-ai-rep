@@ -2923,7 +2923,7 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
           savedMemory = await memoryService.saveMemoryEntry(userId, detectionResult.extractedInfo, {
             category: detectionResult.category,
             importance_score: detectionResult.importance,
-            sourceConversationId: 'debug-test',
+            sourceConversationId: null, // Don't require conversationId for debug test
             keywords: detectionResult.keywords,
           });
           console.log(`[DEBUG] Memory saved:`, savedMemory);

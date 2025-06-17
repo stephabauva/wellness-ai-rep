@@ -517,7 +517,7 @@ class AiService {
     return this.providers.has(providerName);
   }
 
-  // Simplified memory processing - disabled enhanced detection to prevent API quota exhaustion
+  // Re-enabled memory processing with background detection for user preferences
   private async processEnhancedMemory(
     userId: number,
     message: string,
@@ -527,7 +527,7 @@ class AiService {
     coachingMode: string
   ): Promise<any> {
     try {
-      // Only use traditional memory processing - no AI calls to prevent quota burn
+      // Use full memory processing including background automatic detection
       const traditionalResult = await memoryService.processMessageForMemory(
         userId, message, conversationId, messageId, conversationHistory
       );

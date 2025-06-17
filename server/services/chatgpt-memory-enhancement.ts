@@ -115,7 +115,11 @@ Use this information naturally in your responses to provide personalized guidanc
       // Handle different deduplication actions
       switch (deduplicationResult.action) {
         case 'create':
-          await this.createNewMemory(userId, detection, conversationId, semanticHash);
+          // Generate proper UUID for conversation ID if test format
+          const validConversationId = conversationId.startsWith('test-') 
+            ? crypto.randomUUID() 
+            : conversationId;
+          await this.createNewMemory(userId, detection, validConversationId, semanticHash);
           break;
         case 'update':
           await this.updateExistingMemory(deduplicationResult.existingMemoryId!, detection);

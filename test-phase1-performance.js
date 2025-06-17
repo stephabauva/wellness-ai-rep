@@ -3,7 +3,7 @@
  * Direct performance testing with metrics output
  */
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
 class Phase1PerformanceTest {
   constructor() {
@@ -335,8 +335,5 @@ async function main() {
   await testSuite.runAllTests();
 }
 
-if (require.main === module) {
-  main().catch(console.error);
-}
-
-module.exports = { Phase1PerformanceTest };
+// Execute if this is the main module
+main().catch(console.error);

@@ -246,7 +246,7 @@ Use this health data to provide personalized insights and recommendations. Alway
     
     if (hasCurrentImages) {
       // Image-focused prompt when user is actively sharing images
-      systemPromptContent = `${memoryEnhancedPrompt}
+      systemPromptContent = `${memoryEnhancedPrompt}${healthDataContext}
 
 === VISUAL ANALYSIS CAPABILITIES ===
 You can see and analyze all images in this conversation. When users share images:
@@ -258,7 +258,7 @@ You can see and analyze all images in this conversation. When users share images
 Apply both your personal knowledge about this user AND your visual analysis capabilities to provide the most helpful response.`;
     } else {
       // Memory-focused prompt for text-only conversations
-      systemPromptContent = `${memoryEnhancedPrompt}
+      systemPromptContent = `${memoryEnhancedPrompt}${healthDataContext}
 
 When images are shared, you can analyze them directly. For text conversations, focus on using your knowledge about this user to provide personalized wellness coaching.`;
     }

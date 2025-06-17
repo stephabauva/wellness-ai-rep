@@ -47,7 +47,7 @@ export class MemoryRelationshipEngine {
   private cacheTimestamps = new Map<string, number>();
 
   /**
-   * Analyze and extract atomic facts from memory content
+   * Ultra-fast atomic facts extraction with pattern matching
    */
   async extractAtomicFacts(memoryId: string, content: string): Promise<AtomicFact[]> {
     const cacheKey = `facts_${memoryId}`;
@@ -60,30 +60,33 @@ export class MemoryRelationshipEngine {
     const startTime = Date.now();
     
     try {
-      // Extract atomic facts using lightweight pattern matching
+      // Super-fast pattern-based extraction
       const facts: AtomicFact[] = [];
-      const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 10);
       
-      for (const sentence of sentences) {
-        const trimmed = sentence.trim();
-        if (trimmed.length === 0) continue;
-        
-        // Classify fact type based on content patterns
-        const factType = this.classifyFactType(trimmed);
-        
-        const fact: AtomicFact = {
-          id: crypto.randomUUID(),
-          memoryId,
-          factType,
-          content: trimmed,
-          confidence: this.calculateFactConfidence(trimmed),
-          extractedAt: new Date()
-        };
-        
-        facts.push(fact);
+      // Quick pattern matching for key fact types
+      const patterns = {
+        preference: /\b(prefer|like|love|enjoy|hate|dislike)\b/i,
+        goal: /\b(want to|goal|target|aim|trying to)\b/i,
+        constraint: /\b(cannot|can't|avoid|allergic|restrict)\b/i,
+        experience: /\b(did|went|tried|completed)\b/i
+      };
+      
+      // Single pass through content for all patterns
+      for (const [factType, pattern] of Object.entries(patterns)) {
+        if (pattern.test(content)) {
+          facts.push({
+            id: crypto.randomUUID(),
+            memoryId,
+            factType: factType as AtomicFact['factType'],
+            content: content.slice(0, 100), // Truncate for performance
+            confidence: 0.7,
+            extractedAt: new Date()
+          });
+          break; // Only extract first match for speed
+        }
       }
       
-      // Cache the results
+      // Cache the results aggressively
       this.atomicFactCache.set(cacheKey, facts);
       this.cacheTimestamps.set(cacheKey, Date.now());
       

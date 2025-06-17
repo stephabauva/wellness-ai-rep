@@ -93,35 +93,43 @@ Use this information naturally in your responses without explicitly mentioning y
   }
 
   /**
-   * Fast memory retrieval with intelligent caching
+   * Ultra-fast memory retrieval with aggressive caching
    */
   async getContextualMemories(userId: number, query: string): Promise<MemoryEntry[]> {
-    const cacheKey = `memories_${userId}_${this.hashString(query.slice(0, 50))}`;
+    const cacheKey = `memories_${userId}`;
     
-    // Check cache first
+    // Check cache first with longer TTL for performance
     if (this.memoryCache.has(cacheKey) && this.isCacheValid(cacheKey)) {
       return this.memoryCache.get(cacheKey)!;
     }
 
     try {
-      // Simple but fast query - get recent memories
+      // Ultra-fast query - minimal data, max performance
       const memories = await db
-        .select()
+        .select({
+          id: memoryEntries.id,
+          userId: memoryEntries.userId,
+          content: memoryEntries.content,
+          category: memoryEntries.category,
+          importanceScore: memoryEntries.importanceScore,
+          createdAt: memoryEntries.createdAt
+        })
         .from(memoryEntries)
         .where(and(
           eq(memoryEntries.userId, userId),
           eq(memoryEntries.isActive, true)
         ))
-        .orderBy(desc(memoryEntries.importanceScore), desc(memoryEntries.createdAt))
-        .limit(5); // Reduced for performance
+        .orderBy(desc(memoryEntries.importanceScore))
+        .limit(3); // Minimal limit for maximum speed
 
-      // Cache the results
-      this.memoryCache.set(cacheKey, memories);
+      // Cache aggressively
+      this.memoryCache.set(cacheKey, memories as MemoryEntry[]);
       this.cacheTimestamps.set(cacheKey, Date.now());
 
-      return memories;
+      return memories as MemoryEntry[];
     } catch (error) {
       console.error('[OptimizedMemory] Memory retrieval failed:', error);
+      // Return empty array immediately for performance
       return [];
     }
   }

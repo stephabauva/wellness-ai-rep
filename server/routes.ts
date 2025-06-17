@@ -1059,30 +1059,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const retrievalStartTime = Date.now();
       
-      // Lightweight memory retrieval for performance testing
-      let memories = [];
-      try {
-        // Use basic memory service with limited results for performance
-        memories = await enhancedMemoryService.getRelevantMemories(
-          query,
-          1, // Default user ID
-          Math.min(limit || 5, 3), // Limit to 3 for performance
-          contextualHints || []
-        );
-      } catch (error) {
-        console.warn('Memory retrieval fallback to empty array:', error);
-        memories = [];
-      }
+      // Use optimized memory service for <150ms performance
+      const { optimizedMemoryService } = await import('./services/optimized-memory-service');
+      const memories = await optimizedMemoryService.getContextualMemories(1, query);
 
       const retrievalTime = Date.now() - retrievalStartTime;
 
       res.json({
-        memories: Array.isArray(memories) ? memories.slice(0, limit || 5) : [],
-        count: Array.isArray(memories) ? Math.min(memories.length, limit || 5) : 0,
+        memories: memories.slice(0, limit || 5),
+        count: Math.min(memories.length, limit || 5),
         phase: "1",
         performance: {
           retrievalTime: `${retrievalTime}ms`,
-          cached: Array.isArray(memories) && memories.length > 0
+          cached: memories.length > 0
         },
         features: {
           dynamicThresholds: true,

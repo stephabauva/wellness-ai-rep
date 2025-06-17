@@ -193,8 +193,12 @@ class MemoryService {
         
         if (savedMemory) {
           console.log(`[MemoryService] Successfully saved memory: "${autoDetection.extractedInfo}" (ID: ${savedMemory.id})`);
-          // Invalidate user memory cache
-          this.invalidateUserMemoryCache(userId);
+          // Invalidate user memory cache immediately for real-time updates
+          this.invalidateUserMemoryCache(userId, 100); // Fast invalidation
+          
+          // Force immediate cache cleanup to ensure fresh data
+          this.forceCacheCleanup();
+          console.log(`[MemoryService] Cache forcefully invalidated for immediate UI refresh`);
         } else {
           console.error('[MemoryService] Failed to save memory - saveMemoryEntry returned null');
         }

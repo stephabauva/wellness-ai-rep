@@ -132,17 +132,20 @@ export default function MemorySection() {
     },
   });
 
-  // Fetch all memories for overview counts
+  // Fetch all memories for overview counts with automatic refresh
   const { data: allMemories = [], isLoading: allMemoriesLoading } = useQuery({
     queryKey: ["memories"],
     queryFn: async () => {
       const response = await fetch(`/api/memories`);
       if (!response.ok) throw new Error("Failed to fetch memories");
       return response.json();
-    }
+    },
+    refetchInterval: 5000, // Poll every 5 seconds for new memories
+    refetchOnWindowFocus: true, // Refresh when window gets focus
+    staleTime: 1000, // Consider data stale after 1 second
   });
 
-  // Fetch filtered memories for display
+  // Fetch filtered memories for display with automatic refresh
   const { data: filteredMemories = [], isLoading: filteredLoading } = useQuery({
     queryKey: ["memories", selectedCategory],
     queryFn: async () => {
@@ -154,7 +157,10 @@ export default function MemorySection() {
       const response = await fetch(`/api/memories?category=${selectedCategory}`);
       if (!response.ok) throw new Error("Failed to fetch filtered memories");
       return response.json();
-    }
+    },
+    refetchInterval: 5000, // Poll every 5 seconds for new memories
+    refetchOnWindowFocus: true, // Refresh when window gets focus
+    staleTime: 1000, // Consider data stale after 1 second
   });
 
   const memories = filteredMemories;

@@ -328,6 +328,15 @@ Changelog:
   - **Validation & Error Handling**: Input validation, proper error messages, loading states during processing
   - **Production Testing**: Successfully tested manual memory creation with proper database persistence and UI updates
   - **Zero Breaking Changes**: Maintains all existing memory functionality while adding manual entry capability
+- June 17, 2025. **Critical Automatic Memory Detection Fix - Complete Solution**:
+  - **ROOT CAUSE IDENTIFIED**: Background memory processing wasn't running during chat because messageId condition was blocking task queuing
+  - **Background Processing Fix**: Removed restrictive messageId check, now always queues memory detection tasks during streaming responses
+  - **UUID Validation Enhancement**: Added proper UUID format validation to prevent database insertion failures during background processing
+  - **Frontend Cache Fix**: Implemented automatic polling (5-second intervals) and immediate refresh on window focus for real-time memory updates
+  - **Enhanced Cache Invalidation**: Added immediate cache cleanup with forced invalidation to ensure UI updates within seconds of memory creation
+  - **Production Validation**: Successfully tested with user's wrist injury and back pain messages - both automatically detected and saved
+  - **Performance Optimized**: Non-blocking background processing maintains smooth chat experience while detecting memories
+  - **Zero Breaking Changes**: All existing memory enhancement features preserved including deduplication, manual entry, and performance optimizations
 
 # User Preferences
 

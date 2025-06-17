@@ -270,50 +270,8 @@ export const HealthDataConsentSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Dashboard Visibility</CardTitle>
-          <CardDescription>
-            Choose which health metrics appear in your dashboard
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium">Visible Categories</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {settings.health_consent?.data_visibility?.visible_categories?.map((category) => (
-                  <Badge key={category} variant="default">
-                    {category}
-                    <button
-                      onClick={() => toggleCategoryVisibility(category, false)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Hidden Categories</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {settings.health_consent?.data_visibility?.hidden_categories?.map((category) => (
-                  <Badge key={category} variant="secondary">
-                    {category}
-                    <button
-                      onClick={() => toggleCategoryVisibility(category, true)}
-                      className="ml-1 hover:text-primary"
-                    >
-                      +
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Dashboard Visibility moved to Health Dashboard for better UX */}
+      {/* Users can now directly customize metrics from the health dashboard interface */}
 
       <Card>
         <CardHeader>
@@ -373,53 +331,158 @@ const getCategoryDescription = (category: string): string => {
 };
 ```
 
-#### 1.5.3 Settings Navigation Integration
+#### 1.5.3 Health Dashboard Metrics Visibility Card
 ```typescript
-// client/src/components/SettingsSection.tsx enhancement
-export const SettingsSection: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('account');
+// client/src/components/health/MetricsVisibilityCard.tsx
+export const MetricsVisibilityCard: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [visibleMetrics, setVisibleMetrics] = useState<string[]>([]);
+  
+  const allHealthMetrics = [
+    // Lifestyle & Activity
+    { id: 'steps', name: 'Steps', category: 'Activity' },
+    { id: 'distance_walked', name: 'Distance Walked/Run', category: 'Activity' },
+    { id: 'flights_climbed', name: 'Flights Climbed', category: 'Activity' },
+    { id: 'active_energy', name: 'Active Energy/Calories', category: 'Activity' },
+    { id: 'resting_energy', name: 'Resting Energy', category: 'Activity' },
+    { id: 'exercise_minutes', name: 'Exercise Minutes', category: 'Activity' },
+    { id: 'stand_hours', name: 'Stand Hours', category: 'Activity' },
+    { id: 'workouts', name: 'Workouts', category: 'Activity' },
+    
+    // Cardiovascular
+    { id: 'heart_rate', name: 'Heart Rate', category: 'Cardiovascular' },
+    { id: 'resting_heart_rate', name: 'Resting Heart Rate', category: 'Cardiovascular' },
+    { id: 'walking_heart_rate', name: 'Walking Heart Rate Average', category: 'Cardiovascular' },
+    { id: 'hrv', name: 'Heart Rate Variability (HRV)', category: 'Cardiovascular' },
+    { id: 'high_low_hr_notifications', name: 'High and Low Heart Rate Notifications', category: 'Cardiovascular' },
+    { id: 'irregular_rhythm', name: 'Irregular Rhythm Notifications', category: 'Cardiovascular' },
+    { id: 'ecg', name: 'ECG (Electrocardiogram)', category: 'Cardiovascular' },
+    { id: 'afib_history', name: 'AFib History', category: 'Cardiovascular' },
+    { id: 'blood_oxygen', name: 'Blood Oxygen (SpO2)', category: 'Cardiovascular' },
+    { id: 'respiratory_rate', name: 'Respiratory Rate', category: 'Cardiovascular' },
+    { id: 'blood_pressure', name: 'Blood Pressure (via connected cuffs)', category: 'Cardiovascular' },
+    
+    // Sleep & Recovery
+    { id: 'sleep_duration', name: 'Sleep Duration', category: 'Sleep' },
+    { id: 'sleep_stages', name: 'Sleep Stages (Awake, Light, Deep, REM)', category: 'Sleep' },
+    { id: 'time_in_bed', name: 'Time in Bed', category: 'Sleep' },
+    { id: 'sleep_consistency', name: 'Sleep Consistency', category: 'Sleep' },
+    { id: 'wrist_temperature', name: 'Wrist Temperature', category: 'Sleep' },
+    
+    // Body Composition
+    { id: 'body_weight', name: 'Body Weight', category: 'Body Composition' },
+    { id: 'body_fat_percentage', name: 'Body Fat Percentage', category: 'Body Composition' },
+    { id: 'bmi', name: 'Body Mass Index (BMI)', category: 'Body Composition' },
+    { id: 'lean_body_mass', name: 'Lean Body Mass', category: 'Body Composition' },
+    
+    // Fitness & Performance
+    { id: 'cardio_fitness', name: 'Cardio Fitness (VO2 Max)', category: 'Fitness' },
+    { id: 'heart_rate_recovery', name: 'Heart Rate Recovery', category: 'Fitness' },
+    { id: 'readiness_score', name: 'Readiness Score/Body Battery', category: 'Fitness' },
+    { id: 'walking_steadiness', name: 'Walking Steadiness', category: 'Fitness' },
+    { id: 'walking_speed', name: 'Walking Speed', category: 'Fitness' },
+    { id: 'step_length', name: 'Step Length', category: 'Fitness' },
+    { id: 'walking_asymmetry', name: 'Walking Asymmetry', category: 'Fitness' },
+    { id: 'double_support_time', name: 'Double Support Time (Gait)', category: 'Fitness' },
+    { id: 'running_power', name: 'Running Power', category: 'Fitness' },
+    { id: 'ground_contact_time', name: 'Ground Contact Time', category: 'Fitness' },
+    { id: 'vertical_oscillation', name: 'Vertical Oscillation', category: 'Fitness' },
+    
+    // Mental Health & Wellness
+    { id: 'menstrual_cycle', name: 'Menstrual Cycle Tracking', category: 'Wellness' },
+    { id: 'ovulation_estimates', name: 'Ovulation Estimates', category: 'Wellness' },
+    { id: 'mindful_minutes', name: 'Mindful Minutes', category: 'Wellness' },
+    { id: 'mood_logging', name: 'State of Mind/Mood Logging', category: 'Wellness' },
+    { id: 'stress_level', name: 'Stress Level', category: 'Wellness' },
+    { id: 'eda', name: 'Electrodermal Activity (EDA)', category: 'Wellness' },
+    
+    // Safety & Environmental
+    { id: 'fall_detection', name: 'Fall Detection', category: 'Safety' },
+    { id: 'crash_detection', name: 'Crash Detection', category: 'Safety' },
+    { id: 'environmental_sound', name: 'Environmental Sound Levels', category: 'Environmental' },
+    { id: 'headphone_audio', name: 'Headphone Audio Levels', category: 'Environmental' },
+    { id: 'time_in_daylight', name: 'Time in Daylight', category: 'Environmental' },
+    { id: 'uv_index', name: 'UV Index', category: 'Environmental' },
+    { id: 'handwashing_detection', name: 'Handwashing Detection', category: 'Health Habits' },
+    
+    // Nutrition & Health
+    { id: 'blood_glucose', name: 'Blood Glucose (via connected CGMs)', category: 'Medical' },
+    { id: 'hydration', name: 'Hydration/Water Intake', category: 'Nutrition' },
+    { id: 'caffeine_intake', name: 'Caffeine Intake', category: 'Nutrition' },
+    { id: 'medications', name: 'Medications Logged', category: 'Medical' },
+    { id: 'symptoms', name: 'Symptoms Logged', category: 'Medical' },
+    { id: 'health_records', name: 'Health Records (allergies, immunizations, lab results)', category: 'Medical' }
+  ];
+
+  const filteredMetrics = allHealthMetrics.filter(metric =>
+    metric.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    metric.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const addMetricToDashboard = (metricId: string) => {
+    setVisibleMetrics(prev => [...prev, metricId]);
+    // Call API to update user dashboard preferences
+  };
 
   return (
-    <div className="flex h-full">
-      <div className="w-64 border-r bg-muted/10">
-        <nav className="space-y-2 p-4">
-          {/* Existing navigation items */}
-          <SettingsNavItem
-            id="account"
-            label="Account"
-            icon={User}
-            active={activeTab === 'account'}
-            onClick={() => setActiveTab('account')}
-          />
-          <SettingsNavItem
-            id="ai-configuration"
-            label="AI Configuration"
-            icon={Brain}
-            active={activeTab === 'ai-configuration'}
-            onClick={() => setActiveTab('ai-configuration')}
-          />
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Customize Your Health Dashboard
+        </CardTitle>
+        <CardDescription>
+          Add health metrics to your dashboard for personalized tracking
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search health metrics..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
           
-          {/* NEW: Health Data Consent tab */}
-          <SettingsNavItem
-            id="health-consent"
-            label="Health Data & Privacy"
-            icon={Shield}
-            active={activeTab === 'health-consent'}
-            onClick={() => setActiveTab('health-consent')}
-            badge="GDPR"
-          />
-          
-          {/* Other existing items... */}
-        </nav>
-      </div>
-
-      <div className="flex-1 p-6">
-        {activeTab === 'account' && <AccountSettings />}
-        {activeTab === 'ai-configuration' && <AiConfigurationSettings />}
-        {activeTab === 'health-consent' && <HealthDataConsentSettings />}
-        {/* Other existing tabs... */}
-      </div>
-    </div>
+          <ScrollArea className="h-96">
+            {Object.entries(
+              filteredMetrics.reduce((acc, metric) => {
+                if (!acc[metric.category]) acc[metric.category] = [];
+                acc[metric.category].push(metric);
+                return acc;
+              }, {} as Record<string, typeof filteredMetrics>)
+            ).map(([category, metrics]) => (
+              <div key={category} className="mb-4">
+                <h4 className="font-medium text-sm text-muted-foreground mb-2">
+                  {category}
+                </h4>
+                <div className="space-y-1">
+                  {metrics.map((metric) => (
+                    <div
+                      key={metric.id}
+                      className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
+                    >
+                      <span className="text-sm">{metric.name}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => addMetricToDashboard(metric.id)}
+                        disabled={visibleMetrics.includes(metric.id)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </ScrollArea>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 ```
@@ -545,10 +608,19 @@ app.patch('/api/user/settings', authenticateUser, async (req, res) => {
 });
 ```
 
-### Phase 2: AI Memory Integration (Week 2)
-**Objective:** Integrate consent checks with AI memory system
+### Phase 2: AI Memory Integration & Dashboard Enhancement (Week 2)
+**Objective:** Integrate consent checks with AI memory system and implement dashboard metrics visibility
 
-#### 2.1 Memory Service Enhancement
+#### 2.1 Health Dashboard Metrics Visibility Card
+```typescript
+// client/src/components/health/MetricsVisibilityCard.tsx
+// Interactive metrics selection directly in health dashboard
+// Real-time dashboard customization with comprehensive smartphone health metrics
+// Search and category-based metric discovery
+// Direct '+' button integration for adding metrics to dashboard
+```
+
+#### 2.2 Memory Service Enhancement
 ```typescript
 // Enhancement to existing memory service
 export class ConsentAwareMemoryService extends MemoryService {

@@ -26,11 +26,16 @@
 
 ## Required Fixes
 
-### Fix 1: Dashboard Visibility Update Bug
-```typescript
-// Issue in consent settings endpoint - likely HTTP method validation error
-// Needs investigation of routes.ts consent update endpoint
-```
+### Fix 1: Dashboard Visibility Feature Relocation
+**New Approach**: Move dashboard visibility control from Settings to Health Dashboard
+**Implementation**: Add metrics selection card directly in health dashboard with:
+- Interactive card with all smartphone health metrics
+- '+' button to add metrics to dashboard
+- Search functionality for metric discovery
+- Real-time dashboard updates
+
+**Technical Debt Resolved**: Eliminates HTTP token validation error by removing complex settings endpoint
+**User Experience**: Direct interaction in context rather than buried in settings
 
 ### Fix 2: Data Retention Background Service
 ```typescript

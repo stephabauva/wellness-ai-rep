@@ -2900,6 +2900,54 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
     }
   });
 
+  // Debug endpoint to test memory detection
+  app.post("/api/debug/memory-detection", async (req, res) => {
+    try {
+      const { message, userId = 1 } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      console.log(`[DEBUG] Testing memory detection for message: "${message}"`);
+      
+      // Test the memory detection system directly
+      const detectionResult = await memoryService.detectMemoryWorthy(message, []);
+      
+      console.log(`[DEBUG] Detection result:`, detectionResult);
+      
+      // If it should be remembered, test saving it
+      let savedMemory = null;
+      if (detectionResult.shouldRemember) {
+        try {
+          savedMemory = await memoryService.saveMemoryEntry(userId, detectionResult.extractedInfo, {
+            category: detectionResult.category,
+            importance_score: detectionResult.importance,
+            sourceConversationId: 'debug-test',
+            keywords: detectionResult.keywords,
+          });
+          console.log(`[DEBUG] Memory saved:`, savedMemory);
+        } catch (saveError) {
+          console.error(`[DEBUG] Error saving memory:`, saveError);
+        }
+      }
+      
+      res.json({
+        message,
+        detectionResult,
+        savedMemory,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error("Error in memory detection debug:", error);
+      res.status(500).json({ 
+        error: "Memory detection test failed", 
+        details: error.message,
+        stack: error.stack 
+      });
+    }
+  });
+
   app.get("/api/memory/atomic-facts/:memoryId", async (req, res) => {
     try {
       const memoryId = req.params.memoryId;

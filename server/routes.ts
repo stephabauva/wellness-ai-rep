@@ -174,6 +174,39 @@ const updateCategoryBodySchema = insertFileCategorySchema.pick({
   color: true
 }).partial();
 
+// Health consent settings schema
+const healthConsentSettingsSchema = z.object({
+  data_visibility: z.object({
+    visible_categories: z.array(z.string()),
+    hidden_categories: z.array(z.string()),
+    dashboard_preferences: z.record(z.any()).optional().default({})
+  }),
+  ai_access_consent: z.object({
+    lifestyle: z.boolean(),
+    cardiovascular: z.boolean(),
+    body_composition: z.boolean(),
+    medical: z.boolean(),
+    advanced: z.boolean()
+  }),
+  retention_policies: z.object({
+    lifestyle_days: z.number(),
+    cardiovascular_days: z.number(),
+    body_composition_days: z.number(),
+    medical_days: z.number(),
+    advanced_days: z.number()
+  }),
+  export_controls: z.object({
+    auto_export_enabled: z.boolean(),
+    export_format: z.enum(['pdf', 'json', 'csv']),
+    include_ai_interactions: z.boolean()
+  })
+});
+
+// Enhanced settings schema to include health consent
+const enhancedSettingsUpdateSchema = settingsUpdateSchema.extend({
+  health_consent: healthConsentSettingsSchema.optional()
+});
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -937,7 +970,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Return comprehensive user settings including AI configuration
+      // Get health consent settings
+      const consentSettings = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+
+      // Return comprehensive user settings including AI configuration and health consent
       const userSettings = {
         ...(user.preferences || {}),
         aiProvider: user.aiProvider,
@@ -948,7 +985,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memoryDetectionProvider: user.memoryDetectionProvider,
         memoryDetectionModel: user.memoryDetectionModel,
         name: user.name,
-        email: user.email
+        email: user.email,
+        health_consent: healthConsent
       };
       
       res.json(userSettings);
@@ -960,7 +998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user settings
   app.patch("/api/settings", async (req, res) => {
     try {
-      const settings = settingsUpdateSchema.parse(req.body);
+      const settings = enhancedSettingsUpdateSchema.parse(req.body);
 
       // Update attachment retention settings if provided
       if (settings.highValueRetentionDays !== undefined || 
@@ -974,9 +1012,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         attachmentRetentionService.updateRetentionDurations(retentionUpdates);
       }
 
+      // Update health consent settings if provided
+      if (settings.health_consent) {
+        await healthConsentService.updateConsentSettings(1, settings.health_consent);
+      }
+
       const updatedUser = await storage.updateUserSettings(1, settings); // Default user ID
 
-      // Return comprehensive updated settings including AI configuration
+      // Get updated health consent settings
+      const consentSettings = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+
+      // Return comprehensive updated settings including AI configuration and health consent
       const updatedSettings = {
         ...(updatedUser.preferences || {}),
         aiProvider: updatedUser.aiProvider,
@@ -987,7 +1034,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memoryDetectionProvider: updatedUser.memoryDetectionProvider,
         memoryDetectionModel: updatedUser.memoryDetectionModel,
         name: updatedUser.name,
-        email: updatedUser.email
+        email: updatedUser.email,
+        health_consent: healthConsent
       };
       
       res.json(updatedSettings);
@@ -1014,6 +1062,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reportData);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate health report" });
+    }
+  });
+
+  // Health consent management endpoints
+  
+  // Get health consent settings (dedicated endpoint)
+  app.get("/api/health-consent", async (req, res) => {
+    try {
+      const consentSettings = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+      res.json(healthConsent);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch health consent settings" });
+    }
+  });
+
+  // Update health consent settings (dedicated endpoint)
+  app.patch("/api/health-consent", async (req, res) => {
+    try {
+      const settings = healthConsentSettingsSchema.parse(req.body);
+      await healthConsentService.updateConsentSettings(1, settings);
+      
+      // Log the consent change for GDPR compliance
+      await healthConsentService.logDataAccess(1, 'consent_settings', 'update', true);
+      
+      const updatedConsent = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(updatedConsent);
+      
+      res.json(healthConsent);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid consent settings", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update health consent settings" });
+      }
+    }
+  });
+
+  // Get health data access log (GDPR compliance)
+  app.get("/api/health-consent/access-log", async (req, res) => {
+    try {
+      const logs = await db
+        .select()
+        .from(healthDataAccessLog)
+        .where(eq(healthDataAccessLog.userId, 1))
+        .orderBy(desc(healthDataAccessLog.accessedAt))
+        .limit(100);
+      
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch access log" });
+    }
+  });
+
+  // Check AI access for specific category
+  app.get("/api/health-consent/ai-access/:category", async (req, res) => {
+    try {
+      const category = req.params.category;
+      const hasAccess = await healthConsentService.hasAiAccess(1, category);
+      res.json({ category, hasAccess });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check AI access" });
+    }
+  });
+
+  // Initialize default consent for new users
+  app.post("/api/health-consent/initialize", async (req, res) => {
+    try {
+      await healthConsentService.initializeDefaultConsent(1);
+      const consentSettings = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+      res.json(healthConsent);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to initialize consent settings" });
     }
   });
 

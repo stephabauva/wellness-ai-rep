@@ -12,7 +12,8 @@ import {
   Palette, 
   FolderOpen, 
   Bot, 
-  Zap
+  Zap,
+  Shield
 } from "lucide-react";
 
 // Import hooks
@@ -27,6 +28,7 @@ import { AppPreferencesSettings } from "./settings/AppPreferencesSettings";
 import { FileManagementSettings } from "./settings/FileManagementSettings";
 import { AiConfigurationSettings } from "./settings/AiConfigurationSettings";
 import { PerformanceSettings } from "./settings/PerformanceSettings";
+import { HealthDataConsentSettings } from "./settings/HealthDataConsentSettings";
 
 // Define the combined Zod schema for the entire settings form
 // This should be compatible with UserSettingsFormValues and RetentionSettingsFormValues

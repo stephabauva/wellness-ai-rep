@@ -2004,28 +2004,34 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         return res.status(400).json({ message: "Importance must be a number between 0 and 1" });
       }
 
-      // Process the manual memory entry through the existing memory system
-      // This will use the enhanced memory detection and processing pipeline
-      const memoryResult = await memoryService.processMessageForMemory(
-        userId,
-        content,
-        `manual-entry-${Date.now()}`, // Generate unique conversation ID for manual entries
-        0, // No specific message ID for manual entries
-        [] // No conversation history for manual entries
-      );
-
-      // Also create the memory directly to ensure it's saved with the specified parameters
+      // Use the existing memory service's createMemory method directly
+      // This integrates with the existing system without breaking UUID constraints
       const memory = await memoryService.createMemory(
         userId,
         content.trim(),
         category,
         importance,
-        `manual-entry-${Date.now()}`,
-        0,
+        null, // No conversation ID for manual entries
+        null, // No message ID for manual entries  
         [] // Keywords will be auto-generated through the memory processing system
       );
 
       if (memory) {
+        // Also trigger background memory processing for relationship detection
+        // This uses the existing memory processing pipeline without conversation constraints
+        try {
+          await memoryService.processMessageForMemory(
+            userId,
+            content,
+            null, // No conversation ID needed for processing
+            null, // No message ID needed
+            [] // No conversation history for manual entries
+          );
+        } catch (processingError) {
+          // Log but don't fail the request if background processing fails
+          console.warn('Background memory processing failed for manual entry:', processingError);
+        }
+
         res.status(201).json({
           success: true,
           memory: {

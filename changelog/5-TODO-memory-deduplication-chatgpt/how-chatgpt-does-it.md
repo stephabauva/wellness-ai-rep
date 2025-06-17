@@ -147,5 +147,4 @@ Streaming	| SSE with chunked responses
 
 ⸻
 
-Want me to scaffold this in FastAPI or Node.js with real code and OpenAI APIs?
 

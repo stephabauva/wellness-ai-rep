@@ -26,8 +26,19 @@ class Phase4PerformanceTest {
     try {
       const result = await testFunction();
       const duration = Date.now() - startTime;
-      const target = this.performanceTargets[testName.replace(/\s+/g, '').replace(/[^a-zA-Z]/g, '').toLowerCase()];
-      const passed = target ? duration <= target : true;
+      
+      // Map test names to performance targets
+      const targetMapping = {
+        'Feature Flag Evaluation': this.performanceTargets.featureFlagEvaluation,
+        'Gradual Rollout': this.performanceTargets.gradualRollout,
+        'Performance Monitoring': this.performanceTargets.performanceMonitoring,
+        'Production Readiness': this.performanceTargets.productionReadiness,
+        'Feature Toggling': this.performanceTargets.featureToggling,
+        'Monitoring Dashboard': this.performanceTargets.monitoringDashboard
+      };
+      
+      const target = targetMapping[testName] || 100; // Default 100ms if not found
+      const passed = duration <= target;
       
       this.results.push({
         test: testName,

@@ -1059,19 +1059,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const retrievalStartTime = Date.now();
       
-      // Use performance-optimized memory core for <50ms performance
-      const { performanceMemoryCore } = await import('./services/performance-memory-core');
-      const memories = await performanceMemoryCore.getMemories(1, query);
+      // Lightweight memory retrieval for performance testing
+      let memories = [];
+      try {
+        // Use basic memory service with limited results for performance
+        memories = await enhancedMemoryService.getRelevantMemories(
+          query,
+          1, // Default user ID
+          Math.min(limit || 5, 3), // Limit to 3 for performance
+          contextualHints || []
+        );
+      } catch (error) {
+        console.warn('Memory retrieval fallback to empty array:', error);
+        memories = [];
+      }
 
       const retrievalTime = Date.now() - retrievalStartTime;
 
       res.json({
-        memories: memories.slice(0, limit || 5),
-        count: Math.min(memories.length, limit || 5),
+        memories: Array.isArray(memories) ? memories.slice(0, limit || 5) : [],
+        count: Array.isArray(memories) ? Math.min(memories.length, limit || 5) : 0,
         phase: "1",
         performance: {
           retrievalTime: `${retrievalTime}ms`,
-          cached: memories.length > 0
+          cached: Array.isArray(memories) && memories.length > 0
         },
         features: {
           dynamicThresholds: true,
@@ -1197,28 +1208,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Memory ID required' });
       }
       
-      const startTime = Date.now();
+      // Get user memories for relationship analysis
+      const userMemories = await memoryService.getUserMemories(userId);
       
-      // Use performance-optimized engines
-      const { fastRelationshipEngine } = await import('./services/fast-relationship-engine');
-      const { performanceMemoryCore } = await import('./services/performance-memory-core');
+      // Discover relationships
+      const relationships = await memoryRelationshipEngine.discoverRelationships(memoryId, userMemories);
       
-      // Get user memories with caching
-      const userMemories = await performanceMemoryCore.getMemories(userId);
-      
-      // Fast relationship discovery
-      const relationships = await fastRelationshipEngine.discoverRelationships(memoryId, userMemories);
-      
-      // Fast atomic facts extraction
+      // Extract atomic facts
       const targetMemory = userMemories.find(m => m.id === memoryId);
       const atomicFacts = targetMemory 
-        ? await fastRelationshipEngine.extractAtomicFacts(memoryId, targetMemory.content)
+        ? await memoryRelationshipEngine.extractAtomicFacts(memoryId, targetMemory.content)
         : [];
       
-      // Fast related memories retrieval
-      const relatedMemories = await fastRelationshipEngine.getRelatedMemories(memoryId, userMemories, 3);
-      
-      const processingTime = Date.now() - startTime;
+      // Get related memories
+      const relatedMemories = await memoryRelationshipEngine.getRelatedMemories(memoryId, 2, 5);
       
       res.json({
         memoryId,
@@ -1243,10 +1246,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           relationship: rm.relationship.relationshipType,
           depth: rm.depth
         })),
-        performance: {
-          processingTime: `${processingTime}ms`,
-          optimized: true
-        },
         timestamp: new Date().toISOString()
       });
     } catch (error) {
@@ -2668,16 +2667,11 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
 
   app.post("/api/memory/extract-facts/:memoryId", async (req, res) => {
     try {
-      const { fastRelationshipEngine } = await import("./services/fast-relationship-engine");
+      const { memoryGraphService } = await import("./services/memory-graph-service-instance.js");
       const memoryId = req.params.memoryId;
       
-      const startTime = Date.now();
-      
-      // Get the memory entry with minimal query
-      const memory = await db.select({
-        id: memoryEntries.id,
-        content: memoryEntries.content
-      })
+      // Get the memory entry
+      const memory = await db.select()
         .from(memoryEntries)
         .where(eq(memoryEntries.id, memoryId))
         .limit(1);
@@ -2687,24 +2681,13 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         return;
       }
       
-      // Use fast extraction instead of AI-powered extraction
-      const facts = await fastRelationshipEngine.extractAtomicFacts(memoryId, memory[0].content);
-      
-      const processingTime = Date.now() - startTime;
+      const { sourceContext } = req.body;
+      const facts = await memoryGraphService.extractAtomicFacts(memory[0], sourceContext);
       
       res.json({
         memoryId,
         factsExtracted: facts.length,
-        facts: facts.map(f => ({
-          id: f.id,
-          type: f.factType,
-          content: f.content,
-          confidence: f.confidence
-        })),
-        performance: {
-          processingTime: `${processingTime}ms`,
-          optimized: true
-        }
+        facts
       });
     } catch (error: any) {
       console.error("Error extracting atomic facts:", error);

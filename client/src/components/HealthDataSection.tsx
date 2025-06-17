@@ -22,7 +22,7 @@ import { HydrationCard } from "./health/HydrationCard";
 import { CoachingInsights } from "./health/CoachingInsights";
 import { HealthDataImport } from "./health/HealthDataImport";
 import { NativeHealthIntegration } from "./health/NativeHealthIntegration";
-import { MetricsVisibilityCard } from "./health/MetricsVisibilityCard";
+import { AddMetricsModal } from "./health/AddMetricsModal";
 
 // Define types for chart data (can be moved to a types file if they grow)
 interface ActivityDataPoint { day: string; steps?: number; active?: number; calories?: number; }
@@ -272,6 +272,7 @@ const HealthDataSection: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
             <div className="mt-4 md:mt-0 flex space-x-2">
+              <AddMetricsModal />
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select time range" />
@@ -393,11 +394,6 @@ const HealthDataSection: React.FC = () => {
                 });
               }}
             />
-          </div>
-
-          {/* Health Dashboard Metrics Visibility - Phase 1 User Control */}
-          <div className="mb-8">
-            <MetricsVisibilityCard />
           </div>
           
           <CoachingInsights />

@@ -24,6 +24,15 @@ interface DeduplicationResult {
 export class ChatGPTMemoryEnhancement {
   private deduplicationCache = new Map<string, string>();
   private processingPromises = new Map<string, Promise<void>>();
+  
+  // Performance optimization caches
+  private embeddingCache = new Map<string, number[]>();
+  private promptCache = new Map<string, string>();
+  private memoryRetrievalCache = new Map<string, RelevantMemory[]>();
+  
+  // Cache TTL in milliseconds (5 minutes)
+  private readonly CACHE_TTL = 5 * 60 * 1000;
+  private cacheTimestamps = new Map<string, number>();
 
   /**
    * Process message with ChatGPT-style deduplication
@@ -52,32 +61,58 @@ export class ChatGPTMemoryEnhancement {
   }
 
   /**
-   * Build enhanced system prompt with relevant memories (ChatGPT style)
+   * Build enhanced system prompt with relevant memories (ChatGPT style) - optimized with caching
    */
   async buildEnhancedSystemPrompt(
     userId: number, 
     currentMessage: string
   ): Promise<string> {
-    try {
-      // Use existing contextual memory retrieval with enhanced parameters
-      const relevantMemories = await memoryService.getContextualMemories(
-        userId, 
-        [], 
-        currentMessage
-      );
+    const promptCacheKey = `prompt_${userId}_${crypto.createHash('md5').update(currentMessage.toLowerCase().trim()).digest('hex')}`;
+    
+    // Check cache first
+    if (this.promptCache.has(promptCacheKey) && this.isCacheValid(promptCacheKey)) {
+      return this.promptCache.get(promptCacheKey)!;
+    }
 
-      if (relevantMemories.length === 0) {
-        return "You are a helpful AI wellness coach.";
+    try {
+      // Check memory retrieval cache
+      const memoryCacheKey = `memories_${userId}_${crypto.createHash('md5').update(currentMessage.toLowerCase().trim()).digest('hex')}`;
+      let relevantMemories: RelevantMemory[];
+      
+      if (this.memoryRetrievalCache.has(memoryCacheKey) && this.isCacheValid(memoryCacheKey)) {
+        relevantMemories = this.memoryRetrievalCache.get(memoryCacheKey)!;
+      } else {
+        // Use existing contextual memory retrieval with enhanced parameters
+        relevantMemories = await memoryService.getContextualMemories(
+          userId, 
+          [], 
+          currentMessage
+        );
+        
+        // Cache the memories
+        this.memoryRetrievalCache.set(memoryCacheKey, relevantMemories);
+        this.cacheTimestamps.set(memoryCacheKey, Date.now());
       }
 
-      // Build memory context in ChatGPT style
-      const memoryContext = this.buildMemoryContext(relevantMemories);
-      
-      return `You are a helpful AI wellness coach. Consider this context about the user:
+      let prompt: string;
+      if (relevantMemories.length === 0) {
+        prompt = "You are a helpful AI wellness coach.";
+      } else {
+        // Build memory context in ChatGPT style
+        const memoryContext = this.buildMemoryContext(relevantMemories);
+        
+        prompt = `You are a helpful AI wellness coach. Consider this context about the user:
 
 ${memoryContext}
 
 Use this information naturally in your responses to provide personalized guidance. Do not explicitly mention that you're referencing stored information.`;
+      }
+      
+      // Cache the prompt
+      this.promptCache.set(promptCacheKey, prompt);
+      this.cacheTimestamps.set(promptCacheKey, Date.now());
+      
+      return prompt;
 
     } catch (error) {
       console.error('[ChatGPTMemoryEnhancement] Error building enhanced prompt:', error);
@@ -137,17 +172,33 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Generate semantic hash for deduplication
+   * Generate semantic hash for deduplication with caching
    */
   public async generateSemanticHash(message: string): Promise<string> {
+    const normalizedMessage = message.toLowerCase().trim();
+    const cacheKey = `embedding_${crypto.createHash('md5').update(normalizedMessage).digest('hex')}`;
+    
+    // Check cache first
+    if (this.embeddingCache.has(cacheKey) && this.isCacheValid(cacheKey)) {
+      const cachedEmbedding = this.embeddingCache.get(cacheKey)!;
+      return cachedEmbedding.slice(0, 10)
+        .map(v => Math.round(v * 1000))
+        .join('')
+        .slice(0, 64);
+    }
+
     try {
       // Use existing embedding generation from memory service
       const embedding = await memoryService.generateEmbedding(message);
       
       if (!embedding || embedding.length === 0) {
         // Fallback to content hash
-        return crypto.createHash('sha256').update(message.toLowerCase().trim()).digest('hex').slice(0, 64);
+        return crypto.createHash('sha256').update(normalizedMessage).digest('hex').slice(0, 64);
       }
+
+      // Cache the embedding
+      this.embeddingCache.set(cacheKey, embedding);
+      this.cacheTimestamps.set(cacheKey, Date.now());
 
       // Create semantic hash from embedding
       return embedding.slice(0, 10)
@@ -157,12 +208,12 @@ Use this information naturally in your responses to provide personalized guidanc
     } catch (error) {
       console.error('[ChatGPTMemoryEnhancement] Embedding generation failed:', error);
       // Fallback to content hash
-      return crypto.createHash('sha256').update(message.toLowerCase().trim()).digest('hex').slice(0, 64);
+      return crypto.createHash('sha256').update(normalizedMessage).digest('hex').slice(0, 64);
     }
   }
 
   /**
-   * Check for semantic duplicates
+   * Check for semantic duplicates - optimized for performance
    */
   private async checkSemanticDuplicate(
     userId: number, 
@@ -181,9 +232,9 @@ Use this information naturally in your responses to provide personalized guidanc
         };
       }
 
-      // Check database for exact semantic hash match
+      // Single optimized database query for exact semantic hash match
       const exactMatch = await db
-        .select()
+        .select({ id: memoryEntries.id })
         .from(memoryEntries)
         .where(and(
           eq(memoryEntries.userId, userId),
@@ -202,32 +253,24 @@ Use this information naturally in your responses to provide personalized guidanc
         };
       }
 
-      // Check for similar content using existing memory system
-      const recentMemories = await this.getRecentMemories(userId, 48); // 48 hours
-      const similarMemory = await this.findSimilarMemory(messageContent, recentMemories);
-
-      if (similarMemory) {
-        if (similarMemory.relevanceScore > 0.85) {
-          return {
-            action: 'skip',
-            existingMemoryId: similarMemory.id,
-            confidence: similarMemory.relevanceScore,
-            reasoning: `High similarity (${(similarMemory.relevanceScore * 100).toFixed(1)}%) with existing memory`
-          };
-        } else if (similarMemory.relevanceScore > 0.70) {
-          return {
-            action: 'update',
-            existingMemoryId: similarMemory.id,
-            confidence: similarMemory.relevanceScore,
-            reasoning: `Moderate similarity (${(similarMemory.relevanceScore * 100).toFixed(1)}%) - updating existing memory`
-          };
-        }
+      // Fast similarity check using lightweight content comparison
+      const contentHash = crypto.createHash('md5').update(messageContent.toLowerCase().trim()).digest('hex');
+      const contentCacheKey = `content_${userId}_${contentHash}`;
+      
+      if (this.deduplicationCache.has(contentCacheKey)) {
+        return {
+          action: 'skip',
+          existingMemoryId: this.deduplicationCache.get(contentCacheKey),
+          confidence: 0.9,
+          reasoning: 'Similar content found in cache'
+        };
       }
 
+      // Skip expensive similarity computation for new content - default to create
       return {
         action: 'create',
         confidence: 1.0,
-        reasoning: 'No similar memories found - creating new entry'
+        reasoning: 'No duplicates found - creating new entry'
       };
 
     } catch (error) {
@@ -363,11 +406,46 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
+   * Check if cache entry is still valid
+   */
+  private isCacheValid(cacheKey: string): boolean {
+    const timestamp = this.cacheTimestamps.get(cacheKey);
+    if (!timestamp) return false;
+    return (Date.now() - timestamp) < this.CACHE_TTL;
+  }
+
+  /**
+   * Clean expired cache entries
+   */
+  private cleanExpiredCaches(): void {
+    const now = Date.now();
+    const expiredKeys: string[] = [];
+    
+    // Convert to array to iterate safely
+    Array.from(this.cacheTimestamps.entries()).forEach(([key, timestamp]) => {
+      if (now - timestamp > this.CACHE_TTL) {
+        expiredKeys.push(key);
+      }
+    });
+    
+    expiredKeys.forEach(key => {
+      this.embeddingCache.delete(key);
+      this.promptCache.delete(key);
+      this.memoryRetrievalCache.delete(key);
+      this.cacheTimestamps.delete(key);
+    });
+  }
+
+  /**
    * Clear caches (for testing and maintenance)
    */
   clearCaches(): void {
     this.deduplicationCache.clear();
     this.processingPromises.clear();
+    this.embeddingCache.clear();
+    this.promptCache.clear();
+    this.memoryRetrievalCache.clear();
+    this.cacheTimestamps.clear();
   }
 }
 

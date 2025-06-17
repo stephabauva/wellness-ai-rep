@@ -156,6 +156,9 @@ export const memoryEntries = pgTable("memory_entries", {
   lastAccessed: timestamp("last_accessed").defaultNow(),
   accessCount: integer("access_count").default(0),
   isActive: boolean("is_active").default(true),
+  // Phase 1: ChatGPT Memory Enhancement additions
+  semanticHash: text("semantic_hash"), // For deduplication
+  updateCount: integer("update_count").default(1), // Track memory updates
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

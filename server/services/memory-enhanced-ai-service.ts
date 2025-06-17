@@ -1,13 +1,13 @@
-import { AiService } from './ai-service';
+import { aiService } from './ai-service';
 import { chatGPTMemoryEnhancement } from './chatgpt-memory-enhancement';
 import { AttachmentData } from './providers/ai-provider.interface';
 
 /**
  * Memory-Enhanced AI Service
- * Extends existing AiService with ChatGPT-style memory integration
+ * Wraps existing aiService with ChatGPT-style memory integration
  * Phase 1: Core memory enhancement with real-time deduplication
  */
-export class MemoryEnhancedAIService extends AiService {
+export class MemoryEnhancedAIService {
   private chatGPTMemory = chatGPTMemoryEnhancement;
 
   /**
@@ -51,23 +51,26 @@ export class MemoryEnhancedAIService extends AiService {
       }
 
       // Convert image attachments to proper format
-      const attachments: AttachmentData[] = imageAttachments.map(imagePath => ({
-        data: imagePath,
-        fileType: 'image/jpeg' // Default, could be enhanced with actual type detection
+      const attachments: AttachmentData[] = imageAttachments.map((imagePath, index) => ({
+        fileName: `image_${index}.jpg`,
+        fileType: 'image/jpeg',
+        url: imagePath
       }));
 
-      // Call existing chat response method with enhanced system prompt
-      const response = await this.getChatResponse(
+      // Call existing AI service with enhanced system prompt
+      const messageId = Date.now(); // Generate temporary messageId
+      const aiConfig = { provider: "openai", model: modelOverride || "gpt-4o" };
+      
+      const response = await aiService.getChatResponse(
         message,
         userId,
         conversationId,
-        temperature,
+        messageId,
         mode,
         conversationHistory,
-        modelOverride,
+        aiConfig,
         attachments,
-        stream,
-        systemPrompt
+        false // automaticModelSelection
       );
 
       // Memory processing completes in background - no need to await
@@ -77,12 +80,13 @@ export class MemoryEnhancedAIService extends AiService {
       console.error('[MemoryEnhancedAI] Error in enhanced chat response:', error);
       
       // Fallback to existing service without memory enhancement
-      const attachments: AttachmentData[] = imageAttachments.map(imagePath => ({
+      const attachments: AttachmentData[] = imageAttachments.map((imagePath, index) => ({
         data: imagePath,
-        fileType: 'image/jpeg'
+        fileType: 'image/jpeg',
+        fileName: `image_${index}.jpg`
       }));
 
-      return await this.getChatResponse(
+      return await aiService.getChatResponse(
         message,
         userId,
         conversationId,

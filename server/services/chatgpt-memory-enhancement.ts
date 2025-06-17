@@ -287,18 +287,14 @@ Use this information naturally in your responses to provide personalized guidanc
     conversationId: string,
     semanticHash: string
   ): Promise<void> {
-    const memoryData: InsertMemoryEntry = {
-      userId,
-      content: detection.extractedInfo,
+    const memoryOptions = {
       category: detection.category,
-      importanceScore: detection.importance,
-      keywords: detection.keywords,
+      importance_score: detection.importance,
       sourceConversationId: conversationId,
-      semanticHash,
-      updateCount: 1
+      keywords: detection.keywords
     };
 
-    await memoryService.saveMemoryEntry(userId, detection.extractedInfo, memoryData);
+    await memoryService.saveMemoryEntry(userId, detection.extractedInfo, memoryOptions);
   }
 
   /**

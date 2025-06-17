@@ -163,18 +163,41 @@ class MemoryService {
     const { userId, message, conversationId, messageId, conversationHistory } = payload;
     
     try {
+      console.log(`[MemoryService] Processing background memory task for user ${userId}, message: "${message.substring(0, 50)}..."`);
+      
       const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
+      console.log(`[MemoryService] Memory detection result:`, { 
+        shouldRemember: autoDetection.shouldRemember, 
+        category: autoDetection.category, 
+        importance: autoDetection.importance 
+      });
+      
       if (autoDetection.shouldRemember) {
-        await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
+        // Validate conversationId format - must be valid UUID or null
+        let validConversationId = null;
+        if (conversationId && typeof conversationId === 'string') {
+          // Check if it's a valid UUID format (36 characters with dashes)
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (uuidRegex.test(conversationId)) {
+            validConversationId = conversationId;
+          }
+        }
+        
+        const savedMemory = await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
           category: autoDetection.category,
           importance_score: autoDetection.importance,
-          sourceConversationId: conversationId,
+          sourceConversationId: validConversationId,
           sourceMessageId: messageId,
           keywords: autoDetection.keywords,
         });
         
-        // Invalidate user memory cache
-        this.invalidateUserMemoryCache(userId);
+        if (savedMemory) {
+          console.log(`[MemoryService] Successfully saved memory: "${autoDetection.extractedInfo}" (ID: ${savedMemory.id})`);
+          // Invalidate user memory cache
+          this.invalidateUserMemoryCache(userId);
+        } else {
+          console.error('[MemoryService] Failed to save memory - saveMemoryEntry returned null');
+        }
       }
     } catch (error) {
       console.error('[MemoryService] Background memory processing failed:', error);

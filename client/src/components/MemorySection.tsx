@@ -6,9 +6,29 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+// Manual memory entry schema
+const manualMemorySchema = z.object({
+  content: z.string().min(10, "Memory content must be at least 10 characters").max(500, "Memory content must be less than 500 characters"),
+  category: z.enum(["preference", "personal_info", "context", "instruction"], {
+    required_error: "Please select a memory category",
+  }),
+  importance: z.enum(["low", "medium", "high"], {
+    required_error: "Please select importance level",
+  }),
+});
+
+type ManualMemoryFormData = z.infer<typeof manualMemorySchema>;
 
 interface MemoryEntry {
   id: string;
@@ -99,7 +119,18 @@ export default function MemorySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
   const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
+  const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const { toast } = useToast();
+
+  // Form for manual memory entry
+  const form = useForm<ManualMemoryFormData>({
+    resolver: zodResolver(manualMemorySchema),
+    defaultValues: {
+      content: "",
+      category: "preference",
+      importance: "medium",
+    },
+  });
 
   // Fetch all memories for overview counts
   const { data: allMemories = [], isLoading: allMemoriesLoading } = useQuery({
@@ -128,6 +159,43 @@ export default function MemorySection() {
 
   const memories = filteredMemories;
   const isLoading = allMemoriesLoading || filteredLoading;
+
+  // Manual memory creation mutation
+  const createManualMemoryMutation = useMutation({
+    mutationFn: async (data: ManualMemoryFormData) => {
+      // Convert importance level to numeric score
+      const importanceMap = { low: 0.3, medium: 0.6, high: 0.9 };
+      const importanceScore = importanceMap[data.importance];
+
+      // Use the existing memory processing system like chat does
+      return apiRequest("/api/memories/manual", "POST", {
+        content: data.content,
+        category: data.category,
+        importance: importanceScore,
+      });
+    },
+    onSuccess: async () => {
+      // Invalidate and refetch all memory-related queries
+      await queryClient.invalidateQueries({ queryKey: ["memories"] });
+      await queryClient.refetchQueries({ queryKey: ["memories"] });
+      if (selectedCategory !== "all") {
+        await queryClient.refetchQueries({ queryKey: ["memories", selectedCategory] });
+      }
+      form.reset();
+      setIsManualEntryOpen(false);
+      toast({
+        title: "Memory saved",
+        description: "Your memory has been processed and saved successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to save memory. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const deleteMemoryMutation = useMutation({
     mutationFn: (memoryId: string) => apiRequest(`/api/memories/${memoryId}`, "DELETE"),
@@ -252,7 +320,119 @@ export default function MemorySection() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Memory Overview</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Memory Overview</span>
+                <Dialog open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Memory
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle>Manually Add Memory</DialogTitle>
+                      <DialogDescription>
+                        Add important information that your AI coach should remember for future conversations.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(data => createManualMemoryMutation.mutate(data))} className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="content"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Memory Content</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Enter information you want your AI coach to remember (e.g., 'I prefer morning workouts and have a gluten sensitivity')"
+                                  className="min-h-[100px]"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Describe the information clearly and specifically.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="category"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Category</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select memory category" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="preference">Preferences</SelectItem>
+                                  <SelectItem value="personal_info">Personal Info</SelectItem>
+                                  <SelectItem value="context">Context</SelectItem>
+                                  <SelectItem value="instruction">Instructions</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Choose the type of information this memory represents.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="importance"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Importance Level</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select importance level" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="low">Low - General information</SelectItem>
+                                  <SelectItem value="medium">Medium - Important preference</SelectItem>
+                                  <SelectItem value="high">High - Critical health information</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                How important is this information for coaching decisions?
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="flex justify-end space-x-2 pt-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsManualEntryOpen(false)}
+                            disabled={createManualMemoryMutation.isPending}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={createManualMemoryMutation.isPending}
+                          >
+                            {createManualMemoryMutation.isPending ? "Processing..." : "Save Memory"}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              </CardTitle>
               <CardDescription>
                 Your AI coach remembers important information from your conversations to provide personalized guidance.
               </CardDescription>

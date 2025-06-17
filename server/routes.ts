@@ -1985,6 +1985,67 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
     }
   });
 
+  // Manual memory creation endpoint
+  app.post("/api/memories/manual", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const { content, category, importance } = req.body;
+
+      // Validate input
+      if (!content || content.trim().length < 10) {
+        return res.status(400).json({ message: "Memory content must be at least 10 characters" });
+      }
+
+      if (!["preference", "personal_info", "context", "instruction"].includes(category)) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
+
+      if (typeof importance !== "number" || importance < 0 || importance > 1) {
+        return res.status(400).json({ message: "Importance must be a number between 0 and 1" });
+      }
+
+      // Process the manual memory entry through the existing memory system
+      // This will use the enhanced memory detection and processing pipeline
+      const memoryResult = await memoryService.processMessageForMemory(
+        userId,
+        content,
+        `manual-entry-${Date.now()}`, // Generate unique conversation ID for manual entries
+        0, // No specific message ID for manual entries
+        [] // No conversation history for manual entries
+      );
+
+      // Also create the memory directly to ensure it's saved with the specified parameters
+      const memory = await memoryService.createMemory(
+        userId,
+        content.trim(),
+        category,
+        importance,
+        `manual-entry-${Date.now()}`,
+        0,
+        [] // Keywords will be auto-generated through the memory processing system
+      );
+
+      if (memory) {
+        res.status(201).json({
+          success: true,
+          memory: {
+            id: memory.id,
+            content: memory.content,
+            category: memory.category,
+            importance: memory.importanceScore,
+            createdAt: memory.createdAt
+          },
+          message: "Memory processed and saved successfully"
+        });
+      } else {
+        res.status(500).json({ message: "Failed to save memory" });
+      }
+    } catch (error) {
+      console.error('Error creating manual memory:', error);
+      res.status(500).json({ message: "Failed to create memory" });
+    }
+  });
+
   // Get conversations with metadata
   app.get("/api/conversations", async (req, res) => {
     try {

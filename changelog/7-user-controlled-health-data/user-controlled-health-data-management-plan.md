@@ -123,6 +123,428 @@ export const HealthDataConsentSettings: React.FC = () => {
 }
 ```
 
+### Phase 1.5: Settings Integration (Week 1.5)
+**Objective:** Integrate consent controls with existing settings UI architecture
+
+#### 1.5.1 Settings Schema Extension
+```typescript
+// shared/schema.ts enhancement
+export interface UserSettingsFormValues {
+  // Existing settings (preserved)
+  username: string;
+  email: string;
+  coaching_preferences: CoachingPreferences;
+  ai_configuration: AiConfiguration;
+  file_management: FileManagementSettings;
+  performance: PerformanceSettings;
+  
+  // New health consent settings
+  health_consent: HealthConsentSettings;
+}
+
+export interface HealthConsentSettings {
+  data_visibility: {
+    visible_categories: string[];
+    hidden_categories: string[];
+    dashboard_preferences: DashboardPreferences;
+  };
+  ai_access_consent: {
+    lifestyle: boolean;
+    cardiovascular: boolean;
+    body_composition: boolean;
+    medical: boolean;
+    advanced: boolean;
+  };
+  retention_policies: {
+    lifestyle_days: number;
+    cardiovascular_days: number;
+    body_composition_days: number;
+    medical_days: number;
+    advanced_days: number;
+  };
+  export_controls: {
+    auto_export_enabled: boolean;
+    export_format: 'pdf' | 'json' | 'csv';
+    include_ai_interactions: boolean;
+  };
+}
+```
+
+#### 1.5.2 Settings Component Integration
+```typescript
+// client/src/components/settings/HealthDataConsentSettings.tsx
+import React from 'react';
+import { useUserSettings } from '../../hooks/useUserSettings';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Badge } from '../ui/badge';
+import { Separator } from '../ui/separator';
+
+export const HealthDataConsentSettings: React.FC = () => {
+  const { settings, updateSettings, isLoading } = useUserSettings();
+
+  const handleConsentUpdate = (category: string, enabled: boolean) => {
+    updateSettings({
+      health_consent: {
+        ...settings.health_consent,
+        ai_access_consent: {
+          ...settings.health_consent.ai_access_consent,
+          [category]: enabled
+        }
+      }
+    });
+  };
+
+  const handleRetentionUpdate = (category: string, days: number) => {
+    updateSettings({
+      health_consent: {
+        ...settings.health_consent,
+        retention_policies: {
+          ...settings.health_consent.retention_policies,
+          [`${category}_days`]: days
+        }
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Access Consent</CardTitle>
+          <CardDescription>
+            Control which health data categories your AI coach can access for personalized insights
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries(settings.health_consent?.ai_access_consent || {}).map(([category, enabled]) => (
+            <div key={category} className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base capitalize">{category.replace('_', ' ')}</Label>
+                <p className="text-sm text-muted-foreground">
+                  {getCategoryDescription(category)}
+                </p>
+              </div>
+              <Switch
+                checked={enabled}
+                onCheckedChange={(checked) => handleConsentUpdate(category, checked)}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Data Retention Policies</CardTitle>
+          <CardDescription>
+            Set how long different types of health data are stored
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries(settings.health_consent?.retention_policies || {}).map(([key, days]) => {
+            const category = key.replace('_days', '');
+            return (
+              <div key={key} className="flex items-center justify-between">
+                <Label className="capitalize">{category.replace('_', ' ')}</Label>
+                <Select
+                  value={days.toString()}
+                  onValueChange={(value) => handleRetentionUpdate(category, parseInt(value))}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 days</SelectItem>
+                    <SelectItem value="90">90 days</SelectItem>
+                    <SelectItem value="180">6 months</SelectItem>
+                    <SelectItem value="365">1 year</SelectItem>
+                    <SelectItem value="-1">Forever</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Dashboard Visibility</CardTitle>
+          <CardDescription>
+            Choose which health metrics appear in your dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-medium">Visible Categories</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {settings.health_consent?.data_visibility?.visible_categories?.map((category) => (
+                  <Badge key={category} variant="default">
+                    {category}
+                    <button
+                      onClick={() => toggleCategoryVisibility(category, false)}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Hidden Categories</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {settings.health_consent?.data_visibility?.hidden_categories?.map((category) => (
+                  <Badge key={category} variant="secondary">
+                    {category}
+                    <button
+                      onClick={() => toggleCategoryVisibility(category, true)}
+                      className="ml-1 hover:text-primary"
+                    >
+                      +
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Data Export & Portability</CardTitle>
+          <CardDescription>
+            GDPR-compliant data export and portability options
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>Auto-export enabled</Label>
+            <Switch
+              checked={settings.health_consent?.export_controls?.auto_export_enabled}
+              onCheckedChange={(checked) => updateExportSetting('auto_export_enabled', checked)}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label>Export format</Label>
+            <Select
+              value={settings.health_consent?.export_controls?.export_format}
+              onValueChange={(value) => updateExportSetting('export_format', value)}
+            >
+              <SelectTrigger className="w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pdf">PDF</SelectItem>
+                <SelectItem value="json">JSON</SelectItem>
+                <SelectItem value="csv">CSV</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label>Include AI interactions</Label>
+            <Switch
+              checked={settings.health_consent?.export_controls?.include_ai_interactions}
+              onCheckedChange={(checked) => updateExportSetting('include_ai_interactions', checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const getCategoryDescription = (category: string): string => {
+  const descriptions = {
+    lifestyle: 'Steps, calories, activity levels, sleep patterns',
+    cardiovascular: 'Heart rate, blood pressure, oxygen saturation',
+    body_composition: 'Weight, BMI, body fat percentage, muscle mass',
+    medical: 'Blood glucose, temperature, medication tracking',
+    advanced: 'VO2 max, HRV, lactate threshold, performance metrics'
+  };
+  return descriptions[category as keyof typeof descriptions] || '';
+};
+```
+
+#### 1.5.3 Settings Navigation Integration
+```typescript
+// client/src/components/SettingsSection.tsx enhancement
+export const SettingsSection: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('account');
+
+  return (
+    <div className="flex h-full">
+      <div className="w-64 border-r bg-muted/10">
+        <nav className="space-y-2 p-4">
+          {/* Existing navigation items */}
+          <SettingsNavItem
+            id="account"
+            label="Account"
+            icon={User}
+            active={activeTab === 'account'}
+            onClick={() => setActiveTab('account')}
+          />
+          <SettingsNavItem
+            id="ai-configuration"
+            label="AI Configuration"
+            icon={Brain}
+            active={activeTab === 'ai-configuration'}
+            onClick={() => setActiveTab('ai-configuration')}
+          />
+          
+          {/* NEW: Health Data Consent tab */}
+          <SettingsNavItem
+            id="health-consent"
+            label="Health Data & Privacy"
+            icon={Shield}
+            active={activeTab === 'health-consent'}
+            onClick={() => setActiveTab('health-consent')}
+            badge="GDPR"
+          />
+          
+          {/* Other existing items... */}
+        </nav>
+      </div>
+
+      <div className="flex-1 p-6">
+        {activeTab === 'account' && <AccountSettings />}
+        {activeTab === 'ai-configuration' && <AiConfigurationSettings />}
+        {activeTab === 'health-consent' && <HealthDataConsentSettings />}
+        {/* Other existing tabs... */}
+      </div>
+    </div>
+  );
+};
+```
+
+#### 1.5.4 useUserSettings Hook Enhancement
+```typescript
+// client/src/hooks/useUserSettings.ts enhancement
+export const useUserSettings = () => {
+  const { data: settings, isLoading, error } = useQuery({
+    queryKey: ['userSettings'],
+    queryFn: fetchUserSettings,
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: updateUserSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userSettings'] });
+      // Invalidate health data queries if consent changed
+      queryClient.invalidateQueries({ queryKey: ['healthData'] });
+      // Invalidate AI memory if consent changed
+      queryClient.invalidateQueries({ queryKey: ['memories'] });
+    },
+  });
+
+  const updateSettings = (newSettings: Partial<UserSettingsFormValues>) => {
+    updateSettingsMutation.mutate(newSettings);
+  };
+
+  // Default health consent settings for new users
+  const settingsWithDefaults = {
+    ...settings,
+    health_consent: {
+      data_visibility: {
+        visible_categories: ['lifestyle', 'cardiovascular', 'body_composition'],
+        hidden_categories: ['medical', 'advanced'],
+        dashboard_preferences: {}
+      },
+      ai_access_consent: {
+        lifestyle: true,
+        cardiovascular: true,
+        body_composition: true,
+        medical: false,
+        advanced: false
+      },
+      retention_policies: {
+        lifestyle_days: 365,
+        cardiovascular_days: 365,
+        body_composition_days: 365,
+        medical_days: 90,
+        advanced_days: 180
+      },
+      export_controls: {
+        auto_export_enabled: false,
+        export_format: 'pdf' as const,
+        include_ai_interactions: false
+      },
+      ...settings?.health_consent
+    }
+  };
+
+  return {
+    settings: settingsWithDefaults,
+    updateSettings,
+    isLoading,
+    error
+  };
+};
+```
+
+#### 1.5.5 Backend Settings API Enhancement
+```typescript
+// server/routes.ts enhancement for settings
+app.get('/api/user/settings', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Get existing settings
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    // Get health consent settings
+    const consentSettings = await db
+      .select()
+      .from(userHealthConsent)
+      .where(eq(userHealthConsent.user_id, userId));
+
+    // Merge settings with consent data
+    const settings = {
+      ...user[0],
+      health_consent: transformConsentToSettings(consentSettings)
+    };
+
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+app.patch('/api/user/settings', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { health_consent, ...otherSettings } = req.body;
+
+    // Update user preferences (existing pattern)
+    if (Object.keys(otherSettings).length > 0) {
+      await db
+        .update(users)
+        .set({ 
+          preferences: otherSettings,
+          updated_at: new Date()
+        })
+        .where(eq(users.id, userId));
+    }
+
+    // Update health consent settings
+    if (health_consent) {
+      await updateHealthConsentSettings(userId, health_consent);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+```
+
 ### Phase 2: AI Memory Integration (Week 2)
 **Objective:** Integrate consent checks with AI memory system
 

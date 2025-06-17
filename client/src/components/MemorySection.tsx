@@ -179,8 +179,12 @@ export default function MemorySection() {
       await queryClient.invalidateQueries({ queryKey: ["memories"] });
       await queryClient.refetchQueries({ queryKey: ["memories"] });
       if (selectedCategory !== "all") {
+        await queryClient.invalidateQueries({ queryKey: ["memories", selectedCategory] });
         await queryClient.refetchQueries({ queryKey: ["memories", selectedCategory] });
       }
+      // Force immediate refetch of all memories to ensure UI updates
+      await queryClient.refetchQueries();
+      
       form.reset();
       setIsManualEntryOpen(false);
       toast({

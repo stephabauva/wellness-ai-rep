@@ -1,6 +1,6 @@
 Mission : 
 The user wants you to implement a plan. 
-You will follow that plan and save your fixed issues in a changelog/<feature-name>/<feature>-fixed-issues-report.md file.
+You will follow that plan and save your fixed issues in a changelog/[feature-name]/[feature]-fixed-issues-report.md file.
 
 You must:
 - Respect all stability constraints (see below)
@@ -23,7 +23,7 @@ If you encounter any obstacle forcing you to change your approach:
 - Then propose a new optimal path that still respects I1
 
 Optional Cross-Tech Exploration:
-You are encouraged to:
+If you need to re-assess, you are encouraged to:
 - Evaluate whether another language (e.g. Go, Python/FastAPI, Rust) or framework could better serve this feature
 - Justify trade-offs in performance, complexity, integration effort
 - Only recommend it if it passes I1/I2 and includes a **safe integration or sandbox plan**
@@ -39,15 +39,12 @@ Replit-specific constraints:
 - `vite.config.ts` and `server.hmr` are fragile and easily misconfigured
 - Even previously working commits have failed to restore a broken state — the system is delicate
 - Avoid touching build systems, persistent sockets, or compression unless necessary
+- Respect Replit's tooling system
 
 Avoid:
 - Over-aggressive deduplication or HTTP/2 changes
 - Modifying HMR setup or WebSocket handling
 - Introducing new workflows or bypassing Replit's own tooling
-
-All changes must be:
-- Local, safe, and reversible
-- Fully explained
-- Respecting Replit’s tooling model
+- Do NOT alter anything related to the memory system which currently optimal, you can user element of that system for other features but do not alter that system.
 
 Stability is sacred. Never assume it's safe. **Prove it.**

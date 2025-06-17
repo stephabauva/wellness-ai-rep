@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { aiService } from "./services/ai-service";
+import { memoryEnhancedAIService } from "./services/memory-enhanced-ai-service";
 import { memoryService } from "./services/memory-service";
 import { enhancedMemoryService } from "./services/enhanced-memory-service";
 import { generatePDFReport } from "./services/pdf-service";

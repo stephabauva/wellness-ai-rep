@@ -80,23 +80,24 @@ export class MemoryEnhancedAIService {
       console.error('[MemoryEnhancedAI] Error in enhanced chat response:', error);
       
       // Fallback to existing service without memory enhancement
-      const attachments: AttachmentData[] = imageAttachments.map((imagePath, index) => ({
-        data: imagePath,
+      const fallbackAttachments: AttachmentData[] = imageAttachments.map((imagePath, index) => ({
+        fileName: `image_${index}.jpg`,
         fileType: 'image/jpeg',
-        fileName: `image_${index}.jpg`
+        url: imagePath
       }));
+
+      const fallbackMessageId = Date.now();
+      const fallbackAiConfig = { provider: "openai", model: modelOverride || "gpt-4o" };
 
       return await aiService.getChatResponse(
         message,
         userId,
         conversationId,
-        temperature,
+        fallbackMessageId,
         mode,
         conversationHistory,
-        modelOverride,
-        attachments,
-        stream,
-        customSystemPrompt
+        fallbackAiConfig,
+        fallbackAttachments
       );
     }
   }
@@ -116,12 +117,12 @@ export class MemoryEnhancedAIService {
         `health insights analysis for ${timeRange}`
       );
 
-      // Use existing health insights method with enhanced prompt
-      return await this.getHealthInsights(healthData, timeRange, healthPrompt);
+      // Placeholder for health insights - will be implemented in Phase 2
+      return { insights: "Health insights with memory enhancement will be available in Phase 2", prompt: healthPrompt };
     } catch (error) {
       console.error('[MemoryEnhancedAI] Error in health insights:', error);
-      // Fallback to standard health insights
-      return await this.getHealthInsights(healthData, timeRange);
+      // Fallback response
+      return { insights: "Unable to generate health insights at this time" };
     }
   }
 

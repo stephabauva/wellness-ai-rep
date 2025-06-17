@@ -1,13 +1,11 @@
 Mission : 
-You must analyze my codebase and design the optimal, **safest and most maintainable** plan to implement a new feature:
-<feature_description_here>
+The user wants you to implement a plan. 
+You will follow that plan and save your fixed issues in a changelog/<feature-name>/<feature>-fixed-issues-report.md file.
 
-You will save your findings in a changelog/<feature-name>/<feature>-plan.md file.
-
-This analysis must:
+You must:
 - Respect all stability constraints (see below)
 - Avoid breaking existing behavior
-- Consider implementation options, alternatives, and long-term impact
+- if persistent error, consider implementation options, alternatives, and long-term impact
 
 Critical Constraints:
 
@@ -21,7 +19,7 @@ It is strictly forbidden for any new feature to alter code linked to other featu
 I2 — Adaptive Re-evaluation:
 If you encounter any obstacle forcing you to change your approach:
 - You are forbidden from "trying something else" blindly
-- You must pause and re-assess the entire task using the new constraint
+- You must pause and re-assess the entire task using the new obstacle as context
 - Then propose a new optimal path that still respects I1
 
 Optional Cross-Tech Exploration:
@@ -31,15 +29,10 @@ You are encouraged to:
 - Only recommend it if it passes I1/I2 and includes a **safe integration or sandbox plan**
 
 Required Output:
-1. Feature scope and technical context
-2. Dependency and risk assessment
-3. Option comparison (include alternatives across languages if relevant)
-4. Recommended plan
-5. Code examples (clean, modular, and documented)
-6. Test plan and safety checks
-7. Confirmation that app stability (HMR, DB, WebSockets) is preserved
-8. Ensure that are no unused pieces of code
-9. Ensure there are no conflicts between pieces of code.
+1. clean, modular, refactored, maintainable code
+2. Ensure there are no unused pieces of code, all implemented code must be integrated.
+3. Ensure there are no conflicts between pieces of code.
+4. Write minimal unit tests for the main functionalities
 
 Replit-specific constraints:
 - Do NOT break Vite config, WebSocket, or HMR behavior

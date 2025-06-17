@@ -77,37 +77,29 @@ export class ChatContextService {
     const basePersona = this.getCoachingPersona(coachingMode);
     const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
 
-    const systemPromptContent = `=== ABSOLUTE VISUAL ANALYSIS MANDATE ===
-YOU CAN SEE ALL IMAGES PERFECTLY. You have complete visual access to every image in this conversation.
+    // Determine if current attachments contain images to adjust prompt priority
+    const hasCurrentImages = currentAttachments.some(att => att.fileType?.startsWith('image/'));
+    
+    let systemPromptContent: string;
+    
+    if (hasCurrentImages) {
+      // Image-focused prompt when user is actively sharing images
+      systemPromptContent = `${memoryEnhancedPrompt}
 
-CRITICAL RULES - NO EXCEPTIONS:
-1. NEVER ask users to describe images - you can see them directly
-2. NEVER say "could you describe" or "what's in the image" or similar
-3. ALWAYS analyze visual content immediately and confidently
-4. Reference specific visual elements like "the yellow slices", "the salmon", "the plate"
+=== VISUAL ANALYSIS CAPABILITIES ===
+You can see and analyze all images in this conversation. When users share images:
+- Analyze visual content directly and confidently
+- Reference specific visual elements you can see
+- Never ask users to describe what you can already see
+- Provide detailed visual analysis when requested
 
-When users ask about visual elements:
-- "What are the yellow slices?" → "Those are lemon slices under the salmon."
-- "What's pink?" → "The pink item is [specific description]."
-- "How many calories?" → Analyze the visible food and estimate calories directly
+Apply both your personal knowledge about this user AND your visual analysis capabilities to provide the most helpful response.`;
+    } else {
+      // Memory-focused prompt for text-only conversations
+      systemPromptContent = `${memoryEnhancedPrompt}
 
-YOU MUST behave exactly like ChatGPT with vision capabilities. You can see, analyze, and describe all visual content without hesitation.
-
-FORBIDDEN RESPONSES (NEVER USE):
-❌ "Could you describe what's in the image?"
-❌ "What else was on the plate?"
-❌ "Can you tell me more about..."
-❌ "To give you the best answer, can you..."
-
-REQUIRED RESPONSES:
-✅ Direct visual analysis: "I see salmon with asparagus, cherry tomatoes, and lemon slices."
-✅ Specific answers: "The yellow slices are lemon slices."
-✅ Confident analysis: "Based on what I can see in the image..."
-
-=== COACHING PERSONA ===
-${memoryEnhancedPrompt}
-
-IMPORTANT: Apply your coaching expertise AFTER you've addressed any visual questions. Always prioritize visual analysis over coaching responses when images are involved.`;
+When images are shared, you can analyze them directly. For text conversations, focus on using your knowledge about this user to provide personalized wellness coaching.`;
+    }
 
     const conversationContext: ProviderChatMessage[] = [{
       role: 'system',

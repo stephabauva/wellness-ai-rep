@@ -39,6 +39,7 @@ export interface IStorage {
   createHealthData(data: InsertHealthData): Promise<HealthData>;
   createHealthDataBatch(data: InsertHealthData[]): Promise<HealthData[]>;
   clearAllHealthData(userId: number): Promise<void>;
+  deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }>;
   
   // Device methods
   getDevices(userId: number): Promise<ConnectedDevice[]>;
@@ -440,6 +441,20 @@ export class MemStorage implements IStorage {
   async clearAllHealthData(userId: number): Promise<void> {
     this.healthData.delete(userId);
   }
+
+  async deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }> {
+    const userHealthData = this.healthData.get(userId) || [];
+    const beforeCount = userHealthData.length;
+    
+    // Filter out records matching the dataType
+    const filteredData = userHealthData.filter(item => item.dataType !== dataType);
+    const deletedCount = beforeCount - filteredData.length;
+    
+    // Update the stored data
+    this.healthData.set(userId, filteredData);
+    
+    return { deletedCount };
+  }
   
   // Device methods
   async getDevices(userId: number): Promise<ConnectedDevice[]> {
@@ -648,6 +663,22 @@ export class DatabaseStorage implements IStorage {
     
     // Invalidate health data cache for this user
     cacheService.invalidateUserData(userId);
+  }
+
+  async deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }> {
+    const result = await db
+      .delete(healthData)
+      .where(
+        and(
+          eq(healthData.userId, userId),
+          eq(healthData.dataType, dataType)
+        )
+      );
+    
+    // Invalidate health data cache for this user
+    cacheService.invalidateUserData(userId);
+    
+    return { deletedCount: result.rowCount || 0 };
   }
   
   // Device methods

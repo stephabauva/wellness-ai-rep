@@ -68,10 +68,12 @@ const HealthDataSection: React.FC = () => {
       return { success: true, deletedTypes: metricsToRemove };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/health-consent/visibility'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/health-data'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/health-data/categories'] });
+      refetchHealthData();
       toast({
         title: "Metrics Removed",
-        description: `${selectedMetricsForRemoval.length} metric(s) removed from dashboard.`,
+        description: `${selectedMetricsForRemoval.length} metric type(s) deleted from database.`,
       });
       setSelectedMetricsForRemoval([]);
       setIsRemovalMode(false);

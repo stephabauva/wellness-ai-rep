@@ -615,6 +615,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete health data by type
+  app.delete("/api/health-data/delete-by-type", async (req, res) => {
+    try {
+      const { dataType } = req.body;
+      
+      if (!dataType) {
+        return res.status(400).json({ message: "dataType is required" });
+      }
+
+      // Delete all records of this data type for user 1
+      const result = await storage.deleteHealthDataByType(1, dataType);
+      
+      res.json({ 
+        message: `Successfully deleted all ${dataType} data`,
+        deletedCount: result.deletedCount || 0
+      });
+    } catch (error) {
+      console.error('Error deleting health data by type:', error);
+      res.status(500).json({ message: "Failed to delete health data" });
+    }
+  });
+
   // Configure multer for health data file uploads
   const healthDataUpload = multer({
     storage: multer.diskStorage({

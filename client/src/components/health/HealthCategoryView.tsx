@@ -10,7 +10,9 @@ interface HealthCategoryViewProps {
   categoryKey: keyof import('@/hooks/useHealthDataApi').CategorizedHealthData; // e.g., 'body_composition'
   metrics: HealthMetric[] | undefined; // Array of metrics for this category
   icon: React.ReactNode; // Icon for the category title
-  // You could add props for trend charts or other visualizations specific to this category view later
+  isRemovalMode?: boolean;
+  selectedMetricsForRemoval?: string[];
+  onMetricSelectionChange?: (selectedMetrics: string[]) => void;
 }
 
 export const HealthCategoryView: React.FC<HealthCategoryViewProps> = ({
@@ -19,6 +21,9 @@ export const HealthCategoryView: React.FC<HealthCategoryViewProps> = ({
   categoryKey,
   metrics,
   icon,
+  isRemovalMode = false,
+  selectedMetricsForRemoval = [],
+  onMetricSelectionChange = () => {}
 }) => {
   // Filter heart rate data for cardiovascular category
   const heartRateData = categoryKey === 'cardiovascular' 
@@ -32,6 +37,9 @@ export const HealthCategoryView: React.FC<HealthCategoryViewProps> = ({
         category={categoryKey as string}
         metrics={metrics || []}
         icon={icon}
+        isRemovalMode={isRemovalMode}
+        selectedMetricsForRemoval={selectedMetricsForRemoval}
+        onMetricSelectionChange={onMetricSelectionChange}
       />
       
       {/* Add heart rate chart for cardiovascular category */}

@@ -76,7 +76,10 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
   category, 
   metrics, 
   icon,
-  color = "primary"
+  color = "primary",
+  isRemovalMode = false,
+  selectedMetricsForRemoval = [],
+  onMetricSelectionChange = () => {}
 }) => {
   if (!metrics.length) return null;
 
@@ -87,6 +90,24 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
     }
     return acc;
   }, {} as Record<string, HealthMetric>);
+
+  // Handle checkbox selection for individual metrics
+  const handleMetricSelection = (metricDataType: string, checked: boolean) => {
+    if (!onMetricSelectionChange) return;
+    
+    const currentSelection = [...selectedMetricsForRemoval];
+    if (checked) {
+      if (!currentSelection.includes(metricDataType)) {
+        currentSelection.push(metricDataType);
+      }
+    } else {
+      const index = currentSelection.indexOf(metricDataType);
+      if (index > -1) {
+        currentSelection.splice(index, 1);
+      }
+    }
+    onMetricSelectionChange(currentSelection);
+  };
 
   return (
     <Card className="h-fit">
@@ -104,8 +125,17 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
       <CardContent>
         <div className="grid gap-3">
           {Object.values(latestMetrics).map((metric) => (
-            <div key={metric.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
-              <div className="flex items-center gap-2">
+            <div key={metric.id} className="relative flex items-center justify-between p-3 rounded-lg border border-border">
+              {isRemovalMode && (
+                <div className="absolute top-2 left-2 z-10">
+                  <Checkbox
+                    checked={selectedMetricsForRemoval.includes(metric.dataType)}
+                    onCheckedChange={(checked) => handleMetricSelection(metric.dataType, !!checked)}
+                    className="bg-background border-2"
+                  />
+                </div>
+              )}
+              <div className={`flex items-center gap-2 ${isRemovalMode ? 'ml-8' : ''}`}>
                 {getMetricIcon(metric.dataType)}
                 <div>
                   <p className="text-sm font-medium">{formatMetricName(metric.dataType)}</p>

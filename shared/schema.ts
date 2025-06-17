@@ -499,3 +499,87 @@ export type InsertFileAccessLog = z.infer<typeof insertFileAccessLogSchema>;
 
 export type FileRetentionSettings = typeof fileRetentionSettings.$inferSelect;
 export type InsertFileRetentionSettings = z.infer<typeof insertFileRetentionSettingsSchema>;
+
+// Phase 1: User Health Consent Management Schema
+export const userHealthConsent = pgTable("user_health_consent", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  category: text("category").notNull(), // 'lifestyle', 'cardiovascular', 'body_composition', 'medical', 'advanced'
+  consentType: text("consent_type").notNull(), // 'ai_access', 'retention', 'sharing'
+  isEnabled: boolean("is_enabled").default(false),
+  retentionDays: integer("retention_days").default(90),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertUserHealthConsentSchema = createInsertSchema(userHealthConsent).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Health data access log for GDPR compliance
+export const healthDataAccessLog = pgTable("health_data_access_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  dataType: text("data_type").notNull(),
+  accessType: text("access_type").notNull(), // 'ai_query', 'export', 'display'
+  consentVerified: boolean("consent_verified").default(false),
+  accessedAt: timestamp("accessed_at").defaultNow(),
+});
+
+export const insertHealthDataAccessLogSchema = createInsertSchema(healthDataAccessLog).omit({
+  id: true,
+  accessedAt: true,
+});
+
+// Export consent types
+export type UserHealthConsent = typeof userHealthConsent.$inferSelect;
+export type InsertUserHealthConsent = z.infer<typeof insertUserHealthConsentSchema>;
+
+export type HealthDataAccessLog = typeof healthDataAccessLog.$inferSelect;
+export type InsertHealthDataAccessLog = z.infer<typeof insertHealthDataAccessLogSchema>;
+
+// Health consent settings interface for settings UI
+export interface HealthConsentSettings {
+  data_visibility: {
+    visible_categories: string[];
+    hidden_categories: string[];
+    dashboard_preferences: Record<string, any>;
+  };
+  ai_access_consent: {
+    lifestyle: boolean;
+    cardiovascular: boolean;
+    body_composition: boolean;
+    medical: boolean;
+    advanced: boolean;
+  };
+  retention_policies: {
+    lifestyle_days: number;
+    cardiovascular_days: number;
+    body_composition_days: number;
+    medical_days: number;
+    advanced_days: number;
+  };
+  export_controls: {
+    auto_export_enabled: boolean;
+    export_format: 'pdf' | 'json' | 'csv';
+    include_ai_interactions: boolean;
+  };
+}
+
+// Extended user settings type
+export interface UserSettingsFormValues {
+  username: string;
+  email: string;
+  name?: string;
+  preferences?: any;
+  transcriptionProvider: string;
+  preferredLanguage: string;
+  automaticModelSelection: boolean;
+  aiProvider: string;
+  aiModel: string;
+  memoryDetectionProvider: string;
+  memoryDetectionModel: string;
+  health_consent?: HealthConsentSettings;
+}

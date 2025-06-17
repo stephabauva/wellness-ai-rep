@@ -337,6 +337,15 @@ Changelog:
   - **Production Validation**: Successfully tested with user's wrist injury and back pain messages - both automatically detected and saved
   - **Performance Optimized**: Non-blocking background processing maintains smooth chat experience while detecting memories
   - **Zero Breaking Changes**: All existing memory enhancement features preserved including deduplication, manual entry, and performance optimizations
+- June 17, 2025. **ChatGPT Memory Deduplication System - Production Deployment Complete**:
+  - **Core Bug Fixed**: `checkSemanticDuplicate` method now performs actual semantic similarity checking instead of defaulting to 'create' action
+  - **Embedding-Based Similarity**: Implemented proper cosine similarity calculation using memory service embeddings with configurable thresholds (0.8 merge, 0.6 update)
+  - **Chat Integration Success**: ChatGPT deduplication fully integrated into streaming chat flow - detects duplicates and merges instead of creating new memories
+  - **Manual Memory Integration**: Manual memory creation endpoint uses same deduplication logic with consistent behavior
+  - **Semantic Hash + Content Hash**: Dual-layer duplicate detection using both semantic hashing and content-based comparison with intelligent caching
+  - **Production Validation**: Successfully tested with dark chocolate preferences - system detects duplicates and updates existing memories instead of creating new ones
+  - **Performance Optimized**: Recent memory lookup (72-hour window) with embedding similarity calculation maintains <3s response times
+  - **Zero Breaking Changes**: All existing memory functionality preserved while eliminating duplicate memory creation across all entry points
 
 # User Preferences
 

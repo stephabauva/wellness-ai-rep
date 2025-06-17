@@ -24,18 +24,44 @@
 **Status**: Backend services missing
 **Impact**: Export preferences have no functional effect
 
-## Required Fixes
+## Current Phase 1 Implementation Status
 
-### Fix 1: Dashboard Visibility Feature Relocation
-**New Approach**: Move dashboard visibility control from Settings to Health Dashboard
-**Implementation**: Add metrics selection card directly in health dashboard with:
-- Interactive card with all smartphone health metrics
+### ✅ COMPLETED
+1. **Database Schema Extensions** - All tables created and functional
+2. **Settings UI Component** - `HealthDataConsentSettings.tsx` fully implemented
+3. **AI Access Consent Controls** - All category toggles working
+4. **Data Retention Policies** - All retention settings functional
+5. **Export Controls UI** - All export preference controls implemented
+6. **Settings Integration** - Complete integration with user settings schema
+
+### ❌ MISSING IMPLEMENTATION
+1. **Health Dashboard Metrics Visibility Card** - NOT IMPLEMENTED
+   - No interactive card in health dashboard
+   - No comprehensive smartphone metrics list
+   - No search functionality
+   - No '+' button to add metrics
+2. **Settings Cleanup** - Dashboard visibility controls still in settings component
+
+### 🔧 CRITICAL FIXES NEEDED
+1. **HTTP Token Error** - `[plugin:runtime-error-plugin] Method is not a valid HTTP token.`
+   - Affects: Dashboard visibility updates, Export data, View access log
+   - Root cause: Backend consent settings endpoint validation issue
+2. **Feature Relocation** - Move dashboard visibility from Settings to Health Dashboard
+
+## Required Changes for User Request
+
+### Fix 1: Remove Dashboard Visibility from Settings
+**Status**: NOT DONE - Still exists in `HealthDataConsentSettings.tsx`
+**Action**: Remove the entire "Dashboard Visibility" card from settings component
+
+### Fix 2: Add Metrics Visibility Card to Health Dashboard  
+**Status**: NOT DONE - No component exists
+**Implementation**: Create `MetricsVisibilityCard.tsx` with:
+- Interactive card with comprehensive smartphone health metrics
 - '+' button to add metrics to dashboard
 - Search functionality for metric discovery
 - Real-time dashboard updates
-
-**Technical Debt Resolved**: Eliminates HTTP token validation error by removing complex settings endpoint
-**User Experience**: Direct interaction in context rather than buried in settings
+- All metrics from smartphones: Steps, Heart Rate, Sleep, etc.
 
 ### Fix 2: Data Retention Background Service
 ```typescript

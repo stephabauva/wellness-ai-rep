@@ -135,7 +135,7 @@ Use this information naturally in your responses to provide personalized guidanc
   /**
    * Generate semantic hash for deduplication
    */
-  private async generateSemanticHash(message: string): Promise<string> {
+  public async generateSemanticHash(message: string): Promise<string> {
     try {
       // Use existing embedding generation from memory service
       const embedding = await memoryService.generateEmbedding(message);

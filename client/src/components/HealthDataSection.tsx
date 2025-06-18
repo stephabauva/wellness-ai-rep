@@ -45,35 +45,51 @@ const HealthDataSection: React.FC = () => {
   const { downloadHealthReport, isDownloadingReport } = useHealthReport();
   const { toast } = useToast();
 
-  // Mutation for removing metrics
+  // Mutation for removing metrics from visibility settings
   const removeMetricsMutation = useMutation({
     mutationFn: async (metricsToRemove: string[]) => {
-      // Instead of removing from visibility settings, delete the actual health data records
-      const deletePromises = metricsToRemove.map(async (dataType) => {
-        const response = await fetch(`/api/health-data/delete-by-type`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dataType }),
-        });
-        
-        if (!response.ok) {
-          console.error(`Failed to delete ${dataType}:`, await response.text());
-          throw new Error(`Failed to delete ${dataType}`);
+      // Get current visibility settings
+      const response = await fetch('/api/health-consent/visibility');
+      if (!response.ok) {
+        throw new Error('Failed to fetch visibility settings');
+      }
+      const currentSettings = await response.json();
+      
+      // Update visibility settings to hide selected metrics
+      const updatedSettings = {
+        ...currentSettings,
+        dashboard_preferences: {
+          ...currentSettings.dashboard_preferences,
+          visible_metrics: currentSettings.dashboard_preferences.visible_metrics.filter(
+            (metricId: string) => !metricsToRemove.includes(metricId)
+          ),
+          hidden_metrics: [
+            ...currentSettings.dashboard_preferences.hidden_metrics.filter(
+              (metricId: string) => !metricsToRemove.includes(metricId)
+            ),
+            ...metricsToRemove
+          ]
         }
-        
-        return response.json();
+      };
+
+      // Update visibility settings
+      const updateResponse = await fetch('/api/health-consent/visibility', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings),
       });
 
-      await Promise.all(deletePromises);
-      return { success: true, deletedTypes: metricsToRemove };
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update visibility settings');
+      }
+
+      return { success: true, removedMetrics: metricsToRemove };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/health-data'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/health-data/categories'] });
-      refetchHealthData();
+      queryClient.invalidateQueries({ queryKey: ['/api/health-consent/visibility'] });
       toast({
         title: "Metrics Removed",
-        description: `${selectedMetricsForRemoval.length} metric type(s) deleted from database.`,
+        description: `${selectedMetricsForRemoval.length} metric(s) removed from dashboard.`,
       });
       setSelectedMetricsForRemoval([]);
       setIsRemovalMode(false);
@@ -81,7 +97,7 @@ const HealthDataSection: React.FC = () => {
     onError: () => {
       toast({
         title: "Failed to Remove Metrics",
-        description: "Unable to remove metrics. Please try again.",
+        description: "Unable to remove metrics from dashboard. Please try again.",
         variant: "destructive",
       });
     },
@@ -325,7 +341,7 @@ const HealthDataSection: React.FC = () => {
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
-            <div className="mt-4 md:mt-0 flex space-x-2">
+            <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
               <AddMetricsModal />
               <Button 
                 variant="outline" 

@@ -310,62 +310,8 @@ export const HealthDataConsentSettings: React.FC<HealthDataConsentSettingsProps>
         </CardContent>
       </Card>
 
-      {/* Dashboard Visibility */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Dashboard Visibility
-          </CardTitle>
-          <CardDescription>
-            Health metrics that appear in your dashboard based on your consent settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                Visible Categories
-              </Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {currentHealthConsent.data_visibility.visible_categories.map((category: string) => (
-                  <Badge key={category} variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    {getCategoryIcon(category)} {category.replace('_', ' ')}
-                    <button
-                      onClick={() => toggleCategoryVisibility(category, false)}
-                      className="ml-1 hover:text-destructive"
-                      title="Hide category"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                <EyeOff className="h-4 w-4" />
-                Hidden Categories
-              </Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {currentHealthConsent.data_visibility.hidden_categories.map((category: string) => (
-                  <Badge key={category} variant="secondary" className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    {getCategoryIcon(category)} {category.replace('_', ' ')}
-                    <button
-                      onClick={() => toggleCategoryVisibility(category, true)}
-                      className="ml-1 hover:text-primary"
-                      title="Show category"
-                    >
-                      +
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Dashboard Visibility moved to Health Dashboard for better UX */}
+      {/* Users can now directly customize metrics from the health dashboard interface */}
 
       {/* Data Export & Portability */}
       <Card>

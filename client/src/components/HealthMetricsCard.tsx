@@ -23,6 +23,12 @@ interface HealthMetricsCardProps {
   isRemovalMode?: boolean;
   selectedMetricsForRemoval?: string[];
   onMetricSelectionChange?: (selectedMetrics: string[]) => void;
+  visibilitySettings?: {
+    dashboard_preferences: {
+      visible_metrics: string[];
+      hidden_metrics: string[];
+    };
+  };
 }
 
 const getMetricIcon = (dataType: string) => {
@@ -79,7 +85,8 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
   color = "primary",
   isRemovalMode = false,
   selectedMetricsForRemoval = [],
-  onMetricSelectionChange = () => {}
+  onMetricSelectionChange = () => {},
+  visibilitySettings
 }) => {
   if (!metrics.length) return null;
 
@@ -90,6 +97,30 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
     }
     return acc;
   }, {} as Record<string, HealthMetric>);
+
+  // Filter metrics based on visibility settings
+  const filteredMetrics = visibilitySettings ? 
+    Object.fromEntries(
+      Object.entries(latestMetrics).filter(([dataType]) => {
+        const visibleMetrics = visibilitySettings.dashboard_preferences.visible_metrics;
+        const hiddenMetrics = visibilitySettings.dashboard_preferences.hidden_metrics;
+        
+        // If explicitly hidden, don't show
+        if (hiddenMetrics.includes(dataType)) {
+          return false;
+        }
+        
+        // If we have visible metrics list and it's not in there, don't show
+        if (visibleMetrics.length > 0 && !visibleMetrics.includes(dataType)) {
+          return false;
+        }
+        
+        return true;
+      })
+    ) : latestMetrics;
+
+  // If no visible metrics after filtering, don't render the card
+  if (Object.keys(filteredMetrics).length === 0) return null;
 
   // Handle checkbox selection for individual metrics
   const handleMetricSelection = (metricDataType: string, checked: boolean) => {
@@ -118,13 +149,13 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
             {title}
           </CardTitle>
           <Badge variant="secondary" className="text-xs">
-            {Object.keys(latestMetrics).length} metrics
+            {Object.keys(filteredMetrics).length} metrics
           </Badge>
         </div>
       </CardHeader>
       <CardContent>
         <div className="grid gap-3">
-          {Object.values(latestMetrics).map((metric) => (
+          {Object.values(filteredMetrics).map((metric) => (
             <div key={metric.id} className="relative flex items-center justify-between p-3 rounded-lg border border-border">
               {isRemovalMode && (
                 <div className="absolute top-2 left-2 z-10">

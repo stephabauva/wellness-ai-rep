@@ -11,6 +11,7 @@ import HealthMetricsCard from "@/components/HealthMetricsCard"; // This is an ex
 // Import hooks
 import { useHealthDataApi, CategorizedHealthData, HealthMetric } from "@/hooks/useHealthDataApi";
 import { useHealthReport } from "@/hooks/useHealthReport";
+import { useHealthVisibilitySettings } from "@/hooks/useHealthVisibilitySettings";
 
 // Import sub-components
 import { KeyMetricsOverview } from "./health/KeyMetricsOverview";
@@ -44,6 +45,7 @@ const HealthDataSection: React.FC = () => {
   const { categorizedData, allHealthData, isLoading, refetchHealthData } = useHealthDataApi(timeRange);
   const { downloadHealthReport, isDownloadingReport } = useHealthReport();
   const { toast } = useToast();
+  const { settings: visibilitySettings } = useHealthVisibilitySettings();
 
   // Mutation for removing metrics from visibility settings
   const removeMetricsMutation = useMutation({

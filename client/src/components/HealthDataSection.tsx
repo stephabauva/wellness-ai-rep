@@ -442,6 +442,7 @@ const HealthDataSection: React.FC = () => {
                       isRemovalMode={isRemovalMode}
                       selectedMetricsForRemoval={selectedMetricsForRemoval}
                       onMetricSelectionChange={setSelectedMetricsForRemoval}
+                      visibilitySettings={visibilitySettings}
                     />
                   )
                 ))}
@@ -459,6 +460,7 @@ const HealthDataSection: React.FC = () => {
                   isRemovalMode={isRemovalMode}
                   selectedMetricsForRemoval={selectedMetricsForRemoval}
                   onMetricSelectionChange={setSelectedMetricsForRemoval}
+                  visibilitySettings={visibilitySettings}
                 />
               </TabsContent>
             ))}

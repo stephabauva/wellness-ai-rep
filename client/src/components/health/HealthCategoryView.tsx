@@ -13,6 +13,12 @@ interface HealthCategoryViewProps {
   isRemovalMode?: boolean;
   selectedMetricsForRemoval?: string[];
   onMetricSelectionChange?: (selectedMetrics: string[]) => void;
+  visibilitySettings?: {
+    dashboard_preferences: {
+      visible_metrics: string[];
+      hidden_metrics: string[];
+    };
+  };
 }
 
 export const HealthCategoryView: React.FC<HealthCategoryViewProps> = ({
@@ -23,7 +29,8 @@ export const HealthCategoryView: React.FC<HealthCategoryViewProps> = ({
   icon,
   isRemovalMode = false,
   selectedMetricsForRemoval = [],
-  onMetricSelectionChange = () => {}
+  onMetricSelectionChange = () => {},
+  visibilitySettings
 }) => {
   // Filter heart rate data for cardiovascular category
   const heartRateData = categoryKey === 'cardiovascular' 
@@ -40,6 +47,7 @@ export const HealthCategoryView: React.FC<HealthCategoryViewProps> = ({
         isRemovalMode={isRemovalMode}
         selectedMetricsForRemoval={selectedMetricsForRemoval}
         onMetricSelectionChange={onMetricSelectionChange}
+        visibilitySettings={visibilitySettings}
       />
       
       {/* Add heart rate chart for cardiovascular category */}

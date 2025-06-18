@@ -1135,18 +1135,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get health dashboard metrics visibility settings
   app.get("/api/health-consent/visibility", async (req, res) => {
     try {
-      const defaultVisibility = {
-        visible_categories: ['Activity', 'Cardiovascular', 'Sleep'],
-        hidden_categories: ['Medical', 'Reproductive Health', 'Integration'],
-        dashboard_preferences: {
-          visible_metrics: ['steps', 'heart_rate', 'sleep_duration', 'active_energy'],
-          hidden_metrics: [],
-          metric_order: ['steps', 'heart_rate', 'sleep_duration', 'active_energy']
-        }
-      };
-      
-      // For Phase 1, return default settings (in Phase 2, this would query user preferences)
-      res.json(defaultVisibility);
+      const user = await storage.getUser(1);
+      if (!user || !user.preferences?.healthVisibilitySettings) {
+        const defaultVisibility = {
+          visible_categories: ['Activity', 'Cardiovascular', 'Sleep'],
+          hidden_categories: ['Medical', 'Reproductive Health', 'Integration'],
+          dashboard_preferences: {
+            visible_metrics: ['steps', 'heart_rate', 'sleep_duration', 'active_energy'],
+            hidden_metrics: [],
+            metric_order: ['steps', 'heart_rate', 'sleep_duration', 'active_energy']
+          }
+        };
+        res.json(defaultVisibility);
+      } else {
+        res.json(user.preferences.healthVisibilitySettings);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch visibility settings" });
     }
@@ -1157,17 +1160,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const visibilitySettings = req.body;
       
-      // Validate basic structure
-      if (!visibilitySettings.visible_categories || !visibilitySettings.dashboard_preferences) {
-        return res.status(400).json({ message: "Invalid visibility settings structure" });
+      // Get current user
+      const user = await storage.getUser(1);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
+
+      // Update user preferences with new visibility settings
+      const updatedPreferences = {
+        ...user.preferences,
+        healthVisibilitySettings: visibilitySettings
+      };
+
+      await storage.updateUserSettings(1, { preferences: updatedPreferences });
       
-      // Log the visibility change for GDPR compliance
-      await healthConsentService.logDataAccess(1, 'dashboard_visibility', 'update', true);
-      
-      // For Phase 1, just return the updated settings (in Phase 2, this would persist to database)
       res.json(visibilitySettings);
     } catch (error) {
+      console.error('Error updating visibility settings:', error);
       res.status(500).json({ message: "Failed to update visibility settings" });
     }
   });

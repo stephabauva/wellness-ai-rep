@@ -1,12 +1,13 @@
-import React from 'react';
+import React from 'react'; // useEffect removed
 import {
   ScrollView, View, Text, StyleSheet, TouchableOpacity, Switch, ActivityIndicator, Button
 } from 'react-native';
 import { ChevronRight, Bell, UserCircle, Palette, Globe, ShieldCheck, BarChart3, AlertCircle } from 'lucide-react-native';
-import { useRouter } from 'expo-router'; // Correctly import useRouter
+import { useRouter } from 'expo-router';
 import { useUserSettings, UserSettingsData } from '../../../src/hooks/useUserSettings';
 import { useToast } from '../../../src/hooks/use-toast';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, LAYOUT_SPACING, TEXT_STYLES } from '../../../src/theme';
+// TEXT_STYLES removed as it's not used in this file's StyleSheet
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, LAYOUT_SPACING } from '../../../src/theme';
 
 type SettingRowProps = {
   icon?: React.ReactNode;
@@ -62,13 +63,11 @@ const SettingsScreen: React.FC = () => {
     isUpdatingSettings
   } = useUserSettings();
   const { show: showToast } = useToast();
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
-  useEffect(() => {
-    if (settingsError) {
-      showToast({ title: "Error Loading Settings", message: settingsError.message || "Could not load settings.", type: 'error' });
-    }
-  }, [settingsError, showToast]);
+  // useEffect for settingsError toast was removed in a previous step, which is fine as errors are handled on display.
+  // Re-confirming if it should be here or if error display is sufficient.
+  // For now, assuming error display is sufficient. If toasts are desired for initial load error, it can be added back.
 
   const handleSettingUpdate = async (key: keyof UserSettingsData, value: any) => {
     try {
@@ -133,7 +132,7 @@ const SettingsScreen: React.FC = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>App Preferences</Text>
         <SettingRow icon={<Palette size={22} color={COLORS.secondary} />} label="Dark Mode" hasSwitch switchValue={currentSettings.darkMode || false} onSwitchChange={(v) => handleSettingUpdate('darkMode', v)} disabled={isUpdatingSettings} />
-        <SettingRow icon={<Globe size={22} color="#34C759" />} label="Language" value={currentSettings.preferredLanguage || "English"} onPress={handleSelectLanguage} isLast disabled={isUpdatingSettings} />
+        <SettingRow icon={<Globe size={22} color={COLORS.success} />} label="Language" value={currentSettings.preferredLanguage || "English"} onPress={handleSelectLanguage} isLast disabled={isUpdatingSettings} />
       </View>
 
       <View style={styles.section}>

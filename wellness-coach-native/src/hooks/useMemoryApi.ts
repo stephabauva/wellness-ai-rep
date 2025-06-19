@@ -1,22 +1,53 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getFromApi, deleteFromApi } from '../services/apiClient';
-import { useToast } from './use-toast'; // Assuming use-toast is already adapted
+// import { useToast } from './use-toast'; // useToast was imported but not used, so no JSDoc needed for it here.
+
+/**
+ * @file useMemoryApi.ts
+ * @description Custom hook for interacting with the memory management API.
+ * Provides functions for fetching, deleting, creating, and updating memories.
+ */
 
 // Define the structure for a Memory item based on PWA or backend
 // This should align with what the backend expects or be transformed before sending.
+/**
+ * @interface MemoryItem
+ * @description Represents a single memory item.
+ * @property {string} id - Unique identifier for the memory.
+ * @property {string} content - The textual content of the memory.
+ * @property {string} [category] - Category of the memory (e.g., 'Preference', 'Health Concern').
+ * @property {'Low' | 'Medium' | 'High' | 'Critical' | string} [importance] - Importance level of the memory.
+ * @property {string} [timestamp] - ISO8601 string of when the memory was recorded or last updated.
+ * @property {Record<string, any>} [metadata] - Additional structured data related to the memory.
+ */
 export interface MemoryItem {
   id: string;
   content: string;
-  category?: string; // e.g., 'Preference', 'Health Concern', 'Goal'
-  importance?: 'Low' | 'Medium' | 'High' | 'Critical' | string; // Allow string for flexibility
-  timestamp?: string; // ISO8601 string of when it was recorded or last updated
-  metadata?: Record<string, any>; // For any other structured data
-  // Add other fields like 'userId', 'source', etc. if applicable
+  category?: string;
+  importance?: 'Low' | 'Medium' | 'High' | 'Critical' | string;
+  timestamp?: string;
+  metadata?: Record<string, any>;
 }
 
+/**
+ * Custom hook `useMemoryApi` for managing memory data.
+ *
+ * @returns {object} An object containing:
+ *  - `memories: MemoryItem[]` - Array of fetched memory items.
+ *  - `isLoadingMemories: boolean` - Loading state for fetching memories.
+ *  - `memoriesError: Error | null` - Error object if fetching memories fails.
+ *  - `refetchMemories: () => void` - Function to manually refetch memories.
+ *  - `deleteMemoryAPI: (memoryId: string) => Promise<void>` - Async function to delete a memory by its ID.
+ *  - `isDeletingMemory: boolean` - Loading state for memory deletion.
+ *  // TODO: Add JSDoc for create/update functions when implemented
+ *  // - `createMemoryAPI`
+ *  // - `isCreatingMemory`
+ *  // - `updateMemoryAPI`
+ *  // - `isUpdatingMemory`
+ */
 export function useMemoryApi() {
   const queryClient = useQueryClient();
-  const { show: showToast } = useToast(); // Assuming useToast hook returns a show method
+  // const { show: showToast } = useToast(); // showToast was not used here, toasts handled in component
 
   // Fetching memories
   const {

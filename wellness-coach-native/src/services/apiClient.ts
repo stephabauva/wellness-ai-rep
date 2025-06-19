@@ -1,9 +1,23 @@
 import { API_CONFIG } from '../config/api';
 
+/**
+ * @interface RequestOptions
+ * @extends RequestInit
+ * @property {number} [timeout] - Optional timeout in milliseconds for the request.
+ */
 interface RequestOptions extends RequestInit {
-  timeout?: number; // Optional timeout in milliseconds
+  timeout?: number;
 }
 
+/**
+ * Handles the response from a fetch request.
+ * Clears the timeout, checks for non-ok responses, and parses JSON.
+ * @template T - The expected type of the JSON response.
+ * @param {Response} response - The Response object from a fetch call.
+ * @param {NodeJS.Timeout} timeoutId - The ID of the timeout timer to clear.
+ * @returns {Promise<T>} A promise that resolves with the parsed JSON response.
+ * @throws {Error} If the API request fails or returns a non-ok status.
+ */
 async function handleResponse<T>(response: Response, timeoutId: NodeJS.Timeout): Promise<T> {
   clearTimeout(timeoutId);
   if (!response.ok) {
@@ -31,6 +45,14 @@ function handleError(error: any, timeoutId: NodeJS.Timeout, timeoutValue: number
   throw error;
 }
 
+/**
+ * Performs a GET request to a specified API endpoint.
+ * @template T - The expected type of the JSON response. Defaults to `any`.
+ * @param {string} endpoint - The API endpoint to fetch data from (e.g., 'users').
+ * @param {RequestOptions} [options={}] - Optional fetch request options, including timeout.
+ * @returns {Promise<T>} A promise that resolves with the JSON response.
+ * @throws {Error} If the API request fails, times out, or returns a non-ok status.
+ */
 export async function getFromApi<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { timeout = API_CONFIG.timeout, ...fetchOptions } = options;
   const controller = new AbortController();
@@ -52,6 +74,15 @@ export async function getFromApi<T = any>(endpoint: string, options: RequestOpti
   }
 }
 
+/**
+ * Performs a POST request to a specified API endpoint with a JSON body.
+ * @template T - The expected type of the JSON response. Defaults to `any`.
+ * @param {string} endpoint - The API endpoint to post data to (e.g., 'users').
+ * @param {any} body - The data to be sent in the request body (will be JSON.stringify-ed).
+ * @param {RequestOptions} [options={}] - Optional fetch request options, including timeout.
+ * @returns {Promise<T>} A promise that resolves with the JSON response.
+ * @throws {Error} If the API request fails, times out, or returns a non-ok status.
+ */
 export async function postToApi<T = any>(endpoint: string, body: any, options: RequestOptions = {}): Promise<T> {
   const { timeout = API_CONFIG.timeout, ...fetchOptions } = options;
   const controller = new AbortController();
@@ -75,6 +106,15 @@ export async function postToApi<T = any>(endpoint: string, body: any, options: R
   }
 }
 
+/**
+ * Performs a PUT request to a specified API endpoint with a JSON body.
+ * @template T - The expected type of the JSON response. Defaults to `any`.
+ * @param {string} endpoint - The API endpoint to update data at (e.g., 'users/1').
+ * @param {any} body - The data to be sent in the request body (will be JSON.stringify-ed).
+ * @param {RequestOptions} [options={}] - Optional fetch request options, including timeout.
+ * @returns {Promise<T>} A promise that resolves with the JSON response.
+ * @throws {Error} If the API request fails, times out, or returns a non-ok status.
+ */
 export async function putToApi<T = any>(endpoint: string, body: any, options: RequestOptions = {}): Promise<T> {
   const { timeout = API_CONFIG.timeout, ...fetchOptions } = options;
   const controller = new AbortController();
@@ -98,6 +138,15 @@ export async function putToApi<T = any>(endpoint: string, body: any, options: Re
   }
 }
 
+/**
+ * Performs a PATCH request to a specified API endpoint with a JSON body.
+ * @template T - The expected type of the JSON response. Defaults to `any`.
+ * @param {string} endpoint - The API endpoint to partially update data at (e.g., 'users/1').
+ * @param {any} body - The data to be sent in the request body (will be JSON.stringify-ed).
+ * @param {RequestOptions} [options={}] - Optional fetch request options, including timeout.
+ * @returns {Promise<T>} A promise that resolves with the JSON response.
+ * @throws {Error} If the API request fails, times out, or returns a non-ok status.
+ */
 export async function patchToApi<T = any>(endpoint: string, body: any, options: RequestOptions = {}): Promise<T> {
   const { timeout = API_CONFIG.timeout, ...fetchOptions } = options;
   const controller = new AbortController();
@@ -121,6 +170,14 @@ export async function patchToApi<T = any>(endpoint: string, body: any, options: 
   }
 }
 
+/**
+ * Performs a DELETE request to a specified API endpoint.
+ * @template T - The expected type of the JSON response (often null or a confirmation message). Defaults to `any`.
+ * @param {string} endpoint - The API endpoint to delete a resource from (e.g., 'users/1').
+ * @param {RequestOptions} [options={}] - Optional fetch request options, including timeout.
+ * @returns {Promise<T>} A promise that resolves with the JSON response.
+ * @throws {Error} If the API request fails, times out, or returns a non-ok status.
+ */
 export async function deleteFromApi<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { timeout = API_CONFIG.timeout, ...fetchOptions } = options;
   const controller = new AbortController();
@@ -142,8 +199,17 @@ export async function deleteFromApi<T = any>(endpoint: string, options: RequestO
   }
 }
 
-// TODO: RN-Adapt - Add a specific function for FormData uploads if needed,
 // as it requires different headers (no 'Content-Type': 'application/json').
+/**
+ * Performs a POST request with FormData to a specified API endpoint.
+ * Useful for file uploads. Content-Type header should NOT be set manually for FormData.
+ * @template T - The expected type of the JSON response. Defaults to `any`.
+ * @param {string} endpoint - The API endpoint to post FormData to (e.g., 'upload').
+ * @param {FormData} formData - The FormData object to send.
+ * @param {RequestOptions} [options={}] - Optional fetch request options, including timeout.
+ * @returns {Promise<T>} A promise that resolves with the JSON response.
+ * @throws {Error} If the API request fails, times out, or returns a non-ok status.
+ */
 export async function postFormDataToApi<T = any>(endpoint: string, formData: FormData, options: RequestOptions = {}): Promise<T> {
   const { timeout = API_CONFIG.timeout, ...fetchOptions } = options;
   const controller = new AbortController();

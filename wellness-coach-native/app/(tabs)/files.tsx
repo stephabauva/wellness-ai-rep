@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Button, Alert,
-  ActivityIndicator, RefreshControl, ScrollView, Platform, Modal, Image
+  ActivityIndicator, RefreshControl, ScrollView, Modal, Image
+  // Platform was unused
 } from 'react-native';
-import { DocumentText, Trash, Eye, UploadCloud, Folder, AlertCircle, XSquare } from 'lucide-react-native';
+// DocumentText, Eye were unused from lucide-react-native directly
+import { Trash, UploadCloud, Folder, AlertCircle, XSquare } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFileApi } from '../../../src/hooks/useFileApi';
 import { useFileUpload } from '../../../src/hooks/useFileUpload';
@@ -31,6 +33,51 @@ const FilesScreen: React.FC = () => {
   const [isActuallyUploading, setIsActuallyUploading] = useState(false);
   const [isPreviewModalVisible, setIsPreviewModalVisible] = useState(false);
   const [previewImageUri, setPreviewImageUri] = useState<string | undefined>(undefined);
+
+  // Memoize helper functions passed to renderItem or its children
+  const renderFileIcon = useCallback((item: ApiFileItem) => {
+    if (item.categoryIcon && item.categoryIcon !== 'folder') return getIconFromName(item.categoryIcon);
+    return getFileTypeSpecificIcon(item.fileType, item.fileName);
+  }, []); // Depends only on imported utils
+
+  const handleViewFile = useCallback((file: ApiFileItem) => {
+    const fileType = file.fileType.toLowerCase();
+    if (fileType.startsWith('image/') && file.url) {
+      setPreviewImageUri(file.url);
+      setIsPreviewModalVisible(true);
+    } else {
+      alert(`Viewing details for ${file.displayName || file.fileName}. URL: ${file.url || 'N/A'}`);
+    }
+  }, [setPreviewImageUri, setIsPreviewModalVisible]); // Dependencies from useState are stable
+
+  const handleDeleteFile = useCallback((file: ApiFileItem) => {
+    Alert.alert(
+      "Delete File",
+      `Are you sure you want to delete "${file.displayName || file.fileName}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteFiles([file.id], {
+                onSuccess: () => {
+                  showToast({ title: "File Deleted", message: `${file.displayName || file.fileName} has been deleted.`, type: 'success' });
+                  refetchFiles();
+                },
+                onError: (error: any) => {
+                  showToast({ title: "Delete Failed", message: error.message || "Could not delete file.", type: 'error' });
+                }
+              });
+            } catch (error: any) {
+              showToast({ title: "Delete Error", message: error.message || "An unexpected error occurred.", type: 'error' });
+            }
+          }
+        }
+      ]
+    );
+  }, [deleteFiles, refetchFiles, showToast]); // Dependencies from hooks are stable
 
   useEffect(() => {
     if (uploadError) {
@@ -127,12 +174,18 @@ const FilesScreen: React.FC = () => {
 
   const renderFileIcon = (item: ApiFileItem) => {
     if (item.categoryIcon && item.categoryIcon !== 'folder') return getIconFromName(item.categoryIcon);
-    return getFileTypeSpecificIcon(item.fileType, item.fileName);
+    // If categoryIcon is 'folder' or null, getFileTypeSpecificIcon will be used.
+    // This logic is now inside the memoized renderFileIcon.
+    // if (item.categoryIcon && item.categoryIcon !== 'folder') return getIconFromName(item.categoryIcon);
+    // return getFileTypeSpecificIcon(item.fileType, item.fileName);
+    return renderFileIcon(item); // Use the memoized version
   };
 
-  const renderFileItem = ({ item }: { item: ApiFileItem }) => (
+  // renderFileItem itself is memoized
+  const renderFileItem = useCallback(({ item }: { item: ApiFileItem }) => (
     <TouchableOpacity onPress={() => handleViewFile(item)}>
       <View style={styles.fileItemContainer}>
+        {/* Use the memoized renderFileIcon directly or ensure it's stable if defined outside */}
         <View style={styles.fileIconContainer}>{renderFileIcon(item)}</View>
         <View style={styles.fileInfoContainer}>
           <Text style={styles.fileName} numberOfLines={1} ellipsizeMode="middle">{item.displayName || item.fileName}</Text>
@@ -146,7 +199,7 @@ const FilesScreen: React.FC = () => {
         </View>
       </View>
     </TouchableOpacity>
-  );
+  ), [isDeletingFiles, isActuallyUploading, renderFileIcon, handleViewFile, handleDeleteFile]);
 
   if (filesError) {
     return (

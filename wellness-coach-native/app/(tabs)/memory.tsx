@@ -1,11 +1,12 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react'; // Added useCallback
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
-  Button, ScrollView, Alert, ActivityIndicator, RefreshControl
+  Button, Alert, ActivityIndicator, RefreshControl
 } from 'react-native';
 import { PlusCircle, Search, Edit3, Trash2, Filter, AlertCircle } from 'lucide-react-native';
-import { useMemoryApi, MemoryItem } from '../../../src/hooks/useMemoryApi'; // Import the hook and type
+import { useMemoryApi, MemoryItem } from '../../../src/hooks/useMemoryApi';
 import { useToast } from '../../../src/hooks/use-toast';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, LAYOUT_SPACING } from '../../../src/theme';
 
 const MemoryScreen: React.FC = () => {
   const {
@@ -19,7 +20,6 @@ const MemoryScreen: React.FC = () => {
   const { show: showToast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState<string>('');
-  // State to track which memory item's delete action is currently processing
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,11 +28,11 @@ const MemoryScreen: React.FC = () => {
     }
   }, [memoriesError, showToast]);
 
+  const handleEditMemory = useCallback((memory: MemoryItem) => {
+    alert(`Editing: ${memory.content.substring(0,30)}...`);
+  }, []);
 
-  // Placeholder actions
-  const handleEditMemory = (memory: MemoryItem) => alert(`Editing: ${memory.content.substring(0,30)}...`);
-
-  const handleDeleteMemory = (memory: MemoryItem) => {
+  const handleDeleteMemory = useCallback((memory: MemoryItem) => {
     Alert.alert(
       "Delete Memory",
       `Are you sure you want to delete this memory?\n"${memory.content.substring(0, 100)}${memory.content.length > 100 ? '...' : ''}"`,
@@ -42,25 +42,28 @@ const MemoryScreen: React.FC = () => {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            setDeletingItemId(memory.id); // Indicate this item's delete is in progress
+            setDeletingItemId(memory.id);
             try {
               await deleteMemoryAPI(memory.id);
               showToast({ title: "Memory Deleted", message: "The memory has been successfully deleted.", type: 'success' });
-              // refetchMemories(); // onSuccess in useMemoryApi already invalidates query, so data will refetch.
-                                // Explicit refetch might be desired for immediate UI update if not using optimistic updates.
             } catch (error: any) {
               showToast({ title: "Delete Failed", message: error.message || "Could not delete memory.", type: 'error' });
             } finally {
-              setDeletingItemId(null); // Clear deleting state for this item
+              setDeletingItemId(null);
             }
           }
         }
       ]
     );
-  };
+  }, [deleteMemoryAPI, showToast]); // Removed refetchMemories, it's handled by query invalidation
 
-  const handleAddMemory = () => alert('Add New Memory pressed - functionality to be implemented.');
-  const handleFilterMemories = () => alert('Filter Memories pressed - functionality to be implemented.');
+  const handleAddMemory = useCallback(() => {
+    alert('Add New Memory pressed - functionality to be implemented.');
+  }, []);
+
+  const handleFilterMemories = useCallback(() => {
+    alert('Filter Memories pressed - functionality to be implemented.');
+  }, []);
 
   const filteredMemories = useMemo(() => {
     if (!searchQuery) return memories;
@@ -70,7 +73,7 @@ const MemoryScreen: React.FC = () => {
       );
   }, [memories, searchQuery]);
 
-  const renderMemoryItem = ({ item }: { item: MemoryItem }) => (
+  const renderMemoryItem = useCallback(({ item }: { item: MemoryItem }) => (
     <View style={styles.memoryItemContainer}>
       <View style={styles.memoryContent}>
         <Text style={styles.memoryText}>{item.content}</Text>
@@ -83,27 +86,27 @@ const MemoryScreen: React.FC = () => {
       </View>
       <View style={styles.memoryActions}>
         <TouchableOpacity onPress={() => handleEditMemory(item)} style={styles.actionButton}>
-          <Edit3 size={18} color="#007AFF" />
+          <Edit3 size={18} color={COLORS.primary} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleDeleteMemory(item)}
           style={styles.actionButton}
-          disabled={deletingItemId === item.id || isDeletingMemory} // Disable if this item is deleting or any delete is globally active
+          disabled={deletingItemId === item.id || isDeletingMemory}
         >
           {deletingItemId === item.id ?
-            <ActivityIndicator size="small" /> :
-            <Trash2 size={18} color="#EF5350" />
+            <ActivityIndicator size="small" color={COLORS.error} /> :
+            <Trash2 size={18} color={COLORS.error} />
           }
         </TouchableOpacity>
       </View>
     </View>
-  );
+  ), [handleEditMemory, handleDeleteMemory, deletingItemId, isDeletingMemory, COLORS.primary, COLORS.error]); // Added COLORS to deps for icon colors
 
-  if (isLoadingMemories && !memories.length) { // Show full screen loader only on initial load
+  if (isLoadingMemories && !memories.length) {
     return (
       <View style={styles.centeredMessageContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text>Loading memories...</Text>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{marginTop: SPACING.sm, color: COLORS.textSecondary}}>Loading memories...</Text>
       </View>
     );
   }
@@ -111,9 +114,9 @@ const MemoryScreen: React.FC = () => {
   if (memoriesError) {
     return (
       <View style={styles.centeredMessageContainer}>
-        <AlertCircle size={40} color="red" />
+        <AlertCircle size={40} color={COLORS.error} />
         <Text style={styles.errorText}>Error fetching memories: {memoriesError.message}</Text>
-        <Button title="Retry" onPress={() => refetchMemories()} />
+        <Button title="Retry" onPress={() => refetchMemories()} color={COLORS.primary} />
       </View>
     );
   }
@@ -124,16 +127,17 @@ const MemoryScreen: React.FC = () => {
 
       <View style={styles.searchFilterArea}>
         <View style={styles.searchContainer}>
-          <Search size={20} color="#666" style={styles.searchIcon} />
+          <Search size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search memories..."
+            placeholderTextColor={COLORS.textDisabled}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
         <TouchableOpacity style={styles.filterButton} onPress={handleFilterMemories}>
-          <Filter size={20} color="#fff" />
+          <Filter size={20} color={COLORS.white} />
           <Text style={styles.filterButtonText}>Filter</Text>
         </TouchableOpacity>
       </View>
@@ -149,66 +153,69 @@ const MemoryScreen: React.FC = () => {
         }
         contentContainerStyle={styles.listContentContainer}
         refreshControl={
-          <RefreshControl refreshing={isLoadingMemories && memories.length > 0} onRefresh={refetchMemories} />
+          <RefreshControl refreshing={isLoadingMemories} onRefresh={refetchMemories} tintColor={COLORS.primary} />
         }
       />
 
       <TouchableOpacity style={styles.fab} onPress={handleAddMemory}>
-        <PlusCircle size={28} color="#fff" />
+        <PlusCircle size={28} color={COLORS.white} />
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  screenContainer: { flex: 1, backgroundColor: '#F4F6F8' },
+  screenContainer: { flex: 1, backgroundColor: COLORS.background },
   header: {
-    fontSize: 24, fontWeight: 'bold', textAlign: 'center', paddingVertical: 16,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E0E0E0',
+    fontSize: FONT_SIZES.h2, fontWeight: FONT_WEIGHTS.bold, textAlign: 'center',
+    paddingVertical: SPACING.md, backgroundColor: COLORS.cardBackground,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border, color: COLORS.text,
   },
   searchFilterArea: {
-    flexDirection: 'row', padding: 10, backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#E0E0E0', alignItems: 'center',
+    flexDirection: 'row', padding: SPACING.sm, backgroundColor: COLORS.cardBackground,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border, alignItems: 'center',
   },
   searchContainer: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#E9ECEF', borderRadius: 20, paddingHorizontal: 10,
+    backgroundColor: COLORS.lightGray, borderRadius: SPACING.lg, paddingHorizontal: SPACING.sm,
   },
-  searchIcon: { marginRight: 8 },
-  searchInput: { flex: 1, height: 40, fontSize: 16 },
+  searchIcon: { marginRight: SPACING.sm },
+  searchInput: {
+    flex: 1, height: 40, fontSize: FONT_SIZES.body,
+    color: COLORS.text
+  },
   filterButton: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#007AFF',
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, marginLeft: 10,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderRadius: SPACING.lg, marginLeft: SPACING.sm,
   },
-  filterButtonText: { color: '#fff', fontSize: 14, marginLeft: 5 },
-  listContentContainer: { paddingBottom: 80, flexGrow: 1 }, // Added flexGrow
+  filterButtonText: { color: COLORS.white, fontSize: FONT_SIZES.body - 2, marginLeft: SPACING.xs, fontWeight: FONT_WEIGHTS.medium },
+  listContentContainer: { paddingBottom: SPACING.xl + SPACING.lg, flexGrow: 1 },
   memoryItemContainer: {
-    backgroundColor: '#fff', borderRadius: 8, padding: 15, marginVertical: 6,
-    marginHorizontal: 10, flexDirection: 'row', justifyContent: 'space-between',
-    elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    backgroundColor: COLORS.cardBackground, borderRadius: SPACING.sm, padding: SPACING.md,
+    marginVertical: SPACING.xs, marginHorizontal: LAYOUT_SPACING.screenPaddingHorizontal,
+    flexDirection: 'row', justifyContent: 'space-between',
+    elevation: 1, shadowColor: COLORS.black, shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 2,
   },
   memoryContent: { flex: 1 },
-  memoryText: { fontSize: 15, color: '#333', marginBottom: 5 },
-  memoryMeta: { fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 3 },
-  memoryDate: { fontSize: 11, color: '#777' },
+  memoryText: { fontSize: FONT_SIZES.body, color: COLORS.text, marginBottom: SPACING.xs },
+  memoryMeta: { fontSize: FONT_SIZES.caption, color: COLORS.textSecondary, fontStyle: 'italic', marginBottom: SPACING.xxs },
+  memoryDate: { fontSize: FONT_SIZES.caption - 1, color: COLORS.textDisabled },
   memoryActions: {
     flexDirection: 'column', justifyContent: 'space-around',
-    alignItems: 'center', marginLeft: 10,
+    alignItems: 'center', marginLeft: SPACING.sm,
   },
-  actionButton: { padding: 6 },
-  centeredMessageContainer: { // Added for centering empty/error/loading messages
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  actionButton: { padding: SPACING.xs },
+  centeredMessageContainer: {
+    flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg,
   },
-  emptyListText: { textAlign: 'center', fontSize: 16, color: '#777' },
-  errorText: { textAlign: 'center', fontSize: 16, color: 'red', marginBottom: 10 },
+  emptyListText: { textAlign: 'center', fontSize: FONT_SIZES.body, color: COLORS.textSecondary },
+  errorText: { textAlign: 'center', fontSize: FONT_SIZES.body, color: COLORS.error, marginBottom: SPACING.sm },
   fab: {
-    position: 'absolute', right: 20, bottom: 20, backgroundColor: '#007AFF',
+    position: 'absolute', right: SPACING.md, bottom: SPACING.md, backgroundColor: COLORS.primary,
     width: 56, height: 56, borderRadius: 28, justifyContent: 'center',
-    alignItems: 'center', elevation: 4, shadowColor: '#000',
+    alignItems: 'center', elevation: 4, shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2,
   },
 });

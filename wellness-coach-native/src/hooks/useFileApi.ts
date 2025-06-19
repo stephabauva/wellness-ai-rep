@@ -6,15 +6,51 @@ import { formatFileSize } from '../utils/fileManagerUtils'; // Adjusted path // 
 // import { API_CONFIG } from '../config/api'; // No longer needed directly
 import { getFromApi, postToApi, patchToApi, deleteFromApi, putToApi } from '../services/apiClient'; // Import apiClient functions
 
+/**
+ * @file useFileApi.ts
+ * @description Custom hook for interacting with file and category management APIs.
+ * Provides functions for fetching, deleting, categorizing files, and managing categories.
+ */
+
 // Type for category data for create operations (aligns with server DTO from insertFileCategorySchema)
 // Requires 'name', other fields from the schema are optional.
+/** @private Type for creating a new file category. */
 type CreatableFileCategory = Required<Pick<FileCategory, 'name'>> & Partial<Pick<FileCategory, 'description' | 'icon' | 'color'>>;
 
 // Type for category data for update operations (all fields optional)
+/** @private Type for updating an existing file category. */
 type UpdatableFileCategory = Partial<Pick<FileCategory, 'name' | 'description' | 'icon' | 'color'>>;
 
+/**
+ * Custom hook `useFileApi` for managing files and categories.
+ *
+ * @returns {object} An object containing:
+ *  - `files: FileItem[]` - Array of fetched files.
+ *  - `isLoadingFiles: boolean` - Loading state for fetching files.
+ *  - `filesError: Error | null` - Error object if fetching files fails.
+ *  - `refetchFiles: () => void` - Function to manually refetch files.
+ *  - `deleteFiles: (fileIds: string[]) => void` - Function to delete files by their IDs.
+ *  - `deleteFilesAsync: (fileIds: string[]) => Promise<any>` - Async version of deleteFiles.
+ *  - `isDeletingFiles: boolean` - Loading state for file deletion.
+ *  - `categorizeFiles: (params: { fileIds: string[]; categoryId?: string }) => void` - Function to assign files to a category.
+ *  - `categorizeFilesAsync: (params: { fileIds: string[]; categoryId?: string }) => Promise<any>` - Async version of categorizeFiles.
+ *  - `isCategorizingFiles: boolean` - Loading state for file categorization.
+ *  - `categories: FileCategory[]` - Array of fetched categories.
+ *  - `isLoadingCategories: boolean` - Loading state for fetching categories.
+ *  - `categoriesError: Error | null` - Error object if fetching categories fails.
+ *  - `refetchCategories: () => void` - Function to manually refetch categories.
+ *  - `createCategory: (categoryData: CreatableFileCategory) => void` - Function to create a new category.
+ *  - `createCategoryAsync: (categoryData: CreatableFileCategory) => Promise<FileCategory>` - Async version of createCategory.
+ *  - `isCreatingCategory: boolean` - Loading state for category creation.
+ *  - `updateCategory: (params: { categoryId: string, categoryData: UpdatableFileCategory }) => void` - Function to update an existing category.
+ *  - `updateCategoryAsync: (params: { categoryId: string, categoryData: UpdatableFileCategory }) => Promise<FileCategory>` - Async version of updateCategory.
+ *  - `isUpdatingCategory: boolean` - Loading state for category update.
+ *  - `deleteCategory: (categoryId: string) => void` - Function to delete a category by its ID.
+ *  - `deleteCategoryAsync: (categoryId: string) => Promise<null>` - Async version of deleteCategory.
+ *  - `isDeletingCategory: boolean` - Loading state for category deletion.
+ */
 export function useFileApi() {
-  const { toast } = useToast();
+  const { toast } = useToast(); // Note: This uses the 'toast' function from useToast's return, not 'show'
   const queryClient = useQueryClient();
 
   const {

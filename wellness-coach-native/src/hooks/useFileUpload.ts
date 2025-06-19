@@ -3,30 +3,70 @@ import { useQueryClient } from '@tanstack/react-query';
 // TODO: RN-Adapt - UniversalFileService needs to be adapted or replaced for React Native.
 // Its current implementation might use web-specific APIs (like Web Workers for compression).
 import { UniversalFileService } from '../services/universal-file-service';
-// import { API_CONFIG } from '../config/api'; // No longer needed directly
-import { postFormDataToApi } from '../services/apiClient'; // Import specific function for FormData
+import { postFormDataToApi } from '../services/apiClient';
 
-interface UploadResponse {
-  success: boolean;
-  file: {
-    id: string;
-    fileName: string;
-    displayName: string;
-    originalName: string;
-    fileType: string;
-    fileSize: number;
-    url: string;
-    category?: string;
-  };
+/**
+ * @file useFileUpload.ts
+ * @description Custom hook for handling file uploads, including potential compression
+ * and Go acceleration service interaction via `UniversalFileService`.
+ */
+
+/**
+ * @interface UploadResponseFile
+ * @description Structure of the 'file' object expected in a successful upload response from the backend.
+ * @property {string} id - Unique ID of the uploaded file.
+ * @property {string} fileName - Server-side filename.
+ * @property {string} displayName - User-friendly display name.
+ * @property {string} originalName - Original filename from the client.
+ * @property {string} fileType - MIME type of the file.
+ * @property {number} fileSize - Size of the file in bytes.
+ * @property {string} url - URL to access the uploaded file.
+ * @property {string} [category] - Optional category ID if assigned during upload.
+ */
+interface UploadResponseFile {
+  id: string;
+  fileName: string;
+  displayName: string;
+  originalName: string;
+  fileType: string;
+  fileSize: number;
+  url: string;
+  category?: string;
 }
 
+/**
+ * @interface UploadResponse
+ * @description Structure of the expected response object from a successful file upload API call.
+ * @property {boolean} success - Indicates if the upload was successful.
+ * @property {UploadResponseFile} file - Details of the uploaded file.
+ */
+interface UploadResponse {
+  success: boolean;
+  file: UploadResponseFile;
+}
+
+/**
+ * @interface UseFileUploadReturn
+ * @description Return type of the `useFileUpload` hook.
+ * @property {(file: any, categoryId?: string) => Promise<UploadResponse | null>} uploadFile - Function to upload a file.
+ *   The `file` parameter is expected to be an object compatible with FormData appending for React Native
+ *   (e.g., `{ uri: string, name: string, type: string, size?: number }`).
+ * @property {boolean} isUploading - True if a file upload is currently in progress.
+ * @property {string | null} error - Error message if the last upload failed.
+ */
 interface UseFileUploadReturn {
-  // TODO: RN-Adapt - `file: File` parameter will change to whatever RN file pickers provide.
   uploadFile: (file: any, categoryId?: string) => Promise<UploadResponse | null>;
   isUploading: boolean;
   error: string | null;
 }
 
+/**
+ * Custom hook `useFileUpload` for uploading files.
+ * It handles potential compression and Go acceleration via `UniversalFileService` (which needs RN adaptation).
+ * Uses `apiClient.postFormDataToApi` for the actual upload.
+ *
+ * @returns {UseFileUploadReturn} Object containing upload function, loading state, and error state.
+ */
 export function useFileUpload(): UseFileUploadReturn {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

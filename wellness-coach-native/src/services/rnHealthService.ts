@@ -1,8 +1,25 @@
 import AppleHealthKit, { HealthValue, HealthKitPermissions, HealthInputOptions, PermissionStatus } from 'react-native-health';
 import GoogleFit, { Scopes } from 'react-native-google-fit';
 import { Platform } from 'react-native';
-import { postToApi } from './apiClient'; // For backend sync
+import { postToApi } from './apiClient';
 
+/**
+ * @file rnHealthService.ts
+ * @description Service module for interacting with native health platforms (Apple HealthKit, Google Fit)
+ * using react-native-health. It handles permissions, data fetching, and syncing to the backend.
+ */
+
+/**
+ * @interface HealthDataPoint
+ * @description Common structure for health data points collected from native services.
+ * @property {string} [id] - Optional unique ID for the data point (can be source-specific or backend-generated).
+ * @property {string} dataType - The type of health data (e.g., 'Steps', 'HeartRate', 'Sleep').
+ * @property {number | string} value - The value of the data point. Can be a number or string (e.g., for sleep stages).
+ * @property {string} [unit] - The unit of measurement for the value (e.g., 'count', 'bpm', 'kg', 'hours').
+ * @property {string} timestamp - ISO8601 string representing the start time or recording time of the data.
+ * @property {string} [source] - The source of the data (e.g., 'AppleHealth', 'GoogleFit', specific device name).
+ * @property {Record<string, any>} [metadata] - Additional metadata, like endDate for sleep or other source-specific details.
+ */
 export interface HealthDataPoint {
   id?: string;
   dataType: string;
@@ -19,19 +36,27 @@ const healthKitReadPermissions: HealthKitPermissions['permissions']['read'] = [
   APPLE_PERMS.DistanceWalkingRunning, APPLE_PERMS.Weight, APPLE_PERMS.SleepAnalysis,
   // APPLE_PERMS.BodyMassIndex, APPLE_PERMS.FlightsClimbed,
 ];
+/** @private Apple HealthKit initialization options */
 const healthKitOptions: HealthKitPermissions = {
   permissions: { read: healthKitReadPermissions, write: [] },
 };
 
+/** @private Google Fit scopes required by the application */
 const googleFitScopes = [
   Scopes.FITNESS_ACTIVITY_READ, Scopes.FITNESS_BODY_READ,
   Scopes.FITNESS_HEART_RATE_READ, Scopes.FITNESS_SLEEP_READ,
 ];
 
+/** @deprecated This type is not actively used within the service's public API. */
 export type HealthServiceStatus = 'NotInitialized' | 'Initializing' | 'Initialized' | 'Error' | 'PermissionDenied';
-export type PermissionCheckResult = 'Granted' | 'Denied' | 'NotDetermined';
+/** Represents the status of a specific health permission. */
+export type PermissionCheckResult = 'Granted' | 'Denied' | 'NotDetermined' | 'Error';
 
 
+/**
+ * Gets information about the native health data provider for the current platform.
+ * @returns {{ platform: string, provider: string }} An object containing the platform (e.g., 'iOS', 'Android') and provider name (e.g., 'HealthKit', 'Google Fit').
+ */
 export function getProviderInfo(): { platform: string, provider: string } {
   if (Platform.OS === 'ios') {
     return { platform: 'iOS', provider: 'HealthKit' };
@@ -83,6 +108,12 @@ export async function requestHealthPermissions(): Promise<boolean> {
   return false;
 }
 
+/**
+ * Checks the current authorization status for configured health permissions.
+ * For iOS, it checks each permission type individually.
+ * For Android, it relies on `GoogleFit.isAuthorized` which indicates if the last general authorization was successful for the requested scopes.
+ * @returns {Promise<Record<string, PermissionCheckResult>>} A promise that resolves to an object mapping permission/scope names to their status ('Granted', 'Denied', 'NotDetermined', 'Error').
+ */
 export async function checkHealthPermissions(): Promise<Record<string, PermissionCheckResult>> {
   const permissionResults: Record<string, PermissionCheckResult> = {};
   if (Platform.OS === 'ios') {
@@ -141,6 +172,14 @@ export async function initHealthService(): Promise<boolean> {
   return false;
 }
 
+/**
+ * Fetches various types of health data (steps, heart rate, sleep, etc.) from the native health service
+ * for a given date range.
+ * @param {Date} startDate - The start date for the data query.
+ * @param {Date} endDate - The end date for the data query.
+ * @returns {Promise<HealthDataPoint[]>} A promise that resolves to an array of collected `HealthDataPoint` objects.
+ * Returns partial data if some data types fail to fetch; errors are logged to console.
+ */
 export async function fetchHealthData(startDate: Date, endDate: Date): Promise<HealthDataPoint[]> {
   const allData: HealthDataPoint[] = [];
   const options: HealthInputOptions = {
@@ -224,6 +263,12 @@ export async function fetchHealthData(startDate: Date, endDate: Date): Promise<H
   return allData;
 }
 
+/**
+ * Sends an array of collected health data points to the backend API.
+ * @param {HealthDataPoint[]} healthData - An array of `HealthDataPoint` objects to be synced.
+ * @returns {Promise<any>} A promise that resolves with the backend's response.
+ * @throws {Error} If the API request fails.
+ */
 export async function syncHealthDataToBackend(healthData: HealthDataPoint[]): Promise<any> {
   if (!healthData || healthData.length === 0) {
     console.log("[rnHealthService] No health data to sync.");
@@ -231,6 +276,7 @@ export async function syncHealthDataToBackend(healthData: HealthDataPoint[]): Pr
   }
   try {
     console.log(`[rnHealthService] Syncing ${healthData.length} data points to backend...`);
+    // Assumes backend endpoint '/health-data/native-sync' expects { data: HealthDataPoint[] }
     const response = await postToApi('health-data/native-sync', { data: healthData });
     console.log("[rnHealthService] Health data synced successfully:", response);
     return response;
@@ -240,6 +286,15 @@ export async function syncHealthDataToBackend(healthData: HealthDataPoint[]): Pr
   }
 }
 
+/**
+ * Orchestrates a full health data synchronization process:
+ * 1. Initializes the health service (requests permissions if needed).
+ * 2. Fetches health data for the specified number of past days.
+ * 3. Syncs the fetched data to the backend.
+ * @param {number} [daysToSync=7] - The number of past days for which to fetch and sync data.
+ * @returns {Promise<HealthDataPoint[]>} A promise that resolves with the array of data points that were fetched (and attempted to sync).
+ * @throws {Error} If initialization fails or if a critical error occurs during fetching or syncing.
+ */
 export async function performFullHealthSync(daysToSync: number = 7): Promise<HealthDataPoint[]> {
     try {
         const initialized = await initHealthService();

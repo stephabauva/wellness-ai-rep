@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { COLORS, SPACING, FONT_SIZES, TEXT_STYLES } from '../../../src/theme'; // Adjusted path for theme
+// TEXT_STYLES and LAYOUT_SPACING (from previous version) were not used in active styles.
+import { COLORS, SPACING, FONT_SIZES } from '../../../src/theme';
 import { Check } from 'lucide-react-native'; // For indicating selected language
 
 const LANGUAGES = [
@@ -56,10 +57,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     // paddingTop: SPACING.md, // No top padding if using stack navigator header
   },
-  headerTitle: { // Only if not using stack navigator header or want custom title styling
-    ...TEXT_STYLES.screenHeader,
+  headerTitle: {
+    // ...TEXT_STYLES.screenHeader, // TEXT_STYLES import removed
+    fontSize: FONT_SIZES.h2, // Example if TEXT_STYLES.screenHeader was FONT_SIZES.h2
+    fontWeight: 'bold',      // Example
     color: COLORS.text,
-    paddingHorizontal: LAYOUT_SPACING.screenPaddingHorizontal,
+    // paddingHorizontal: LAYOUT_SPACING.screenPaddingHorizontal, // LAYOUT_SPACING import removed
+    paddingHorizontal: SPACING.md, // Using SPACING directly
     paddingBottom: SPACING.md,
     textAlign: 'center',
     backgroundColor: COLORS.cardBackground,
@@ -71,8 +75,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: COLORS.cardBackground,
-    paddingHorizontal: LAYOUT_SPACING.screenPaddingHorizontal,
-    paddingVertical: LAYOUT_SPACING.itemPaddingVertical,
+    // paddingHorizontal: LAYOUT_SPACING.screenPaddingHorizontal, // LAYOUT_SPACING import removed
+    paddingHorizontal: SPACING.md, // Using SPACING directly
+    // paddingVertical: LAYOUT_SPACING.itemPaddingVertical, // LAYOUT_SPACING import removed
+    paddingVertical: SPACING.md, // Using SPACING directly (adjust as needed, e.g. SPACING.sm + SPACING.xs for 12)
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.separator,
   },

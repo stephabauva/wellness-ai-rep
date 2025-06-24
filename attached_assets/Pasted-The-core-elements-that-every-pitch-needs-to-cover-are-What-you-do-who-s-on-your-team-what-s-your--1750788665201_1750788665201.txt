@@ -1,0 +1,76 @@
+The core elements that every pitch needs to cover are: What you do, who's on your team, what's your traction, what do you know that everyone else doesn't (unique insights), what's your market size, and what are you asking for.
+Here are the main points and advice for each element and for pitching in general:
+•
+What You Do
+◦
+You need to be able to describe your company in two sentences and provide a specific, real-world example. The example should illustrate the problem and solution clearly, like the Airbnb example of a waiter paying rent during the Obama inauguration.
+◦
+Goal: Be 80% accurate but 100% clear, not 100% accurate and 50% clear.
+◦
+Avoid: Using jargon, vague examples, explaining it in a way only a customer would understand (investors are often not your users), or waiting until later slides to explain what your company does.
+◦
+Have two distinct answers for "what do you do": one for investors and one for customers.
+◦
+It's acceptable to ask investors if they understand or would like another example.
+•
+Your Team
+◦
+The purpose is to show who is on your team, what they do, their impressive accomplishments and credentials, and ideally, how they've personally experienced the problem.
+◦
+Avoid: Not stating roles or titles (e.g., CEO, who writes code), telling long life stories, or omitting specific, impressive accomplishments (e.g., working on the Mars rover).
+•
+Traction
+◦
+Provide a clear explanation of what you've accomplished since starting your company.
+◦
+Only use a graph if it shows growth ("up to the right").
+◦
+Traction isn't limited to revenue or users; it can be building an app and getting it into test flight with users quickly.
+◦
+The key is to communicate momentum and that you "get things done quickly".
+◦
+Crucially, always include the timeframe for your accomplishments (e.g., "in one month").
+◦
+Avoid: Listing "fake work" like advisor surveys.
+◦
+If you have no traction (e.g., week two of your startup), it's better to omit the slide entirely than to include a bad one.
+•
+Unique Insights
+◦
+These are the non-obvious things you've learned about the problem, customer, or potential solution.
+◦
+You earn the right to present unique insights once the investor understands what your company does and is impressed by your team.
+◦
+Example: Airbnb's insight that processing payments in a low-trust environment facilitates marketplace transactions.
+◦
+Avoid: Insights that are not truly unique (i.e., over 50% of people would agree), being vague with examples, or not using numbers and facts to support your insights.
+•
+Market Size
+◦
+How you calculate the market size is more important than the number itself.
+◦
+Educate the investor on your potential users, pricing, and the value you create, using a "Bottoms Up" calculation.
+◦
+Avoid: Quoting large, general reports (e.g., "JP Morgan said...") without showing your specific math.
+◦
+Show the math and talk about comparable products and their pricing to justify yours.
+•
+The Ask
+◦
+You must explicitly ask for money. Many founders fail to do this, missing the opportunity for investors who might prefer to write a check rather than say no.
+◦
+State how much money you are raising and what specific revenue or usage milestones you aim to accomplish with that money within a defined timeframe (e.g., 18-24 months).
+◦
+Avoid: Not asking for money, not mentioning social proof (other investors/amounts raised), or focusing on who you will hire rather than the actual product milestones.
+•
+General Pitching Principles
+◦
+Order your points from most to least impressive. While "what you do" comes first and "the ask" comes last, the middle elements should be ordered based on what is most impactful for your company. Don't feel rigidly bound by a standard format.
+◦
+Earn every two minutes of the meeting by putting your best information early. Don't save the "good stuff" for later, as investors' attention can wane quickly.
+◦
+Treat your pitch as a conversation, not a book report. The goal is to draw the investor into a dialogue, allowing them to convince themselves to invest. If an investor shows interest in a particular point, even if it's later in your deck, skip to it and engage them in conversation.
+◦
+Pay attention to the investor's non-verbal cues (tells), especially on Zoom, to gauge their interest.
+◦
+Use boring, basic, and non-distracting slides. The focus should be on you, the founder, and your message, not on fancy design or visuals. A designer might emphasize the wrong points of your business.

@@ -122,7 +122,7 @@
 
 **Upcoming Features (Funded Roadmap):**
 - **Nutrition Intelligence:** Photo → automatic meal logging → nutrition tracking
-- **Workout Recognition:** Point camera at gym equipment → AI identifies → suggests workout
+- **Workout Recognition & Logging:** Point camera at gym equipment → AI identifies → suggests workout → user logs sets/reps → automatic workout tracking with AI coaching recommendations
 - **Smart Device Ecosystem:** Integration with 50+ health devices
 - **Predictive Health Insights:** AI-powered health trend analysis
 

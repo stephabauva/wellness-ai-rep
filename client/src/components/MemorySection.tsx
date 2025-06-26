@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -503,9 +504,9 @@ export default function MemorySection() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {allMemories.filter((m: MemoryEntry) => m.importanceScore >= 0.8).length}
+                    {memoryOverview.categories.personal_info || 0}
                   </div>
-                  <div className="text-sm text-gray-600">High Priority</div>
+                  <div className="text-sm text-gray-600">Personal Info</div>
                 </div>
               </div>
             </CardContent>
@@ -561,7 +562,26 @@ export default function MemorySection() {
                 </Card>
               </Collapsible>
 
-              {memories.length === 0 ? (
+              {showLoadButton ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-8">
+                    <Brain className="h-12 w-12 text-blue-400 mb-4" />
+                    <Button onClick={handleLoadMemories} disabled={allMemoriesLoading}>
+                      {allMemoriesLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Loading Memories...
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Show My Stored Memories ({memoryOverview.total})
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : memories.length === 0 ? (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-8">
                     <Brain className="h-12 w-12 text-gray-400 mb-4" />

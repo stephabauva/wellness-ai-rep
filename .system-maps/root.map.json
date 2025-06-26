@@ -37,6 +37,11 @@
       "description": "Production-ready structured logging system with configurable levels and clean output formatting.",
       "path": "/.system-maps/logging.map.json",
       "dependencies": []
+    },
+    "performance": {
+      "description": "Application performance optimization including lazy loading, caching strategies, and startup optimization.",
+      "path": "/.system-maps/performance.map.json",
+      "dependencies": ["chat", "memory", "health"]
     }
   },
   "globalComponents": {

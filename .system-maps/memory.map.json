@@ -1,4 +1,12 @@
+The code adds a table of contents to the JSON structure describing memory features, components, API endpoints, database schema, and data stores.
+```
+```replit_final_file
 {
+  "tableOfContents": {
+    "storage": ["memory-creation", "categorization", "deduplication"],
+    "retrieval": ["context-aware-retrieval", "semantic-search", "relationship-mapping"],
+    "enhancement": ["chatgpt-style-memory", "automatic-detection", "background-processing"]
+  },
   "features": {
     "memory-detection": {
       "description": "Automatically detects and extracts memorable information from user messages during chat interactions.",

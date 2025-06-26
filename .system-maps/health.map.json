@@ -1,5 +1,10 @@
 {
-  "lastUpdated": "2025-01-28T18:20:00Z",
+  "tableOfContents": {
+    "data-import": ["file-upload", "format-parsing", "data-validation"],
+    "dashboard": ["metrics-overview", "trends-visualization", "coaching-insights"],
+    "native-integration": ["capacitor-health-kit", "real-time-sync", "permissions-management"]
+  },
+  "lastUpdated": "2025-01-26T10:00:00Z",
   "redirect": "This map has been refactored into a federated structure.",
   "newLocation": "./.system-maps/health/",
   "structure": {

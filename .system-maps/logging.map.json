@@ -1,4 +1,8 @@
 {
+  "tableOfContents": {
+    "structured-logging": ["logger-service", "log-levels", "clean-output"],
+    "performance-tracking": ["request-logging", "memory-service-logs", "database-migration-logs"]
+  },
   "domain": "logging",
   "version": "1.0.0",
   "lastUpdated": "2025-06-26T22:10:40Z",

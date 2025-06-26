@@ -1,5 +1,9 @@
-
 {
+  "tableOfContents": {
+    "metrics-management": ["add-metrics", "remove-metrics"],
+    "data-filtering": ["time-range-filtering", "data-reset"],
+    "data-operations": ["health-data-import", "pdf-export", "native-health-sync"]
+  },
   "lastUpdated": "2025-01-28T18:20:00Z",
   "dependencies": [],
   "featureGroups": {

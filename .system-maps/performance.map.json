@@ -1,4 +1,12 @@
+Adding a table of contents to the performance map file based on the provided feature groups.
+```
+```replit_final_file
 {
+  "tableOfContents": {
+    "lazyLoading": ["staggeredSectionLoading", "conditionalRendering", "backgroundPreloading"],
+    "cacheOptimization": ["sectionSpecificCaching", "intelligentPrefetching"],
+    "performanceHooks": ["useLazySection", "useStaggeredLoading", "useBackgroundPreload"]
+  },
   "domain": "performance",
   "description": "Application performance optimization systems including lazy loading, caching strategies, and startup optimization",
   "version": "1.0.0",

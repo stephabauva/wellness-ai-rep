@@ -1,5 +1,11 @@
+
 {
-  "lastUpdated": "2025-06-26T10:00:00Z",
+  "tableOfContents": {
+    "core-messaging": ["send-message", "receive-streaming-response", "conversation-history"],
+    "input-enhancements": ["file-attachment", "camera-capture", "audio-recording"],
+    "advanced-features": ["chatgpt-style-memory", "context-aware-prompts", "conversation-management"]
+  },
+  "lastUpdated": "2025-01-26T10:00:00Z",
   "dependencies": ["memory", "files"],
   "featureGroups": {
     "core-messaging": {
@@ -56,6 +62,7 @@
           "userFlow": [
             "User clicks the 'History' button in the `ChatSection` header.",
             "The `ConversationHistory` modal opens, listing past conversations.",
+            "User can search for specific conversations using the search input.",
             "User clicks on a conversation to load it.",
             "`useChatMessages` fetches the messages for the selected conversation."
           ],
@@ -63,8 +70,9 @@
             {
               "name": "ConversationHistory",
               "path": "client/src/components/ConversationHistory.tsx",
-              "description": "A modal component that displays a list of past conversations.",
-              "uses": ["useChatMessages"]
+              "description": "A modal component that displays a searchable list of past conversations.",
+              "uses": ["useChatMessages"],
+              "calls": ["/api/conversations"]
             },
             {
               "name": "useChatMessages",
@@ -80,12 +88,13 @@
       "description": "Features that provide alternative methods for message input beyond typing.",
       "features": {
         "file-attachment": {
-          "description": "Allows users to attach files to their messages.",
+          "description": "Allows users to attach files to their messages. Files are displayed as mini previews in the chat and automatically added to file management.",
           "userFlow": [
             "User clicks the 'Paperclip' icon in `ChatInputArea`.",
             "The `useFileManagement` hook's `handleFileChange` function is triggered.",
             "A POST request is sent to `/api/upload` to upload the file.",
-            "The file is displayed in the `AttachmentPreview` component."
+            "The file is displayed in the `AttachmentPreview` component as a mini image.",
+            "File is automatically added to file management system for retention period."
           ],
           "components": [
             {
@@ -97,17 +106,18 @@
             {
               "name": "AttachmentPreview",
               "path": "client/src/components/AttachmentPreview.tsx",
-              "description": "Displays a preview of the attached files before sending."
+              "description": "Displays mini previews of attached files before sending, with remove functionality."
             }
           ]
         },
         "camera-capture": {
-          "description": "Allows users to take a photo and attach it to their message.",
+          "description": "Allows users to take a photo using their device camera and attach it to their message.",
           "userFlow": [
             "User clicks the 'Camera' icon in `ChatInputArea`.",
             "A modal with the camera feed opens.",
             "User clicks 'Capture Photo'.",
-            "The photo is sent to `useFileManagement`'s `uploadFileMutation`."
+            "The photo is sent to `useFileManagement`'s `uploadFileMutation`.",
+            "Photo appears as mini image in attachment preview."
           ],
           "components": [
             {
@@ -118,25 +128,25 @@
           ]
         },
         "audio-recording": {
-          "description": "Allows users to record their voice, transcribe it to text, and use it as their message.",
+          "description": "Allows users to record their voice using browser's Web Speech API, which automatically transcribes to text in the input field.",
           "userFlow": [
             "User clicks the microphone icon in `AudioRecorder`.",
-            "`useAudioRecording` hook starts recording.",
-            "User stops recording.",
-            "The audio is sent to the `/api/transcribe` endpoint.",
-            "The transcribed text is set as the input message."
+            "`useAudioRecording` hook starts recording using Web Speech API.",
+            "Browser automatically transcribes speech to text in real-time.",
+            "Transcribed text is set as the input message in the text field.",
+            "Note: OpenAI and Google voice transcription endpoints are not currently working."
           ],
           "components": [
             {
               "name": "AudioRecorder",
               "path": "client/src/components/AudioRecorder.tsx",
-              "description": "The UI component for the audio recording button and state.",
+              "description": "The UI component for the audio recording button and state, supporting Web Speech API.",
               "uses": ["useAudioRecording"]
             },
             {
               "name": "useAudioRecording",
-              "path": "client/src/hooks/useAudioRecording.ts",
-              "description": "Handles the logic for recording audio from the microphone and sending it for transcription.",
+              "path": "client/src/hooks/useAudioRecording.ts", 
+              "description": "Handles the logic for recording audio using Web Speech API and transcribing to text.",
               "calls": ["/api/transcribe"]
             }
           ]
@@ -147,9 +157,10 @@
       "description": "Enhancements built on top of the core messaging functionality.",
       "features": {
         "chatgpt-style-memory": {
-          "description": "Provides the AI with context from past conversations through real-time deduplication and memory-enhanced system prompts.",
+          "description": "Provides the AI with context from past conversations through real-time deduplication and memory-enhanced system prompts when relevant.",
           "userFlow": [
             "When a user sends a message, the `aiService` on the backend calls `chatGPTMemoryEnhancement.buildEnhancedSystemPrompt`.",
+            "AI coach accesses user's memory if it determines the context is relevant.",
             "In parallel, `chatGPTMemoryEnhancement.processWithDeduplication` is called to analyze the message for potential new memories.",
             "The AI response is generated with the enhanced context."
           ],
@@ -175,6 +186,23 @@
               "path": "server/services/chat-context-service.ts",
               "description": "A service responsible for constructing the full context for an AI chat interaction.",
               "uses": ["memoryService"]
+            }
+          ]
+        },
+        "conversation-management": {
+          "description": "Allows users to create new conversations and manage conversation state.",
+          "userFlow": [
+            "User clicks 'New Chat' button in ChatSection header.",
+            "`handleNewChat` function is called from `useChatMessages`.",
+            "Current conversation is cleared and new conversation context is initialized.",
+            "User can start fresh conversation with AI coach."
+          ],
+          "components": [
+            {
+              "name": "ChatSection",
+              "path": "client/src/components/ChatSection.tsx",
+              "description": "Main chat interface component with new chat and history buttons.",
+              "uses": ["useChatMessages", "useChatActions", "ConversationHistory"]
             }
           ]
         }
@@ -205,16 +233,24 @@
       "calls": ["aiService.getChatResponseStream"]
     },
     "/api/messages": {
-      "method": "GET",
+      "method": "GET", 
       "description": "Fetches the messages for a specific conversation.",
       "path": "server/routes.ts",
       "handler": "app.get('/api/messages', ...)",
       "readsFrom": ["chatMessages"],
       "modifies": []
     },
+    "/api/conversations": {
+      "method": "GET",
+      "description": "Fetches the list of conversations for the conversation history modal.",
+      "path": "server/routes.ts", 
+      "handler": "app.get('/api/conversations', ...)",
+      "readsFrom": ["conversations"],
+      "modifies": []
+    },
     "/api/upload": {
       "method": "POST",
-      "description": "Uploads a file to be attached to a message.",
+      "description": "Uploads a file to be attached to a message and adds it to file management system.",
       "path": "server/routes.ts",
       "handler": "app.post('/api/upload', ...)",
       "readsFrom": [],
@@ -222,7 +258,7 @@
     },
     "/api/transcribe": {
       "method": "POST",
-      "description": "Transcribes an audio file to text.",
+      "description": "Transcribes an audio file to text (currently not working for OpenAI/Google, Web Speech API used instead).",
       "path": "server/routes.ts",
       "handler": "app.post('/api/transcribe', ...)",
       "readsFrom": [],
@@ -236,7 +272,7 @@
         "description": "Stores metadata for each conversation, such as the title and user ID."
       },
       "conversationMessages": {
-        "schema": "shared/schema.ts",
+        "schema": "shared/schema.ts", 
         "description": "Stores individual messages within each conversation, including the role (user/assistant) and content."
       },
       "chatMessages": {
@@ -245,7 +281,7 @@
       },
       "files": {
         "schema": "shared/schema.ts",
-        "description": "Stores information about uploaded files."
+        "description": "Stores information about uploaded files, automatically populated from chat attachments."
       }
     }
   }

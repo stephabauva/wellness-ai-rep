@@ -1,5 +1,5 @@
 
-# Memory Polling Fix Plan
+# Memory Polling Fix Plan - Reactive Retrieval Only
 
 ## Problem Analysis
 
@@ -12,12 +12,15 @@ The console shows repeated calls to `/api/memories` every few seconds:
 
 ### Root Cause Identification
 
-From analyzing `client/src/components/MemorySection.tsx`, the issue is **aggressive polling configuration**:
+The issue is **unnecessary proactive polling** when memories should only be retrieved:
+1. **When user sends a message** (for AI context)
+2. **When user explicitly views Memory Section** (for UI display)
+3. **When user performs memory operations** (add/delete)
 
-1. **Dual Query Polling**: Both `allMemories` and `filteredMemories` queries poll every 5 seconds
-2. **Low Stale Time**: 1-second stale time forces constant refetching
-3. **Aggressive Invalidation**: Manual cache invalidation after every mutation
-4. **Window Focus Refetching**: Additional requests on window focus
+Current problems:
+- **Dual Query Polling**: Both `allMemories` and `filteredMemories` queries poll every 5 seconds
+- **Unnecessary Background Fetching**: Memories fetched even when not needed
+- **Aggressive Invalidation**: Manual cache invalidation after every mutation
 
 ## Critical Constraints Analysis
 
@@ -38,29 +41,24 @@ From analyzing `client/src/components/MemorySection.tsx`, the issue is **aggress
 
 ## Technical Solution
 
-### Option 1: Smart Polling (RECOMMENDED)
-**Pros**: Maintains real-time feel, reduces calls by 80%
-**Cons**: Still some background polling
-**Risk**: Low - isolated change
+### Reactive Memory Retrieval (RECOMMENDED)
+**Pros**: Zero unnecessary calls, perfect alignment with ChatGPT behavior
+**Cons**: None - this is the correct approach
+**Risk**: Very Low - eliminates wasteful polling entirely
 
-### Option 2: Event-Driven Updates
-**Pros**: Zero unnecessary calls
-**Cons**: Complex state management
-**Risk**: Medium - requires broader changes
-
-### Option 3: Manual Refresh Only
-**Pros**: Zero background calls
-**Cons**: Poor UX for collaborative usage
-**Risk**: Low but UX impact
+**Core Principle**: Memories are only fetched when actually needed:
+1. **User sends message** → AI service fetches relevant memories for context
+2. **User opens Memory Section** → UI fetches memories for display  
+3. **User performs memory operations** → Targeted updates only
 
 ## Recommended Implementation
 
-### Phase 1: Immediate Fix (Smart Polling)
+### Phase 1: Remove All Automatic Polling
 
-**Target**: Reduce API calls from every 5 seconds to every 30 seconds, eliminate redundant invalidations.
+**Target**: Eliminate all background polling, fetch memories only on-demand.
 
 ```typescript
-// Enhanced query configuration
+// Reactive query configuration - NO automatic polling
 const { data: allMemories = [], isLoading: allMemoriesLoading } = useQuery({
   queryKey: ["memories"],
   queryFn: async () => {
@@ -68,68 +66,70 @@ const { data: allMemories = [], isLoading: allMemoriesLoading } = useQuery({
     if (!response.ok) throw new Error("Failed to fetch memories");
     return response.json();
   },
-  refetchInterval: 30000, // 30 seconds instead of 5
-  refetchOnWindowFocus: false, // Disable window focus refetch
-  staleTime: 25000, // 25 seconds instead of 1 second
+  enabled: false, // Disabled by default - only fetch when explicitly triggered
+  staleTime: 5 * 60 * 1000, // 5 minutes - reasonable for manual operations
+  refetchOnWindowFocus: false, // Never refetch automatically
+  refetchInterval: false, // No polling ever
 });
 ```
 
-### Phase 2: Smart Invalidation
+### Phase 2: Component-Specific Memory Loading
 
-**Target**: Only invalidate cache when actual changes occur.
+**Target**: Load memories only when Memory Section is rendered and visible.
 
 ```typescript
-// Replace aggressive invalidation
-onSuccess: async () => {
-  // Single targeted invalidation instead of multiple
-  await queryClient.invalidateQueries({ queryKey: ["memories"] });
-  
-  // Remove redundant refetch calls
-  // await queryClient.refetchQueries({ queryKey: ["memories"] });
-  // await queryClient.refetchQueries();
-  
-  form.reset();
-  setIsManualEntryOpen(false);
-  toast({
-    title: "Memory saved",
-    description: "Your memory has been processed and saved successfully.",
-  });
-}
+// Only fetch when component mounts and user is viewing it
+useEffect(() => {
+  // Fetch memories when user opens Memory Section
+  queryClient.fetchQuery({ queryKey: ["memories"] });
+}, []); // Run once on mount
+
+// For filtered memories, only fetch when category changes
+const { data: filteredMemories = [] } = useQuery({
+  queryKey: ["memories", selectedCategory],
+  queryFn: async () => {
+    if (selectedCategory === "all") {
+      return allMemories; // Use cached data
+    }
+    const response = await fetch(`/api/memories?category=${selectedCategory}`);
+    if (!response.ok) throw new Error("Failed to fetch filtered memories");
+    return response.json();
+  },
+  enabled: !!allMemories.length, // Only run if we have base memories loaded
+  staleTime: 5 * 60 * 1000,
+});
 ```
 
-### Phase 3: Conditional Polling
+### Phase 3: Chat-Triggered Memory Retrieval
 
-**Target**: Only poll when memory section is active.
+**Target**: AI service fetches memories only when processing user messages.
 
 ```typescript
-// Add visibility-based polling
-const [isSectionVisible, setIsSectionVisible] = useState(false);
-
-const { data: allMemories = [] } = useQuery({
-  queryKey: ["memories"],
-  queryFn: fetchMemories,
-  refetchInterval: isSectionVisible ? 30000 : false, // Only poll when visible
-  enabled: isSectionVisible, // Only fetch when section is active
-});
+// In AI service - memories fetched reactively during chat processing
+const relevantMemories = await memoryService.getContextualMemories(
+  userId,
+  conversationHistory,
+  currentMessage
+); // This happens server-side, only when user sends a message
 ```
 
 ## Implementation Steps
 
-### Step 1: Update Query Configuration
-- Increase polling interval from 5s to 30s
-- Increase stale time from 1s to 25s
-- Disable window focus refetching
-- Remove redundant refetch calls
+### Step 1: Remove All Automatic Polling
+- Set `enabled: false` by default for memory queries
+- Remove `refetchInterval` completely
+- Disable `refetchOnWindowFocus`
+- Increase `staleTime` to 5 minutes for manual operations
 
-### Step 2: Optimize Mutation Handlers
-- Replace multiple invalidation calls with single targeted invalidation
-- Remove redundant `refetchQueries` calls
-- Keep only essential cache updates
+### Step 2: Implement On-Demand Loading
+- Fetch memories only when Memory Section component mounts
+- Use cached data for filtering operations when possible
+- Remove redundant parallel queries
 
-### Step 3: Add Visibility Detection (Optional Enhancement)
-- Implement intersection observer for section visibility
-- Conditional polling based on user interaction
-- Pause polling when section not in view
+### Step 3: Optimize Server-Side Memory Retrieval
+- Ensure AI service only fetches memories during message processing
+- Remove any background memory processing that isn't triggered by user actions
+- Keep memory retrieval purely reactive
 
 ## Code Changes Required
 
@@ -164,10 +164,11 @@ If issues arise:
 ## Expected Results
 
 ### Performance Improvements
-- **80% reduction** in unnecessary API calls
-- **90% reduction** in console noise
-- **Improved perceived performance** due to less background processing
-- **Better battery life** on mobile devices
+- **99% reduction** in unnecessary API calls (only when actually needed)
+- **Complete elimination** of console noise from polling
+- **Significantly improved performance** due to zero background processing
+- **Much better battery life** on mobile devices
+- **Faster app responsiveness** due to reduced server load
 
 ### User Experience
 - ✅ Maintains real-time feel for memory updates

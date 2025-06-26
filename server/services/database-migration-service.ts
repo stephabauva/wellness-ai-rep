@@ -126,37 +126,44 @@ export class DatabaseMigrationService {
   }> {
     try {
       // Test connection
-      const connectionTest = await db.execute(sql`SELECT 1 as test`);
+      await db.execute(sql`SELECT 1 as test`);
       
-      // Count tables
-      const tables = await db.execute(sql`
+      // Count tables using pg_tables (more reliable)
+      const tablesResult = await db.execute(sql`
         SELECT COUNT(*) as count 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public'
+        FROM pg_tables 
+        WHERE schemaname = 'public'
       `);
       
-      // Count indexes
-      const indexes = await db.execute(sql`
+      // Count indexes using pg_indexes
+      const indexesResult = await db.execute(sql`
         SELECT COUNT(*) as count 
         FROM pg_indexes 
         WHERE schemaname = 'public'
       `);
 
-      // Check for slow queries (basic performance check)
-      const slowQueries = await db.execute(sql`
-        SELECT COUNT(*) as count
-        FROM pg_stat_statements 
-        WHERE mean_exec_time > 1000
-        LIMIT 1
-      `).catch(() => [{ count: 0 }]); // Fallback if pg_stat_statements not available
+      // Fallback: Test actual table existence
+      let actualTableCount = 0;
+      const testTables = ['users', 'chat_messages', 'health_data', 'connected_devices', 'conversations', 'memory_entries', 'files'];
+      
+      for (const table of testTables) {
+        try {
+          await db.execute(sql.raw(`SELECT 1 FROM ${table} LIMIT 1`));
+          actualTableCount++;
+        } catch {
+          // Table doesn't exist or no access
+        }
+      }
 
-      const tableCount = Number(tables[0]?.count) || 0;
-      const indexCount = Number(indexes[0]?.count) || 0;
-      const slowQueryCount = Number(slowQueries[0]?.count) || 0;
+      const tableCount = Number((tablesResult as any)[0]?.count) || actualTableCount;
+      const indexCount = Number((indexesResult as any)[0]?.count) || 0;
 
+      // Performance assessment based on table/index existence
       let performance: 'good' | 'warning' | 'critical' = 'good';
-      if (slowQueryCount > 10) performance = 'critical';
-      else if (slowQueryCount > 5 || indexCount < 10) performance = 'warning';
+      if (tableCount === 0) performance = 'critical';
+      else if (tableCount < 5 || indexCount < 10) performance = 'warning';
+
+      logger.debug(`Database health check: ${tableCount} tables, ${indexCount} indexes`, { service: 'database' });
 
       return {
         connectionStatus: 'connected',
@@ -165,6 +172,7 @@ export class DatabaseMigrationService {
         performance
       };
     } catch (error) {
+      logger.error('Database health check failed', error as Error, { service: 'database' });
       return {
         connectionStatus: 'error',
         tableCount: 0,
@@ -180,7 +188,7 @@ export class DatabaseMigrationService {
     try {
       // Check if database is already initialized
       const userCount = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
-      const hasUsers = Number(userCount[0]?.count) > 0;
+      const hasUsers = Number((userCount as any)[0]?.count) > 0;
       
       if (!hasUsers) {
         logger.debug('Database is empty, creating sample data...', { service: 'database' });

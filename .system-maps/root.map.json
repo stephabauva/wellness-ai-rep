@@ -20,7 +20,7 @@
     },
     "memory": {
       "description": "Controls the AI's long-term memory, including storage, retrieval, and deduplication.",
-      "path": "/.system-maps/memory.map.json",
+      "path": "/.system-maps/memory/",
       "dependencies": ["chat"]
     },
     "files": {

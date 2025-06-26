@@ -1,0 +1,141 @@
+
+{
+  "tableOfContents": {
+    "detection": ["memory-detection", "background-processing"],
+    "storage": ["memory-creation", "categorization", "deduplication"],
+    "retrieval": ["context-aware-retrieval", "semantic-search"]
+  },
+  "lastUpdated": "2025-01-27T10:00:00Z", 
+  "dependencies": ["chat"],
+  "featureGroups": {
+    "detection": {
+      "description": "Automatic memory detection and background processing from chat interactions",
+      "features": {
+        "memory-detection": {
+          "description": "AI-powered detection of memory-worthy content from user messages",
+          "userFlow": [
+            "User sends message in chat",
+            "Background analysis detects memorable information",
+            "System extracts facts and creates memory entries",
+            "Memory stored with confidence scoring"
+          ],
+          "components": ["memory-service", "chatgpt-memory-enhancement"]
+        },
+        "background-processing": {
+          "description": "Non-blocking memory processing with priority queues",
+          "userFlow": [
+            "Memory detection tasks queued in background",
+            "Processing occurs without blocking chat responses", 
+            "Results cached and made available to retrieval",
+            "Cache invalidation triggers UI updates"
+          ],
+          "components": ["memory-service", "enhanced-memory-service"]
+        }
+      }
+    },
+    "storage": {
+      "description": "Memory storage, categorization and deduplication systems",
+      "features": {
+        "memory-creation": {
+          "description": "Storage of memory entries with embeddings and metadata",
+          "userFlow": [
+            "Memory content processed and validated",
+            "Embedding generated for semantic search", 
+            "Memory stored with category and importance",
+            "Database indexes updated for performance"
+          ],
+          "components": ["memory-service", "enhanced-memory-service"]
+        },
+        "categorization": {
+          "description": "Automatic categorization of memories into preference, personal_info, context, instruction",
+          "userFlow": [
+            "AI analyzes memory content",
+            "Category assigned based on content type",
+            "Confidence score calculated",
+            "Manual override available through UI"
+          ],
+          "components": ["memory-service"]
+        },
+        "deduplication": {
+          "description": "ChatGPT-style memory deduplication and consolidation",
+          "userFlow": [
+            "New memory compared with existing memories",
+            "Duplicate or conflicting memories identified",
+            "Smart consolidation or replacement performed",
+            "Memory graph relationships updated"
+          ],
+          "components": ["chatgpt-memory-enhancement", "memory-graph-service"]
+        }
+      }
+    },
+    "retrieval": {
+      "description": "Context-aware memory retrieval for AI responses",
+      "features": {
+        "context-aware-retrieval": {
+          "description": "Retrieval of relevant memories based on conversation context",
+          "userFlow": [
+            "User sends new message",
+            "System builds context from conversation",
+            "Semantic search finds relevant memories",
+            "Top memories included in AI prompt"
+          ],
+          "components": ["memory-service", "intelligent-memory-retrieval"]
+        },
+        "semantic-search": {
+          "description": "Vector-based similarity search with caching",
+          "userFlow": [
+            "Query embedding generated",
+            "Cosine similarity calculated with stored memories",
+            "Results ranked by relevance and importance",
+            "Cache updated with search results"
+          ],
+          "components": ["memory-service", "go-memory-service"]
+        }
+      }
+    }
+  },
+  "components": {
+    "memory-service": {
+      "path": "server/services/memory-service.ts",
+      "type": "Service Class",
+      "description": "Core memory management with detection, storage, and retrieval",
+      "calls": ["POST /api/memory/create", "GET /api/memory/contextual"],
+      "uses": ["cache-service", "ai-service"],
+      "invalidates": ["query:memories"]
+    },
+    "chatgpt-memory-enhancement": {
+      "path": "server/services/chatgpt-memory-enhancement.ts", 
+      "type": "Service Class",
+      "description": "ChatGPT-style memory deduplication and processing",
+      "calls": [],
+      "uses": ["memory-service", "ai-service"],
+      "invalidates": ["query:memories"]
+    },
+    "enhanced-memory-service": {
+      "path": "server/services/enhanced-memory-service.ts",
+      "type": "Service Class", 
+      "description": "Enhanced memory operations with background processing",
+      "calls": [],
+      "uses": ["memory-service", "enhanced-background-processor"],
+      "invalidates": ["query:memories"]
+    }
+  },
+  "apiEndpoints": {
+    "POST /api/memory/create": {
+      "description": "Creates memory entry with confidence scoring",
+      "handlerFile": "server/routes.ts",
+      "requestBody": "{ content: string, userId: number, category?: string, importance?: number }",
+      "response": "{ id: string, content: string, category: string, confidence: number }",
+      "readsFrom": ["users.id"],
+      "modifies": ["memories", "memory_embeddings"]
+    },
+    "GET /api/memory/contextual": {
+      "description": "Retrieves memories relevant to conversation context",
+      "handlerFile": "server/routes.ts", 
+      "requestBody": "",
+      "response": "[{ id: string, content: string, relevanceScore: number, retrievalReason: string }]",
+      "readsFrom": ["memories", "memory_embeddings"],
+      "modifies": ["memory_access_logs"]
+    }
+  }
+}

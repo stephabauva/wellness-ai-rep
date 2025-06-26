@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db, pool } from '../db';
 import { sql } from 'drizzle-orm';
 import { logger } from './logger-service';
 
@@ -128,27 +128,31 @@ export class DatabaseMigrationService {
       // Test connection
       await db.execute(sql`SELECT 1 as test`);
       
-      // Count tables using pg_tables (more reliable)
-      const tablesResult = await db.execute(sql`
-        SELECT COUNT(*) as count 
-        FROM pg_tables 
-        WHERE schemaname = 'public'
-      `);
+      // Use the exported pool for reliable count queries
+      let tableCount = 0;
+      let indexCount = 0;
       
-      // Count performance indexes in public schema (excluding primary keys)
-      const indexesResult = await db.execute(sql`
-        SELECT COUNT(DISTINCT indexname) as count 
-        FROM pg_indexes 
-        WHERE schemaname = 'public' 
-        AND indexname NOT LIKE '%_pkey'
-      `);
-
-      // Extract counts with robust type handling
-      const rawTableCount = (tablesResult as any)[0]?.count;
-      const rawIndexCount = (indexesResult as any)[0]?.count;
-      
-      const tableCount = typeof rawTableCount === 'string' ? parseInt(rawTableCount, 10) : Number(rawTableCount) || 0;
-      const indexCount = typeof rawIndexCount === 'string' ? parseInt(rawIndexCount, 10) : Number(rawIndexCount) || 0;
+      try {
+        const client = await pool.connect();
+        
+        // Get public schema table count
+        const tablesResult = await client.query(
+          'SELECT COUNT(*) as count FROM pg_tables WHERE schemaname = $1',
+          ['public']
+        );
+        tableCount = parseInt(tablesResult.rows[0]?.count ?? '0', 10);
+        
+        // Get performance index count (excluding primary keys)
+        const indexesResult = await client.query(
+          "SELECT COUNT(DISTINCT indexname) as count FROM pg_indexes WHERE schemaname = $1 AND indexname NOT LIKE '%_pkey'",
+          ['public']
+        );
+        indexCount = parseInt(indexesResult.rows[0]?.count ?? '0', 10);
+        
+        client.release();
+      } catch (error) {
+        logger.debug(`Database count query failed: ${error}`, { service: 'database' });
+      }
 
       // Performance assessment based on table/index existence
       let performance: 'good' | 'warning' | 'critical' = 'good';

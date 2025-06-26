@@ -191,31 +191,36 @@ export class DatabaseMigrationService {
   }
 
   async initializeDatabase(): Promise<void> {
-    logger.debug('Initializing PostgreSQL database with sample data...', { service: 'database' });
+    logger.debug('Initializing PostgreSQL database...', { service: 'database' });
     
     try {
-      // Check if database is already initialized
-      const userCount = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
-      const hasUsers = Number((userCount as any)[0]?.count) > 0;
+      // Always ensure performance indexes exist
+      await this.createPerformanceIndexes();
       
-      if (!hasUsers) {
-        logger.debug('Database is empty, creating sample data...', { service: 'database' });
+      // Check if database needs sample data (only for completely empty database)
+      const tableChecks = await Promise.all([
+        db.execute(sql`SELECT COUNT(*) as count FROM users`).catch(() => [{ count: 0 }]),
+        db.execute(sql`SELECT COUNT(*) as count FROM chat_messages`).catch(() => [{ count: 0 }]),
+        db.execute(sql`SELECT COUNT(*) as count FROM conversations`).catch(() => [{ count: 0 }])
+      ]);
+      
+      const hasAnyData = tableChecks.some(result => Number((result as any)[0]?.count) > 0);
+      
+      if (!hasAnyData) {
+        logger.debug('Database is completely empty, creating minimal sample data...', { service: 'database' });
         
-        // Create tables first (handled by Drizzle migrations)
-        await this.createPerformanceIndexes();
-        
-        // Initialize sample data through DatabaseStorage
+        // Only create minimal sample data for development
         const { DatabaseStorage } = await import('../storage');
         const storage = new DatabaseStorage();
         await storage.initializeSampleData();
         
-        logger.debug('Database initialization completed', { service: 'database' });
+        logger.debug('Sample data initialization completed', { service: 'database' });
       } else {
-        logger.debug('Database already initialized, ensuring indexes exist...', { service: 'database' });
-        await this.createPerformanceIndexes();
+        logger.debug('Database contains existing data, skipping sample data creation', { service: 'database' });
       }
       
       await this.optimizeDatabase();
+      logger.debug('Database initialization completed', { service: 'database' });
     } catch (error) {
       logger.error('Database initialization failed', error as Error, { service: 'database' });
       throw error;

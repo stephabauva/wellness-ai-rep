@@ -1,0 +1,105 @@
+
+{
+  "tableOfContents": {
+    "app-preferences": ["theme-settings", "notification-settings", "data-sharing-settings"]
+  },
+  "lastUpdated": "2025-06-26T20:20:00Z",
+  "dependencies": [],
+  "featureGroups": {
+    "app-preferences": {
+      "description": "General application behavior and appearance settings",
+      "features": {
+        "theme-settings": {
+          "description": "Dark/light mode toggle and theme preferences",
+          "userFlow": [
+            "User navigates to app preferences",
+            "Current theme setting is displayed",
+            "User toggles dark mode switch",
+            "Theme is immediately applied",
+            "Preference is saved"
+          ],
+          "components": [
+            "AppPreferencesSettings.tsx",
+            "Switch component for darkMode"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "notification-settings": {
+          "description": "Push notifications and email summary preferences",
+          "userFlow": [
+            "User accesses app preferences",
+            "Notification settings are loaded",
+            "User toggles notification preferences",
+            "Settings are validated and saved"
+          ],
+          "components": [
+            "AppPreferencesSettings.tsx",
+            "Switch components for pushNotifications and emailSummaries"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "data-sharing-settings": {
+          "description": "Anonymous data sharing preferences for service improvement",
+          "userFlow": [
+            "User navigates to app preferences",
+            "Data sharing setting is displayed",
+            "User toggles data sharing preference",
+            "Setting is saved and applied"
+          ],
+          "components": [
+            "AppPreferencesSettings.tsx",
+            "Switch component for dataSharing"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "AppPreferencesSettings.tsx": {
+      "description": "General app behavior settings",
+      "path": "client/src/components/settings/AppPreferencesSettings.tsx",
+      "dependencies": ["react-hook-form", "Switch UI components"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/settings": {
+      "description": "Retrieve user settings",
+      "handler": "server/routes.ts",
+      "returns": "UserSettings object"
+    },
+    "PUT /api/settings": {
+      "description": "Update user settings", 
+      "handler": "server/routes.ts",
+      "accepts": "Partial UserSettings object"
+    }
+  },
+  "database": {
+    "user_settings": {
+      "description": "Stores user preferences and configuration",
+      "columns": ["id", "user_id", "darkMode", "pushNotifications", "emailSummaries", "dataSharing", "coaching_mode", "ai_provider", "ai_model"],
+      "indexes": ["user_id"]
+    }
+  }
+}

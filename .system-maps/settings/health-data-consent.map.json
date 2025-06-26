@@ -1,0 +1,135 @@
+
+{
+  "tableOfContents": {
+    "health-data-consent": ["ai-access-consent", "data-visibility", "retention-policies", "export-controls"]
+  },
+  "lastUpdated": "2025-06-26T20:20:00Z",
+  "dependencies": ["health"],
+  "featureGroups": {
+    "health-data-consent": {
+      "description": "Granular health data access and privacy controls",
+      "features": {
+        "ai-access-consent": {
+          "description": "Control which health data categories AI can access",
+          "userFlow": [
+            "User navigates to health data consent",
+            "Current consent settings are loaded",
+            "User toggles consent for different health categories",
+            "Consent changes are saved and applied to AI interactions"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "Switch components for each health category"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/settings",
+            "PUT /api/health-consent/settings"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        },
+        "data-visibility": {
+          "description": "Control which health data is visible in dashboard and reports",
+          "userFlow": [
+            "User accesses data visibility settings",
+            "Current visibility preferences are loaded",
+            "User toggles visibility for health categories",
+            "Changes affect dashboard and report generation"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "useHealthVisibilitySettings hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/visibility",
+            "PUT /api/health-consent/visibility"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        },
+        "retention-policies": {
+          "description": "Set retention periods for different health data categories",
+          "userFlow": [
+            "User navigates to health consent settings",
+            "Retention policies are displayed",
+            "User adjusts retention periods per category",
+            "Policies are saved and enforced by cleanup processes"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "Select components for retention periods"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/settings",
+            "PUT /api/health-consent/settings"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        },
+        "export-controls": {
+          "description": "Configure automatic data export preferences",
+          "userFlow": [
+            "User accesses export controls",
+            "Current export settings are loaded",
+            "User configures export preferences",
+            "Settings affect automated export processes"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "Switch and Select components for export settings"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/settings",
+            "PUT /api/health-consent/settings"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "HealthDataConsentSettings.tsx": {
+      "description": "Health data privacy and consent management",
+      "path": "client/src/components/settings/HealthDataConsentSettings.tsx",
+      "dependencies": ["useQuery", "useMutation", "useToast", "Various UI components"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/health-consent/settings": {
+      "description": "Retrieve health data consent settings",
+      "handler": "server/routes.ts",
+      "returns": "HealthConsentSettings object"
+    },
+    "PUT /api/health-consent/settings": {
+      "description": "Update health data consent settings",
+      "handler": "server/routes.ts", 
+      "accepts": "Partial HealthConsentSettings object"
+    },
+    "GET /api/health-consent/visibility": {
+      "description": "Retrieve health data visibility preferences",
+      "handler": "server/routes.ts",
+      "returns": "HealthVisibilitySettings object"
+    },
+    "PUT /api/health-consent/visibility": {
+      "description": "Update health data visibility preferences",
+      "handler": "server/routes.ts",
+      "accepts": "Partial HealthVisibilitySettings object"
+    }
+  },
+  "database": {
+    "health_consent_settings": {
+      "description": "Health data consent and privacy controls",
+      "columns": ["id", "user_id", "category", "ai_access_consent", "visibility", "retention_days"],
+      "indexes": ["user_id", "category"]
+    }
+  }
+}

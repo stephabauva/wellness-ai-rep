@@ -1,0 +1,78 @@
+
+{
+  "tableOfContents": {
+    "performance-settings": ["virtual-scrolling", "pagination", "web-workers"]
+  },
+  "lastUpdated": "2025-06-26T20:20:00Z",
+  "dependencies": [],
+  "featureGroups": {
+    "performance-settings": {
+      "description": "Application performance optimization settings",
+      "features": {
+        "virtual-scrolling": {
+          "description": "Enable/disable virtual scrolling for large lists",
+          "userFlow": [
+            "User accesses performance settings",
+            "Virtual scrolling setting is displayed",
+            "User toggles virtual scrolling",
+            "Setting is applied immediately to relevant components"
+          ],
+          "components": [
+            "PerformanceSettings.tsx",
+            "SettingsSection.tsx (local state management)"
+          ],
+          "apiEndpoints": [],
+          "database": {
+            "readsFrom": [],
+            "modifies": []
+          }
+        },
+        "pagination": {
+          "description": "Enable/disable pagination for large data sets",
+          "userFlow": [
+            "User navigates to performance settings",
+            "Pagination setting is shown",
+            "User toggles pagination preference",
+            "Setting affects data loading behavior"
+          ],
+          "components": [
+            "PerformanceSettings.tsx",
+            "SettingsSection.tsx (local state management)"
+          ],
+          "apiEndpoints": [],
+          "database": {
+            "readsFrom": [],
+            "modifies": []
+          }
+        },
+        "web-workers": {
+          "description": "Enable/disable web workers for background processing",
+          "userFlow": [
+            "User accesses performance settings",
+            "Web workers setting is displayed",
+            "User toggles web workers preference",
+            "Setting affects background processing behavior"
+          ],
+          "components": [
+            "PerformanceSettings.tsx",
+            "SettingsSection.tsx (local state management)"
+          ],
+          "apiEndpoints": [],
+          "database": {
+            "readsFrom": [],
+            "modifies": []
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "PerformanceSettings.tsx": {
+      "description": "Application performance optimization controls",
+      "path": "client/src/components/settings/PerformanceSettings.tsx",
+      "dependencies": ["Switch UI components"]
+    }
+  },
+  "apiEndpoints": {},
+  "database": {}
+}

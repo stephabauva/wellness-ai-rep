@@ -1,0 +1,102 @@
+
+{
+  "tableOfContents": {
+    "file-management": ["retention-policies", "auto-cleanup", "storage-preferences"]
+  },
+  "lastUpdated": "2025-06-26T20:20:00Z",
+  "dependencies": ["file-manager"],
+  "featureGroups": {
+    "file-management": {
+      "description": "File retention, cleanup, and storage management settings",
+      "features": {
+        "retention-policies": {
+          "description": "Configure how long different types of files are kept",
+          "userFlow": [
+            "User accesses file management settings",
+            "Current retention policies are loaded",
+            "User adjusts retention periods",
+            "Policies are validated and saved"
+          ],
+          "components": [
+            "FileManagementSettings.tsx",
+            "useRetentionSettings hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/retention-settings",
+            "PUT /api/retention-settings"
+          ],
+          "database": {
+            "readsFrom": ["retention_settings"],
+            "modifies": ["retention_settings"]
+          }
+        },
+        "auto-cleanup": {
+          "description": "Automatic file cleanup based on retention policies",
+          "userFlow": [
+            "User configures auto-cleanup settings",
+            "Cleanup schedules are set",
+            "Background processes execute cleanup",
+            "User receives cleanup reports"
+          ],
+          "components": [
+            "FileManagementSettings.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/retention-settings",
+            "PUT /api/retention-settings"
+          ],
+          "database": {
+            "readsFrom": ["retention_settings", "files"],
+            "modifies": ["retention_settings", "files"]
+          }
+        },
+        "storage-preferences": {
+          "description": "Storage location and organization preferences",
+          "userFlow": [
+            "User accesses storage preferences",
+            "Current storage settings are displayed",
+            "User modifies storage preferences",
+            "Changes are applied and saved"
+          ],
+          "components": [
+            "FileManagementSettings.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/retention-settings",
+            "PUT /api/retention-settings"
+          ],
+          "database": {
+            "readsFrom": ["retention_settings"],
+            "modifies": ["retention_settings"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "FileManagementSettings.tsx": {
+      "description": "File retention and storage settings",
+      "path": "client/src/components/settings/FileManagementSettings.tsx",
+      "dependencies": ["useRetentionSettings"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/retention-settings": {
+      "description": "Retrieve file retention policies",
+      "handler": "server/routes.ts", 
+      "returns": "RetentionSettings object"
+    },
+    "PUT /api/retention-settings": {
+      "description": "Update file retention policies",
+      "handler": "server/routes.ts",
+      "accepts": "Partial RetentionSettings object"
+    }
+  },
+  "database": {
+    "retention_settings": {
+      "description": "File retention policies and cleanup configuration",
+      "columns": ["id", "user_id", "category", "retention_days", "auto_cleanup"],
+      "indexes": ["user_id", "category"]
+    }
+  }
+}

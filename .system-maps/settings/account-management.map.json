@@ -1,0 +1,85 @@
+
+{
+  "tableOfContents": {
+    "account-management": ["profile-settings", "user-preferences"]
+  },
+  "lastUpdated": "2025-06-26T20:20:00Z",
+  "dependencies": [],
+  "featureGroups": {
+    "account-management": {
+      "description": "User account and profile management settings",
+      "features": {
+        "profile-settings": {
+          "description": "Basic user profile information management",
+          "userFlow": [
+            "User clicks account settings tab",
+            "Form loads with current user data",
+            "User modifies profile fields",
+            "Form validation occurs",
+            "Settings are saved via API"
+          ],
+          "components": [
+            "AccountSettings.tsx",
+            "SettingsSection.tsx (main container)",
+            "Form components from ui/form.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "user-preferences": {
+          "description": "General user preference management",
+          "userFlow": [
+            "User navigates to account section",
+            "Current preferences are loaded",
+            "User modifies preferences",
+            "Changes are validated and saved"
+          ],
+          "components": [
+            "AccountSettings.tsx",
+            "useUserSettings hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "AccountSettings.tsx": {
+      "description": "User account and profile settings form",
+      "path": "client/src/components/settings/AccountSettings.tsx",
+      "dependencies": ["react-hook-form", "UserSettingsFormValues"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/settings": {
+      "description": "Retrieve user settings",
+      "handler": "server/routes.ts",
+      "returns": "UserSettings object"
+    },
+    "PUT /api/settings": {
+      "description": "Update user settings", 
+      "handler": "server/routes.ts",
+      "accepts": "Partial UserSettings object"
+    }
+  },
+  "database": {
+    "user_settings": {
+      "description": "Stores user preferences and configuration",
+      "columns": ["id", "user_id", "darkMode", "pushNotifications", "emailSummaries", "dataSharing", "coaching_mode", "ai_provider", "ai_model"],
+      "indexes": ["user_id"]
+    }
+  }
+}

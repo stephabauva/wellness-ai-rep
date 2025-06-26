@@ -30,7 +30,7 @@
     },
     "settings": {
       "description": "Manages user preferences, application settings, and configurations. Contains user information.",
-      "path": "/.system-maps/settings.map.json",
+      "path": "/.system-maps/settings/",
       "dependencies": []
     },
     "logging": {

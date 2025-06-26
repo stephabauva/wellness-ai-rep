@@ -1,0 +1,84 @@
+
+{
+  "tableOfContents": {
+    "coaching-preferences": ["coaching-mode-toggle", "coaching-style-selection"]
+  },
+  "lastUpdated": "2025-06-26T20:20:00Z",
+  "dependencies": [],
+  "featureGroups": {
+    "coaching-preferences": {
+      "description": "AI coaching behavior and style configuration",
+      "features": {
+        "coaching-mode-toggle": {
+          "description": "Toggle between different coaching modes",
+          "userFlow": [
+            "User clicks coaching preferences tab",
+            "Current coaching mode is displayed",
+            "User selects new coaching mode",
+            "AppContext is updated",
+            "Settings are persisted"
+          ],
+          "components": [
+            "CoachingPreferencesSettings.tsx",
+            "AppContext.tsx (setCoachingMode)"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "coaching-style-selection": {
+          "description": "Select specific coaching personality and approach",
+          "userFlow": [
+            "User accesses coaching preferences",
+            "Available coaching styles are presented",
+            "User selects preferred style",
+            "Selection is saved and applied to AI interactions"
+          ],
+          "components": [
+            "CoachingPreferencesSettings.tsx",
+            "coach-select.tsx UI component"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "CoachingPreferencesSettings.tsx": {
+      "description": "AI coaching behavior configuration",
+      "path": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+      "dependencies": ["AppContext", "coach-select UI component"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/settings": {
+      "description": "Retrieve user settings",
+      "handler": "server/routes.ts",
+      "returns": "UserSettings object"
+    },
+    "PUT /api/settings": {
+      "description": "Update user settings", 
+      "handler": "server/routes.ts",
+      "accepts": "Partial UserSettings object"
+    }
+  },
+  "database": {
+    "user_settings": {
+      "description": "Stores user preferences and configuration",
+      "columns": ["id", "user_id", "darkMode", "pushNotifications", "emailSummaries", "dataSharing", "coaching_mode", "ai_provider", "ai_model"],
+      "indexes": ["user_id"]
+    }
+  }
+}

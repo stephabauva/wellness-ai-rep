@@ -1,0 +1,110 @@
+
+{
+  "tableOfContents": {
+    "ai-configuration": ["model-selection", "provider-settings", "auto-model-selection"]
+  },
+  "lastUpdated": "2025-06-26T20:20:00Z",
+  "dependencies": [],
+  "featureGroups": {
+    "ai-configuration": {
+      "description": "AI model selection and provider configuration settings",
+      "features": {
+        "model-selection": {
+          "description": "Manual selection of specific AI models",
+          "userFlow": [
+            "User navigates to AI configuration",
+            "Available models are loaded and displayed",
+            "User selects preferred model",
+            "Selection is saved and applied to future requests"
+          ],
+          "components": [
+            "AiConfigurationSettings.tsx",
+            "useAiModels hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/ai-models",
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "provider-settings": {
+          "description": "Configure AI provider preferences (OpenAI, Google, etc.)",
+          "userFlow": [
+            "User accesses AI configuration",
+            "Provider settings are loaded",
+            "User configures provider preferences",
+            "Settings are validated and saved"
+          ],
+          "components": [
+            "AiConfigurationSettings.tsx",
+            "useAiModels hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/ai-models",
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "auto-model-selection": {
+          "description": "Toggle automatic model selection based on query complexity",
+          "userFlow": [
+            "User navigates to AI configuration",
+            "Auto-selection setting is displayed",
+            "User toggles auto-selection preference",
+            "Setting is saved and applied to AI service"
+          ],
+          "components": [
+            "AiConfigurationSettings.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "AiConfigurationSettings.tsx": {
+      "description": "AI model and provider configuration",
+      "path": "client/src/components/settings/AiConfigurationSettings.tsx", 
+      "dependencies": ["useAiModels", "Select UI components"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/ai-models": {
+      "description": "Retrieve available AI models and providers",
+      "handler": "server/routes.ts",
+      "returns": "Array of AiModel objects"
+    },
+    "GET /api/settings": {
+      "description": "Retrieve user settings",
+      "handler": "server/routes.ts",
+      "returns": "UserSettings object"
+    },
+    "PUT /api/settings": {
+      "description": "Update user settings", 
+      "handler": "server/routes.ts",
+      "accepts": "Partial UserSettings object"
+    }
+  },
+  "database": {
+    "user_settings": {
+      "description": "Stores user preferences and configuration",
+      "columns": ["id", "user_id", "darkMode", "pushNotifications", "emailSummaries", "dataSharing", "coaching_mode", "ai_provider", "ai_model"],
+      "indexes": ["user_id"]
+    }
+  }
+}

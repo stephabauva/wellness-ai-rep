@@ -819,8 +819,6 @@ Use this remembered information to personalize your responses naturally. Don't e
   // Tier 2 C: Optimized user memories with caching and filtering
   async getUserMemories(userId: number, category?: MemoryCategory): Promise<MemoryEntry[]> {
     try {
-      console.log(`[MemoryService] Getting memories for user ${userId}, category: ${category}`);
-      
       // Force fresh data by bypassing cache
       const allMemories = await db
         .select()
@@ -830,14 +828,11 @@ Use this remembered information to personalize your responses naturally. Don't e
           eq(memoryEntries.isActive, true)
         ))
         .orderBy(desc(memoryEntries.importanceScore));
-      
-      console.log(`[MemoryService] Retrieved ${allMemories.length} memories from database`);
 
       // Apply category filter if specified
       let filteredMemories = allMemories;
       if (category) {
         filteredMemories = allMemories.filter(memory => memory.category === category);
-        console.log(`[MemoryService] Filtered to ${filteredMemories.length} memories for category ${category}`);
       }
 
       // Map database fields to frontend expected format
@@ -860,10 +855,10 @@ Use this remembered information to personalize your responses naturally. Don't e
         return dateB - dateA;
       });
       
-      console.log(`[MemoryService] Returning ${sortedMemories.length} sorted memories`);
+      logger.memory('getUserMemories', { userId, count: sortedMemories.length });
       return sortedMemories;
     } catch (error) {
-      console.error('Error getting user memories:', error);
+      logger.error('Error getting user memories', error as Error, { service: 'memory' });
       return [];
     }
   }
@@ -888,12 +883,12 @@ Use this remembered information to personalize your responses naturally. Don't e
         // Clear related cache entries
         cacheService.clearMemorySearchResults(userId);
         
-        console.log(`[MemoryService] Memory ${memoryId} marked as inactive and cache cleared`);
+        logger.debug(`Memory ${memoryId} marked as inactive and cache cleared`, { service: 'memory' });
       }
 
       return !!deleted;
     } catch (error) {
-      console.error('Error deleting memory:', error);
+      logger.error('Error deleting memory', error as Error, { service: 'memory' });
       return false;
     }
   }

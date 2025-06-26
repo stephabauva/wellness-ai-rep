@@ -76,7 +76,7 @@ export async function generatePDFReport(user: User, healthData: HealthData[]): P
     
     // Find step data for this date
     const stepData = stepsData.find(data => 
-      format(new Date(data.timestamp), "MM/dd/yyyy") === formattedDate
+      data.timestamp != null ? format(new Date(data.timestamp), "MM/dd/yyyy") === formattedDate : false
     );
     
     activityTrends.push({
@@ -95,7 +95,7 @@ export async function generatePDFReport(user: User, healthData: HealthData[]): P
     
     // Find sleep data for this date
     const sleepDataForDay = sleepData.find(data => 
-      format(new Date(data.timestamp), "MM/dd/yyyy") === formattedDate
+      data.timestamp != null ? format(new Date(data.timestamp), "MM/dd/yyyy") === formattedDate : false
     );
     
     const duration = sleepDataForDay ? parseFloat(sleepDataForDay.value) : 0;
@@ -114,7 +114,8 @@ export async function generatePDFReport(user: User, healthData: HealthData[]): P
   // Get AI-generated recommendations
   let recommendations: string[] = [];
   try {
-    recommendations = await aiService.getHealthInsights(healthData);
+    const insightsResponse = await aiService.getHealthInsights(healthData);
+    recommendations = insightsResponse.insights;
   } catch (error) {
     console.error("Error getting recommendations:", error);
     recommendations = [

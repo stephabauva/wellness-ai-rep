@@ -6,7 +6,8 @@
 import { aiService } from './ai-service.js';
 import { memoryGraphService } from './memory-graph-service-instance.js';
 import { storage } from '../storage.js';
-import { MemoryEntry } from '../../shared/schema.js';
+import { MemoryEntry, ChatMessage } from '../../shared/schema.js';
+
 
 interface ConversationContext {
   userId: number;
@@ -49,17 +50,17 @@ interface AdaptiveThreshold {
 }
 
 interface RelevantMemory {
-  id: number;
+  id: string; // Changed from number
   content: string;
   category: string;
-  importance: number;
+  importanceScore: number; // Changed from importance
   relevanceScore: number;
   retrievalReason: string;
   confidenceLevel: number;
   temporalWeight: number;
   contextualBoost: number;
   diversityScore: number;
-  createdAt: Date;
+  createdAt: Date | null; // Changed from Date
 }
 
 export class IntelligentMemoryRetrieval {
@@ -175,26 +176,16 @@ export class IntelligentMemoryRetrieval {
       const candidates: RetrievalCandidate[] = [];
       const adaptiveThreshold = await this.calculateAdaptiveThreshold(expandedQuery, context);
 
-      for (const memoryEntry of userMemories) {
-        // Convert database entry to memory format
-        const memory = {
-          id: parseInt(memoryEntry.id),
-          content: memoryEntry.content,
-          category: memoryEntry.category,
-          importance: memoryEntry.importanceScore,
-          createdAt: memoryEntry.createdAt || new Date(),
-          userId: memoryEntry.userId
-        };
-
-        // Calculate multi-dimensional scores
+      for (const memoryEntry of userMemories) { // memoryEntry is of type MemoryEntry
+        // Calculate multi-dimensional scores using memoryEntry directly
         const semanticScore = await this.calculateSemanticSimilarity(
           expandedQuery, 
-          memory.content
+          memoryEntry.content
         );
         
-        const temporalScore = this.calculateTemporalRelevance(memory, context);
-        const contextualScore = await this.calculateContextualRelevance(memory, context);
-        const graphScore = await this.calculateGraphRelevance(memory, expandedQuery);
+        const temporalScore = this.calculateTemporalRelevance(memoryEntry, context);
+        const contextualScore = await this.calculateContextualRelevance(memoryEntry, context);
+        const graphScore = await this.calculateGraphRelevance(memoryEntry, expandedQuery);
 
         // Combined scoring with adaptive weights
         const combinedScore = this.calculateCombinedScore({
@@ -206,7 +197,7 @@ export class IntelligentMemoryRetrieval {
 
         if (combinedScore > adaptiveThreshold.semantic) {
           candidates.push({
-            memory,
+            memory: memoryEntry, // Use memoryEntry directly
             scores: {
               semantic: semanticScore,
               temporal: temporalScore,
@@ -308,7 +299,7 @@ export class IntelligentMemoryRetrieval {
         id: candidate.memory.id,
         content: candidate.memory.content,
         category: candidate.memory.category,
-        importance: candidate.memory.importance,
+        importanceScore: candidate.memory.importanceScore, // Changed from importance
         relevanceScore: candidate.scores.combined,
         retrievalReason: candidate.retrievalReason.join(', '),
         confidenceLevel: candidate.confidence,
@@ -447,10 +438,14 @@ export class IntelligentMemoryRetrieval {
 
       // Score based on relationship strength to query-relevant memories
       let graphScore = 0.5;
-      for (const rel of memoryNode.relationships) {
-        const relationshipType = rel.relationshipType || rel.type;
-        if (relationshipType === 'supports' || relationshipType === 'elaborates') {
-          graphScore += 0.1 * rel.strength;
+      if (memoryNode.relationships) { // Ensure relationships exist
+        for (const rel of memoryNode.relationships) {
+          // Assuming rel is of type MemoryRelationship or similar, which has relationshipType
+          const relationshipType = rel.relationshipType;
+          if (relationshipType === 'supports' || relationshipType === 'elaborates') {
+            // Ensure rel.strength exists and is a number if MemoryRelationship is not strictly enforced
+            graphScore += 0.1 * (typeof rel.strength === 'number' ? rel.strength : 0);
+          }
         }
       }
 
@@ -640,32 +635,33 @@ Focus on health, wellness, and fitness terminology relevant to the coaching cont
     return Math.min(baseDiversity + categoryBonus, 1.0);
   }
 
+// ... (other code) ...
+
   private async basicFallbackRetrieval(
     userId: number,
     query: string,
     maxResults: number
   ): Promise<RelevantMemory[]> {
-    // Simple fallback using basic text matching
-    const userMemories = await storage.getMessages(userId) as any[];
-    const memoryEntries = userMemories.filter(m => m.category && m.importance);
+    // Simple fallback using basic text matching on ChatMessages
+    const chatMessages: ChatMessage[] = await storage.getMessages(userId);
 
-    return memoryEntries
-      .filter(memory => 
-        memory.content.toLowerCase().includes(query.toLowerCase())
+    return chatMessages
+      .filter(msg =>
+        msg.content.toLowerCase().includes(query.toLowerCase())
       )
       .slice(0, maxResults)
-      .map(memory => ({
-        id: memory.id,
-        content: memory.content,
-        category: memory.category,
-        importance: memory.importance,
+      .map((msg: ChatMessage) => ({
+        id: msg.id.toString(), // Convert number id to string
+        content: msg.content,
+        category: 'chat_history', // Assign a default category
+        importanceScore: 0.5, // Assign a default importanceScore
         relevanceScore: 0.7,
-        retrievalReason: 'fallback_text_match',
+        retrievalReason: 'fallback_text_match_chat',
         confidenceLevel: 0.6,
         temporalWeight: 0.5,
         contextualBoost: 0.5,
         diversityScore: 0.5,
-        createdAt: memory.createdAt
+        createdAt: msg.timestamp // Changed from memory.createdAt
       }));
   }
 }

@@ -21,19 +21,19 @@ export class PreparedStatementsService {
   // Prepared statements for common queries
   private preparedStatements = {
     // User queries
-    getUserById: db.select().from(users).where(eq(users.id, sql.placeholder("id"))).prepare(),
-    getUserByUsername: db.select().from(users).where(eq(users.username, sql.placeholder("username"))).prepare(),
+    getUserById: db.select().from(users).where(eq(users.id, sql.placeholder("id"))).prepare("ps_get_user_by_id"),
+    getUserByUsername: db.select().from(users).where(eq(users.username, sql.placeholder("username"))).prepare("ps_get_user_by_username"),
     
     // Message queries
     getMessagesByUserId: db.select().from(chatMessages)
       .where(eq(chatMessages.userId, sql.placeholder("userId")))
       .orderBy(chatMessages.timestamp)
-      .prepare(),
+      .prepare("ps_get_messages_by_user_id"),
     
     getConversationMessages: db.select().from(conversationMessages)
       .where(eq(conversationMessages.conversationId, sql.placeholder("conversationId")))
       .orderBy(conversationMessages.createdAt)
-      .prepare(),
+      .prepare("ps_get_conversation_messages"),
     
     // Health data queries
     getHealthDataByUserAndTimeRange: db.select().from(healthData)
@@ -42,7 +42,7 @@ export class PreparedStatementsService {
         gte(healthData.timestamp, sql.placeholder("startDate"))
       ))
       .orderBy(desc(healthData.timestamp))
-      .prepare(),
+      .prepare("ps_get_health_data_by_user_and_time_range"),
     
     getHealthDataByUserAndType: db.select().from(healthData)
       .where(and(
@@ -50,25 +50,25 @@ export class PreparedStatementsService {
         eq(healthData.dataType, sql.placeholder("dataType"))
       ))
       .orderBy(desc(healthData.timestamp))
-      .prepare(),
+      .prepare("ps_get_health_data_by_user_and_type"),
     
     // Device queries
     getDevicesByUserId: db.select().from(connectedDevices)
       .where(eq(connectedDevices.userId, sql.placeholder("userId")))
-      .prepare(),
+      .prepare("ps_get_devices_by_user_id"),
     
     getActiveDevicesByUserId: db.select().from(connectedDevices)
       .where(and(
         eq(connectedDevices.userId, sql.placeholder("userId")),
         eq(connectedDevices.isActive, true)
       ))
-      .prepare(),
+      .prepare("ps_get_active_devices_by_user_id"),
     
     // Memory queries
     getMemoryEntriesByUser: db.select().from(memoryEntries)
       .where(eq(memoryEntries.userId, sql.placeholder("userId")))
       .orderBy(desc(memoryEntries.importanceScore))
-      .prepare(),
+      .prepare("ps_get_memory_entries_by_user"),
     
     getMemoryEntriesByUserAndCategory: db.select().from(memoryEntries)
       .where(and(
@@ -76,7 +76,7 @@ export class PreparedStatementsService {
         eq(memoryEntries.category, sql.placeholder("category"))
       ))
       .orderBy(desc(memoryEntries.importanceScore))
-      .prepare(),
+      .prepare("ps_get_memory_entries_by_user_and_category"),
     
     // File queries
     getFilesByUserId: db.select().from(files)
@@ -85,7 +85,7 @@ export class PreparedStatementsService {
         eq(files.isDeleted, false)
       ))
       .orderBy(desc(files.createdAt))
-      .prepare(),
+      .prepare("ps_get_files_by_user_id"),
     
     getFilesByConversation: db.select().from(files)
       .where(and(
@@ -93,7 +93,7 @@ export class PreparedStatementsService {
         eq(files.isDeleted, false)
       ))
       .orderBy(desc(files.createdAt))
-      .prepare()
+      .prepare("ps_get_files_by_conversation")
   };
 
   static getInstance(): PreparedStatementsService {

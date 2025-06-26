@@ -127,7 +127,7 @@ class GoFileProcessingService {
       try {
         const response = await fetch(`${this.serviceUrl}/health`, {
           method: 'GET',
-          timeout: 1000
+          signal: AbortSignal.timeout(1000)
         });
         
         if (response.ok) {
@@ -162,7 +162,7 @@ class GoFileProcessingService {
       const response = await fetch(url, {
         method: 'POST',
         body: formData,
-        timeout: 30000 // 30 second timeout
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       });
 
       if (!response.ok) {
@@ -195,7 +195,7 @@ class GoFileProcessingService {
       const response = await fetch(`${this.serviceUrl}/process-batch`, {
         method: 'POST',
         body: formData,
-        timeout: 120000 // 2 minute timeout for batch processing
+        signal: AbortSignal.timeout(120000) // 2 minute timeout for batch processing
       });
 
       if (!response.ok) {
@@ -231,7 +231,7 @@ class GoFileProcessingService {
       const response = await fetch(url, {
         method: 'POST',
         body: formData,
-        timeout: 30000
+        signal: AbortSignal.timeout(30000)
       });
 
       if (!response.ok) {
@@ -261,7 +261,7 @@ class GoFileProcessingService {
       const response = await fetch(`${this.serviceUrl}/metadata`, {
         method: 'POST',
         body: formData,
-        timeout: 10000
+        signal: AbortSignal.timeout(10000)
       });
 
       if (!response.ok) {
@@ -285,14 +285,14 @@ class GoFileProcessingService {
     try {
       const response = await fetch(`${this.serviceUrl}/health`, {
         method: 'GET',
-        timeout: 5000
+        signal: AbortSignal.timeout(5000)
       });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      return await response.json() as { status: string; workers: number; maxWorkers: number };
     } catch (error) {
       console.error('[GoFileService] Health check failed:', error);
       throw error;
@@ -321,11 +321,11 @@ class GoFileProcessingService {
         serviceUrl: this.serviceUrl,
         ...health
       };
-    } catch (error) {
+    } catch (e: unknown) {
       return {
         isRunning: false,
         serviceUrl: this.serviceUrl,
-        error: error.message
+        error: e instanceof Error ? e.message : String(e)
       };
     }
   }

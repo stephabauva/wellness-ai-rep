@@ -634,7 +634,9 @@ export class HealthDataParser {
 
           parsedData.push(dataPoint);
           const category = dataPoint.category;
-          categories[category] = (categories[category] || 0) + 1;
+          if (category) { // Ensure category is not undefined, though it shouldn't be from categorizeDataType
+            categories[category] = (categories[category] || 0) + 1;
+          }
 
         } catch (obsError) {
           errors.push(`Error parsing observation: ${obsError instanceof Error ? obsError.message : 'Unknown error'}`);
@@ -1257,7 +1259,7 @@ export class HealthDataParser {
               validRecords: validRecords,
               skippedRecords: skippedRecords,
               categories: parsedData.reduce((acc, item) => {
-                if (item.category) {
+                if (item.category && typeof item.category === 'string') { // Stronger check
                   acc[item.category] = (acc[item.category] || 0) + 1;
                 }
                 return acc;
@@ -1408,7 +1410,10 @@ export class HealthDataParser {
 
                     parsedData.push(dataPoint);
                     validRecords++;
-                    categories[mapping.category] = (categories[mapping.category] || 0) + 1;
+                    // mapping.category is HealthDataCategory, which is a string union, so typeof check is redundant but safe.
+                    if (typeof mapping.category === 'string') {
+                        categories[mapping.category] = (categories[mapping.category] || 0) + 1;
+                    }
                   }
                 }
               }

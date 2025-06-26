@@ -228,11 +228,20 @@ export class AttachmentRetentionService {
 
       for (const row of conversationsWithMessages) {
         const message = row.conversation_messages;
-        if (!message?.metadata?.attachments) continue;
 
-        const attachments = message.metadata.attachments as any[];
+        if (!message || !message.metadata) continue; // Ensure message and metadata exist
+
+        // Define a type for metadata if it has a known structure for attachments
+        interface MessageMetadataWithAttachments {
+          attachments?: Array<{ fileName: string; displayName?: string; fileType: string; [key: string]: any }>;
+        }
+
+        const metadata = message.metadata as MessageMetadataWithAttachments;
+
+        if (!metadata.attachments || !Array.isArray(metadata.attachments) || metadata.attachments.length === 0) continue;
         
-        for (const attachment of attachments) {
+        for (const attachment of metadata.attachments) {
+          if (!attachment || !attachment.fileName) continue; // Ensure attachment and fileName are valid
           if (processedFiles.has(attachment.fileName)) continue;
           processedFiles.add(attachment.fileName);
 
@@ -243,24 +252,24 @@ export class AttachmentRetentionService {
           const fileAge = now.getTime() - fileStats.mtime.getTime();
           const daysSinceCreation = Math.floor(fileAge / (1000 * 60 * 60 * 24));
 
-          const categorization = this.categorizeAttachment(
+          const categorizationResult = await this.categorizeAttachment(
             attachment.displayName || attachment.fileName,
             attachment.fileType,
-            message.content
+            message.content // message is confirmed not null here
           );
 
           // Skip if file should be kept indefinitely
-          if (categorization.retentionDays === -1) continue;
+          if (categorizationResult.retentionDays === -1) continue;
 
           // Delete if expired
-          if (daysSinceCreation > categorization.retentionDays) {
+          if (daysSinceCreation > categorizationResult.retentionDays) {
             try {
               const fileSize = fileStats.size;
               unlinkSync(filePath);
               deletedFiles++;
               freedSpace += fileSize;
               
-              console.log(`Deleted expired ${categorization.category}-value file: ${attachment.fileName} (${daysSinceCreation} days old)`);
+              console.log(`Deleted expired ${categorizationResult.category}-value file: ${attachment.fileName} (${daysSinceCreation} days old)`);
             } catch (error) {
               console.error(`Failed to delete file ${attachment.fileName}:`, error);
             }

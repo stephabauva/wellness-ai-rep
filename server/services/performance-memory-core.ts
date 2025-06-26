@@ -161,8 +161,8 @@ export class PerformanceMemoryCore {
         content: content.slice(0, 500), // Truncate for performance
         category,
         importanceScore: importance,
-        keywords: this.extractQuickKeywords(content),
-        isActive: true
+        keywords: this.extractQuickKeywords(content)
+        // isActive is handled by DB default
       };
 
       await db.insert(memoryEntries).values(entry);

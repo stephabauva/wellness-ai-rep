@@ -250,8 +250,8 @@ Use this information naturally in your responses without explicitly mentioning y
         category: metadata.category,
         importanceScore: metadata.importance_score,
         keywords: metadata.keywords,
-        sourceConversationId: metadata.sourceConversationId,
-        isActive: true
+        sourceConversationId: metadata.sourceConversationId
+        // isActive is handled by DB default
       };
 
       await db.insert(memoryEntries).values(entry);

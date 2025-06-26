@@ -2,6 +2,32 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb, uuid, real }
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Define UserPreferences type
+export const userPreferenceSchema = z.object({
+  primaryGoal: z.string().optional(),
+  coachStyle: z.string().optional(),
+  reminderFrequency: z.string().optional(),
+  focusAreas: z.array(z.string()).optional(),
+  darkMode: z.boolean().optional(),
+  pushNotifications: z.boolean().optional(),
+  emailSummaries: z.boolean().optional(),
+  dataSharing: z.boolean().optional(),
+  healthVisibilitySettings: z.object({
+    visible_categories: z.array(z.string()),
+    hidden_categories: z.array(z.string()),
+    dashboard_preferences: z.object({
+      visible_metrics: z.array(z.string()),
+      hidden_metrics: z.array(z.string()),
+      metric_order: z.array(z.string()),
+    }),
+  }).optional(),
+  highValueRetentionDays: z.number().int().min(-1).optional(), // -1 for indefinite
+  mediumValueRetentionDays: z.number().int().min(1).optional(),
+  lowValueRetentionDays: z.number().int().min(1).optional(),
+});
+
+export type UserPreferences = z.infer<typeof userPreferenceSchema>;
+
 // Custom vector type for embeddings (we'll handle vector operations manually)
 const vectorType = (name: string, dimensions: number) => text(name);
 
@@ -12,7 +38,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name"),
   email: text("email"),
-  preferences: jsonb("preferences"),
+  preferences: jsonb("preferences").$type<UserPreferences>().notNull().default({}),
   transcriptionProvider: text("transcription_provider").default("webspeech"),
   preferredLanguage: text("preferred_language").default("en"),
   automaticModelSelection: boolean("automatic_model_selection").default(true),
@@ -23,7 +49,11 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
+export const insertUserSchema = createInsertSchema(users, {
+  // Override 'preferences' to use userPreferenceSchema directly, making it optional
+  // because the database column has a default value.
+  preferences: userPreferenceSchema.optional(),
+}).pick({
   username: true,
   password: true,
   name: true,
@@ -569,17 +599,11 @@ export interface HealthConsentSettings {
 }
 
 // Settings update schema (moved from routes.ts)
+// It should include general user settings fields AND all user preference fields
 export const settingsUpdateSchema = z.object({
+  // Top-level User entity fields that can be updated
   name: z.string().optional(),
   email: z.string().email().optional(),
-  primaryGoal: z.string().optional(),
-  coachStyle: z.string().optional(),
-  reminderFrequency: z.string().optional(),
-  focusAreas: z.array(z.string()).optional(),
-  darkMode: z.boolean().optional(),
-  pushNotifications: z.boolean().optional(),
-  emailSummaries: z.boolean().optional(),
-  dataSharing: z.boolean().optional(),
   aiProvider: z.enum(["openai", "google"]).optional(),
   aiModel: z.string().optional(),
   transcriptionProvider: z.enum(["webspeech", "openai", "google"]).optional(),
@@ -587,10 +611,9 @@ export const settingsUpdateSchema = z.object({
   automaticModelSelection: z.boolean().optional(),
   memoryDetectionProvider: z.enum(["google", "openai", "none"]).optional(),
   memoryDetectionModel: z.string().optional(),
-  // Attachment retention settings
-  highValueRetentionDays: z.number().optional(),
-  mediumValueRetentionDays: z.number().optional(),
-  lowValueRetentionDays: z.number().optional()
+
+  // Dynamically include all fields from userPreferenceSchema
+  ...userPreferenceSchema.shape,
 });
 
 // Health consent settings validation schema
@@ -625,6 +648,7 @@ export const healthConsentSettingsSchema = z.object({
 export const enhancedSettingsUpdateSchema = settingsUpdateSchema.extend({
   health_consent: healthConsentSettingsSchema.optional(),
 });
+export type EnhancedSettingsUpdate = z.infer<typeof enhancedSettingsUpdateSchema>;
 
 // Extended user settings type
 export interface UserSettingsFormValues {

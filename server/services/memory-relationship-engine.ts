@@ -335,10 +335,13 @@ export class MemoryRelationshipEngine {
   }
 
   private calculateTemporalScore(source: MemoryEntry, target: MemoryEntry): number {
-    const sourceTime = source.createdAt?.getTime() || 0;
-    const targetTime = target.createdAt?.getTime() || 0;
+    const sourceTime = source.createdAt?.getTime();
+    const targetTime = target.createdAt?.getTime();
     
-    if (sourceTime === 0 || targetTime === 0) return 0;
+    // If either createdAt is null, cannot calculate a meaningful temporal score
+    if (sourceTime === undefined || sourceTime === null || targetTime === undefined || targetTime === null) {
+      return 0;
+    }
     
     const timeDiff = Math.abs(sourceTime - targetTime);
     const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
@@ -434,18 +437,23 @@ export class MemoryRelationshipEngine {
       }
       
       // Check for temporal relationships
-      const timeDiff = Math.abs(source.createdAt.getTime() - target.createdAt.getTime());
-      if (timeDiff < 24 * 60 * 60 * 1000) { // Within 24 hours
-        return {
-          id: crypto.randomUUID(),
-          sourceMemoryId: source.id,
-          targetMemoryId: target.id,
-          relationshipType: 'temporal_sequence',
-          strength: 0.6,
-          confidence: 0.8,
-          context: 'Created within 24 hours of each other',
-          createdAt: new Date()
-        };
+      const sourceTime = source.createdAt?.getTime();
+      const targetTime = target.createdAt?.getTime();
+
+      if (sourceTime != null && targetTime != null) {
+        const timeDiff = Math.abs(sourceTime - targetTime);
+        if (timeDiff < 24 * 60 * 60 * 1000) { // Within 24 hours
+          return {
+            id: crypto.randomUUID(),
+            sourceMemoryId: source.id,
+            targetMemoryId: target.id,
+            relationshipType: 'temporal_sequence',
+            strength: 0.6,
+            confidence: 0.8,
+            context: 'Created within 24 hours of each other',
+            createdAt: new Date()
+          };
+        }
       }
       
       return null;
@@ -555,32 +563,9 @@ export class MemoryRelationshipEngine {
     return comparisons > 0 ? totalOverlap / comparisons : 0;
   }
 
-  private async getCandidateMemories(memoryId: string): Promise<MemoryEntry[]> {
-    // Get recent memories from the same user
-    const sourceMemory = await db
-      .select()
-      .from(memoryEntries)
-      .where(eq(memoryEntries.id, memoryId))
-      .limit(1);
-    
-    if (sourceMemory.length === 0) return [];
-    
-    return await db
-      .select()
-      .from(memoryEntries)
-      .where(and(
-        eq(memoryEntries.userId, sourceMemory[0].userId),
-        eq(memoryEntries.isActive, true)
-      ))
-      .orderBy(desc(memoryEntries.createdAt))
-      .limit(20);
-  }
+  // Removed duplicate getCandidateMemories function
 
-  private isCacheValid(cacheKey: string): boolean {
-    const timestamp = this.cacheTimestamps.get(cacheKey);
-    if (!timestamp) return false;
-    return (Date.now() - timestamp) < this.CACHE_TTL;
-  }
+  // Removed duplicate isCacheValid function
 
   /**
    * Performance monitoring

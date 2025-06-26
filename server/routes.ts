@@ -27,7 +27,7 @@ import { goFileService } from "./services/go-file-service";
 import { statSync, unlinkSync } from 'fs';
 import { HealthDataParser } from "./services/health-data-parser";
 import { HealthDataDeduplicationService } from "./services/health-data-deduplication";
-import { insertHealthDataSchema } from "@shared/schema";
+import { insertHealthDataSchema, type UserPreferences } from "@shared/schema";
 import { spawn } from 'child_process';
 import { enhancedBackgroundProcessor } from "./services/enhanced-background-processor";
 import { memoryFeatureFlags } from "./services/memory-feature-flags";
@@ -968,8 +968,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
 
       // Return comprehensive user settings including AI configuration and health consent
+      // user.preferences is now UserPreferences (not nullable)
       const userSettings = {
-        ...(user.preferences || {}),
+        ...user.preferences,
         aiProvider: user.aiProvider,
         aiModel: user.aiModel,
         automaticModelSelection: user.automaticModelSelection,
@@ -1167,12 +1168,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update user preferences with new visibility settings
-      const updatedPreferences = {
-        ...user.preferences,
+      // The visibilitySettings from req.body is directly the value for healthVisibilitySettings
+      await storage.updateUserSettings(1, {
         healthVisibilitySettings: visibilitySettings
-      };
-
-      await storage.updateUserSettings(1, { preferences: updatedPreferences });
+      });
       
       res.json(visibilitySettings);
     } catch (error) {
@@ -1702,9 +1701,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+// Interface for sample health records
+interface SampleHealthRecord {
+  type: string;
+  value: string;
+  unit: string;
+  timestamp: string;
+  source?: string; // Added as it's used in some sample generations
+  category?: string; // Added as it's used in some sample generations
+}
+
 // Sample data generation function for testing
-function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: number = 30): any[] {
-    const sampleData = [];
+function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: number = 30): SampleHealthRecord[] {
+    const sampleData: SampleHealthRecord[] = [];
     const now = new Date();
     const requestedTypes = dataTypes.length > 0 ? dataTypes : ['steps', 'heart_rate', 'sleep', 'weight'];
     
@@ -1716,7 +1725,7 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
           case 'steps':
             sampleData.push({
               type: 'steps',
-              value: Math.floor(Math.random() * 5000) + 3000,
+              value: (Math.floor(Math.random() * 5000) + 3000).toString(),
               unit: 'count',
               timestamp: date.toISOString()
             });
@@ -1724,7 +1733,7 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
           case 'heart_rate':
             sampleData.push({
               type: 'heart_rate',
-              value: Math.floor(Math.random() * 40) + 60,
+              value: (Math.floor(Math.random() * 40) + 60).toString(),
               unit: 'bpm',
               timestamp: date.toISOString()
             });
@@ -1732,7 +1741,7 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
           case 'sleep':
             sampleData.push({
               type: 'sleep',
-              value: Math.floor(Math.random() * 120) + 420,
+              value: (Math.floor(Math.random() * 120) + 420).toString(),
               unit: 'minutes',
               timestamp: date.toISOString()
             });
@@ -1741,7 +1750,7 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
             if (i % 3 === 0) { // Weight data every 3 days
               sampleData.push({
                 type: 'weight',
-                value: Math.floor(Math.random() * 20) + 65,
+                value: (Math.floor(Math.random() * 20) + 65).toString(),
                 unit: 'kg',
                 timestamp: date.toISOString()
               });
@@ -2414,21 +2423,22 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
       }
+      const file = req.file; // Assign to a new const for type narrowing
 
       // Check file size and automatically start Go service for large data files (XML, JSON, CSV)
-      const fileSizeInMB = req.file.size / (1024 * 1024);
-      const lowerFileName = req.file.originalname.toLowerCase();
+      const fileSizeInMB = file.size / (1024 * 1024);
+      const lowerFileName = file.originalname.toLowerCase();
       const isLargeDataFile = fileSizeInMB > 5 && (
         lowerFileName.endsWith('.xml') || 
         lowerFileName.endsWith('.json') || 
         lowerFileName.endsWith('.csv') ||
-        req.file.mimetype.includes('xml') ||
-        req.file.mimetype.includes('json') ||
-        req.file.mimetype.includes('csv')
+        file.mimetype.includes('xml') ||
+        file.mimetype.includes('json') ||
+        file.mimetype.includes('csv')
       );
 
       if (isLargeDataFile) {
-        console.log(`Large data file detected in file management (${fileSizeInMB.toFixed(1)}MB): ${req.file.originalname}`);
+        console.log(`Large data file detected in file management (${fileSizeInMB.toFixed(1)}MB): ${file.originalname}`);
         console.log('Attempting to start Go acceleration service for file management...');
         try {
           await startGoAccelerationService();
@@ -2450,12 +2460,12 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
 
       // Generate unique filename
       const fileId = nanoid();
-      const fileExtension = req.file.originalname.split('.').pop() || '';
+      const fileExtension = file.originalname.split('.').pop() || '';
       const fileName = `${fileId}.${fileExtension}`;
       const filePath = join(uploadsDir, fileName);
 
       // Check if we should try Go acceleration for large data files
-      let finalFileBuffer = req.file.buffer;
+      let finalFileBuffer = file.buffer;
       let goServiceUsed = false;
       let compressionStats = null;
 
@@ -2465,24 +2475,32 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
           const FormData = (await import('form-data')).default;
           const nodeFetch = (await import('node-fetch')).default;
           const formData = new FormData();
-          formData.append('file', req.file.buffer, {
-            filename: req.file.originalname,
-            contentType: req.file.mimetype,
-            knownLength: req.file.size
+          formData.append('file', file.buffer, { // Use file here
+            filename: file.originalname,
+            contentType: file.mimetype,
+            knownLength: file.size
           });
           
+          interface GoCompressResponse {
+            compressedData?: string; // base64 encoded
+            originalSize?: number;
+            compressedSize?: number;
+            ratio?: number;
+            time?: number;
+            error?: string;
+          }
           const response = await nodeFetch('http://localhost:5001/accelerate/compress-large', {
             method: 'POST',
             body: formData,
             headers: {
               ...formData.getHeaders(),
             },
-            timeout: 120000
+            signal: AbortSignal.timeout(120000)
           });
           
           if (response.ok) {
-            const result = await response.json();
-            if (result.compressedData) {
+            const result = await response.json() as GoCompressResponse;
+            if (result.compressedData && result.originalSize !== undefined && result.compressedSize !== undefined && result.ratio !== undefined && result.time !== undefined) {
               // Use compressed data from Go service
               finalFileBuffer = Buffer.from(result.compressedData, 'base64');
               goServiceUsed = true;
@@ -2493,6 +2511,8 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
                 time: result.time
               };
               console.log(`Go acceleration successful for ${req.file.originalname}: ${result.originalSize} → ${result.compressedSize} bytes (${(result.ratio * 100).toFixed(1)}% compression)`);
+            } else if (result.error) {
+              console.log('Go acceleration service returned an error:', result.error);
             }
           }
         } catch (error) {
@@ -2513,11 +2533,11 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         (async () => {
           try {
             const result = await goFileService.processFile(
-              req.file.originalname, 
+              file.originalname,
               finalFileBuffer, 
-              req.file.mimetype.startsWith('image/') // Generate thumbnails for images only
+              file.mimetype.startsWith('image/') // Generate thumbnails for images only
             );
-            console.log(`[TIER 3] Go service processed ${req.file.originalname} in ${result.processingTime}ms`);
+            console.log(`[TIER 3] Go service processed ${file.originalname} in ${result.processingTime}ms`);
             return result;
           } catch (error) {
             console.warn('[TIER 3] Go service unavailable, using Node.js fallback:', error);
@@ -2526,13 +2546,13 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         })()
       ]);
 
-      const uploadedFileName = req.file.originalname;
+      const uploadedFileName = file.originalname;
       const uniqueFileName = fileName;
 
       // Get retention information for the uploaded file
       const retentionInfo = attachmentRetentionService.getRetentionInfo(
-        uploadedFileName,
-        req.file.mimetype
+        uploadedFileName, // This is fine as it's derived from file.originalname
+        file.mimetype
       );
 
       let validatedCategoryId: string | undefined = undefined;
@@ -2559,8 +2579,8 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         fileName: uniqueFileName,
         displayName: uploadedFileName,
         originalName: uploadedFileName,
-        fileType: req.file.mimetype,
-        fileSize: goServiceUsed && compressionStats ? compressionStats.compressedSize : req.file.size,
+        fileType: file.mimetype,
+        fileSize: goServiceUsed && compressionStats ? compressionStats.compressedSize : file.size,
         url: `/uploads/${uniqueFileName}`,
         retentionInfo,
       };
@@ -2578,27 +2598,67 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         req.file.mimetype
       );
 
-      // Enhanced metadata from Go service (TIER 3 optimization)
-      let enhancedMetadata = {
-        retentionInfo: fileRetentionInfo,
-        uploadContext: 'file_manager',
-        processingTime: Date.now() - uploadStartTime,
-        goServiceUsed: !!goProcessingResult
-      };
+      // Local interfaces based on go-file-service.ts (since they are not exported)
+      interface GoFileServiceThumbnail {
+        size: string;
+        width: number;
+        height: number;
+        filePath: string;
+        fileSize: number;
+      }
 
-      if (goProcessingResult && goProcessingResult.success) {
+      interface GoFileServiceOriginalMetadata { // Simplified name
+        fileName: string;
+        fileSize: number;
+        mimeType: string;
+        md5Hash: string;
+        width?: number;
+        height?: number;
+        colorProfile?: string;
+        exifData?: Record<string, string>;
+        duration?: number;
+        perceptualHash?: string;
+        processedAt: Date; // Assuming it's a Date object
+      }
+
+      // Define a more complete type for the metadata object
+      interface FileUploadMetadata {
+        retentionInfo: typeof fileRetentionInfo;
+        uploadContext: string;
+        processingTime: number;
+        goServiceUsed: boolean;
+        md5Hash?: string;
+        perceptualHash?: string;
+        exifData?: Record<string, string>;
+        dimensions?: { width: number; height: number };
+        thumbnails?: GoFileServiceThumbnail[];
+        colorProfile?: string;
+      }
+
+      let enhancedMetadata: FileUploadMetadata;
+
+      if (goProcessingResult && goProcessingResult.success && goProcessingResult.original) {
         enhancedMetadata = {
-          ...enhancedMetadata,
-          processingTime: goProcessingResult.processingTime || enhancedMetadata.processingTime,
-          md5Hash: goProcessingResult.original?.md5Hash,
-          perceptualHash: goProcessingResult.original?.perceptualHash,
-          exifData: goProcessingResult.original?.exifData,
-          dimensions: goProcessingResult.original?.width && goProcessingResult.original?.height ? {
+          retentionInfo: fileRetentionInfo,
+          uploadContext: 'file_manager',
+          processingTime: goProcessingResult.processingTime || (Date.now() - uploadStartTime),
+          goServiceUsed: true,
+          md5Hash: goProcessingResult.original.md5Hash,
+          perceptualHash: goProcessingResult.original.perceptualHash,
+          exifData: goProcessingResult.original.exifData,
+          dimensions: goProcessingResult.original.width && goProcessingResult.original.height ? {
             width: goProcessingResult.original.width,
             height: goProcessingResult.original.height
           } : undefined,
           thumbnails: goProcessingResult.thumbnails,
-          colorProfile: goProcessingResult.original?.colorProfile
+          colorProfile: goProcessingResult.original.colorProfile
+        };
+      } else {
+        enhancedMetadata = {
+          retentionInfo: fileRetentionInfo,
+          uploadContext: 'file_manager',
+          processingTime: Date.now() - uploadStartTime,
+          goServiceUsed: false,
         };
       }
       
@@ -2623,8 +2683,8 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         fileName: uniqueFileName,
         displayName: uploadedFileName,
         filePath: filePath,
-        fileType: req.file.mimetype,
-        fileSize: req.file.size,
+        fileType: file.mimetype,
+        fileSize: file.size,
         uploadSource: 'direct', // Direct upload from file manager
         retentionPolicy: fileRetentionInfo.category,
         retentionDays,
@@ -3348,13 +3408,36 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
     try {
       console.log('Forwarding batch processing request to Go service');
       
+      const fwdHeaders = new Headers();
+      for (const [key, value] of Object.entries(req.headers)) {
+        // Skip host and content-length as they are set by fetch/destination server
+        if (key.toLowerCase() === 'host' || key.toLowerCase() === 'content-length') {
+          continue;
+        }
+        if (value) {
+          let valueStr: string;
+          if (Array.isArray(value)) {
+            valueStr = value.join(', ');
+          } else {
+            valueStr = String(value); // Ensure it's a string
+          }
+          fwdHeaders.set(key, valueStr);
+        }
+      }
+
+      let bodyToSend: BodyInit | null | undefined = req.body;
+      // If req.body is an object and not a Buffer/Stream, stringify it and set Content-Type.
+      if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body) && typeof (req.body as any).pipe !== 'function') {
+        bodyToSend = JSON.stringify(req.body);
+        if (!fwdHeaders.has('Content-Type')) {
+          fwdHeaders.set('Content-Type', 'application/json');
+        }
+      }
+
       const response = await fetch('http://localhost:5001/accelerate/batch-process', {
         method: 'POST',
-        body: req.body,
-        headers: {
-          ...req.headers,
-          'host': undefined,
-        },
+        body: bodyToSend,
+        headers: fwdHeaders, // fwdHeaders is a Headers object
         signal: AbortSignal.timeout(300000) // 5 minute timeout for batch processing
       });
       
@@ -3376,12 +3459,12 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
       });
       
       res.json(result);
-    } catch (error) {
-      console.error('Batch processing proxy error:', error);
+    } catch (e: unknown) {
+      console.error('Batch processing proxy error:', e);
       res.status(500).json({ 
         error: 'Batch processing service unavailable',
         fallback: 'Process files individually',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: e instanceof Error ? e.message : String(e)
       });
     }
   });
@@ -3418,8 +3501,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
           averageTime: metrics.averageProcessingTime
         }
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message, processingTime: Date.now() - startTime });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message, processingTime: Date.now() - startTime });
     }
   });
 
@@ -3427,15 +3511,15 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
     const startTime = Date.now();
     
     try {
-      const { payloads } = req.body;
+      const { payloads }: { payloads: Array<{ userId: number; message: string; conversationId: string; priority?: number }> } = req.body;
       
       await enhancedBackgroundProcessor.processBatchMemories(payloads);
       
       const processingTime = Date.now() - startTime;
-      const userGroups = payloads.reduce((groups, payload) => {
+      const userGroups = payloads.reduce((groups: Record<number, number>, payload) => {
         groups[payload.userId] = (groups[payload.userId] || 0) + 1;
         return groups;
-      }, {});
+      }, {} as Record<number, number>);
       
       res.json({
         success: true,
@@ -3444,8 +3528,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         userGroups: Object.keys(userGroups).length,
         batchEfficiency: processingTime / payloads.length
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message, processingTime: Date.now() - startTime });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message, processingTime: Date.now() - startTime });
     }
   });
 
@@ -3469,14 +3554,14 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         failureCount: metrics.failureCount,
         fallbackUsed: true
       });
-    } catch (error) {
+    } catch (e: unknown) {
       const responseTime = Date.now() - startTime;
       res.json({
         circuitBreakerActive: true,
         responseTime,
         failureCount: 1,
         fallbackUsed: true,
-        error: error.message
+        error: e instanceof Error ? e.message : String(e)
       });
     }
   });
@@ -3513,8 +3598,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
           averagePerItem: (Date.now() - startTime) / concurrentRequests
         }
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 
@@ -3540,8 +3626,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         featureStates,
         rolloutPercentages: memoryFeatureFlags.getAllFeatureStates()
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 
@@ -3556,8 +3643,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         enabled,
         rolloutPercentage: 10 // Based on default settings
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 
@@ -3586,8 +3674,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
       }
       
       res.json({ success: true, samplesGenerated: sampleCount });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 
@@ -3601,8 +3690,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         reportSize: JSON.stringify(report).length,
         ...report
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 
@@ -3628,8 +3718,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         systemHealth: readinessScore >= 90 ? 'excellent' : readinessScore >= 75 ? 'good' : 'needs_improvement',
         checks
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 
@@ -3637,12 +3728,16 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
     const startTime = Date.now();
     
     try {
-      const { userId, testScenarios } = req.body;
+      interface TestScenario {
+        feature: string;
+        action: string;
+      }
+      const { userId, testScenarios }: { userId?: number; testScenarios: TestScenario[] } = req.body;
       
-      const featureResults = testScenarios.map(scenario => ({
+      const featureResults = testScenarios.map((scenario: TestScenario) => ({ // Added type for scenario here
         feature: scenario.feature,
-        enabled: memoryFeatureFlags.shouldEnableChatGPTMemory(userId),
-        action: scenario.action
+        enabled: memoryFeatureFlags.shouldEnableChatGPTMemory(userId || 1),
+        action: scenario.action,
       }));
       
       const toggleSpeed = Date.now() - startTime;
@@ -3654,8 +3749,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         consistent: true,
         fallbackTested: true
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 
@@ -3676,8 +3772,9 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
         componentsLoaded,
         components
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ error: message });
     }
   });
 

@@ -194,7 +194,7 @@ class GoAIGatewayService {
       try {
         const response = await fetch(`${this.serviceUrl}/health`, {
           method: 'GET',
-          timeout: 2000
+          signal: AbortSignal.timeout(2000)
         });
         
         if (response.ok) {
@@ -229,7 +229,7 @@ class GoAIGatewayService {
           'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
         },
         body: JSON.stringify(request),
-        timeout: 60000
+        signal: AbortSignal.timeout(60000)
       });
 
       if (!response.ok) {
@@ -269,7 +269,7 @@ class GoAIGatewayService {
           'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
         },
         body: JSON.stringify(batchRequest),
-        timeout: 120000
+        signal: AbortSignal.timeout(120000)
       });
 
       if (!response.ok) {
@@ -299,14 +299,14 @@ class GoAIGatewayService {
         headers: {
           'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
         },
-        timeout: 10000
+        signal: AbortSignal.timeout(10000)
       });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      return await response.json() as Record<string, any[]>;
     } catch (error) {
       console.error('[GoAIGateway] Failed to get available models:', error);
       throw error;
@@ -325,14 +325,14 @@ class GoAIGatewayService {
         headers: {
           'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
         },
-        timeout: 5000
+        signal: AbortSignal.timeout(5000)
       });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      return await response.json() as GoGatewayStats;
     } catch (error) {
       console.error('[GoAIGateway] Failed to get stats:', error);
       throw error;
@@ -351,14 +351,14 @@ class GoAIGatewayService {
         headers: {
           'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
         },
-        timeout: 5000
+        signal: AbortSignal.timeout(5000)
       });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      return await response.json() as Record<string, any>;
     } catch (error) {
       console.error('[GoAIGateway] Failed to get cache stats:', error);
       throw error;
@@ -377,7 +377,7 @@ class GoAIGatewayService {
         headers: {
           'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
         },
-        timeout: 5000
+        signal: AbortSignal.timeout(5000)
       });
 
       if (!response.ok) {
@@ -398,7 +398,7 @@ class GoAIGatewayService {
     try {
       const response = await fetch(`${this.serviceUrl}/health`, {
         method: 'GET',
-        timeout: 5000
+        signal: AbortSignal.timeout(5000)
       });
 
       if (!response.ok) {
@@ -532,12 +532,13 @@ class GoAIGatewayService {
         cacheStats,
         lastHealthCheck: new Date(this.lastHealthCheck).toISOString()
       };
-    } catch (error) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
       return {
         isRunning: false,
         isHealthy: false,
         serviceUrl: this.serviceUrl,
-        error: error.message,
+        error: message,
         lastHealthCheck: new Date(this.lastHealthCheck).toISOString()
       };
     }

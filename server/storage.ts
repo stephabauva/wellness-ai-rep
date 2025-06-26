@@ -15,7 +15,10 @@ import {
   type AtomicFact,
   type MemoryRelationship,
   type MemoryConsolidationLog,
-  type MemoryGraphMetrics
+  type MemoryGraphMetrics,
+  type EnhancedSettingsUpdate,
+  type UserPreferences,
+  userPreferenceSchema,
 } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { eq, and, gte, desc } from "drizzle-orm";
@@ -28,7 +31,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUserSettings(id: number, settings: any): Promise<User>;
+  updateUserSettings(id: number, settings: EnhancedSettingsUpdate): Promise<User>;
   
   // Message methods
   getMessages(userId: number): Promise<ChatMessage[]>;
@@ -342,30 +345,34 @@ export class MemStorage implements IStorage {
     return user;
   }
   
-  async updateUserSettings(id: number, settings: any): Promise<User> {
+  async updateUserSettings(id: number, settings: EnhancedSettingsUpdate): Promise<User> {
     const user = await this.getUser(id);
     if (!user) {
       throw new Error(`User with id ${id} not found`);
     }
     
-    // Extract AI configuration and other top-level fields
-    const { aiProvider, aiModel, automaticModelSelection, transcriptionProvider, preferredLanguage, name, email, ...preferenceSettings } = settings;
+    // Directly parse 'settings' to extract and validate preference fields
+    // .partial() allows only a subset of preference fields to be present
+    // Zod will strip any fields from 'settings' not in 'userPreferenceSchema' (its default behavior)
+    const validatedPreferenceUpdates = userPreferenceSchema.partial().parse(settings);
     
     const updatedUser: User = {
-      ...user,
-      // Update top-level user fields
-      ...(aiProvider && { aiProvider }),
-      ...(aiModel && { aiModel }),
-      ...(automaticModelSelection !== undefined && { automaticModelSelection }),
-      ...(transcriptionProvider && { transcriptionProvider }),
-      ...(preferredLanguage && { preferredLanguage }),
-      ...(name && { name }),
-      ...(email && { email }),
-      // Update preferences for other settings
-      preferences: {
-        ...user.preferences,
-        ...preferenceSettings
-      }
+        ...user,
+        // Update top-level User fields from settings if they exist
+        name: settings.name !== undefined ? settings.name : user.name,
+        email: settings.email !== undefined ? settings.email : user.email,
+        aiProvider: settings.aiProvider !== undefined ? settings.aiProvider : user.aiProvider,
+        aiModel: settings.aiModel !== undefined ? settings.aiModel : user.aiModel,
+        automaticModelSelection: settings.automaticModelSelection !== undefined ? settings.automaticModelSelection : user.automaticModelSelection,
+        transcriptionProvider: settings.transcriptionProvider !== undefined ? settings.transcriptionProvider : user.transcriptionProvider,
+        preferredLanguage: settings.preferredLanguage !== undefined ? settings.preferredLanguage : user.preferredLanguage,
+        memoryDetectionProvider: settings.memoryDetectionProvider !== undefined ? settings.memoryDetectionProvider : user.memoryDetectionProvider,
+        memoryDetectionModel: settings.memoryDetectionModel !== undefined ? settings.memoryDetectionModel : user.memoryDetectionModel,
+
+        preferences: {
+            ...user.preferences, // user.preferences is now UserPreferences (non-nullable)
+            ...validatedPreferenceUpdates, // Spread the Zod-validated preference fields
+        },
     };
     
     this.users.set(id, updatedUser);
@@ -414,7 +421,7 @@ export class MemStorage implements IStorage {
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
     
-    return allData.filter(data => data.timestamp >= startDate);
+    return allData.filter(data => data.timestamp != null && data.timestamp >= startDate);
   }
   
   async createHealthData(data: InsertHealthData): Promise<HealthData> {
@@ -424,6 +431,10 @@ export class MemStorage implements IStorage {
     const newHealthData: HealthData = {
       id,
       ...data,
+      unit: data.unit ?? null,
+      source: data.source ?? null,
+      category: data.category ?? null,
+      metadata: data.metadata ?? null, // Coalesce undefined to null
       timestamp: data.timestamp || new Date()
     };
     
@@ -442,6 +453,10 @@ export class MemStorage implements IStorage {
       const newHealthData: HealthData = {
         id,
         ...data,
+        unit: data.unit ?? null,
+        source: data.source ?? null,
+        category: data.category ?? null,
+        metadata: data.metadata ?? null, // Coalesce undefined to null
         timestamp: data.timestamp || new Date()
       };
       
@@ -485,7 +500,11 @@ export class MemStorage implements IStorage {
     
     const newDevice: ConnectedDevice = {
       id,
-      ...device
+      ...device,
+      lastSync: device.lastSync ?? null,
+      isActive: device.isActive ?? true, // Align with DB default(true)
+      metadata: device.metadata ?? null,
+      createdAt: new Date()
     };
     
     this.devices.set(id, newDevice);
@@ -501,8 +520,8 @@ export class MemStorage implements IStorage {
     const updatedDevice: ConnectedDevice = {
       ...device,
       metadata: {
-        ...device.metadata,
-        ...settings
+        ...((device.metadata && typeof device.metadata === 'object') ? device.metadata : {}),
+        ...((settings && typeof settings === 'object') ? settings : {})
       },
       lastSync: new Date()
     };
@@ -535,24 +554,81 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const dataToInsert: InsertUser = { ...insertUser };
+
+    if (dataToInsert.preferences) {
+        try {
+            // Validate/coerce if preferences are provided.
+            // Ensures that what we pass to Drizzle is strictly UserPreferences.
+            dataToInsert.preferences = userPreferenceSchema.parse(dataToInsert.preferences);
+        } catch (e) {
+            console.error("Invalid preferences format during user creation, using default. Error:", e);
+            dataToInsert.preferences = {}; // Default to empty object on parse error
+        }
+    } else {
+        // If preferences are not provided at all, assign an empty object
+        // because the column is NOT NULL and has a DB default of {}.
+        dataToInsert.preferences = {};
+    }
+
+    const [user] = await db.insert(users).values(dataToInsert).returning();
     return user;
   }
   
-  async updateUserSettings(id: number, settings: any): Promise<User> {
+  async updateUserSettings(id: number, settings: EnhancedSettingsUpdate): Promise<User> {
     const [currentUser] = await db.select().from(users).where(eq(users.id, id));
     if (!currentUser) {
       throw new Error(`User with id ${id} not found`);
     }
-    
-    const updatedPreferences = {
-      ...currentUser.preferences,
-      ...settings
+
+    // Separate preferences from top-level user fields
+    const {
+      name, email, aiProvider, aiModel, automaticModelSelection,
+      transcriptionProvider, preferredLanguage, memoryDetectionProvider, memoryDetectionModel,
+      // health_consent is handled by its own service, not directly set here
+      // retention days are also part of preferences or separate settings
+      primaryGoal, coachStyle, reminderFrequency, focusAreas, darkMode,
+      pushNotifications, emailSummaries, dataSharing, healthVisibilitySettings,
+      highValueRetentionDays, mediumValueRetentionDays, lowValueRetentionDays,
+      ...otherPossibleSettings // Should be empty if schema is matched
+    } = settings;
+
+    const preferencesToUpdate: Partial<UserPreferences> = {};
+    if (primaryGoal !== undefined) preferencesToUpdate.primaryGoal = primaryGoal;
+    if (coachStyle !== undefined) preferencesToUpdate.coachStyle = coachStyle;
+    if (reminderFrequency !== undefined) preferencesToUpdate.reminderFrequency = reminderFrequency;
+    if (focusAreas !== undefined) preferencesToUpdate.focusAreas = focusAreas;
+    if (darkMode !== undefined) preferencesToUpdate.darkMode = darkMode;
+    if (pushNotifications !== undefined) preferencesToUpdate.pushNotifications = pushNotifications;
+    if (emailSummaries !== undefined) preferencesToUpdate.emailSummaries = emailSummaries;
+    if (dataSharing !== undefined) preferencesToUpdate.dataSharing = dataSharing;
+    if (healthVisibilitySettings !== undefined) preferencesToUpdate.healthVisibilitySettings = healthVisibilitySettings;
+    if (highValueRetentionDays !== undefined) preferencesToUpdate.highValueRetentionDays = highValueRetentionDays;
+    if (mediumValueRetentionDays !== undefined) preferencesToUpdate.mediumValueRetentionDays = mediumValueRetentionDays;
+    if (lowValueRetentionDays !== undefined) preferencesToUpdate.lowValueRetentionDays = lowValueRetentionDays;
+
+    const userFieldsToUpdate: Partial<User> = {};
+    if (name !== undefined) userFieldsToUpdate.name = name;
+    if (email !== undefined) userFieldsToUpdate.email = email;
+    if (aiProvider !== undefined) userFieldsToUpdate.aiProvider = aiProvider;
+    if (aiModel !== undefined) userFieldsToUpdate.aiModel = aiModel;
+    if (automaticModelSelection !== undefined) userFieldsToUpdate.automaticModelSelection = automaticModelSelection;
+    if (transcriptionProvider !== undefined) userFieldsToUpdate.transcriptionProvider = transcriptionProvider;
+    if (preferredLanguage !== undefined) userFieldsToUpdate.preferredLanguage = preferredLanguage;
+    if (memoryDetectionProvider !== undefined) userFieldsToUpdate.memoryDetectionProvider = memoryDetectionProvider;
+    if (memoryDetectionModel !== undefined) userFieldsToUpdate.memoryDetectionModel = memoryDetectionModel;
+
+    const finalPreferences = {
+      ...currentUser.preferences, // currentUser.preferences is now non-nullable
+      ...preferencesToUpdate,
     };
-    
+
     const [updatedUser] = await db
       .update(users)
-      .set({ preferences: updatedPreferences })
+      .set({
+        ...userFieldsToUpdate,
+        preferences: finalPreferences
+      })
       .where(eq(users.id, id))
       .returning();
     
@@ -752,8 +828,8 @@ export class DatabaseStorage implements IStorage {
     let updatedSettings = { ...settings };
     if (settings.metadata) {
       updatedSettings.metadata = {
-        ...currentDevice.metadata,
-        ...settings.metadata
+        ...((currentDevice.metadata && typeof currentDevice.metadata === 'object') ? currentDevice.metadata : {}),
+        ...((settings.metadata && typeof settings.metadata === 'object') ? settings.metadata : {})
       };
     }
     

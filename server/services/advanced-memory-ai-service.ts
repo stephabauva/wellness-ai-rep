@@ -111,13 +111,11 @@ export class AdvancedMemoryAIService {
     } catch (error) {
       console.error('[AdvancedMemoryAI] Error in advanced chat response:', error);
       
-      // Fallback to Phase 1 memory enhancement
+      // Fallback to Phase 1 memory enhancement (which is essentially covered by the final fallback)
+      // Removing the call to non-existent chatGPTMemoryEnhancement.getChatResponseWithMemory
+      // Directly use the final fallback to basic AI service if advanced logic fails.
+      console.warn('[AdvancedMemoryAI] Advanced processing failed, attempting final fallback to aiService.getChatResponse.');
       try {
-        return await chatGPTMemoryEnhancement.getChatResponseWithMemory?.(
-          message, userId, conversationId, temperature, mode, 
-          conversationHistory, modelOverride, imageAttachments, stream, customSystemPrompt
-        );
-      } catch (fallbackError) {
         // Final fallback to basic AI service
         const fallbackAttachments: AttachmentData[] = imageAttachments.map((imagePath, index) => ({
           fileName: `image_${index}.jpg`,
@@ -132,6 +130,9 @@ export class AdvancedMemoryAIService {
           message, userId, conversationId, fallbackMessageId, mode,
           conversationHistory, fallbackAiConfig, fallbackAttachments
         );
+      } catch (finalFallbackError) {
+        console.error('[AdvancedMemoryAI] Final fallback to basic AI service also failed:', finalFallbackError);
+        throw finalFallbackError; // Re-throw or return a generic error message
       }
     }
   }

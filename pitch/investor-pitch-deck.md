@@ -8,7 +8,10 @@
 
 **In two sentences:** We've built an AI health coaching platform that combines conversational AI with comprehensive health data integration, creating a personalized wellness hub that learns and adapts to each user's unique health journey. Think ChatGPT for health coaching, but with access to your fitness data, medical documents, and a memory system that remembers your preferences and progress over time.
 
-**Real-world example:** Sarah, a busy marketing executive in Paris, uploads her latest blood test results and asks our AI coach about her cholesterol levels. The coach not only explains the results in simple terms but also references her previous conversation about wanting to improve her heart health, suggests specific dietary changes based on her food preferences (which it remembers), and automatically updates her health dashboard with new metrics—all in French, matching her cultural context.
+**Real-world examples:**
+1-Sarah, a busy marketing executive in Paris, uploads her latest blood test results and asks our AI coach about her cholesterol levels. The coach not only explains the results in simple terms but also references her previous conversation about wanting to improve her heart health, suggests specific dietary changes based on her food preferences (which it remembers), and automatically updates her health dashboard with new metrics—all in French, matching her cultural context.
+
+2-Tony is trying to lose weight, and talks daily with his ai coach, he talks about his meals with pictures, about workouts, and also his steps done. The coach gives its opinion and recommendations. The coach also asks about Tony's mental wellbeing of the day, memorise relevant data and provides an attentive and empathetic ear to the user, like a confident, maximising Tony's chance to achieve hsi goals.
 
 ---
 

@@ -1,11 +1,7 @@
-Mission : 
-Implement a feature in the **safest and most maintainable** manner.
-
-If issues arise you will document them in changelog/<feature-name>/<feature>-issues-and-fixes.md file.
-
-This implementation must:
+This analysis must:
 - Respect all stability constraints (see below)
 - Avoid breaking existing behavior
+- Consider implementation options, alternatives, and long-term impact
 
 Critical Constraints:
 

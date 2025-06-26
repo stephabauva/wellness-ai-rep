@@ -1,7 +1,7 @@
 {
   "appName": "Wellness AI Rep",
   "version": "1.0.0",
-  "lastUpdated": "2025-06-26T00:10:00Z",
+  "lastUpdated": "2025-06-26T15:20:00Z",
   "domains": {
     "chat": {
       "description": "Handles all conversational AI, messaging, and related features.",
@@ -31,6 +31,11 @@
     "settings": {
       "description": "Manages user preferences, application settings, and configurations. Contains user information.",
       "path": "/.system-maps/settings.map.json",
+      "dependencies": []
+    },
+    "logging": {
+      "description": "Production-ready structured logging system with configurable levels and clean output formatting.",
+      "path": "/.system-maps/logging.map.json",
       "dependencies": []
     }
   },

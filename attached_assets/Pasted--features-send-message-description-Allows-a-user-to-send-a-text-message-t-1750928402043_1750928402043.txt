@@ -1,0 +1,130 @@
+{
+  "features": {
+    "send-message": {
+      "description": "Allows a user to send a text message to the AI and receive a streaming response. Handles conversation creation and history.",
+      "userFlow": [
+        "User types a message into the ChatInputArea.",
+        "User clicks the send button.",
+        "A POST request is made to /api/messages/stream.",
+        "The user's message appears in the MessageDisplayArea immediately (optimistic update).",
+        "The AI's response streams into the MessageDisplayArea in real-time."
+      ],
+      "components": [
+        "ChatSection",
+        "ChatInputArea",
+        "MessageDisplayArea",
+        "useChatActions",
+        "useStreamingChat",
+        "useChatMessages"
+      ]
+    }
+  },
+  "components": {
+    "ChatSection": {
+      "path": "client/src/components/ChatSection.tsx",
+      "type": "React Component",
+      "description": "The main container for the entire chat interface. Orchestrates all other chat components and hooks.",
+      "calls": [],
+      "uses": [
+        "useChatMessages",
+        "useChatActions",
+        "MessageDisplayArea",
+        "ChatInputArea",
+        "AttachmentPreview",
+        "ConversationHistory"
+      ],
+      "invalidates": []
+    },
+    "ChatInputArea": {
+      "path": "client/src/components/ChatInputArea.tsx",
+      "type": "React Component",
+      "description": "Provides the text input, send button, and attachment buttons for the user.",
+      "calls": [],
+      "uses": ["useChatActions"],
+      "invalidates": []
+    },
+    "MessageDisplayArea": {
+      "path": "client/src/components/MessageDisplayArea.tsx",
+      "type": "React Component",
+      "description": "Renders the list of user and AI messages, including the real-time streaming response.",
+      "calls": [],
+      "uses": [],
+      "invalidates": []
+    },
+    "useChatActions": {
+      "path": "client/src/hooks/useChatActions.ts",
+      "type": "React Hook",
+      "description": "Consolidates all user actions, such as sending messages and handling file attachments.",
+      "calls": [],
+      "uses": ["useStreamingChat"],
+      "invalidates": []
+    },
+    "useStreamingChat": {
+      "path": "client/src/hooks/useStreamingChat.ts",
+      "type": "React Hook",
+      "description": "Manages the real-time, streaming connection to the backend for AI responses.",
+      "calls": ["POST /api/messages/stream"],
+      "uses": [],
+      "invalidates": []
+    },
+    "useChatMessages": {
+      "path": "client/src/hooks/useChatMessages.ts",
+      "type": "React Hook",
+      "description": "Manages the state of the message list for the current conversation by consuming the global AppContext.",
+      "calls": ["GET /api/messages"],
+      "uses": ["AppContext"],
+      "invalidates": []
+    }
+  },
+  "apiEndpoints": {
+    "POST /api/messages/stream": {
+      "description": "Receives a user message and initiates a Server-Sent Events (SSE) stream for the AI response.",
+      "handlerFile": "server/routes.ts",
+      "requestBody": "{ content: string, conversationId?: string, attachments?: any[] }",
+      "response": "text/event-stream",
+      "readsFrom": ["conversations", "conversation_messages", "users.preferences"],
+      "modifies": ["conversations", "conversation_messages"]
+    },
+    "POST /api/messages": {
+      "description": "(Legacy) Receives a user message and returns a single, non-streamed AI response.",
+      "handlerFile": "server/routes.ts",
+      "requestBody": "{ content: string, conversationId?: string, attachments?: any[] }",
+      "response": "{ userMessage: object, aiMessage: object, conversationId: string }",
+      "readsFrom": ["conversations", "conversation_messages", "users.preferences"],
+      "modifies": ["conversations", "conversation_messages", "files"]
+    },
+    "GET /api/messages": {
+      "description": "Retrieves all messages for a given user.",
+      "handlerFile": "server/routes.ts",
+      "requestBody": "",
+      "response": "[Message]",
+      "readsFrom": ["chat_messages"],
+      "modifies": []
+    }
+  },
+  "database": {
+    "schemaFile": "shared/schema.ts",
+    "tables": {
+      "conversations": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "title": { "type": "text" },
+          "createdAt": { "type": "timestamp" },
+          "updatedAt": { "type": "timestamp" }
+        }
+      },
+      "conversation_messages": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "conversationId": { "type": "uuid", "foreignKey": "conversations.id" },
+          "role": { "type": "text" },
+          "content": { "type": "text" },
+          "metadata": { "type": "jsonb" },
+          "createdAt": { "type": "timestamp" }
+        }
+      }
+    }
+  },
+  "dataStores": {}
+}

@@ -1,0 +1,123 @@
+# System Mapping Generation Guide for LLMs
+
+## 1. Core Philosophy
+
+The primary objective of a system map is to create a structured, queryable, and unambiguous representation of the application's architecture. This map serves as a "single source of truth" for understanding how different parts of the codebase connect, from user-facing features down to specific database tables.
+
+This guide is not for human consumption; it is a technical instruction set for an LLM. The format must be adhered to precisely to ensure operational efficiency, minimize token cost, and maximize analytical accuracy. The chosen format is a federated set of JSON files, as this format's rigid structure is the most computationally efficient for an LLM to parse and reason about.
+
+## 2. Architecture: Federated Domain-Driven Maps
+
+To ensure scalability and manage token cost, the system map is not a single monolithic file. It is a collection of domain-specific maps governed by a root manifest.
+
+- **Root Map:** A single, lightweight `root.map.json` file located in `/.system-maps/`. It serves as an index of all application domains and lists truly global components.
+- **Domain Maps:** Separate JSON files (e.g., `chat.map.json`, `health.map.json`) also located in `/.system-maps/`. Each map contains the detailed architectural information for a specific, bounded context of the application.
+
+This federated approach allows for loading only the relevant context for a given task, which is the most efficient model for an LLM.
+
+## 3. File Schema Definition
+
+Adherence to the following JSON schema is mandatory.
+
+### 3.1. `root.map.json`
+
+```json
+{
+  "appName": "String",
+  "version": "String",
+  "domains": {
+    "[domainName]": {
+      "description": "String",
+      "path": "String (absolute path to the domain map file)"
+    }
+  },
+  "globalComponents": {
+    "[ComponentName]": {
+      "path": "String (absolute path to the component file)",
+      "description": "String",
+      "uses": ["String (list of other global components)"]
+    }
+  }
+}
+```
+
+### 3.2. Domain Map (e.g., `health.map.json`)
+
+A domain map must contain four top-level keys: `features`, `components`, `apiEndpoints`, and `database`.
+
+```json
+{
+  "features": {
+    "[feature-hyphen-case]": {
+      "description": "String: A high-level summary of the user-facing feature.",
+      "userFlow": ["String: An ordered list of steps a user takes to interact with the feature."],
+      "components": ["String: A list of component keys (from the `components` section) that implement this feature."]
+    }
+  },
+  "components": {
+    "[ComponentName]": {
+      "path": "String (absolute path to the component file)",
+      "type": "String (e.g., 'React Component', 'React Hook', 'Utility Function')",
+      "description": "String: What the component does.",
+      "calls": ["String: A list of API endpoint keys (e.g., 'METHOD /api/path') this component calls."],
+      "uses": ["String: A list of other component keys this component uses."],
+      "invalidates": ["String: A list of data store keys (e.g., 'query:queryKey') this component invalidates."]
+    }
+  },
+  "apiEndpoints": {
+    "[METHOD /api/path]": {
+      "description": "String: The purpose of this endpoint.",
+      "handlerFile": "String (absolute path to the server-side file that handles this route)",
+      "requestBody": "String (A JSON-like string representing the expected request body schema)",
+      "response": "String (A JSON-like string representing the typical success response schema)",
+      "readsFrom": ["String: List of database table/column keys (e.g., 'tableName.columnName') this endpoint reads from."],
+      "modifies": ["String: List of database table/column keys this endpoint writes to."]
+    }
+  },
+  "database": {
+    "schemaFile": "String (absolute path to the primary schema definition file, e.g., schema.ts)",
+    "tables": {
+      "[tableName]": {
+        "columns": {
+          "[columnName]": {
+            "type": "String (SQL data type)",
+            "primaryKey": "Boolean (optional)",
+            "unique": "Boolean (optional)",
+            "foreignKey": "String (optional, e.g., 'otherTable.otherColumn')"
+          }
+        },
+        "relations": [
+          {
+            "type": "String (e.g., 'one-to-many', 'many-to-one')",
+            "from": "String (e.g., 'thisTable.columnName')",
+            "to": "String (e.g., 'otherTable.columnName')",
+            "description": "String"
+          }
+        ]
+      }
+    }
+  },
+  "dataStores": {
+    "[storeKey]": {
+      "type": "String (e.g., 'React Query Key', 'Redux Slice')",
+      "description": "String: What this client-side data store caches or manages."
+    }
+  }
+}
+```
+
+## 4. Process for Map Generation
+
+1.  **Initialization:** If it does not exist, create the `/.system-maps/` directory.
+2.  **Root Map First:** Always begin by creating or updating `/.system-maps/root.map.json`. This provides the foundational context of the application's domains.
+3.  **Domain-Driven Creation:** Create domain maps on a per-task basis. When a user requests work within a specific domain (e.g., "fix chat bug"), first load the corresponding domain map (`chat.map.json`). If it doesn't exist, create it by analyzing the relevant codebase sections.
+4.  **Analysis Workflow:** To populate a map, perform the following actions:
+    - Use `glob` to find relevant files within the domain (e.g., `client/src/components/chat/**/*`, `server/routes/chat.ts`).
+    - Use `read_file` on these files.
+    - Trace the flow from the UI component down to the API endpoint, and from the endpoint down to the database schema, filling in the respective JSON sections.
+    - Pay close attention to imports/exports to populate the `uses` arrays.
+    - Look for `fetch` calls or API client usage to populate the `calls` arrays.
+    - Analyze server-side route handlers to populate `readsFrom` and `modifies`.
+    - Analyze schema files (`schema.ts`, SQL migrations) to populate the `database` section.
+
+This guide is the definitive specification. It must be followed without deviation to ensure the system map remains a reliable and efficient tool for codebase analysis and modification.

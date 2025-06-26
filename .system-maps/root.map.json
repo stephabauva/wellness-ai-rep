@@ -10,7 +10,7 @@
     },
     "health": {
       "description": "Manages user health data, dashboard, metrics, and reporting.",
-      "path": "/.system-maps/health/",
+      "path": "/.system-maps/health.map.json",
       "dependencies": ["files", "settings"]
     },
     "devices": {

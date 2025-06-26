@@ -1,0 +1,129 @@
+{
+  "domain": "performance",
+  "description": "Application performance optimization systems including lazy loading, caching strategies, and startup optimization",
+  "version": "1.0.0",
+  "lastUpdated": "2025-06-26T22:45:00Z",
+  "featureGroups": {
+    "lazyLoading": {
+      "description": "Staggered section loading system that reduces initial API requests from 12+ to 2-3 critical requests",
+      "features": {
+        "staggeredSectionLoading": {
+          "description": "Progressive section loading with priority-based timing",
+          "files": [
+            "client/src/context/AppContext.tsx",
+            "client/src/hooks/useStaggeredLoading.ts"
+          ],
+          "flow": [
+            "User opens app → Chat loads immediately (0ms)",
+            "Memory overview loads after 200ms",
+            "Settings load after 500ms", 
+            "Health, files, devices load after 1000ms"
+          ],
+          "implementation": {
+            "loadingStates": "Set<string> tracking which sections are loaded",
+            "priorities": "Chat=immediate, Memory=200ms, Settings=500ms, Others=1000ms",
+            "stateManagement": "AppContext manages loadedSections state globally"
+          }
+        },
+        "conditionalRendering": {
+          "description": "Sections render skeleton states until data is loaded",
+          "files": [
+            "client/src/pages/home.tsx",
+            "client/src/components/SectionSkeleton.tsx"
+          ],
+          "skeletonTypes": ["health", "memory", "files", "devices", "settings", "default"],
+          "renderingLogic": "loadedSections.includes(section) ? <Component /> : <SectionSkeleton type={section} />"
+        },
+        "backgroundPreloading": {
+          "description": "Smart prefetching of section data with priority weighting",
+          "files": [
+            "client/src/hooks/useBackgroundPreload.ts"
+          ],
+          "strategy": {
+            "memoryPriority": "50ms delay for memory section (fastest)",
+            "staggeredDelay": "100ms increments for other sections",
+            "cacheAware": "Uses getSectionCacheTime for optimal stale times"
+          }
+        }
+      }
+    },
+    "cacheOptimization": {
+      "description": "Section-aware caching strategies with different stale times per data type",
+      "features": {
+        "sectionSpecificCaching": {
+          "description": "Different cache strategies based on data freshness requirements",
+          "files": [
+            "client/src/lib/queryClient.ts"
+          ],
+          "cacheStrategies": {
+            "chat": "0ms - Always fresh for real-time messaging",
+            "settings": "30 minutes - Infrequently changed user preferences",
+            "memoryOverview": "2 minutes - Moderate freshness for memory stats",
+            "healthData": "5 minutes - Standard freshness for health metrics",
+            "files": "1 minute - Quick refresh for file management",
+            "devices": "5 minutes - Standard freshness for device status"
+          },
+          "globalSettings": {
+            "gcTime": "10 minutes cache retention",
+            "retry": "1 attempt with exponential backoff",
+            "refetchOnMount": "always for active sections only"
+          }
+        },
+        "intelligentPrefetching": {
+          "description": "Cache-aware prefetching with section-specific stale times",
+          "implementation": "getSectionCacheTime() helper provides optimal stale times per endpoint",
+          "endpoints": {
+            "/api/settings": "30min",
+            "/api/memories": "2min", 
+            "/api/health-data": "5min",
+            "/api/files": "1min",
+            "/api/devices": "5min"
+          }
+        }
+      }
+    },
+    "performanceHooks": {
+      "description": "Reusable hooks for performance optimization patterns",
+      "features": {
+        "useLazySection": {
+          "description": "Section-specific loading state management with async data fetching",
+          "files": ["client/src/hooks/useLazySection.ts"],
+          "interface": {
+            "input": "sectionName: SectionName",
+            "output": "{ isLoaded: boolean, isLoading: boolean, loadSection: () => Promise<void> }"
+          },
+          "loadingLogic": "Prefetches all queries for a section in parallel, manages loading states"
+        },
+        "useStaggeredLoading": {
+          "description": "Global staggered loading orchestration",
+          "files": ["client/src/hooks/useStaggeredLoading.ts"], 
+          "timing": "Chat immediate, Memory 200ms, Settings 500ms, Others 1000ms",
+          "output": "loadedSections: string[] array of loaded section names"
+        },
+        "useBackgroundPreload": {
+          "description": "Non-blocking background data prefetching",
+          "files": ["client/src/hooks/useBackgroundPreload.ts"],
+          "strategy": "Priority-weighted delays with cache-aware prefetching"
+        }
+      }
+    }
+  },
+  "performanceTargets": {
+    "startupImprovement": "70% faster startup (1.5s → 500ms)",
+    "requestReduction": "From 12+ concurrent requests to 2-3 critical requests",
+    "cacheHitRate": "Maintain 304 cache hit rates >80%",
+    "userExperience": "Chat immediately available, other sections load progressively"
+  },
+  "dependencies": {
+    "chat": "Chat section loads first with highest priority",
+    "memory": "Memory overview loads early for user context",
+    "health": "Health data loads with standard priority",
+    "logging": "Performance metrics tracked via structured logging"
+  },
+  "technicalDetails": {
+    "framework": "React Query v5 with TanStack Query",
+    "stateManagement": "React Context with useMemo optimization",
+    "cachingStrategy": "Hierarchical cache times with section awareness",
+    "renderingPattern": "Conditional rendering with skeleton placeholders"
+  }
+}

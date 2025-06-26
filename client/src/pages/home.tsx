@@ -7,6 +7,7 @@ import ConnectedDevicesSection from "@/components/ConnectedDevicesSection";
 import MemorySection from "@/components/MemorySection";
 import FileManagerSection from "@/components/FileManagerSection";
 import SettingsSection from "@/components/SettingsSection";
+import SectionSkeleton from "@/components/SectionSkeleton";
 import { useAppContext } from "@/context/AppContext";
 
 const Home: React.FC = () => {
@@ -16,23 +17,23 @@ const Home: React.FC = () => {
   // Memoize section components with conditional rendering based on loaded sections
   const chatSectionComponent = useMemo(() => <ChatSection />, []);
   const healthSectionComponent = useMemo(() => 
-    loadedSections.includes('health') ? <HealthDataSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading health data...</div>, 
+    loadedSections.includes('health') ? <HealthDataSection /> : <SectionSkeleton type="health" />, 
     [loadedSections]
   );
   const devicesSectionComponent = useMemo(() => 
-    loadedSections.includes('devices') ? <ConnectedDevicesSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading devices...</div>, 
+    loadedSections.includes('devices') ? <ConnectedDevicesSection /> : <SectionSkeleton type="devices" />, 
     [loadedSections]
   );
   const memorySectionComponent = useMemo(() => 
-    loadedSections.includes('memory') ? <MemorySection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading memories...</div>, 
+    loadedSections.includes('memory') ? <MemorySection /> : <SectionSkeleton type="memory" />, 
     [loadedSections]
   );
   const filesSectionComponent = useMemo(() => 
-    loadedSections.includes('files') ? <FileManagerSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading files...</div>, 
+    loadedSections.includes('files') ? <FileManagerSection /> : <SectionSkeleton type="files" />, 
     [loadedSections]
   );
   const settingsSectionComponent = useMemo(() => 
-    loadedSections.includes('settings') ? <SettingsSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading settings...</div>, 
+    loadedSections.includes('settings') ? <SettingsSection /> : <SectionSkeleton type="settings" />, 
     [loadedSections]
   );
 

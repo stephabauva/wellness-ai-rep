@@ -97,7 +97,7 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes default
-      cacheTime: 10 * 60 * 1000, // 10 minutes cache retention
+      gcTime: 10 * 60 * 1000, // 10 minutes cache retention (renamed from cacheTime in v5)
       retry: 1, // Allow one retry for transient failures
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnMount: 'always', // Only for active sections

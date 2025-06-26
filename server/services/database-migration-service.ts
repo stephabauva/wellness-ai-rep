@@ -135,36 +135,27 @@ export class DatabaseMigrationService {
         WHERE schemaname = 'public'
       `);
       
-      // Count indexes using direct SQL query
+      // Count performance indexes in public schema (excluding primary keys)
       const indexesResult = await db.execute(sql`
-        SELECT COUNT(DISTINCT indexname)::text as count 
+        SELECT COUNT(DISTINCT indexname) as count 
         FROM pg_indexes 
         WHERE schemaname = 'public' 
         AND indexname NOT LIKE '%_pkey'
       `);
 
-      // Fallback: Test actual table existence
-      let actualTableCount = 0;
-      const testTables = ['users', 'chat_messages', 'health_data', 'connected_devices', 'conversations', 'memory_entries', 'files'];
+      // Extract counts with robust type handling
+      const rawTableCount = (tablesResult as any)[0]?.count;
+      const rawIndexCount = (indexesResult as any)[0]?.count;
       
-      for (const table of testTables) {
-        try {
-          await db.execute(sql.raw(`SELECT 1 FROM ${table} LIMIT 1`));
-          actualTableCount++;
-        } catch {
-          // Table doesn't exist or no access
-        }
-      }
-
-      const tableCount = Number((tablesResult as any)[0]?.count) || actualTableCount;
-      const indexCount = Number((indexesResult as any)[0]?.count) || 0;
+      const tableCount = typeof rawTableCount === 'string' ? parseInt(rawTableCount, 10) : Number(rawTableCount) || 0;
+      const indexCount = typeof rawIndexCount === 'string' ? parseInt(rawIndexCount, 10) : Number(rawIndexCount) || 0;
 
       // Performance assessment based on table/index existence
       let performance: 'good' | 'warning' | 'critical' = 'good';
       if (tableCount === 0) performance = 'critical';
       else if (tableCount < 5 || indexCount < 10) performance = 'warning';
 
-      logger.debug(`Database health check: ${tableCount} tables, ${indexCount} indexes`, { service: 'database' });
+      logger.debug(`Database health check: ${tableCount} public schema tables, ${indexCount} performance indexes`, { service: 'database' });
 
       return {
         connectionStatus: 'connected',

@@ -18,9 +18,9 @@ async function initializeDatabase() {
     
     const health = await databaseMigrationService.checkDatabaseHealth();
     if (health.performance === 'warning' || health.connectionStatus !== 'connected') {
-      logger.warn(`Database health: ${health.connectionStatus}, ${health.tableCount} tables, ${health.indexCount} indexes, performance: ${health.performance}`);
+      logger.warn(`Database health: ${health.connectionStatus}, ${health.tableCount} public schema tables, ${health.indexCount} performance indexes, performance: ${health.performance}`);
     } else {
-      logger.system(`Database ready: ${health.tableCount} tables, ${health.indexCount} indexes`);
+      logger.system(`Database ready: ${health.tableCount} public schema tables, ${health.indexCount} performance indexes`);
     }
   } catch (error) {
     logger.error('Database initialization failed', error as Error);

@@ -9,8 +9,8 @@
       "dependencies": ["memory", "files"]
     },
     "health": {
-      "description": "Manages user health data, dashboard, metrics, and reporting.",
-      "path": "/.system-maps/health.map.json",
+      "description": "Health data management, metrics tracking, dashboard visibility controls, and data import/export functionality.",
+      "path": "/.system-maps/health/",
       "dependencies": ["files", "settings"]
     },
     "devices": {

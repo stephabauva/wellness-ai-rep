@@ -1,0 +1,123 @@
+
+{
+  "description": "Direct integration with native mobile health platforms (HealthKit on iOS, Google Fit on Android) for real-time health data synchronization.",
+  "userFlow": [
+    "User clicks 'Sync with Phone' button in HealthDataSection.",
+    "Platform detection determines available native health services.",
+    "Permission request dialog appears for health data access.",
+    "User grants permissions for specific health data types.",
+    "NativeHealthIntegration component initializes sync process.",
+    "Native health service fetches data from device health app.",
+    "Data is transformed to application format.",
+    "Sync progress is displayed to user with real-time updates.",
+    "New data is merged with existing records (deduplication).",
+    "Health dashboard updates with newly synced data.",
+    "Sync completion status and statistics are shown."
+  ],
+  "components": [
+    "NativeHealthIntegration",
+    "native-health-service",
+    "platform-detection",
+    "HealthKitManager (iOS)",
+    "GoogleFitManager (Android)"
+  ],
+  "platforms": {
+    "ios": {
+      "healthKit": {
+        "permissions": [
+          "HKQuantityTypeIdentifierStepCount",
+          "HKQuantityTypeIdentifierHeartRate",
+          "HKQuantityTypeIdentifierBodyMass",
+          "HKCategoryTypeIdentifierSleepAnalysis",
+          "HKQuantityTypeIdentifierActiveEnergyBurned"
+        ],
+        "dataTypes": [
+          "steps",
+          "heartRate",
+          "weight",
+          "sleep",
+          "caloriesBurned",
+          "bloodPressure",
+          "bloodGlucose"
+        ]
+      }
+    },
+    "android": {
+      "googleFit": {
+        "permissions": [
+          "Fitness.SCOPE_ACTIVITY_READ",
+          "Fitness.SCOPE_BODY_READ",
+          "Fitness.SCOPE_LOCATION_READ"
+        ],
+        "dataTypes": [
+          "TYPE_STEP_COUNT_DELTA",
+          "TYPE_HEART_RATE_BPM",
+          "TYPE_WEIGHT",
+          "TYPE_SLEEP_SEGMENT",
+          "TYPE_CALORIES_EXPENDED"
+        ]
+      }
+    },
+    "web": {
+      "fallback": {
+        "description": "File upload interface when native access is unavailable",
+        "methods": ["manual file import", "sample data generation"]
+      }
+    }
+  },
+  "syncModes": {
+    "manual": {
+      "description": "User-initiated sync with custom date range selection",
+      "options": ["last 7 days", "last 30 days", "last 90 days", "custom range"]
+    },
+    "background": {
+      "description": "Automatic periodic sync when app is in background",
+      "intervals": ["hourly", "daily", "weekly"],
+      "requirements": ["background processing permissions", "battery optimization disabled"]
+    },
+    "realtime": {
+      "description": "Live sync as health data is recorded on device",
+      "implementation": "Push notifications from native health apps",
+      "limitations": ["iOS HealthKit background delivery", "Android Fit data availability"]
+    }
+  },
+  "dataMapping": {
+    "steps": {
+      "ios": "HKQuantityTypeIdentifierStepCount",
+      "android": "TYPE_STEP_COUNT_DELTA",
+      "unit": "count",
+      "aggregation": "sum"
+    },
+    "heartRate": {
+      "ios": "HKQuantityTypeIdentifierHeartRate",
+      "android": "TYPE_HEART_RATE_BPM",
+      "unit": "bpm",
+      "aggregation": "average"
+    },
+    "weight": {
+      "ios": "HKQuantityTypeIdentifierBodyMass",
+      "android": "TYPE_WEIGHT",
+      "unit": "kg",
+      "aggregation": "latest"
+    },
+    "sleep": {
+      "ios": "HKCategoryTypeIdentifierSleepAnalysis",
+      "android": "TYPE_SLEEP_SEGMENT",
+      "unit": "minutes",
+      "aggregation": "sum"
+    }
+  },
+  "errorHandling": [
+    "Permission denied graceful fallback",
+    "Network connectivity issues",
+    "Native API rate limiting",
+    "Data format inconsistencies",
+    "Partial sync recovery"
+  ],
+  "security": {
+    "dataEncryption": "All health data encrypted in transit and at rest",
+    "permissionValidation": "Continuous validation of granted permissions",
+    "userConsent": "Explicit consent tracking for each data type",
+    "dataMinimization": "Only sync explicitly requested data types"
+  }
+}

@@ -1,0 +1,78 @@
+
+{
+  "description": "Comprehensive health data import system supporting multiple file formats from various health platforms and devices.",
+  "userFlow": [
+    "User clicks 'Import Health Data' button in HealthDataSection.",
+    "HealthDataImport component renders with file upload interface.",
+    "User selects health data file (Apple Health XML, Google Fit JSON, CSV, etc.).",
+    "File is validated for format and size constraints.",
+    "Health data parser processes the file based on detected format.",
+    "Deduplication service identifies and handles duplicate records.",
+    "User reviews import preview with statistics (new records, duplicates, errors).",
+    "User confirms import or adjusts settings.",
+    "Data is batch imported into the database.",
+    "Health dashboard refreshes with new data.",
+    "Import results are displayed to user."
+  ],
+  "components": [
+    "HealthDataImport",
+    "HealthDataParser",
+    "HealthDataDeduplicationService",
+    "useFileUpload",
+    "useOptimizedUpload"
+  ],
+  "supportedFormats": [
+    {
+      "format": "Apple Health Export",
+      "fileType": "XML",
+      "description": "Complete health data export from iOS Health app",
+      "maxSize": "100MB",
+      "parser": "AppleHealthXMLParser"
+    },
+    {
+      "format": "Google Fit Export",
+      "fileType": "JSON",
+      "description": "Google Takeout health and fitness data",
+      "maxSize": "50MB",
+      "parser": "GoogleFitJSONParser"
+    },
+    {
+      "format": "Generic CSV",
+      "fileType": "CSV",
+      "description": "Custom CSV format with date, metric, value columns",
+      "maxSize": "10MB",
+      "parser": "GenericCSVParser"
+    },
+    {
+      "format": "Fitbit Export",
+      "fileType": "JSON",
+      "description": "Fitbit data export files",
+      "maxSize": "25MB",
+      "parser": "FitbitJSONParser"
+    }
+  ],
+  "apiIntegration": {
+    "endpoint": "POST /api/health-data/import",
+    "processingSteps": [
+      "File validation and virus scanning",
+      "Format detection and parser selection",
+      "Data extraction and normalization",
+      "Duplicate detection and resolution",
+      "Batch database insertion",
+      "Cache invalidation and UI updates"
+    ]
+  },
+  "errorHandling": [
+    "Invalid file format detection",
+    "Corrupted data recovery",
+    "Partial import continuation",
+    "User-friendly error messages",
+    "Import rollback on critical failures"
+  ],
+  "performance": {
+    "streaming": "Large files processed in chunks to prevent memory issues",
+    "batchSize": "1000 records per database transaction",
+    "progressTracking": "Real-time progress updates for user feedback",
+    "backgroundProcessing": "Long imports handled asynchronously"
+  }
+}

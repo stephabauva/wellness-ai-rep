@@ -2085,6 +2085,32 @@ function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: numbe
 
   // Memory management endpoints
 
+  // Get user's memories overview (lightweight counts only)
+  app.get("/api/memories/overview", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      
+      // Fetch all memories for counting
+      const allMemories = await memoryService.getUserMemories(userId);
+      
+      // Calculate category counts
+      const categories = {
+        preference: allMemories.filter(m => m.category === 'preference').length,
+        personal_info: allMemories.filter(m => m.category === 'personal_info').length,
+        context: allMemories.filter(m => m.category === 'context').length,
+        instruction: allMemories.filter(m => m.category === 'instruction').length
+      };
+      
+      res.json({
+        total: allMemories.length,
+        categories
+      });
+    } catch (error) {
+      console.error('Error fetching memory overview:', error);
+      res.status(500).json({ message: "Failed to fetch memory overview" });
+    }
+  });
+
   // Get user's memories
   app.get("/api/memories", async (req, res) => {
     try {

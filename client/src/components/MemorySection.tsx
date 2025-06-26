@@ -120,6 +120,8 @@ export default function MemorySection() {
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
   const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
+  const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
+  const [showLoadButton, setShowLoadButton] = useState<boolean>(true);
   const { toast } = useToast();
 
   // Form for manual memory entry
@@ -132,39 +134,59 @@ export default function MemorySection() {
     },
   });
 
-  // Fetch all memories for overview counts with automatic refresh
-  const { data: allMemories = [], isLoading: allMemoriesLoading } = useQuery({
+  // Overview count query - lightweight, runs once on mount
+  const { data: memoryOverview = { total: 0, categories: {} }, isLoading: overviewLoading } = useQuery({
+    queryKey: ["memory-overview"],
+    queryFn: async () => {
+      const response = await fetch(`/api/memories/overview`);
+      if (!response.ok) throw new Error("Failed to fetch memory overview");
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnWindowFocus: false,
+    refetchInterval: false, // No polling
+  });
+
+  // Disabled memory queries by default
+  const { data: allMemories = [], isLoading: allMemoriesLoading, refetch: refetchMemories } = useQuery({
     queryKey: ["memories"],
     queryFn: async () => {
       const response = await fetch(`/api/memories`);
       if (!response.ok) throw new Error("Failed to fetch memories");
       return response.json();
     },
-    refetchInterval: 5000, // Poll every 5 seconds for new memories
-    refetchOnWindowFocus: true, // Refresh when window gets focus
-    staleTime: 1000, // Consider data stale after 1 second
+    enabled: false, // Never automatically fetch
+    staleTime: 10 * 60 * 1000, // 10 minutes cache once loaded
+    refetchOnWindowFocus: false,
+    refetchInterval: false, // No polling ever
   });
 
-  // Fetch filtered memories for display with automatic refresh
-  const { data: filteredMemories = [], isLoading: filteredLoading } = useQuery({
+  // Filtered memories query - only enabled when memories are loaded
+  const { data: filteredMemories = [], isLoading: filteredLoading, refetch: refetchFiltered } = useQuery({
     queryKey: ["memories", selectedCategory],
     queryFn: async () => {
       if (selectedCategory === "all") {
-        const response = await fetch(`/api/memories`);
-        if (!response.ok) throw new Error("Failed to fetch memories");
-        return response.json();
+        return allMemories;
       }
       const response = await fetch(`/api/memories?category=${selectedCategory}`);
       if (!response.ok) throw new Error("Failed to fetch filtered memories");
       return response.json();
     },
-    refetchInterval: 5000, // Poll every 5 seconds for new memories
-    refetchOnWindowFocus: true, // Refresh when window gets focus
-    staleTime: 1000, // Consider data stale after 1 second
+    enabled: memoriesLoaded, // Only enabled after memories are loaded
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    refetchOnWindowFocus: false,
+    refetchInterval: false, // No polling
   });
 
-  const memories = filteredMemories;
-  const isLoading = allMemoriesLoading || filteredLoading;
+  // Manual load function
+  const handleLoadMemories = async () => {
+    setShowLoadButton(false);
+    await refetchMemories();
+    setMemoriesLoaded(true);
+  };
+
+  const memories = memoriesLoaded ? (selectedCategory === "all" ? allMemories : filteredMemories) : [];
+  const isLoading = overviewLoading || (memoriesLoaded && (allMemoriesLoading || filteredLoading));
 
   // Manual memory creation mutation
   const createManualMemoryMutation = useMutation({
@@ -181,15 +203,17 @@ export default function MemorySection() {
       });
     },
     onSuccess: async () => {
-      // Invalidate and refetch all memory-related queries
-      await queryClient.invalidateQueries({ queryKey: ["memories"] });
-      await queryClient.refetchQueries({ queryKey: ["memories"] });
-      if (selectedCategory !== "all") {
-        await queryClient.invalidateQueries({ queryKey: ["memories", selectedCategory] });
-        await queryClient.refetchQueries({ queryKey: ["memories", selectedCategory] });
+      // Invalidate overview to update counts
+      await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
+      
+      // If memories are loaded, refetch them to show new memory
+      if (memoriesLoaded) {
+        await queryClient.invalidateQueries({ queryKey: ["memories"] });
+        await refetchMemories();
+        if (selectedCategory !== "all") {
+          await refetchFiltered();
+        }
       }
-      // Force immediate refetch of all memories to ensure UI updates
-      await queryClient.refetchQueries();
       
       form.reset();
       setIsManualEntryOpen(false);
@@ -210,12 +234,18 @@ export default function MemorySection() {
   const deleteMemoryMutation = useMutation({
     mutationFn: (memoryId: string) => apiRequest(`/api/memories/${memoryId}`, "DELETE"),
     onSuccess: async () => {
-      // Invalidate and refetch all memory-related queries to ensure overview updates
-      await queryClient.invalidateQueries({ queryKey: ["memories"] });
-      await queryClient.refetchQueries({ queryKey: ["memories"] });
-      if (selectedCategory !== "all") {
-        await queryClient.refetchQueries({ queryKey: ["memories", selectedCategory] });
+      // Invalidate overview to update counts
+      await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
+      
+      // If memories are loaded, refetch them to update the list
+      if (memoriesLoaded) {
+        await queryClient.invalidateQueries({ queryKey: ["memories"] });
+        await refetchMemories();
+        if (selectedCategory !== "all") {
+          await refetchFiltered();
+        }
       }
+      
       toast({
         title: "Memory deleted",
         description: "The memory has been successfully removed.",
@@ -233,12 +263,18 @@ export default function MemorySection() {
   const bulkDeleteMutation = useMutation({
     mutationFn: (memoryIds: string[]) => apiRequest("/api/memories/bulk", "DELETE", { memoryIds }),
     onSuccess: async (data) => {
-      // Invalidate and refetch all memory-related queries to ensure overview updates
-      await queryClient.invalidateQueries({ queryKey: ["memories"] });
-      await queryClient.refetchQueries({ queryKey: ["memories"] });
-      if (selectedCategory !== "all") {
-        await queryClient.refetchQueries({ queryKey: ["memories", selectedCategory] });
+      // Invalidate overview to update counts
+      await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
+      
+      // If memories are loaded, refetch them to update the list
+      if (memoriesLoaded) {
+        await queryClient.invalidateQueries({ queryKey: ["memories"] });
+        await refetchMemories();
+        if (selectedCategory !== "all") {
+          await refetchFiltered();
+        }
       }
+      
       setSelectedMemoryIds(new Set());
       toast({
         title: "Memories deleted",
@@ -450,18 +486,18 @@ export default function MemorySection() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{allMemories.length}</div>
+                  <div className="text-2xl font-bold text-blue-600">{memoryOverview.total}</div>
                   <div className="text-sm text-gray-600">Total Memories</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {allMemories.filter((m: MemoryEntry) => m.category === "preference").length}
+                    {memoryOverview.categories.preference || 0}
                   </div>
                   <div className="text-sm text-gray-600">Preferences</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {allMemories.filter((m: MemoryEntry) => m.category === "instruction").length}
+                    {memoryOverview.categories.instruction || 0}
                   </div>
                   <div className="text-sm text-gray-600">Instructions</div>
                 </div>

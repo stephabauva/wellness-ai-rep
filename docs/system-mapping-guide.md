@@ -107,4 +107,8 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
         - Analyze server-side route handlers to populate `apiEndpoints`.
         - Analyze schema files (`schema.ts`, SQL migrations) to populate the `database` section.
 
+CAREFUL : 
+1-Only focus on one domain for the system map, you should not modify other system maps or information of other features, unless you have detected a critical miss while browsing the code, in that case you must explain why. 
+2-If some code related to the domain are not integrated, mention them at the end of the corresponding system map or in a separate file.
+
 This guide is the definitive specification. It must be followed without deviation to ensure the system map remains a reliable and efficient tool for codebase analysis and modification.

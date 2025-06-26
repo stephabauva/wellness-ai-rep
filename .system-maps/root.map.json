@@ -1,11 +1,4 @@
 {
-  "tableOfContents": {
-    "chat": ["core-messaging", "input-enhancements", "advanced-features"],
-    "health": ["data-import", "dashboard", "native-integration"],
-    "memory": ["storage", "retrieval", "enhancement"],
-    "performance": ["monitoring", "optimization"],
-    "logging": ["structured-logging", "performance-tracking"]
-  },
   "appName": "Wellness AI Rep",
   "version": "1.0.0",
   "lastUpdated": "2025-06-26T15:20:00Z",

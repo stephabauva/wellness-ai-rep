@@ -52,6 +52,9 @@ interface AppContextType {
   // Optimistic update methods for smooth streaming
   addOptimisticMessage: (message: Message) => void;
   updateOptimisticMessage: (id: string, updates: Partial<Message>) => void;
+  // Lazy loading control
+  loadedSections: ActiveSection[];
+  isSettingsLoaded: boolean;
 }
 
 interface SendMessageParams {

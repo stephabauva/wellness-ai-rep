@@ -595,11 +595,10 @@ Respond with JSON:
 
       // Get user memories directly for debugging
       const userMemories = await this.getUserMemoriesLazy(userId);
-      console.log(`[MemoryService] Retrieved ${userMemories.length} user memories from database`);
 
       // For memory-related queries, return ALL memories with basic scoring
       if (currentMessage.toLowerCase().includes('memor') || currentMessage.toLowerCase().includes('about me')) {
-        console.log(`[MemoryService] Memory query detected, returning all active memories`);
+        logger.debug(`Memory query detected, returning all active memories`, { service: 'memory' });
         
         const allRelevantMemories: RelevantMemory[] = userMemories.map(memory => ({
           ...memory,
@@ -607,20 +606,17 @@ Respond with JSON:
           retrievalReason: 'direct_memory_query'
         }));
 
-        console.log(`[MemoryService] Returning ${allRelevantMemories.length} memories for memory query`);
         return allRelevantMemories.sort((a, b) => b.relevanceScore - a.relevanceScore);
       }
 
       // Generate embedding for current context
       const contextEmbedding = await this.generateEmbedding(context);
-      console.log(`[MemoryService] Generated context embedding of length ${contextEmbedding.length}`);
 
       // Calculate semantic similarity and create relevant memories
       const relevantMemories: RelevantMemory[] = [];
 
       for (const memory of userMemories) {
         if (!memory.embedding) {
-          console.log(`[MemoryService] Memory ${memory.id} has no embedding, skipping`);
           continue;
         }
 
@@ -641,7 +637,10 @@ Respond with JSON:
               similarity = await this.cosineSimilarity(contextEmbedding, memoryEmbedding);
             }
             
-            console.log(`[MemoryService] Memory "${memory.content}" similarity: ${similarity}`);
+            // Debug logging only for high similarity
+            if (similarity > 0.7) {
+              logger.debug(`High similarity memory found: ${similarity.toFixed(3)}`, { service: 'memory' });
+            }
             
             if (similarity > 0.5) { // Lowered threshold for better retrieval
               relevantMemories.push({
@@ -652,7 +651,7 @@ Respond with JSON:
             }
           }
         } catch (error) {
-          console.error('Error parsing memory embedding for memory', memory.id, ':', error);
+          logger.error(`Error parsing memory embedding for memory ${memory.id}`, error as Error, { service: 'memory' });
         }
       }
 
@@ -665,8 +664,6 @@ Respond with JSON:
           return dateB - dateA;
         });
 
-      console.log(`[MemoryService] Found ${importantMemories.length} important memories (importance >= 0.7)`);
-
       // Add important memories that aren't already included
       for (const memory of importantMemories) {
         if (!relevantMemories.find(rm => rm.id === memory.id)) {
@@ -675,7 +672,6 @@ Respond with JSON:
             relevanceScore: memory.importanceScore,
             retrievalReason: 'high_importance'
           });
-          console.log(`[MemoryService] Added important memory: "${memory.content}"`);
         }
       }
 
@@ -684,15 +680,12 @@ Respond with JSON:
         .sort((a, b) => b.relevanceScore - a.relevanceScore)
         .slice(0, 8);
       
-      console.log(`[MemoryService] Final results: ${results.length} memories, reasons: ${results.map(r => r.retrievalReason).join(', ')}`);
-      
-      // Don't cache during debugging
-      // cacheService.setMemorySearchResults(userId, context, 10, results);
+      logger.memory('memory retrieval', { userId, count: results.length });
       
       return results;
         
     } catch (error) {
-      console.error('Error retrieving contextual memories:', error);
+      logger.error('Error retrieving contextual memories', error as Error, { service: 'memory' });
       return [];
     }
   }
@@ -753,7 +746,6 @@ Respond with JSON:
 
       // Tier 2 C: Background processing for automatic memory detection
       // This prevents blocking the main response flow
-      console.log(`[MemoryService] processMessageForMemory - messageId: ${messageId}, type: ${typeof messageId}`);
       
       // Always queue background memory processing for user messages (messageId can be undefined during streaming)
       this.addBackgroundTask('memory_processing', {
@@ -763,13 +755,10 @@ Respond with JSON:
         messageId: messageId || null,
         conversationHistory
       }, 3); // Medium priority
-      
-      console.log(`[MemoryService] Background memory detection task queued for user ${userId}`);
-      console.log(`[MemoryService] Current queue length: ${this.backgroundQueue.tasks.length}`);
 
       return results;
     } catch (error) {
-      console.error('Error processing message for memory:', error);
+      logger.error('Error processing message for memory', error as Error, { service: 'memory' });
       return { triggers: [] };
     }
   }
@@ -803,7 +792,7 @@ Respond with JSON:
         }
       }
     } catch (error) {
-      console.error('Error logging memory usage:', error);
+      logger.error('Error logging memory usage', error as Error, { service: 'memory' });
     }
   }
 

@@ -135,19 +135,13 @@ export class DatabaseMigrationService {
         WHERE schemaname = 'public'
       `);
       
-      // Count indexes using pg_indexes (more reliable approach)
+      // Count indexes using direct SQL query
       const indexesResult = await db.execute(sql`
-        SELECT COUNT(DISTINCT indexname) as count 
+        SELECT COUNT(DISTINCT indexname)::text as count 
         FROM pg_indexes 
         WHERE schemaname = 'public' 
         AND indexname NOT LIKE '%_pkey'
-      `).catch(async () => {
-        // Fallback to pg_stat_user_indexes
-        return await db.execute(sql`
-          SELECT COUNT(*) as count 
-          FROM pg_stat_user_indexes
-        `);
-      });
+      `);
 
       // Fallback: Test actual table existence
       let actualTableCount = 0;

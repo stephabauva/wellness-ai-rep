@@ -6,12 +6,12 @@
     "chat": {
       "description": "Handles all conversational AI, messaging, and related features.",
       "path": "/.system-maps/chat/",
-      "dependencies": ["memory", "files", "file-manager"]
+      "dependencies": ["memory", "file-manager"]
     },
     "health": {
       "description": "Health data management, metrics tracking, dashboard visibility controls, and data import/export functionality.",
       "path": "/.system-maps/health/",
-      "dependencies": ["files", "settings", "file-manager"]
+      "dependencies": ["settings", "file-manager"]
     },
     "devices": {
       "description": "Manages connections to external devices and data sources (e.g., native health kits).",

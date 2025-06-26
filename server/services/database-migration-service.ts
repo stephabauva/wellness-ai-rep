@@ -135,12 +135,20 @@ export class DatabaseMigrationService {
         WHERE schemaname = 'public'
       `);
       
-      // Count indexes using pg_indexes
+      // Count indexes using pg_stat_user_indexes (more reliable)
       const indexesResult = await db.execute(sql`
         SELECT COUNT(*) as count 
-        FROM pg_indexes 
-        WHERE schemaname = 'public'
-      `);
+        FROM pg_stat_user_indexes
+      `).catch(async () => {
+        // Fallback to information_schema
+        return await db.execute(sql`
+          SELECT COUNT(*) as count 
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage kcu 
+          ON tc.constraint_name = kcu.constraint_name
+          WHERE tc.table_schema = 'public'
+        `);
+      });
 
       // Fallback: Test actual table existence
       let actualTableCount = 0;

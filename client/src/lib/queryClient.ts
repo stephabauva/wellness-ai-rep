@@ -80,15 +80,27 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Section-specific cache strategies for lazy loading optimization
+const sectionCacheConfig = {
+  chat: { staleTime: 0 }, // Always fresh for real-time chat
+  settings: { staleTime: 30 * 60 * 1000 }, // 30 minutes for settings
+  'memory-overview': { staleTime: 2 * 60 * 1000 }, // 2 minutes for memory overview
+  health: { staleTime: 5 * 60 * 1000 }, // 5 minutes for health data
+  files: { staleTime: 1 * 60 * 1000 }, // 1 minute for files
+  devices: { staleTime: 5 * 60 * 1000 }, // 5 minutes for devices
+};
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes - optimized cache warming
+      staleTime: 5 * 60 * 1000, // 5 minutes default
+      cacheTime: 10 * 60 * 1000, // 10 minutes cache retention
       retry: 1, // Allow one retry for transient failures
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnMount: 'always', // Only for active sections
     },
     mutations: {
       retry: 1, // Allow one retry for mutations too
@@ -96,3 +108,23 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Helper function to get section-specific cache time
+export const getSectionCacheTime = (endpoint: string): number => {
+  if (endpoint.includes('/api/settings') || endpoint.includes('/ai-models')) {
+    return sectionCacheConfig.settings.staleTime;
+  }
+  if (endpoint.includes('/api/memories')) {
+    return sectionCacheConfig['memory-overview'].staleTime;
+  }
+  if (endpoint.includes('/api/health-data') || endpoint.includes('/api/health-consent')) {
+    return sectionCacheConfig.health.staleTime;
+  }
+  if (endpoint.includes('/api/files') || endpoint.includes('/api/categories') || endpoint.includes('/api/retention-settings')) {
+    return sectionCacheConfig.files.staleTime;
+  }
+  if (endpoint.includes('/api/devices')) {
+    return sectionCacheConfig.devices.staleTime;
+  }
+  return 5 * 60 * 1000; // Default 5 minutes
+};

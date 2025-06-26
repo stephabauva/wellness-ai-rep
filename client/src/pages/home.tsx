@@ -10,16 +10,31 @@ import SettingsSection from "@/components/SettingsSection";
 import { useAppContext } from "@/context/AppContext";
 
 const Home: React.FC = () => {
-  const { activeSection } = useAppContext(); // Restored from context
+  const { activeSection, loadedSections } = useAppContext(); // Add loadedSections
   console.log("[Home] Component body execution. activeSection:", activeSection); // Adjusted log
   
-  // Memoize section components
+  // Memoize section components with conditional rendering based on loaded sections
   const chatSectionComponent = useMemo(() => <ChatSection />, []);
-  const healthSectionComponent = useMemo(() => <HealthDataSection />, []);
-  const devicesSectionComponent = useMemo(() => <ConnectedDevicesSection />, []);
-  const memorySectionComponent = useMemo(() => <MemorySection />, []);
-  const filesSectionComponent = useMemo(() => <FileManagerSection />, []);
-  const settingsSectionComponent = useMemo(() => <SettingsSection />, []);
+  const healthSectionComponent = useMemo(() => 
+    loadedSections.includes('health') ? <HealthDataSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading health data...</div>, 
+    [loadedSections]
+  );
+  const devicesSectionComponent = useMemo(() => 
+    loadedSections.includes('devices') ? <ConnectedDevicesSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading devices...</div>, 
+    [loadedSections]
+  );
+  const memorySectionComponent = useMemo(() => 
+    loadedSections.includes('memory') ? <MemorySection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading memories...</div>, 
+    [loadedSections]
+  );
+  const filesSectionComponent = useMemo(() => 
+    loadedSections.includes('files') ? <FileManagerSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading files...</div>, 
+    [loadedSections]
+  );
+  const settingsSectionComponent = useMemo(() => 
+    loadedSections.includes('settings') ? <SettingsSection /> : <div className="flex items-center justify-center h-full text-gray-500">Loading settings...</div>, 
+    [loadedSections]
+  );
 
   // renderActiveSection function is removed
   

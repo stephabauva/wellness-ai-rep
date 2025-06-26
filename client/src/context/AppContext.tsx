@@ -90,14 +90,56 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [newlyCreatedConvId, setNewlyCreatedConvId] = useState<string | null>(null);
   const [isStreamingActive, setIsStreamingActive] = useState<boolean>(false);
 
+  // Lazy loading state
+  const [loadedSections, setLoadedSections] = useState<ActiveSection[]>(['chat']);
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState<boolean>(false);
+
   const { userSettings, isLoadingSettings } = useUserSettings();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (userSettings) {
       console.log("[AppContext] User settings loaded:", userSettings);
+      setIsSettingsLoaded(true);
     }
   }, [userSettings]);
+
+  // Priority loading logic - implement staggered loading after settings are ready
+  useEffect(() => {
+    if (isSettingsLoaded && !isLoadingSettings) {
+      console.log("[AppContext] Starting staggered section loading...");
+      
+      // Phase 1: Chat is already loaded immediately
+      // Phase 2: Load memory overview after 200ms (lightweight)
+      setTimeout(() => {
+        queryClient.prefetchQuery({ queryKey: ['/api/memories/overview'] });
+        setLoadedSections(prev => [...prev, 'memory']);
+      }, 200);
+
+      // Phase 3: Load settings data after 500ms
+      setTimeout(() => {
+        queryClient.prefetchQuery({ queryKey: ['/api/settings'] });
+        queryClient.prefetchQuery({ queryKey: ['/api/ai-models'] });
+        setLoadedSections(prev => [...prev, 'settings']);
+      }, 500);
+
+      // Phase 4: Background load remaining sections after 1000ms
+      setTimeout(() => {
+        // Health section
+        queryClient.prefetchQuery({ queryKey: ['/api/health-data'] });
+        queryClient.prefetchQuery({ queryKey: ['/api/devices'] });
+        queryClient.prefetchQuery({ queryKey: ['/api/health-consent/visibility'] });
+        queryClient.prefetchQuery({ queryKey: ['/api/health-data/categories'] });
+        
+        // Files section
+        queryClient.prefetchQuery({ queryKey: ['/api/files'] });
+        queryClient.prefetchQuery({ queryKey: ['/api/categories'] });
+        queryClient.prefetchQuery({ queryKey: ['/api/retention-settings'] });
+        
+        setLoadedSections(prev => [...prev, 'health', 'files', 'devices']);
+      }, 1000);
+    }
+  }, [isSettingsLoaded, isLoadingSettings, queryClient]);
 
   const appSettings = useMemo<AppSettings>(() => ({
     aiProvider: userSettings?.aiProvider || "google",
@@ -469,11 +511,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     isStreamingActive,
     addOptimisticMessage: addOptimisticMessageHandler,
     updateOptimisticMessage: updateOptimisticMessageHandler,
+    loadedSections,
+    isSettingsLoaded,
   }), [
     activeSection, setActiveSection, coachingMode, setCoachingMode, appSettings,
     activeMessages, currentConversationId, isLoadingMessages,
     sendMessageHandler, selectConversationHandler, newChatHandler, refreshMessagesHandler,
-    setStreamingActiveHandler, isStreamingActive, addOptimisticMessageHandler, updateOptimisticMessageHandler
+    setStreamingActiveHandler, isStreamingActive, addOptimisticMessageHandler, updateOptimisticMessageHandler,
+    loadedSections, isSettingsLoaded
   ]);
 
   return (

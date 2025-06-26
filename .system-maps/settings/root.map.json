@@ -1,0 +1,578 @@
+
+{
+  "tableOfContents": {
+    "account-management": ["profile-settings", "user-preferences"],
+    "coaching-preferences": ["coaching-mode-toggle", "coaching-style-selection"],
+    "app-preferences": ["theme-settings", "notification-settings", "data-sharing-settings"],
+    "file-management": ["retention-policies", "auto-cleanup", "storage-preferences"],
+    "ai-configuration": ["model-selection", "provider-settings", "auto-model-selection"],
+    "performance-settings": ["virtual-scrolling", "pagination", "web-workers"],
+    "health-data-consent": ["ai-access-consent", "data-visibility", "retention-policies", "export-controls"]
+  },
+  "lastUpdated": "2025-06-26T20:06:00Z",
+  "dependencies": ["health", "memory", "file-manager"],
+  "featureGroups": {
+    "account-management": {
+      "description": "User account and profile management settings",
+      "features": {
+        "profile-settings": {
+          "description": "Basic user profile information management",
+          "userFlow": [
+            "User clicks account settings tab",
+            "Form loads with current user data",
+            "User modifies profile fields",
+            "Form validation occurs",
+            "Settings are saved via API"
+          ],
+          "components": [
+            "AccountSettings.tsx",
+            "SettingsSection.tsx (main container)",
+            "Form components from ui/form.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "user-preferences": {
+          "description": "General user preference management",
+          "userFlow": [
+            "User navigates to account section",
+            "Current preferences are loaded",
+            "User modifies preferences",
+            "Changes are validated and saved"
+          ],
+          "components": [
+            "AccountSettings.tsx",
+            "useUserSettings hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    },
+    "coaching-preferences": {
+      "description": "AI coaching behavior and style configuration",
+      "features": {
+        "coaching-mode-toggle": {
+          "description": "Toggle between different coaching modes",
+          "userFlow": [
+            "User clicks coaching preferences tab",
+            "Current coaching mode is displayed",
+            "User selects new coaching mode",
+            "AppContext is updated",
+            "Settings are persisted"
+          ],
+          "components": [
+            "CoachingPreferencesSettings.tsx",
+            "AppContext.tsx (setCoachingMode)"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "coaching-style-selection": {
+          "description": "Select specific coaching personality and approach",
+          "userFlow": [
+            "User accesses coaching preferences",
+            "Available coaching styles are presented",
+            "User selects preferred style",
+            "Selection is saved and applied to AI interactions"
+          ],
+          "components": [
+            "CoachingPreferencesSettings.tsx",
+            "coach-select.tsx UI component"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    },
+    "app-preferences": {
+      "description": "General application behavior and appearance settings",
+      "features": {
+        "theme-settings": {
+          "description": "Dark/light mode toggle and theme preferences",
+          "userFlow": [
+            "User navigates to app preferences",
+            "Current theme setting is displayed",
+            "User toggles dark mode switch",
+            "Theme is immediately applied",
+            "Preference is saved"
+          ],
+          "components": [
+            "AppPreferencesSettings.tsx",
+            "Switch component for darkMode"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "notification-settings": {
+          "description": "Push notifications and email summary preferences",
+          "userFlow": [
+            "User accesses app preferences",
+            "Notification settings are loaded",
+            "User toggles notification preferences",
+            "Settings are validated and saved"
+          ],
+          "components": [
+            "AppPreferencesSettings.tsx",
+            "Switch components for pushNotifications and emailSummaries"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "data-sharing-settings": {
+          "description": "Anonymous data sharing preferences for service improvement",
+          "userFlow": [
+            "User navigates to app preferences",
+            "Data sharing setting is displayed",
+            "User toggles data sharing preference",
+            "Setting is saved and applied"
+          ],
+          "components": [
+            "AppPreferencesSettings.tsx",
+            "Switch component for dataSharing"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    },
+    "file-management": {
+      "description": "File retention, cleanup, and storage management settings",
+      "features": {
+        "retention-policies": {
+          "description": "Configure how long different types of files are kept",
+          "userFlow": [
+            "User accesses file management settings",
+            "Current retention policies are loaded",
+            "User adjusts retention periods",
+            "Policies are validated and saved"
+          ],
+          "components": [
+            "FileManagementSettings.tsx",
+            "useRetentionSettings hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/retention-settings",
+            "PUT /api/retention-settings"
+          ],
+          "database": {
+            "readsFrom": ["retention_settings"],
+            "modifies": ["retention_settings"]
+          }
+        },
+        "auto-cleanup": {
+          "description": "Automatic file cleanup based on retention policies",
+          "userFlow": [
+            "User configures auto-cleanup settings",
+            "Cleanup schedules are set",
+            "Background processes execute cleanup",
+            "User receives cleanup reports"
+          ],
+          "components": [
+            "FileManagementSettings.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/retention-settings",
+            "PUT /api/retention-settings"
+          ],
+          "database": {
+            "readsFrom": ["retention_settings", "files"],
+            "modifies": ["retention_settings", "files"]
+          }
+        },
+        "storage-preferences": {
+          "description": "Storage location and organization preferences",
+          "userFlow": [
+            "User accesses storage preferences",
+            "Current storage settings are displayed",
+            "User modifies storage preferences",
+            "Changes are applied and saved"
+          ],
+          "components": [
+            "FileManagementSettings.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/retention-settings",
+            "PUT /api/retention-settings"
+          ],
+          "database": {
+            "readsFrom": ["retention_settings"],
+            "modifies": ["retention_settings"]
+          }
+        }
+      }
+    },
+    "ai-configuration": {
+      "description": "AI model selection and provider configuration settings",
+      "features": {
+        "model-selection": {
+          "description": "Manual selection of specific AI models",
+          "userFlow": [
+            "User navigates to AI configuration",
+            "Available models are loaded and displayed",
+            "User selects preferred model",
+            "Selection is saved and applied to future requests"
+          ],
+          "components": [
+            "AiConfigurationSettings.tsx",
+            "useAiModels hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/ai-models",
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "provider-settings": {
+          "description": "Configure AI provider preferences (OpenAI, Google, etc.)",
+          "userFlow": [
+            "User accesses AI configuration",
+            "Provider settings are loaded",
+            "User configures provider preferences",
+            "Settings are validated and saved"
+          ],
+          "components": [
+            "AiConfigurationSettings.tsx",
+            "useAiModels hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/ai-models",
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        },
+        "auto-model-selection": {
+          "description": "Toggle automatic model selection based on query complexity",
+          "userFlow": [
+            "User navigates to AI configuration",
+            "Auto-selection setting is displayed",
+            "User toggles auto-selection preference",
+            "Setting is saved and applied to AI service"
+          ],
+          "components": [
+            "AiConfigurationSettings.tsx"
+          ],
+          "apiEndpoints": [
+            "GET /api/settings",
+            "PUT /api/settings"
+          ],
+          "database": {
+            "readsFrom": ["user_settings"],
+            "modifies": ["user_settings"]
+          }
+        }
+      }
+    },
+    "performance-settings": {
+      "description": "Application performance optimization settings",
+      "features": {
+        "virtual-scrolling": {
+          "description": "Enable/disable virtual scrolling for large lists",
+          "userFlow": [
+            "User accesses performance settings",
+            "Virtual scrolling setting is displayed",
+            "User toggles virtual scrolling",
+            "Setting is applied immediately to relevant components"
+          ],
+          "components": [
+            "PerformanceSettings.tsx",
+            "SettingsSection.tsx (local state management)"
+          ],
+          "apiEndpoints": [],
+          "database": {
+            "readsFrom": [],
+            "modifies": []
+          }
+        },
+        "pagination": {
+          "description": "Enable/disable pagination for large data sets",
+          "userFlow": [
+            "User navigates to performance settings",
+            "Pagination setting is shown",
+            "User toggles pagination preference",
+            "Setting affects data loading behavior"
+          ],
+          "components": [
+            "PerformanceSettings.tsx",
+            "SettingsSection.tsx (local state management)"
+          ],
+          "apiEndpoints": [],
+          "database": {
+            "readsFrom": [],
+            "modifies": []
+          }
+        },
+        "web-workers": {
+          "description": "Enable/disable web workers for background processing",
+          "userFlow": [
+            "User accesses performance settings",
+            "Web workers setting is displayed",
+            "User toggles web workers preference",
+            "Setting affects background processing behavior"
+          ],
+          "components": [
+            "PerformanceSettings.tsx",
+            "SettingsSection.tsx (local state management)"
+          ],
+          "apiEndpoints": [],
+          "database": {
+            "readsFrom": [],
+            "modifies": []
+          }
+        }
+      }
+    },
+    "health-data-consent": {
+      "description": "Granular health data access and privacy controls",
+      "features": {
+        "ai-access-consent": {
+          "description": "Control which health data categories AI can access",
+          "userFlow": [
+            "User navigates to health data consent",
+            "Current consent settings are loaded",
+            "User toggles consent for different health categories",
+            "Consent changes are saved and applied to AI interactions"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "Switch components for each health category"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/settings",
+            "PUT /api/health-consent/settings"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        },
+        "data-visibility": {
+          "description": "Control which health data is visible in dashboard and reports",
+          "userFlow": [
+            "User accesses data visibility settings",
+            "Current visibility preferences are loaded",
+            "User toggles visibility for health categories",
+            "Changes affect dashboard and report generation"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "useHealthVisibilitySettings hook"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/visibility",
+            "PUT /api/health-consent/visibility"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        },
+        "retention-policies": {
+          "description": "Set retention periods for different health data categories",
+          "userFlow": [
+            "User navigates to health consent settings",
+            "Retention policies are displayed",
+            "User adjusts retention periods per category",
+            "Policies are saved and enforced by cleanup processes"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "Select components for retention periods"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/settings",
+            "PUT /api/health-consent/settings"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        },
+        "export-controls": {
+          "description": "Configure automatic data export preferences",
+          "userFlow": [
+            "User accesses export controls",
+            "Current export settings are loaded",
+            "User configures export preferences",
+            "Settings affect automated export processes"
+          ],
+          "components": [
+            "HealthDataConsentSettings.tsx",
+            "Switch and Select components for export settings"
+          ],
+          "apiEndpoints": [
+            "GET /api/health-consent/settings",
+            "PUT /api/health-consent/settings"
+          ],
+          "database": {
+            "readsFrom": ["health_consent_settings"],
+            "modifies": ["health_consent_settings"]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "SettingsSection.tsx": {
+      "description": "Main settings container with navigation and form management",
+      "path": "client/src/components/SettingsSection.tsx",
+      "dependencies": [
+        "useUserSettings",
+        "useRetentionSettings", 
+        "useAiModels",
+        "AppContext",
+        "react-hook-form",
+        "All settings sub-components"
+      ]
+    },
+    "AccountSettings.tsx": {
+      "description": "User account and profile settings form",
+      "path": "client/src/components/settings/AccountSettings.tsx",
+      "dependencies": ["react-hook-form", "UserSettingsFormValues"]
+    },
+    "CoachingPreferencesSettings.tsx": {
+      "description": "AI coaching behavior configuration",
+      "path": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+      "dependencies": ["AppContext", "coach-select UI component"]
+    },
+    "AppPreferencesSettings.tsx": {
+      "description": "General app behavior settings",
+      "path": "client/src/components/settings/AppPreferencesSettings.tsx",
+      "dependencies": ["react-hook-form", "Switch UI components"]
+    },
+    "FileManagementSettings.tsx": {
+      "description": "File retention and storage settings",
+      "path": "client/src/components/settings/FileManagementSettings.tsx",
+      "dependencies": ["useRetentionSettings"]
+    },
+    "AiConfigurationSettings.tsx": {
+      "description": "AI model and provider configuration",
+      "path": "client/src/components/settings/AiConfigurationSettings.tsx", 
+      "dependencies": ["useAiModels", "Select UI components"]
+    },
+    "PerformanceSettings.tsx": {
+      "description": "Application performance optimization controls",
+      "path": "client/src/components/settings/PerformanceSettings.tsx",
+      "dependencies": ["Switch UI components"]
+    },
+    "HealthDataConsentSettings.tsx": {
+      "description": "Health data privacy and consent management",
+      "path": "client/src/components/settings/HealthDataConsentSettings.tsx",
+      "dependencies": ["useQuery", "useMutation", "useToast", "Various UI components"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/settings": {
+      "description": "Retrieve user settings",
+      "handler": "server/routes.ts",
+      "returns": "UserSettings object"
+    },
+    "PUT /api/settings": {
+      "description": "Update user settings", 
+      "handler": "server/routes.ts",
+      "accepts": "Partial UserSettings object"
+    },
+    "GET /api/retention-settings": {
+      "description": "Retrieve file retention policies",
+      "handler": "server/routes.ts", 
+      "returns": "RetentionSettings object"
+    },
+    "PUT /api/retention-settings": {
+      "description": "Update file retention policies",
+      "handler": "server/routes.ts",
+      "accepts": "Partial RetentionSettings object"
+    },
+    "GET /api/ai-models": {
+      "description": "Retrieve available AI models and providers",
+      "handler": "server/routes.ts",
+      "returns": "Array of AiModel objects"
+    },
+    "GET /api/health-consent/settings": {
+      "description": "Retrieve health data consent settings",
+      "handler": "server/routes.ts",
+      "returns": "HealthConsentSettings object"
+    },
+    "PUT /api/health-consent/settings": {
+      "description": "Update health data consent settings",
+      "handler": "server/routes.ts", 
+      "accepts": "Partial HealthConsentSettings object"
+    },
+    "GET /api/health-consent/visibility": {
+      "description": "Retrieve health data visibility preferences",
+      "handler": "server/routes.ts",
+      "returns": "HealthVisibilitySettings object"
+    },
+    "PUT /api/health-consent/visibility": {
+      "description": "Update health data visibility preferences",
+      "handler": "server/routes.ts",
+      "accepts": "Partial HealthVisibilitySettings object"
+    }
+  },
+  "database": {
+    "user_settings": {
+      "description": "Stores user preferences and configuration",
+      "columns": ["id", "user_id", "darkMode", "pushNotifications", "emailSummaries", "dataSharing", "coaching_mode", "ai_provider", "ai_model"],
+      "indexes": ["user_id"]
+    },
+    "retention_settings": {
+      "description": "File retention policies and cleanup configuration",
+      "columns": ["id", "user_id", "category", "retention_days", "auto_cleanup"],
+      "indexes": ["user_id", "category"]
+    },
+    "health_consent_settings": {
+      "description": "Health data consent and privacy controls",
+      "columns": ["id", "user_id", "category", "ai_access_consent", "visibility", "retention_days"],
+      "indexes": ["user_id", "category"]
+    }
+  }
+}

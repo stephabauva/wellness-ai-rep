@@ -135,18 +135,17 @@ export class DatabaseMigrationService {
         WHERE schemaname = 'public'
       `);
       
-      // Count indexes using pg_stat_user_indexes (more reliable)
+      // Count indexes using pg_indexes (more reliable approach)
       const indexesResult = await db.execute(sql`
-        SELECT COUNT(*) as count 
-        FROM pg_stat_user_indexes
+        SELECT COUNT(DISTINCT indexname) as count 
+        FROM pg_indexes 
+        WHERE schemaname = 'public' 
+        AND indexname NOT LIKE '%_pkey'
       `).catch(async () => {
-        // Fallback to information_schema
+        // Fallback to pg_stat_user_indexes
         return await db.execute(sql`
           SELECT COUNT(*) as count 
-          FROM information_schema.table_constraints tc
-          JOIN information_schema.key_column_usage kcu 
-          ON tc.constraint_name = kcu.constraint_name
-          WHERE tc.table_schema = 'public'
+          FROM pg_stat_user_indexes
         `);
       });
 
@@ -194,32 +193,12 @@ export class DatabaseMigrationService {
     logger.debug('Initializing PostgreSQL database...', { service: 'database' });
     
     try {
-      // Always ensure performance indexes exist
+      // Ensure performance indexes exist
       await this.createPerformanceIndexes();
       
-      // Check if database needs sample data (only for completely empty database)
-      const tableChecks = await Promise.all([
-        db.execute(sql`SELECT COUNT(*) as count FROM users`).catch(() => [{ count: 0 }]),
-        db.execute(sql`SELECT COUNT(*) as count FROM chat_messages`).catch(() => [{ count: 0 }]),
-        db.execute(sql`SELECT COUNT(*) as count FROM conversations`).catch(() => [{ count: 0 }])
-      ]);
-      
-      const hasAnyData = tableChecks.some(result => Number((result as any)[0]?.count) > 0);
-      
-      if (!hasAnyData) {
-        logger.debug('Database is completely empty, creating minimal sample data...', { service: 'database' });
-        
-        // Only create minimal sample data for development
-        const { DatabaseStorage } = await import('../storage');
-        const storage = new DatabaseStorage();
-        await storage.initializeSampleData();
-        
-        logger.debug('Sample data initialization completed', { service: 'database' });
-      } else {
-        logger.debug('Database contains existing data, skipping sample data creation', { service: 'database' });
-      }
-      
+      // Optimize database performance
       await this.optimizeDatabase();
+      
       logger.debug('Database initialization completed', { service: 'database' });
     } catch (error) {
       logger.error('Database initialization failed', error as Error, { service: 'database' });

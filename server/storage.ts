@@ -322,7 +322,22 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
-    const user: User = { ...insertUser, id, createdAt: new Date() };
+    const user: User = {
+      id,
+      username: insertUser.username,
+      password: insertUser.password,
+      name: insertUser.name ?? null,
+      email: insertUser.email ?? null,
+      preferences: insertUser.preferences ?? {},
+      transcriptionProvider: insertUser.transcriptionProvider ?? null,
+      preferredLanguage: insertUser.preferredLanguage ?? null,
+      automaticModelSelection: insertUser.automaticModelSelection ?? null,
+      aiProvider: insertUser.aiProvider ?? null,
+      aiModel: insertUser.aiModel ?? null,
+      memoryDetectionProvider: insertUser.memoryDetectionProvider ?? null,
+      memoryDetectionModel: insertUser.memoryDetectionModel ?? null,
+      createdAt: new Date()
+    };
     this.users.set(id, user);
     return user;
   }
@@ -759,149 +774,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(connectedDevices.id, id));
   }
   
-  // Initialize sample data (only if database is empty)
-  async initializeSampleData(): Promise<void> {
-    // Check if any users exist
-    const userCount = await db.select().from(users).limit(1);
-    
-    // If no users, populate with sample data
-    if (userCount.length === 0) {
-      console.log("Initializing database with sample data...");
-      
-      // Create a default user
-      const [defaultUser] = await db.insert(users).values({
-        username: "janesmith",
-        password: "password", // In a real app, this would be hashed
-        name: "Jane Smith",
-        email: "jane.smith@example.com",
-        preferences: {
-          primaryGoal: "weight-loss",
-          coachStyle: "motivational",
-          reminderFrequency: "daily",
-          focusAreas: ["nutrition", "exercise", "sleep"],
-          darkMode: false,
-          pushNotifications: true,
-          emailSummaries: true,
-          dataSharing: false
-        },
-        createdAt: new Date()
-      }).returning();
-      
-      // Sample messages
-      await db.insert(chatMessages).values([
-        {
-          userId: defaultUser.id,
-          content: "Hello Sarah! 👋 Welcome back to your Weight Loss coaching session. How are you feeling today?",
-          isUserMessage: false,
-          timestamp: new Date(Date.now() - 1000 * 60 * 10) // 10 minutes ago
-        },
-        {
-          userId: defaultUser.id,
-          content: "I'm feeling pretty good! I managed to go for a run yesterday, but I'm a bit sore today.",
-          isUserMessage: true,
-          timestamp: new Date(Date.now() - 1000 * 60 * 9) // 9 minutes ago
-        },
-        {
-          userId: defaultUser.id,
-          content: "Great job on the run, Sarah! 🏃‍♀️ Post-exercise soreness is completely normal, especially when you're getting back into your routine.\n\nI see from your connected fitness tracker that you completed a 25-minute run at a good pace. That's excellent progress!\n\nWould you like me to suggest some gentle recovery stretches for today? Or would you prefer to focus on nutrition planning to complement your workout?",
-          isUserMessage: false,
-          timestamp: new Date(Date.now() - 1000 * 60 * 8) // 8 minutes ago
-        },
-        {
-          userId: defaultUser.id,
-          content: "I'd love some stretching suggestions, please!",
-          isUserMessage: true,
-          timestamp: new Date(Date.now() - 1000 * 60 * 7) // 7 minutes ago
-        },
-        {
-          userId: defaultUser.id,
-          content: "Here are some gentle recovery stretches that will help with your soreness:\n\n- Standing quad stretch: 30 seconds each leg\n- Seated hamstring stretch: a30 seconds each leg\n- Calf stretch against wall: 30 seconds each leg\n- Child's pose: Hold for 1 minute\n- Gentle torso twists: 10 each side\n\nRemember to breathe deeply and never stretch to the point of pain. Would you like me to send a reminder to do these stretches later today?",
-          isUserMessage: false,
-          timestamp: new Date(Date.now() - 1000 * 60 * 6) // 6 minutes ago
-        }
-      ]);
-      
-      // Connected devices
-      await db.insert(connectedDevices).values([
-        {
-          userId: defaultUser.id,
-          deviceName: "FitTrack Smartwatch",
-          deviceType: "smartwatch",
-          lastSync: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-          isActive: true,
-          metadata: {
-            features: ["Step tracking", "Heart rate", "Sleep tracking", "Exercise detection"]
-          }
-        },
-        {
-          userId: defaultUser.id,
-          deviceName: "HealthScale Pro",
-          deviceType: "scale",
-          lastSync: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-          isActive: true,
-          metadata: {
-            features: ["Weight", "Body fat", "Muscle mass", "BMI"]
-          }
-        }
-      ]);
-      
-      // Sample health data
-      const today = new Date();
-      const healthDataEntries = [];
-      
-      // Steps data for past 7 days
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        
-        healthDataEntries.push({
-          userId: defaultUser.id,
-          dataType: "steps",
-          value: (6000 + Math.floor(Math.random() * 5000)).toString(),
-          unit: "steps",
-          timestamp: date,
-          source: "smartwatch"
-        });
-        
-        healthDataEntries.push({
-          userId: defaultUser.id,
-          dataType: "sleep",
-          value: (6 + Math.random() * 2).toFixed(1),
-          unit: "hours",
-          timestamp: date,
-          source: "smartwatch"
-        });
-        
-        healthDataEntries.push({
-          userId: defaultUser.id,
-          dataType: "heartRate",
-          value: (65 + Math.floor(Math.random() * 15)).toString(),
-          unit: "bpm",
-          timestamp: date,
-          source: "smartwatch"
-        });
-      }
-      
-      // Weight data for the most recent day
-      healthDataEntries.push({
-        userId: defaultUser.id,
-        dataType: "weight",
-        value: "165",
-        unit: "lbs",
-        timestamp: new Date(today.setDate(today.getDate() - 1)),
-        source: "scale"
-      });
-      
-      // Insert health data in chunks to avoid parameter limits
-      const chunkSize = 10;
-      for (let i = 0; i < healthDataEntries.length; i += chunkSize) {
-        const chunk = healthDataEntries.slice(i, i + chunkSize);
-        await db.insert(healthData).values(chunk);
-      }
-      
-      console.log("Sample data initialized successfully!");
-    }
-  }
+
 }
 
 // Initialize in-memory storage (fallback for when database is not available)

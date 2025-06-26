@@ -1,5 +1,0 @@
-{
-  "description": "Core memory system with intelligent storage, retrieval, and user management capabilities",
-  "path": "./.system-maps/memory/",
-  "dependencies": ["chat", "health"]
-}

@@ -1,5 +1,6 @@
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from './logger-service';
 
 export class DatabaseMigrationService {
   private static instance: DatabaseMigrationService;
@@ -12,7 +13,7 @@ export class DatabaseMigrationService {
   }
 
   async createPerformanceIndexes(): Promise<void> {
-    console.log('Creating performance indexes for PostgreSQL...');
+    logger.debug('Creating performance indexes for PostgreSQL...', { service: 'database' });
     
     const indexes = [
       // Core message indexes
@@ -60,19 +61,25 @@ export class DatabaseMigrationService {
       'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_conversation_messages_content_fts ON conversation_messages USING GIN(to_tsvector(\'english\', content))'
     ];
 
+    let createdCount = 0;
+    let failedCount = 0;
+
     for (const indexQuery of indexes) {
       try {
         await db.execute(sql.raw(indexQuery));
-        console.log(`✓ Created index: ${indexQuery.split(' ')[5]}`);
+        createdCount++;
       } catch (error: any) {
         // Skip if index already exists
         if (!error.message?.includes('already exists')) {
-          console.warn(`⚠ Failed to create index: ${error.message}`);
+          logger.warn(`Failed to create index: ${error.message}`, { service: 'database' });
+          failedCount++;
+        } else {
+          createdCount++;
         }
       }
     }
     
-    console.log('Performance indexes creation completed');
+    logger.debug(`Performance indexes: ${createdCount} created/verified, ${failedCount} failed`, { service: 'database' });
   }
 
   async optimizeDatabase(): Promise<void> {
@@ -95,16 +102,20 @@ export class DatabaseMigrationService {
       'VACUUM ANALYZE health_data'
     ];
 
+    let successCount = 0;
+    let failedCount = 0;
+
     for (const optimization of optimizations) {
       try {
         await db.execute(sql.raw(optimization));
-        console.log(`✓ ${optimization}`);
+        successCount++;
       } catch (error: any) {
-        console.warn(`⚠ Optimization warning: ${error.message}`);
+        logger.warn(`Optimization failed: ${optimization} - ${error.message}`, { service: 'database' });
+        failedCount++;
       }
     }
     
-    console.log('Database optimization completed');
+    logger.debug(`Database optimization: ${successCount} completed, ${failedCount} failed`, { service: 'database' });
   }
 
   async checkDatabaseHealth(): Promise<{
@@ -164,7 +175,7 @@ export class DatabaseMigrationService {
   }
 
   async initializeDatabase(): Promise<void> {
-    console.log('Initializing PostgreSQL database with sample data...');
+    logger.debug('Initializing PostgreSQL database with sample data...', { service: 'database' });
     
     try {
       // Check if database is already initialized
@@ -172,7 +183,7 @@ export class DatabaseMigrationService {
       const hasUsers = Number(userCount[0]?.count) > 0;
       
       if (!hasUsers) {
-        console.log('Database is empty, creating sample data...');
+        logger.debug('Database is empty, creating sample data...', { service: 'database' });
         
         // Create tables first (handled by Drizzle migrations)
         await this.createPerformanceIndexes();
@@ -182,15 +193,15 @@ export class DatabaseMigrationService {
         const storage = new DatabaseStorage();
         await storage.initializeSampleData();
         
-        console.log('✓ Database initialization completed');
+        logger.debug('Database initialization completed', { service: 'database' });
       } else {
-        console.log('Database already initialized, ensuring indexes exist...');
+        logger.debug('Database already initialized, ensuring indexes exist...', { service: 'database' });
         await this.createPerformanceIndexes();
       }
       
       await this.optimizeDatabase();
     } catch (error) {
-      console.error('Database initialization failed:', error);
+      logger.error('Database initialization failed', error as Error, { service: 'database' });
       throw error;
     }
   }

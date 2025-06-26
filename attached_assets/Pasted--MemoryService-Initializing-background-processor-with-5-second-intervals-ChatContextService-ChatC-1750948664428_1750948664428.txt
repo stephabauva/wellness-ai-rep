@@ -1,0 +1,192 @@
+[MemoryService] Initializing background processor with 5-second intervals
+[ChatContextService] ChatContextService initialized 
+[OpenAIProvider] OpenAIProvider initialized 
+[AiService] OpenAI provider registered. 
+[GoogleProvider] GoogleProvider initialized 
+[AiService] Google provider registered. 
+4:36:12 PM [express] Initializing PostgreSQL database...
+Initializing PostgreSQL database...
+Initializing PostgreSQL database with sample data...
+Database is empty, creating sample data...
+Creating performance indexes for PostgreSQL...
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+✓ Created index: EXISTS
+Performance indexes creation completed
+✓ Database initialization completed
+Optimizing PostgreSQL database...
+✓ ANALYZE users
+✓ ANALYZE chat_messages
+✓ ANALYZE health_data
+✓ ANALYZE connected_devices
+✓ ANALYZE conversations
+✓ ANALYZE conversation_messages
+✓ ANALYZE memory_entries
+✓ ANALYZE files
+✓ VACUUM ANALYZE users
+✓ VACUUM ANALYZE chat_messages
+✓ VACUUM ANALYZE health_data
+Database optimization completed
+Database health check: connected, 0 tables, 0 indexes, performance: warning
+4:36:13 PM [express] Database initialization completed
+4:36:13 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+4:36:15 PM [express] GET /api/health-data/categories 304 in 100ms :: {}
+4:36:15 PM [express] GET /api/health-data 304 in 97ms :: []
+4:36:15 PM [express] GET /api/retention-settings 304 in 0ms :: {"highValueRetentionDays":-1,"mediumV…
+4:36:15 PM [express] GET /api/ai-models 304 in 1ms :: {"openai":[{"id":"gpt-4o","name":"GPT-4o","des…
+4:36:15 PM [express] GET /api/devices 304 in 93ms :: [{"id":1,"userId":1,"deviceName":"FitTrack Smar…
+Skipping non-existent file in listing: pUMRdRQ8zLiwcO-nqA9I8.png
+Skipping non-existent file in listing: 2FL1Gv_fHhYMSxT2DiFPG.png
+Skipping non-existent file in listing: _xZr7r8HvV9mM1S75QUjn.gz
+Skipping non-existent file in listing: 5aFfcISBho1qtvwtfyaYE.gz
+4:36:15 PM [express] GET /api/files 304 in 97ms :: []
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:15 PM [express] GET /api/memories 304 in 195ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6"…
+4:36:15 PM [express] GET /api/health-consent/visibility 304 in 200ms :: {"visible_categories":["Acti…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:15 PM [express] GET /api/memories 304 in 202ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6"…
+4:36:15 PM [express] GET /api/categories 304 in 119ms :: [{"id":"04af2e32-62fb-4d8d-9418-1da9e6fd01f…
+4:36:15 PM [express] GET /api/accelerate/health 304 in 9ms :: {"available":false,"error":"Service un…
+4:36:15 PM [express] GET /api/health-consent/visibility 304 in 25ms :: {"visible_categories":["Activ…
+4:36:15 PM [express] GET /api/settings 304 in 146ms :: {"name":"Jane Smith","email":"jane.smith@exam…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:20 PM [express] GET /api/memories 304 in 85ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:20 PM [express] GET /api/memories 304 in 95ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+4:36:20 PM [express] GET /api/health-data/categories 304 in 1ms :: {}
+4:36:20 PM [express] GET /api/health-data 304 in 0ms :: []
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+4:36:20 PM [express] GET /api/devices 304 in 32ms :: [{"id":1,"userId":1,"deviceName":"FitTrack Smar…
+4:36:20 PM [express] GET /api/health-consent/visibility 304 in 34ms :: {"visible_categories":["Activ…
+4:36:20 PM [express] GET /api/ai-models 304 in 0ms :: {"openai":[{"id":"gpt-4o","name":"GPT-4o","des…
+4:36:20 PM [express] GET /api/retention-settings 304 in 0ms :: {"highValueRetentionDays":-1,"mediumV…
+Skipping non-existent file in listing: pUMRdRQ8zLiwcO-nqA9I8.png
+Skipping non-existent file in listing: 2FL1Gv_fHhYMSxT2DiFPG.png
+Skipping non-existent file in listing: _xZr7r8HvV9mM1S75QUjn.gz
+Skipping non-existent file in listing: 5aFfcISBho1qtvwtfyaYE.gz
+4:36:20 PM [express] GET /api/files 304 in 101ms :: []
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:20 PM [express] GET /api/memories 304 in 118ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6"…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:20 PM [express] GET /api/memories 304 in 126ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6"…
+4:36:20 PM [express] GET /api/categories 304 in 95ms :: [{"id":"04af2e32-62fb-4d8d-9418-1da9e6fd01fc…
+4:36:20 PM [express] GET /api/accelerate/health 304 in 1ms :: {"available":false,"error":"Service un…
+4:36:20 PM [express] GET /api/settings 304 in 129ms :: {"name":"Jane Smith","email":"jane.smith@exam…
+4:36:20 PM [express] GET /api/health-consent/visibility 304 in 112ms :: {"visible_categories":["Acti…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:25 PM [express] GET /api/memories 304 in 86ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:25 PM [express] GET /api/memories 304 in 97ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:30 PM [express] GET /api/memories 304 in 86ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:30 PM [express] GET /api/memories 304 in 92ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:36 PM [express] GET /api/memories 304 in 88ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:36 PM [express] GET /api/memories 304 in 93ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:41 PM [express] GET /api/memories 304 in 81ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:41 PM [express] GET /api/memories 304 in 86ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:46 PM [express] GET /api/memories 304 in 85ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:46 PM [express] GET /api/memories 304 in 90ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:51 PM [express] GET /api/memories 304 in 86ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:51 PM [express] GET /api/memories 304 in 94ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:56 PM [express] GET /api/memories 304 in 82ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:36:56 PM [express] GET /api/memories 304 in 88ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:37:01 PM [express] GET /api/memories 304 in 83ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:37:01 PM [express] GET /api/memories 304 in 88ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:37:06 PM [express] GET /api/memories 304 in 84ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:37:06 PM [express] GET /api/memories 304 in 92ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Getting memories for user 1, category: undefined
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:37:11 PM [express] GET /api/memories 304 in 87ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…
+[MemoryService] Retrieved 7 memories from database
+[MemoryService] Returning 7 sorted memories
+4:37:11 PM [express] GET /api/memories 304 in 92ms :: [{"id":"5345d6ff-fa2c-4293-8c41-c2797fd1fce6",…

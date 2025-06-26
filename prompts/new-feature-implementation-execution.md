@@ -49,6 +49,7 @@ Avoid:
 - Over-aggressive deduplication or HTTP/2 changes
 - Modifying HMR setup or WebSocket handling
 - Introducing new workflows or bypassing Replit's own tooling
+- data samples / mock data
 
 All changes must be:
 - Local, safe, and reversible

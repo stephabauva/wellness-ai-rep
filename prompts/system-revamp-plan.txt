@@ -171,6 +171,8 @@ Then:
 - Ensure dev-only build still behaves identically on desktop
 - Avoid Service Worker auto-installation during development
 
+### 7 .Other
+Do not use sample data / mock data, unless it is for simple rapid testing purposes.
 ---
 
 ### ✅ Final Replit Dev Environment Stability Checklist

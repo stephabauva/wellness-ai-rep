@@ -35,6 +35,7 @@ Do not:
 - Introduce new workflows or runtime scripts
 - Alter build steps outside Replit's defaults
 - Break anything related to `npm run dev`, live preview, or port binding
+- Use data samples / mock data, unless it is for small rapid testing
 
 You MUST provide:
 1. The identified bottleneck(s)

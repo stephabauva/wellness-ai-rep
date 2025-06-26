@@ -1,0 +1,56 @@
+{
+  "appName": "Wellness AI Rep",
+  "version": "1.0.0",
+  "lastUpdated": "2025-06-26T00:10:00Z",
+  "domains": {
+    "chat": {
+      "description": "Handles all conversational AI, messaging, and related features.",
+      "path": "/.system-maps/chat/",
+      "dependencies": ["memory", "files"]
+    },
+    "health": {
+      "description": "Manages user health data, dashboard, metrics, and reporting.",
+      "path": "/.system-maps/health.map.json",
+      "dependencies": ["files", "settings"]
+    },
+    "devices": {
+      "description": "Manages connections to external devices and data sources (e.g., native health kits).",
+      "path": "/.system-maps/devices.map.json",
+      "dependencies": ["health", "settings"]
+    },
+    "memory": {
+      "description": "Controls the AI's long-term memory, including storage, retrieval, and deduplication.",
+      "path": "/.system-maps/memory.map.json",
+      "dependencies": ["chat"]
+    },
+    "files": {
+      "description": "Handles file uploads, storage, and management.",
+      "path": "/.system-maps/files.map.json",
+      "dependencies": ["settings"]
+    },
+    "settings": {
+      "description": "Manages user preferences, application settings, and configurations. Contains user information.",
+      "path": "/.system-maps/settings.map.json",
+      "dependencies": []
+    }
+  },
+  "globalComponents": {
+    "AppContext": {
+      "path": "client/src/context/AppContext.tsx",
+      "description": "Global application state management",
+      "uses": []
+    },
+    "DatabaseConnection": {
+      "path": "server/db.ts",
+      "description": "PostgreSQL database connection and configuration",
+      "uses": []
+    }
+  },
+  "architecture": {
+    "frontend": "React + TypeScript + Vite",
+    "backend": "Node.js + Express + TypeScript",
+    "database": "PostgreSQL + Drizzle ORM",
+    "ai": "Multi-provider (OpenAI, Google Gemini)",
+    "microservices": ["go-memory-service", "go-file-service", "go-ai-gateway"]
+  }
+}

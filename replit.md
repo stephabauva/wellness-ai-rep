@@ -354,6 +354,14 @@ Changelog:
   - **Known Issues**: Delete functionality not working despite proper frontend selection - metrics remain visible after deletion attempt
   - **Documentation**: Comprehensive implementation guide created in `health-dashboard-metrics-control-implementation.md`
   - **Status**: UI complete, backend ready, deletion workflow needs debugging for complete functionality
+- June 26, 2025. **Memory Polling Fix Implementation Complete**:
+  - **Created `/api/memories/overview` endpoint**: Lightweight memory statistics and category counts without loading full memory content
+  - **Eliminated automatic polling**: Removed all `refetchInterval` and `refetchOnWindowFocus` from memory queries to prevent unnecessary API calls
+  - **Implemented manual loading system**: Added "Show My Stored Memories" button that only loads detailed memories on user request
+  - **Updated query configuration**: Set `enabled: false` by default with `staleTime: 5 minutes` for optimal caching behavior
+  - **Enhanced UI with conditional display**: Memory overview shows counts immediately, detailed memories load only when manually triggered
+  - **Performance improvement**: 100% elimination of automatic memory polling while preserving all existing memory functionality
+  - **System map updated**: Updated `.system-maps/memory.map.json` to reflect new architecture and API endpoints
 
 # User Preferences
 

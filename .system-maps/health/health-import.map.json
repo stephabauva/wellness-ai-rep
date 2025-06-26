@@ -1,0 +1,100 @@
+
+{
+  "lastUpdated": "2025-01-15T18:00:00Z",
+  "dependencies": ["logging"],
+  "featureGroups": {
+    "healthDataImport": {
+      "description": "Comprehensive health data import system supporting multiple formats and sources",
+      "features": {
+        "file-upload-import": {
+          "description": "Upload and process health data files (Apple Health, Fitbit, etc.)",
+          "userFlow": [
+            "User clicks 'Import Health Data' button",
+            "File upload dialog opens",
+            "User selects health data file (XML, JSON, CSV)",
+            "File is validated and compressed if needed",
+            "Data is parsed and categorized",
+            "User reviews import preview",
+            "Data is saved to database with deduplication"
+          ],
+          "components": [
+            "HealthDataImport.tsx",
+            "FileUploadDialog.tsx"
+          ]
+        },
+        "native-health-integration": {
+          "description": "Direct integration with native health APIs (iOS HealthKit, Android Health Connect)",
+          "userFlow": [
+            "User enables native health access in settings",
+            "App requests health permissions",
+            "Background sync is configured",
+            "Health data is automatically imported",
+            "Data is processed and stored with deduplication"
+          ],
+          "components": [
+            "NativeHealthIntegration.tsx",
+            "HealthDataSection.tsx"
+          ]
+        },
+        "data-parsing": {
+          "description": "Parse and process various health data formats",
+          "userFlow": [
+            "Health file is received",
+            "Format is detected (Apple Health XML, Fitbit JSON, etc.)",
+            "Data is parsed using appropriate parser",
+            "Records are normalized to standard format",
+            "Data validation is performed",
+            "Parsed data is returned for storage"
+          ],
+          "components": []
+        }
+      }
+    }
+  },
+  "components": {
+    "HealthDataImport.tsx": {
+      "path": "client/src/components/health/HealthDataImport.tsx",
+      "description": "Main health data import interface with file upload and native integration options",
+      "dependencies": [
+        "useFileUpload",
+        "useHealthDataApi",
+        "FileUploadDialog.tsx",
+        "NativeHealthIntegration.tsx"
+      ]
+    },
+    "NativeHealthIntegration.tsx": {
+      "path": "client/src/components/health/NativeHealthIntegration.tsx",
+      "description": "Native health service integration component for iOS/Android",
+      "dependencies": [
+        "native-health-service.ts",
+        "platform-detection.ts"
+      ]
+    }
+  },
+  "apiEndpoints": {
+    "/api/health-data/import": {
+      "method": "POST",
+      "description": "Upload and import health data files",
+      "handler": "server/routes.ts",
+      "readsFrom": [],
+      "modifies": ["health_data", "health_categories"]
+    },
+    "/api/health-data/native-sync": {
+      "method": "POST",
+      "description": "Sync data from native health services",
+      "handler": "server/routes.ts",
+      "readsFrom": [],
+      "modifies": ["health_data", "health_categories"]
+    }
+  },
+  "database": {
+    "health_data": {
+      "description": "Stores all imported health metrics and measurements",
+      "key_columns": ["id", "user_id", "category", "type", "value", "timestamp", "source"]
+    },
+    "health_categories": {
+      "description": "Categorizes different types of health data",
+      "key_columns": ["id", "name", "type", "unit"]
+    }
+  }
+}

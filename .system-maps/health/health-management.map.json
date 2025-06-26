@@ -1,0 +1,110 @@
+
+{
+  "lastUpdated": "2025-01-15T18:00:00Z",
+  "dependencies": ["logging"],
+  "featureGroups": {
+    "healthDataManagement": {
+      "description": "User-controlled health data management and privacy settings",
+      "features": {
+        "metrics-visibility": {
+          "description": "Control which health metrics are visible and shared",
+          "userFlow": [
+            "User goes to health settings",
+            "Views current visibility settings",
+            "Toggles metrics on/off",
+            "Settings are saved and applied immediately"
+          ],
+          "components": [
+            "MetricsVisibilityCard.tsx",
+            "HealthDataConsentSettings.tsx"
+          ]
+        },
+        "manual-entry": {
+          "description": "Manually add or edit health data entries",
+          "userFlow": [
+            "User clicks 'Add Data' button",
+            "Modal opens with data entry form",
+            "User selects category and enters values",
+            "Data is validated and saved",
+            "Dashboard updates with new data"
+          ],
+          "components": [
+            "AddMetricsModal.tsx",
+            "RemoveMetricsModal.tsx"
+          ]
+        },
+        "coaching-insights": {
+          "description": "AI-powered insights and recommendations based on health data",
+          "userFlow": [
+            "System analyzes user's health data",
+            "AI generates personalized insights",
+            "Recommendations are displayed",
+            "User can accept or dismiss suggestions"
+          ],
+          "components": [
+            "CoachingInsights.tsx"
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "MetricsVisibilityCard.tsx": {
+      "path": "client/src/components/health/MetricsVisibilityCard.tsx",
+      "description": "Interface for controlling health metrics visibility",
+      "dependencies": [
+        "useHealthVisibilitySettings",
+        "useHealthDataApi"
+      ]
+    },
+    "AddMetricsModal.tsx": {
+      "path": "client/src/components/health/AddMetricsModal.tsx",
+      "description": "Modal for manually adding health data entries",
+      "dependencies": [
+        "useHealthDataApi",
+        "form validation"
+      ]
+    },
+    "CoachingInsights.tsx": {
+      "path": "client/src/components/health/CoachingInsights.tsx",
+      "description": "AI-powered health insights and recommendations component",
+      "dependencies": [
+        "useHealthDataApi",
+        "AI coaching service"
+      ]
+    }
+  },
+  "apiEndpoints": {
+    "/api/health-consent/visibility": {
+      "method": "GET",
+      "description": "Get current health data visibility settings",
+      "handler": "server/routes.ts",
+      "readsFrom": ["health_consent"],
+      "modifies": []
+    },
+    "/api/health-consent/visibility": {
+      "method": "PUT",
+      "description": "Update health data visibility settings",
+      "handler": "server/routes.ts",
+      "readsFrom": [],
+      "modifies": ["health_consent"]
+    },
+    "/api/health-data": {
+      "method": "POST",
+      "description": "Add new health data entry",
+      "handler": "server/routes.ts",
+      "readsFrom": [],
+      "modifies": ["health_data"]
+    }
+  },
+  "database": {
+    "health_consent": {
+      "description": "Stores user consent and visibility preferences for health data",
+      "key_columns": ["id", "user_id", "category", "is_visible", "sharing_enabled"]
+    },
+    "health_data": {
+      "description": "Stores manually entered and imported health data",
+      "key_columns": ["id", "user_id", "category", "type", "value", "timestamp", "source"]
+    }
+  }
+}

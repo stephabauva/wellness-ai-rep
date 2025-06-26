@@ -53,51 +53,99 @@ Current problems:
 
 ## Recommended Implementation
 
-### Phase 1: Remove All Automatic Polling
+### Phase 1: Manual Memory Loading with Overview Counts
 
-**Target**: Eliminate all background polling, fetch memories only on-demand.
+**Target**: Show overview counts immediately, but require manual button press to load memories.
 
 ```typescript
-// Reactive query configuration - NO automatic polling
-const { data: allMemories = [], isLoading: allMemoriesLoading } = useQuery({
+// Overview count query - lightweight, runs once on mount
+const { data: memoryOverview = { total: 0, categories: {} }, isLoading: overviewLoading } = useQuery({
+  queryKey: ["memory-overview"],
+  queryFn: async () => {
+    const response = await fetch(`/api/memories/overview`);
+    if (!response.ok) throw new Error("Failed to fetch memory overview");
+    return response.json();
+  },
+  staleTime: 5 * 60 * 1000, // 5 minutes cache
+  refetchOnWindowFocus: false,
+  refetchInterval: false, // No polling
+});
+
+// Memory loading state and button control
+const [memoriesLoaded, setMemoriesLoaded] = useState(false);
+const [showLoadButton, setShowLoadButton] = useState(true);
+
+// Disabled memory queries by default
+const { data: allMemories = [], isLoading: allMemoriesLoading, refetch: refetchMemories } = useQuery({
   queryKey: ["memories"],
   queryFn: async () => {
     const response = await fetch(`/api/memories`);
     if (!response.ok) throw new Error("Failed to fetch memories");
     return response.json();
   },
-  enabled: false, // Disabled by default - only fetch when explicitly triggered
-  staleTime: 5 * 60 * 1000, // 5 minutes - reasonable for manual operations
-  refetchOnWindowFocus: false, // Never refetch automatically
+  enabled: false, // Never automatically fetch
+  staleTime: 10 * 60 * 1000, // 10 minutes cache once loaded
+  refetchOnWindowFocus: false,
   refetchInterval: false, // No polling ever
 });
+
+// Manual load function
+const handleLoadMemories = async () => {
+  setShowLoadButton(false);
+  await refetchMemories();
+  setMemoriesLoaded(true);
+};
 ```
 
-### Phase 2: Component-Specific Memory Loading
+### Phase 2: Overview API Endpoint
 
-**Target**: Load memories only when Memory Section is rendered and visible.
+**Target**: Create lightweight endpoint for counts only.
 
 ```typescript
-// Only fetch when component mounts and user is viewing it
-useEffect(() => {
-  // Fetch memories when user opens Memory Section
-  queryClient.fetchQuery({ queryKey: ["memories"] });
-}, []); // Run once on mount
+// New API endpoint: GET /api/memories/overview
+// Returns: { total: number, categories: { preference: number, personal_info: number, etc } }
+// Fast query - only counts, no content retrieval
+```
 
-// For filtered memories, only fetch when category changes
-const { data: filteredMemories = [] } = useQuery({
-  queryKey: ["memories", selectedCategory],
-  queryFn: async () => {
-    if (selectedCategory === "all") {
-      return allMemories; // Use cached data
-    }
-    const response = await fetch(`/api/memories?category=${selectedCategory}`);
-    if (!response.ok) throw new Error("Failed to fetch filtered memories");
-    return response.json();
-  },
-  enabled: !!allMemories.length, // Only run if we have base memories loaded
-  staleTime: 5 * 60 * 1000,
-});
+### Phase 3: UI with Manual Loading
+
+**Target**: Show counts immediately, memories only after button press.
+
+```typescript
+// Memory overview always visible
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div className="text-center">
+    <div className="text-2xl font-bold text-blue-600">{memoryOverview.total}</div>
+    <div className="text-sm text-gray-600">Total Memories</div>
+  </div>
+  // ... other counts
+</div>
+
+// Conditional memory display
+{showLoadButton ? (
+  <Card>
+    <CardContent className="flex flex-col items-center justify-center py-8">
+      <Brain className="h-12 w-12 text-blue-400 mb-4" />
+      <Button onClick={handleLoadMemories} disabled={allMemoriesLoading}>
+        {allMemoriesLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Loading Memories...
+          </>
+        ) : (
+          <>
+            <Eye className="h-4 w-4 mr-2" />
+            Show My Stored Memories ({memoryOverview.total})
+          </>
+        )}
+      </Button>
+    </CardContent>
+  </Card>
+) : (
+  <div className="grid gap-4">
+    {/* Memory list display */}
+  </div>
+)}
 ```
 
 ### Phase 3: Chat-Triggered Memory Retrieval
@@ -164,17 +212,19 @@ If issues arise:
 ## Expected Results
 
 ### Performance Improvements
-- **99% reduction** in unnecessary API calls (only when actually needed)
-- **Complete elimination** of console noise from polling
-- **Significantly improved performance** due to zero background processing
-- **Much better battery life** on mobile devices
-- **Faster app responsiveness** due to reduced server load
+- **100% elimination** of automatic memory polling
+- **Complete elimination** of console noise from memory queries
+- **Instant overview display** with lightweight count queries
+- **User-controlled memory loading** - no unnecessary data transfer
+- **Optimal server resource usage** - queries only when needed
 
 ### User Experience
-- ✅ Maintains real-time feel for memory updates
-- ✅ Preserves all existing functionality
-- ✅ Reduces server load and browser overhead
-- ✅ No visible changes to user interface
+- ✅ **Immediate overview counts** - see totals without loading full memories
+- ✅ **Manual control** - user decides when to load memory details
+- ✅ **Clean interface** - button disappears after memories are loaded
+- ✅ **Preserved functionality** - all memory operations work as before
+- ✅ **No performance impact** - memories load fast when requested
+- ✅ **Better UX** - user knows exactly when data is being fetched
 
 ## Risk Assessment: MINIMAL
 

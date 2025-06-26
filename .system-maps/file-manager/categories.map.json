@@ -1,0 +1,176 @@
+
+{
+  "tableOfContents": {
+    "categoryManagement": ["create-category", "update-category", "delete-category"],
+    "categoryFiltering": ["category-tabs", "category-selector"],
+    "categoryDisplay": ["category-dropdown", "category-visualization"]
+  },
+  "lastUpdated": "2025-06-26T19:52:00Z",
+  "dependencies": ["core-operations"],
+  "featureGroups": {
+    "categoryManagement": {
+      "description": "Full CRUD operations for file categories",
+      "features": {
+        "create-category": {
+          "description": "Create new custom file categories",
+          "userFlow": [
+            "User accesses category management",
+            "User clicks create category",
+            "User enters category name, description, icon, color",
+            "useFileApi.createCategory called",
+            "Category created via /api/categories POST",
+            "Categories list refreshed"
+          ],
+          "components": [
+            "CategorySelector",
+            "useFileApi"
+          ]
+        },
+        "update-category": {
+          "description": "Edit existing custom categories",
+          "userFlow": [
+            "User selects category to edit",
+            "User modifies category properties",
+            "useFileApi.updateCategory called",
+            "Category updated via /api/categories/:id PUT",
+            "Categories list refreshed"
+          ],
+          "components": [
+            "CategorySelector",
+            "useFileApi"
+          ]
+        },
+        "delete-category": {
+          "description": "Remove custom categories",
+          "userFlow": [
+            "User selects category to delete",
+            "Confirmation dialog appears",
+            "useFileApi.deleteCategory called",
+            "Category deleted via /api/categories/:id DELETE",
+            "Files using category set to uncategorized",
+            "Categories list refreshed"
+          ],
+          "components": [
+            "CategorySelector",
+            "useFileApi"
+          ]
+        }
+      }
+    },
+    "categoryFiltering": {
+      "description": "Filter files by category using tabs and selectors",
+      "features": {
+        "category-tabs": {
+          "description": "Tab-based category filtering interface",
+          "userFlow": [
+            "CategoryTabs displays all categories plus 'All' and 'Uncategorized'",
+            "User clicks category tab",
+            "useFileManagerState.setActiveTab updates filter",
+            "FileList shows only files matching selected category"
+          ],
+          "components": [
+            "CategoryTabs",
+            "useFileManagerState"
+          ]
+        },
+        "category-selector": {
+          "description": "Bulk categorization of selected files",
+          "userFlow": [
+            "User selects multiple files",
+            "User opens CategorySelector from toolbar",
+            "User chooses target category",
+            "useFileApi.categorizeFiles called with fileIds and categoryId",
+            "Files updated via /api/files/categorize PATCH",
+            "File list refreshed with new categories"
+          ],
+          "components": [
+            "CategorySelector",
+            "FileActionsToolbar",
+            "useFileApi"
+          ]
+        }
+      }
+    },
+    "categoryDisplay": {
+      "description": "Category visualization and UI components",
+      "features": {
+        "category-dropdown": {
+          "description": "Dropdown component for category selection",
+          "userFlow": [
+            "CategoryDropdown renders available categories",
+            "Shows category name, icon, and color",
+            "Supports both system and custom categories"
+          ],
+          "components": [
+            "CategoryDropdown"
+          ]
+        },
+        "category-visualization": {
+          "description": "Visual representation of categories with icons and colors",
+          "userFlow": [
+            "Categories displayed with custom icons and colors",
+            "System categories have predefined styling",
+            "Custom categories use user-defined styling"
+          ],
+          "components": [
+            "CategoryTabs",
+            "CategoryDropdown",
+            "FileList"
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "CategoryTabs": {
+      "path": "client/src/components/filemanager/CategoryTabs.tsx",
+      "description": "Tab interface for category-based file filtering"
+    },
+    "CategorySelector": {
+      "path": "client/src/components/filemanager/CategorySelector.tsx",
+      "description": "Category selection component for bulk operations"
+    },
+    "CategoryDropdown": {
+      "path": "client/src/components/filemanager/CategoryDropdown.tsx",
+      "description": "Dropdown component for category selection"
+    }
+  },
+  "apiEndpoints": {
+    "/api/categories": {
+      "method": "GET",
+      "description": "Retrieve user's categories (system + custom)",
+      "readsFrom": ["fileCategories"],
+      "implementation": "server/routes.ts"
+    },
+    "/api/categories": {
+      "method": "POST", 
+      "description": "Create new custom category",
+      "modifies": ["fileCategories"],
+      "implementation": "server/routes.ts"
+    },
+    "/api/categories/:id": {
+      "method": "PUT",
+      "description": "Update existing custom category",
+      "modifies": ["fileCategories"],
+      "implementation": "server/routes.ts"
+    },
+    "/api/categories/:id": {
+      "method": "DELETE",
+      "description": "Delete custom category",
+      "modifies": ["fileCategories"],
+      "implementation": "server/routes.ts"
+    },
+    "/api/files/categorize": {
+      "method": "PATCH",
+      "description": "Bulk categorize selected files",
+      "modifies": ["files"],
+      "implementation": "server/routes.ts"
+    }
+  },
+  "database": {
+    "fileCategories": {
+      "description": "Categories table storing both system and custom categories",
+      "key_fields": ["id", "name", "userId", "isCustom", "icon", "color"]
+    }
+  }
+}

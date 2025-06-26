@@ -1,0 +1,168 @@
+
+{
+  "tableOfContents": {
+    "fileProcessing": ["go-acceleration", "compression-optimization", "metadata-extraction"],
+    "retentionManagement": ["retention-policies", "file-lifecycle"],
+    "performanceOptimization": ["universal-file-service", "smart-routing"]
+  },
+  "lastUpdated": "2025-06-26T19:52:00Z",
+  "dependencies": ["core-operations"],
+  "featureGroups": {
+    "fileProcessing": {
+      "description": "Advanced file processing with Go microservice acceleration",
+      "features": {
+        "go-acceleration": {
+          "description": "Go microservice acceleration for large file processing",
+          "userFlow": [
+            "Large data files (>5MB XML/JSON/CSV) detected during upload",
+            "UniversalFileService automatically attempts Go service startup",
+            "FileAccelerationService.startGoAccelerationService called",
+            "/api/accelerate/start endpoint spawns Go service",
+            "File processed with Go compression achieving 90%+ compression ratios",
+            "Graceful fallback to TypeScript if Go service unavailable"
+          ],
+          "components": [
+            "UniversalFileService",
+            "FileAccelerationService",
+            "useFileUpload"
+          ]
+        },
+        "compression-optimization": {
+          "description": "Universal file compression with intelligent routing",
+          "userFlow": [
+            "UniversalFileService.compressFile called for each upload",
+            "Service detects file characteristics and system capabilities",
+            "Routes to optimal compression method (TypeScript vs Go)",
+            "Compression results include ratio, algorithm, processing time",
+            "Compressed file uploaded to reduce bandwidth and storage"
+          ],
+          "components": [
+            "UniversalFileService",
+            "FileCompressionService",
+            "FileAccelerationService"
+          ]
+        },
+        "metadata-extraction": {
+          "description": "Extract comprehensive file metadata including EXIF, hashing, dimensions",
+          "userFlow": [
+            "Go file service processes uploaded file in parallel",
+            "Extracts md5Hash for integrity verification",
+            "Generates perceptualHash for duplicate detection",
+            "Extracts EXIF data for images (camera, location, etc.)",
+            "Determines image dimensions and color profile",
+            "Creates thumbnails in multiple sizes",
+            "Metadata stored in files.metadata JSON field"
+          ],
+          "components": [
+            "GoFileService",
+            "go-file-service/main.go"
+          ]
+        }
+      }
+    },
+    "retentionManagement": {
+      "description": "Intelligent file retention policies based on content analysis",
+      "features": {
+        "retention-policies": {
+          "description": "Automatic retention policy assignment based on file content",
+          "userFlow": [
+            "AttachmentRetentionService analyzes uploaded file",
+            "Categorizes as high/medium/low value based on content",
+            "Medical files get permanent retention (-1 days)",
+            "Fitness files get medium retention (365 days)",
+            "General files get standard retention (90 days)",
+            "Retention info stored in files table",
+            "User notified of retention policy in upload toast"
+          ],
+          "components": [
+            "AttachmentRetentionService",
+            "useFileUpload"
+          ]
+        },
+        "file-lifecycle": {
+          "description": "Manage file lifecycle from upload to scheduled deletion",
+          "userFlow": [
+            "Files assigned retention days on upload",
+            "scheduledDeletion field calculated based on retention policy",
+            "Background service monitors for expired files",
+            "Files marked as isDeleted when retention expires",
+            "Physical file deletion handled by cleanup service"
+          ],
+          "components": [
+            "AttachmentRetentionService"
+          ]
+        }
+      }
+    },
+    "performanceOptimization": {
+      "description": "Performance optimization through intelligent service routing",
+      "features": {
+        "universal-file-service": {
+          "description": "Smart file service that routes to optimal processing method",
+          "userFlow": [
+            "UniversalFileService.initialize() called on app startup",
+            "Service detects platform capabilities (web/capacitor/react-native)",
+            "Determines Go acceleration availability",
+            "Routes file operations to best available service",
+            "Provides unified interface regardless of underlying implementation"
+          ],
+          "components": [
+            "UniversalFileService",
+            "FileAccelerationService",
+            "FileCompressionService"
+          ]
+        },
+        "smart-routing": {
+          "description": "Intelligent routing between TypeScript and Go services",
+          "userFlow": [
+            "File characteristics analyzed (size, type, complexity)",
+            "Go acceleration recommended for large structured data files",
+            "TypeScript used for small files and when Go unavailable",
+            "Automatic fallback ensures system always works",
+            "Performance metrics tracked for optimization"
+          ],
+          "components": [
+            "UniversalFileService",
+            "FileAccelerationService"
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "UniversalFileService": {
+      "path": "client/src/services/universal-file-service.ts",
+      "description": "Smart routing service for optimal file processing",
+      "dependencies": ["FileCompressionService", "FileAccelerationService"]
+    },
+    "FileAccelerationService": {
+      "path": "client/src/services/file-acceleration-service.ts", 
+      "description": "TypeScript interface to Go acceleration service"
+    },
+    "FileCompressionService": {
+      "path": "client/src/services/file-compression.ts",
+      "description": "TypeScript-based file compression service"
+    },
+    "AttachmentRetentionService": {
+      "path": "server/services/attachment-retention-service.ts",
+      "description": "Server-side retention policy management"
+    },
+    "GoFileService": {
+      "path": "server/services/go-file-service.ts",
+      "description": "Node.js integration with Go file processing service"
+    }
+  },
+  "apiEndpoints": {
+    "/api/accelerate/start": {
+      "method": "POST",
+      "description": "Start Go acceleration service for large file processing",
+      "implementation": "server/routes.ts"
+    }
+  },
+  "database": {
+    "files": {
+      "description": "Enhanced files table with processing metadata",
+      "key_fields": ["metadata", "retentionPolicy", "retentionDays", "scheduledDeletion"]
+    }
+  }
+}

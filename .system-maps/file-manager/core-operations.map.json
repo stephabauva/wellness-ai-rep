@@ -1,0 +1,189 @@
+
+{
+  "tableOfContents": {
+    "fileOperations": ["upload-file", "delete-files", "refresh-files"],
+    "fileDisplay": ["list-view", "grid-view", "file-selection"],
+    "fileSharing": ["web-share", "qr-code-generation"]
+  },
+  "lastUpdated": "2025-06-26T19:52:00Z",
+  "dependencies": ["categories", "universal-file-service"],
+  "featureGroups": {
+    "fileOperations": {
+      "description": "Core file management operations including upload, delete, and refresh",
+      "features": {
+        "upload-file": {
+          "description": "Upload files with optional category assignment and Go acceleration for large files",
+          "userFlow": [
+            "User clicks upload button",
+            "FileUploadDialog opens",
+            "User selects file(s) and optional category",
+            "useFileUpload hook processes file",
+            "Universal file service applies compression if beneficial",
+            "Go acceleration service auto-starts for large data files (>5MB XML/JSON/CSV)",
+            "File uploaded via /api/upload endpoint",
+            "File queries refreshed via React Query"
+          ],
+          "components": [
+            "FileUploadDialog",
+            "useFileUpload",
+            "UniversalFileService",
+            "FileAccelerationService"
+          ]
+        },
+        "delete-files": {
+          "description": "Bulk deletion of selected files with confirmation",
+          "userFlow": [
+            "User selects files via checkboxes",
+            "User clicks delete button in FileActionsToolbar",
+            "Confirmation dialog appears",
+            "useFileApi.deleteFiles executes bulk deletion",
+            "Files removed from database and filesystem",
+            "UI updated via React Query cache invalidation"
+          ],
+          "components": [
+            "FileActionsToolbar",
+            "useFileApi",
+            "useFileManagerState"
+          ]
+        },
+        "refresh-files": {
+          "description": "Refresh file list to show latest state",
+          "userFlow": [
+            "User clicks refresh button",
+            "useFileApi.refetchFiles called",
+            "React Query refetches from /api/files",
+            "UI updates with fresh file list"
+          ],
+          "components": [
+            "FileActionsToolbar",
+            "useFileApi"
+          ]
+        }
+      }
+    },
+    "fileDisplay": {
+      "description": "File visualization and selection interfaces",
+      "features": {
+        "list-view": {
+          "description": "Display files in detailed list format with metadata",
+          "userFlow": [
+            "User selects list view mode",
+            "FileList component renders files in table format",
+            "Shows file name, size, date, category, selection checkbox"
+          ],
+          "components": [
+            "FileList",
+            "useFileManagerState"
+          ]
+        },
+        "grid-view": {
+          "description": "Display files in grid format with thumbnails",
+          "userFlow": [
+            "User selects grid view mode",
+            "FileList component renders files in grid layout",
+            "Shows file icons/thumbnails with basic info"
+          ],
+          "components": [
+            "FileList",
+            "useFileManagerState"
+          ]
+        },
+        "file-selection": {
+          "description": "Multi-select files using checkboxes for bulk operations",
+          "userFlow": [
+            "User clicks individual file checkboxes or select all",
+            "useFileManagerState tracks selected files",
+            "FileActionsToolbar enables bulk operations"
+          ],
+          "components": [
+            "FileList",
+            "FileActionsToolbar",
+            "useFileManagerState"
+          ]
+        }
+      }
+    },
+    "fileSharing": {
+      "description": "File sharing capabilities including web share and QR codes",
+      "features": {
+        "web-share": {
+          "description": "Share selected files using Web Share API",
+          "userFlow": [
+            "User selects files and clicks share button",
+            "useFileSharing.shareSelectedFiles called",
+            "Web Share API invoked with file URLs",
+            "Native share dialog appears"
+          ],
+          "components": [
+            "FileActionsToolbar",
+            "useFileSharing"
+          ]
+        },
+        "qr-code-generation": {
+          "description": "Generate QR codes for file sharing",
+          "userFlow": [
+            "User selects files and clicks QR code button",
+            "useFileSharing.generateAndShowQRCode called",
+            "QR code generated with file access URLs",
+            "QrCodeDialog displays the QR code"
+          ],
+          "components": [
+            "QrCodeDialog",
+            "useFileSharing",
+            "FileActionsToolbar"
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "FileManagerSection": {
+      "path": "client/src/components/FileManagerSection.tsx",
+      "description": "Main file manager container component",
+      "dependencies": ["useFileApi", "useFileManagerState", "useFileSharing"]
+    },
+    "FileList": {
+      "path": "client/src/components/filemanager/FileList.tsx",
+      "description": "File display component supporting list and grid views"
+    },
+    "FileActionsToolbar": {
+      "path": "client/src/components/filemanager/FileActionsToolbar.tsx",
+      "description": "Toolbar with file operation buttons (upload, delete, share, QR, view toggle)"
+    },
+    "FileUploadDialog": {
+      "path": "client/src/components/filemanager/FileUploadDialog.tsx",
+      "description": "Modal dialog for file upload with category selection"
+    },
+    "QrCodeDialog": {
+      "path": "client/src/components/filemanager/QrCodeDialog.tsx",
+      "description": "Modal dialog displaying QR codes for file sharing"
+    }
+  },
+  "apiEndpoints": {
+    "/api/upload": {
+      "method": "POST",
+      "description": "Upload file with optional category assignment and Go acceleration",
+      "readsFrom": ["fileCategories"],
+      "modifies": ["files"],
+      "implementation": "server/routes.ts"
+    },
+    "/api/files": {
+      "method": "GET",
+      "description": "Retrieve user's files with category information",
+      "readsFrom": ["files", "fileCategories"],
+      "implementation": "server/routes.ts"
+    },
+    "/api/files/delete": {
+      "method": "POST",
+      "description": "Bulk delete selected files",
+      "modifies": ["files"],
+      "implementation": "server/routes.ts"
+    }
+  },
+  "database": {
+    "files": {
+      "description": "Main files table storing file metadata",
+      "key_fields": ["id", "userId", "fileName", "filePath", "categoryId", "isDeleted"]
+    }
+  }
+}

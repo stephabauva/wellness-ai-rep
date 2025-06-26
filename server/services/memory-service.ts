@@ -16,6 +16,7 @@ import {
 import { eq, desc, and, sql, gt } from 'drizzle-orm';
 import { cacheService } from './cache-service';
 import { goMemoryService } from './go-memory-service';
+import { logger } from './logger-service';
 
 interface MemoryDetectionResult {
   shouldRemember: boolean;
@@ -78,11 +79,11 @@ class MemoryService {
 
   // Tier 2 C: Initialize background processor
   private initializeBackgroundProcessor(): void {
-    console.log('[MemoryService] Initializing background processor with 5-second intervals');
+    logger.debug('Initializing background processor', { service: 'memory' });
     
     setInterval(() => {
-      if (this.backgroundQueue.tasks.length > 0) {
-        console.log(`[MemoryService] Background processor checking queue: ${this.backgroundQueue.tasks.length} tasks pending`);
+      if (this.backgroundQueue.tasks.length > 10) {
+        logger.warn(`Background queue growing large: ${this.backgroundQueue.tasks.length} tasks`, { service: 'memory' });
       }
       this.processBackgroundQueue();
     }, 5000); // Process queue every 5 seconds
@@ -197,23 +198,18 @@ class MemoryService {
       
       // Force immediate cache cleanup to ensure fresh data
       this.forceCacheCleanup();
-      console.log(`[MemoryService] Cache forcefully invalidated for immediate UI refresh`);
+      logger.debug('Cache forcefully invalidated for immediate UI refresh', { service: 'memory' });
       
     } catch (error) {
-      console.error('[MemoryService] ChatGPT deduplication processing failed, falling back to standard processing:', error);
+      logger.error('ChatGPT deduplication processing failed, falling back to standard processing', error as Error, { service: 'memory' });
       
       // Fallback to original memory processing if deduplication fails
       try {
         const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
-        console.log(`[MemoryService] Fallback memory detection result:`, { 
-          shouldRemember: autoDetection.shouldRemember, 
-          category: autoDetection.category, 
-          importance: autoDetection.importance 
-        });
         
         if (autoDetection.shouldRemember) {
           // Validate conversationId format - must be valid UUID or null
-          let validConversationId = null;
+          let validConversationId: string | undefined = undefined;
           if (conversationId && typeof conversationId === 'string') {
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             if (uuidRegex.test(conversationId)) {
@@ -230,13 +226,13 @@ class MemoryService {
           });
           
           if (savedMemory) {
-            console.log(`[MemoryService] Fallback - Successfully saved memory: "${autoDetection.extractedInfo}" (ID: ${savedMemory.id})`);
+            logger.debug(`Fallback memory saved: ${savedMemory.id}`, { service: 'memory' });
             this.invalidateUserMemoryCache(userId, 100);
             this.forceCacheCleanup();
           }
         }
       } catch (fallbackError) {
-        console.error('[MemoryService] Both ChatGPT and fallback memory processing failed:', fallbackError);
+        logger.error('Both ChatGPT and fallback memory processing failed', fallbackError as Error, { service: 'memory' });
       }
     }
   }
@@ -284,7 +280,7 @@ class MemoryService {
     const timer = setTimeout(() => {
       this.userMemoryCache.delete(key);
       this.updateTimers.delete(key);
-      console.log(`[MemoryService] Invalidated memory cache for user ${userId}`);
+      logger.debug(`Invalidated memory cache for user ${userId}`, { service: 'memory' });
     }, delay);
     
     this.updateTimers.set(key, timer);

@@ -34,7 +34,11 @@ To maintain clarity and prevent maps from becoming unwieldy, the following quant
 
 Adherence to the following JSON schema is mandatory.
 
+**Table of Contents Requirement:** All system map files MUST include a `tableOfContents` object at the top of the file structure, except for `root.map.json`. The table of contents provides a quick overview of feature groups and their associated features, enabling efficient navigation and understanding of the map's structure.
+
 ### 3.1. `root.map.json` (Hybrid Federated)
+
+The root map is the only file that does NOT require a table of contents, as it serves as the master navigation index.
 
 ```json
 {
@@ -57,6 +61,9 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
 
 ```json
 {
+  "tableOfContents": {
+    "[groupName]": ["feature-name-1", "feature-name-2", "feature-name-3"]
+  },
   "lastUpdated": "String (ISO 8601 timestamp)",
   "dependencies": ["String (list of other domains)"],
   "featureGroups": {

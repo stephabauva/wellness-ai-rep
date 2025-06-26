@@ -1136,7 +1136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health-consent/visibility", async (req, res) => {
     try {
       const user = await storage.getUser(1);
-      if (!user || !user.preferences?.healthVisibilitySettings) {
+      if (!user || !(user.preferences as any)?.healthVisibilitySettings) { // Cast to any
         const defaultVisibility = {
           visible_categories: ['Activity', 'Cardiovascular', 'Sleep'],
           hidden_categories: ['Medical', 'Reproductive Health', 'Integration'],

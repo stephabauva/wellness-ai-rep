@@ -146,7 +146,7 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
     return availability[provider];
   };
 
-  const getButtonVariant = () => {
+  const getButtonVariant = (): "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined => {
     return "outline";
   };
 

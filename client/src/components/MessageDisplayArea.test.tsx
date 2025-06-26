@@ -1,7 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MessageDisplayArea, DisplayMessage } from './MessageDisplayArea'; // Adjust path as needed
+import { MessageDisplayArea } from './MessageDisplayArea'; // Adjust path as needed
 import { ChatMessage } from '@/components/ui/chat-message'; // The actual child component
+
+// Define DisplayMessage type locally for the test
+type DisplayMessage = {
+  id: string;
+  content: string;
+  isUserMessage: boolean;
+  timestamp: Date;
+  attachments?: { name: string; type: string; url?: string }[];
+};
 
 // Mock ChatMessage to verify props and simplify testing
 vi.mock('@/components/ui/chat-message', () => ({
@@ -10,7 +19,7 @@ vi.mock('@/components/ui/chat-message', () => ({
       <span data-testid="message-content">{message}</span>
       <span data-testid="message-isUser">{isUser.toString()}</span>
       <span data-testid="message-timestamp">{timestamp.toISOString()}</span>
-      {attachments && attachments.map((att: any, idx: number) => (
+      {attachments && attachments.map((att: { name: string; type: string; url?: string }, idx: number) => (
         <div key={idx} data-testid="message-attachment">
           <span>{att.name}</span>
           <span>{att.type}</span>

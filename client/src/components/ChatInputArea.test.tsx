@@ -40,6 +40,12 @@ describe('ChatInputArea', () => {
       sendMessageMutation: { isPending: false } as any,
       attachedFiles: [],
       clearAttachedFiles: vi.fn(), // Not directly used by ChatInputArea UI but part of the type
+      // Add missing properties
+      streamingMessage: { id: 'test-id', content: '', isComplete: false, isStreaming: false },
+      isConnected: false,
+      isThinking: false,
+      stopStreaming: vi.fn(),
+      pendingUserMessage: null,
     };
     mockSettings = {
       transcriptionProvider: 'webspeech',

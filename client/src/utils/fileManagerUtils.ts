@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, FileText, Stethoscope, Activity, Folder, Heart, Apple, Dumbbell, FileImage, Camera, Users, Settings, Database } from 'lucide-react';
-import { FileItem, FileCategory } from '@/types/fileManager';
+import { FileItem, FileCategoryGroup } from '@/types/fileManager'; // Use FileCategoryGroup
 
 export const getFileIcon = (fileType: string, fileName: string): React.ReactNode => {
   const lowerFileType = fileType.toLowerCase();
@@ -56,7 +56,7 @@ export const getRetentionBadgeColor = (category?: string): string => {
   }
 };
 
-export const categorizeFiles = (files: FileItem[]): FileCategory[] => {
+export const categorizeFiles = (files: FileItem[]): FileCategoryGroup[] => { // Update return type
   const medical = files.filter(f => {
     const fileName = f.fileName.toLowerCase();
     const fileType = f.fileType.toLowerCase();

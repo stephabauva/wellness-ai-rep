@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 // Import hooks
-import { useUserSettings, UserSettingsFormValues } from "@/hooks/useUserSettings";
+import { useUserSettings, UserSettingsFormValues, settingsFormSchema as userSettingsFormSchema } from "@/hooks/useUserSettings";
 import { useRetentionSettings, RetentionSettingsFormValues } from "@/hooks/useRetentionSettings";
 import { useAiModels } from "@/hooks/useAiModels";
 
@@ -31,32 +31,8 @@ import { PerformanceSettings } from "./settings/PerformanceSettings";
 import { HealthDataConsentSettings } from "./settings/HealthDataConsentSettings";
 
 // Define the combined Zod schema for the entire settings form
-// This should be compatible with UserSettingsFormValues and RetentionSettingsFormValues
-const settingsSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  primaryGoal: z.string(),
-  coachStyle: z.string(),
-  reminderFrequency: z.string(),
-  focusAreas: z.array(z.string()).min(1, { message: "Select at least one area of focus." }),
-  darkMode: z.boolean(),
-  pushNotifications: z.boolean(),
-  emailSummaries: z.boolean(),
-  dataSharing: z.boolean(),
-  aiProvider: z.enum(["openai", "google"]),
-  aiModel: z.string(),
-  transcriptionProvider: z.enum(["webspeech", "openai", "google"]),
-  preferredLanguage: z.string(),
-  automaticModelSelection: z.boolean(),
-  memoryDetectionProvider: z.enum(["google", "openai", "none"]),
-  memoryDetectionModel: z.string(),
-  highValueRetentionDays: z.number(),
-  mediumValueRetentionDays: z.number(),
-  lowValueRetentionDays: z.number(),
-});
-
 // This type will be used by the form
-export type CombinedSettingsFormValues = z.infer<typeof settingsSchema>;
+// export type CombinedSettingsFormValues = z.infer<typeof settingsSchema>; // Replaced by UserSettingsFormValues
 
 // Define settings sections with icons
 const settingsSections = [
@@ -82,9 +58,10 @@ const SettingsSection: React.FC = () => {
   const [enablePagination, setEnablePagination] = React.useState(false);
   const [enableWebWorkers, setEnableWebWorkers] = React.useState(false);
 
-  const form = useForm<CombinedSettingsFormValues>({
-    resolver: zodResolver(settingsSchema),
+  const form = useForm<UserSettingsFormValues>({ // Use UserSettingsFormValues
+    resolver: zodResolver(userSettingsFormSchema), // Use imported schema
     defaultValues: {
+      username: "", // Add username default
       name: "",
       email: "",
       primaryGoal: "weight-loss",
@@ -111,6 +88,7 @@ const SettingsSection: React.FC = () => {
   useEffect(() => {
     if (userSettings && retentionSettings) {
       form.reset({
+        username: (userSettings as any).username || "",
         name: userSettings.name || "",
         email: userSettings.email || "",
         primaryGoal: userSettings.primaryGoal || "weight-loss",
@@ -135,36 +113,19 @@ const SettingsSection: React.FC = () => {
     }
   }, [userSettings, retentionSettings, form.reset]);
   
-  const onSubmit = (data: CombinedSettingsFormValues) => {
+  const onSubmit = (data: UserSettingsFormValues) => { // Use UserSettingsFormValues
     // Separate data for different update functions if necessary
-    const userSettingsData: Partial<UserSettingsFormValues> = {
-      name: data.name,
-      email: data.email,
-      primaryGoal: data.primaryGoal,
-      coachStyle: data.coachStyle,
-      reminderFrequency: data.reminderFrequency,
-      focusAreas: data.focusAreas,
-      darkMode: data.darkMode,
-      pushNotifications: data.pushNotifications,
-      emailSummaries: data.emailSummaries,
-      dataSharing: data.dataSharing,
-      aiProvider: data.aiProvider,
-      aiModel: data.aiModel,
-      transcriptionProvider: data.transcriptionProvider,
-      preferredLanguage: data.preferredLanguage,
-      automaticModelSelection: data.automaticModelSelection,
-      memoryDetectionProvider: data.memoryDetectionProvider,
-      memoryDetectionModel: data.memoryDetectionModel,
-    };
-    updateUserSettings(userSettingsData);
+    const { highValueRetentionDays, mediumValueRetentionDays, lowValueRetentionDays, ...userSettingsSubmitData } = data;
+
+    updateUserSettings(userSettingsSubmitData);
 
     const retentionData: RetentionSettingsFormValues = {
-      highValueRetentionDays: data.highValueRetentionDays,
-      mediumValueRetentionDays: data.mediumValueRetentionDays,
-      lowValueRetentionDays: data.lowValueRetentionDays,
+      highValueRetentionDays: highValueRetentionDays ?? -1, // Provide default value
+      mediumValueRetentionDays: mediumValueRetentionDays ?? 90, // Provide default value
+      lowValueRetentionDays: lowValueRetentionDays ?? 30, // Provide default value
     };
     // Only update retention if values are present (could be refined)
-    if (data.highValueRetentionDays !== undefined) {
+    if (highValueRetentionDays !== undefined) { // Check specific property
         updateRetentionSettings(retentionData);
     }
     
@@ -195,10 +156,16 @@ const SettingsSection: React.FC = () => {
       case 'health-consent':
         return (
           <HealthDataConsentSettings
-            settings={userSettings}
+            settings={userSettings ? { ...userSettings, username: userSettings.username || "" } : undefined}
             onSettingsUpdate={(newSettings) => {
               // Update settings via the existing handler
-              const data = { ...form.getValues(), ...newSettings };
+              const data = {
+                ...form.getValues(),
+                ...newSettings,
+                aiProvider: newSettings.aiProvider as "openai" | "google", // Cast aiProvider
+                transcriptionProvider: newSettings.transcriptionProvider as "webspeech" | "openai" | "google", // Cast transcriptionProvider
+                memoryDetectionProvider: newSettings.memoryDetectionProvider as "openai" | "google" | "none", // Cast memoryDetectionProvider
+              };
               onSubmit(data);
             }}
             isLoading={isUpdatingSettings}

@@ -211,8 +211,12 @@ export class HealthKitProvider extends NativeHealthProvider {
     try {
       // Use the actual HealthKit plugin for iOS
       if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-        const { HealthKitManager } = Capacitor.Plugins;
-        return await (HealthKitManager as any)[method](args);
+        const HealthKitManager = (window as any).Capacitor?.Plugins?.HealthKitManager;
+        if (HealthKitManager) {
+          return await HealthKitManager[method](args);
+        } else {
+          console.warn('[HealthKit] HealthKitManager plugin not found on Capacitor.Plugins');
+        }
       }
       
       // Fallback for development/web

@@ -5,7 +5,8 @@ import { z } from "zod"; // For FormValues type, assuming it's defined here or i
 
 // Define the Zod schema for settings form values if not already centralized
 // This should match or be compatible with the schema in SettingsSection.tsx
-const settingsFormSchema = z.object({
+export const settingsFormSchema = z.object({ // Export this schema
+  username: z.string().optional(), // Add username here
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   primaryGoal: z.string(),

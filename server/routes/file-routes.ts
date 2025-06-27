@@ -13,13 +13,108 @@ import {
   statSync,
   unlinkSync,
   fs,
-  nanoid
+  nanoid,
+  multer,
+  z
 } from "./shared-dependencies.js";
 import { startGoAccelerationService } from "./shared-utils.js";
 
 const FIXED_USER_ID = 1;
 
+// File upload configuration
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'image/', 'video/', 'audio/', 'application/pdf', 'text/',
+      'application/json', 'application/xml', 'text/xml', 'text/csv',
+      'application/msword', 'application/vnd.openxmlformats-officedocument'
+    ];
+    const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
+    cb(null, isAllowed);
+  }
+});
+
+const categorySchema = z.object({
+  categoryId: z.string().optional()
+});
+
 export async function registerFileRoutes(app: Express): Promise<void> {
+  // File upload endpoint - CRITICAL: This was missing from routes modularization
+  app.post('/api/upload', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { categoryId } = categorySchema.parse(req.body);
+      const file = req.file;
+      const originalName = file.originalname;
+      const fileName = `${nanoid()}-${originalName}`;
+      const filePath = join(process.cwd(), 'uploads', fileName);
+
+      // Move file to final location
+      fs.renameSync(file.path, filePath);
+
+      // Auto-start Go service for large files
+      if (file.size > 5 * 1024 * 1024) {
+        try {
+          await startGoAccelerationService();
+        } catch (error) {
+          console.log('Go service auto-start failed, continuing with standard processing');
+        }
+      }
+
+      // Determine retention policy
+      const isHealthData = /\.(xml|json|csv)$/i.test(originalName) || 
+                          /health|medical|export/i.test(originalName);
+      const retentionPolicy = isHealthData ? 'high' : 'medium';
+      const retentionDays = isHealthData ? -1 : 90;
+
+      // Save to database
+      const fileRecord = await db.insert(files).values({
+        userId: FIXED_USER_ID,
+        fileName: fileName,
+        displayName: originalName,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        filePath: filePath,
+        retentionPolicy: retentionPolicy,
+        retentionDays: retentionDays,
+        categoryId: categoryId || null,
+        uploadSource: 'chat',
+        metadata: {
+          retentionInfo: {
+            category: retentionPolicy,
+            retentionDays: retentionDays,
+            reason: isHealthData ? 'Medical data' : 'General file'
+          }
+        }
+      }).returning();
+
+      res.json({
+        file: {
+          id: fileName,
+          fileName: fileName,
+          displayName: originalName,
+          originalName: originalName,
+          fileType: file.mimetype,
+          fileSize: file.size,
+          url: `/uploads/${fileName}`,
+          retentionInfo: {
+            category: retentionPolicy,
+            retentionDays: retentionDays,
+            reason: isHealthData ? 'Medical data' : 'General file'
+          }
+        }
+      });
+    } catch (error) {
+      console.error('File upload error:', error);
+      res.status(500).json({ error: 'Failed to upload file' });
+    }
+  });
+
   // Get user files
   app.get('/api/files', async (req, res) => {
     try {

@@ -40,9 +40,11 @@ export const SleepQualityChart: React.FC<SleepQualityChartProps> = ({ data }) =>
         <CardDescription>Deep, light, and REM sleep patterns</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="chart-responsive h-[400px] min-h-[300px] min-w-[300px]">
-          <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
+        <div style={{ width: '100%', height: '400px', minWidth: '300px', minHeight: '300px' }}>
+          <ResponsiveContainer width={300} height={400} minWidth={300} minHeight={400}>
             <BarChart
+              width={300}
+              height={400}
               data={chartData}
               margin={{ top: 5, right: 20, left: -20, bottom: 5 }} // Adjusted margins
               stackOffset="expand" // This creates a 100% stacked bar chart effect

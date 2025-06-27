@@ -15,7 +15,7 @@ vi.mock('openai', () => ({
     chat: {
       completions: {
         create: vi.fn().mockResolvedValue({
-          choices: [{ message: { content: 'mocked response' } }]
+          choices: [{ message: { content: JSON.stringify({ worthy: true, category: 'preference', importance: 'medium' }) } }]
         })
       }
     },

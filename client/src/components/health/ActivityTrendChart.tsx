@@ -51,30 +51,35 @@ export const ActivityTrendChart: React.FC<ActivityTrendChartProps> = ({ data }) 
         <CardDescription>Steps and active minutes comparison</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="chart-responsive h-[400px] min-h-[300px] min-w-[300px]"> {/* Fixed chart sizing */}
-          <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
-            <BarChart
-              data={chartData}
-              margin={{ top: 5, right: 20, left: -10, bottom: 5 }} // Adjusted margins
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={12} />
-              <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" axisLine={false} tickLine={false} fontSize={12} />
-              <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--secondary-foreground))" axisLine={false} tickLine={false} fontSize={12} />
-              <Tooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
-                contentStyle={{
-                    backgroundColor: 'hsl(var(--background))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '0.5rem',
-                }}
-              />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.8rem', paddingTop: '10px' }} />
-              <Bar yAxisId="left" dataKey="steps" name="Steps" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={10}/>
-              <Bar yAxisId="right" dataKey="active" name="Active Minutes" fill="hsl(var(--secondary-foreground))" radius={[4, 4, 0, 0]} barSize={10} />
-              {/* Removed 'calories' Bar for simplicity to match original two Y-axes, can be added back if needed */}
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="chart-responsive h-[400px] min-h-[300px] min-w-[300px]">
+          {isChartReady ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" axisLine={false} tickLine={false} fontSize={12} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--secondary-foreground))" axisLine={false} tickLine={false} fontSize={12} />
+                <Tooltip
+                  cursor={{ fill: 'hsl(var(--muted))' }}
+                  contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      borderColor: 'hsl(var(--border))',
+                      borderRadius: '0.5rem',
+                  }}
+                />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.8rem', paddingTop: '10px' }} />
+                <Bar yAxisId="left" dataKey="steps" name="Steps" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={10}/>
+                <Bar yAxisId="right" dataKey="active" name="Active Minutes" fill="hsl(var(--secondary-foreground))" radius={[4, 4, 0, 0]} barSize={10} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-muted-foreground">Loading chart...</div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

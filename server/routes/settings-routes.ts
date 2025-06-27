@@ -111,11 +111,30 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
       const reportData = {
         user: {
           name: user.name || 'Health Data User',
-          email: user.email || 'user@example.com'
+          email: user.email || 'user@example.com',
+          goalType: user.preferences?.focusAreas?.[0] || 'general'
         },
-        healthData,
-        generatedAt: new Date(),
-        reportPeriod: range
+        date: new Date().toISOString(),
+        summary: {
+          title: `Health Report - ${range}`,
+          content: `Health summary for ${user.name || 'user'} covering ${range} period with ${healthData.length} data points.`
+        },
+        stats: {
+          steps: healthData.filter(d => d.dataType === 'steps').length > 0 
+            ? parseInt(healthData.filter(d => d.dataType === 'steps')[0].value) 
+            : 0,
+          sleep: healthData.filter(d => d.dataType === 'sleep').length > 0 
+            ? `${healthData.filter(d => d.dataType === 'sleep')[0].value}h` 
+            : 'No data',
+          heartRate: healthData.filter(d => d.dataType === 'heartRate').length > 0 
+            ? parseInt(healthData.filter(d => d.dataType === 'heartRate')[0].value) 
+            : 70,
+          weight: healthData.filter(d => d.dataType === 'weight').length > 0 
+            ? parseInt(healthData.filter(d => d.dataType === 'weight')[0].value) 
+            : 0
+        },
+        trends: [],
+        recommendations: ['Stay active', 'Maintain consistent sleep schedule', 'Monitor key health metrics']
       };
 
       const pdfBuffer = await generatePDFReport(reportData);

@@ -80,6 +80,34 @@ export class MemoryFeatureFlags {
            this.shouldEnableEnhancedPrompts(userId) &&
            this.isRealTimeDeduplicationEnabled();
   }
+
+  /**
+   * Get all feature flags and their current state
+   */
+  getAllFlags(): Record<string, any> {
+    return {
+      features: { ...this.features },
+      rolloutPercentages: { ...this.rolloutPercentages },
+      environment: {
+        ENABLE_CHATGPT_MEMORY: process.env.ENABLE_CHATGPT_MEMORY,
+        ENABLE_REAL_TIME_DEDUP: process.env.ENABLE_REAL_TIME_DEDUP,
+        ENABLE_ENHANCED_PROMPTS: process.env.ENABLE_ENHANCED_PROMPTS,
+        ENABLE_BATCH_PROCESSING: process.env.ENABLE_BATCH_PROCESSING,
+        ENABLE_CIRCUIT_BREAKERS: process.env.ENABLE_CIRCUIT_BREAKERS
+      }
+    };
+  }
+
+  /**
+   * Set a feature flag (for testing/admin purposes)
+   */
+  setFlag(flagName: string, value: boolean): boolean {
+    if (flagName in this.features) {
+      (this.features as any)[flagName] = value;
+      return true;
+    }
+    return false;
+  }
 }
 
 export const memoryFeatureFlags = new MemoryFeatureFlags();

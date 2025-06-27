@@ -5,7 +5,7 @@ import { z } from "zod";
 import { 
   Express, storage, aiService, transcriptionService, db, eq, desc,
   conversations, conversationMessages, files, attachmentRetentionService,
-  multer, join
+  multer, join, existsSync
 } from "./shared-dependencies.js";
 
 const attachmentSchema = z.object({
@@ -42,9 +42,8 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
   const FIXED_USER_ID = 1;
 
   app.use('/uploads', (req, res, next) => {
-    const fs = require('fs');
     const filePath = join(process.cwd(), 'uploads', req.path);
-    fs.existsSync(filePath) ? res.sendFile(filePath) : res.status(404).send('File not found');
+    existsSync(filePath) ? res.sendFile(filePath) : res.status(404).send('File not found');
   });
 
   app.get("/api/messages", async (req, res) => {

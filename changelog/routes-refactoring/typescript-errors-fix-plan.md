@@ -248,3 +248,56 @@ This plan provides a **systematic, low-risk approach** to resolving all 52 TypeS
 4. **Minimal impact** - only touching files with actual errors
 
 The fixes are **targeted, safe, and reversible**, ensuring the application remains stable throughout the process.
+# TypeScript Errors Fix Plan - Updated
+
+## Current Status: 5 Errors in 2 Files
+
+### 1. AI Service Error (1 error)
+**File**: `server/services/ai-service.ts:282`
+**Error**: `Expected 3 arguments, but got 4`
+
+**Analysis**: 
+- Function call has incorrect number of arguments
+- Likely `memoryService.getContextualMemories()` call signature mismatch
+
+**Fix**: 
+- Check function signature and remove extra argument
+- Ensure parameter alignment matches interface
+
+### 2. Health Data Parser Errors (4 errors)
+**File**: `server/services/health-data-parser.ts:834,882`
+**Error**: `Type 'undefined' cannot be used as an index type`
+
+**Analysis**:
+- `categorizeDataType()` method can return `undefined`
+- TypeScript correctly flags unsafe object key access
+- Lines 834 and 882 both have the same pattern: `categories[category]`
+
+**Fix Strategy**:
+- Add null checks before accessing categories object
+- Ensure `categorizeDataType()` always returns a valid category
+- Use defensive programming with fallback values
+
+### Implementation Plan:
+
+1. **AI Service Fix** (Low Risk):
+   - Review function call on line 282
+   - Remove extra argument or update function signature
+   - Test memory retrieval functionality
+
+2. **Health Data Parser Fix** (Low Risk):
+   - Add type guards for category access
+   - Ensure categorizeDataType never returns undefined
+   - Add fallback category handling
+
+### Success Criteria:
+- All 5 TypeScript errors resolved
+- No new errors introduced
+- Existing functionality preserved
+- Type safety improved
+
+### Testing Required:
+- TypeScript compilation passes
+- Memory service integration works
+- Health data parsing functions correctly
+- No runtime errors in affected areas

@@ -154,7 +154,9 @@ export default function MemorySection() {
     queryFn: async () => {
       const response = await fetch(`/api/memories`);
       if (!response.ok) throw new Error("Failed to fetch memories");
-      return response.json();
+      const data = await response.json();
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     },
     enabled: false, // Never automatically fetch
     staleTime: 10 * 60 * 1000, // 10 minutes cache once loaded
@@ -167,11 +169,13 @@ export default function MemorySection() {
     queryKey: ["memories", selectedCategory],
     queryFn: async () => {
       if (selectedCategory === "all") {
-        return allMemories;
+        return Array.isArray(allMemories) ? allMemories : [];
       }
       const response = await fetch(`/api/memories?category=${selectedCategory}`);
       if (!response.ok) throw new Error("Failed to fetch filtered memories");
-      return response.json();
+      const data = await response.json();
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     },
     enabled: memoriesLoaded, // Only enabled after memories are loaded
     staleTime: 10 * 60 * 1000, // 10 minutes cache

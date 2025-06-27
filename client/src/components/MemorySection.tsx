@@ -164,25 +164,6 @@ export default function MemorySection() {
     refetchInterval: false, // No polling ever
   });
 
-  // Filtered memories query - only enabled when memories are loaded
-  const { data: filteredMemories = [], isLoading: filteredLoading, refetch: refetchFiltered } = useQuery({
-    queryKey: ["memories", selectedCategory],
-    queryFn: async () => {
-      if (selectedCategory === "all") {
-        return Array.isArray(allMemories) ? allMemories : [];
-      }
-      const response = await fetch(`/api/memories?category=${selectedCategory}`);
-      if (!response.ok) throw new Error("Failed to fetch filtered memories");
-      const data = await response.json();
-      // Ensure we always return an array
-      return Array.isArray(data) ? data : [];
-    },
-    enabled: memoriesLoaded, // Only enabled after memories are loaded
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
-    refetchOnWindowFocus: false,
-    refetchInterval: false, // No polling
-  });
-
   // Manual load function
   const handleLoadMemories = async () => {
     setShowLoadButton(false);
@@ -190,7 +171,12 @@ export default function MemorySection() {
     setMemoriesLoaded(true);
   };
 
-  const memories = memoriesLoaded ? (selectedCategory === "all" ? allMemories : filteredMemories) : [];
+  // Client-side filtering of memories based on selected category
+  const memories = memoriesLoaded ? 
+    (selectedCategory === "all" ? 
+      allMemories : 
+      allMemories.filter((memory: MemoryEntry) => memory.category === selectedCategory)
+    ) : [];
   const isLoading = overviewLoading || (memoriesLoaded && (allMemoriesLoading || filteredLoading));
 
   // Manual memory creation mutation
@@ -579,7 +565,7 @@ export default function MemorySection() {
                       ) : (
                         <>
                           <Eye className="h-4 w-4 mr-2" />
-                          Show My Stored Memories ({memoryOverview.total})
+                          Show My Stored Memories
                         </>
                       )}
                     </Button>

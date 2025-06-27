@@ -7,6 +7,7 @@ import {
   files,
   fileCategories,
   categoryService,
+  insertFileSchema,
   eq,
   join,
   existsSync,
@@ -72,14 +73,14 @@ export async function registerFileRoutes(app: Express): Promise<void> {
       const retentionPolicy = isHealthData ? 'high' : 'medium';
       const retentionDays = isHealthData ? -1 : 90;
 
-      // Save to database
-      const fileRecord = await db.insert(files).values({
+      // Create file data with proper validation
+      const fileData = insertFileSchema.parse({
         userId: FIXED_USER_ID,
         fileName: fileName,
         displayName: originalName,
+        filePath: filePath,
         fileType: file.mimetype,
         fileSize: file.size,
-        filePath: filePath,
         retentionPolicy: retentionPolicy,
         retentionDays: retentionDays,
         categoryId: categoryId || null,
@@ -91,7 +92,10 @@ export async function registerFileRoutes(app: Express): Promise<void> {
             reason: isHealthData ? 'Medical data' : 'General file'
           }
         }
-      }).returning();
+      });
+
+      // Save to database
+      const fileRecord = await db.insert(files).values(fileData).returning();
 
       res.json({
         file: {

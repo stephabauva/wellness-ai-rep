@@ -57,5 +57,6 @@ All changes must be:
 - Local, safe, and reversible
 - Fully explained
 - Respecting Replit’s tooling model
+- Follow typescript best code practice, the plan should require regular 'npm run check' to fix type errors.
 
 Stability is sacred. Never assume it's safe. **Prove it.**

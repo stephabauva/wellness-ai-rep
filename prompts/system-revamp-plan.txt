@@ -173,6 +173,7 @@ Then:
 
 ### 7 .Other
 Do not use sample data / mock data, unless it is for simple rapid testing purposes.
+Follow typescript best code practice, the plan should require regular 'npm run check' to fix type errors.
 ---
 
 ### ✅ Final Replit Dev Environment Stability Checklist

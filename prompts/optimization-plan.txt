@@ -48,5 +48,7 @@ You MUST provide:
 8. Ensure that are no unused pieces of code
 9. Ensure there are no conflicts between pieces of code.
 
+- Follow typescript best code practice, the plan should require regular 'npm run check' to fix type errors.
+
 The app is in a stable state. Do NOT break it.  
 **Stability is sacred. Respect I1 and I2 at all times.**

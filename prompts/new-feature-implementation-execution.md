@@ -55,5 +55,6 @@ All changes must be:
 - Local, safe, and reversible
 - Fully explained
 - Respecting Replit’s tooling model
+- Follow typescript best code practice, regularly do a 'npm run check' and fix type errors.
 
 Stability is sacred. Never assume it's safe. **Prove it.**

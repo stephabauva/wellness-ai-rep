@@ -1,39 +1,14 @@
+// ARCHIVED: Monolithic routes file successfully modularized into 6 focused modules
+// This file is preserved for reference but no longer used in production
+// Active routes are now in ./routes/ directory with proper modular structure
+//
+// Migration completed: June 27, 2025
+// Original size: 3,848 lines → Modular size: 1,599 lines across 6 modules
+// Modules: chat-routes.ts, health-routes.ts, memory-routes.ts, file-routes.ts, settings-routes.ts, monitoring-routes.ts
+//
+// To use this legacy version, set environment variable: USE_MONOLITHIC_ROUTES=true
+
 import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { aiService } from "./services/ai-service";
-import { memoryEnhancedAIService } from "./services/memory-enhanced-ai-service";
-import { memoryService } from "./services/memory-service";
-import { enhancedMemoryService } from "./services/enhanced-memory-service";
-import { advancedMemoryAIService } from './services/advanced-memory-ai-service';
-import { memoryRelationshipEngine } from './services/memory-relationship-engine';
-import { performanceMemoryCore } from './services/performance-memory-core';
-import { generatePDFReport } from "./services/pdf-service";
-import { transcriptionService } from "./services/transcription-service";
-import { cacheService } from "./services/cache-service";
-import multer from "multer";
-import { z } from "zod";
-import { nanoid } from "nanoid";
-import { db } from "./db";
-import { conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog, users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema } from "@shared/schema";
-import { categoryService } from "./services/category-service";
-import { eq, desc, and, or } from "drizzle-orm";
-import { join } from 'path';
-import { existsSync } from 'fs';
-import path from 'path';
-import fs from 'fs';
-import { attachmentRetentionService } from "./services/attachment-retention-service";
-import { goFileService } from "./services/go-file-service";
-import { statSync, unlinkSync } from 'fs';
-import { HealthDataParser } from "./services/health-data-parser";
-import { HealthDataDeduplicationService } from "./services/health-data-deduplication";
-import { insertHealthDataSchema, type UserPreferences } from "@shared/schema";
-import { spawn } from 'child_process';
-import { enhancedBackgroundProcessor } from "./services/enhanced-background-processor";
-import { memoryFeatureFlags } from "./services/memory-feature-flags";
-import { memoryPerformanceMonitor } from "./services/memory-performance-monitor";
-import { ChatGPTMemoryEnhancement } from "./services/chatgpt-memory-enhancement";
-import { healthConsentService } from "./services/health-consent-service";
 
 
 

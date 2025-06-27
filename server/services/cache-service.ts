@@ -444,6 +444,18 @@ export class IntelligentCacheService {
     return stats;
   }
 
+  // Clear user-specific cache data
+  clearUserCache(userId: number): void {
+    this.invalidateUserData(userId);
+  }
+
+  // Clear all caches
+  clearAllCaches(): void {
+    this.caches.forEach(cache => cache.clear());
+    this.hitCounts.clear();
+    this.missCounts.clear();
+  }
+
   // Preemptive cache warming
   async warmCache(userId: number): Promise<void> {
     try {

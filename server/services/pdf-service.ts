@@ -38,7 +38,26 @@ interface HealthReportData {
   recommendations: string[];
 }
 
-export async function generatePDFReport(user: User, healthData: HealthData[]): Promise<HealthReportData> {
+export async function generatePDFReport(reportData: HealthReportData): Promise<Buffer> {
+  // This is a simplified implementation that returns a mock PDF buffer
+  // In a production environment, you would use a library like jsPDF or puppeteer
+  const pdfContent = `Health Report for ${reportData.user.name}
+Generated: ${reportData.date}
+Goal Type: ${reportData.user.goalType}
+
+Summary: ${reportData.summary.content}
+
+Statistics:
+- Steps: ${reportData.stats.steps}
+- Sleep: ${reportData.stats.sleep}
+- Heart Rate: ${reportData.stats.heartRate} BPM
+- Weight: ${reportData.stats.weight} lbs
+`;
+  
+  return Buffer.from(pdfContent, 'utf-8');
+}
+
+async function generateHealthReportData(user: User, healthData: HealthData[]): Promise<HealthReportData> {
   // Extract relevant data from the health data
   const today = new Date();
   const stepsData = healthData.filter(data => data.dataType === "steps");

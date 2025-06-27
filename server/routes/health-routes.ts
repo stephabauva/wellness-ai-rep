@@ -146,21 +146,21 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
         await startGoAccelerationService();
       }
 
-      const parser = new HealthDataParser();
-      const { healthData, metadata, error } = await parser.parseHealthDataFile(
-        filePath, 
+      const fileContent = readFileSync(filePath);
+      const parseResult = await HealthDataParser.parseFile(
+        fileContent, 
         req.file.originalname
       );
 
-      if (error) {
-        return res.status(400).json({ message: error });
+      if (!parseResult.success) {
+        return res.status(400).json({ message: parseResult.errors?.join(', ') || 'Parsing failed' });
       }
 
       res.json({
         success: true,
-        totalRecords: healthData.length,
-        sampleData: healthData.slice(0, 10),
-        metadata,
+        totalRecords: parseResult.data?.length || 0,
+        sampleData: parseResult.data?.slice(0, 10) || [],
+        metadata: parseResult.metadata || {},
         fileInfo: {
           originalName: req.file.originalname,
           size: fileSize,
@@ -188,14 +188,14 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
         await startGoAccelerationService();
       }
 
-      const parser = new HealthDataParser();
-      const { healthData, metadata, error } = await parser.parseHealthDataFile(
-        filePath, 
+      const fileContent = readFileSync(filePath);
+      const parseResult = await HealthDataParser.parseFile(
+        fileContent, 
         req.file.originalname
       );
 
-      if (error) {
-        return res.status(400).json({ message: error });
+      if (!parseResult.success) {
+        return res.status(400).json({ message: parseResult.errors?.join(', ') || 'Parsing failed' });
       }
 
       // Process and store health data

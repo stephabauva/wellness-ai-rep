@@ -20,7 +20,7 @@
     "chat-routes": {
       "file": "server/routes/chat-routes.ts",
       "maxLines": 280,
-      "currentLines": 256,
+      "currentLines": 259,
       "status": "complete",
       "responsibilities": [
         "Message streaming",
@@ -42,65 +42,115 @@
     "health-routes": {
       "file": "server/routes/health-routes.ts", 
       "maxLines": 300,
-      "currentLines": 7,
-      "status": "stub",
+      "currentLines": 278,
+      "status": "complete",
       "responsibilities": [
         "Health data CRUD",
         "Apple Health import/export",
         "Native health integration",
-        "Health consent management"
+        "Health consent management",
+        "Go service acceleration",
+        "CDA format support"
+      ],
+      "endpoints": [
+        "GET /api/health-data",
+        "GET /api/health-data/categories",
+        "POST /api/health-data/parse",
+        "POST /api/health-data/import",
+        "DELETE /api/health-data/reset",
+        "GET /api/health-data/native/capabilities",
+        "POST /api/health-data/native/sync",
+        "POST /api/health-data/background-sync"
       ]
     },
     
     "memory-routes": {
       "file": "server/routes/memory-routes.ts",
       "maxLines": 280, 
-      "currentLines": 7,
-      "status": "stub",
+      "currentLines": 280,
+      "status": "complete",
       "responsibilities": [
         "Memory CRUD operations",
         "ChatGPT memory enhancement",
         "Memory relationships",
-        "Atomic facts processing"
+        "Atomic facts processing",
+        "Deduplication system",
+        "Performance optimization"
+      ],
+      "endpoints": [
+        "GET /api/memories",
+        "GET /api/memories/overview",
+        "POST /api/memories/manual",
+        "POST /api/memories/enhance",
+        "GET /api/memories/relationships",
+        "POST /api/memories/atomic-facts",
+        "GET /api/memories/performance-report"
       ]
     },
     
     "file-routes": {
       "file": "server/routes/file-routes.ts",
       "maxLines": 270,
-      "currentLines": 7, 
-      "status": "stub",
+      "currentLines": 226, 
+      "status": "complete",
       "responsibilities": [
         "File upload/download",
         "File categorization",
         "Go service integration",
-        "Retention management"
+        "Retention management",
+        "Metadata extraction"
+      ],
+      "endpoints": [
+        "GET /api/files",
+        "POST /api/files/upload",
+        "DELETE /api/files/:id",
+        "POST /api/files/:id/categorize",
+        "GET /api/files/categories"
       ]
     },
     
     "settings-routes": {
       "file": "server/routes/settings-routes.ts",
       "maxLines": 250,
-      "currentLines": 7,
-      "status": "stub", 
+      "currentLines": 132,
+      "status": "complete", 
       "responsibilities": [
         "User preferences",
         "AI configuration",
         "Device management",
-        "Coaching settings"
+        "Coaching settings",
+        "PDF report generation"
+      ],
+      "endpoints": [
+        "GET /api/settings",
+        "POST /api/settings",
+        "GET /api/settings/ai-config",
+        "POST /api/settings/ai-config",
+        "GET /api/settings/devices",
+        "POST /api/settings/devices",
+        "GET /api/settings/pdf-report"
       ]
     },
     
     "monitoring-routes": {
       "file": "server/routes/monitoring-routes.ts",
       "maxLines": 260,
-      "currentLines": 7,
-      "status": "stub",
+      "currentLines": 179,
+      "status": "complete",
       "responsibilities": [
         "Cache statistics",
         "Go service proxies", 
         "Performance monitoring",
-        "Health checks"
+        "Health checks",
+        "Feature flags management"
+      ],
+      "endpoints": [
+        "GET /api/cache/stats",
+        "POST /api/cache/clear",
+        "GET /api/accelerate/health",
+        "POST /api/accelerate/start",
+        "POST /api/memory/feature-flags-test",
+        "GET /api/memory/performance-monitoring-test"
       ]
     }
   },

@@ -1,4 +1,3 @@
-
 # Critical Routes Refactoring Regression Fixes Plan
 
 ## Executive Summary
@@ -107,8 +106,11 @@ This represents a complete failure of the modular routes approach. We must:
 ### Phase 2: Systematic Validation (24 HOURS)
 1. **Test every feature manually** across all domains
 2. **Run comprehensive integration tests** on all endpoints
-3. **Validate UI functionality** in every section
-4. **Performance regression testing** 
+3. **Update System Maps**: Update `.system-maps/routes/routes-core.map.json` with actual working implementation
+4. **Validate System Maps**: Ensure architecture documentation matches reality and reflects all fixes
+5. **Update Domain Maps**: Update chat.map.json, health.map.json, memory/, file-manager/ maps with corrected route dependencies
+6. **Validate UI functionality** in every section
+7. **Performance regression testing**
 
 ### Phase 3: Long-term Stability (48 HOURS)
 1. **Implement automated regression testing**

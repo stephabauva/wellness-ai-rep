@@ -1,0 +1,17 @@
+{
+  "validation": {
+    "components": {
+      "checkExistence": true,
+      "validateDependencies": false
+    },
+    "apis": {
+      "validateEndpoints": true,
+      "checkHandlerFiles": false
+    }
+  },
+  "scanning": {
+    "includePatterns": [
+      "client/src/components/**/*.tsx"
+    ]
+  }
+}

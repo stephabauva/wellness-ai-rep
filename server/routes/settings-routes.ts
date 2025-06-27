@@ -133,7 +133,10 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
             ? parseInt(healthData.filter(d => d.dataType === 'weight')[0].value) 
             : 0
         },
-        trends: [],
+        trends: {
+          activity: [],
+          sleep: []
+        },
         recommendations: ['Stay active', 'Maintain consistent sleep schedule', 'Monitor key health metrics']
       };
 

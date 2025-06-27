@@ -1,0 +1,94 @@
+🧪 Test 13: Test 5.2
+Command: node system-map-auditor/dist/cli.js audit-feature chat
+Expected: Validate components for specific feature using audit-feature command
+----------------------------------------
+❌ FAIL: Test failed (exit code: 1)
+Output preview:
+  🔍 System Map Auditor Report
+  ==================================================
+  
+  📊 Summary:
+     Features audited: 1
+     Features passed:  0 / 1
+     Total checks:     70
+     Execution time:   5ms
+  
+  🚨 Issues found:
+Exit code: 1
+Full output saved to: /tmp/test_output_13.txt
+
+🧪 Test 14: Test 5.3
+Command: node system-map-auditor/dist/cli.js full-audit --format=json
+Expected: Full audit with JSON output format
+----------------------------------------
+❌ FAIL: Test failed (exit code: 1)
+Output preview:
+  {
+    "metadata": {
+      "timestamp": "2025-06-27T22:30:18.486Z",
+      "version": "1.0.0",
+      "totalFeatures": 2,
+      "totalExecutionTime": 73
+    },
+    "summary": {
+      "totalChecks": 71,
+      "passedFeatures": 0,
+Exit code: 1
+Full output saved to: /tmp/test_output_14.txt
+
+🧪 Test 15: Test 6.1
+Command: node system-map-auditor/dist/cli.js validate-apis --verbose
+Expected: API endpoint validation with verbose output
+----------------------------------------
+❌ FAIL: Test failed (exit code: 1)
+Output preview:
+  🔍 System Map Auditor Report
+  ==================================================
+  
+  📊 Summary:
+     Features audited: 2
+     Features passed:  0 / 2
+     Total checks:     56
+     Execution time:   82ms
+  
+  🚨 Issues found:
+Exit code: 1
+Full output saved to: /tmp/test_output_15.txt
+
+🧪 Test 16: Test 6.2
+Command: node system-map-auditor/dist/cli.js validate-apis --filter='chat'
+Expected: Validate APIs with filter pattern
+----------------------------------------
+❌ FAIL: Test failed (exit code: 1)
+Output preview:
+  🔍 System Map Auditor Report
+  ==================================================
+  
+  📊 Summary:
+     Features audited: 2
+     Features passed:  0 / 2
+     Total checks:     56
+     Execution time:   71ms
+  
+  🚨 Issues found:
+Exit code: 1
+Full output saved to: /tmp/test_output_16.txt
+
+🧪 Test 17: Test 6.3
+Command: node system-map-auditor/dist/cli.js validate-apis --show-suggestions
+Expected: API validation with fix suggestions
+----------------------------------------
+❌ FAIL: Test failed (exit code: 1)
+Output preview:
+  🔍 System Map Auditor Report
+  ==================================================
+  
+  📊 Summary:
+     Features audited: 2
+     Features passed:  0 / 2
+     Total checks:     56
+     Execution time:   78ms
+  
+  🚨 Issues found:
+Exit code: 1
+Full output saved to: /tmp/test_output_17.txt

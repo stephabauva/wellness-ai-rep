@@ -831,7 +831,9 @@ export class HealthDataParser {
 
           parsedData.push(dataPoint);
           const category = dataPoint.category;
-          categories[category] = (categories[category] || 0) + 1;
+          if (category && typeof category === 'string') {
+            categories[category] = (categories[category] || 0) + 1;
+          }
 
           if (progressCallback) {
             progressCallback({
@@ -879,7 +881,9 @@ export class HealthDataParser {
 
             parsedData.push(dataPoint);
             const category = dataPoint.category;
-            categories[category] = (categories[category] || 0) + 1;
+            if (category && typeof category === 'string') {
+              categories[category] = (categories[category] || 0) + 1;
+            }
           }
 
           // Progress reporting for large files

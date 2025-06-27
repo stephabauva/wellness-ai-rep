@@ -278,8 +278,7 @@ class AiService {
       await chatGPTMemoryEnhancement.processWithDeduplication(
         userId,
         message,
-        conversationId,
-        conversationHistory
+        conversationId
       );
       
       log('info', '[AiService] ChatGPT memory deduplication completed successfully', {

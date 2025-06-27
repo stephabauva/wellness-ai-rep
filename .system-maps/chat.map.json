@@ -114,7 +114,8 @@
             {
               "name": "AttachmentPreview",
               "path": "client/src/components/AttachmentPreview.tsx",
-              "description": "Displays mini previews of attached files before sending, with remove functionality."
+              "description": "Displays mini previews of attached files before sending, with remove functionality.",
+            "tests": ["client/src/components/AttachmentPreview.test.tsx"]
             }
           ]
         },

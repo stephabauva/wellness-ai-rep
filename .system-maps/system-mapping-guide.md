@@ -73,7 +73,8 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
         "[feature-name]": {
           "description": "...",
           "userFlow": ["..."],
-          "components": ["..."]
+          "components": ["..."],
+          "tests": ["String (path to test file, e.g., 'client/src/tests/chat/AttachmentDisplay.test.tsx')"]
         },
         "special-feature": {
             "description": "A very large feature, defined externally.",

@@ -7,9 +7,11 @@ Refactor the massive `server/routes.ts` file (3000+ lines) into domain-specific 
 ## Critical Constraints Respected
 - **I1 - Existing Features Must Not Break**: All endpoints maintain exact same behavior
 - **I2 - Always Reassess**: Each module will be tested independently before integration
-- **Replit Safety**: No changes to build process, HMR, or WebSocket functionality
+- **Replit Safety**: Zero modifications to vite.config.ts, server/vite.ts, HMR, or WebSocket functionality
 - **Backward Compatibility**: All existing API endpoints work unchanged
 - **Import Dependencies**: Maintain all existing service imports and dependencies
+- **System Maps Compliance**: Update .system-maps/ to reflect new modular architecture
+- **No Build Changes**: No modifications to package.json, build process, or deployment pipeline
 
 ## Comprehensive Analysis: Current Routes File Dependencies
 
@@ -114,13 +116,51 @@ const createCategoryBodySchema = insertFileCategorySchema.pick({...});
 const updateCategoryBodySchema = insertFileCategorySchema.pick({...});
 ```
 
+## System Maps Impact Analysis
+
+### Required System Map Updates
+The modularization will require updating the following system maps to reflect the new architecture:
+
+#### `.system-maps/root.map.json`
+- Update backend architecture to show modular routes structure
+- Add new "routes" domain with sub-modules
+
+#### New System Maps Required
+```json
+// .system-maps/routes/routes-core.map.json
+{
+  "description": "Modular routes architecture with domain-specific route handlers",
+  "modules": {
+    "chat-routes": { "path": "server/routes/chat-routes.ts", "maxLines": 290 },
+    "health-routes": { "path": "server/routes/health-routes.ts", "maxLines": 300 },
+    "memory-routes": { "path": "server/routes/memory-routes.ts", "maxLines": 290 },
+    "file-routes": { "path": "server/routes/file-routes.ts", "maxLines": 280 },
+    "settings-routes": { "path": "server/routes/settings-routes.ts", "maxLines": 250 },
+    "monitoring-routes": { "path": "server/routes/monitoring-routes.ts", "maxLines": 300 }
+  },
+  "sharedInfrastructure": {
+    "dependencies": "server/routes/shared-dependencies.ts",
+    "utilities": "server/routes/shared-utils.ts"
+  }
+}
+```
+
+#### Updated Dependencies
+- **chat.map.json**: Add dependency on routes/chat-routes
+- **health.map.json**: Add dependency on routes/health-routes  
+- **memory/memory-core.map.json**: Add dependency on routes/memory-routes
+- **file-manager/core-operations.map.json**: Add dependency on routes/file-routes
+
 ## Updated Refactoring Strategy
 
 ### Phase 1: Create Shared Infrastructure
 
 #### 1.1 Shared Dependencies Module (`server/routes/shared-dependencies.ts`)
 ```typescript
-// Export ALL services and dependencies used across route modules
+// CRITICAL: Export-only module to prevent import cycles
+// NO business logic in this file - pure re-exports only
+
+// AI & Memory Services
 export { aiService } from "../services/ai-service";
 export { memoryEnhancedAIService } from "../services/memory-enhanced-ai-service";
 export { memoryService } from "../services/memory-service";
@@ -128,6 +168,8 @@ export { enhancedMemoryService } from "../services/enhanced-memory-service";
 export { advancedMemoryAIService } from '../services/advanced-memory-ai-service';
 export { memoryRelationshipEngine } from '../services/memory-relationship-engine';
 export { performanceMemoryCore } from '../services/performance-memory-core';
+
+// File & Processing Services  
 export { transcriptionService } from "../services/transcription-service";
 export { cacheService } from "../services/cache-service";
 export { categoryService } from "../services/category-service";
@@ -136,15 +178,19 @@ export { goFileService } from "../services/go-file-service";
 export { healthConsentService } from "../services/health-consent-service";
 export { HealthDataParser } from "../services/health-data-parser";
 export { HealthDataDeduplicationService } from "../services/health-data-deduplication";
+
+// Background Processing
 export { enhancedBackgroundProcessor } from "../services/enhanced-background-processor";
 export { memoryFeatureFlags } from "../services/memory-feature-flags";
 export { memoryPerformanceMonitor } from "../services/memory-performance-monitor";
 export { ChatGPTMemoryEnhancement } from "../services/chatgpt-memory-enhancement";
 
+// Database and Schema
 export { db } from "../db";
 export { storage } from "../storage";
 export * from "@shared/schema";
 
+// External Dependencies
 export { eq, desc, and, or } from "drizzle-orm";
 export { join } from 'path';
 export { existsSync } from 'fs';
@@ -410,7 +456,7 @@ export function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays
 
 ### Phase 2: Create Domain Route Modules (Max 300 lines each)
 
-#### 2.1 Chat Routes (`server/routes/chat-routes.ts`) - ~290 lines
+#### 2.1 Chat Routes (`server/routes/chat-routes.ts`) - MAX 290 lines
 ```typescript
 import { Express } from "express";
 import { 
@@ -430,7 +476,13 @@ import {
   desc
 } from "./shared-dependencies";
 
+// VALIDATION: Must not exceed 290 lines
+// REPLIT SAFETY: No WebSocket modifications, no HMR interference
 export function registerChatRoutes(app: Express): void {
+  // Line count tracking: ~15 lines per endpoint * 7 endpoints = ~105 core lines
+  // Plus imports (15) + error handling (40) + validation (30) = ~190 lines
+  // Buffer: 100 lines for complex logic = 290 lines total MAX
+
   // GET /api/messages
   app.get("/api/messages", async (req, res) => {
     try {
@@ -441,7 +493,7 @@ export function registerChatRoutes(app: Express): void {
     }
   });
 
-  // POST /api/messages/stream
+  // POST /api/messages/stream - CRITICAL: Preserve exact SSE headers for Replit compatibility
   app.post("/api/messages/stream", async (req, res) => {
     try {
       const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection } = messageSchema.parse(req.body);
@@ -452,6 +504,7 @@ export function registerChatRoutes(app: Express): void {
       const userAiModel = aiModel || user?.aiModel || 'gemini-2.0-flash-exp';
       const userAutoSelection = automaticModelSelection ?? user?.automaticModelSelection ?? true;
 
+      // REPLIT CRITICAL: Exact SSE headers - do not modify
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -498,38 +551,18 @@ export function registerChatRoutes(app: Express): void {
     }
   });
 
-  // POST /api/messages (full implementation from original routes.ts)
-  app.post("/api/messages", async (req, res) => {
-    // [Complete implementation - extracted from original file]
-    // This will include all the parallel processing optimizations,
-    // attachment handling, conversation management, etc.
-  });
+  // [Remaining endpoints implemented with exact same logic as original]
+  // POST /api/messages - Full parallel processing implementation
+  // GET /api/conversations - Complete conversation listing
+  // GET /api/conversations/:id/messages - Message retrieval
+  // POST /api/transcribe/openai - OpenAI Whisper transcription
+  // POST /api/transcribe/google - Google Speech-to-Text transcription
+  // GET /api/transcription/providers - Provider capabilities
 
-  // GET /api/conversations
-  app.get("/api/conversations", async (req, res) => {
-    // [Complete implementation]
-  });
-
-  // GET /api/conversations/:id/messages
-  app.get("/api/conversations/:id/messages", async (req, res) => {
-    // [Complete implementation]
-  });
-
-  // POST /api/transcribe/openai
-  app.post("/api/transcribe/openai", audioUpload.single('audio'), async (req, res) => {
-    // [Complete implementation]
-  });
-
-  // POST /api/transcribe/google
-  app.post("/api/transcribe/google", audioUpload.single('audio'), async (req, res) => {
-    // [Complete implementation]
-  });
-
-  // GET /api/transcription/providers
-  app.get("/api/transcription/providers", async (req, res) => {
-    // [Complete implementation]
-  });
+  // VALIDATION CHECKPOINT: Verify line count < 290
 }
+
+// Post-migration validation: wc -l server/routes/chat-routes.ts must show < 290
 ```
 
 #### 2.2 Health Routes (`server/routes/health-routes.ts`) - ~300 lines
@@ -1180,61 +1213,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 ## Migration Implementation Strategy
 
-### Step 1: Create Infrastructure (Day 1)
+### Step 1: Infrastructure & System Maps (Day 1)
 1. Create `server/routes/` directory
-2. Create `shared-dependencies.ts` and `shared-utils.ts`
-3. Test that shared dependencies resolve correctly
-4. Verify no import cycles or conflicts
+2. Create `shared-dependencies.ts` and `shared-utils.ts` with line count validation
+3. **Update System Maps**: Create `.system-maps/routes/routes-core.map.json`
+4. **Update Root Map**: Add routes domain to `.system-maps/root.map.json`
+5. Test shared dependencies resolve correctly with no import cycles
+6. Verify Replit environment safety (HMR, WebSocket, port binding)
 
-### Step 2: Extract One Module at a Time (Days 2-7)
-1. **Start with Monitoring Routes** (lowest risk, independent functionality)
-2. **Move to Settings Routes** (well-isolated, minimal cross-dependencies)
-3. **Extract File Routes** (moderate complexity, Go service integration)
-4. **Move Health Routes** (complex but well-defined boundaries)
-5. **Extract Memory Routes** (newest features, comprehensive testing needed)
-6. **Finish with Chat Routes** (most critical, extensive testing required)
+### Step 2: Modular Extraction (Days 2-7) - One Module Per Day
+**Critical**: Each module must be ≤ assigned line limit
 
-### Step 3: Update Main Index (Day 8)
-1. Update `server/index.ts` to use new routes
-2. Test all endpoints thoroughly
-3. Remove temporary compatibility bridge
-4. Archive original `server/routes.ts` as backup
+1. **Day 2 - Monitoring Routes** (≤300 lines, lowest risk)
+   - Extract cache stats, Go service proxies, performance endpoints
+   - Validate: Line count, functionality, no Replit interference
 
-### Step 4: Validation (Day 9)
-1. Full application testing - all features functional
-2. All API endpoints working correctly
-3. Performance regression testing
-4. Memory usage validation
-5. Go service integration working
-6. WebSocket and streaming functionality intact
+2. **Day 3 - Settings Routes** (≤250 lines, well-isolated)  
+   - Extract user settings, AI config, retention settings
+   - Validate: Settings persistence, no cross-dependencies
 
-## Safety Mechanisms
+3. **Day 4 - File Routes** (≤280 lines, Go integration)
+   - Extract file management, categories, Go acceleration
+   - Validate: File uploads, Go service integration, no HMR issues
 
-### Feature Flags for Route Modules
+4. **Day 5 - Health Routes** (≤300 lines, complex domain)
+   - Extract health data, import/export, native integration
+   - Validate: Large file processing, native health features
+
+5. **Day 6 - Memory Routes** (≤290 lines, newest features)
+   - Extract memory management, ChatGPT integration, relationships
+   - Validate: Memory detection, deduplication, performance
+
+6. **Day 7 - Chat Routes** (≤290 lines, most critical)
+   - Extract messaging, streaming, transcription
+   - Validate: SSE streaming, WebSocket compatibility, conversation flow
+
+### Step 3: Integration & System Maps Update (Day 8)
+1. Update `server/index.ts` to use modular routes
+2. **Validate System Maps**: Ensure architecture documentation matches reality
+3. Test all endpoints with comprehensive integration tests
+4. Remove temporary compatibility bridge
+5. Archive original `server/routes.ts` as `routes.ts.backup`
+
+### Step 4: Final Validation (Day 9)
+1. **Line Count Validation**: Ensure all modules ≤ limits
+2. **System Map Validation**: Architecture documentation complete
+3. **Full Application Testing**: All features functional
+4. **Performance Regression Testing**: No performance degradation
+5. **Replit Environment Testing**: HMR, WebSocket, streaming intact
+6. **Go Service Integration**: All microservices working
+7. **Import Cycle Detection**: No circular dependencies
+8. **Memory Usage Validation**: No memory leaks introduced
+
+## Enhanced Safety Mechanisms
+
+### 1. Replit Environment Protection
 ```typescript
-// In shared-utils.ts
-export const ROUTE_MODULES_ENABLED = {
-  chat: true,
-  health: true,
-  memory: true,
-  files: true,
-  settings: true,
-  monitoring: true
+// In shared-utils.ts - REPLIT SAFETY VALIDATION
+export const REPLIT_SAFETY_CHECK = {
+  // Verify no modifications to fragile Replit systems
+  viteConfigUntouched: true,
+  hmrUntouched: true, 
+  webSocketsPreserved: true,
+  buildProcessUnchanged: true,
+  portBindingUnchanged: true // Must remain 5000 for Replit
 };
 ```
 
-### Rollback Plan
-1. Keep original `routes.ts` as `routes.ts.backup`
-2. Instant rollback via server restart with old file
-3. Feature flags allow selective disable of modules
-4. Git commit after each successful module migration
+### 2. Line Count Enforcement
+```typescript
+// Automated validation in each route module
+const MAX_LINES = {
+  'chat-routes': 290,
+  'health-routes': 300,
+  'memory-routes': 290,
+  'file-routes': 280,
+  'settings-routes': 250,
+  'monitoring-routes': 300
+};
 
-### Testing Strategy
-1. **Unit Tests**: Each module exports testable functions
-2. **Integration Tests**: Full HTTP endpoint testing
-3. **Cross-Module Tests**: Ensure shared dependencies work correctly
-4. **Performance Tests**: Response time regression monitoring
-5. **Memory Tests**: Memory usage validation across modules
+// CI/CD validation hook
+export function validateLineCount(filename: string): boolean {
+  const lineCount = countLines(filename);
+  const maxAllowed = MAX_LINES[filename] || 300;
+  if (lineCount > maxAllowed) {
+    throw new Error(`${filename} exceeds ${maxAllowed} lines (${lineCount})`);
+  }
+  return true;
+}
+```
+
+### 3. Import Cycle Detection
+```typescript
+// In shared-dependencies.ts
+export const IMPORT_VALIDATION = {
+  // Prevent circular imports between route modules
+  allowedImports: {
+    'chat-routes': ['shared-dependencies', 'shared-utils'],
+    'health-routes': ['shared-dependencies', 'shared-utils'], 
+    'memory-routes': ['shared-dependencies', 'shared-utils'],
+    'file-routes': ['shared-dependencies', 'shared-utils'],
+    'settings-routes': ['shared-dependencies', 'shared-utils'],
+    'monitoring-routes': ['shared-dependencies', 'shared-utils']
+  },
+  // Route modules CANNOT import each other directly
+  forbiddenCrossImports: true
+};
+```
+
+### 4. Feature Flags with Emergency Disable
+```typescript
+// In shared-utils.ts
+export const ROUTE_MODULES_ENABLED = {
+  chat: process.env.ENABLE_CHAT_ROUTES !== 'false',
+  health: process.env.ENABLE_HEALTH_ROUTES !== 'false',
+  memory: process.env.ENABLE_MEMORY_ROUTES !== 'false',
+  files: process.env.ENABLE_FILE_ROUTES !== 'false',
+  settings: process.env.ENABLE_SETTINGS_ROUTES !== 'false',
+  monitoring: process.env.ENABLE_MONITORING_ROUTES !== 'false'
+};
+
+// Emergency fallback to monolithic routes.ts
+export const EMERGENCY_FALLBACK = process.env.USE_MONOLITHIC_ROUTES === 'true';
+```
+
+### 5. Rollback Strategy (Enhanced)
+1. **Backup Creation**: `cp server/routes.ts server/routes.ts.backup`
+2. **Git Checkpoint**: Commit after each successful module migration
+3. **Environment Variables**: Instant disable via `.env` 
+4. **Service Instance Preservation**: Global instances remain identical
+5. **Database Transaction Safety**: No schema changes during migration
+
+### 6. System Maps Validation
+```typescript
+// Validate system maps are updated correctly
+export function validateSystemMaps(): boolean {
+  const requiredMaps = [
+    '.system-maps/routes/routes-core.map.json',
+    '.system-maps/root.map.json' // Must include routes domain
+  ];
+  
+  return requiredMaps.every(map => existsSync(map));
+}
+```
+
+### 7. Testing Strategy (Enhanced)
+1. **Pre-Migration Tests**: Full endpoint coverage baseline
+2. **Module Unit Tests**: Each route module independently tested  
+3. **Integration Tests**: Cross-module dependency validation
+4. **Performance Regression Tests**: Response time monitoring
+5. **Memory Leak Tests**: Memory usage validation
+6. **Replit Environment Tests**: HMR, WebSocket, port binding validation
+7. **System Maps Validation**: Architecture consistency checks
 
 ## Expected Benefits
 
@@ -1272,17 +1402,35 @@ export const ROUTE_MODULES_ENABLED = {
 
 ## Conclusion
 
-This updated plan provides a **comprehensive, safe, incremental migration** that:
+This enhanced plan provides a **comprehensive, safe, incremental migration** that:
 
 1. **Preserves all imports and dependencies** - comprehensive dependency analysis completed
-2. **Maintains exact API compatibility** - all endpoints unchanged
-3. **Enables parallel development** - clear domain separation
+2. **Maintains exact API compatibility** - all endpoints unchanged  
+3. **Enables parallel development** - clear domain separation with ≤300 line modules
 4. **Provides instant rollback** - safety-first approach with backups
 5. **Follows existing patterns** - consistent with current architecture
 6. **Respects Replit constraints** - no build process changes, maintains HMR
+7. **Updates system maps** - keeps architecture documentation current
+8. **Enforces line limits** - prevents future monolithic growth
 
-The modular structure will dramatically improve maintainability while ensuring zero disruption to the existing stable application.
+### System Maps Impact: **YES**
 
-**Implementation Timeline**: 9 days
-**Risk Level**: **LOW** - Comprehensive safety measures and rollback plan
-**Impact**: **HIGH** - Dramatically improved code maintainability and development velocity
+The plan **does impact system maps files** and includes:
+
+- **New routes system map**: `.system-maps/routes/routes-core.map.json`
+- **Updated root map**: Add "routes" domain to `.system-maps/root.map.json`  
+- **Updated domain maps**: chat.map.json, health.map.json, memory/, file-manager/ maps updated with route dependencies
+- **Architecture consistency**: System maps will accurately reflect the new modular routes structure
+
+### Benefits
+- **6 focused modules** instead of 1 massive file (3000+ lines → 6 × ≤300 lines)
+- **Maintainable code** - easier debugging, testing, and feature development
+- **Parallel development** - teams can work on different domains simultaneously
+- **Future-proof architecture** - prevents return to monolithic structure
+- **Enhanced documentation** - system maps keep architecture visible
+
+**Implementation Timeline**: 9 days  
+**Risk Level**: **LOW** - Enhanced safety measures, comprehensive validation, rollback plan  
+**Impact**: **HIGH** - Dramatically improved maintainability, development velocity, and code organization
+
+The modular structure will transform development experience while ensuring zero disruption to the existing stable application.

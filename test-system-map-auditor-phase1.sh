@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # System Map Auditor - Phase 1 Automated Test Suite
@@ -30,19 +29,19 @@ run_test() {
     local test_command="$2"
     local expected_behavior="$3"
     local expected_keywords="$4"  # Optional: keywords to check in output
-    
+
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo ""
     echo -e "${BLUE}🧪 Test $TOTAL_TESTS: $test_name${NC}"
     echo "Command: $test_command"
     echo "Expected: $expected_behavior"
     echo "----------------------------------------"
-    
+
     # Run the command with timeout and capture output
     local test_passed=false
     timeout 30s bash -c "$test_command" > /tmp/test_output_$TOTAL_TESTS.txt 2>&1
     local exit_code=$?
-    
+
     # Handle timeout case
     if [ $exit_code -eq 124 ]; then
         echo -e "${YELLOW}⚠️  TIMEOUT${NC}: Command timed out after 30 seconds"
@@ -52,7 +51,7 @@ run_test() {
         head -20 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
         return
     fi
-    
+
     # Check output content for expected keywords if provided
     if [ -n "$expected_keywords" ]; then
         local keywords_found=true
@@ -64,7 +63,7 @@ run_test() {
                 break
             fi
         done
-        
+
         if [ "$keywords_found" = true ] || [ $exit_code -eq 0 ]; then
             test_passed=true
         fi
@@ -74,12 +73,12 @@ run_test() {
             test_passed=true
         fi
     fi
-    
+
     if [ "$test_passed" = true ]; then
         echo -e "${GREEN}✅ PASS${NC}: Expected output found"
         PASSED_TESTS=$((PASSED_TESTS + 1))
         TEST_RESULTS+=("✅ $test_name")
-        
+
         # Show first few lines of output
         echo "Output preview:"
         head -10 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
@@ -87,12 +86,12 @@ run_test() {
         echo -e "${RED}❌ FAIL${NC}: Expected output not found"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         TEST_RESULTS+=("❌ $test_name")
-        
+
         # Show error output
         echo "Full output:"
         head -20 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
     fi
-    
+
     echo "Exit code: $exit_code"
     echo "Full output saved to: /tmp/test_output_$TOTAL_TESTS.txt"
 }

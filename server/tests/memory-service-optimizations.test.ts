@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, vi } from 'vitest';
+import { databaseMigrationService } from '../services/database-migration-service';
 
 // IMPORTANT: Mock 'openai' before it's imported by memory-service
 vi.mock('openai', () => {

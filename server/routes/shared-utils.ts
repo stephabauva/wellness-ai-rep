@@ -90,17 +90,8 @@ export async function shouldUseGoAcceleration(fileSize: number): Promise<boolean
   return false;
 }
 
-/**
- * Sample health data generation for development/testing
- * Returns realistic health data samples for charts and testing
- */
 interface SampleHealthRecord {
-  type: string;
-  value: string;
-  unit: string;
-  timestamp: string;
-  source?: string;
-  category?: string;
+  type: string; value: string; unit: string; timestamp: string; source?: string; category?: string;
 }
 
 export function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays: number = 30): SampleHealthRecord[] {
@@ -109,72 +100,40 @@ export function generateSampleHealthData(dataTypes: string[] = [], timeRangeDays
   const records: SampleHealthRecord[] = [];
   
   const healthTypes = dataTypes.length > 0 ? dataTypes : [
-    'HKQuantityTypeIdentifierStepCount',
-    'HKQuantityTypeIdentifierHeartRate',
-    'HKQuantityTypeIdentifierActiveEnergyBurned',
-    'HKQuantityTypeIdentifierBodyMass',
+    'HKQuantityTypeIdentifierStepCount', 'HKQuantityTypeIdentifierHeartRate',
+    'HKQuantityTypeIdentifierActiveEnergyBurned', 'HKQuantityTypeIdentifierBodyMass',
     'HKCategoryTypeIdentifierSleepAnalysis'
   ];
   
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
     for (const type of healthTypes) {
-      let value: string;
-      let unit: string;
-      let category: string;
+      let value: string, unit: string, category: string;
       
       switch (type) {
         case 'HKQuantityTypeIdentifierStepCount':
-          value = (Math.floor(Math.random() * 5000) + 3000).toString();
-          unit = 'count';
-          category = 'activity';
-          break;
+          value = (Math.floor(Math.random() * 5000) + 3000).toString(); unit = 'count'; category = 'activity'; break;
         case 'HKQuantityTypeIdentifierHeartRate':
-          value = (Math.floor(Math.random() * 40) + 60).toString();
-          unit = 'count/min';
-          category = 'vitals';
-          break;
+          value = (Math.floor(Math.random() * 40) + 60).toString(); unit = 'count/min'; category = 'vitals'; break;
         case 'HKQuantityTypeIdentifierActiveEnergyBurned':
-          value = (Math.floor(Math.random() * 300) + 200).toString();
-          unit = 'kcal';
-          category = 'activity';
-          break;
+          value = (Math.floor(Math.random() * 300) + 200).toString(); unit = 'kcal'; category = 'activity'; break;
         case 'HKQuantityTypeIdentifierBodyMass':
-          value = (70 + Math.random() * 2 - 1).toFixed(1);
-          unit = 'kg';
-          category = 'body';
-          break;
+          value = (70 + Math.random() * 2 - 1).toFixed(1); unit = 'kg'; category = 'body'; break;
         case 'HKCategoryTypeIdentifierSleepAnalysis':
-          value = 'HKCategoryValueSleepAnalysisAsleep';
-          unit = '';
-          category = 'sleep';
-          break;
+          value = 'HKCategoryValueSleepAnalysisAsleep'; unit = ''; category = 'sleep'; break;
         default:
-          value = Math.floor(Math.random() * 100).toString();
-          unit = 'unit';
-          category = 'general';
+          value = Math.floor(Math.random() * 100).toString(); unit = 'unit'; category = 'general';
       }
       
-      records.push({
-        type,
-        value,
-        unit,
-        timestamp: d.toISOString(),
-        source: 'Sample Data Generator',
-        category
-      });
+      records.push({ type, value, unit, timestamp: d.toISOString(), source: 'Sample Data Generator', category });
     }
   }
   
   return records;
 }
 
-/**
- * Calculate cache hit rates and memory statistics
- */
 export function calculateOverallHitRate(stats: Record<string, any>): string {
   const totalRequests = stats.totalRequests || 0;
   const cacheHits = stats.cacheHits || 0;
-  
   if (totalRequests === 0) return "0.0%";
   return ((cacheHits / totalRequests) * 100).toFixed(1) + "%";
 }
@@ -183,9 +142,6 @@ export function calculateTotalMemoryUsage(stats: Record<string, any>): number {
   return (stats.memoryUsage?.heapUsed || 0) + (stats.cacheSize || 0);
 }
 
-/**
- * Device capability detection for native health integrations
- */
 export function getDeviceFeatures(deviceType: string): string[] {
   const features = {
     'ios': ['HealthKit', 'CoreMotion', 'WatchConnectivity'],
@@ -193,18 +149,10 @@ export function getDeviceFeatures(deviceType: string): string[] {
     'web': ['WebBluetooth', 'DeviceMotion', 'Geolocation'],
     'desktop': ['FileSystem', 'SerialPort', 'USB']
   };
-  
   return features[deviceType as keyof typeof features] || [];
 }
 
-/**
- * REPLIT SAFETY VALIDATION
- * Verify no modifications to fragile Replit systems
- */
 export const REPLIT_SAFETY_CHECK = {
-  viteConfigUntouched: true,
-  hmrUntouched: true, 
-  webSocketsPreserved: true,
-  buildProcessUnchanged: true,
-  portBindingUnchanged: true // Must remain 5000 for Replit
+  viteConfigUntouched: true, hmrUntouched: true, webSocketsPreserved: true,
+  buildProcessUnchanged: true, portBindingUnchanged: true
 };

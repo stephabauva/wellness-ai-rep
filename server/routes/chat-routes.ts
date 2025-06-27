@@ -215,66 +215,40 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get conversations
   app.get("/api/conversations", async (req, res) => {
     try {
-      const userId = FIXED_USER_ID;
-      const convs = await db
-        .select()
-        .from(conversations)
-        .where(eq(conversations.userId, userId))
-        .orderBy(desc(conversations.updatedAt));
-
+      const convs = await db.select().from(conversations).where(eq(conversations.userId, FIXED_USER_ID)).orderBy(desc(conversations.updatedAt));
       res.json(convs);
     } catch (error) {
-      console.error('Error fetching conversations:', error);
       res.status(500).json({ message: "Failed to fetch conversations" });
     }
   });
 
-  // Get messages for specific conversation
   app.get("/api/conversations/:id/messages", async (req, res) => {
     try {
-      const conversationId = req.params.id;
-      const messages = await db
-        .select()
-        .from(conversationMessages)
-        .where(eq(conversationMessages.conversationId, conversationId))
-        .orderBy(conversationMessages.createdAt);
-
+      const messages = await db.select().from(conversationMessages).where(eq(conversationMessages.conversationId, req.params.id)).orderBy(conversationMessages.createdAt);
       res.json(messages);
     } catch (error) {
-      console.error('Error fetching conversation messages:', error);
       res.status(500).json({ message: "Failed to fetch conversation messages" });
     }
   });
 
-  // OpenAI transcription endpoint
   app.post("/api/transcribe/openai", audioUpload.single('audio'), async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No audio file provided' });
-      }
-
+      if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
       const transcription = await transcriptionService.transcribeWithOpenAI(req.file.path);
       res.json({ transcription });
     } catch (error) {
-      console.error('OpenAI transcription error:', error);
       res.status(500).json({ error: 'Transcription failed' });
     }
   });
 
-  // Google transcription endpoint
   app.post("/api/transcribe/google", audioUpload.single('audio'), async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No audio file provided' });
-      }
-
+      if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
       const transcription = await transcriptionService.transcribeWithGoogle(req.file.path);
       res.json({ transcription });
     } catch (error) {
-      console.error('Google transcription error:', error);
       res.status(500).json({ error: 'Transcription failed' });
     }
   });

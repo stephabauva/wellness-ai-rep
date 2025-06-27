@@ -1,5 +1,4 @@
-// MAX_LINES: 50
-// Shared Dependencies - Centralized imports for route modules
+// MAX_LINES: 50 - Shared Dependencies for route modules
 import type { Express } from "express";
 import { storage } from "../storage";
 import { aiService } from "../services/ai-service";
@@ -42,15 +41,13 @@ import { spawn } from 'child_process';
 
 export {
   storage, aiService, memoryEnhancedAIService, memoryService, enhancedMemoryService,
-  advancedMemoryAIService, memoryRelationshipEngine, performanceMemoryCore,
-  generatePDFReport, transcriptionService, cacheService, categoryService,
-  attachmentRetentionService, goFileService, HealthDataParser, HealthDataDeduplicationService,
-  enhancedBackgroundProcessor, memoryFeatureFlags, memoryPerformanceMonitor,
-  ChatGPTMemoryEnhancement, healthConsentService, db, eq, desc, and, or,
-  conversations, conversationMessages, memoryEntries, insertFileCategorySchema,
-  files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships,
-  memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog,
-  users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema, insertHealthDataSchema,
-  multer, z, nanoid, join, existsSync, statSync, unlinkSync, path, fs, spawn
+  advancedMemoryAIService, memoryRelationshipEngine, performanceMemoryCore, generatePDFReport,
+  transcriptionService, cacheService, categoryService, attachmentRetentionService, goFileService,
+  HealthDataParser, HealthDataDeduplicationService, enhancedBackgroundProcessor, memoryFeatureFlags,
+  memoryPerformanceMonitor, ChatGPTMemoryEnhancement, healthConsentService, db, eq, desc, and, or,
+  conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories,
+  insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics,
+  userHealthConsent, healthDataAccessLog, users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema,
+  insertHealthDataSchema, multer, z, nanoid, join, existsSync, statSync, unlinkSync, path, fs, spawn
 };
 export type { Express, UserPreferences };

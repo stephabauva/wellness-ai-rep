@@ -2,6 +2,7 @@
   "name": "system-map-auditor",
   "version": "1.0.0",
   "description": "A tool to maintain integrity and accuracy of system maps through automated validation",
+  "type": "module",
   "main": "dist/cli.js",
   "bin": {
     "system-map-auditor": "./dist/cli.js"

@@ -229,16 +229,59 @@ export class SystemMapParser {
     // Validate individual components
     if (map.components) {
       Object.entries(map.components).forEach(([componentName, component]: [string, any]) => {
-        // Handle both object and simple string formats
-        const hasPath = typeof component === 'object' ? component.path : typeof component === 'string';
-        
-        if (!hasPath) {
+        if (typeof component === 'object' && component !== null) {
+          // Handle nested component groups (e.g., routeModules: { chat-routes: "path" })
+          const hasNestedComponents = Object.values(component).some(value => 
+            typeof value === 'string' && value.includes('/')
+          );
+          
+          if (hasNestedComponents) {
+            // Validate nested components (skip metadata fields like description, type)
+            Object.entries(component).forEach(([nestedKey, nestedValue]: [string, any]) => {
+              if (typeof nestedValue === 'string') {
+                // Skip metadata fields
+                const isMetadataField = ['description', 'type', 'version', 'status'].includes(nestedKey);
+                if (!isMetadataField && !nestedValue.includes('/')) {
+                  issues.push({
+                    type: 'invalid-reference',
+                    severity: 'error',
+                    message: `Component "${componentName}.${nestedKey}" missing valid path in value "${nestedValue}"`,
+                    location: `${mapPath}:components.${componentName}.${nestedKey}`,
+                    suggestion: 'Ensure component values contain valid file paths'
+                  });
+                }
+              }
+            });
+          } else {
+            // Standard component object validation
+            if (!component.path) {
+              issues.push({
+                type: 'invalid-reference',
+                severity: 'error',
+                message: `Component "${componentName}" missing required "path" field`,
+                location: `${mapPath}:components.${componentName}`,
+                suggestion: 'Ensure all components have path fields'
+              });
+            }
+          }
+        } else if (typeof component === 'string') {
+          // Simple string path format
+          if (!component.includes('/')) {
+            issues.push({
+              type: 'invalid-reference',
+              severity: 'error',
+              message: `Component "${componentName}" has invalid path format "${component}"`,
+              location: `${mapPath}:components.${componentName}`,
+              suggestion: 'Ensure component path contains directory separators'
+            });
+          }
+        } else {
           issues.push({
             type: 'invalid-reference',
             severity: 'error',
-            message: `Component "${componentName}" missing required "path" field`,
+            message: `Component "${componentName}" must be either an object with path field or a string path`,
             location: `${mapPath}:components.${componentName}`,
-            suggestion: 'Ensure all components have path fields'
+            suggestion: 'Ensure components are objects with path fields or string paths'
           });
         }
       });
@@ -247,18 +290,44 @@ export class SystemMapParser {
     // Validate individual API endpoints
     if (map.apiEndpoints) {
       Object.entries(map.apiEndpoints).forEach(([endpoint, api]: [string, any]) => {
-        // Extract method from endpoint key if not in api object
-        const hasMethod = api.method || endpoint.match(/^(GET|POST|PUT|PATCH|DELETE)\s/);
-        const hasDescription = api.description || api.handler;
-        
-        if (!hasMethod || !hasDescription) {
-          issues.push({
-            type: 'invalid-reference',
-            severity: 'error',
-            message: `API endpoint "${endpoint}" missing required "method" or "description" field`,
-            location: `${mapPath}:apiEndpoints.${endpoint}`,
-            suggestion: 'Ensure all API endpoints have method and description fields'
-          });
+        // Handle nested API structures (e.g., chat: { conversations: "GET /api/..." })
+        if (typeof api === 'object' && api !== null) {
+          // Check if this is a grouped API structure
+          const hasNestedEndpoints = Object.values(api).some(value => 
+            typeof value === 'string' && value.match(/^(GET|POST|PUT|PATCH|DELETE)\s/)
+          );
+          
+          if (hasNestedEndpoints) {
+            // Validate nested endpoints
+            Object.entries(api).forEach(([nestedKey, nestedValue]: [string, any]) => {
+              if (typeof nestedValue === 'string') {
+                const hasMethod = nestedValue.match(/^(GET|POST|PUT|PATCH|DELETE)\s/);
+                if (!hasMethod) {
+                  issues.push({
+                    type: 'invalid-reference',
+                    severity: 'error',
+                    message: `API endpoint "${endpoint}.${nestedKey}" missing HTTP method in value "${nestedValue}"`,
+                    location: `${mapPath}:apiEndpoints.${endpoint}.${nestedKey}`,
+                    suggestion: 'Ensure API endpoint values start with HTTP method (GET, POST, etc.)'
+                  });
+                }
+              }
+            });
+          } else {
+            // Standard API object validation
+            const hasMethod = api.method || endpoint.match(/^(GET|POST|PUT|PATCH|DELETE)\s/);
+            const hasDescription = api.description || api.handler || api.handlerFile;
+            
+            if (!hasMethod || !hasDescription) {
+              issues.push({
+                type: 'invalid-reference',
+                severity: 'error',
+                message: `API endpoint "${endpoint}" missing required "method" or "description" field`,
+                location: `${mapPath}:apiEndpoints.${endpoint}`,
+                suggestion: 'Ensure all API endpoints have method and description fields'
+              });
+            }
+          }
         }
       });
     }
@@ -306,13 +375,27 @@ export class SystemMapParser {
     // Validate individual components
     if (map.components && Array.isArray(map.components)) {
       map.components.forEach((component, index) => {
-        if (!component.name || !component.path) {
+        // Handle both object format {name, path} and string format "ComponentName"
+        const isObject = typeof component === 'object' && component !== null;
+        const isString = typeof component === 'string';
+        
+        if (isObject) {
+          if (!component.name || !component.path) {
+            issues.push({
+              type: 'invalid-reference',
+              severity: 'error',
+              message: `Component at index ${index} missing required "name" or "path" field`,
+              location: `${mapPath}:components[${index}]`,
+              suggestion: 'Ensure all components have name and path fields'
+            });
+          }
+        } else if (!isString) {
           issues.push({
             type: 'invalid-reference',
             severity: 'error',
-            message: `Component at index ${index} missing required "name" or "path" field`,
+            message: `Component at index ${index} must be either an object with name/path or a string`,
             location: `${mapPath}:components[${index}]`,
-            suggestion: 'Ensure all components have name and path fields'
+            suggestion: 'Ensure components are either objects {name, path} or strings'
           });
         }
       });

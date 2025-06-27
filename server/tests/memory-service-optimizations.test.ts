@@ -98,7 +98,10 @@ function createDbMock() {
   return dbMock;
 }
 
-// Remove database mock to use real database for integration testing
+// Mock database to avoid integration issues in test environment
+vi.mock('../db', () => ({
+  db: createDbMock(),
+}));
 
 vi.mock('../services/cache-service', () => ({
   cacheService: {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
@@ -15,6 +15,14 @@ interface ActivityTrendChartProps {
 }
 
 export const ActivityTrendChart: React.FC<ActivityTrendChartProps> = ({ data }) => {
+  const [isChartReady, setIsChartReady] = useState(false);
+  
+  useEffect(() => {
+    // Delay chart rendering to ensure container is properly sized
+    const timer = setTimeout(() => setIsChartReady(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
   // Only show chart if real data is available
   const hasRealData = data && data.length > 0;
   

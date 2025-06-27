@@ -129,8 +129,13 @@ export class SystemMapParser {
   private validateMapStructure(map: SystemMap, mapPath: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
 
-    // Check required name field
-    if (!map.name || typeof map.name !== 'string') {
+    // Check for name field (can be in different locations)
+    const hasName = map.name || 
+                   (map as any).appName || 
+                   (map as any).featureGroups ||
+                   (map as any).domains;
+    
+    if (!hasName) {
       issues.push({
         type: 'invalid-reference',
         severity: 'warning',
@@ -140,6 +145,124 @@ export class SystemMapParser {
       });
     }
 
+    // Handle different system map formats
+    if ((map as any).domains) {
+      // Root system map format
+      return this.validateRootMapStructure(map as any, mapPath, issues);
+    } else if ((map as any).featureGroups) {
+      // Feature-based system map format
+      return this.validateFeatureMapStructure(map as any, mapPath, issues);
+    } else {
+      // Legacy format validation
+      return this.validateLegacyMapStructure(map, mapPath, issues);
+    }
+  }
+
+  /**
+   * Validate root system map structure (domains format)
+   */
+  private validateRootMapStructure(map: any, mapPath: string, issues: ValidationIssue[]): ValidationIssue[] {
+    if (map.domains && typeof map.domains !== 'object') {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'error',
+        message: 'Root system map "domains" field must be an object',
+        location: mapPath,
+        suggestion: 'Ensure domains is defined as an object with domain definitions'
+      });
+    }
+
+    // Validate individual domains
+    if (map.domains) {
+      Object.entries(map.domains).forEach(([domainName, domain]: [string, any]) => {
+        if (!domain.description || !domain.path) {
+          issues.push({
+            type: 'invalid-reference',
+            severity: 'error',
+            message: `Domain "${domainName}" missing required "description" or "path" field`,
+            location: `${mapPath}:domains.${domainName}`,
+            suggestion: 'Ensure all domains have description and path fields'
+          });
+        }
+      });
+    }
+
+    return issues;
+  }
+
+  /**
+   * Validate feature-based system map structure
+   */
+  private validateFeatureMapStructure(map: any, mapPath: string, issues: ValidationIssue[]): ValidationIssue[] {
+    if (map.featureGroups && typeof map.featureGroups !== 'object') {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'error',
+        message: 'System map "featureGroups" field must be an object',
+        location: mapPath,
+        suggestion: 'Ensure featureGroups is defined as an object'
+      });
+    }
+
+    // Validate components object
+    if (map.components && typeof map.components !== 'object') {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'error',
+        message: 'System map "components" field must be an object',
+        location: mapPath,
+        suggestion: 'Ensure components is defined as an object'
+      });
+    }
+
+    // Validate apiEndpoints object
+    if (map.apiEndpoints && typeof map.apiEndpoints !== 'object') {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'error',
+        message: 'System map "apiEndpoints" field must be an object',
+        location: mapPath,
+        suggestion: 'Ensure apiEndpoints is defined as an object'
+      });
+    }
+
+    // Validate individual components
+    if (map.components) {
+      Object.entries(map.components).forEach(([componentName, component]: [string, any]) => {
+        if (!component.path) {
+          issues.push({
+            type: 'invalid-reference',
+            severity: 'error',
+            message: `Component "${componentName}" missing required "path" field`,
+            location: `${mapPath}:components.${componentName}`,
+            suggestion: 'Ensure all components have path fields'
+          });
+        }
+      });
+    }
+
+    // Validate individual API endpoints
+    if (map.apiEndpoints) {
+      Object.entries(map.apiEndpoints).forEach(([endpoint, api]: [string, any]) => {
+        if (!api.method || !api.description) {
+          issues.push({
+            type: 'invalid-reference',
+            severity: 'error',
+            message: `API endpoint "${endpoint}" missing required "method" or "description" field`,
+            location: `${mapPath}:apiEndpoints.${endpoint}`,
+            suggestion: 'Ensure all API endpoints have method and description fields'
+          });
+        }
+      });
+    }
+
+    return issues;
+  }
+
+  /**
+   * Validate legacy system map structure (array format)
+   */
+  private validateLegacyMapStructure(map: SystemMap, mapPath: string, issues: ValidationIssue[]): ValidationIssue[] {
     // Validate components array
     if (map.components && !Array.isArray(map.components)) {
       issues.push({
@@ -174,7 +297,7 @@ export class SystemMapParser {
     }
 
     // Validate individual components
-    if (map.components) {
+    if (map.components && Array.isArray(map.components)) {
       map.components.forEach((component, index) => {
         if (!component.name || !component.path) {
           issues.push({
@@ -189,7 +312,7 @@ export class SystemMapParser {
     }
 
     // Validate individual APIs
-    if (map.apis) {
+    if (map.apis && Array.isArray(map.apis)) {
       map.apis.forEach((api, index) => {
         if (!api.path || !api.method || !api.handler) {
           issues.push({

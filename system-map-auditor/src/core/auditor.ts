@@ -129,10 +129,14 @@ export class SystemMapAuditor {
     let warningChecks = 0;
     let failedChecks = 0;
 
+    // Normalize system map components and APIs for validation
+    const normalizedComponents = this.normalizeComponents(systemMap);
+    const normalizedApis = this.normalizeApis(systemMap);
+
     // Validate components
-    if (systemMap.components && this.config.validation.components) {
+    if (normalizedComponents.length > 0 && this.config.validation.components) {
       const componentResult = await this.componentValidator.validateAllComponents(
-        systemMap.components,
+        normalizedComponents,
         codebase,
         this.config.validation.components
       );
@@ -151,9 +155,9 @@ export class SystemMapAuditor {
     }
 
     // Validate APIs
-    if (systemMap.apis && this.config.validation.apis) {
+    if (normalizedApis.length > 0 && this.config.validation.apis) {
       const apiResult = await this.apiValidator.validateAllApis(
-        systemMap.apis,
+        normalizedApis,
         codebase,
         this.config.validation.apis
       );
@@ -329,6 +333,87 @@ export class SystemMapAuditor {
    */
   getVersion(): string {
     return '1.0.0';
+  }
+
+  /**
+   * Normalize components from different system map formats
+   */
+  private normalizeComponents(systemMap: SystemMap): any[] {
+    const components: any[] = [];
+
+    // Handle legacy array format
+    if (systemMap.components && Array.isArray(systemMap.components)) {
+      components.push(...systemMap.components);
+    }
+
+    // Handle object format (feature-based maps)
+    if (systemMap.components && typeof systemMap.components === 'object' && !Array.isArray(systemMap.components)) {
+      Object.entries(systemMap.components).forEach(([name, component]: [string, any]) => {
+        components.push({
+          name,
+          path: component.path,
+          description: component.description,
+          uses: component.uses || []
+        });
+      });
+    }
+
+    // Handle featureGroups format
+    const mapAny = systemMap as any;
+    if (mapAny.featureGroups) {
+      Object.values(mapAny.featureGroups).forEach((group: any) => {
+        if (group.features) {
+          Object.values(group.features).forEach((feature: any) => {
+            if (feature.components && Array.isArray(feature.components)) {
+              components.push(...feature.components);
+            }
+          });
+        }
+      });
+    }
+
+    // Handle globalComponents format
+    if (mapAny.globalComponents) {
+      Object.entries(mapAny.globalComponents).forEach(([name, component]: [string, any]) => {
+        components.push({
+          name,
+          path: component.path,
+          description: component.description,
+          uses: component.uses || []
+        });
+      });
+    }
+
+    return components;
+  }
+
+  /**
+   * Normalize APIs from different system map formats
+   */
+  private normalizeApis(systemMap: SystemMap): any[] {
+    const apis: any[] = [];
+
+    // Handle legacy array format
+    if (systemMap.apis && Array.isArray(systemMap.apis)) {
+      apis.push(...systemMap.apis);
+    }
+
+    // Handle apiEndpoints object format
+    const mapAny = systemMap as any;
+    if (mapAny.apiEndpoints) {
+      Object.entries(mapAny.apiEndpoints).forEach(([path, api]: [string, any]) => {
+        apis.push({
+          path,
+          method: api.method,
+          handler: api.handler || api.path,
+          description: api.description,
+          readsFrom: api.readsFrom || [],
+          modifies: api.modifies || []
+        });
+      });
+    }
+
+    return apis;
   }
 
   /**

@@ -17,7 +17,8 @@ program
   .option('-c, --config <path>', 'custom configuration file path')
   .option('-v, --verbose', 'enable verbose output')
   .option('-q, --quiet', 'suppress non-error output')
-  .option('--dry-run', 'show what would be done without making changes');
+  .option('--dry-run', 'show what would be done without making changes')
+  .option('--show-config', 'display configuration and exit');
 
 // Help command
 program
@@ -293,6 +294,18 @@ program
       process.exit(1);
     }
   });
+
+// Handle global --show-config option
+if (process.argv.includes('--show-config')) {
+  try {
+    const auditor = new SystemMapAuditor();
+    console.log(auditor.showConfig());
+    process.exit(0);
+  } catch (error) {
+    console.error('Failed to load configuration:', error instanceof Error ? error.message : 'Unknown error');
+    process.exit(1);
+  }
+}
 
 // Error handling
 program.exitOverride();

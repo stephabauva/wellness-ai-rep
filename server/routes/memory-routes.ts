@@ -258,7 +258,6 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
       const testStartTime = Date.now();
       const semanticHash = await memoryEnhancedAIService.chatGPTMemory.generateSemanticHash(message);
       const hashGenerationTime = Date.now() - testStartTime;
-      
       const deduplicationResult = { action: 'create' as const, confidence: 1.0 };
       const totalTime = Date.now() - testStartTime;
 
@@ -270,8 +269,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
           semanticHash: semanticHash.slice(0, 16) + "...",
           action: deduplicationResult.action, confidence: deduplicationResult.confidence
         },
-        performance: { hashGeneration: `${hashGenerationTime}ms`, totalTime: `${totalTime}ms` },
-        features: { realTimeDeduplication: true, enhancedSystemPrompts: true, semanticHashing: true }
+        performance: { hashGeneration: `${hashGenerationTime}ms`, totalTime: `${totalTime}ms` }
       });
     } catch (error) {
       console.error('ChatGPT memory enhancement test error:', error);

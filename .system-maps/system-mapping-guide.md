@@ -30,6 +30,26 @@ To maintain clarity and prevent maps from becoming unwieldy, the following quant
     -   The JSON definition for a *single feature* within a `featureGroup` exceeds **100 lines**.
     -   **Action:** Create a new `[feature-name].feature.json` file. Move the entire feature object into this new file. In the original domain map, replace the feature object with a `$ref` pointer (e.g., `"$ref": "./[feature-name].feature.json"`). This should be used only for individual features that are disproportionately large.
 
+#### Metadata Requirements for Extracted Features
+
+**MANDATORY:** All extracted `.feature.json` files MUST include a metadata header at the top of the file to provide context:
+
+```json
+{
+  "_metadata": {
+    "featureName": "health-data-import",
+    "featureGroup": "data-operations", 
+    "parentFile": "./dashboard.map.json",
+    "domain": "health"
+  },
+  "description": "...",
+  "userFlow": ["..."],
+  // ... rest of feature definition
+}
+```
+
+This metadata ensures that extracted features remain self-documenting and provide clear navigation context when viewed in isolation.
+
 ## 3. File Schema Definition
 
 Adherence to the following JSON schema is mandatory.

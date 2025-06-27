@@ -1,5 +1,11 @@
 
 {
+  "_metadata": {
+    "featureName": "health-data-import",
+    "featureGroup": "data-operations", 
+    "parentFile": "./dashboard.map.json",
+    "domain": "health"
+  },
   "description": "Comprehensive health data import system supporting multiple file formats from various health platforms and devices.",
   "userFlow": [
     "User clicks 'Import Health Data' button in HealthDataSection.",

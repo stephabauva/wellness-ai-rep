@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { db } from '../db';
+import { db, pool } from '../db';
 import { sql } from 'drizzle-orm';
 import { preparedStatementsService } from '../services/prepared-statements-service';
 import { databaseMigrationService } from '../services/database-migration-service';
@@ -15,12 +15,13 @@ describe('PostgreSQL Performance Tests', () => {
   });
 
   it('should have performance indexes created', async () => {
-    const indexes = await db.execute(sql`
+    const result = await pool.query(`
       SELECT count(*) as count
       FROM pg_indexes 
       WHERE schemaname = 'public' AND indexname LIKE 'idx_%'
     `);
-    expect(Number(indexes[0]?.count)).toBeGreaterThan(5);
+    const indexCount = parseInt(result.rows[0]?.count || '0');
+    expect(indexCount).toBeGreaterThan(5);
   });
 
   it('should execute prepared statements efficiently', async () => {

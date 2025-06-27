@@ -1,5 +1,7 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { z } from 'zod';
 import MemorySection from '../../client/src/components/MemorySection';
@@ -61,9 +63,9 @@ describe('Manual Memory Entry Feature', () => {
 
   const renderMemorySection = () => {
     return render(
-      React.createElement(QueryClientProvider, { client: queryClient },
-        React.createElement(MemorySection)
-      )
+      <QueryClientProvider client={queryClient}>
+        <MemorySection />
+      </QueryClientProvider>
     );
   };
 

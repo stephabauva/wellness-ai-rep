@@ -772,7 +772,7 @@ Respond with JSON:
     try {
       const accessLogs: InsertMemoryAccessLog[] = memories.map(memory => ({
         memoryEntryId: memory.id,
-        conversationId,
+        conversationId: conversationId || null,
         relevanceScore: memory.relevanceScore,
         usedInResponse,
       }));

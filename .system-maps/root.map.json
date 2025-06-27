@@ -42,6 +42,11 @@
       "description": "Application performance optimization including lazy loading, caching strategies, and startup optimization.",
       "path": "/.system-maps/performance.map.json",
       "dependencies": ["chat", "memory", "health"]
+    },
+    "routes": {
+      "description": "Modular routes architecture breaking down massive monolithic routes.ts into domain-specific modules with line count enforcement.",
+      "path": "/.system-maps/routes/",
+      "dependencies": ["chat", "health", "memory", "file-manager", "settings"]
     }
   },
   "globalComponents": {

@@ -1,12 +1,12 @@
 // MAX_LINES: 60 - Routes Module Index
 import type { Express } from "express";
 import type { Server } from "http";
-import { registerChatRoutes } from "./chat-routes";
-import { registerHealthRoutes } from "./health-routes";
-import { registerMemoryRoutes } from "./memory-routes";
-import { registerFileRoutes } from "./file-routes";
-import { registerSettingsRoutes } from "./settings-routes";
-import { registerMonitoringRoutes } from "./monitoring-routes";
+import { registerChatRoutes } from "./chat-routes.js";
+import { registerHealthRoutes } from "./health-routes.js";
+import { registerMemoryRoutes } from "./memory-routes.js";
+import { registerFileRoutes } from "./file-routes.js";
+import { registerSettingsRoutes } from "./settings-routes.js";
+import { registerMonitoringRoutes } from "./monitoring-routes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = await registerChatRoutes(app);

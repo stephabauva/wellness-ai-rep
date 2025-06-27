@@ -64,8 +64,8 @@ export const HydrationCard: React.FC<HydrationCardProps> = ({ data, timeline }) 
         <CardTitle>Hydration</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
-        <div className="relative w-40 h-40 mb-4"> {/* Ensure consistent sizing */}
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="relative w-40 h-40 mb-4 min-w-[160px] min-h-[160px]"> {/* Fixed chart sizing */}
+          <ResponsiveContainer width="100%" height="100%" minWidth={160} minHeight={160}>
             <PieChart>
               <Pie
                 data={pieData}

@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # System Map Auditor - Phase 1 Automated Test Suite
@@ -40,16 +41,23 @@ run_test() {
 
     # Run the command with timeout and capture output
     local test_passed=false
-    timeout 10s bash -c "$test_command" > /tmp/test_output_$TOTAL_TESTS.txt 2>&1
-    local exit_code=$?
+    local exit_code=0
+    
+    # Use timeout command to prevent hanging
+    if timeout 10s bash -c "$test_command" > /tmp/test_output_$TOTAL_TESTS.txt 2>&1; then
+        exit_code=0
+    else
+        exit_code=$?
+    fi
 
     # Handle timeout case
     if [ $exit_code -eq 124 ]; then
-        echo -e "${YELLOW}⚠️  TIMEOUT${NC}: Command timed out after 30 seconds"
+        echo -e "${YELLOW}⚠️  TIMEOUT${NC}: Command timed out after 10 seconds"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         TEST_RESULTS+=("❌ $test_name (TIMEOUT)")
-        echo "Full output:"
-        head -20 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
+        echo "Output preview:"
+        head -10 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
+        echo "Full output saved to: /tmp/test_output_$TOTAL_TESTS.txt"
         return
     fi
 
@@ -57,12 +65,12 @@ run_test() {
     if [ -n "$failure_keywords" ]; then
         IFS=',' read -ra FAIL_KEYWORDS <<< "$failure_keywords"
         for keyword in "${FAIL_KEYWORDS[@]}"; do
-            if grep -iq "$keyword" /tmp/test_output_$TOTAL_TESTS.txt; then
+            if grep -qi "$keyword" /tmp/test_output_$TOTAL_TESTS.txt; then
                 echo -e "${RED}❌ FAIL${NC}: Failure keyword detected: $keyword"
                 FAILED_TESTS=$((FAILED_TESTS + 1))
                 TEST_RESULTS+=("❌ $test_name (Error: $keyword)")
-                echo "Full output:"
-                head -20 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
+                echo "Output preview:"
+                head -10 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
                 echo "Exit code: $exit_code"
                 echo "Full output saved to: /tmp/test_output_$TOTAL_TESTS.txt"
                 return
@@ -75,7 +83,7 @@ run_test() {
         local keywords_found=true
         IFS=',' read -ra KEYWORDS <<< "$expected_keywords"
         for keyword in "${KEYWORDS[@]}"; do
-            if ! grep -iq "$keyword" /tmp/test_output_$TOTAL_TESTS.txt; then
+            if ! grep -qi "$keyword" /tmp/test_output_$TOTAL_TESTS.txt; then
                 keywords_found=false
                 echo "Missing keyword: $keyword"
                 break
@@ -99,15 +107,15 @@ run_test() {
 
         # Show first few lines of output
         echo "Output preview:"
-        head -10 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
+        head -5 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
     else
         echo -e "${RED}❌ FAIL${NC}: Test failed (exit code: $exit_code)"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         TEST_RESULTS+=("❌ $test_name")
 
         # Show error output
-        echo "Full output:"
-        head -20 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
+        echo "Output preview:"
+        head -10 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
     fi
 
     echo "Exit code: $exit_code"
@@ -289,7 +297,7 @@ run_test \
     "" \
     "error,unknown option,CLI Error"
 
-# Test 5.2: Feature-specific component validation (EXPECTED TO FAIL - -f option not implemented)
+# Test 5.2: Feature-specific component validation
 run_test \
     "Test 5.2" \
     "node system-map-auditor/dist/cli.js audit-feature chat" \

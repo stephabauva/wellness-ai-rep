@@ -9,7 +9,7 @@ export default defineConfig({
   test: {
     globals: true, // To use expect, describe, it, etc., without importing
     environment: 'jsdom', // Explicitly set the environment
-    setupFiles: './client/src/setupTests.ts',
+    setupFiles: ['./client/src/setupTests.ts'],
     css: false,
     server: {
       deps: {
@@ -23,7 +23,10 @@ export default defineConfig({
         ]
       }
     }
-    // Add any other Vitest specific configurations here
+  },
+  define: {
+    // Enable JSX in test files
+    'process.env.NODE_ENV': '"test"'
   },
   resolve: {
     alias: {

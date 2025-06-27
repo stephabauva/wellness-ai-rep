@@ -31,7 +31,7 @@ describe('useChatActions', () => {
       },
     });
     return ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={testQueryClientInstance}>{children}</QueryClientProvider>
+      React.createElement(QueryClientProvider, { client: testQueryClientInstance }, children)
     );
   };
 

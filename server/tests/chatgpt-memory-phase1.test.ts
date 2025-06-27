@@ -3,11 +3,29 @@
  * Comprehensive testing with performance metrics for memory enhancement capabilities
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ChatGPTMemoryEnhancement } from '../services/chatgpt-memory-enhancement';
 import { MemoryEnhancedAIService } from '../services/memory-enhanced-ai-service';
 import { storage } from '../storage';
 import { resolve } from 'path';
+
+// Mock OpenAI to avoid browser environment issues
+vi.mock('openai', () => ({
+  default: vi.fn(() => ({
+    chat: {
+      completions: {
+        create: vi.fn().mockResolvedValue({
+          choices: [{ message: { content: 'mocked response' } }]
+        })
+      }
+    },
+    embeddings: {
+      create: vi.fn().mockResolvedValue({
+        data: [{ embedding: new Array(1536).fill(0.1) }]
+      })
+    }
+  }))
+}));
 
 // Performance measurement utilities
 class PerformanceTimer {

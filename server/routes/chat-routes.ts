@@ -38,6 +38,29 @@ const audioUpload = multer({
 });
 
 export async function registerChatRoutes(app: Express): Promise<Server> {
+  
+  // Get all conversations for a user
+  app.get('/api/conversations', async (req, res) => {
+    try {
+      const userId = 1; // Fixed user ID
+      
+      const userConversations = await db
+        .select({
+          id: conversations.id,
+          title: conversations.title,
+          createdAt: conversations.createdAt,
+          updatedAt: conversations.updatedAt,
+        })
+        .from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.updatedAt));
+      
+      res.json(userConversations);
+    } catch (error) {
+      console.error('Get conversations error:', error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
   const httpServer = createServer(app);
   const FIXED_USER_ID = 1;
 

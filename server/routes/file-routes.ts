@@ -25,7 +25,7 @@ const FIXED_USER_ID = 1;
 const fileUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
-  fileFilter: (req, file, cb) => {
+  fileFilter: (req: any, file: any, cb: any) => {
     // Allow all file types for general upload
     const allowedMimeTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -111,7 +111,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
       }
 
       // Get retention information
-      const retentionInfo = attachmentRetentionService.getRetentionInfo(
+      const retentionInfo = await attachmentRetentionService.getRetentionInfo(
         file.originalname,
         file.mimetype
       );
@@ -128,7 +128,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
         categoryId: validatedCategoryId,
         retentionPolicy: retentionInfo.category,
         retentionDays: retentionInfo.retentionDays,
-        uploadSource: 'manual',
+        uploadSource: 'manual' as const,
         metadata: {
           originalName: file.originalname,
           retentionInfo
@@ -355,6 +355,27 @@ export async function registerFileRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error('Error starting Go service:', error);
       res.status(500).json({ message: 'Failed to start Go acceleration service' });
+    }
+  });
+
+  // Get file categories - CRITICAL for file manager category selection
+  app.get('/api/files/categories', async (req, res) => {
+    try {
+      const categories = await db
+        .select({
+          id: fileCategories.id,
+          name: fileCategories.name,
+          description: fileCategories.description,
+          icon: fileCategories.icon,
+          color: fileCategories.color
+        })
+        .from(fileCategories)
+        .where(eq(fileCategories.userId, FIXED_USER_ID));
+
+      res.json(categories);
+    } catch (error) {
+      console.error('Error fetching file categories:', error);
+      res.status(500).json({ error: 'Failed to fetch file categories' });
     }
   });
 

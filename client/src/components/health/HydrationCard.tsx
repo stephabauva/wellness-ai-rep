@@ -64,25 +64,23 @@ export const HydrationCard: React.FC<HydrationCardProps> = ({ data, timeline }) 
         <CardTitle>Hydration</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
-        <div className="relative w-40 h-40 mb-4 min-w-[160px] min-h-[160px]"> {/* Fixed chart sizing */}
-          <ResponsiveContainer width="100%" height="100%" minWidth={160} minHeight={160}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                innerRadius={55} // Adjusted for a thicker ring
-                outerRadius={70}
-                paddingAngle={consumed > 0 && remaining > 0 ? 2 : 0} // No padding if full or empty
-                dataKey="value"
-                stroke="none" // No stroke between pie segments
-              >
-                <Cell fill={consumedColor} />
-                <Cell fill={remainingColor} />
-              </Pie>
-              {/* <Tooltip /> // Tooltip can be verbose for this simple chart */}
-            </PieChart>
-          </ResponsiveContainer>
+        <div style={{ position: 'relative', width: '160px', height: '160px', minWidth: '160px', minHeight: '160px', marginBottom: '1rem' }}>
+          <PieChart width={160} height={160}>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              innerRadius={55} // Adjusted for a thicker ring
+              outerRadius={70}
+              paddingAngle={consumed > 0 && remaining > 0 ? 2 : 0} // No padding if full or empty
+              dataKey="value"
+              stroke="none" // No stroke between pie segments
+            >
+              <Cell fill={consumedColor} />
+              <Cell fill={remainingColor} />
+            </Pie>
+            {/* <Tooltip /> // Tooltip can be verbose for this simple chart */}
+          </PieChart>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-2xl font-bold">{percentage.toFixed(0)}%</span>
             <span className="text-sm text-muted-foreground">

@@ -19,7 +19,7 @@ export const ActivityTrendChart: React.FC<ActivityTrendChartProps> = ({ data }) 
   
   useEffect(() => {
     // Delay chart rendering to ensure container is properly sized
-    const timer = setTimeout(() => setIsChartReady(true), 100);
+    const timer = setTimeout(() => setIsChartReady(true), 300);
     return () => clearTimeout(timer);
   }, []);
   
@@ -51,10 +51,12 @@ export const ActivityTrendChart: React.FC<ActivityTrendChartProps> = ({ data }) 
         <CardDescription>Steps and active minutes comparison</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="chart-responsive h-[400px] min-h-[300px] min-w-[300px]">
+        <div style={{ width: '100%', height: '400px', minWidth: '300px', minHeight: '300px' }}>
           {isChartReady ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
+            <ResponsiveContainer width={300} height={400} minWidth={300} minHeight={400}>
               <BarChart
+                width={300}
+                height={400}
                 data={chartData}
                 margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
               >

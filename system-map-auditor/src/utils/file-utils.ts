@@ -131,7 +131,7 @@ export class FileUtils {
           files.push(...this.findSystemMapFiles(fullPath));
         } else if (entry.isFile() && (
           entry.name.endsWith('.map.json') || 
-          entry.name.endsWith('.feature.json')
+          entry.name === 'root.map.json'
         )) {
           files.push(fullPath);
         }

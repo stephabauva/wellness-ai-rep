@@ -239,9 +239,10 @@ export class SystemMapParser {
             // Validate nested components (skip metadata fields like description, type)
             Object.entries(component).forEach(([nestedKey, nestedValue]: [string, any]) => {
               if (typeof nestedValue === 'string') {
-                // Skip metadata fields
+                // Skip metadata fields and script files
                 const isMetadataField = ['description', 'type', 'version', 'status'].includes(nestedKey);
-                if (!isMetadataField && !nestedValue.includes('/')) {
+                const isScriptFile = nestedKey === 'script' && (nestedValue.endsWith('.sh') || nestedValue.endsWith('.js'));
+                if (!isMetadataField && !isScriptFile && !nestedValue.includes('/')) {
                   issues.push({
                     type: 'invalid-reference',
                     severity: 'error',

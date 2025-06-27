@@ -29,6 +29,7 @@ run_test() {
     local test_command="$2"
     local expected_behavior="$3"
     local expected_keywords="$4"  # Optional: keywords to check in output
+    local failure_keywords="$5"  # Optional: keywords that indicate failure
 
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo ""
@@ -52,6 +53,23 @@ run_test() {
         return
     fi
 
+    # Check for explicit failure keywords first
+    if [ -n "$failure_keywords" ]; then
+        IFS=',' read -ra FAIL_KEYWORDS <<< "$failure_keywords"
+        for keyword in "${FAIL_KEYWORDS[@]}"; do
+            if grep -iq "$keyword" /tmp/test_output_$TOTAL_TESTS.txt; then
+                echo -e "${RED}❌ FAIL${NC}: Failure keyword detected: $keyword"
+                FAILED_TESTS=$((FAILED_TESTS + 1))
+                TEST_RESULTS+=("❌ $test_name (Error: $keyword)")
+                echo "Full output:"
+                head -20 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
+                echo "Exit code: $exit_code"
+                echo "Full output saved to: /tmp/test_output_$TOTAL_TESTS.txt"
+                return
+            fi
+        done
+    fi
+
     # Check output content for expected keywords if provided
     if [ -n "$expected_keywords" ]; then
         local keywords_found=true
@@ -64,12 +82,12 @@ run_test() {
             fi
         done
 
-        if [ "$keywords_found" = true ] || [ $exit_code -eq 0 ]; then
+        if [ "$keywords_found" = true ] && [ $exit_code -eq 0 ]; then
             test_passed=true
         fi
     else
-        # For tests without specific keyword requirements, check if command completed successfully
-        if [ $exit_code -eq 0 ] || [ $exit_code -eq 1 ]; then
+        # For tests without specific keyword requirements, only pass if exit code is 0
+        if [ $exit_code -eq 0 ]; then
             test_passed=true
         fi
     fi
@@ -83,7 +101,7 @@ run_test() {
         echo "Output preview:"
         head -10 /tmp/test_output_$TOTAL_TESTS.txt | sed 's/^/  /'
     else
-        echo -e "${RED}❌ FAIL${NC}: Expected output not found"
+        echo -e "${RED}❌ FAIL${NC}: Test failed (exit code: $exit_code)"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         TEST_RESULTS+=("❌ $test_name")
 
@@ -162,37 +180,42 @@ echo "======================================"
 # Test 1.1: Help command
 run_test \
     "Test 1.1" \
-    "node system-map-auditor/dist/cli.js --help || echo 'HELP_OUTPUT_CAPTURED'" \
+    "node system-map-auditor/dist/cli.js --help" \
     "Help message with all available commands" \
-    "Usage,Commands,Options,system-map-auditor"
+    "Usage,Commands,Options,system-map-auditor" \
+    "error,unknown option,CLI Error"
 
 # Test 1.2: Version command
 run_test \
     "Test 1.2" \
-    "node system-map-auditor/dist/cli.js --version || echo 'VERSION_OUTPUT_CAPTURED'" \
+    "node system-map-auditor/dist/cli.js --version" \
     "Version number display" \
-    "1.0.0"
+    "1.0.0" \
+    "error,unknown option,CLI Error"
 
 # Test 1.3: Configuration with dry-run
 run_test \
     "Test 1.3" \
-    "node system-map-auditor/dist/cli.js --config --dry-run || echo 'DRY_RUN_CONFIG_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js --config --dry-run" \
     "Configuration validation without errors in dry-run mode" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 2.1: Default configuration
 run_test \
     "Test 2.1" \
     "node system-map-auditor/dist/cli.js show-config" \
     "Default configuration displayed in JSON format" \
-    "validation,scanning,reporting"
+    "validation,scanning,reporting" \
+    "error,unknown option,CLI Error"
 
 # Test 2.2: Custom configuration
 run_test \
     "Test 2.2" \
     "node system-map-auditor/dist/cli.js --config test-config.json show-config" \
     "Custom configuration loaded and merged correctly" \
-    "checkExistence,validateEndpoints"
+    "checkExistence,validateEndpoints" \
+    "error,unknown option,CLI Error"
 
 # =============================================================================
 # DAY 2: SYSTEM MAP PARSER TESTING
@@ -207,42 +230,48 @@ run_test \
     "Test 3.1" \
     "node system-map-auditor/dist/cli.js parse-only --verbose" \
     "Successful parsing of all system maps with verbose output" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 3.2: Parse specific system map (chat.map.json)
 run_test \
     "Test 3.2" \
-    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/chat.map.json --verbose || echo 'PARSE_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/chat.map.json --verbose" \
     "Parse specific system map with verbose output" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 3.3: Parse federated map ($ref resolution)
 run_test \
     "Test 3.3" \
-    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/root.map.json --debug || echo 'FEDERATED_PARSE_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/root.map.json --debug" \
     "Parse federated map with $ref resolution" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 4.1: Component discovery with patterns
 run_test \
     "Test 4.1" \
-    "node system-map-auditor/dist/cli.js scan-only --component-patterns='client/src/components/**/*.tsx' || echo 'COMPONENT_SCAN_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js scan-only --component-patterns='client/src/components/**/*.tsx'" \
     "Discover components using specific patterns" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 4.2: API endpoint discovery with patterns  
 run_test \
     "Test 4.2" \
-    "node system-map-auditor/dist/cli.js scan-only --api-patterns='server/routes/**/*.ts' || echo 'API_SCAN_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js scan-only --api-patterns='server/routes/**/*.ts'" \
     "Discover API endpoints using specific patterns" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 4.3: Full codebase scan
 run_test \
     "Test 4.3" \
-    "node system-map-auditor/dist/cli.js scan-only --verbose || echo 'FULL_SCAN_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js scan-only --verbose" \
     "Complete codebase scan with verbose output" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # =============================================================================
 # DAY 3: BASIC VALIDATION TESTING
@@ -255,44 +284,50 @@ echo "=================================="
 # Test 5.1: Component existence validation
 run_test \
     "Test 5.1" \
-    "node system-map-auditor/dist/cli.js validate-components --verbose || echo 'COMPONENT_VALIDATION_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js validate-components --verbose" \
     "Component existence validation with verbose output" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
-# Test 5.2: Feature-specific component validation
+# Test 5.2: Feature-specific component validation (EXPECTED TO FAIL - -f option not implemented)
 run_test \
     "Test 5.2" \
-    "node system-map-auditor/dist/cli.js -f chat validate-components || echo 'FEATURE_COMPONENT_VALIDATION_COMPLETED'" \
-    "Validate components for specific feature" \
-    ""
+    "node system-map-auditor/dist/cli.js audit-feature chat" \
+    "Validate components for specific feature using audit-feature command" \
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 5.3: Component validation with JSON format
 run_test \
     "Test 5.3" \
-    "node system-map-auditor/dist/cli.js validate-components --format=json || echo 'JSON_COMPONENT_VALIDATION_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js validate-components --format=json" \
     "Component validation with JSON output format" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 6.1: API endpoint validation
 run_test \
     "Test 6.1" \
-    "node system-map-auditor/dist/cli.js validate-apis --verbose || echo 'API_VALIDATION_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js validate-apis --verbose" \
     "API endpoint validation with verbose output" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 6.2: Specific API validation with filter
 run_test \
     "Test 6.2" \
-    "node system-map-auditor/dist/cli.js validate-apis --filter='*/api/chat/*' || echo 'FILTERED_API_VALIDATION_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js validate-apis --filter='*/api/chat/*'" \
     "Validate specific APIs using filter pattern" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 6.3: API validation with suggestions
 run_test \
     "Test 6.3" \
-    "node system-map-auditor/dist/cli.js validate-apis --show-suggestions || echo 'API_SUGGESTIONS_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js validate-apis --show-suggestions" \
     "API validation with fix suggestions" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # =============================================================================
 # ADDITIONAL PHASE 1 TESTS FROM MANUAL TESTING GUIDE
@@ -307,42 +342,48 @@ run_test \
     "Test 7" \
     "node system-map-auditor/dist/cli.js scan-for-maps" \
     "List of system map files found" \
-    ".system-maps"
+    ".system-maps" \
+    "error,unknown option,CLI Error"
 
 # Test 8: Full Audit
 run_test \
     "Test 8" \
-    "node system-map-auditor/dist/cli.js full-audit --format=console || echo 'AUDIT_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js full-audit --format=console" \
     "Complete validation of available features" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 9: Feature Audit
 run_test \
     "Test 9" \
-    "node system-map-auditor/dist/cli.js audit-feature chat || echo 'FEATURE_AUDIT_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js audit-feature chat" \
     "Specific feature audit results" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 10: Global show-config option
 run_test \
     "Test 10" \
-    "node system-map-auditor/dist/cli.js --show-config || echo 'GLOBAL_CONFIG_SHOWN'" \
+    "node system-map-auditor/dist/cli.js --show-config" \
     "Display configuration using global option" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 11: Dry run mode
 run_test \
     "Test 11" \
-    "node system-map-auditor/dist/cli.js --dry-run parse-only || echo 'DRY_RUN_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js --dry-run parse-only" \
     "Test dry run mode without making changes" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # Test 12: Quiet mode test
 run_test \
     "Test 12" \
-    "node system-map-auditor/dist/cli.js --quiet parse-only || echo 'QUIET_MODE_COMPLETED'" \
+    "node system-map-auditor/dist/cli.js --quiet parse-only" \
     "Test quiet mode with minimal output" \
-    ""
+    "" \
+    "error,unknown option,CLI Error"
 
 # =============================================================================
 # TEST RESULTS SUMMARY

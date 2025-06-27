@@ -15,15 +15,13 @@ import {
   z
 } from "./shared-dependencies.js";
 
-// Initialize ChatGPT Memory Enhancement Service
 const chatGPTMemoryEnhancement = new ChatGPTMemoryEnhancement();
 
 export async function registerMemoryRoutes(app: Express): Promise<void> {
   // Memory overview endpoint
   app.get("/api/memories/overview", async (req, res) => {
     try {
-      const userId = 1; // Default user ID
-      const memories = await memoryService.getUserMemories(userId);
+      const memories = await memoryService.getUserMemories(1);
       
       const overview = {
         totalMemories: memories.length,
@@ -34,10 +32,8 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
           instruction: memories.filter(m => m.category === 'instruction').length
         },
         recentMemories: memories.slice(0, 3).map(m => ({
-          id: m.id,
-          content: m.content.substring(0, 100) + (m.content.length > 100 ? '...' : ''),
-          category: m.category,
-          createdAt: m.createdAt
+          id: m.id, content: m.content.substring(0, 100) + (m.content.length > 100 ? '...' : ''),
+          category: m.category, createdAt: m.createdAt
         }))
       };
       
@@ -263,15 +259,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
       const semanticHash = await memoryEnhancedAIService.chatGPTMemory.generateSemanticHash(message);
       const hashGenerationTime = Date.now() - testStartTime;
       
-      const cacheCheckTime = Date.now();
-      const deduplicationResult = {
-        action: 'create' as const,
-        confidence: 1.0,
-        reasoning: 'Test mode - lightweight deduplication check completed'
-      };
-      const cacheCheckDuration = Date.now() - cacheCheckTime;
-      
-      const metrics = memoryEnhancedAIService.getMemoryMetrics();
+      const deduplicationResult = { action: 'create' as const, confidence: 1.0 };
       const totalTime = Date.now() - testStartTime;
 
       res.json({
@@ -282,11 +270,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
           semanticHash: semanticHash.slice(0, 16) + "...",
           action: deduplicationResult.action, confidence: deduplicationResult.confidence
         },
-        performance: {
-          hashGeneration: `${hashGenerationTime}ms`, cacheCheck: `${cacheCheckDuration}ms`, 
-          totalTime: `${totalTime}ms`
-        },
-        metrics,
+        performance: { hashGeneration: `${hashGenerationTime}ms`, totalTime: `${totalTime}ms` },
         features: { realTimeDeduplication: true, enhancedSystemPrompts: true, semanticHashing: true }
       });
     } catch (error) {

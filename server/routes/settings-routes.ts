@@ -1,6 +1,6 @@
 // MAX_LINES: 250
 // Settings Routes Module - User settings, AI config, device management
-import { Express } from "./shared-dependencies";
+import { Express } from "./shared-dependencies.js";
 
 export async function registerSettingsRoutes(app: Express): Promise<void> {
   // Settings routes implementation will be completed in next phase

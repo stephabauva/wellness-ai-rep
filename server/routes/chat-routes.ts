@@ -6,7 +6,7 @@ import {
   Express, storage, aiService, transcriptionService, db, eq, desc,
   conversations, conversationMessages, files, attachmentRetentionService,
   multer, join
-} from "./shared-dependencies";
+} from "./shared-dependencies.js";
 
 const attachmentSchema = z.object({
   id: z.string(), fileName: z.string(), displayName: z.string().optional(),
@@ -25,7 +25,8 @@ const messageSchema = z.object({
 });
 
 const audioUpload = multer({
-  dest: 'uploads/audio/', limits: { fileSize: 25 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/webm', 'audio/ogg'];
     if (allowed.includes(file.mimetype)) {
@@ -236,8 +237,11 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
   app.post("/api/transcribe/openai", audioUpload.single('audio'), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
-      const transcription = await transcriptionService.transcribeWithOpenAI(req.file.path);
-      res.json({ transcription });
+      const transcription = await transcriptionService.transcribeWithOpenAI(
+        req.file.buffer,
+        req.file.originalname || "audio.wav"
+      );
+      res.json(transcription);
     } catch (error) {
       res.status(500).json({ error: 'Transcription failed' });
     }
@@ -246,8 +250,8 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
   app.post("/api/transcribe/google", audioUpload.single('audio'), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
-      const transcription = await transcriptionService.transcribeWithGoogle(req.file.path);
-      res.json({ transcription });
+      const transcription = await transcriptionService.transcribeWithGoogle(req.file.buffer);
+      res.json(transcription);
     } catch (error) {
       res.status(500).json({ error: 'Transcription failed' });
     }

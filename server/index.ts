@@ -1,4 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes/index";
 import { registerSimpleRoutes } from "./routes-simple";
 import { setupVite, serveStatic, log } from "./vite";
@@ -6,9 +8,15 @@ import { storage, DatabaseStorage } from "./storage";
 import { databaseMigrationService } from "./services/database-migration-service";
 import { logger } from "./services/logger-service";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve uploaded files statically
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Initialize database with indexes and optimizations
 async function initializeDatabase() {

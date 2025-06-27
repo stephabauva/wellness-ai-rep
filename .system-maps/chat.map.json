@@ -93,9 +93,17 @@
             "User clicks the 'Paperclip' icon in `ChatInputArea`.",
             "The `useFileManagement` hook's `handleFileChange` function is triggered.",
             "A POST request is sent to `/api/upload` to upload the file.",
-            "The file is displayed in the `AttachmentPreview` component as a mini image.",
+            "The server saves the file to the `/uploads` directory.",
+            "The `AttachmentPreview` component renders the image using a URL like `/uploads/filename.png`.",
+            "The server serves the `/uploads` directory statically, allowing the client to fetch the image.",
             "File is automatically added to file management system for retention period."
           ],
+          "server-side": {
+            "static-serving": {
+              "path": "/uploads",
+              "description": "The Express server is configured to statically serve the `uploads` directory, making uploaded files accessible to the client for previews."
+            }
+          },
           "components": [
             {
               "name": "useFileManagement",

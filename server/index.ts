@@ -15,7 +15,7 @@ async function initializeDatabase() {
   try {
     logger.system('Initializing PostgreSQL database...');
     await databaseMigrationService.initializeDatabase();
-    
+
     const health = await databaseMigrationService.checkDatabaseHealth();
     if (health.performance === 'warning' || health.connectionStatus !== 'connected') {
       logger.warn(`Database health: ${health.connectionStatus}, ${health.tableCount} public schema tables, ${health.indexCount} performance indexes, performance: ${health.performance}`);
@@ -30,7 +30,7 @@ async function initializeDatabase() {
 
 app.use((req, res, next) => {
   const start = Date.now();
-  
+
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (req.path.startsWith("/api")) {
@@ -47,7 +47,7 @@ app.use((req, res, next) => {
     if (storage instanceof DatabaseStorage) {
       await initializeDatabase();
     }
-    
+
     const server = await registerRoutes(app);
     registerSimpleRoutes(app);
 
@@ -75,7 +75,6 @@ app.use((req, res, next) => {
     server.listen({
       port,
       host: "0.0.0.0",
-      reusePort: true,
     }, () => {
       logger.system(`Server running on port ${port}`);
     });

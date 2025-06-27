@@ -101,7 +101,8 @@ This represents a complete failure of the modular routes approach. We must:
 1. **Preserve modular structure** but fix critical imports
 2. **Restore shared service instances** across all modules
 3. **Fix database connection sharing** immediately
-4. **Validate every single API endpoint** with automated tests
+4. **TypeScript compilation validation** - Run `npm run check` after each fix
+5. **Validate every single API endpoint** with automated tests
 
 ### Phase 2: Systematic Validation (24 HOURS)
 1. **Test every feature manually** across all domains
@@ -122,6 +123,7 @@ This represents a complete failure of the modular routes approach. We must:
 // Fix: server/routes/shared-dependencies.ts
 // Ensure ALL services are properly exported and shared
 // Include: database, cache, AI services, file services
+// Add: Explicit type exports for all shared interfaces
 ```
 
 ### 2. Multer Configuration Fix
@@ -152,7 +154,22 @@ This represents a complete failure of the modular routes approach. We must:
 // Fix: CORS and middleware application
 ```
 
+### 6. TypeScript Safety Enforcement
+```typescript
+// Fix: Function signature validation across all modules
+// Ensure all calls match expected parameters (prevent TS2554 errors)
+// Add type guards for object index usage (prevent TS2538 errors)
+// Eliminate any types without explicit justification
+```
+
 ## Validation Checklist (MANDATORY)
+
+### TypeScript Compilation Safety (BLOCKING)
+- [ ] **Zero TypeScript errors** - `npm run check` must pass with 0 errors
+- [ ] **Function signature validation** - all calls match expected parameters
+- [ ] **Type safety compliance** - all imports properly typed
+- [ ] **Object index safety** - proper type guards for undefined values
+- [ ] **No regression errors** - previous TS2554 and TS2538 errors stay fixed
 
 ### Chat Functionality
 - [ ] File upload works (image, document, any file type)
@@ -198,7 +215,8 @@ This represents a complete failure of the modular routes approach. We must:
 1. **Emergency shared dependencies fix**
 2. **Multer configuration restoration** 
 3. **Critical API endpoint validation**
-4. **Basic smoke testing**
+4. **TypeScript compilation gate** - Block deployment if `npm run check` shows errors
+5. **Basic smoke testing**
 
 ### Short-term (4-24 hours)
 1. **Comprehensive manual testing** of all features
@@ -208,9 +226,12 @@ This represents a complete failure of the modular routes approach. We must:
 
 ### Medium-term (24-48 hours)
 1. **Automated regression test suite**
-2. **Health check implementation**
-3. **Rollback mechanism creation**
-4. **Documentation updates**
+2. **Pre-commit TypeScript validation** - Block commits with TypeScript errors
+3. **CI/CD TypeScript gate** - Automated blocking for TypeScript failures
+4. **Health check implementation**
+5. **Rollback mechanism creation**
+6. **Type-first development protocols** - All new code must pass TypeScript strict mode
+7. **Documentation updates**
 
 ## Risk Mitigation
 
@@ -234,6 +255,9 @@ This represents a complete failure of the modular routes approach. We must:
 ## Success Criteria
 
 ### Technical Criteria
+- ✅ **Zero TypeScript errors** - `npm run check` must pass with 0 errors
+- ✅ **Type safety compliance** - all imports properly typed, no `any` types
+- ✅ **Function signature validation** - all calls match expected parameters
 - ✅ **Zero functional regressions** - every feature works as before
 - ✅ **Performance parity** - no slower than monolithic version
 - ✅ **Error rate unchanged** - same or better error rates
@@ -254,6 +278,8 @@ This represents a complete failure of the modular routes approach. We must:
 ## Post-Fix Validation Protocol
 
 ### 1. Automated Validation
+- **TypeScript compilation check** - Must pass with zero errors
+- **Type safety validation** - Verify all imports and function signatures
 - Run full test suite across all modules
 - Performance benchmarking vs. baseline
 - Error rate monitoring and comparison
@@ -276,14 +302,17 @@ This represents a complete failure of the modular routes approach. We must:
 ### What Went Wrong
 1. **Insufficient dependency mapping** - missed critical service interdependencies
 2. **Inadequate integration testing** - modules not tested together
-3. **Missing validation protocol** - no comprehensive feature testing
-4. **Rushed implementation** - didn't follow staged rollout plan
+3. **Missing TypeScript validation** - no compilation checks during implementation
+4. **Missing validation protocol** - no comprehensive feature testing
+5. **Rushed implementation** - didn't follow staged rollout plan
 
 ### What Must Change
-1. **Mandatory integration testing** before any modular changes
-2. **Comprehensive dependency analysis** for all refactoring
-3. **Feature-by-feature validation** with automated tests
-4. **Staged rollout with rollback triggers** for all major changes
+1. **Mandatory TypeScript compilation gates** - Block all changes if `npm run check` fails
+2. **Type-first development approach** - All function signatures validated before implementation
+3. **Mandatory integration testing** before any modular changes
+4. **Comprehensive dependency analysis** for all refactoring
+5. **Feature-by-feature validation** with automated tests
+6. **Staged rollout with rollback triggers** for all major changes
 
 ## Conclusion
 

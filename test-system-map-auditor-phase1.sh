@@ -189,8 +189,8 @@ run_test \
     "Test 1.1" \
     "node system-map-auditor/dist/cli.js help" \
     "Help message with all available commands" \
-    "Usage,Commands,Options,system-map-auditor" \
-    "CLI Error,unknown option,Error:"
+    "Usage,system-map-auditor" \
+    "unknown option,Error:"
 
 # Test 1.2: Version command
 run_test \

@@ -97,25 +97,6 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Add health data - CRITICAL for health dashboard metric addition
-  app.post("/api/health-data", async (req, res) => {
-    try {
-      const healthData = insertHealthDataSchema.parse(req.body);
-      const result = await storage.createHealthData({
-        ...healthData,
-        userId: 1
-      });
-      res.json(result);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
-        res.status(400).json({ message: "Invalid health data format", details: error.message });
-      } else {
-        console.error('Error adding health data:', error);
-        res.status(500).json({ message: "Failed to add health data" });
-      }
-    }
-  });
-
   // Clear all health data
   app.delete("/api/health-data/reset", async (req, res) => {
     try {

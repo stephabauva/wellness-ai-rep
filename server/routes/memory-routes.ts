@@ -44,35 +44,12 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Get user memories with category filtering
+  // Get user memories
   app.get("/api/memories", async (req, res) => {
     try {
       const userId = 1; // Default user ID
-      const category = req.query.category as string;
-      
-      let memories = await memoryService.getUserMemories(userId);
-      
-      // Filter by category if specified
-      if (category && category !== 'all') {
-        memories = memories.filter(m => m.category === category);
-      }
-
-      // Calculate category counts for proper display
-      const allMemories = await memoryService.getUserMemories(userId);
-      const categoryCounts = {
-        preference: allMemories.filter(m => m.category === 'preference').length,
-        personal_info: allMemories.filter(m => m.category === 'personal_info').length,
-        context: allMemories.filter(m => m.category === 'context').length,
-        instruction: allMemories.filter(m => m.category === 'instruction').length
-      };
-
-      res.json({
-        memories,
-        totalCount: allMemories.length,
-        filteredCount: memories.length,
-        categoryCounts,
-        activeFilter: category || 'all'
-      });
+      const memories = await memoryService.getUserMemories(userId);
+      res.json(memories);
     } catch (error) {
       console.error('Error fetching memories:', error);
       res.status(500).json({ message: "Failed to fetch memories" });

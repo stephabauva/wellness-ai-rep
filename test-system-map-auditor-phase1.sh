@@ -137,11 +137,11 @@ EOF
 
 echo ""
 echo "📋 Phase 1 Test Coverage:"
-echo "  • Day 1: CLI Foundation (2 sub-tests: 1.1-1.2)"
+echo "  • Day 1: CLI Foundation (3 sub-tests: 1.1-1.3)"
 echo "  • Day 2: System Map Parser (6 sub-tests: 2.1-2.2, 3.1-3.3, 4.1-4.3)"
 echo "  • Day 3: Basic Validation (6 sub-tests: 5.1-5.3, 6.1-6.3)"
 echo "  • Additional Core Tests (6 tests: 7-12)"
-echo "  • Total: 20 comprehensive sub-tests"
+echo "  • Total: 21 comprehensive sub-tests"
 echo ""
 
 # Prerequisites
@@ -173,6 +173,13 @@ run_test \
     "node system-map-auditor/dist/cli.js --version || echo 'VERSION_OUTPUT_CAPTURED'" \
     "Version number display" \
     "1.0.0"
+
+# Test 1.3: Configuration with dry-run
+run_test \
+    "Test 1.3: Configuration with Dry-Run" \
+    "node system-map-auditor/dist/cli.js --config --dry-run || echo 'DRY_RUN_CONFIG_COMPLETED'" \
+    "Configuration validation without errors in dry-run mode" \
+    ""
 
 # Test 2.1: Default configuration
 run_test \

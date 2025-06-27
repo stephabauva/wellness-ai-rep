@@ -1,5 +1,11 @@
 
 {
+  "_metadata": {
+    "featureName": "native-health-sync",
+    "featureGroup": "data-operations", 
+    "parentFile": "./dashboard.map.json",
+    "domain": "health"
+  },
   "description": "Direct integration with native mobile health platforms (HealthKit on iOS, Google Fit on Android) for real-time health data synchronization.",
   "userFlow": [
     "User clicks 'Sync with Phone' button in HealthDataSection.",

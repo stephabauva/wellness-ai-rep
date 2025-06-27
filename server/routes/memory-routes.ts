@@ -211,27 +211,15 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
   app.post("/api/memory/enhanced-detect", async (req, res) => {
     try {
       const { message, conversationHistory, userProfile } = req.body;
-      
-      if (!message) {
-        return res.status(400).json({ error: "Message is required" });
-      }
+      if (!message) return res.status(400).json({ error: "Message is required" });
 
       const enhancedDetection = await enhancedMemoryService.detectMemoryWorthy(
-        message,
-        conversationHistory || [],
-        userProfile
+        message, conversationHistory || [], userProfile
       );
 
       res.json({
-        enhancedDetection,
-        phase: "1",
-        features: {
-          contextAwareDetection: true,
-          atomicFactExtraction: true,
-          contradictionCheck: true,
-          temporalRelevance: true,
-          confidenceScoring: true
-        }
+        enhancedDetection, phase: "1",
+        features: { contextAwareDetection: true, atomicFactExtraction: true, contradictionCheck: true }
       });
     } catch (error) {
       console.error('Enhanced memory detection error:', error);
@@ -242,33 +230,19 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
   // Enhanced memory retrieval
   app.post("/api/memory/enhanced-retrieve", async (req, res) => {
     try {
-      const { query, limit, contextualHints } = req.body;
-      
-      if (!query) {
-        return res.status(400).json({ error: "Query is required" });
-      }
+      const { query, limit } = req.body;
+      if (!query) return res.status(400).json({ error: "Query is required" });
 
-      const retrievalStartTime = Date.now();
-      
-      // Pre-imported performance core for maximum speed
+      const startTime = Date.now();
       const memories = await performanceMemoryCore.getMemories(1, query);
-
-      const retrievalTime = Date.now() - retrievalStartTime;
+      const retrievalTime = Date.now() - startTime;
 
       res.json({
         memories: memories.slice(0, limit || 5),
         count: Math.min(memories.length, limit || 5),
         phase: "1",
-        performance: {
-          retrievalTime: `${retrievalTime}ms`,
-          cached: memories.length > 0
-        },
-        features: {
-          dynamicThresholds: true,
-          temporalWeighting: true,
-          diversityFiltering: true,
-          contextualHints: true
-        }
+        performance: { retrievalTime: `${retrievalTime}ms`, cached: memories.length > 0 },
+        features: { dynamicThresholds: true, temporalWeighting: true, diversityFiltering: true }
       });
     } catch (error) {
       console.error('Enhanced memory retrieval error:', error);
@@ -297,38 +271,23 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
       };
       const cacheCheckDuration = Date.now() - cacheCheckTime;
       
-      const promptStartTime = Date.now();
-      const testPrompt = "You are a helpful AI wellness coach with enhanced memory capabilities.";
-      const promptGenerationTime = Date.now() - promptStartTime;
-      
       const metrics = memoryEnhancedAIService.getMemoryMetrics();
-      const totalTestTime = Date.now() - testStartTime;
+      const totalTime = Date.now() - testStartTime;
 
       res.json({
-        phase: "1",
-        status: "operational",
+        phase: "1", status: "operational",
         testResults: {
-          enhancedPrompt: testPrompt,
-          memoryProcessingTriggered: true,
-          deduplicationEnabled: true,
+          enhancedPrompt: "AI wellness coach with enhanced memory capabilities",
+          memoryProcessingTriggered: true, deduplicationEnabled: true,
           semanticHash: semanticHash.slice(0, 16) + "...",
-          deduplicationAction: deduplicationResult.action,
-          deduplicationConfidence: deduplicationResult.confidence
+          action: deduplicationResult.action, confidence: deduplicationResult.confidence
         },
         performance: {
-          hashGeneration: `${hashGenerationTime}ms`,
-          cacheCheck: `${cacheCheckDuration}ms`, 
-          promptGeneration: `${promptGenerationTime}ms`,
-          totalTime: `${totalTestTime}ms`
+          hashGeneration: `${hashGenerationTime}ms`, cacheCheck: `${cacheCheckDuration}ms`, 
+          totalTime: `${totalTime}ms`
         },
         metrics,
-        features: {
-          realTimeDeduplication: true,
-          enhancedSystemPrompts: true,
-          parallelProcessing: true,
-          semanticHashing: true,
-          intelligentCaching: true
-        }
+        features: { realTimeDeduplication: true, enhancedSystemPrompts: true, semanticHashing: true }
       });
     } catch (error) {
       console.error('ChatGPT memory enhancement test error:', error);

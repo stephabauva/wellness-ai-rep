@@ -137,11 +137,11 @@ EOF
 
 echo ""
 echo "📋 Phase 1 Test Coverage:"
-echo "  • Day 1: CLI Foundation (4 tests)"
-echo "  • Day 2: System Map Parser (4 tests)"
-echo "  • Day 3: Basic Validation (4 tests)"
-echo "  • Additional Manual Guide Tests (14 tests)"
-echo "  • Total: 26 comprehensive tests"
+echo "  • Day 1: CLI Foundation (2 sub-tests: 1.1-1.2)"
+echo "  • Day 2: System Map Parser (6 sub-tests: 2.1-2.2, 3.1-3.3, 4.1-4.3)"
+echo "  • Day 3: Basic Validation (6 sub-tests: 5.1-5.3, 6.1-6.3)"
+echo "  • Additional Core Tests (6 tests: 7-12)"
+echo "  • Total: 20 comprehensive sub-tests"
 echo ""
 
 # Prerequisites
@@ -160,30 +160,30 @@ echo ""
 echo -e "${YELLOW}📍 DAY 1: CLI Foundation Tests${NC}"
 echo "======================================"
 
-# Test 1: Basic CLI Commands - Help
+# Test 1.1: Help command
 run_test \
-    "CLI Help Command" \
+    "Test 1.1: CLI Help Command" \
     "node system-map-auditor/dist/cli.js --help || echo 'HELP_OUTPUT_CAPTURED'" \
     "Help message with all available commands" \
     "Usage,Commands,Options,system-map-auditor"
 
-# Test 2: Basic CLI Commands - Version
+# Test 1.2: Version command
 run_test \
-    "CLI Version Command" \
+    "Test 1.2: CLI Version Command" \
     "node system-map-auditor/dist/cli.js --version || echo 'VERSION_OUTPUT_CAPTURED'" \
     "Version number display" \
     "1.0.0"
 
-# Test 3: Configuration System - Show Config
+# Test 2.1: Default configuration
 run_test \
-    "Show Default Configuration" \
+    "Test 2.1: Show Default Configuration" \
     "node system-map-auditor/dist/cli.js show-config" \
     "Default configuration displayed in JSON format" \
     "validation,scanning,reporting"
 
-# Test 4: Configuration System - Custom Config
+# Test 2.2: Custom configuration
 run_test \
-    "Custom Configuration Loading" \
+    "Test 2.2: Custom Configuration Loading" \
     "node system-map-auditor/dist/cli.js --config test-config.json show-config" \
     "Custom configuration loaded and merged correctly" \
     "checkExistence,validateEndpoints"
@@ -196,32 +196,46 @@ echo ""
 echo -e "${YELLOW}📍 DAY 2: System Map Parser Tests${NC}"
 echo "====================================="
 
-# Test 5: System Map Discovery
+# Test 3.1: Parse with verbose output
 run_test \
-    "System Map Discovery" \
-    "node system-map-auditor/dist/cli.js scan-for-maps" \
-    "List of system map files found" \
-    ".system-maps"
-
-# Test 6: System Map Parsing Validation
-run_test \
-    "System Map Parsing" \
-    "node system-map-auditor/dist/cli.js parse-only" \
-    "Parsing validation results without errors" \
-    ""
-
-# Test 7: Verbose Parsing Output
-run_test \
-    "Verbose Parsing Mode" \
+    "Test 3.1: System Map Parsing (Verbose)" \
     "node system-map-auditor/dist/cli.js parse-only --verbose" \
-    "Detailed parsing information with verbose output" \
+    "Successful parsing of all system maps with verbose output" \
     ""
 
-# Test 8: Quiet Parsing Mode
+# Test 3.2: Parse specific system map (chat.map.json)
 run_test \
-    "Quiet Parsing Mode" \
-    "node system-map-auditor/dist/cli.js parse-only --quiet" \
-    "Minimal output parsing mode" \
+    "Test 3.2: Parse Specific System Map (chat.map.json)" \
+    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/chat.map.json --verbose || echo 'PARSE_COMPLETED'" \
+    "Parse specific system map with verbose output" \
+    ""
+
+# Test 3.3: Parse federated map ($ref resolution)
+run_test \
+    "Test 3.3: Parse Federated Map (root.map.json)" \
+    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/root.map.json --debug || echo 'FEDERATED_PARSE_COMPLETED'" \
+    "Parse federated map with $ref resolution" \
+    ""
+
+# Test 4.1: Component discovery with patterns
+run_test \
+    "Test 4.1: Component Discovery with Patterns" \
+    "node system-map-auditor/dist/cli.js scan-only --component-patterns='client/src/components/**/*.tsx' || echo 'COMPONENT_SCAN_COMPLETED'" \
+    "Discover components using specific patterns" \
+    ""
+
+# Test 4.2: API endpoint discovery with patterns  
+run_test \
+    "Test 4.2: API Endpoint Discovery with Patterns" \
+    "node system-map-auditor/dist/cli.js scan-only --api-patterns='server/routes/**/*.ts' || echo 'API_SCAN_COMPLETED'" \
+    "Discover API endpoints using specific patterns" \
+    ""
+
+# Test 4.3: Full codebase scan
+run_test \
+    "Test 4.3: Full Codebase Scan (Verbose)" \
+    "node system-map-auditor/dist/cli.js scan-only --verbose || echo 'FULL_SCAN_COMPLETED'" \
+    "Complete codebase scan with verbose output" \
     ""
 
 # =============================================================================
@@ -232,32 +246,46 @@ echo ""
 echo -e "${YELLOW}📍 DAY 3: Basic Validation Tests${NC}"
 echo "=================================="
 
-# Test 9: Component Validation
+# Test 5.1: Component existence validation
 run_test \
-    "Component Validation" \
-    "node system-map-auditor/dist/cli.js validate-components --quiet" \
-    "Component existence validation results" \
+    "Test 5.1: Component Validation (Verbose)" \
+    "node system-map-auditor/dist/cli.js validate-components --verbose || echo 'COMPONENT_VALIDATION_COMPLETED'" \
+    "Component existence validation with verbose output" \
     ""
 
-# Test 10: API Validation
+# Test 5.2: Feature-specific component validation
 run_test \
-    "API Validation" \
-    "node system-map-auditor/dist/cli.js validate-apis --quiet" \
-    "API endpoint validation results" \
+    "Test 5.2: Feature-Specific Component Validation" \
+    "node system-map-auditor/dist/cli.js -f chat validate-components || echo 'FEATURE_COMPONENT_VALIDATION_COMPLETED'" \
+    "Validate components for specific feature" \
     ""
 
-# Test 11: Full Audit (if available)
+# Test 5.3: Component validation with JSON format
 run_test \
-    "Basic Full Audit" \
-    "node system-map-auditor/dist/cli.js full-audit --format=console || echo 'AUDIT_COMPLETED'" \
-    "Complete validation of available features" \
+    "Test 5.3: Component Validation (JSON Format)" \
+    "node system-map-auditor/dist/cli.js validate-components --format=json || echo 'JSON_COMPONENT_VALIDATION_COMPLETED'" \
+    "Component validation with JSON output format" \
     ""
 
-# Test 12: Feature Audit
+# Test 6.1: API endpoint validation
 run_test \
-    "Feature Audit (Chat)" \
-    "node system-map-auditor/dist/cli.js audit-feature chat || echo 'FEATURE_AUDIT_COMPLETED'" \
-    "Specific feature audit results" \
+    "Test 6.1: API Validation (Verbose)" \
+    "node system-map-auditor/dist/cli.js validate-apis --verbose || echo 'API_VALIDATION_COMPLETED'" \
+    "API endpoint validation with verbose output" \
+    ""
+
+# Test 6.2: Specific API validation with filter
+run_test \
+    "Test 6.2: Specific API Validation (Filter)" \
+    "node system-map-auditor/dist/cli.js validate-apis --filter='*/api/chat/*' || echo 'FILTERED_API_VALIDATION_COMPLETED'" \
+    "Validate specific APIs using filter pattern" \
+    ""
+
+# Test 6.3: API validation with suggestions
+run_test \
+    "Test 6.3: API Validation with Suggestions" \
+    "node system-map-auditor/dist/cli.js validate-apis --show-suggestions || echo 'API_SUGGESTIONS_COMPLETED'" \
+    "API validation with fix suggestions" \
     ""
 
 # =============================================================================
@@ -268,100 +296,44 @@ echo ""
 echo -e "${YELLOW}📍 ADDITIONAL MANUAL TESTING GUIDE TESTS${NC}"
 echo "=========================================="
 
-# Test 13: Specific system map parsing
+# Test 7: System Map Discovery  
 run_test \
-    "Parse Specific System Map (chat.map.json)" \
-    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/chat.map.json --verbose || echo 'PARSE_COMPLETED'" \
-    "Parse specific system map with verbose output" \
+    "Test 7: System Map Discovery" \
+    "node system-map-auditor/dist/cli.js scan-for-maps" \
+    "List of system map files found" \
+    ".system-maps"
+
+# Test 8: Full Audit
+run_test \
+    "Test 8: Basic Full Audit" \
+    "node system-map-auditor/dist/cli.js full-audit --format=console || echo 'AUDIT_COMPLETED'" \
+    "Complete validation of available features" \
     ""
 
-# Test 14: Federated map parsing with $ref resolution
+# Test 9: Feature Audit
 run_test \
-    "Parse Federated Map (root.map.json)" \
-    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/root.map.json --debug || echo 'FEDERATED_PARSE_COMPLETED'" \
-    "Parse federated map with $ref resolution" \
+    "Test 9: Feature Audit (Chat)" \
+    "node system-map-auditor/dist/cli.js audit-feature chat || echo 'FEATURE_AUDIT_COMPLETED'" \
+    "Specific feature audit results" \
     ""
 
-# Test 15: Component discovery with patterns
+# Test 10: Global show-config option
 run_test \
-    "Component Discovery with Patterns" \
-    "node system-map-auditor/dist/cli.js scan-only --component-patterns='client/src/components/**/*.tsx' || echo 'COMPONENT_SCAN_COMPLETED'" \
-    "Discover components using specific patterns" \
-    ""
-
-# Test 16: API endpoint discovery with patterns
-run_test \
-    "API Endpoint Discovery with Patterns" \
-    "node system-map-auditor/dist/cli.js scan-only --api-patterns='server/routes/**/*.ts' || echo 'API_SCAN_COMPLETED'" \
-    "Discover API endpoints using specific patterns" \
-    ""
-
-# Test 17: Full codebase scan with verbose
-run_test \
-    "Full Codebase Scan (Verbose)" \
-    "node system-map-auditor/dist/cli.js scan-only --verbose || echo 'FULL_SCAN_COMPLETED'" \
-    "Complete codebase scan with verbose output" \
-    ""
-
-# Test 18: Component validation with verbose
-run_test \
-    "Component Validation (Verbose)" \
-    "node system-map-auditor/dist/cli.js validate-components --verbose || echo 'COMPONENT_VALIDATION_COMPLETED'" \
-    "Component existence validation with verbose output" \
-    ""
-
-# Test 19: Feature-specific component validation
-run_test \
-    "Feature-Specific Component Validation" \
-    "node system-map-auditor/dist/cli.js -f chat validate-components || echo 'FEATURE_COMPONENT_VALIDATION_COMPLETED'" \
-    "Validate components for specific feature" \
-    ""
-
-# Test 20: Component validation with JSON format
-run_test \
-    "Component Validation (JSON Format)" \
-    "node system-map-auditor/dist/cli.js validate-components --format=json || echo 'JSON_COMPONENT_VALIDATION_COMPLETED'" \
-    "Component validation with JSON output format" \
-    ""
-
-# Test 21: API validation with verbose
-run_test \
-    "API Validation (Verbose)" \
-    "node system-map-auditor/dist/cli.js validate-apis --verbose || echo 'API_VALIDATION_COMPLETED'" \
-    "API endpoint validation with verbose output" \
-    ""
-
-# Test 22: Specific API validation with filter
-run_test \
-    "Specific API Validation (Filter)" \
-    "node system-map-auditor/dist/cli.js validate-apis --filter='*/api/chat/*' || echo 'FILTERED_API_VALIDATION_COMPLETED'" \
-    "Validate specific APIs using filter pattern" \
-    ""
-
-# Test 23: API validation with suggestions
-run_test \
-    "API Validation with Suggestions" \
-    "node system-map-auditor/dist/cli.js validate-apis --show-suggestions || echo 'API_SUGGESTIONS_COMPLETED'" \
-    "API validation with fix suggestions" \
-    ""
-
-# Test 24: Global show-config option
-run_test \
-    "Global Show Config Option" \
+    "Test 10: Global Show Config Option" \
     "node system-map-auditor/dist/cli.js --show-config || echo 'GLOBAL_CONFIG_SHOWN'" \
     "Display configuration using global option" \
     ""
 
-# Test 25: Dry run mode
+# Test 11: Dry run mode
 run_test \
-    "Dry Run Mode" \
+    "Test 11: Dry Run Mode" \
     "node system-map-auditor/dist/cli.js --dry-run parse-only || echo 'DRY_RUN_COMPLETED'" \
     "Test dry run mode without making changes" \
     ""
 
-# Test 26: Quiet mode test
+# Test 12: Quiet mode test
 run_test \
-    "Quiet Mode Test" \
+    "Test 12: Quiet Mode Test" \
     "node system-map-auditor/dist/cli.js --quiet parse-only || echo 'QUIET_MODE_COMPLETED'" \
     "Test quiet mode with minimal output" \
     ""

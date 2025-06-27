@@ -1,6 +1,7 @@
 // MAX_LINES: 300
 // Health Routes Module - Health data management, import/export, native integration
 import { Express } from "./shared-dependencies.js";
+import { readFileSync, statSync } from "fs";
 import { 
   storage, 
   multer, 
@@ -12,8 +13,7 @@ import {
   HealthDataParser,
   HealthDataDeduplicationService,
   insertHealthDataSchema,
-  healthConsentService,
-  statSync
+  healthConsentService
 } from "./shared-dependencies.js";
 import { startGoAccelerationService } from "./shared-utils.js";
 
@@ -160,7 +160,7 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
         success: true,
         totalRecords: parseResult.data?.length || 0,
         sampleData: parseResult.data?.slice(0, 10) || [],
-        metadata: parseResult.metadata || {},
+        metadata: {},
         fileInfo: {
           originalName: req.file.originalname,
           size: fileSize,
@@ -199,27 +199,26 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
       }
 
       // Process and store health data
-      const deduplicationService = new HealthDataDeduplicationService();
-      let processedData = healthData;
-
-      if (healthData.length > 0) {
-        processedData = await deduplicationService.deduplicateHealthData(healthData, 1);
-      }
-
-      const validatedData = processedData.map(point => ({
-        ...point,
+      const healthData = parseResult.data || [];
+      
+      const validatedData = healthData.map((point: any) => ({
         userId: 1,
-        timestamp: point.timestamp || new Date()
+        dataType: point.dataType,
+        value: point.value,
+        unit: point.unit || '',
+        timestamp: point.timestamp || new Date(),
+        source: point.source || '',
+        category: point.category || 'lifestyle',
+        metadata: point.metadata || {}
       }));
 
-      await storage.insertHealthDataBatch(validatedData);
+      await storage.createHealthDataBatch(validatedData);
 
       res.json({
         success: true,
         totalRecords: healthData.length,
-        uniqueRecords: processedData.length,
-        duplicatesRemoved: healthData.length - processedData.length,
-        metadata
+        imported: validatedData.length,
+        metadata: {}
       });
     } catch (error) {
       console.error('Health data import error:', error);

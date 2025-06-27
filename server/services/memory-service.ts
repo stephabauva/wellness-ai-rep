@@ -587,13 +587,15 @@ Respond with JSON:
 
       console.log(`[MemoryService] Context built: "${context}"`);
 
-      // Skip cache for debugging
-      // const cached = await cacheService.getMemorySearchResults(userId, context, 10);
-      // if (cached) {
-      //   return cached as RelevantMemory[];
-      // }
+      // Attempt to retrieve from cache first
+      const cached = await cacheService.getMemorySearchResults(userId, context, 10);
+      if (cached) {
+        logger.debug(`[MemoryService] Contextual memories cache hit for user ${userId}`, { service: 'memory' });
+        return cached as RelevantMemory[];
+      }
+      logger.debug(`[MemoryService] Contextual memories cache miss for user ${userId}`, { service: 'memory' });
 
-      // Get user memories directly for debugging
+      // Get user memories directly
       const userMemories = await this.getUserMemoriesLazy(userId);
 
       // For memory-related queries, return ALL memories with basic scoring

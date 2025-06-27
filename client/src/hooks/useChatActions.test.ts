@@ -18,12 +18,12 @@ const mockRemoveAttachedFile = vi.fn();
 
 describe('useChatActions', () => {
   let mockSetInputMessage: ReturnType<typeof vi.fn>;
-  let queryClient: QueryClient;
+  let testQueryClientInstance: QueryClient; // Renamed variable
 
   // Helper to wrap hooks with QueryClientProvider
   const createWrapper = () => {
     // Create a new QueryClient for each test to ensure isolation
-    queryClient = new QueryClient({
+    testQueryClientInstance = new QueryClient({ // Assign to renamed variable
       defaultOptions: {
         queries: {
           retry: false, // Disable retries for testing
@@ -31,7 +31,7 @@ describe('useChatActions', () => {
       },
     });
     return ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={testQueryClientInstance}>{children}</QueryClientProvider>
     );
   };
 

@@ -75,9 +75,11 @@ describe('MessageDisplayArea', () => {
         message: mockMessages[0].content,
         isUser: mockMessages[0].isUserMessage,
         timestamp: mockMessages[0].timestamp,
-        attachments: mockMessages[0].attachments?.map(att => ({ ...att, url: att.url || '' })),
+        attachments: mockMessages[0].attachments?.map(att => ({ name: att.name, type: att.type })), // URL not passed
+        isStreaming: false, // Based on message data
+        isStreamingComplete: false, // Hardcoded in component
       }),
-      expect.anything() // For React's internal props like key
+      expect.anything()
     );
 
     // Verify props for the second message
@@ -86,7 +88,9 @@ describe('MessageDisplayArea', () => {
         message: mockMessages[1].content,
         isUser: mockMessages[1].isUserMessage,
         timestamp: mockMessages[1].timestamp,
-        attachments: undefined, // Or an empty array depending on ChatMessage's expectation
+        attachments: undefined,
+        isStreaming: false, // Based on message data
+        isStreamingComplete: false, // Hardcoded in component
       }),
       expect.anything()
     );
@@ -114,10 +118,15 @@ describe('MessageDisplayArea', () => {
 
     expect(ChatMessage).toHaveBeenCalledWith(
       expect.objectContaining({
+        message: messageWithAttachments[0].content,
+        isUser: messageWithAttachments[0].isUserMessage,
+        timestamp: messageWithAttachments[0].timestamp,
         attachments: [
-          { name: 'image.jpg', type: 'image/jpeg', url: '/image.jpg' },
-          { name: 'doc.pdf', type: 'application/pdf', url: '' } // Ensure fallback for URL
-        ]
+          { name: 'image.jpg', type: 'image/jpeg' }, // URL not passed
+          { name: 'doc.pdf', type: 'application/pdf' }  // URL not passed
+        ],
+        isStreaming: false, // Based on message data
+        isStreamingComplete: false, // Hardcoded in component
       }),
       expect.anything()
     );

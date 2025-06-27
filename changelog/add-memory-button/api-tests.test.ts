@@ -303,7 +303,7 @@ describe('Manual Memory API Endpoint', () => {
           content: 'My personal training preference is high intensity interval training',
           category: 'personal_info',
           importance: 0.7,
-          createdAt: new Date('2025-06-17T12:00:00Z')
+          createdAt: new Date('2025-06-17T12:00:00Z').toISOString()
         },
         message: 'Memory processed and saved successfully'
       });

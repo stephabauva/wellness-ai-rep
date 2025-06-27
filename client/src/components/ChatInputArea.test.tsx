@@ -112,11 +112,18 @@ describe('ChatInputArea', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger camera input on Camera button click', () => {
+  it('should trigger camera input on Camera button click (when getUserMedia fails)', async () => {
+    mockGetUserMedia.mockRejectedValueOnce(new Error('Simulated camera access failure'));
+
     renderComponent();
-    const cameraInput = screen.getByTestId('file-input-camera') as HTMLInputElement; // Add data-testid to input
+    const cameraInput = screen.getByTestId('file-input-camera') as HTMLInputElement;
     const clickSpy = vi.spyOn(cameraInput, 'click');
-    fireEvent.click(screen.getByRole('button', { name: /camera/i }));
+
+    const cameraButton = screen.getByRole('button', { name: /use camera/i });
+    // Using userEvent.click for better simulation of user interaction, especially with async logic
+    await userEvent.click(cameraButton);
+
+    // The click on cameraInputRef should happen after the promise rejection in openCamera
     expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 

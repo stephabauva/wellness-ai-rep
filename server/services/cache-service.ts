@@ -362,18 +362,29 @@ export class IntelligentCacheService {
 
   // Cache invalidation methods
   invalidateUserData(userId: number): void {
-    const caches = ['userSettings', 'contextualMemories', 'healthData'];
-    caches.forEach(cacheName => {
-      const cache = this.caches.get(cacheName);
-      if (cache) {
-        // Clear all keys that contain the userId
-        const keys = Array.from(cache.keys());
-        keys.forEach(key => {
-          if (key.includes(`user:${userId}`) || key.includes(`:${userId}:`)) {
-            cache.delete(key);
+    // Specifically invalidate userSettings
+    const userSettingsCache = this.getCache('userSettings');
+    const userSettingsKey = CacheKeys.userSettings(userId);
+    userSettingsCache.delete(userSettingsKey);
+
+    // Invalidate other user-related caches that might use more complex key structures
+    const cachesToIterate = ['contextualMemories', 'healthData'] as const; // Ensure type safety
+    cachesToIterate.forEach(cacheName => {
+      const cache = this.getCache(cacheName);
+      const keysToDelete: string[] = [];
+      for (const key of cache.keys()) {
+        // More specific checks based on how keys are generated for these caches
+        if (cacheName === 'contextualMemories' && (key.startsWith(CacheKeys.contextualMemories(userId, '')) || key.startsWith(CacheKeys.memorySearch(userId, '', 0).substring(0, CacheKeys.memorySearch(userId, '', 0).indexOf(':search:'))))) {
+          // Check for keys like `memories:user:${userId}` or `memories:user:${userId}:conv:${conversationId}`
+          // Also check for `memory:search:${userId}:...`
+           if (key.startsWith(`memories:user:${userId}`) || key.startsWith(`memory:search:${userId}`)) {
+            keysToDelete.push(key);
           }
-        });
+        } else if (cacheName === 'healthData' && key.startsWith(`health:${userId}:`)) {
+          keysToDelete.push(key);
+        }
       }
+      keysToDelete.forEach(key => cache.delete(key));
     });
   }
 

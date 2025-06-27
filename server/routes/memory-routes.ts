@@ -175,8 +175,8 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
           content.trim(),
           category,
           importance,
-          null, // No conversation ID for manual entries
-          null, // No message ID for manual entries  
+          undefined, // No conversation ID for manual entries
+          undefined, // No message ID for manual entries  
           [] // Keywords will be auto-generated through the memory processing system
         );
 

@@ -240,7 +240,7 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
   app.patch("/api/health-consent", async (req, res) => {
     try {
       const updates = req.body;
-      await healthConsentService.updateUserConsentSettings(1, updates);
+      await healthConsentService.updateConsentSettings(1, updates);
       res.json({ message: "Health consent settings updated successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to update health consent settings" });

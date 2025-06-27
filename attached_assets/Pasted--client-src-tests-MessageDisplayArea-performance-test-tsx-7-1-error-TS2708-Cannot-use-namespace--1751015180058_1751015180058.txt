@@ -1,0 +1,268 @@
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:7:1 - error TS2708: Cannot use namespace 'jest' as a value.
+
+7 jest.mock('@/hooks/useWebWorker', () => ({
+  ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:9:18 - error TS2708: Cannot use namespace 'jest' as a value.
+
+9     postMessage: jest.fn(),
+                   ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:14:1 - error TS2708: Cannot use namespace 'jest' as a value.
+
+14 jest.mock('@/hooks/useVirtualScrolling', () => ({
+   ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:19:20 - error TS2708: Cannot use namespace 'jest' as a value.
+
+19     scrollToIndex: jest.fn(),
+                      ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:20:19 - error TS2708: Cannot use namespace 'jest' as a value.
+
+20     handleScroll: jest.fn(),
+                     ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:24:1 - error TS2708: Cannot use namespace 'jest' as a value.
+
+24 jest.mock('@/hooks/useMessagePagination', () => ({
+   ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:27:15 - error TS2708: Cannot use namespace 'jest' as a value.
+
+27     loadMore: jest.fn(),
+                 ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:44:1 - error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+44 describe('MessageDisplayArea Performance Optimizations', () => {
+   ~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:45:3 - error TS2304: Cannot find name 'beforeEach'.
+
+45   beforeEach(() => {
+     ~~~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:46:5 - error TS2708: Cannot use namespace 'jest' as a value.
+
+46     jest.clearAllMocks();
+       ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:49:3 - error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+49   describe('Virtual Scrolling', () => {
+     ~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:50:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+50     test('renders without crashing when virtual scrolling is enabled', () => {
+       ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:61:7 - error TS2304: Cannot find name 'expect'.
+
+61       expect(screen.getByRole('region')).toBeInTheDocument();
+         ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:64:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+64     test('applies correct CSS classes for virtual scrolling', () => {
+       ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:76:7 - error TS2304: Cannot find name 'expect'.
+
+76       expect(virtualContainer).toBeInTheDocument();
+         ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:79:7 - error TS2304: Cannot find name 'expect'.
+
+79       expect(virtualContent).toBeInTheDocument();
+         ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:82:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+82     test('handles empty message list with virtual scrolling', () => {
+       ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:91:7 - error TS2304: Cannot find name 'expect'.
+
+91       expect(screen.getByText('No messages yet. Start a conversation!')).toBeInTheDocument();
+         ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:95:3 - error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+95   describe('Message Pagination', () => {
+     ~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:96:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+96     test('renders load more button when pagination is enabled and has next page', () => {
+       ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:103:19 - error TS2708: Cannot use namespace 'jest' as a value.
+
+103         loadMore: jest.fn(),
+                      ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:116:7 - error TS2304: Cannot find name 'expect'.
+
+116       expect(screen.getByText('Load Earlier Messages')).toBeInTheDocument();
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:119:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+119     test('shows loading state when pagination is loading', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:125:19 - error TS2708: Cannot use namespace 'jest' as a value.
+
+125         loadMore: jest.fn(),
+                      ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:138:7 - error TS2304: Cannot find name 'expect'.
+
+138       expect(screen.getByText('Loading earlier messages...')).toBeInTheDocument();
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:142:3 - error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+142   describe('Scroll to Bottom', () => {
+      ~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:143:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+143     test('shows scroll to bottom button when not at bottom', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:166:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+166     test('uses correct CSS classes for scroll to bottom button', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:176:7 - error TS2304: Cannot find name 'expect'.
+
+176       expect(styles?.textContent).toContain('scroll-to-bottom');
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:180:3 - error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+180   describe('Performance Features Integration', () => {
+      ~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:181:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+181     test('handles both virtual scrolling and pagination disabled (standard mode)', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:195:7 - error TS2304: Cannot find name 'expect'.
+
+195       expect(messageElements.length).toBeGreaterThan(0);
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:198:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+198     test('prevents conflicting optimizations from breaking layout', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:213:7 - error TS2304: Cannot find name 'expect'.
+
+213       expect(virtualContainer).toBeInTheDocument();
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:216:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+216     test('applies chat-message-optimized class for performance', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:228:7 - error TS2304: Cannot find name 'expect'.
+
+228       expect(optimizedElements.length).toBeGreaterThan(0);
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:232:3 - error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+232   describe('Error Handling', () => {
+      ~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:233:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+233     test('handles undefined messagesToDisplay gracefully', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:241:7 - error TS2304: Cannot find name 'expect'.
+
+241       expect(screen.getByText('No messages yet. Start a conversation!')).toBeInTheDocument();
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:244:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+244     test('renders loading state correctly', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:252:7 - error TS2304: Cannot find name 'expect'.
+
+252       expect(screen.getByText('Loading conversation...')).toBeInTheDocument();
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:255:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+255     test('handles streaming messages without crashes', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:272:7 - error TS2304: Cannot find name 'expect'.
+
+272       expect(screen.getByRole('region')).toBeInTheDocument();
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:276:3 - error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+276   describe('Accessibility', () => {
+      ~~~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:277:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+277     test('maintains proper ARIA attributes with optimizations enabled', () => {
+        ~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:289:7 - error TS2304: Cannot find name 'expect'.
+
+289       expect(container).toBeInTheDocument();
+          ~~~~~~
+
+client/src/tests/MessageDisplayArea.performance.test.tsx:292:5 - error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+
+292     test('scroll to bottom button is keyboard accessible', () => {
+        ~~~~
+
+server/services/ai-service.ts:282:9 - error TS2554: Expected 3 arguments, but got 4.
+
+282         conversationHistory
+            ~~~~~~~~~~~~~~~~~~~
+
+server/services/health-data-parser.ts:834:22 - error TS2538: Type 'undefined' cannot be used as an index type.
+
+834           categories[category] = (categories[category] || 0) + 1;
+                         ~~~~~~~~
+
+server/services/health-data-parser.ts:834:46 - error TS2538: Type 'undefined' cannot be used as an index type.
+
+834           categories[category] = (categories[category] || 0) + 1;
+                                                 ~~~~~~~~
+
+server/services/health-data-parser.ts:882:24 - error TS2538: Type 'undefined' cannot be used as an index type.
+
+882             categories[category] = (categories[category] || 0) + 1;
+                           ~~~~~~~~
+
+server/services/health-data-parser.ts:882:48 - error TS2538: Type 'undefined' cannot be used as an index type.
+
+882             categories[category] = (categories[category] || 0) + 1;
+                                                   ~~~~~~~~
+
+
+Found 52 errors in 3 files.
+
+Errors  Files
+    47  client/src/tests/MessageDisplayArea.performance.test.tsx:7
+     1  server/services/ai-service.ts:282
+     4  server/services/health-data-parser.ts:834

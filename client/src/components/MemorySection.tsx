@@ -177,7 +177,7 @@ export default function MemorySection() {
       allMemories : 
       allMemories.filter((memory: MemoryEntry) => memory.category === selectedCategory)
     ) : [];
-  const isLoading = overviewLoading || (memoriesLoaded && (allMemoriesLoading || filteredLoading));
+  const isLoading = overviewLoading || (memoriesLoaded && allMemoriesLoading);
 
   // Manual memory creation mutation
   const createManualMemoryMutation = useMutation({
@@ -201,9 +201,6 @@ export default function MemorySection() {
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
         await refetchMemories();
-        if (selectedCategory !== "all") {
-          await refetchFiltered();
-        }
       }
       
       form.reset();
@@ -232,9 +229,6 @@ export default function MemorySection() {
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
         await refetchMemories();
-        if (selectedCategory !== "all") {
-          await refetchFiltered();
-        }
       }
       
       toast({
@@ -261,9 +255,6 @@ export default function MemorySection() {
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
         await refetchMemories();
-        if (selectedCategory !== "all") {
-          await refetchFiltered();
-        }
       }
       
       setSelectedMemoryIds(new Set());

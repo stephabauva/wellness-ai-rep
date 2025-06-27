@@ -72,8 +72,8 @@ export const HeartRateChart: React.FC<HeartRateChartProps> = ({ data }) => {
         <CardDescription>Daily average, minimum, and maximum heart rate</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="chart-responsive h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="chart-responsive h-[400px] min-h-[300px] min-w-[300px]">
+          <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
             <LineChart
               data={chartData}
               margin={{ top: 5, right: 20, left: 10, bottom: 5 }}

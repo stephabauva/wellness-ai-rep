@@ -40,8 +40,8 @@ export const SleepQualityChart: React.FC<SleepQualityChartProps> = ({ data }) =>
         <CardDescription>Deep, light, and REM sleep patterns</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="chart-responsive h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="chart-responsive h-[400px] min-h-[300px] min-w-[300px]">
+          <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
             <BarChart
               data={chartData}
               margin={{ top: 5, right: 20, left: -20, bottom: 5 }} // Adjusted margins

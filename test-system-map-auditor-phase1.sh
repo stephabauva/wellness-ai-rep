@@ -173,11 +173,11 @@ run_test \
     "Version number display" \
     "1.0.0"
 
-# Test 1.3: Dry-run with parse command
+# Test 1.3: Configuration with dry-run
 run_test \
     "Test 1.3" \
-    "node system-map-auditor/dist/cli.js --dry-run parse-only || echo 'DRY_RUN_CONFIG_COMPLETED'" \
-    "Dry-run mode with parse command" \
+    "node system-map-auditor/dist/cli.js --config --dry-run || echo 'DRY_RUN_CONFIG_COMPLETED'" \
+    "Configuration validation without errors in dry-run mode" \
     ""
 
 # Test 2.1: Default configuration
@@ -209,39 +209,39 @@ run_test \
     "Successful parsing of all system maps with verbose output" \
     ""
 
-# Test 3.2: Parse with quiet mode
+# Test 3.2: Parse specific system map (chat.map.json)
 run_test \
     "Test 3.2" \
-    "node system-map-auditor/dist/cli.js parse-only --quiet || echo 'PARSE_COMPLETED'" \
-    "Parse system maps in quiet mode" \
+    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/chat.map.json --verbose || echo 'PARSE_COMPLETED'" \
+    "Parse specific system map with verbose output" \
     ""
 
-# Test 3.3: Parse with default settings (no specific options available)
+# Test 3.3: Parse federated map ($ref resolution)
 run_test \
     "Test 3.3" \
-    "node system-map-auditor/dist/cli.js parse-only || echo 'FEDERATED_PARSE_COMPLETED'" \
-    "Parse system maps with default settings" \
+    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/root.map.json --debug || echo 'FEDERATED_PARSE_COMPLETED'" \
+    "Parse federated map with $ref resolution" \
     ""
 
-# Test 4.1: Scan for system map files
+# Test 4.1: Component discovery with patterns
 run_test \
     "Test 4.1" \
-    "node system-map-auditor/dist/cli.js scan-for-maps || echo 'COMPONENT_SCAN_COMPLETED'" \
-    "Discover system map files in project" \
+    "node system-map-auditor/dist/cli.js scan-only --component-patterns='client/src/components/**/*.tsx' || echo 'COMPONENT_SCAN_COMPLETED'" \
+    "Discover components using specific patterns" \
     ""
 
-# Test 4.2: Show configuration  
+# Test 4.2: API endpoint discovery with patterns  
 run_test \
     "Test 4.2" \
-    "node system-map-auditor/dist/cli.js show-config || echo 'API_SCAN_COMPLETED'" \
-    "Display current configuration settings" \
+    "node system-map-auditor/dist/cli.js scan-only --api-patterns='server/routes/**/*.ts' || echo 'API_SCAN_COMPLETED'" \
+    "Discover API endpoints using specific patterns" \
     ""
 
-# Test 4.3: Full audit with console format
+# Test 4.3: Full codebase scan
 run_test \
     "Test 4.3" \
-    "node system-map-auditor/dist/cli.js full-audit --format=console || echo 'FULL_SCAN_COMPLETED'" \
-    "Complete audit with console output format" \
+    "node system-map-auditor/dist/cli.js scan-only --verbose || echo 'FULL_SCAN_COMPLETED'" \
+    "Complete codebase scan with verbose output" \
     ""
 
 # =============================================================================
@@ -259,25 +259,25 @@ run_test \
     "Component existence validation with verbose output" \
     ""
 
-# Test 5.2: Component validation with filter
+# Test 5.2: Feature-specific component validation
 run_test \
     "Test 5.2" \
-    "node system-map-auditor/dist/cli.js validate-components --filter='chat' || echo 'FEATURE_COMPONENT_VALIDATION_COMPLETED'" \
-    "Validate components with filter pattern" \
+    "node system-map-auditor/dist/cli.js -f chat validate-components || echo 'FEATURE_COMPONENT_VALIDATION_COMPLETED'" \
+    "Validate components for specific feature" \
     ""
 
-# Test 5.3: Component validation in quiet mode
+# Test 5.3: Component validation with JSON format
 run_test \
     "Test 5.3" \
-    "node system-map-auditor/dist/cli.js validate-components --quiet || echo 'JSON_COMPONENT_VALIDATION_COMPLETED'" \
-    "Component validation in quiet mode" \
+    "node system-map-auditor/dist/cli.js validate-components --format=json || echo 'JSON_COMPONENT_VALIDATION_COMPLETED'" \
+    "Component validation with JSON output format" \
     ""
 
-# Test 6.1: API endpoint validation in quiet mode
+# Test 6.1: API endpoint validation
 run_test \
     "Test 6.1" \
-    "node system-map-auditor/dist/cli.js validate-apis --quiet || echo 'API_VALIDATION_COMPLETED'" \
-    "API endpoint validation in quiet mode" \
+    "node system-map-auditor/dist/cli.js validate-apis --verbose || echo 'API_VALIDATION_COMPLETED'" \
+    "API endpoint validation with verbose output" \
     ""
 
 # Test 6.2: Specific API validation with filter

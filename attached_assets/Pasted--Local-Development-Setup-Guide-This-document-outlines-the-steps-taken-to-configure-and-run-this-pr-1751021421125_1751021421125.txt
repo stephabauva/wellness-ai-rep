@@ -1,0 +1,47 @@
+# Local Development Setup Guide
+
+This document outlines the steps taken to configure and run this project on a local machine, specifically addressing challenges encountered on macOS.
+
+## 1. Environment Variables
+
+To manage sensitive information like database credentials, we introduced environment variables.
+
+- **`.env` File**: A `.env` file was created in the project root to store the database connection string.
+
+- **`dotenv` Package**: The `dotenv` package was installed to load these variables into the application environment.
+  ```bash
+  npm install dotenv
+  ```
+
+- **Configuration**: The package was then imported and configured at the beginning of `drizzle.config.ts` and `server/db.ts` to ensure variables were available where needed.
+
+## 2. Neon Database Integration
+
+We connected the application to a Neon serverless PostgreSQL database.
+
+- **Neon CLI**: The `neonctl` command-line tool was installed using Homebrew to manage the Neon project.
+  ```bash
+  brew install neonctl
+  ```
+
+- **Authentication**: We authenticated with Neon to link the local environment to the correct account.
+  ```bash
+  neonc auth
+  ```
+
+- **Database Migration**: The database was imported directly from the Replit environment into Neon via "Import data", in the noen project dashboard online. This process created a new branch in Neon containing all the necessary tables and data, making it instantly available to the application.
+
+
+## 3. IMPORTANT! Server Configuration Fix (might break Replit)
+
+When attempting to run the server locally, we encountered an `ENOTSUP: operation not supported` error related to the network socket.
+
+- **Problem**: The error was traced to the `reusePort: true` option in the server initialization code within `server/index.ts`. This feature is not consistently supported across all operating systems, including macOS.
+
+- **Solution**: The `reusePort: true` line was removed from the `server.listen()` configuration, which resolved the startup error without changing the port.
+
+## 4. neondatabase/serverless
+
+The former neon serverless version was "@neondatabase/serverless": "^0.10.4", Gemini CLI removed it and later re-installed it with version "^1.0.1"
+
+NOTE : to kill port 5000 -> kill -9 $(lsof -ti:5000)

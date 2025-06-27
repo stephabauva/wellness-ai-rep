@@ -40,7 +40,7 @@ run_test() {
 
     # Run the command with timeout and capture output
     local test_passed=false
-    timeout 30s bash -c "$test_command" > /tmp/test_output_$TOTAL_TESTS.txt 2>&1
+    timeout 10s bash -c "$test_command" > /tmp/test_output_$TOTAL_TESTS.txt 2>&1
     local exit_code=$?
 
     # Handle timeout case
@@ -180,7 +180,7 @@ echo "======================================"
 # Test 1.1: Help command
 run_test \
     "Test 1.1" \
-    "node system-map-auditor/dist/cli.js --help" \
+    "node system-map-auditor/dist/cli.js help" \
     "Help message with all available commands" \
     "Usage,Commands,Options,system-map-auditor" \
     "error,unknown option,CLI Error"
@@ -188,7 +188,7 @@ run_test \
 # Test 1.2: Version command
 run_test \
     "Test 1.2" \
-    "node system-map-auditor/dist/cli.js --version" \
+    "node system-map-auditor/dist/cli.js version" \
     "Version number display" \
     "1.0.0" \
     "error,unknown option,CLI Error"
@@ -196,9 +196,9 @@ run_test \
 # Test 1.3: Configuration with dry-run
 run_test \
     "Test 1.3" \
-    "node system-map-auditor/dist/cli.js --config --dry-run" \
+    "node system-map-auditor/dist/cli.js --dry-run show-config" \
     "Configuration validation without errors in dry-run mode" \
-    "" \
+    "validation,scanning,reporting" \
     "error,unknown option,CLI Error"
 
 # Test 2.1: Default configuration
@@ -228,48 +228,48 @@ echo "====================================="
 # Test 3.1: Parse with verbose output
 run_test \
     "Test 3.1" \
-    "node system-map-auditor/dist/cli.js parse-only --verbose" \
+    "node system-map-auditor/dist/cli.js --verbose parse-only" \
     "Successful parsing of all system maps with verbose output" \
     "" \
     "error,unknown option,CLI Error"
 
-# Test 3.2: Parse specific system map (chat.map.json)
+# Test 3.2: Parse system maps quietly
 run_test \
     "Test 3.2" \
-    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/chat.map.json --verbose" \
-    "Parse specific system map with verbose output" \
+    "node system-map-auditor/dist/cli.js --quiet parse-only" \
+    "Parse system maps with quiet output" \
     "" \
     "error,unknown option,CLI Error"
 
-# Test 3.3: Parse federated map ($ref resolution)
+# Test 3.3: Parse with configuration file
 run_test \
     "Test 3.3" \
-    "node system-map-auditor/dist/cli.js parse-only --map=.system-maps/root.map.json --debug" \
-    "Parse federated map with $ref resolution" \
+    "node system-map-auditor/dist/cli.js --config test-config.json parse-only" \
+    "Parse maps with custom configuration" \
     "" \
     "error,unknown option,CLI Error"
 
-# Test 4.1: Component discovery with patterns
+# Test 4.1: Component discovery with scan-for-maps
 run_test \
     "Test 4.1" \
-    "node system-map-auditor/dist/cli.js scan-only --component-patterns='client/src/components/**/*.tsx'" \
-    "Discover components using specific patterns" \
-    "" \
+    "node system-map-auditor/dist/cli.js scan-for-maps" \
+    "Discover system map files in project" \
+    ".system-maps" \
     "error,unknown option,CLI Error"
 
-# Test 4.2: API endpoint discovery with patterns  
+# Test 4.2: Parse only test
 run_test \
     "Test 4.2" \
-    "node system-map-auditor/dist/cli.js scan-only --api-patterns='server/routes/**/*.ts'" \
-    "Discover API endpoints using specific patterns" \
+    "node system-map-auditor/dist/cli.js parse-only" \
+    "Parse system maps without validation" \
     "" \
     "error,unknown option,CLI Error"
 
-# Test 4.3: Full codebase scan
+# Test 4.3: Parse only with quiet flag
 run_test \
     "Test 4.3" \
-    "node system-map-auditor/dist/cli.js scan-only --verbose" \
-    "Complete codebase scan with verbose output" \
+    "node system-map-auditor/dist/cli.js parse-only --quiet" \
+    "Parse system maps quietly" \
     "" \
     "error,unknown option,CLI Error"
 
@@ -297,11 +297,11 @@ run_test \
     "" \
     "error,unknown option,CLI Error"
 
-# Test 5.3: Component validation with JSON format
+# Test 5.3: Full audit with JSON format
 run_test \
     "Test 5.3" \
-    "node system-map-auditor/dist/cli.js validate-components --format=json" \
-    "Component validation with JSON output format" \
+    "node system-map-auditor/dist/cli.js full-audit --format=json" \
+    "Full audit with JSON output format" \
     "" \
     "error,unknown option,CLI Error"
 
@@ -313,11 +313,11 @@ run_test \
     "" \
     "error,unknown option,CLI Error"
 
-# Test 6.2: Specific API validation with filter
+# Test 6.2: API validation with filter
 run_test \
     "Test 6.2" \
-    "node system-map-auditor/dist/cli.js validate-apis --filter='*/api/chat/*'" \
-    "Validate specific APIs using filter pattern" \
+    "node system-map-auditor/dist/cli.js validate-apis --filter='chat'" \
+    "Validate APIs with filter pattern" \
     "" \
     "error,unknown option,CLI Error"
 

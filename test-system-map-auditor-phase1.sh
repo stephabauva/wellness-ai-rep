@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # System Map Auditor - Phase 1 Automated Test Suite
@@ -42,7 +41,7 @@ run_test() {
     # Run the command with timeout and capture output
     local test_passed=false
     local exit_code=0
-    
+
     # Use timeout command to prevent hanging
     if timeout 10s bash -c "$test_command" > /tmp/test_output_$TOTAL_TESTS.txt 2>&1; then
         exit_code=0
@@ -191,7 +190,7 @@ run_test \
     "node system-map-auditor/dist/cli.js help" \
     "Help message with all available commands" \
     "Usage,Commands,Options,system-map-auditor" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 1.2: Version command
 run_test \
@@ -199,7 +198,7 @@ run_test \
     "node system-map-auditor/dist/cli.js version" \
     "Version number display" \
     "1.0.0" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 1.3: Configuration with dry-run
 run_test \
@@ -207,7 +206,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --dry-run show-config" \
     "Configuration validation without errors in dry-run mode" \
     "validation,scanning,reporting" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 2.1: Default configuration
 run_test \
@@ -215,7 +214,7 @@ run_test \
     "node system-map-auditor/dist/cli.js show-config" \
     "Default configuration displayed in JSON format" \
     "validation,scanning,reporting" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 2.2: Custom configuration
 run_test \
@@ -223,7 +222,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --config test-config.json show-config" \
     "Custom configuration loaded and merged correctly" \
     "checkExistence,validateEndpoints" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # =============================================================================
 # DAY 2: SYSTEM MAP PARSER TESTING
@@ -239,7 +238,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --verbose parse-only" \
     "Successful parsing of all system maps with verbose output" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 3.2: Parse system maps quietly
 run_test \
@@ -247,7 +246,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --quiet parse-only" \
     "Parse system maps with quiet output" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 3.3: Parse with configuration file
 run_test \
@@ -255,7 +254,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --config test-config.json parse-only" \
     "Parse maps with custom configuration" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 4.1: Component discovery with scan-for-maps
 run_test \
@@ -263,7 +262,7 @@ run_test \
     "node system-map-auditor/dist/cli.js scan-for-maps" \
     "Discover system map files in project" \
     ".system-maps" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 4.2: Parse only test
 run_test \
@@ -271,7 +270,7 @@ run_test \
     "node system-map-auditor/dist/cli.js parse-only" \
     "Parse system maps without validation" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 4.3: Parse only with quiet flag
 run_test \
@@ -279,7 +278,7 @@ run_test \
     "node system-map-auditor/dist/cli.js parse-only --quiet" \
     "Parse system maps quietly" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # =============================================================================
 # DAY 3: BASIC VALIDATION TESTING
@@ -295,7 +294,7 @@ run_test \
     "node system-map-auditor/dist/cli.js validate-components --verbose" \
     "Component existence validation with verbose output" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 5.2: Feature-specific component validation
 run_test \
@@ -303,7 +302,7 @@ run_test \
     "node system-map-auditor/dist/cli.js audit-feature chat" \
     "Validate components for specific feature using audit-feature command" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 5.3: Full audit with JSON format
 run_test \
@@ -311,7 +310,7 @@ run_test \
     "node system-map-auditor/dist/cli.js full-audit --format=json" \
     "Full audit with JSON output format" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 6.1: API endpoint validation
 run_test \
@@ -319,7 +318,7 @@ run_test \
     "node system-map-auditor/dist/cli.js validate-apis --verbose" \
     "API endpoint validation with verbose output" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 6.2: API validation with filter
 run_test \
@@ -327,7 +326,7 @@ run_test \
     "node system-map-auditor/dist/cli.js validate-apis --filter='chat'" \
     "Validate APIs with filter pattern" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 6.3: API validation with suggestions
 run_test \
@@ -335,7 +334,7 @@ run_test \
     "node system-map-auditor/dist/cli.js validate-apis --show-suggestions" \
     "API validation with fix suggestions" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # =============================================================================
 # ADDITIONAL PHASE 1 TESTS FROM MANUAL TESTING GUIDE
@@ -351,7 +350,7 @@ run_test \
     "node system-map-auditor/dist/cli.js scan-for-maps" \
     "List of system map files found" \
     ".system-maps" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 8: Full Audit
 run_test \
@@ -359,7 +358,7 @@ run_test \
     "node system-map-auditor/dist/cli.js full-audit --format=console" \
     "Complete validation of available features" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 9: Feature Audit
 run_test \
@@ -367,7 +366,7 @@ run_test \
     "node system-map-auditor/dist/cli.js audit-feature chat" \
     "Specific feature audit results" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 10: Global show-config option
 run_test \
@@ -375,7 +374,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --show-config" \
     "Display configuration using global option" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 11: Dry run mode
 run_test \
@@ -383,7 +382,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --dry-run parse-only" \
     "Test dry run mode without making changes" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # Test 12: Quiet mode test
 run_test \
@@ -391,7 +390,7 @@ run_test \
     "node system-map-auditor/dist/cli.js --quiet parse-only" \
     "Test quiet mode with minimal output" \
     "" \
-    "error,unknown option,CLI Error"
+    "CLI Error,unknown option,Error:"
 
 # =============================================================================
 # TEST RESULTS SUMMARY

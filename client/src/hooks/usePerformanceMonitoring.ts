@@ -84,7 +84,11 @@ export function usePerformanceMonitoring({
     return () => {
       endRenderMeasurement();
     };
-  });
+    // The functions startRenderMeasurement and endRenderMeasurement are stable
+    // if their own dependencies (sampleRate, componentName, enableMemoryMonitoring)
+    // do not change. This effect will run on mount and when these props change,
+    // and cleanup on unmount or before re-running due to these prop changes.
+  }, [startRenderMeasurement, endRenderMeasurement]);
 
   // Performance warning detection
   const getPerformanceWarnings = useCallback(() => {

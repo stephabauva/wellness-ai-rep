@@ -13,7 +13,8 @@ export class DatabaseMigrationService {
   }
 
   async createPerformanceIndexes(): Promise<void> {
-    logger.debug('Creating performance indexes for PostgreSQL...', { service: 'database' });
+    logger.debug('Starting: Create performance indexes for PostgreSQL...', { service: 'database' });
+    const startTime = Date.now();
     
     const indexes = [
       // Core message indexes
@@ -80,10 +81,14 @@ export class DatabaseMigrationService {
     }
     
     logger.debug(`Performance indexes: ${createdCount} created/verified, ${failedCount} failed`, { service: 'database' });
+    const endTime = Date.now();
+    logger.debug(`Finished: Create performance indexes. Duration: ${endTime - startTime}ms`, { service: 'database' });
   }
 
   async optimizeDatabase(): Promise<void> {
-    console.log('Optimizing PostgreSQL database...');
+    logger.debug('Starting: Optimize PostgreSQL database...', { service: 'database' });
+    const startTime = Date.now();
+    // console.log('Optimizing PostgreSQL database...'); // Replaced by logger
     
     const optimizations = [
       // Update table statistics
@@ -116,6 +121,8 @@ export class DatabaseMigrationService {
     }
     
     logger.debug(`Database optimization: ${successCount} completed, ${failedCount} failed`, { service: 'database' });
+    const endTime = Date.now();
+    logger.debug(`Finished: Optimize PostgreSQL database. Duration: ${endTime - startTime}ms`, { service: 'database' });
   }
 
   async checkDatabaseHealth(): Promise<{
@@ -124,6 +131,8 @@ export class DatabaseMigrationService {
     indexCount: number;
     performance: 'good' | 'warning' | 'critical';
   }> {
+    logger.debug('Starting: Check database health...', { service: 'database' });
+    const startTime = Date.now();
     try {
       // Test connection
       await db.execute(sql`SELECT 1 as test`);
@@ -175,11 +184,16 @@ export class DatabaseMigrationService {
         indexCount: 0,
         performance: 'critical'
       };
+    } finally {
+      const endTime = Date.now();
+      logger.debug(`Finished: Check database health. Duration: ${endTime - startTime}ms`, { service: 'database' });
     }
   }
 
   async initializeDatabase(): Promise<void> {
-    logger.debug('Initializing PostgreSQL database...', { service: 'database' });
+    logger.debug('Starting: Full database initialization method...', { service: 'database' });
+    const startTime = Date.now();
+    // logger.debug('Initializing PostgreSQL database...', { service: 'database' }); // Redundant with new log
     
     try {
       // Ensure performance indexes exist
@@ -188,10 +202,13 @@ export class DatabaseMigrationService {
       // Optimize database performance
       await this.optimizeDatabase();
       
-      logger.debug('Database initialization completed', { service: 'database' });
+      logger.debug('Database initialization completed successfully.', { service: 'database' });
     } catch (error) {
       logger.error('Database initialization failed', error as Error, { service: 'database' });
-      throw error;
+      throw error; // Re-throw error after logging
+    } finally {
+      const endTime = Date.now();
+      logger.debug(`Finished: Full database initialization method. Duration: ${endTime - startTime}ms`, { service: 'database' });
     }
   }
 }

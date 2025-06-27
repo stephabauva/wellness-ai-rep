@@ -1,4 +1,29 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// IMPORTANT: Mock 'openai' before it's imported by memory-service
+vi.mock('openai', () => {
+  const mockOpenAIInstance = {
+    chat: {
+      completions: {
+        create: vi.fn().mockResolvedValue({
+          choices: [{ message: { content: JSON.stringify({ shouldRemember: false, category: 'context', importance: 0.1, extractedInfo: '', keywords: [], reasoning: '' }) } }],
+        }),
+      },
+    },
+    embeddings: {
+      create: vi.fn().mockResolvedValue({
+        data: [{ embedding: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] }], // Ensure embedding length matches expectations if any
+      }),
+    },
+  };
+  // Named export 'OpenAI' for constructor `new OpenAI()`
+  return {
+    OpenAI: vi.fn(() => mockOpenAIInstance),
+    default: vi.fn(() => mockOpenAIInstance), // Support `import OpenAI from 'openai'`
+  };
+});
+
+// Now import memoryService, which will use the mocked OpenAI
 import { memoryService } from '../services/memory-service';
 
 // Mock the database and cache service

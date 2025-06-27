@@ -40,6 +40,32 @@ export interface UserSettingsData extends UserSettingsFormValues {
 }
 
 
+// Define default settings to be used as placeholderData
+const defaultUserSettings: UserSettingsData = {
+  username: "Guest",
+  name: "User",
+  email: "",
+  primaryGoal: "general_wellness", // Assuming enum-like string values
+  coachStyle: "balanced",
+  reminderFrequency: "daily",
+  focusAreas: ["stress_management"],
+  darkMode: false,
+  pushNotifications: true,
+  emailSummaries: false,
+  dataSharing: false,
+  aiProvider: "google",
+  aiModel: "gemini-2.0-flash-exp", // Ensure this is a valid default model
+  transcriptionProvider: "webspeech",
+  preferredLanguage: "en",
+  automaticModelSelection: true,
+  memoryDetectionProvider: "none",
+  memoryDetectionModel: "",
+  // Optional retention settings can be omitted or explicitly undefined if truly optional
+  // highValueRetentionDays: undefined,
+  // mediumValueRetentionDays: undefined,
+  // lowValueRetentionDays: undefined,
+};
+
 export function useUserSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,13 +73,19 @@ export function useUserSettings() {
   const { data: userSettings, isLoading: isLoadingSettings, error: settingsError } = useQuery<UserSettingsData>({
     queryKey: ['userSettings', '/api/settings'], // Unique queryKey
     queryFn: async () => {
+      console.log('[useUserSettings] Fetching /api/settings...');
       const response = await fetch('/api/settings');
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Failed to fetch settings' }));
+        console.error('[useUserSettings] Error fetching settings:', errorData.message);
         throw new Error(errorData.message || 'Failed to fetch settings');
       }
-      return await response.json();
+      const settings = await response.json();
+      console.log('[useUserSettings] Successfully fetched settings:', settings);
+      return settings;
     },
+    placeholderData: defaultUserSettings, // Provide placeholder data
+    staleTime: 1000 * 60 * 5, // Cache settings for 5 minutes to reduce refetches
   });
 
   const updateSettingsMutation = useMutation({

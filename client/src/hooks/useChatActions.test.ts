@@ -1,5 +1,6 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, RenderHookOptions } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useChatActions } from './useChatActions';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { useFileManagement } from '@/hooks/useFileManagement';
@@ -17,10 +18,25 @@ const mockRemoveAttachedFile = vi.fn();
 
 describe('useChatActions', () => {
   let mockSetInputMessage: ReturnType<typeof vi.fn>;
+  let queryClient: QueryClient;
+
+  // Helper to wrap hooks with QueryClientProvider
+  const createWrapper = () => {
+    // Create a new QueryClient for each test to ensure isolation
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false, // Disable retries for testing
+        },
+      },
+    });
+    return ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
 
   beforeEach(() => {
-    vi.clearAllMocks(); // Clear mocks before each test
-
+    vi.clearAllMocks();
     mockSetInputMessage = vi.fn();
 
     (useChatMessages as vi.Mock).mockReturnValue({
@@ -29,7 +45,7 @@ describe('useChatActions', () => {
 
     (useFileManagement as vi.Mock).mockReturnValue({
       attachedFiles: [],
-      setAttachedFiles: vi.fn(), // Mocked but not directly tested here
+      setAttachedFiles: vi.fn(),
       clearAttachedFiles: mockClearAttachedFiles,
       uploadFileMutation: mockUploadFileMutation,
       removeAttachedFile: mockRemoveAttachedFile,
@@ -41,15 +57,21 @@ describe('useChatActions', () => {
         aiModel: 'gpt-4o',
         automaticModelSelection: false,
       },
+      // Add other AppContext values if useChatActions depends on them
+      refreshMessages: vi.fn(),
+      setStreamingActive: vi.fn(),
+      addOptimisticMessage: vi.fn(),
+      updateOptimisticMessage: vi.fn(),
     });
   });
 
   it('should call sendMessageMutation with correct parameters on handleSendMessage', () => {
+    const wrapper = createWrapper();
     const { result } = renderHook(() => useChatActions({
       inputMessage: 'Test message',
       setInputMessage: mockSetInputMessage,
       currentConversationId: 'conv123',
-    }));
+    }), { wrapper });
 
     act(() => {
       result.current.handleSendMessage();
@@ -61,18 +83,19 @@ describe('useChatActions', () => {
       conversationId: 'conv123',
       aiProvider: 'openai',
       aiModel: 'gpt-4o',
-      automaticModelSelection: false, // Based on mock settings
+      automaticModelSelection: false,
     });
     expect(mockSetInputMessage).toHaveBeenCalledWith('');
     expect(mockClearAttachedFiles).toHaveBeenCalled();
   });
 
   it('should handle file change and call uploadFileMutation', () => {
+    const wrapper = createWrapper();
     const { result } = renderHook(() => useChatActions({
       inputMessage: '',
       setInputMessage: mockSetInputMessage,
       currentConversationId: null,
-    }));
+    }), { wrapper });
 
     const mockFile = new File(['dummy content'], 'example.png', { type: 'image/png' });
     const mockEvent = {
@@ -84,15 +107,16 @@ describe('useChatActions', () => {
     });
 
     expect(mockUploadFileMutation.mutate).toHaveBeenCalledWith(mockFile);
-    expect(mockEvent.target.value).toBe(''); // Check if input value is cleared
+    expect(mockEvent.target.value).toBe('');
   });
 
   it('should handle camera capture and call uploadFileMutation', () => {
+    const wrapper = createWrapper();
     const { result } = renderHook(() => useChatActions({
       inputMessage: '',
       setInputMessage: mockSetInputMessage,
       currentConversationId: null,
-    }));
+    }), { wrapper });
 
     const mockFile = new File(['camera content'], 'camera.jpg', { type: 'image/jpeg' });
     const mockEvent = {
@@ -108,12 +132,17 @@ describe('useChatActions', () => {
   });
 
   it('should use settings for automaticModelSelection when attachments are present', () => {
+    const wrapper = createWrapper();
     (useAppContext as vi.Mock).mockReturnValue({
       settings: {
         aiProvider: 'openai',
         aiModel: 'gpt-4o',
-        automaticModelSelection: true, // Setting is true
+        automaticModelSelection: true,
       },
+      refreshMessages: vi.fn(),
+      setStreamingActive: vi.fn(),
+      addOptimisticMessage: vi.fn(),
+      updateOptimisticMessage: vi.fn(),
     });
      (useFileManagement as vi.Mock).mockReturnValue({
       attachedFiles: [{ id: 'file1', fileName: 'image.png', fileType: 'image/png', fileSize: 100 }],
@@ -127,7 +156,7 @@ describe('useChatActions', () => {
       inputMessage: 'Message with image',
       setInputMessage: mockSetInputMessage,
       currentConversationId: 'conv123',
-    }));
+    }), { wrapper });
 
     act(() => {
       result.current.handleSendMessage();
@@ -135,17 +164,23 @@ describe('useChatActions', () => {
 
     expect(mockSendMessageMutation.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
-        automaticModelSelection: true, // Should be true because settings.automaticModelSelection is true
+        automaticModelSelection: true,
       })
     );
   });
 
    it('should default automaticModelSelection to true if images are attached and settings.automaticModelSelection is undefined', () => {
+    const wrapper = createWrapper();
     (useAppContext as vi.Mock).mockReturnValue({
-      settings: { // automaticModelSelection is undefined here
+      settings: {
         aiProvider: 'openai',
         aiModel: 'gpt-4o',
+        // automaticModelSelection is undefined
       },
+      refreshMessages: vi.fn(),
+      setStreamingActive: vi.fn(),
+      addOptimisticMessage: vi.fn(),
+      updateOptimisticMessage: vi.fn(),
     });
     (useFileManagement as vi.Mock).mockReturnValue({
       attachedFiles: [{ id: 'file1', fileName: 'image.png', fileType: 'image/png', fileSize:123 }],
@@ -158,7 +193,7 @@ describe('useChatActions', () => {
       inputMessage: 'Test with image',
       setInputMessage: mockSetInputMessage,
       currentConversationId: 'conv-img',
-    }));
+    }), { wrapper });
 
     act(() => {
       result.current.handleSendMessage();
@@ -166,23 +201,24 @@ describe('useChatActions', () => {
 
     expect(mockSendMessageMutation.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
-        automaticModelSelection: true, // Defaults to true due to image
+        automaticModelSelection: true,
       })
     );
   });
 
   it('should not send message if input is empty and no attachments', () => {
-     (useFileManagement as vi.Mock).mockReturnValue({ // Ensure no attachments
+    const wrapper = createWrapper();
+    (useFileManagement as vi.Mock).mockReturnValue({
       attachedFiles: [],
       clearAttachedFiles: mockClearAttachedFiles,
       uploadFileMutation: mockUploadFileMutation,
       removeAttachedFile: mockRemoveAttachedFile,
     });
     const { result } = renderHook(() => useChatActions({
-      inputMessage: '   ', // Whitespace only
+      inputMessage: '   ',
       setInputMessage: mockSetInputMessage,
       currentConversationId: 'conv456',
-    }));
+    }), { wrapper });
 
     act(() => {
       result.current.handleSendMessage();

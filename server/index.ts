@@ -53,7 +53,11 @@ app.use((req, res, next) => {
   try {
     // Initialize PostgreSQL database with indexes and sample data
     if (storage instanceof DatabaseStorage) {
+      logger.system('Starting database initialization process...');
+      const dbInitStartTime = Date.now();
       await initializeDatabase();
+      const dbInitEndTime = Date.now();
+      logger.system(`Database initialization process completed in ${dbInitEndTime - dbInitStartTime}ms`);
     }
 
     const server = await registerRoutes(app);

@@ -5,12 +5,13 @@ Adding a table of contents to the performance map file based on the provided fea
   "tableOfContents": {
     "lazyLoading": ["staggeredSectionLoading", "conditionalRendering", "backgroundPreloading"],
     "cacheOptimization": ["sectionSpecificCaching", "intelligentPrefetching"],
-    "performanceHooks": ["useLazySection", "useStaggeredLoading", "useBackgroundPreload"]
+    "performanceHooks": ["useLazySection", "useStaggeredLoading", "useBackgroundPreload"],
+    "uiPerformanceHooks": ["virtualScrolling", "messagePagination", "optimisticUpdates", "performanceMonitoring"]
   },
   "domain": "performance",
-  "description": "Application performance optimization systems including lazy loading, caching strategies, and startup optimization",
-  "version": "1.0.0",
-  "lastUpdated": "2025-06-26T22:45:00Z",
+  "description": "Application performance optimization systems including lazy loading, caching strategies, startup optimization, and UI performance hooks.",
+  "version": "1.0.1",
+  "lastUpdated": "2025-06-27T14:30:00Z",
   "featureGroups": {
     "lazyLoading": {
       "description": "Staggered section loading system that reduces initial API requests from 12+ to 2-3 critical requests",
@@ -133,5 +134,34 @@ Adding a table of contents to the performance map file based on the provided fea
     "stateManagement": "React Context with useMemo optimization",
     "cachingStrategy": "Hierarchical cache times with section awareness",
     "renderingPattern": "Conditional rendering with skeleton placeholders"
+  },
+  "uiPerformanceHooks": {
+      "description": "Hooks focused on optimizing UI rendering, data handling, and performance monitoring.",
+      "features": {
+        "virtualScrolling": {
+          "description": "Optimizes rendering of large lists by only rendering visible items.",
+          "files": ["client/src/hooks/useVirtualScrolling.ts"],
+          "purpose": "Efficiently render long message lists or other large datasets.",
+          "tests": ["client/src/tests/performance.test.ts"]
+        },
+        "messagePagination": {
+          "description": "Paginates large sets of messages for efficient loading and display.",
+          "files": ["client/src/hooks/useMessagePagination.ts"],
+          "purpose": "Manage and display extensive message histories without performance degradation.",
+          "tests": ["client/src/tests/performance.test.ts"]
+        },
+        "optimisticUpdates": {
+          "description": "Applies UI updates immediately before server confirmation, with retry logic.",
+          "files": ["client/src/hooks/useOptimisticUpdates.ts"],
+          "purpose": "Improve perceived performance for data mutation operations.",
+          "tests": ["client/src/tests/performance.test.ts"]
+        },
+        "performanceMonitoring": {
+          "description": "Tracks component render times, rerender counts, and memory usage.",
+          "files": ["client/src/hooks/usePerformanceMonitoring.ts"],
+          "purpose": "Identify performance bottlenecks and warnings in components.",
+          "tests": ["client/src/tests/performance.test.ts"]
+        }
+      }
+    }
   }
-}

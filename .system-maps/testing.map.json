@@ -1,0 +1,244 @@
+{
+  "tableOfContents": {
+    "featureGroups": {
+      "vitest-configuration": "Test runner and environment setup with Vitest",
+      "test-mocking": "Mocking patterns and test utilities",
+      "component-testing": "React component testing with testing-library",
+      "server-testing": "Backend API and service testing",
+      "performance-testing": "Performance and optimization testing"
+    }
+  },
+  "domain": "testing",
+  "description": "Comprehensive testing infrastructure using Vitest with consistent mocking patterns and proper test environment configuration",
+  "lastUpdated": "2025-06-27T21:10:00Z",
+  "featureGroups": {
+    "vitest-configuration": {
+      "description": "Test runner configuration and environment setup",
+      "features": {
+        "vitest-config": {
+          "name": "Vitest Configuration",
+          "description": "Main test configuration with JSX support and environment setup",
+          "status": "production",
+          "files": [
+            "vitest.config.ts"
+          ],
+          "dependencies": {
+            "internal": [],
+            "external": ["vitest", "@vitejs/plugin-react", "jsdom"]
+          },
+          "keyFeatures": [
+            "React JSX support with Vite plugin",
+            "JSDOM environment for DOM testing",
+            "Path aliases for imports (@, @shared)",
+            "Global test functions (describe, it, expect)",
+            "Setup files configuration"
+          ]
+        },
+        "test-setup": {
+          "name": "Test Environment Setup",
+          "description": "Global test environment configuration and utilities",
+          "status": "production", 
+          "files": [
+            "client/src/setupTests.ts"
+          ],
+          "dependencies": {
+            "internal": [],
+            "external": ["@testing-library/jest-dom"]
+          },
+          "keyFeatures": [
+            "DOM testing utilities extension",
+            "Global test environment setup",
+            "Custom matchers for assertions"
+          ]
+        }
+      }
+    },
+    "test-mocking": {
+      "description": "Consistent mocking patterns using Vitest's vi.fn() system",
+      "features": {
+        "vitest-mocking": {
+          "name": "Vitest Mocking System",
+          "description": "Standardized mocking patterns replacing Jest mocks",
+          "status": "production",
+          "files": [
+            "server/tests/chatgpt-memory-phase1.test.ts"
+          ],
+          "dependencies": {
+            "internal": [],
+            "external": ["vitest"]
+          },
+          "keyFeatures": [
+            "vi.fn() for function mocking",
+            "vi.mock() for module mocking",
+            "OpenAI API mocking with proper JSON responses",
+            "Browser environment compatibility"
+          ]
+        },
+        "api-mocking": {
+          "name": "API Service Mocking",
+          "description": "Standardized patterns for mocking external APIs",
+          "status": "production",
+          "files": [
+            "server/tests/chatgpt-memory-phase1.test.ts"
+          ],
+          "dependencies": {
+            "internal": ["vitest-mocking"],
+            "external": ["openai"]
+          },
+          "keyFeatures": [
+            "OpenAI chat completions mocking",
+            "Embeddings API mocking",
+            "Proper JSON response formatting",
+            "Error handling simulation"
+          ]
+        }
+      }
+    },
+    "component-testing": {
+      "description": "React component testing with proper rendering and interaction testing",
+      "features": {
+        "react-testing": {
+          "name": "React Component Testing",
+          "description": "Testing React components with testing-library",
+          "status": "production",
+          "files": [
+            "client/src/components/AttachmentPreview.test.tsx",
+            "client/src/tests/chat/AttachmentDisplay.test.tsx"
+          ],
+          "dependencies": {
+            "internal": ["vitest-configuration"],
+            "external": ["@testing-library/react", "@testing-library/user-event"]
+          },
+          "keyFeatures": [
+            "Component rendering tests",
+            "User interaction simulation", 
+            "Props and state testing",
+            "Accessibility testing support"
+          ]
+        },
+        "chart-testing": {
+          "name": "Chart Component Testing",
+          "description": "Testing Recharts components with proper mocking",
+          "status": "production",
+          "files": [
+            "client/src/tests/MessageDisplayArea.performance.test.tsx"
+          ],
+          "dependencies": {
+            "internal": ["react-testing"],
+            "external": ["recharts"]
+          },
+          "keyFeatures": [
+            "Chart rendering verification",
+            "Data visualization testing",
+            "Performance testing for charts",
+            "Responsive container testing"
+          ]
+        }
+      }
+    },
+    "server-testing": {
+      "description": "Backend API and service testing with proper mocking",
+      "features": {
+        "api-testing": {
+          "name": "API Endpoint Testing",
+          "description": "Testing Express API endpoints with supertest",
+          "status": "production",
+          "files": [
+            "server/tests/database-performance.test.ts"
+          ],
+          "dependencies": {
+            "internal": ["vitest-configuration"],
+            "external": ["supertest", "express"]
+          },
+          "keyFeatures": [
+            "HTTP endpoint testing",
+            "Request/response validation",
+            "Authentication testing",
+            "Error handling verification"
+          ]
+        },
+        "service-testing": {
+          "name": "Service Layer Testing",
+          "description": "Testing business logic and service classes",
+          "status": "production",
+          "files": [
+            "server/tests/chatgpt-memory-phase1.test.ts",
+            "server/tests/memory-service-optimizations.test.ts"
+          ],
+          "dependencies": {
+            "internal": ["api-mocking"],
+            "external": []
+          },
+          "keyFeatures": [
+            "Memory service testing",
+            "AI service integration testing",
+            "Database service testing",
+            "Performance optimization testing"
+          ]
+        }
+      }
+    },
+    "performance-testing": {
+      "description": "Performance testing and optimization validation",
+      "features": {
+        "memory-performance": {
+          "name": "Memory System Performance Testing",
+          "description": "Performance testing for memory operations",
+          "status": "production",
+          "files": [
+            "server/tests/chatgpt-memory-phase1.test.ts"
+          ],
+          "dependencies": {
+            "internal": ["service-testing"],
+            "external": []
+          },
+          "keyFeatures": [
+            "Memory retrieval performance",
+            "Deduplication performance",
+            "System prompt generation timing",
+            "Performance benchmarking"
+          ]
+        },
+        "chart-performance": {
+          "name": "Chart Performance Testing",
+          "description": "Performance testing for chart rendering and interactions",
+          "status": "production",
+          "files": [
+            "client/src/tests/performance.test.ts"
+          ],
+          "dependencies": {
+            "internal": ["chart-testing"],
+            "external": ["recharts"]
+          },
+          "keyFeatures": [
+            "Chart rendering performance",
+            "Large dataset handling",
+            "Memory usage optimization",
+            "Responsive container optimization"
+          ]
+        }
+      }
+    }
+  },
+  "migrationHistory": {
+    "jest-to-vitest": {
+      "date": "2025-06-27",
+      "description": "Complete migration from Jest to Vitest testing framework",
+      "changes": [
+        "Removed all Jest dependencies from package.json",
+        "Updated all test files to use vi.fn() instead of jest.fn()",
+        "Configured Vitest with proper React JSX support",
+        "Fixed OpenAI mocking to return proper JSON format",
+        "Resolved chart rendering warnings with explicit sizing",
+        "Updated test configuration for server-side testing"
+      ],
+      "benefits": [
+        "Consistent mocking patterns across all tests",
+        "Better integration with Vite build system",
+        "Eliminated Jest/Vitest configuration conflicts",
+        "Improved test performance and reliability",
+        "Cleaner test output and error messages"
+      ]
+    }
+  }
+}

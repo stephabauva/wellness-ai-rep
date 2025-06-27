@@ -1,7 +1,7 @@
 {
   "appName": "Wellness AI Rep",
   "version": "1.0.0",
-  "lastUpdated": "2025-06-26T15:20:00Z",
+  "lastUpdated": "2025-06-27T21:10:00Z",
   "domains": {
     "chat": {
       "description": "Handles all conversational AI, messaging, and related features.",
@@ -47,6 +47,11 @@
       "description": "Modular routes architecture breaking down massive monolithic routes.ts into domain-specific modules with line count enforcement.",
       "path": "/.system-maps/routes/",
       "dependencies": ["chat", "health", "memory", "file-manager", "settings"]
+    },
+    "testing": {
+      "description": "Comprehensive testing infrastructure using Vitest with consistent mocking patterns and proper test environment configuration.",
+      "path": "/.system-maps/testing.map.json",
+      "dependencies": ["chat", "health", "memory", "performance"]
     }
   },
   "globalComponents": {
@@ -66,6 +71,7 @@
     "backend": "Node.js + Express + TypeScript",
     "database": "PostgreSQL + Drizzle ORM",
     "ai": "Multi-provider (OpenAI, Google Gemini)",
+    "testing": "Vitest + @testing-library/react + supertest",
     "microservices": ["go-memory-service", "go-file-service", "go-ai-gateway"]
   }
 }

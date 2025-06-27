@@ -61,7 +61,7 @@ describe('Manual Memory Entry Feature', () => {
 
   const renderMemorySection = () => {
     return render(
-      <QueryClientProvider client={ queryClient }>
+      <QueryClientProvider client={queryClient}>
         <MemorySection />
       </QueryClientProvider>
     );

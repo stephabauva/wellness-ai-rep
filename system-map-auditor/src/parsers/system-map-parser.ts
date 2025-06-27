@@ -229,7 +229,10 @@ export class SystemMapParser {
     // Validate individual components
     if (map.components) {
       Object.entries(map.components).forEach(([componentName, component]: [string, any]) => {
-        if (!component.path) {
+        // Handle both object and simple string formats
+        const hasPath = typeof component === 'object' ? component.path : typeof component === 'string';
+        
+        if (!hasPath) {
           issues.push({
             type: 'invalid-reference',
             severity: 'error',
@@ -244,7 +247,11 @@ export class SystemMapParser {
     // Validate individual API endpoints
     if (map.apiEndpoints) {
       Object.entries(map.apiEndpoints).forEach(([endpoint, api]: [string, any]) => {
-        if (!api.method || !api.description) {
+        // Extract method from endpoint key if not in api object
+        const hasMethod = api.method || endpoint.match(/^(GET|POST|PUT|PATCH|DELETE)\s/);
+        const hasDescription = api.description || api.handler;
+        
+        if (!hasMethod || !hasDescription) {
           issues.push({
             type: 'invalid-reference',
             severity: 'error',

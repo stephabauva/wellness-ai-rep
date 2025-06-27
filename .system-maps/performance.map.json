@@ -1,12 +1,22 @@
-Adding a table of contents to the performance map file based on the provided feature groups.
-```
-```replit_final_file
 {
   "tableOfContents": {
-    "lazyLoading": ["staggeredSectionLoading", "conditionalRendering", "backgroundPreloading"],
+    "lazyLoading": [
+      "staggeredSectionLoading",
+      "conditionalRendering",
+      "backgroundPreloading"
+    ],
     "cacheOptimization": ["sectionSpecificCaching", "intelligentPrefetching"],
-    "performanceHooks": ["useLazySection", "useStaggeredLoading", "useBackgroundPreload"],
-    "uiPerformanceHooks": ["virtualScrolling", "messagePagination", "optimisticUpdates", "performanceMonitoring"]
+    "performanceHooks": [
+      "useLazySection",
+      "useStaggeredLoading",
+      "useBackgroundPreload"
+    ],
+    "uiPerformanceHooks": [
+      "virtualScrolling",
+      "messagePagination",
+      "optimisticUpdates",
+      "performanceMonitoring"
+    ]
   },
   "domain": "performance",
   "description": "Application performance optimization systems including lazy loading, caching strategies, startup optimization, and UI performance hooks.",
@@ -25,7 +35,7 @@ Adding a table of contents to the performance map file based on the provided fea
           "flow": [
             "User opens app → Chat loads immediately (0ms)",
             "Memory overview loads after 200ms",
-            "Settings load after 500ms", 
+            "Settings load after 500ms",
             "Health, files, devices load after 1000ms"
           ],
           "implementation": {
@@ -40,14 +50,19 @@ Adding a table of contents to the performance map file based on the provided fea
             "client/src/pages/home.tsx",
             "client/src/components/SectionSkeleton.tsx"
           ],
-          "skeletonTypes": ["health", "memory", "files", "devices", "settings", "default"],
+          "skeletonTypes": [
+            "health",
+            "memory",
+            "files",
+            "devices",
+            "settings",
+            "default"
+          ],
           "renderingLogic": "loadedSections.includes(section) ? <Component /> : <SectionSkeleton type={section} />"
         },
         "backgroundPreloading": {
           "description": "Smart prefetching of section data with priority weighting",
-          "files": [
-            "client/src/hooks/useBackgroundPreload.ts"
-          ],
+          "files": ["client/src/hooks/useBackgroundPreload.ts"],
           "strategy": {
             "memoryPriority": "50ms delay for memory section (fastest)",
             "staggeredDelay": "100ms increments for other sections",
@@ -61,9 +76,7 @@ Adding a table of contents to the performance map file based on the provided fea
       "features": {
         "sectionSpecificCaching": {
           "description": "Different cache strategies based on data freshness requirements",
-          "files": [
-            "client/src/lib/queryClient.ts"
-          ],
+          "files": ["client/src/lib/queryClient.ts"],
           "cacheStrategies": {
             "chat": "0ms - Always fresh for real-time messaging",
             "settings": "30 minutes - Infrequently changed user preferences",
@@ -83,7 +96,7 @@ Adding a table of contents to the performance map file based on the provided fea
           "implementation": "getSectionCacheTime() helper provides optimal stale times per endpoint",
           "endpoints": {
             "/api/settings": "30min",
-            "/api/memories": "2min", 
+            "/api/memories": "2min",
             "/api/health-data": "5min",
             "/api/files": "1min",
             "/api/devices": "5min"
@@ -105,7 +118,7 @@ Adding a table of contents to the performance map file based on the provided fea
         },
         "useStaggeredLoading": {
           "description": "Global staggered loading orchestration",
-          "files": ["client/src/hooks/useStaggeredLoading.ts"], 
+          "files": ["client/src/hooks/useStaggeredLoading.ts"],
           "timing": "Chat immediate, Memory 200ms, Settings 500ms, Others 1000ms",
           "output": "loadedSections: string[] array of loaded section names"
         },
@@ -136,42 +149,42 @@ Adding a table of contents to the performance map file based on the provided fea
     "renderingPattern": "Conditional rendering with skeleton placeholders"
   },
   "uiPerformanceHooks": {
-      "description": "Hooks focused on optimizing UI rendering, data handling, and performance monitoring.",
-      "features": {
-        "virtualScrolling": {
-          "description": "Optimizes rendering of large lists by only rendering visible items.",
-          "files": ["client/src/hooks/useVirtualScrolling.ts"],
-          "purpose": "Efficiently render long message lists or other large datasets.",
-          "tests": ["client/src/tests/performance.test.ts"],
-          "status": "passing",
-          "performance": "Renders only visible items for datasets >1000 items"
-        },
-        "messagePagination": {
-          "description": "Paginates large sets of messages for efficient loading and display.",
-          "files": ["client/src/hooks/useMessagePagination.ts"],
-          "purpose": "Manage and display extensive message histories without performance degradation.",
-          "tests": ["client/src/tests/performance.test.ts"],
-          "status": "passing",
-          "performance": "Handles large message sets with 155ms load time"
-        },
-        "optimisticUpdates": {
-          "description": "Applies UI updates immediately before server confirmation, with retry logic.",
-          "files": ["client/src/hooks/useOptimisticUpdates.ts"],
-          "purpose": "Improve perceived performance for data mutation operations.",
-          "tests": ["client/src/tests/performance.test.ts"],
-          "status": "passing",
-          "performance": "Immediate UI updates with 3-retry fallback logic"
-        },
-        "performanceMonitoring": {
-          "description": "Tracks component render times, rerender counts, and memory usage.",
-          "files": ["client/src/hooks/usePerformanceMonitoring.ts"],
-          "purpose": "Identify performance bottlenecks and warnings in components.",
-          "tests": ["client/src/tests/performance.test.ts"],
-          "status": "passing",
-          "performance": "Tracks render times, memory usage, and rerender counts"
-        }
+    "description": "Hooks focused on optimizing UI rendering, data handling, and performance monitoring.",
+    "features": {
+      "virtualScrolling": {
+        "description": "Optimizes rendering of large lists by only rendering visible items.",
+        "files": ["client/src/hooks/useVirtualScrolling.ts"],
+        "purpose": "Efficiently render long message lists or other large datasets.",
+        "tests": ["client/src/tests/performance.test.ts"],
+        "status": "passing",
+        "performance": "Renders only visible items for datasets >1000 items"
+      },
+      "messagePagination": {
+        "description": "Paginates large sets of messages for efficient loading and display.",
+        "files": ["client/src/hooks/useMessagePagination.ts"],
+        "purpose": "Manage and display extensive message histories without performance degradation.",
+        "tests": ["client/src/tests/performance.test.ts"],
+        "status": "passing",
+        "performance": "Handles large message sets with 155ms load time"
+      },
+      "optimisticUpdates": {
+        "description": "Applies UI updates immediately before server confirmation, with retry logic.",
+        "files": ["client/src/hooks/useOptimisticUpdates.ts"],
+        "purpose": "Improve perceived performance for data mutation operations.",
+        "tests": ["client/src/tests/performance.test.ts"],
+        "status": "passing",
+        "performance": "Immediate UI updates with 3-retry fallback logic"
+      },
+      "performanceMonitoring": {
+        "description": "Tracks component render times, rerender counts, and memory usage.",
+        "files": ["client/src/hooks/usePerformanceMonitoring.ts"],
+        "purpose": "Identify performance bottlenecks and warnings in components.",
+        "tests": ["client/src/tests/performance.test.ts"],
+        "status": "passing",
+        "performance": "Tracks render times, memory usage, and rerender counts"
       }
-    },
+    }
+  },
   "testSuites": {
     "frontend": {
       "location": "client/src/tests/performance.test.ts",
@@ -181,7 +194,7 @@ Adding a table of contents to the performance map file based on the provided fea
       "performance": "211ms execution time",
       "categories": [
         "Virtual Scrolling (2 tests)",
-        "Message Pagination (2 tests)", 
+        "Message Pagination (2 tests)",
         "Optimistic Updates (3 tests)",
         "Performance Monitoring (3 tests)",
         "React.memo Optimization (1 test)",
@@ -197,19 +210,19 @@ Adding a table of contents to the performance map file based on the provided fea
       "performance": "2821ms execution time (includes DB initialization)",
       "categories": [
         "Connection Pool Configuration",
-        "Performance Index Creation (26 indexes)", 
+        "Performance Index Creation (26 indexes)",
         "Prepared Statement Execution"
       ]
     },
     "memory": {
-      "location": "server/tests/memory-service-optimizations.test.ts", 
+      "location": "server/tests/memory-service-optimizations.test.ts",
       "status": "passing",
       "testCount": 19,
       "lastRun": "2025-06-27",
       "performance": "55ms execution time with database mocking",
       "categories": [
         "Background Processing Queue (3 tests)",
-        "Lazy Loading and Caching (3 tests)", 
+        "Lazy Loading and Caching (3 tests)",
         "Vector Similarity Caching (2 tests)",
         "Debounced Updates (2 tests)",
         "Performance Optimization (3 tests)",
@@ -219,4 +232,4 @@ Adding a table of contents to the performance map file based on the provided fea
       ]
     }
   }
-  }
+}

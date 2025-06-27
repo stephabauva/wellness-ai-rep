@@ -30,7 +30,7 @@
       ],
       "endpoints": [
         "GET /api/messages",
-        "POST /api/messages/stream",
+        "POST /api/messages/stream", 
         "POST /api/messages",
         "GET /api/conversations",
         "GET /api/conversations/:id/messages",
@@ -102,7 +102,7 @@
       ],
       "endpoints": [
         "GET /api/files",
-        "POST /api/files/upload",
+        "POST /api/upload",
         "DELETE /api/files/:id",
         "POST /api/files/:id/categorize",
         "GET /api/files/categories"
@@ -184,12 +184,14 @@
     "status": "COMPLETED - All Critical Fixes Applied",
     "totalLines": 1620,
     "modules": 9,
-    "lastUpdated": "2025-06-27",
+    "lastUpdated": "2025-06-27T10:45:00Z",
     "criticalFixes": [
-      "Memory API data type fixes applied",
-      "Chart rendering fixes completed",
-      "TypeScript compilation successful",
-      "All route modules operational"
+      "Added missing /api/upload route to file-routes.ts module",
+      "Fixed database schema validation errors in file upload route",
+      "Added missing /api/conversations endpoint to chat-routes.ts", 
+      "Fixed UUID validation error in memory service (conversationId null handling)",
+      "Fixed memory section display and category filtering logic",
+      "TypeScript compilation errors resolved - all modules operational"
     ]
   },
 

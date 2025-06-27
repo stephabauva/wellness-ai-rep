@@ -1,0 +1,158 @@
+{
+  "name": "Routes Core Architecture",
+  "version": "1.0.0",
+  "description": "Modular routes system breaking down massive monolithic routes.ts into domain-specific modules",
+  "created": "2025-06-27",
+  "type": "system_map",
+  "domain": "routes",
+  
+  "architecture": {
+    "pattern": "modular_routes",
+    "principles": [
+      "Domain separation",
+      "Line count limits per module",
+      "Shared dependency management",
+      "Emergency fallback capability"
+    ]
+  },
+
+  "modules": {
+    "chat-routes": {
+      "file": "server/routes/chat-routes.ts",
+      "maxLines": 280,
+      "currentLines": 256,
+      "status": "complete",
+      "responsibilities": [
+        "Message streaming",
+        "Conversation management", 
+        "Audio transcription",
+        "File uploads via chat"
+      ],
+      "endpoints": [
+        "GET /api/messages",
+        "POST /api/messages/stream",
+        "POST /api/messages",
+        "GET /api/conversations",
+        "GET /api/conversations/:id/messages",
+        "POST /api/transcribe/openai",
+        "POST /api/transcribe/google"
+      ]
+    },
+    
+    "health-routes": {
+      "file": "server/routes/health-routes.ts", 
+      "maxLines": 300,
+      "currentLines": 7,
+      "status": "stub",
+      "responsibilities": [
+        "Health data CRUD",
+        "Apple Health import/export",
+        "Native health integration",
+        "Health consent management"
+      ]
+    },
+    
+    "memory-routes": {
+      "file": "server/routes/memory-routes.ts",
+      "maxLines": 280, 
+      "currentLines": 7,
+      "status": "stub",
+      "responsibilities": [
+        "Memory CRUD operations",
+        "ChatGPT memory enhancement",
+        "Memory relationships",
+        "Atomic facts processing"
+      ]
+    },
+    
+    "file-routes": {
+      "file": "server/routes/file-routes.ts",
+      "maxLines": 270,
+      "currentLines": 7, 
+      "status": "stub",
+      "responsibilities": [
+        "File upload/download",
+        "File categorization",
+        "Go service integration",
+        "Retention management"
+      ]
+    },
+    
+    "settings-routes": {
+      "file": "server/routes/settings-routes.ts",
+      "maxLines": 250,
+      "currentLines": 7,
+      "status": "stub", 
+      "responsibilities": [
+        "User preferences",
+        "AI configuration",
+        "Device management",
+        "Coaching settings"
+      ]
+    },
+    
+    "monitoring-routes": {
+      "file": "server/routes/monitoring-routes.ts",
+      "maxLines": 260,
+      "currentLines": 7,
+      "status": "stub",
+      "responsibilities": [
+        "Cache statistics",
+        "Go service proxies", 
+        "Performance monitoring",
+        "Health checks"
+      ]
+    }
+  },
+
+  "infrastructure": {
+    "shared-dependencies": {
+      "file": "server/routes/shared-dependencies.ts",
+      "maxLines": 50,
+      "currentLines": 50,
+      "purpose": "Centralized imports to prevent duplication"
+    },
+    
+    "shared-utils": {
+      "file": "server/routes/shared-utils.ts", 
+      "maxLines": 200,
+      "currentLines": 157,
+      "purpose": "Common utilities and Go service management"
+    },
+    
+    "index": {
+      "file": "server/routes/index.ts",
+      "maxLines": 60,
+      "currentLines": 38, 
+      "purpose": "Central route registration and configuration"
+    }
+  },
+
+  "validation": {
+    "script": "validate-routes.sh",
+    "enforcement": "automated_line_count_checking",
+    "status": "PASSED",
+    "totalLines": 536,
+    "modules": 9
+  },
+
+  "safety_measures": {
+    "emergency_fallback": "USE_MONOLITHIC_ROUTES=true",
+    "feature_flags": "Individual module enable/disable",
+    "replit_safety": "No modifications to vite.config.ts or HMR",
+    "rollback": "Original routes.ts preserved as backup"
+  },
+
+  "benefits": {
+    "maintainability": "300-line modules vs 3800-line monolith",
+    "parallel_development": "Teams can work on separate domains",
+    "testing": "Domain-specific unit testing",
+    "debugging": "Isolated error investigation"
+  },
+
+  "next_phases": [
+    "Day 2-7: Extract remaining route modules from monolithic file",
+    "Day 8: Integration testing and system maps validation", 
+    "Day 9: Final validation and performance testing"
+  ]
+}

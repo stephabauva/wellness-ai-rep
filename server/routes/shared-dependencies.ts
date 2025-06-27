@@ -32,11 +32,9 @@ import {
 } from "@shared/schema";
 import multer from "multer";
 import { z } from "zod";
-import { nanoid } from "nanoid";
-import { join } from 'path';
+import { nanoid } from "nanoid"; import { join } from 'path';
 import { existsSync, statSync, unlinkSync } from 'fs';
-import path from 'path';
-import fs from 'fs';
+import path from 'path'; import fs from 'fs';
 import { spawn } from 'child_process';
 
 export {

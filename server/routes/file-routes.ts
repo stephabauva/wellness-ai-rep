@@ -7,19 +7,154 @@ import {
   files,
   fileCategories,
   categoryService,
+  attachmentRetentionService,
   eq,
   join,
   existsSync,
   statSync,
   unlinkSync,
   fs,
-  nanoid
+  nanoid,
+  multer
 } from "./shared-dependencies.js";
 import { startGoAccelerationService } from "./shared-utils.js";
 
 const FIXED_USER_ID = 1;
 
+// Configure multer for general file uploads
+const fileUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  fileFilter: (req, file, cb) => {
+    // Allow all file types for general upload
+    const allowedMimeTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      'application/pdf', 'text/plain', 'application/json', 'text/csv',
+      'application/zip', 'application/x-zip-compressed',
+      'text/xml', 'application/xml', 'application/octet-stream',
+      'audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/webm',
+      'video/mp4', 'video/webm', 'video/quicktime'
+    ];
+    
+    if (allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('text/') || file.mimetype.startsWith('application/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('File type not supported'));
+    }
+  }
+});
+
 export async function registerFileRoutes(app: Express): Promise<void> {
+  // File upload endpoint - CRITICAL for chat attachments and file manager
+  app.post("/api/upload", fileUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+      
+      const file = req.file;
+      const fileSizeInMB = file.size / (1024 * 1024);
+      const lowerFileName = file.originalname.toLowerCase();
+      const isLargeDataFile = fileSizeInMB > 5 && (
+        lowerFileName.endsWith('.xml') || 
+        lowerFileName.endsWith('.json') || 
+        lowerFileName.endsWith('.csv') ||
+        file.mimetype.includes('xml') ||
+        file.mimetype.includes('json') ||
+        file.mimetype.includes('csv')
+      );
+
+      // Auto-start Go service for large files
+      if (isLargeDataFile) {
+        console.log(`Large data file detected (${fileSizeInMB.toFixed(1)}MB): ${file.originalname}`);
+        try {
+          await startGoAccelerationService();
+          console.log('Go acceleration service started successfully');
+        } catch (error) {
+          console.log('Go service auto-start failed, continuing with TypeScript processing');
+        }
+      }
+
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = join(process.cwd(), 'uploads');
+      if (!existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const fileId = nanoid();
+      const fileExtension = file.originalname.split('.').pop() || '';
+      const fileName = `${fileId}.${fileExtension}`;
+      const filePath = join(uploadsDir, fileName);
+
+      // Write file to disk
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Validate category if provided
+      let validatedCategoryId: string | undefined = undefined;
+      const categoryIdFromRequest = req.body.category as string | undefined;
+      
+      if (categoryIdFromRequest) {
+        try {
+          const category = await categoryService.getCategoryById(categoryIdFromRequest, FIXED_USER_ID);
+          if (!category) {
+            return res.status(400).json({
+              error: "Invalid category ID provided",
+              details: `Category with ID '${categoryIdFromRequest}' not found`
+            });
+          }
+          validatedCategoryId = category.id;
+        } catch (error) {
+          console.error('Category validation error:', error);
+          return res.status(500).json({ error: "Error validating category" });
+        }
+      }
+
+      // Get retention information
+      const retentionInfo = attachmentRetentionService.getRetentionInfo(
+        file.originalname,
+        file.mimetype
+      );
+
+      // Store file in database
+      const fileData = {
+        id: fileId,
+        fileName: fileName,
+        displayName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        filePath: filePath,
+        userId: FIXED_USER_ID,
+        categoryId: validatedCategoryId,
+        retentionPolicy: retentionInfo.category,
+        retentionDays: retentionInfo.retentionDays,
+        uploadSource: 'manual',
+        metadata: {
+          originalName: file.originalname,
+          retentionInfo
+        }
+      };
+
+      // Insert into database
+      const [insertedFile] = await db.insert(files).values(fileData).returning();
+
+      res.json({
+        id: insertedFile.id,
+        fileName: insertedFile.fileName,
+        displayName: insertedFile.displayName,
+        fileType: insertedFile.fileType,
+        fileSize: insertedFile.fileSize,
+        url: `/uploads/${fileName}`,
+        categoryId: validatedCategoryId,
+        retentionInfo
+      });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
   // Get user files
   app.get('/api/files', async (req, res) => {
     try {

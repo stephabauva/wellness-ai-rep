@@ -181,14 +181,16 @@ export class FlowValidator {
     
     // Build usage map
     for (const feature of features) {
-      if (feature.components) {
+      if (feature.components && Array.isArray(feature.components)) {
         for (const component of feature.components) {
-          if (!componentUsage.has(component.name)) {
-            componentUsage.set(component.name, { count: 0, features: [] });
+          if (component && typeof component === 'object' && component.name) {
+            if (!componentUsage.has(component.name)) {
+              componentUsage.set(component.name, { count: 0, features: [] });
+            }
+            const usage = componentUsage.get(component.name)!;
+            usage.count++;
+            usage.features.push(feature.name || 'Unknown Feature');
           }
-          const usage = componentUsage.get(component.name)!;
-          usage.count++;
-          usage.features.push(feature.name);
         }
       }
     }

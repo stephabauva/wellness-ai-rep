@@ -21,6 +21,13 @@ export interface AuditMetrics {
   executionTime: number;
 }
 
+export interface FeatureMetadata {
+  featureName: string;
+  featureGroup: string;
+  parentFile: string;
+  domain: string;
+}
+
 export interface SystemMap {
   name: string;
   version?: string;
@@ -30,6 +37,7 @@ export interface SystemMap {
   flows?: UserFlow[];
   dependencies?: DependencyDef[];
   references?: SystemMapReference[];
+  _metadata?: FeatureMetadata;
 }
 
 export interface ComponentDef {
@@ -72,6 +80,11 @@ export interface DependencyDef {
 export interface SystemMapReference {
   $ref: string;
   description?: string;
+}
+
+export interface FeatureFile extends SystemMap {
+  _metadata: FeatureMetadata;
+  userFlow?: string[];
 }
 
 export interface AuditConfig {

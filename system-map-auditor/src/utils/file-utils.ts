@@ -116,7 +116,7 @@ export class FileUtils {
   }
 
   /**
-   * Recursively find all .map.json files
+   * Recursively find all .map.json and .feature.json files
    */
   private static findSystemMapFiles(dir: string): string[] {
     const files: string[] = [];
@@ -131,6 +131,7 @@ export class FileUtils {
           files.push(...this.findSystemMapFiles(fullPath));
         } else if (entry.isFile() && (
           entry.name.endsWith('.map.json') || 
+          entry.name.endsWith('.feature.json') ||
           entry.name === 'root.map.json'
         )) {
           files.push(fullPath);

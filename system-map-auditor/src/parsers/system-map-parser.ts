@@ -129,6 +129,11 @@ export class SystemMapParser {
   private validateMapStructure(map: SystemMap, mapPath: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
 
+    // Check if this is a feature file
+    if (mapPath.endsWith('.feature.json')) {
+      return this.validateFeatureFileStructure(map as any, mapPath, issues);
+    }
+
     // Check for name field (can be in different locations)
     const hasName = map.name || 
                    (map as any).appName || 

@@ -1,0 +1,74 @@
+{
+  "name": "Health Data Management",
+  "description": "Health data import, processing and visualization system",
+  "components": [
+    {
+      "name": "HealthDashboard",
+      "path": "client/src/components/health/HealthDashboard.tsx",
+      "dependencies": ["ActivityTrendChart", "SleepQualityChart", "HeartRateChart"]
+    },
+    {
+      "name": "ActivityTrendChart",
+      "path": "client/src/components/health/ActivityTrendChart.tsx",
+      "dependencies": []
+    },
+    {
+      "name": "HealthDataParser",
+      "path": "server/services/health-data-parser.ts",
+      "dependencies": ["AppleHealthXMLParser", "CDAAParser"]
+    },
+    {
+      "name": "GoAccelerationService",
+      "path": "server/services/go-acceleration-service.ts",
+      "dependencies": []
+    }
+  ],
+  "apiEndpoints": {
+    "/api/health-data/import": {
+      "method": "POST",
+      "handler": "server/routes/health.ts",
+      "description": "Import health data files",
+      "readsFrom": [],
+      "modifies": ["health_data"]
+    },
+    "/api/health-data": {
+      "method": "GET",
+      "handler": "server/routes/health.ts", 
+      "description": "Get health data",
+      "readsFrom": ["health_data"]
+    },
+    "/api/accelerate/start": {
+      "method": "POST",
+      "handler": "server/routes/health.ts",
+      "description": "Start Go acceleration service",
+      "readsFrom": [],
+      "modifies": []
+    }
+  ],
+  "flows": [
+    {
+      "name": "Import Health Data",
+      "description": "User uploads and imports health data file",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Upload file",
+          "component": "FileUpload",
+          "api": "/api/health-data/import"
+        },
+        {
+          "step": 2,
+          "action": "Process large file with Go service",
+          "component": "GoAccelerationService",
+          "api": "/api/accelerate/start"
+        },
+        {
+          "step": 3,
+          "action": "Display health charts",
+          "component": "HealthDashboard",
+          "api": "/api/health-data"
+        }
+      ]
+    }
+  ]
+}

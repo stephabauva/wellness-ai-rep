@@ -1,0 +1,72 @@
+{
+  "name": "AI Chat System",
+  "description": "Core chat functionality with AI streaming and memory management",
+  "components": [
+    {
+      "name": "ChatInterface",
+      "path": "client/src/components/chat/ChatInterface.tsx",
+      "dependencies": ["MessageDisplayArea", "ChatInput", "SmoothStreamingText"]
+    },
+    {
+      "name": "MessageDisplayArea", 
+      "path": "client/src/components/chat/MessageDisplayArea.tsx",
+      "dependencies": ["SmoothStreamingText"]
+    },
+    {
+      "name": "SmoothStreamingText",
+      "path": "client/src/components/chat/SmoothStreamingText.tsx",
+      "dependencies": []
+    },
+    {
+      "name": "ChatInput",
+      "path": "client/src/components/chat/ChatInput.tsx", 
+      "dependencies": ["FileUpload"]
+    },
+    {
+      "name": "AiService",
+      "path": "server/services/ai-service.ts",
+      "dependencies": ["OpenAIProvider", "GoogleProvider"]
+    }
+  ],
+  "apiEndpoints": {
+    "/api/chat/stream": {
+      "method": "POST",
+      "handler": "server/routes/chat.ts",
+      "description": "Stream AI responses",
+      "readsFrom": ["conversations", "messages"],
+      "modifies": ["messages", "memories"]
+    },
+    "/api/chat/conversations": {
+      "method": "GET", 
+      "handler": "server/routes/chat.ts",
+      "description": "Get conversation list",
+      "readsFrom": ["conversations"]
+    }
+  },
+  "flows": [
+    {
+      "name": "Send Message",
+      "description": "User sends message and receives AI response",
+      "steps": [
+        {
+          "step": 1,
+          "action": "User types message",
+          "component": "ChatInput",
+          "api": null
+        },
+        {
+          "step": 2,
+          "action": "Submit message",
+          "component": "ChatInput",
+          "api": "/api/chat/stream"
+        },
+        {
+          "step": 3,
+          "action": "Display streaming response",
+          "component": "SmoothStreamingText", 
+          "api": null
+        }
+      ]
+    }
+  ]
+}

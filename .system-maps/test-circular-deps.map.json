@@ -1,0 +1,69 @@
+{
+  "name": "Circular Dependency Test",
+  "description": "Test system map with intentional circular dependencies for Phase 2 testing",
+  "components": [
+    {
+      "name": "ComponentA",
+      "path": "test/ComponentA.tsx",
+      "dependencies": ["ComponentB", "ComponentC"]
+    },
+    {
+      "name": "ComponentB", 
+      "path": "test/ComponentB.tsx",
+      "dependencies": ["ComponentC", "ComponentA"]
+    },
+    {
+      "name": "ComponentC",
+      "path": "test/ComponentC.tsx",
+      "dependencies": ["ComponentA"]
+    },
+    {
+      "name": "DeepDependency",
+      "path": "test/DeepDependency.tsx",
+      "dependencies": ["VeryDeepDependency"]
+    },
+    {
+      "name": "VeryDeepDependency",
+      "path": "test/VeryDeepDependency.tsx",
+      "dependencies": ["UltraDeepDependency"]
+    },
+    {
+      "name": "UltraDeepDependency",
+      "path": "test/UltraDeepDependency.tsx",
+      "dependencies": ["DeepDependency"]
+    }
+  ],
+  "apiEndpoints": {
+    "/api/test/circular": {
+      "method": "GET",
+      "handler": "test/circular-handler.ts",
+      "description": "Test endpoint for circular dependency analysis"
+    }
+  },
+  "flows": [
+    {
+      "name": "Test Circular Flow",
+      "description": "Flow that references circular components",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Initialize Component A",
+          "component": "ComponentA",
+          "api": "/api/test/circular"
+        },
+        {
+          "step": 2,
+          "action": "Load Component B",
+          "component": "ComponentB",
+          "api": null
+        },
+        {
+          "step": 3,
+          "action": "Process with Component C",
+          "component": "ComponentC",
+          "api": null
+        }
+      ]
+    }
+  ]
+}

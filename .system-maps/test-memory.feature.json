@@ -1,0 +1,50 @@
+{
+  "_metadata": {
+    "featureName": "Memory Management System",
+    "featureGroup": "AI Core",
+    "parentFile": "test-memory.map.json",
+    "domain": "memory",
+    "description": "Advanced memory detection, deduplication and retrieval system",
+    "userFlow": [
+      "User has conversation",
+      "System detects important memories",
+      "System checks for duplicates",
+      "System stores or updates memories",
+      "System retrieves relevant memories for context"
+    ]
+  },
+  "components": [
+    {
+      "name": "MemorySection",
+      "path": "client/src/components/memory/MemorySection.tsx",
+      "dependencies": ["MemoryOverview", "MemoryList"]
+    },
+    {
+      "name": "MemoryService",
+      "path": "server/services/memory-service.ts",
+      "dependencies": ["AIService", "EmbeddingService"]
+    },
+    {
+      "name": "MemoryEnhancementService",
+      "path": "server/services/memory-enhancement-service.ts",
+      "dependencies": ["MemoryService", "AIService"]
+    }
+  ],
+  "apiEndpoints": {
+    "/api/memories": {
+      "method": "GET",
+      "handler": "server/routes/memory.ts",
+      "description": "Get user memories"
+    },
+    "/api/memories/manual": {
+      "method": "POST", 
+      "handler": "server/routes/memory.ts",
+      "description": "Create manual memory entry"
+    },
+    "/api/memories/enhance": {
+      "method": "POST",
+      "handler": "server/routes/memory.ts", 
+      "description": "Enhance memory with AI processing"
+    }
+  }
+}

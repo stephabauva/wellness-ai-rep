@@ -21,9 +21,24 @@
             "Client-side cache invalidates and dashboard re-renders with new metrics."
           ],
           "components": [
-            "HealthDataSection",
-            "AddMetricsModal",
-            "useHealthVisibilitySettings"
+            {
+              "name": "HealthDataSection",
+              "path": "client/src/components/HealthDataSection.tsx",
+              "description": "Main health dashboard container",
+              "uses": ["AddMetricsModal", "useHealthVisibilitySettings"]
+            },
+            {
+              "name": "AddMetricsModal",
+              "path": "client/src/components/health/AddMetricsModal.tsx",
+              "description": "Modal for adding new metrics",
+              "uses": ["useHealthVisibilitySettings"]
+            },
+            {
+              "name": "useHealthVisibilitySettings",
+              "path": "client/src/hooks/useHealthVisibilitySettings.ts",
+              "description": "Hook for managing visibility settings",
+              "uses": []
+            }
           ]
         },
         "remove-metrics": {
@@ -38,10 +53,30 @@
             "The HealthMetricsCard components re-render, hiding the selected metrics."
           ],
           "components": [
-            "HealthDataSection",
-            "HealthMetricsCard",
-            "RemoveMetricsModal",
-            "useHealthVisibilitySettings"
+            {
+              "name": "HealthDataSection",
+              "path": "client/src/components/HealthDataSection.tsx",
+              "description": "Main health dashboard container",
+              "uses": ["HealthMetricsCard", "RemoveMetricsModal"]
+            },
+            {
+              "name": "HealthMetricsCard",
+              "path": "client/src/components/HealthMetricsCard.tsx",
+              "description": "Individual metric display card",
+              "uses": []
+            },
+            {
+              "name": "RemoveMetricsModal",
+              "path": "client/src/components/health/RemoveMetricsModal.tsx",
+              "description": "Modal for removing metrics",
+              "uses": ["useHealthVisibilitySettings"]
+            },
+            {
+              "name": "useHealthVisibilitySettings",
+              "path": "client/src/hooks/useHealthVisibilitySettings.ts",
+              "description": "Hook for managing visibility settings",
+              "uses": []
+            }
           ]
         }
       }
@@ -58,9 +93,24 @@
             "Charts and metrics re-render with filtered data."
           ],
           "components": [
-            "HealthDataSection",
-            "HealthMetricsCard",
-            "useHealthDataApi"
+            {
+              "name": "HealthDataSection",
+              "path": "client/src/components/HealthDataSection.tsx",
+              "description": "Main health dashboard container",
+              "uses": ["HealthMetricsCard", "useHealthDataApi"]
+            },
+            {
+              "name": "HealthMetricsCard",
+              "path": "client/src/components/HealthMetricsCard.tsx",
+              "description": "Individual metric display card",
+              "uses": []
+            },
+            {
+              "name": "useHealthDataApi",
+              "path": "client/src/hooks/useHealthDataApi.ts",
+              "description": "Hook for health data API calls",
+              "uses": []
+            }
           ]
         },
         "data-reset": {
@@ -73,8 +123,18 @@
             "Dashboard refreshes showing empty state."
           ],
           "components": [
-            "HealthDataSection",
-            "useHealthDataApi"
+            {
+              "name": "HealthDataSection",
+              "path": "client/src/components/HealthDataSection.tsx",
+              "description": "Main health dashboard container",
+              "uses": ["useHealthDataApi"]
+            },
+            {
+              "name": "useHealthDataApi",
+              "path": "client/src/hooks/useHealthDataApi.ts",
+              "description": "Hook for health data API calls",
+              "uses": []
+            }
           ]
         }
       }
@@ -93,8 +153,18 @@
             "PDF file is automatically downloaded to user's device."
           ],
           "components": [
-            "HealthDataSection",
-            "useHealthReport"
+            {
+              "name": "HealthDataSection",
+              "path": "client/src/components/HealthDataSection.tsx",
+              "description": "Main health dashboard container",
+              "uses": ["useHealthReport"]
+            },
+            {
+              "name": "useHealthReport",
+              "path": "client/src/hooks/useHealthReport.ts",
+              "description": "Hook for generating health reports",
+              "uses": []
+            }
           ]
         },
         "native-health-sync": {
@@ -227,68 +297,58 @@
   },
   "apiEndpoints": {
     "GET /api/health-consent/visibility": {
+      "method": "GET",
+      "handler": "server/routes/health-routes.ts",
       "description": "Fetches the user's current dashboard visibility settings from their preferences.",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "",
-      "response": "{ visible_metrics: string[], hidden_metrics: string[], ... }",
       "readsFrom": ["users.preferences.healthVisibilitySettings"],
       "modifies": []
     },
     "PATCH /api/health-consent/visibility": {
+      "method": "PATCH",
+      "handler": "server/routes/health-routes.ts",
       "description": "Updates the user's dashboard visibility settings in their preferences.",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "{ visible_metrics: string[], hidden_metrics: string[], ... }",
-      "response": "{ ...updatedSettings }",
       "readsFrom": ["users"],
       "modifies": ["users.preferences.healthVisibilitySettings"]
     },
     "GET /api/health-data": {
+      "method": "GET",
+      "handler": "server/routes/health-routes.ts",
       "description": "Fetches a list of all health data records for the user within a given time range.",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "",
-      "response": "[HealthMetric]",
-      "queryParams": "startDate, endDate, timeRange",
       "readsFrom": ["healthData"],
       "modifies": []
     },
     "GET /api/health-data/categories": {
+      "method": "GET",
+      "handler": "server/routes/health-routes.ts",
       "description": "Fetches health data records, grouped by category, with time range filtering.",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "",
-      "response": "{ [categoryName]: [HealthMetric] }",
-      "queryParams": "startDate, endDate, timeRange",
       "readsFrom": ["healthData"],
       "modifies": []
     },
     "DELETE /api/health-data/reset": {
+      "method": "DELETE",
+      "handler": "server/routes/health-routes.ts",
       "description": "Deletes all health data for the current user.",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "",
-      "response": "{ success: boolean, deletedCount: number }",
       "readsFrom": ["healthData"],
       "modifies": ["healthData"]
     },
     "POST /api/health-data/export/pdf": {
+      "method": "POST",
+      "handler": "server/routes/health-routes.ts",
       "description": "Generates a PDF report of the user's health data.",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "{ timeRange?: string, includeCharts?: boolean }",
-      "response": "PDF file download",
       "readsFrom": ["healthData", "users"],
       "modifies": []
     },
     "POST /api/health-data/import": {
+      "method": "POST",
+      "handler": "server/routes/health-routes.ts",
       "description": "Imports health data from uploaded files (Apple Health, Google Fit, etc.).",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "FormData with health data file",
-      "response": "{ importedCount: number, duplicatesSkipped: number }",
       "readsFrom": ["healthData"],
       "modifies": ["healthData"]
     },
     "POST /api/health-data/native-sync": {
+      "method": "POST",
+      "handler": "server/routes/health-routes.ts",
       "description": "Synchronizes health data from native mobile health apps.",
-      "handlerFile": "server/routes.ts",
-      "requestBody": "{ dataTypes: string[], timeRange: string }",
-      "response": "{ syncedCount: number, newRecords: number }",
       "readsFrom": ["healthData"],
       "modifies": ["healthData"]
     }

@@ -21,24 +21,11 @@
     "Import results are displayed to user."
   ],
   "components": [
-    {
-      "name": "HealthDataImport",
-      "path": "client/src/components/health/HealthDataImport.tsx",
-      "description": "Main component for health data import with file upload interface",
-      "uses": ["useFileUpload", "useOptimizedUpload"]
-    },
-    {
-      "name": "HealthDataParser", 
-      "path": "server/services/health-data-parser.ts",
-      "description": "Service for parsing multiple health data formats",
-      "uses": ["AppleHealthXMLParser", "GoogleFitJSONParser", "GenericCSVParser", "FitbitJSONParser"]
-    },
-    {
-      "name": "HealthDataDeduplicationService",
-      "path": "server/services/health-data-deduplication.ts", 
-      "description": "Service for identifying and handling duplicate health records",
-      "uses": ["database"]
-    }
+    "HealthDataImport",
+    "HealthDataParser",
+    "HealthDataDeduplicationService",
+    "useFileUpload",
+    "useOptimizedUpload"
   ],
   "supportedFormats": [
     {
@@ -71,14 +58,7 @@
     }
   ],
   "apiIntegration": {
-    "endpoint": {
-      "method": "POST",
-      "path": "/api/health-data/import",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Handles health data file import and processing",
-      "readsFrom": ["uploads", "health_data"],
-      "modifies": ["health_data", "import_logs"]
-    },
+    "endpoint": "POST /api/health-data/import",
     "processingSteps": [
       "File validation and virus scanning",
       "Format detection and parser selection",

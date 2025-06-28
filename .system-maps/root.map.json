@@ -9,9 +9,14 @@
       "dependencies": ["memory", "file-manager"]
     },
     "health": {
-      "description": "Health data management, metrics tracking, dashboard visibility controls, and data import/export functionality.",
+      "description": "Health data management, metrics tracking, dashboard visibility controls, data import/export functionality. Includes dashboard core infrastructure, data import features, and native health sync capabilities.",
       "path": "/.system-maps/health/",
-      "dependencies": ["settings", "file-manager"]
+      "dependencies": ["settings", "file-manager"],
+      "subDomains": {
+        "dashboard": "/.system-maps/health/dashboard/",
+        "data-import": "/.system-maps/health/health-data-import.feature.json",
+        "native-sync": "/.system-maps/health/native-health-sync.feature.json"
+      }
     },
     "devices": {
       "description": "Manages connections to external devices and data sources (e.g., native health kits).",

@@ -3,15 +3,26 @@ import { SystemMapParser } from '../parsers/system-map-parser.js';
 import { CodebaseScanner } from '../parsers/codebase-scanner.js';
 import { ComponentValidator } from '../validators/component-validator.js';
 import { ApiValidator } from '../validators/api-validator.js';
+import { FlowValidator } from '../validators/flow-validator.js';
+import { DependencyAnalyzer } from '../analyzers/dependency-analyzer.js';
 import { ConsoleReporter } from '../reporters/console-reporter.js';
 import { JsonReporter } from '../reporters/json-reporter.js';
+import { MarkdownReporter } from '../reporters/markdown-reporter.js';
 import type { 
   AuditResult, 
   ValidationIssue, 
   AuditMetrics, 
   SystemMap, 
   ParsedCodebase,
-  AuditConfig 
+  AuditConfig,
+  FlowValidationResult,
+  CircularDependency,
+  DependencyAnalysis,
+  PerformanceMetrics,
+  OptimizationSuggestion,
+  CrossReferenceResult,
+  IntegrationPoint,
+  DetailedAuditReport
 } from './types.js';
 
 export class SystemMapAuditor {
@@ -21,8 +32,11 @@ export class SystemMapAuditor {
   private codebaseScanner: CodebaseScanner;
   private componentValidator: ComponentValidator;
   private apiValidator: ApiValidator;
+  private flowValidator: FlowValidator | null = null;
+  private dependencyAnalyzer: DependencyAnalyzer | null = null;
   private consoleReporter: ConsoleReporter;
   private jsonReporter: JsonReporter;
+  private markdownReporter: MarkdownReporter;
 
   constructor(customConfigPath?: string, projectRoot?: string) {
     this.configManager = new ConfigManager(customConfigPath);
@@ -40,6 +54,7 @@ export class SystemMapAuditor {
       this.config.reporting.showSuggestions
     );
     this.jsonReporter = new JsonReporter();
+    this.markdownReporter = new MarkdownReporter();
   }
 
   /**
@@ -422,5 +437,423 @@ export class SystemMapAuditor {
   async scanForMaps(): Promise<string[]> {
     const { maps } = await this.systemMapParser.parseAllSystemMaps();
     return Array.from(maps.keys());
+  }
+
+  // Phase 2 Methods - Flow Validation
+
+  /**
+   * Initialize Phase 2 components when needed
+   */
+  private async initializePhase2Components(): Promise<void> {
+    if (!this.flowValidator || !this.dependencyAnalyzer) {
+      const { codebase } = await this.codebaseScanner.scanCodebase();
+      
+      if (!this.flowValidator) {
+        this.flowValidator = new FlowValidator(codebase);
+      }
+      
+      if (!this.dependencyAnalyzer) {
+        this.dependencyAnalyzer = new DependencyAnalyzer(codebase);
+      }
+    }
+  }
+
+  /**
+   * Validate user flows against actual implementation
+   */
+  async validateFlows(featureName?: string): Promise<FlowValidationResult[]> {
+    await this.initializePhase2Components();
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const results: FlowValidationResult[] = [];
+
+    for (const [mapPath, systemMap] of maps) {
+      if (featureName && !systemMap.name?.includes(featureName) && !mapPath.includes(featureName)) {
+        continue;
+      }
+
+      if (systemMap.flows && this.flowValidator) {
+        const flowResults = this.flowValidator.validateFlowSteps(systemMap);
+        results.push(...flowResults);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Validate cross-feature component references
+   */
+  async validateCrossReferences(sharedOnly: boolean = false): Promise<CrossReferenceResult[]> {
+    await this.initializePhase2Components();
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const systemMaps = Array.from(maps.values());
+
+    if (!this.flowValidator) {
+      return [];
+    }
+
+    const results = this.flowValidator.validateCrossFeatureReferences(systemMaps);
+    
+    if (sharedOnly) {
+      return results.filter(result => result.usageCount > 1);
+    }
+
+    return results;
+  }
+
+  /**
+   * Validate integration points
+   */
+  async validateIntegrationPoints(verifyConnections: boolean = false): Promise<IntegrationPoint[]> {
+    await this.initializePhase2Components();
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const systemMaps = Array.from(maps.values());
+
+    if (!this.flowValidator) {
+      return [];
+    }
+
+    return this.flowValidator.validateIntegrationPoints(systemMaps);
+  }
+
+  // Phase 2 Methods - Dependency Analysis
+
+  /**
+   * Detect circular dependencies
+   */
+  async detectCircularDependencies(): Promise<CircularDependency[]> {
+    await this.initializePhase2Components();
+    
+    if (!this.dependencyAnalyzer) {
+      return [];
+    }
+
+    return this.dependencyAnalyzer.detectCircularDependencies();
+  }
+
+  /**
+   * Analyze dependency depth
+   */
+  async analyzeDependencyDepth(component?: string, maxDepth: number = 5): Promise<DependencyAnalysis[]> {
+    await this.initializePhase2Components();
+    
+    if (!this.dependencyAnalyzer) {
+      return [];
+    }
+
+    if (component) {
+      const analysis = this.dependencyAnalyzer.analyzeDependencyDepth(component);
+      return [analysis];
+    }
+
+    // Analyze all components
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    const results: DependencyAnalysis[] = [];
+
+    for (const [componentName] of codebase.components) {
+      const analysis = this.dependencyAnalyzer.analyzeDependencyDepth(componentName);
+      if (analysis.depth > maxDepth) {
+        results.push(analysis);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Analyze performance impact
+   */
+  async analyzePerformance(): Promise<PerformanceMetrics> {
+    await this.initializePhase2Components();
+    
+    if (!this.dependencyAnalyzer) {
+      // Return empty metrics if analyzer not available
+      return {
+        bundleSize: {
+          totalSize: 0,
+          componentSizes: new Map(),
+          largestComponents: [],
+          unusedCode: 0
+        },
+        loadingMetrics: {
+          criticalPath: [],
+          loadingTime: 0,
+          lazyLoadableComponents: [],
+          preloadCandidates: []
+        },
+        complexityMetrics: {
+          cognitiveComplexity: 0,
+          cyclomaticComplexity: 0,
+          maintainabilityIndex: 100,
+          technicalDebt: 0
+        }
+      };
+    }
+
+    return this.dependencyAnalyzer.analyzePerformanceImpact();
+  }
+
+  /**
+   * Analyze critical dependency paths
+   */
+  async analyzeCriticalPaths(maxLength: number = 10): Promise<string[][]> {
+    await this.initializePhase2Components();
+    
+    if (!this.dependencyAnalyzer) {
+      return [];
+    }
+
+    const performance = this.dependencyAnalyzer.analyzePerformanceImpact();
+    const criticalPath = performance.loadingMetrics.criticalPath;
+    
+    // Return paths that exceed the max length
+    const longPaths: string[][] = [];
+    if (criticalPath.length > maxLength) {
+      longPaths.push(criticalPath);
+    }
+
+    return longPaths;
+  }
+
+  /**
+   * Generate detailed audit report
+   */
+  async generateDetailedReport(options: {
+    includePerformance?: boolean;
+    includeRecommendations?: boolean;
+  } = {}): Promise<DetailedAuditReport> {
+    const results = await this.runFullAudit();
+    const performanceAnalysis = options.includePerformance ? await this.analyzePerformance() : undefined;
+    
+    let recommendations: OptimizationSuggestion[] = [];
+    if (options.includeRecommendations && this.dependencyAnalyzer) {
+      recommendations = this.dependencyAnalyzer.suggestDependencyOptimizations();
+    }
+
+    // Calculate summary
+    const summary = {
+      totalFeatures: results.length,
+      passedFeatures: results.filter(r => r.status === 'pass').length,
+      failedFeatures: results.filter(r => r.status === 'fail').length,
+      warningFeatures: results.filter(r => r.status === 'warning').length,
+      totalIssues: results.reduce((sum, r) => sum + r.issues.length, 0),
+      criticalIssues: results.reduce((sum, r) => sum + r.issues.filter(i => i.severity === 'error').length, 0),
+      overallScore: this.calculateOverallScore(results)
+    };
+
+    return {
+      summary,
+      featureResults: results.map(r => ({
+        featureName: r.feature,
+        status: r.status,
+        componentValidation: { 
+          passed: r.status !== 'fail', 
+          issues: r.issues.filter(i => i.type === 'missing-component'),
+          metrics: {
+            checksPerformed: r.metrics.totalChecks,
+            executionTime: r.metrics.executionTime
+          }
+        },
+        apiValidation: { 
+          passed: r.status !== 'fail', 
+          issues: r.issues.filter(i => i.type === 'api-mismatch'),
+          metrics: {
+            checksPerformed: r.metrics.totalChecks,
+            executionTime: r.metrics.executionTime
+          }
+        },
+        flowValidation: [],
+        crossReferenceValidation: [],
+        performanceMetrics: performanceAnalysis || {
+          bundleSize: {
+            totalSize: 0,
+            componentSizes: new Map(),
+            largestComponents: [],
+            unusedCode: 0
+          },
+          loadingMetrics: {
+            criticalPath: [],
+            loadingTime: 0,
+            lazyLoadableComponents: [],
+            preloadCandidates: []
+          },
+          complexityMetrics: {
+            cognitiveComplexity: 0,
+            cyclomaticComplexity: 0,
+            maintainabilityIndex: 100,
+            technicalDebt: 0
+          }
+        },
+        issues: r.issues
+      })),
+      globalIssues: [],
+      performanceAnalysis: performanceAnalysis || {
+        bundleSize: {
+          totalSize: 0,
+          componentSizes: new Map(),
+          largestComponents: [],
+          unusedCode: 0
+        },
+        loadingMetrics: {
+          criticalPath: [],
+          loadingTime: 0,
+          lazyLoadableComponents: [],
+          preloadCandidates: []
+        },
+        complexityMetrics: {
+          cognitiveComplexity: 0,
+          cyclomaticComplexity: 0,
+          maintainabilityIndex: 100,
+          technicalDebt: 0
+        }
+      },
+      recommendations,
+      metadata: {
+        generatedAt: new Date().toISOString(),
+        auditorVersion: this.getVersion(),
+        projectPath: process.cwd(),
+        configurationUsed: this.config,
+        executionTime: 0
+      }
+    };
+  }
+
+  // Phase 2 Reporting Methods
+
+  /**
+   * Generate flow validation report
+   */
+  generateFlowValidationReport(results: FlowValidationResult[]): string {
+    return this.consoleReporter.renderFlowValidation(results);
+  }
+
+  /**
+   * Generate cross-reference report
+   */
+  generateCrossReferenceReport(results: CrossReferenceResult[]): string {
+    const lines: string[] = [];
+    lines.push('Cross-Reference Validation Results:');
+    lines.push('');
+    
+    for (const result of results) {
+      lines.push(`Component: ${result.component}`);
+      lines.push(`  Usage Count: ${result.usageCount}`);
+      lines.push(`  Features: ${result.features.join(', ')}`);
+      lines.push(`  Pattern: ${result.sharedUsagePattern}`);
+      if (result.inconsistencies.length > 0) {
+        lines.push(`  Issues: ${result.inconsistencies.length}`);
+      }
+      lines.push('');
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate integration point report
+   */
+  generateIntegrationPointReport(results: IntegrationPoint[]): string {
+    const lines: string[] = [];
+    lines.push('Integration Point Validation Results:');
+    lines.push('');
+    
+    for (const result of results) {
+      lines.push(`Integration Point: ${result.name}`);
+      lines.push(`  Type: ${result.type}`);
+      lines.push(`  Verified: ${result.verified ? 'Yes' : 'No'}`);
+      if (result.issues.length > 0) {
+        lines.push(`  Issues: ${result.issues.length}`);
+      }
+      lines.push('');
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate circular dependency report
+   */
+  generateCircularDependencyReport(circularDeps: CircularDependency[]): string {
+    return this.consoleReporter.renderCircularDependencies(circularDeps);
+  }
+
+  /**
+   * Generate circular dependency markdown
+   */
+  generateCircularDependencyMarkdown(circularDeps: CircularDependency[]): string {
+    return this.markdownReporter.generateCircularDependencyDiagram(circularDeps);
+  }
+
+  /**
+   * Generate dependency depth report
+   */
+  generateDependencyDepthReport(analysis: DependencyAnalysis[]): string {
+    const lines: string[] = [];
+    lines.push('Dependency Depth Analysis:');
+    lines.push('');
+    
+    for (const result of analysis) {
+      lines.push(`Component: ${result.component}`);
+      lines.push(`  Depth: ${result.depth}`);
+      lines.push(`  Dependencies: ${result.dependencies.length}`);
+      lines.push(`  Circular Paths: ${result.circularPaths.length}`);
+      lines.push(`  Complexity Score: ${result.metrics.complexityScore}`);
+      lines.push('');
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate performance report
+   */
+  generatePerformanceReport(metrics: PerformanceMetrics): string {
+    return this.consoleReporter.renderPerformanceMetrics(metrics);
+  }
+
+  /**
+   * Generate critical paths report
+   */
+  generateCriticalPathsReport(paths: string[][]): string {
+    const lines: string[] = [];
+    lines.push('Critical Dependency Paths:');
+    lines.push('');
+    
+    for (let i = 0; i < paths.length; i++) {
+      lines.push(`Path ${i + 1} (${paths[i].length} steps):`);
+      lines.push(`  ${paths[i].join(' → ')}`);
+      lines.push('');
+    }
+    
+    if (paths.length === 0) {
+      lines.push('No critical paths found.');
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate detailed markdown report
+   */
+  generateDetailedMarkdownReport(report: DetailedAuditReport): string {
+    return this.markdownReporter.generateDetailedReport(report);
+  }
+
+  // Helper methods
+
+  private calculateOverallScore(results: AuditResult[]): number {
+    if (results.length === 0) return 100;
+    
+    const totalIssues = results.reduce((sum, r) => sum + r.issues.length, 0);
+    const errorCount = results.reduce((sum, r) => sum + r.issues.filter(i => i.severity === 'error').length, 0);
+    const warningCount = results.reduce((sum, r) => sum + r.issues.filter(i => i.severity === 'warning').length, 0);
+    
+    // Simple scoring: start at 100, subtract points for issues
+    let score = 100;
+    score -= errorCount * 10; // 10 points per error
+    score -= warningCount * 5; // 5 points per warning
+    score -= (totalIssues - errorCount - warningCount) * 1; // 1 point per info issue
+    
+    return Math.max(0, score);
   }
 }

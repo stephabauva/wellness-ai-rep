@@ -21,11 +21,30 @@
     "Sync completion status and statistics are shown."
   ],
   "components": [
-    "NativeHealthIntegration",
-    "native-health-service",
-    "platform-detection",
-    "HealthKitManager (iOS)",
-    "GoogleFitManager (Android)"
+    {
+      "name": "NativeHealthIntegration",
+      "path": "client/src/components/health/NativeHealthIntegration.tsx",
+      "description": "React component for native health platform integration",
+      "uses": ["native-health-service", "platform-detection"]
+    },
+    {
+      "name": "native-health-service",
+      "path": "client/src/services/native-health-service.ts",
+      "description": "Service for communicating with native health platforms",
+      "uses": ["HealthKitManager", "GoogleFitManager", "platform-detection"]
+    },
+    {
+      "name": "platform-detection",
+      "path": "client/src/services/platform-detection.ts",
+      "description": "Service for detecting platform capabilities and health providers",
+      "uses": []
+    },
+    {
+      "name": "HealthKitManager",
+      "path": "ios/App/App/HealthKitManager.swift",
+      "description": "iOS native HealthKit integration manager",
+      "uses": ["HealthKit"]
+    }
   ],
   "platforms": {
     "ios": {
@@ -125,5 +144,23 @@
     "permissionValidation": "Continuous validation of granted permissions",
     "userConsent": "Explicit consent tracking for each data type",
     "dataMinimization": "Only sync explicitly requested data types"
-  }
+  },
+  "apiEndpoints": [
+    {
+      "method": "POST",
+      "path": "/api/health-data/native-sync",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Processes native health data sync requests",
+      "readsFrom": ["health_data", "user_preferences"],
+      "modifies": ["health_data", "sync_logs"]
+    },
+    {
+      "method": "POST", 
+      "path": "/api/health-data/background-sync",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Handles background sync operations",
+      "readsFrom": ["health_data", "sync_schedules"],
+      "modifies": ["health_data", "sync_logs", "sync_schedules"]
+    }
+  ]
 }

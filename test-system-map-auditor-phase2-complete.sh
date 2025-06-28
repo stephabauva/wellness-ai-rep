@@ -104,11 +104,12 @@ fi
 # Test CLI accessibility
 echo -e "\n${YELLOW}Testing CLI accessibility...${NC}"
 cd system-map-auditor
-if version_output=$(node dist/cli.js --version 2>&1) && echo "$version_output" | grep -q "1.0.0"; then
-    print_test_result "CLI Accessibility" "PASS" "CLI version: $(echo "$version_output" | grep "1.0.0")"
+version_output=$(node dist/cli.js --version 2>&1)
+if echo "$version_output" | grep -q "1.0.0"; then
+    print_test_result "CLI Accessibility" "PASS" "CLI version found in output"
     cd ..
 else
-    print_test_result "CLI Accessibility" "FAIL" "CLI not accessible or version mismatch"
+    print_test_result "CLI Accessibility" "FAIL" "CLI version not found in output: $version_output"
     cd ..
     exit 1
 fi
@@ -157,7 +158,7 @@ print_header "PHASE 2 PERFORMANCE ANALYSIS TESTS"
 
 # Test 7: Performance Analysis
 run_test_command \
-    "node system-map-auditor/dist/cli.js analyze-performance" \
+    "node dist/cli.js analyze-performance" \
     "Performance Analysis" \
     "PERFORMANCE ANALYSIS"
 
@@ -165,7 +166,7 @@ print_header "PHASE 2 REPORTING TESTS"
 
 # Test 8: Detailed Report Generation
 run_test_command \
-    "node system-map-auditor/dist/cli.js generate-detailed-report" \
+    "node dist/cli.js generate-detailed-report" \
     "Detailed Report Generation" \
     "System Map Auditor - Detailed Analysis Report"
 
@@ -173,13 +174,13 @@ print_header "PHASE 2 HELP AND VERSION TESTS"
 
 # Test 9: Help Command
 run_test_command \
-    "node system-map-auditor/dist/cli.js --help" \
+    "node dist/cli.js --help" \
     "Help Command" \
     "Usage:"
 
 # Test 10: Version Command
 run_test_command \
-    "node system-map-auditor/dist/cli.js --version" \
+    "node dist/cli.js --version" \
     "Version Command" \
     "1.0.0"
 
@@ -187,13 +188,13 @@ print_header "PHASE 2 ADVANCED VALIDATION TESTS"
 
 # Test 11: System Map Discovery
 run_test_command \
-    "node system-map-auditor/dist/cli.js scan" \
+    "node dist/cli.js scan" \
     "System Map Discovery" \
     "System Map Audit Results:"
 
 # Test 12: JSON Output Format
 run_test_command \
-    "node system-map-auditor/dist/cli.js scan --format json" \
+    "node dist/cli.js scan --format json" \
     "JSON Output Format" \
     "\"auditResults\""
 

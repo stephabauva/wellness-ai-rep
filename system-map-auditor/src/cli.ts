@@ -295,6 +295,221 @@ program
     }
   });
 
+// Phase 2 Commands - Flow Validation
+program
+  .command('validate-flows')
+  .description('validate user flows against actual implementation')
+  .option('-f, --feature <name>', 'validate flows for specific feature only')
+  .option('--show-flow-mapping', 'show component capability mapping')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateFlows(options.feature);
+      
+      if (!options.quiet) {
+        console.log(auditor.generateFlowValidationReport(results));
+      }
+      
+      const hasErrors = results.some(result => !result.valid);
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Flow validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-cross-refs')
+  .description('validate cross-feature component references')
+  .option('--shared-only', 'validate only shared components')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateCrossReferences(options.sharedOnly);
+      
+      if (!options.quiet) {
+        console.log(auditor.generateCrossReferenceReport(results));
+      }
+      
+      const hasIssues = results.some(result => result.inconsistencies.length > 0);
+      process.exit(hasIssues ? 1 : 0);
+    } catch (error) {
+      console.error('Cross-reference validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-integration-points')
+  .description('validate external integration points')
+  .option('--verify-connections', 'actually test external connections')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateIntegrationPoints(options.verifyConnections);
+      
+      if (!options.quiet) {
+        console.log(auditor.generateIntegrationPointReport(results));
+      }
+      
+      const hasFailures = results.some(result => !result.verified);
+      process.exit(hasFailures ? 1 : 0);
+    } catch (error) {
+      console.error('Integration point validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+// Phase 2 Commands - Dependency Analysis
+program
+  .command('detect-circular')
+  .description('detect circular dependencies in system maps')
+  .option('--visualize', 'generate dependency visualization')
+  .option('-f, --format <type>', 'output format (console, json, markdown)', 'console')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const circularDeps = await auditor.detectCircularDependencies();
+      
+      if (!options.quiet) {
+        let report: string;
+        switch (options.format) {
+          case 'json':
+            report = JSON.stringify(circularDeps, null, 2);
+            break;
+          case 'markdown':
+            report = auditor.generateCircularDependencyMarkdown(circularDeps);
+            break;
+          case 'console':
+          default:
+            report = auditor.generateCircularDependencyReport(circularDeps);
+            break;
+        }
+        console.log(report);
+      }
+      
+      const hasErrors = circularDeps.some(dep => dep.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Circular dependency detection failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('analyze-dependency-depth')
+  .description('analyze dependency depth for components')
+  .option('-c, --component <name>', 'analyze specific component')
+  .option('--max-depth <number>', 'maximum depth threshold', '5')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const analysis = await auditor.analyzeDependencyDepth(options.component, parseInt(options.maxDepth));
+      
+      if (!options.quiet) {
+        console.log(auditor.generateDependencyDepthReport(analysis));
+      }
+      
+      const hasDeepDependencies = analysis.some(a => a.depth > parseInt(options.maxDepth));
+      process.exit(hasDeepDependencies ? 1 : 0);
+    } catch (error) {
+      console.error('Dependency depth analysis failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('analyze-performance')
+  .description('analyze performance impact of dependencies')
+  .option('--show-bundle-analysis', 'include bundle size analysis')
+  .option('--show-loading-metrics', 'include loading performance metrics')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const metrics = await auditor.analyzePerformance();
+      
+      if (!options.quiet) {
+        console.log(auditor.generatePerformanceReport(metrics));
+      }
+      
+      // Exit with warning if performance is concerning
+      const hasPerformanceIssues = metrics.complexityMetrics.technicalDebt > 50;
+      process.exit(hasPerformanceIssues ? 1 : 0);
+    } catch (error) {
+      console.error('Performance analysis failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('analyze-critical-paths')
+  .description('analyze critical dependency paths')
+  .option('--max-length <number>', 'maximum path length to report', '10')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const paths = await auditor.analyzeCriticalPaths(parseInt(options.maxLength));
+      
+      if (!options.quiet) {
+        console.log(auditor.generateCriticalPathsReport(paths));
+      }
+      
+      const hasLongPaths = paths.some(path => path.length > parseInt(options.maxLength));
+      process.exit(hasLongPaths ? 1 : 0);
+    } catch (error) {
+      console.error('Critical path analysis failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+// Phase 2 Commands - Enhanced Reporting
+program
+  .command('generate-detailed-report')
+  .description('generate comprehensive detailed audit report')
+  .option('-f, --format <type>', 'output format (markdown, json)', 'markdown')
+  .option('-o, --output <file>', 'output file path')
+  .option('--include-performance', 'include performance analysis')
+  .option('--include-recommendations', 'include optimization recommendations')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const detailedReport = await auditor.generateDetailedReport({
+        includePerformance: options.includePerformance,
+        includeRecommendations: options.includeRecommendations
+      });
+      
+      let report: string;
+      switch (options.format) {
+        case 'json':
+          report = JSON.stringify(detailedReport, null, 2);
+          break;
+        case 'markdown':
+        default:
+          report = auditor.generateDetailedMarkdownReport(detailedReport);
+          break;
+      }
+      
+      if (options.output) {
+        writeFileSync(resolve(options.output), report);
+        console.log(`Detailed report saved to: ${options.output}`);
+      } else {
+        console.log(report);
+      }
+      
+      process.exit(0);
+    } catch (error) {
+      console.error('Report generation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
 // Handle global --show-config option
 if (process.argv.includes('--show-config')) {
   try {

@@ -1,4 +1,14 @@
-import type { AuditResult, ValidationIssue, AuditMetrics } from '../core/types.js';
+import type { 
+  AuditResult, 
+  ValidationIssue, 
+  AuditMetrics,
+  DetailedAuditReport,
+  PerformanceMetrics,
+  FlowValidationResult,
+  CircularDependency,
+  OptimizationSuggestion,
+  CrossReferenceResult
+} from '../core/types.js';
 
 export class MarkdownReporter {
   /**
@@ -312,5 +322,395 @@ export class MarkdownReporter {
     lines.push(`*Last updated: ${new Date().toISOString()}*`);
 
     return lines.join('\n');
+  }
+
+  // Phase 2 Enhanced Markdown Reporting Methods
+
+  /**
+   * Generate comprehensive detailed audit report
+   */
+  generateDetailedReport(report: DetailedAuditReport): string {
+    const lines: string[] = [];
+    
+    // Header with metadata
+    lines.push('# System Map Auditor - Detailed Analysis Report');
+    lines.push('');
+    lines.push(`**Generated:** ${report.metadata.generatedAt}`);
+    lines.push(`**Project:** ${report.metadata.projectPath}`);
+    lines.push(`**Auditor Version:** ${report.metadata.auditorVersion}`);
+    lines.push(`**Execution Time:** ${report.metadata.executionTime}ms`);
+    lines.push('');
+
+    // Executive Summary
+    lines.push('## 📊 Executive Summary');
+    lines.push('');
+    lines.push('| Metric | Value | Status |');
+    lines.push('|--------|-------|--------|');
+    lines.push(`| Overall Score | ${report.summary.overallScore}/100 | ${this.getScoreStatus(report.summary.overallScore)} |`);
+    lines.push(`| Features Audited | ${report.summary.totalFeatures} | - |`);
+    lines.push(`| Success Rate | ${Math.round((report.summary.passedFeatures / report.summary.totalFeatures) * 100)}% | ${this.getSuccessRateStatus(report.summary.passedFeatures, report.summary.totalFeatures)} |`);
+    lines.push(`| Critical Issues | ${report.summary.criticalIssues} | ${report.summary.criticalIssues === 0 ? '✅' : '⚠️'} |`);
+    lines.push('');
+
+    // Performance Analysis
+    if (report.performanceAnalysis) {
+      lines.push('## ⚡ Performance Analysis');
+      lines.push('');
+      lines.push(this.generatePerformanceSection(report.performanceAnalysis));
+      lines.push('');
+    }
+
+    // Feature Results
+    lines.push('## 🔍 Feature Analysis Results');
+    lines.push('');
+    
+    for (const featureResult of report.featureResults) {
+      lines.push(this.generateFeatureAnalysisSection(featureResult));
+    }
+
+    // Global Issues
+    if (report.globalIssues.length > 0) {
+      lines.push('## 🚨 Global Issues');
+      lines.push('');
+      lines.push('Issues that affect multiple features or the overall system architecture:');
+      lines.push('');
+      lines.push(this.generateIssueTable(report.globalIssues));
+      lines.push('');
+    }
+
+    // Optimization Recommendations
+    if (report.recommendations.length > 0) {
+      lines.push('## 💡 Optimization Recommendations');
+      lines.push('');
+      lines.push(this.generateOptimizationSection(report.recommendations));
+      lines.push('');
+    }
+
+    // Appendix
+    lines.push('## 📋 Technical Appendix');
+    lines.push('');
+    lines.push('### Configuration Used');
+    lines.push('```json');
+    lines.push(JSON.stringify(report.metadata.configurationUsed, null, 2));
+    lines.push('```');
+    lines.push('');
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate performance analysis section
+   */
+  generatePerformanceSection(metrics: PerformanceMetrics): string {
+    const lines: string[] = [];
+    
+    // Bundle Size Analysis
+    lines.push('### 📦 Bundle Size Analysis');
+    lines.push('');
+    lines.push('| Metric | Value | Status |');
+    lines.push('|--------|-------|--------|');
+    lines.push(`| Total Bundle Size | ${this.formatBytes(metrics.bundleSize.totalSize)} | ${this.getBundleSizeStatus(metrics.bundleSize.totalSize)} |`);
+    lines.push(`| Unused Code | ${this.formatBytes(metrics.bundleSize.unusedCode)} | ${metrics.bundleSize.unusedCode > 0 ? '⚠️' : '✅'} |`);
+    lines.push(`| Bundle Efficiency | ${this.calculateBundleEfficiency(metrics.bundleSize)}% | ${this.getEfficiencyStatus(this.calculateBundleEfficiency(metrics.bundleSize))} |`);
+    lines.push('');
+
+    // Largest Components
+    if (metrics.bundleSize.largestComponents.length > 0) {
+      lines.push('#### 🏋️ Largest Components');
+      lines.push('');
+      lines.push('| Rank | Component | Size | % of Total |');
+      lines.push('|------|-----------|------|------------|');
+      
+      metrics.bundleSize.largestComponents.slice(0, 10).forEach((comp, index) => {
+        const percentage = ((comp.size / metrics.bundleSize.totalSize) * 100).toFixed(1);
+        lines.push(`| ${index + 1} | \`${comp.component}\` | ${this.formatBytes(comp.size)} | ${percentage}% |`);
+      });
+      lines.push('');
+    }
+
+    // Loading Performance
+    lines.push('### 🚀 Loading Performance');
+    lines.push('');
+    lines.push('| Metric | Value | Recommendation |');
+    lines.push('|--------|-------|----------------|');
+    lines.push(`| Critical Path Length | ${metrics.loadingMetrics.criticalPath.length} steps | ${metrics.loadingMetrics.criticalPath.length > 5 ? 'Consider optimization' : 'Good'} |`);
+    lines.push(`| Estimated Loading Time | ${metrics.loadingMetrics.loadingTime}ms | ${metrics.loadingMetrics.loadingTime > 3000 ? 'Optimize' : 'Acceptable'} |`);
+    lines.push(`| Lazy Loadable Components | ${metrics.loadingMetrics.lazyLoadableComponents.length} | Consider implementing |`);
+    lines.push('');
+
+    // Complexity Metrics
+    lines.push('### 🧮 Complexity Analysis');
+    lines.push('');
+    lines.push('| Metric | Score | Status |');
+    lines.push('|--------|-------|--------|');
+    lines.push(`| Cognitive Complexity | ${metrics.complexityMetrics.cognitiveComplexity} | ${this.getComplexityStatus(metrics.complexityMetrics.cognitiveComplexity)} |`);
+    lines.push(`| Maintainability Index | ${metrics.complexityMetrics.maintainabilityIndex}/100 | ${this.getMaintainabilityStatus(metrics.complexityMetrics.maintainabilityIndex)} |`);
+    lines.push(`| Technical Debt | ${metrics.complexityMetrics.technicalDebt} points | ${metrics.complexityMetrics.technicalDebt > 50 ? '⚠️ High' : '✅ Low'} |`);
+    lines.push('');
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate feature analysis section
+   */
+  generateFeatureAnalysisSection(featureResult: any): string {
+    const lines: string[] = [];
+    
+    lines.push(`### ${this.getStatusIcon(featureResult.status)} ${featureResult.featureName}`);
+    lines.push('');
+    
+    // Status overview
+    lines.push('| Validation Type | Status | Issues | Details |');
+    lines.push('|----------------|--------|--------|---------|');
+    lines.push(`| Components | ${this.getValidationStatusIcon(featureResult.componentValidation)} | ${featureResult.componentValidation.issues.length} | ${featureResult.componentValidation.passed ? 'All components validated' : 'Issues found'} |`);
+    lines.push(`| APIs | ${this.getValidationStatusIcon(featureResult.apiValidation)} | ${featureResult.apiValidation.issues.length} | ${featureResult.apiValidation.passed ? 'All APIs validated' : 'Issues found'} |`);
+    
+    if (featureResult.flowValidation && featureResult.flowValidation.length > 0) {
+      const validFlows = featureResult.flowValidation.filter((f: any) => f.valid).length;
+      lines.push(`| User Flows | ${validFlows === featureResult.flowValidation.length ? '✅' : '❌'} | ${featureResult.flowValidation.length - validFlows} | ${validFlows}/${featureResult.flowValidation.length} flows valid |`);
+    }
+    
+    lines.push('');
+
+    // Flow validation details
+    if (featureResult.flowValidation && featureResult.flowValidation.length > 0) {
+      lines.push('#### 🔄 Flow Validation Details');
+      lines.push('');
+      lines.push(this.generateFlowValidationTable(featureResult.flowValidation));
+      lines.push('');
+    }
+
+    // Cross-reference validation
+    if (featureResult.crossReferenceValidation && featureResult.crossReferenceValidation.length > 0) {
+      lines.push('#### 🔗 Cross-Reference Analysis');
+      lines.push('');
+      lines.push(this.generateCrossReferenceTable(featureResult.crossReferenceValidation));
+      lines.push('');
+    }
+
+    // Issues for this feature
+    if (featureResult.issues && featureResult.issues.length > 0) {
+      lines.push('#### 🚨 Issues');
+      lines.push('');
+      lines.push(this.generateIssueTable(featureResult.issues));
+      lines.push('');
+    }
+
+    lines.push('---');
+    lines.push('');
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate flow validation table
+   */
+  generateFlowValidationTable(flowResults: FlowValidationResult[]): string {
+    const lines: string[] = [];
+    
+    lines.push('| Flow Name | Steps | Valid Steps | Status | Issues |');
+    lines.push('|-----------|-------|-------------|--------|--------|');
+    
+    for (const flow of flowResults) {
+      const validSteps = flow.stepResults.filter(s => s.valid).length;
+      const status = flow.valid ? '✅ Valid' : '❌ Invalid';
+      const issues = flow.issues.length;
+      
+      lines.push(`| ${flow.flowName} | ${flow.stepResults.length} | ${validSteps} | ${status} | ${issues} |`);
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate cross-reference table
+   */
+  generateCrossReferenceTable(crossRefs: CrossReferenceResult[]): string {
+    const lines: string[] = [];
+    
+    lines.push('| Component | Usage Count | Features | Pattern | Issues |');
+    lines.push('|-----------|-------------|----------|---------|--------|');
+    
+    for (const crossRef of crossRefs) {
+      const patternIcon = this.getUsagePatternIcon(crossRef.sharedUsagePattern);
+      const issues = crossRef.inconsistencies.length;
+      
+      lines.push(`| \`${crossRef.component}\` | ${crossRef.usageCount} | ${crossRef.features.join(', ')} | ${patternIcon} ${crossRef.sharedUsagePattern} | ${issues} |`);
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate optimization recommendations section
+   */
+  generateOptimizationSection(recommendations: OptimizationSuggestion[]): string {
+    const lines: string[] = [];
+    
+    // Group by impact
+    const grouped = this.groupRecommendationsByImpact(recommendations);
+    
+    for (const [impact, recs] of Object.entries(grouped)) {
+      if (recs.length === 0) continue;
+      
+      const impactIcon = this.getImpactIcon(impact);
+      lines.push(`### ${impactIcon} ${impact.toUpperCase()} Impact Recommendations`);
+      lines.push('');
+      
+      lines.push('| Priority | Type | Target | Description | Effort |');
+      lines.push('|----------|------|--------|-------------|--------|');
+      
+      recs.forEach((rec, index) => {
+        const effortIcon = this.getEffortIcon(rec.effort);
+        lines.push(`| ${index + 1} | ${rec.type} | \`${rec.target}\` | ${rec.description} | ${effortIcon} ${rec.effort} |`);
+      });
+      
+      lines.push('');
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate circular dependency visualization
+   */
+  generateCircularDependencyDiagram(circularDeps: CircularDependency[]): string {
+    const lines: string[] = [];
+    
+    lines.push('## 🔄 Circular Dependencies');
+    lines.push('');
+    
+    if (circularDeps.length === 0) {
+      lines.push('✅ No circular dependencies detected!');
+      return lines.join('\n');
+    }
+    
+    lines.push(`Found ${circularDeps.length} circular dependencies:`);
+    lines.push('');
+    
+    circularDeps.forEach((circular, index) => {
+      lines.push(`### ${index + 1}. ${circular.severity === 'error' ? '🔴' : '🟡'} ${circular.type.toUpperCase()}`);
+      lines.push('');
+      lines.push('**Dependency Path:**');
+      lines.push('```mermaid');
+      lines.push('graph LR');
+      
+      for (let i = 0; i < circular.path.length; i++) {
+        const current = circular.path[i];
+        const next = circular.path[(i + 1) % circular.path.length];
+        lines.push(`  ${this.sanitizeForMermaid(current)} --> ${this.sanitizeForMermaid(next)}`);
+      }
+      
+      lines.push('```');
+      lines.push('');
+      
+      if (circular.suggestion) {
+        lines.push(`**💡 Suggestion:** ${circular.suggestion}`);
+        lines.push('');
+      }
+    });
+    
+    return lines.join('\n');
+  }
+
+  // Helper methods for Phase 2
+
+  private getScoreStatus(score: number): string {
+    if (score >= 90) return '🟢 Excellent';
+    if (score >= 75) return '🟡 Good';
+    if (score >= 60) return '🟠 Fair';
+    return '🔴 Needs Improvement';
+  }
+
+  private getSuccessRateStatus(passed: number, total: number): string {
+    const rate = (passed / total) * 100;
+    if (rate === 100) return '🟢 Perfect';
+    if (rate >= 80) return '🟡 Good';
+    return '🔴 Poor';
+  }
+
+  private getBundleSizeStatus(size: number): string {
+    if (size < 1024 * 1024) return '🟢 Small'; // < 1MB
+    if (size < 5 * 1024 * 1024) return '🟡 Medium'; // < 5MB
+    return '🔴 Large';
+  }
+
+  private getEfficiencyStatus(efficiency: number): string {
+    if (efficiency >= 90) return '🟢 Excellent';
+    if (efficiency >= 75) return '🟡 Good';
+    return '🔴 Poor';
+  }
+
+  private getComplexityStatus(complexity: number): string {
+    if (complexity <= 10) return '🟢 Low';
+    if (complexity <= 20) return '🟡 Medium';
+    return '🔴 High';
+  }
+
+  private getMaintainabilityStatus(index: number): string {
+    if (index >= 80) return '🟢 High';
+    if (index >= 60) return '🟡 Medium';
+    return '🔴 Low';
+  }
+
+  private getValidationStatusIcon(validation: any): string {
+    return validation.passed ? '✅' : '❌';
+  }
+
+  private getUsagePatternIcon(pattern: string): string {
+    switch (pattern) {
+      case 'appropriate': return '🟢';
+      case 'concerning': return '🟡';
+      case 'problematic': return '🔴';
+      default: return '⚪';
+    }
+  }
+
+  private getImpactIcon(impact: string): string {
+    switch (impact) {
+      case 'high': return '🔴';
+      case 'medium': return '🟡';
+      case 'low': return '🟢';
+      default: return '⚪';
+    }
+  }
+
+  private getEffortIcon(effort: string): string {
+    switch (effort) {
+      case 'high': return '🔴';
+      case 'medium': return '🟡';
+      case 'low': return '🟢';
+      default: return '⚪';
+    }
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  }
+
+  private calculateBundleEfficiency(bundleMetrics: any): number {
+    if (bundleMetrics.totalSize === 0) return 100;
+    const efficiency = ((bundleMetrics.totalSize - bundleMetrics.unusedCode) / bundleMetrics.totalSize) * 100;
+    return Math.round(efficiency);
+  }
+
+  private groupRecommendationsByImpact(recommendations: OptimizationSuggestion[]): Record<string, OptimizationSuggestion[]> {
+    return recommendations.reduce((groups, rec) => {
+      const impact = rec.impact;
+      if (!groups[impact]) {
+        groups[impact] = [];
+      }
+      groups[impact].push(rec);
+      return groups;
+    }, {} as Record<string, OptimizationSuggestion[]>);
+  }
+
+  private sanitizeForMermaid(text: string): string {
+    return text.replace(/[^a-zA-Z0-9_]/g, '_');
   }
 }

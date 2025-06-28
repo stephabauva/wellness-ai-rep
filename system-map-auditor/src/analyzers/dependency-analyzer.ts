@@ -397,7 +397,7 @@ export class DependencyAnalyzer {
     const componentGroups = this.findComponentClusters();
 
     for (const [groupName, components] of componentGroups) {
-      if (components.length > 5) {
+      if (components.size > 5) {
         opportunities.push({
           target: groupName,
           components: Array.from(components)

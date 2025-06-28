@@ -342,6 +342,89 @@ export class SystemMapParser {
   }
 
   /**
+   * Validate feature file structure with metadata
+   */
+  private validateFeatureFileStructure(featureFile: any, mapPath: string, issues: ValidationIssue[]): ValidationIssue[] {
+    // Check for required metadata
+    if (!featureFile._metadata) {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'error',
+        message: 'Feature file missing required "_metadata" field',
+        location: mapPath,
+        suggestion: 'Add a "_metadata" object with featureName, featureGroup, parentFile, and domain fields'
+      });
+    } else {
+      // Validate metadata fields
+      const metadata = featureFile._metadata;
+      const requiredFields = ['featureName', 'featureGroup', 'parentFile', 'domain'];
+      
+      for (const field of requiredFields) {
+        if (!metadata[field]) {
+          issues.push({
+            type: 'invalid-reference',
+            severity: 'error',
+            message: `Feature file metadata missing required "${field}" field`,
+            location: `${mapPath}:_metadata.${field}`,
+            suggestion: `Add "${field}" to the _metadata object`
+          });
+        }
+      }
+    }
+
+    // Check for description
+    if (!featureFile.description) {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'warning',
+        message: 'Feature file missing "description" field',
+        location: mapPath,
+        suggestion: 'Add a "description" field to explain the feature purpose'
+      });
+    }
+
+    // Check for userFlow
+    if (!featureFile.userFlow) {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'warning',
+        message: 'Feature file missing "userFlow" field',
+        location: mapPath,
+        suggestion: 'Add a "userFlow" array to document user interaction steps'
+      });
+    } else if (!Array.isArray(featureFile.userFlow)) {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'error',
+        message: 'Feature file "userFlow" must be an array',
+        location: mapPath,
+        suggestion: 'Ensure userFlow is defined as an array of step descriptions'
+      });
+    }
+
+    // Check for components
+    if (!featureFile.components) {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'warning',
+        message: 'Feature file missing "components" field',
+        location: mapPath,
+        suggestion: 'Add a "components" array to list involved components'
+      });
+    } else if (!Array.isArray(featureFile.components)) {
+      issues.push({
+        type: 'invalid-reference',
+        severity: 'error',
+        message: 'Feature file "components" must be an array',
+        location: mapPath,
+        suggestion: 'Ensure components is defined as an array of component names or objects'
+      });
+    }
+
+    return issues;
+  }
+
+  /**
    * Validate legacy system map structure (array format)
    */
   private validateLegacyMapStructure(map: SystemMap, mapPath: string, issues: ValidationIssue[]): ValidationIssue[] {

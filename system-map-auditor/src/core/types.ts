@@ -6,11 +6,12 @@ export interface AuditResult {
 }
 
 export interface ValidationIssue {
-  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found';
+  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found' | 'cross-reference-error' | 'integration-point-error' | 'performance-issue' | 'architecture-violation';
   severity: 'error' | 'warning' | 'info';
   message: string;
   location: string;
   suggestion?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface AuditMetrics {
@@ -177,4 +178,145 @@ export interface DependencyEdge {
   to: string;
   type: 'import' | 'api-call' | 'component-usage';
   weight?: number;
+}
+
+// Phase 2 Types - Flow Validation
+export interface FlowValidationResult {
+  flowName: string;
+  valid: boolean;
+  stepResults: FlowStepResult[];
+  issues: ValidationIssue[];
+}
+
+export interface FlowStepResult {
+  step: FlowStep;
+  valid: boolean;
+  componentExists: boolean;
+  apiExists: boolean;
+  capabilityMatch: boolean;
+  issues: ValidationIssue[];
+}
+
+export interface ComponentCapability {
+  name: string;
+  actions: string[];
+  apiCalls: string[];
+  stateChanges: string[];
+}
+
+// Phase 2 Types - Dependency Analysis
+export interface CircularDependency {
+  path: string[];
+  type: 'import' | 'api-call' | 'component-usage';
+  severity: 'error' | 'warning';
+  suggestion?: string;
+}
+
+export interface DependencyAnalysis {
+  component: string;
+  depth: number;
+  dependencies: string[];
+  dependents: string[];
+  circularPaths: string[][];
+  metrics: DependencyMetrics;
+}
+
+export interface DependencyMetrics {
+  totalDependencies: number;
+  directDependencies: number;
+  maxDepth: number;
+  circularCount: number;
+  complexityScore: number;
+}
+
+export interface OptimizationSuggestion {
+  type: 'reduce-dependencies' | 'break-circular' | 'lazy-load' | 'code-split';
+  target: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  effort: 'high' | 'medium' | 'low';
+}
+
+// Phase 2 Types - Performance Analysis
+export interface PerformanceMetrics {
+  bundleSize: BundleSizeMetrics;
+  loadingMetrics: LoadingMetrics;
+  complexityMetrics: ComplexityMetrics;
+}
+
+export interface BundleSizeMetrics {
+  totalSize: number;
+  componentSizes: Map<string, number>;
+  largestComponents: Array<{component: string; size: number}>;
+  unusedCode: number;
+}
+
+export interface LoadingMetrics {
+  criticalPath: string[];
+  loadingTime: number;
+  lazyLoadableComponents: string[];
+  preloadCandidates: string[];
+}
+
+export interface ComplexityMetrics {
+  cognitiveComplexity: number;
+  cyclomaticComplexity: number;
+  maintainabilityIndex: number;
+  technicalDebt: number;
+}
+
+// Phase 2 Types - Cross-Reference Validation
+export interface CrossReferenceResult {
+  component: string;
+  usageCount: number;
+  features: string[];
+  inconsistencies: ValidationIssue[];
+  sharedUsagePattern: 'appropriate' | 'concerning' | 'problematic';
+}
+
+export interface IntegrationPoint {
+  name: string;
+  type: 'external-api' | 'third-party-service' | 'environment-variable' | 'configuration';
+  dependencies: string[];
+  verified: boolean;
+  issues: ValidationIssue[];
+}
+
+// Phase 2 Types - Enhanced Reporting
+export interface DetailedAuditReport {
+  summary: AuditSummary;
+  featureResults: FeatureAuditResult[];
+  globalIssues: ValidationIssue[];
+  performanceAnalysis: PerformanceMetrics;
+  recommendations: OptimizationSuggestion[];
+  metadata: ReportMetadata;
+}
+
+export interface AuditSummary {
+  totalFeatures: number;
+  passedFeatures: number;
+  failedFeatures: number;
+  warningFeatures: number;
+  totalIssues: number;
+  criticalIssues: number;
+  overallScore: number;
+}
+
+export interface FeatureAuditResult {
+  featureName: string;
+  status: 'pass' | 'fail' | 'warning';
+  componentValidation: ValidationResult;
+  apiValidation: ValidationResult;
+  flowValidation: FlowValidationResult[];
+  crossReferenceValidation: CrossReferenceResult[];
+  performanceMetrics: PerformanceMetrics;
+  issues: ValidationIssue[];
+}
+
+export interface ReportMetadata {
+  generatedAt: string;
+  auditorVersion: string;
+  projectPath: string;
+  configurationUsed: Partial<AuditConfig>;
+  executionTime: number;
 }

@@ -1,174 +1,47 @@
 {
   "tableOfContents": {
-    "metrics-management": ["add-metrics", "remove-metrics"],
-    "data-filtering": ["time-range-filtering", "data-reset"],
-    "data-operations": ["health-data-import", "pdf-export", "native-health-sync"]
+    "dashboard-core": ["components", "database", "data-stores"]
   },
   "lastUpdated": "2025-01-28T18:20:00Z",
   "dependencies": [],
   "featureGroups": {
-    "metrics-management": {
-      "description": "Core functionality for adding and removing health metrics from user's dashboard view.",
+    "dashboard-core": {
+      "description": "Core dashboard infrastructure and shared components. Individual feature groups are in separate sub-domain maps.",
       "features": {
-        "add-metrics": {
-          "description": "Allows users to add new health metrics to their dashboard by selecting from available categories.",
+        "components": {
+          "description": "Shared dashboard components used across all health dashboard features",
           "userFlow": [
-            "User clicks 'Add Metrics' button in HealthDataSection.",
-            "AddMetricsModal opens with available metric categories.",
-            "User checks boxes for metrics they want to add.",
-            "User clicks 'Add Selected' button.",
-            "A PATCH request updates the user's visibility preferences.",
-            "Client-side cache invalidates and dashboard re-renders with new metrics."
+            "Components provide reusable UI elements for health dashboard",
+            "Components integrate with health data APIs and user settings",
+            "Components support metrics management, filtering, and data operations"
           ],
           "components": [
             {
               "name": "HealthDataSection",
               "path": "client/src/components/HealthDataSection.tsx",
-              "description": "Main health dashboard container",
-              "uses": ["AddMetricsModal", "useHealthVisibilitySettings"]
-            },
-            {
-              "name": "AddMetricsModal",
-              "path": "client/src/components/health/AddMetricsModal.tsx",
-              "description": "Modal for adding new metrics",
-              "uses": ["useHealthVisibilitySettings"]
-            },
-            {
-              "name": "useHealthVisibilitySettings",
-              "path": "client/src/hooks/useHealthVisibilitySettings.ts",
-              "description": "Hook for managing visibility settings",
-              "uses": []
-            }
-          ]
-        },
-        "remove-metrics": {
-          "description": "Allows a user to hide health metrics from their dashboard view. This does not delete the data, but updates the user's visibility preferences.",
-          "userFlow": [
-            "User clicks the 'Remove Metrics' button in HealthDataSection.",
-            "The UI enters a removal mode.",
-            "User selects one or more metrics via checkboxes on HealthMetricsCard.",
-            "User clicks the 'Remove Selected' button.",
-            "A PATCH request is made to /api/health-consent/visibility to update the user's preferences.",
-            "The client-side cache for visibility settings is invalidated, causing a re-render.",
-            "The HealthMetricsCard components re-render, hiding the selected metrics."
-          ],
-          "components": [
-            {
-              "name": "HealthDataSection",
-              "path": "client/src/components/HealthDataSection.tsx",
-              "description": "Main health dashboard container",
-              "uses": ["HealthMetricsCard", "RemoveMetricsModal"]
+              "description": "Main container for the health dashboard. Manages state for metrics management, time filtering, and all health data operations.",
+              "uses": [
+                "useHealthDataApi",
+                "useHealthVisibilitySettings",
+                "useHealthReport",
+                "HealthMetricsCard",
+                "AddMetricsModal",
+                "RemoveMetricsModal",
+                "HealthDataImport",
+                "NativeHealthIntegration"
+              ]
             },
             {
               "name": "HealthMetricsCard",
               "path": "client/src/components/HealthMetricsCard.tsx",
-              "description": "Individual metric display card",
-              "uses": []
-            },
-            {
-              "name": "RemoveMetricsModal",
-              "path": "client/src/components/health/RemoveMetricsModal.tsx",
-              "description": "Modal for removing metrics",
-              "uses": ["useHealthVisibilitySettings"]
-            },
-            {
-              "name": "useHealthVisibilitySettings",
-              "path": "client/src/hooks/useHealthVisibilitySettings.ts",
-              "description": "Hook for managing visibility settings",
-              "uses": []
+              "description": "Displays a category of health metrics with charts and provides checkboxes for selection during removal mode. Filters its own display based on visibility settings and time range.",
+              "uses": [
+                "ActivityTrendChart",
+                "HeartRateChart",
+                "SleepQualityChart"
+              ]
             }
           ]
-        }
-      }
-    },
-    "data-filtering": {
-      "description": "Time-based filtering and data display controls for health metrics.",
-      "features": {
-        "time-range-filtering": {
-          "description": "Allows users to view health data for specific time periods (7, 30, 90 days).",
-          "userFlow": [
-            "User selects time range from dropdown/tabs in HealthDataSection.",
-            "Component state updates with new time range.",
-            "Health data API is called with new date parameters.",
-            "Charts and metrics re-render with filtered data."
-          ],
-          "components": [
-            {
-              "name": "HealthDataSection",
-              "path": "client/src/components/HealthDataSection.tsx",
-              "description": "Main health dashboard container",
-              "uses": ["HealthMetricsCard", "useHealthDataApi"]
-            },
-            {
-              "name": "HealthMetricsCard",
-              "path": "client/src/components/HealthMetricsCard.tsx",
-              "description": "Individual metric display card",
-              "uses": []
-            },
-            {
-              "name": "useHealthDataApi",
-              "path": "client/src/hooks/useHealthDataApi.ts",
-              "description": "Hook for health data API calls",
-              "uses": []
-            }
-          ]
-        },
-        "data-reset": {
-          "description": "Allows users to reset/clear their health data.",
-          "userFlow": [
-            "User clicks 'Reset Data' button.",
-            "Confirmation dialog appears.",
-            "User confirms the reset action.",
-            "DELETE request sent to clear user's health data.",
-            "Dashboard refreshes showing empty state."
-          ],
-          "components": [
-            {
-              "name": "HealthDataSection",
-              "path": "client/src/components/HealthDataSection.tsx",
-              "description": "Main health dashboard container",
-              "uses": ["useHealthDataApi"]
-            },
-            {
-              "name": "useHealthDataApi",
-              "path": "client/src/hooks/useHealthDataApi.ts",
-              "description": "Hook for health data API calls",
-              "uses": []
-            }
-          ]
-        }
-      }
-    },
-    "data-operations": {
-      "description": "Import, export, and synchronization operations for health data.",
-      "features": {
-        "health-data-import": {
-          "$ref": "./health-data-import.feature.json"
-        },
-        "pdf-export": {
-          "description": "Generates and downloads PDF reports of user's health data.",
-          "userFlow": [
-            "User clicks 'Download Report' button in HealthDataSection.",
-            "System generates PDF report with current health metrics and charts.",
-            "PDF file is automatically downloaded to user's device."
-          ],
-          "components": [
-            {
-              "name": "HealthDataSection",
-              "path": "client/src/components/HealthDataSection.tsx",
-              "description": "Main health dashboard container",
-              "uses": ["useHealthReport"]
-            },
-            {
-              "name": "useHealthReport",
-              "path": "client/src/hooks/useHealthReport.ts",
-              "description": "Hook for generating health reports",
-              "uses": []
-            }
-          ]
-        },
-        "native-health-sync": {
-          "$ref": "./native-health-sync.feature.json"
         }
       }
     }
@@ -295,64 +168,6 @@
       "invalidates": []
     }
   },
-  "apiEndpoints": {
-    "GET /api/health-consent/visibility": {
-      "method": "GET",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Fetches the user's current dashboard visibility settings from their preferences.",
-      "readsFrom": ["users.preferences.healthVisibilitySettings"],
-      "modifies": []
-    },
-    "PATCH /api/health-consent/visibility": {
-      "method": "PATCH",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Updates the user's dashboard visibility settings in their preferences.",
-      "readsFrom": ["users"],
-      "modifies": ["users.preferences.healthVisibilitySettings"]
-    },
-    "GET /api/health-data": {
-      "method": "GET",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Fetches a list of all health data records for the user within a given time range.",
-      "readsFrom": ["healthData"],
-      "modifies": []
-    },
-    "GET /api/health-data/categories": {
-      "method": "GET",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Fetches health data records, grouped by category, with time range filtering.",
-      "readsFrom": ["healthData"],
-      "modifies": []
-    },
-    "DELETE /api/health-data/reset": {
-      "method": "DELETE",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Deletes all health data for the current user.",
-      "readsFrom": ["healthData"],
-      "modifies": ["healthData"]
-    },
-    "POST /api/health-data/export/pdf": {
-      "method": "POST",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Generates a PDF report of the user's health data.",
-      "readsFrom": ["healthData", "users"],
-      "modifies": []
-    },
-    "POST /api/health-data/import": {
-      "method": "POST",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Imports health data from uploaded files (Apple Health, Google Fit, etc.).",
-      "readsFrom": ["healthData"],
-      "modifies": ["healthData"]
-    },
-    "POST /api/health-data/native-sync": {
-      "method": "POST",
-      "handler": "server/routes/health-routes.ts",
-      "description": "Synchronizes health data from native mobile health apps.",
-      "readsFrom": ["healthData"],
-      "modifies": ["healthData"]
-    }
-  },
   "database": {
     "schemaFile": "shared/schema.ts",
     "tables": {
@@ -384,5 +199,93 @@
       "type": "React Query Key",
       "description": "Caches health data with time-based filtering. Invalidated when new data is imported or data is reset."
     }
+  },
+  "apiEndpoints": {
+    "GET /api/health-consent/visibility": {
+      "method": "GET",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Fetches the user's current dashboard visibility settings from their preferences.",
+      "readsFrom": [
+        "users.preferences.healthVisibilitySettings"
+      ],
+      "modifies": []
+    },
+    "PATCH /api/health-consent/visibility": {
+      "method": "PATCH",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Updates the user's dashboard visibility settings in their preferences.",
+      "readsFrom": [
+        "users"
+      ],
+      "modifies": [
+        "users.preferences.healthVisibilitySettings"
+      ]
+    },
+    "GET /api/health-data": {
+      "method": "GET",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Fetches a list of all health data records for the user within a given time range.",
+      "readsFrom": [
+        "healthData"
+      ],
+      "modifies": []
+    },
+    "GET /api/health-data/categories": {
+      "method": "GET",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Fetches health data records, grouped by category, with time range filtering.",
+      "readsFrom": [
+        "healthData"
+      ],
+      "modifies": []
+    },
+    "DELETE /api/health-data/reset": {
+      "method": "DELETE",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Deletes all health data for the current user.",
+      "readsFrom": [
+        "healthData"
+      ],
+      "modifies": [
+        "healthData"
+      ]
+    },
+    "POST /api/health-data/export/pdf": {
+      "method": "POST",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Generates a PDF report of the user's health data.",
+      "readsFrom": [
+        "healthData",
+        "users"
+      ],
+      "modifies": []
+    },
+    "POST /api/health-data/import": {
+      "method": "POST",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Imports health data from uploaded files (Apple Health, Google Fit, etc.).",
+      "readsFrom": [
+        "healthData"
+      ],
+      "modifies": [
+        "healthData"
+      ]
+    },
+    "POST /api/health-data/native-sync": {
+      "method": "POST",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Synchronizes health data from native mobile health apps.",
+      "readsFrom": [
+        "healthData"
+      ],
+      "modifies": [
+        "healthData"
+      ]
+    }
+  },
+  "subDomains": {
+    "metrics-management": "./dashboard/metrics-management.map.json",
+    "data-filtering": "./dashboard/data-filtering.map.json",
+    "data-operations": "./dashboard/data-operations.map.json"
   }
 }

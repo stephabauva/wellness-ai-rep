@@ -1,0 +1,100 @@
+
+{
+  "tableOfContents": {
+    "metrics-management": ["add-metrics", "remove-metrics"]
+  },
+  "lastUpdated": "2025-01-28T18:20:00Z",
+  "dependencies": [],
+  "featureGroups": {
+    "metrics-management": {
+      "description": "Core functionality for adding and removing health metrics from user's dashboard view.",
+      "features": {
+        "add-metrics": {
+          "description": "Allows users to add new health metrics to their dashboard by selecting from available categories.",
+          "userFlow": [
+            "User clicks 'Add Metrics' button in HealthDataSection.",
+            "AddMetricsModal opens with available metric categories.",
+            "User checks boxes for metrics they want to add.",
+            "User clicks 'Add Selected' button.",
+            "A PATCH request updates the user's visibility preferences.",
+            "Client-side cache invalidates and dashboard re-renders with new metrics."
+          ],
+          "components": [
+            {
+              "name": "HealthDataSection",
+              "path": "client/src/components/HealthDataSection.tsx",
+              "description": "Main health dashboard container",
+              "uses": ["AddMetricsModal", "useHealthVisibilitySettings"]
+            },
+            {
+              "name": "AddMetricsModal",
+              "path": "client/src/components/health/AddMetricsModal.tsx",
+              "description": "Modal for adding new metrics",
+              "uses": ["useHealthVisibilitySettings"]
+            },
+            {
+              "name": "useHealthVisibilitySettings",
+              "path": "client/src/hooks/useHealthVisibilitySettings.ts",
+              "description": "Hook for managing visibility settings",
+              "uses": []
+            }
+          ]
+        },
+        "remove-metrics": {
+          "description": "Allows a user to hide health metrics from their dashboard view. This does not delete the data, but updates the user's visibility preferences.",
+          "userFlow": [
+            "User clicks the 'Remove Metrics' button in HealthDataSection.",
+            "The UI enters a removal mode.",
+            "User selects one or more metrics via checkboxes on HealthMetricsCard.",
+            "User clicks the 'Remove Selected' button.",
+            "A PATCH request is made to /api/health-consent/visibility to update the user's preferences.",
+            "The client-side cache for visibility settings is invalidated, causing a re-render.",
+            "The HealthMetricsCard components re-render, hiding the selected metrics."
+          ],
+          "components": [
+            {
+              "name": "HealthDataSection",
+              "path": "client/src/components/HealthDataSection.tsx",
+              "description": "Main health dashboard container",
+              "uses": ["HealthMetricsCard", "RemoveMetricsModal"]
+            },
+            {
+              "name": "HealthMetricsCard",
+              "path": "client/src/components/HealthMetricsCard.tsx",
+              "description": "Individual metric display card",
+              "uses": []
+            },
+            {
+              "name": "RemoveMetricsModal",
+              "path": "client/src/components/health/RemoveMetricsModal.tsx",
+              "description": "Modal for removing metrics",
+              "uses": ["useHealthVisibilitySettings"]
+            },
+            {
+              "name": "useHealthVisibilitySettings",
+              "path": "client/src/hooks/useHealthVisibilitySettings.ts",
+              "description": "Hook for managing visibility settings",
+              "uses": []
+            }
+          ]
+        }
+      }
+    }
+  },
+  "apiEndpoints": {
+    "PATCH /api/health-consent/visibility": {
+      "method": "PATCH",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Updates the user's dashboard visibility settings in their preferences.",
+      "readsFrom": ["users"],
+      "modifies": ["users.preferences.healthVisibilitySettings"]
+    },
+    "GET /api/health-consent/visibility": {
+      "method": "GET",
+      "handler": "server/routes/health-routes.ts",
+      "description": "Fetches the user's current dashboard visibility settings from their preferences.",
+      "readsFrom": ["users.preferences.healthVisibilitySettings"],
+      "modifies": []
+    }
+  }
+}

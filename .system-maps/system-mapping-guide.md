@@ -10,10 +10,25 @@ This guide is not for human consumption; it is a technical instruction set for a
 
 To ensure scalability, maintainability, and token efficiency, the system map employs a hybrid, federated architecture. It is not a single monolithic file but a directory of files linked from a root manifest.
 
+### 2.1. Core Architecture Components
+
 - **Root Map (`/.system-maps/root.map.json`):** The single source of truth. It acts as a manifest, pointing to the entry point for each major application domain.
-- **Domain Maps (`*.map.json`):** The default unit of mapping. Each domain (e.g., `health`, `memory`) should have a primary map file.
-- **Sub-Domain Directories:** When a domain becomes too complex, its `path` in the `root.map.json` can point to a directory instead of a single file. This directory should contain multiple, more focused sub-domain map files (e.g., `/.system-maps/chat/` could contain `chat-conversation.map.json` and `chat-history.map.json`). This is the preferred method for splitting large domains.
-- **Mega-Feature Files (`*.feature.json`):** For exceptionally large and isolated features within a domain, a feature can be extracted into its own file and referenced from the parent domain map using a `$ref` key. This should be used sparingly.
+- **Core Domain Maps (`*.map.json`):** The primary unit of mapping representing user-facing application areas: `chat`, `health`, `file-manager`, `settings`, `connected-devices`, `memory`.
+- **Infrastructure Maps (`/.system-maps/infrastructure/`):** Cross-cutting concerns like `logging.map.json`, `performance.map.json`, `testing.map.json` that are referenced by core domains using `$ref` patterns.
+- **Sub-Domain Directories:** When a domain becomes too complex, its `path` in the `root.map.json` can point to a directory instead of a single file. This directory should contain multiple, more focused sub-domain map files.
+- **Mega-Feature Files (`*.feature.json`):** For exceptionally large and isolated features within a domain, a feature can be extracted into its own file and referenced from the parent domain map using a `$ref` key.
+
+### 2.2. Domain Scope Definition
+
+**Core Domains** represent user-facing application areas and should contain all related functionality:
+- Business logic, UI components, API endpoints, database operations
+- Cross-cutting infrastructure concerns via `$ref` to infrastructure maps
+- Domain-specific implementations of logging, performance, and testing
+
+**Infrastructure Domains** handle cross-cutting concerns:
+- Should be referenced by core domains, not standalone
+- Contain reusable patterns and shared infrastructure code
+- Examples: structured logging patterns, performance optimization hooks, testing utilities
 
 This hybrid architecture allows for surgical context loading. An LLM can be instructed to load a single sub-domain map for a targeted fix, or it can load all maps in a domain's directory for a comprehensive understanding, providing the optimal balance between context and cost.
 
@@ -32,7 +47,7 @@ To maintain clarity and prevent maps from becoming unwieldy, the following quant
 
 #### Metadata Requirements for Extracted Features
 
-**MANDATORY:** All extracted `.feature.json` files MUST include a metadata header at the top of the file to provide context:
+**MANDATORY:** All extracted `.feature.json` files MUST include a metadata header and infrastructure references:
 
 ```json
 {
@@ -44,17 +59,34 @@ To maintain clarity and prevent maps from becoming unwieldy, the following quant
   },
   "description": "...",
   "userFlow": ["..."],
-  // ... rest of feature definition
+  "systemFlow": ["..."],
+  "components": {
+    "$ref": "../dashboard.map.json#/components"
+  },
+  "apiEndpoints": {
+    "$ref": "../dashboard.map.json#/apiEndpoints"
+  },
+  "logging": {
+    "$ref": "/.system-maps/infrastructure/logging.map.json#/health-logging"
+  },
+  "performance": {
+    "$ref": "/.system-maps/infrastructure/performance.map.json#/health-performance"
+  },
+  "testing": {
+    "$ref": "/.system-maps/infrastructure/testing.map.json#/health-testing"
+  }
 }
 ```
 
-This metadata ensures that extracted features remain self-documenting and provide clear navigation context when viewed in isolation.
+This ensures extracted features maintain clear references to shared infrastructure and remain self-documenting.
 
 ## 3. File Schema Definition
 
 Adherence to the following JSON schema is mandatory.
 
-**Table of Contents Requirement:** All system map files MUST include a `tableOfContents` object at the top of the file structure, except for `root.map.json`. The table of contents provides a quick overview of feature groups and their associated features, enabling efficient navigation and understanding of the map's structure.
+**Table of Contents Requirement:** All system map files MUST include a `tableOfContents` object at the top of the file structure, except for `root.map.json`. The table of contents provides a quick overview of feature groups, their associated features, components, and API endpoints, enabling efficient navigation and understanding of the map's structure.
+
+**Dependency Validation:** Dependencies listed in domain maps must reflect actual code relationships. If domain A depends on domain B, the codebase should show imports, API calls, or other integration points between them. This ensures architectural accuracy and prevents documentation drift.
 
 ### 3.1. `root.map.json` (Hybrid Federated)
 
@@ -82,7 +114,11 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
 ```json
 {
   "tableOfContents": {
-    "[groupName]": ["feature-name-1", "feature-name-2", "feature-name-3"]
+    "[groupName]": {
+      "features": ["feature-name-1", "feature-name-2"],
+      "components": ["ComponentA", "ComponentB"], 
+      "endpoints": ["POST /api/domain/action", "GET /api/domain/data"]
+    }
   },
   "lastUpdated": "String (ISO 8601 timestamp)",
   "dependencies": ["String (list of other domains)"],
@@ -92,8 +128,15 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
       "features": {
         "[feature-name]": {
           "description": "...",
-          "userFlow": ["..."],
+          "userFlow": ["Step 1: User clicks send button", "Step 2: User sees loading indicator"],
+          "systemFlow": ["Validate message content", "Store in database via POST /api/chat", "Trigger AI processing", "Stream response"],
           "components": ["..."],
+          "logging": {
+            "$ref": "/.system-maps/infrastructure/logging.map.json#/chat-logging"
+          },
+          "performance": {
+            "$ref": "/.system-maps/infrastructure/performance.map.json#/chat-performance"
+          },
           "tests": ["String (path to test file, e.g., 'client/src/tests/chat/AttachmentDisplay.test.tsx')"]
         },
         "special-feature": {

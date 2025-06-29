@@ -134,6 +134,13 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
       "endpoints": ["POST /api/domain/action", "GET /api/domain/data"]
     }
   },
+  "integrationStatus": {
+    "[feature-name]": {
+      "status": "active|partial|planned|broken",
+      "lastVerified": "2025-01-XX",
+      "knownIssues": ["API endpoint mismatch", "Component not integrated"]
+    }
+  },
   "lastUpdated": "String (ISO 8601 timestamp)",
   "dependencies": ["String (list of other domains)"],
   "featureGroups": {
@@ -145,6 +152,11 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
           "userFlow": ["Step 1: User clicks send button", "Step 2: User sees loading indicator"],
           "systemFlow": ["Validate message content", "Store in database via POST /api/chat", "Trigger AI processing", "Stream response"],
           "components": ["..."],
+          "apiIntegration": {
+            "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
+            "actualEndpoints": ["PATCH /api/health-consent"],
+            "integrationGaps": ["visibility endpoint missing"]
+          },
           "logging": {
             "$ref": "/.system-maps/infrastructure/logging.map.json#/chat-logging"
           },

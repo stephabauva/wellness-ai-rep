@@ -47,7 +47,7 @@ To maintain clarity and prevent maps from becoming unwieldy, the following quant
 
 #### Metadata Requirements for Extracted Features
 
-**MANDATORY:** All extracted `.feature.json` files MUST include a metadata header and infrastructure references:
+**MANDATORY:** All extracted `.feature.json` files MUST include a metadata header and core references:
 
 ```json
 {
@@ -65,20 +65,34 @@ To maintain clarity and prevent maps from becoming unwieldy, the following quant
   },
   "apiEndpoints": {
     "$ref": "../dashboard.map.json#/apiEndpoints"
-  },
+  }
+}
+```
+
+**CONDITIONAL:** Infrastructure references should only be included if the feature actually uses them:
+
+```json
+{
+  // ... required fields above ...
+  
+  // Only include if feature implements structured logging
   "logging": {
     "$ref": "/.system-maps/infrastructure/logging.map.json#/health-logging"
   },
+  
+  // Only include if feature has performance monitoring hooks
   "performance": {
     "$ref": "/.system-maps/infrastructure/performance.map.json#/health-performance"
   },
+  
+  // Only include if feature has dedicated test infrastructure
   "testing": {
     "$ref": "/.system-maps/infrastructure/testing.map.json#/health-testing"
   }
 }
 ```
 
-This ensures extracted features maintain clear references to shared infrastructure and remain self-documenting.
+This approach reduces token consumption and maintains accuracy by eliminating unused references while ensuring extracted features remain self-documenting.
 
 ## 3. File Schema Definition
 

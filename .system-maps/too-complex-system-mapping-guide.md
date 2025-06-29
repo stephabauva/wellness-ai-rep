@@ -77,7 +77,7 @@ The root map is the only file that does NOT require a table of contents, as it s
 
 ### 3.2. Domain Map (e.g., `health.map.json`)
 
-A domain map can contain `featureGroups` and a reference to a mega-feature file.
+A domain map can contain `featureGroups` and a reference to a mega-feature file. **CRITICAL**: All system maps must be compatible with the System Map Auditor for validation.
 
 ```json
 {
@@ -91,9 +91,20 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
       "description": "String: A summary of the feature group's purpose.",
       "features": {
         "[feature-name]": {
-          "description": "...",
-          "userFlow": ["..."],
-          "components": ["..."],
+          "description": "String: Clear feature description",
+          "userFlow": [
+            "String: Step 1 - User action description",
+            "String: Step 2 - System response description",
+            "String: Step 3 - Expected outcome"
+          ],
+          "components": [
+            {
+              "name": "ComponentName",
+              "path": "client/src/components/ComponentName.tsx",
+              "description": "String: Component purpose and functionality",
+              "uses": ["dependency1", "dependency2"]
+            }
+          ],
           "tests": ["String (path to test file, e.g., 'client/src/tests/chat/AttachmentDisplay.test.tsx')"]
         },
         "special-feature": {
@@ -103,10 +114,78 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
       }
     }
   },
-  "components": { "...": "..." },
-  "apiEndpoints": { "...": "..." },
-  "database": { "...": "..." }
+  "components": {
+    "ComponentName": {
+      "path": "client/src/components/ComponentName.tsx",
+      "description": "String: Component purpose",
+      "uses": ["dependency1", "dependency2"]
+    }
+  },
+  "apiEndpoints": {
+    "/api/endpoint-path": {
+      "method": "POST|GET|PUT|DELETE|PATCH",
+      "handler": "server/routes/specific-routes.ts",
+      "description": "String: API endpoint purpose",
+      "readsFrom": ["database_table1"],
+      "modifies": ["database_table2"]
+    }
+  },
+  "database": {
+    "tables": {
+      "table_name": {
+        "description": "String: Table purpose",
+        "columns": ["column1", "column2"],
+        "relations": ["related_table"]
+      }
+    }
+  }
 }
+```
+
+#### 3.2.1. Component Format Requirements
+
+Components MUST be defined with the following structure for System Map Auditor compatibility:
+
+```json
+{
+  "name": "String: Component name (PascalCase recommended)",
+  "path": "String: Exact file path from project root",
+  "description": "String: Component functionality description",
+  "uses": ["String: Array of dependencies/hooks/services used"]
+}
+```
+
+**Legacy Support**: Simple string format is deprecated but supported:
+```json
+"components": ["ComponentName"]
+```
+
+#### 3.2.2. API Endpoint Format Requirements
+
+API endpoints MUST include these mandatory fields:
+
+```json
+{
+  "method": "String: HTTP method (GET, POST, PUT, DELETE, PATCH)",
+  "handler": "String: Exact file path to route handler (e.g., 'server/routes/chat-routes.ts')",
+  "description": "String: Clear endpoint purpose",
+  "readsFrom": ["String: Array of database tables read from"],
+  "modifies": ["String: Array of database tables modified"]
+}
+```
+
+#### 3.2.3. User Flow Requirements
+
+User flows MUST be structured as step-by-step arrays:
+
+```json
+"userFlow": [
+  "User clicks send message button",
+  "System validates message content",
+  "API processes message and calls AI service",
+  "System streams response back to user",
+  "Message is stored in database with timestamp"
+]
 ```
 
 ## 4. Process for Map Generation
@@ -132,4 +211,48 @@ CAREFUL :
 1-Only focus on one domain for the system map, you should not modify other system maps or information of other features, unless you have detected a critical miss while browsing the code, in that case you must explain why. 
 2-If some code related to the domain are not integrated, mention them at the end of the corresponding system map or in a separate file.
 
-This guide is the definitive specification. It must be followed without deviation to ensure the system map remains a reliable and efficient tool for codebase analysis and modification.
+## 5. System Map Auditor Integration
+
+### 5.1. Validation Requirements
+
+All system maps MUST pass System Map Auditor validation. The auditor validates:
+
+- **Component Existence**: All component paths must point to actual files
+- **API Handler Verification**: All API handlers must exist in specified route files  
+- **Dependency Consistency**: Component dependencies must be resolvable
+- **User Flow Accuracy**: Flow steps must align with actual component capabilities
+- **Database Schema Alignment**: Database references must match actual schema
+
+### 5.2. Auditor-Ready Best Practices
+
+1. **Use Absolute Paths**: Always specify complete paths from project root
+2. **Validate Handler References**: Ensure API handlers point to actual route files
+3. **Document All Dependencies**: Include all component dependencies in `uses` arrays
+4. **Maintain Schema Accuracy**: Keep database references current with actual schema
+5. **Test Integration**: Run auditor validation before committing system map changes
+
+### 5.3. Validation Command
+
+Run the System Map Auditor to validate your maps:
+
+```bash
+# Validate all system maps
+./system-map-auditor/src/cli.ts
+
+# Validate specific domain
+./system-map-auditor/src/cli.ts --domain health
+
+# Generate detailed report
+./system-map-auditor/src/cli.ts --format markdown --output validation-report.md
+```
+
+### 5.4. Error Resolution
+
+Common validation errors and fixes:
+
+- **Missing Component**: Create component file or update path in system map
+- **API Handler Not Found**: Verify route file exists and contains specified handler
+- **Circular Dependencies**: Refactor component structure to eliminate cycles
+- **Flow Inconsistency**: Update user flow steps to match actual implementation
+
+This guide is the definitive specification. It must be followed without deviation to ensure the system map remains a reliable and efficient tool for codebase analysis and modification, and passes System Map Auditor validation.

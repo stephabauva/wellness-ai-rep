@@ -1,10 +1,18 @@
-
 {
   "tableOfContents": {
     "visibility-control": {
       "features": ["add-metrics", "remove-metrics"],
-      "components": ["AddMetricsModal", "RemoveMetricsModal", "useHealthVisibilitySettings", "HealthDataSection", "KeyMetricsOverview"],
-      "endpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"]
+      "components": [
+        "AddMetricsModal",
+        "RemoveMetricsModal",
+        "useHealthVisibilitySettings",
+        "HealthDataSection",
+        "KeyMetricsOverview"
+      ],
+      "endpoints": [
+        "GET /api/health-consent/visibility",
+        "PATCH /api/health-consent/visibility"
+      ]
     }
   },
   "integrationStatus": {
@@ -14,9 +22,12 @@
       "knownIssues": []
     },
     "remove-metrics": {
-      "status": "broken", 
+      "status": "broken",
       "lastVerified": "2025-01-28",
-      "knownIssues": ["UI components don't refresh after successful metric removal", "Cache invalidation incomplete"]
+      "knownIssues": [
+        "UI components don't refresh after successful metric removal",
+        "Cache invalidation incomplete"
+      ]
     }
   },
   "lastUpdated": "2025-01-28T18:20:00Z",
@@ -35,7 +46,7 @@
           ],
           "systemFlow": [
             "AddMetricsModal opens",
-            "useHealthVisibilitySettings fetches current settings", 
+            "useHealthVisibilitySettings fetches current settings",
             "PATCH request updates preferences",
             "Cache invalidation triggers",
             "Dashboard re-renders with new metrics"
@@ -58,11 +69,11 @@
         "remove-metrics": {
           "description": "Remove health metrics from dashboard view.",
           "userFlow": [
-            "User enters removal mode",
-            "User selects metrics to remove", 
             "User clicks 'Remove metrics'",
-            "Success message appears",
-            "Dashboard hides selected metrics"
+            "Checkboxes appear next to each metric",
+            "User selects metrics to remove by check checkboxes",
+            "User confirms selection by clicking on 'Remove selected'",
+            "Metrics are removed and a success message appears"
           ],
           "systemFlow": [
             "RemoveMetricsModal confirms selection",
@@ -70,19 +81,31 @@
             "Cache invalidation triggers",
             "Dashboard re-renders without hidden metrics"
           ],
-          "components": ["RemoveMetricsModal", "useHealthVisibilitySettings", "HealthDataSection", "KeyMetricsOverview"],
+          "components": [
+            "RemoveMetricsModal",
+            "useHealthVisibilitySettings",
+            "HealthDataSection",
+            "KeyMetricsOverview"
+          ],
           "apiIntegration": {
             "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
             "actualEndpoints": ["PATCH /api/health-consent/visibility"],
             "integrationGaps": ["Cache invalidation chain incomplete"],
             "cacheDependencies": {
               "invalidates": ["query:/api/health-consent/visibility"],
-              "refreshesComponents": ["HealthDataSection", "KeyMetricsOverview", "HealthMetricsCard"],
+              "refreshesComponents": [
+                "HealthDataSection",
+                "KeyMetricsOverview",
+                "HealthMetricsCard"
+              ],
               "missingInvalidations": ["useHealthVisibilitySettings hook cache"]
             },
             "uiConsistencyValidation": {
               "tested": false,
-              "knownIssues": ["API succeeds but UI components don't refresh", "Different hooks use different caching strategies"]
+              "knownIssues": [
+                "API succeeds but UI components don't refresh",
+                "Different hooks use different caching strategies"
+              ]
             }
           }
         }
@@ -100,7 +123,7 @@
     },
     "RemoveMetricsModal": {
       "path": "client/src/components/health/RemoveMetricsModal.tsx",
-      "type": "React Component", 
+      "type": "React Component",
       "description": "Modal for removing metrics from dashboard.",
       "calls": ["PATCH /api/health-consent/visibility"],
       "uses": ["useHealthVisibilitySettings"],
@@ -111,7 +134,10 @@
       "path": "client/src/hooks/useHealthVisibilitySettings.ts",
       "type": "React Hook",
       "description": "Manages health metric visibility preferences.",
-      "calls": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"],
+      "calls": [
+        "GET /api/health-consent/visibility",
+        "PATCH /api/health-consent/visibility"
+      ],
       "uses": [],
       "invalidates": ["query:healthVisibilitySettings"],
       "cachingStrategy": "React Query with custom cache key"
@@ -125,7 +151,7 @@
       "refreshTrigger": "useHealthVisibilitySettings hook updates"
     },
     "KeyMetricsOverview": {
-      "path": "client/src/components/health/KeyMetricsOverview.tsx", 
+      "path": "client/src/components/health/KeyMetricsOverview.tsx",
       "type": "React Component",
       "description": "Overview of key health metrics.",
       "uses": ["query:/api/health-consent/visibility"],
@@ -150,7 +176,11 @@
       "readsFrom": ["users"],
       "modifies": ["users.preferences"],
       "calledBy": ["AddMetricsModal", "RemoveMetricsModal"],
-      "requiresRefresh": ["HealthDataSection", "KeyMetricsOverview", "HealthMetricsCard"]
+      "requiresRefresh": [
+        "HealthDataSection",
+        "KeyMetricsOverview",
+        "HealthMetricsCard"
+      ]
     }
   }
 }

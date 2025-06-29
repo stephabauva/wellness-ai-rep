@@ -171,6 +171,45 @@ main() {
     run_test "Audit Specific Feature (chat)" "node system-map-auditor/dist/cli.js audit-feature chat --quiet" 1
     run_test "Audit Specific Feature (health)" "node system-map-auditor/dist/cli.js audit-feature health --quiet" 1
     
+    print_header "ENHANCED VALIDATION FEATURES TESTS (NEW IMPLEMENTATION)"
+    
+    # Component-to-API Call Tracing Tests
+    run_test "Validate API Call Tracing" "node system-map-auditor/dist/cli.js validate-api-call-tracing --quiet" 0
+    run_test "Validate API Call Tracing for Specific Component" "node system-map-auditor/dist/cli.js validate-api-call-tracing --component ChatSection --quiet" 0
+    run_test "Validate API Call Tracing with Cache Check" "node system-map-auditor/dist/cli.js validate-api-call-tracing --check-cache-invalidation --quiet" 0
+    run_test "Validate API Call Tracing with Error Handling" "node system-map-auditor/dist/cli.js validate-api-call-tracing --check-error-handling --quiet" 0
+    
+    # Cache Invalidation Chain Validation Tests
+    run_test "Validate Cache Dependencies" "node system-map-auditor/dist/cli.js validate-cache-dependencies --quiet" 0
+    run_test "Validate Cache Dependencies with Timing" "node system-map-auditor/dist/cli.js validate-cache-dependencies --check-timing --quiet" 0
+    run_test "Validate Cache Invalidation Chains" "node system-map-auditor/dist/cli.js validate-cache-invalidation-chains --quiet" 0
+    run_test "Validate Cache Invalidation Chains with Completeness" "node system-map-auditor/dist/cli.js validate-cache-invalidation-chains --check-completeness --quiet" 0
+    run_test "Validate Query Key Consistency" "node system-map-auditor/dist/cli.js validate-query-key-consistency --quiet" 0
+    run_test "Validate Query Key Consistency with Orphan Check" "node system-map-auditor/dist/cli.js validate-query-key-consistency --check-orphans --quiet" 0
+    
+    # UI Refresh Dependency Validation Tests
+    run_test "Validate UI Refresh Chains" "node system-map-auditor/dist/cli.js validate-ui-refresh-chains --quiet" 0
+    run_test "Validate UI Refresh Chains with Loading States" "node system-map-auditor/dist/cli.js validate-ui-refresh-chains --check-loading-states --quiet" 0
+    run_test "Validate UI Refresh Chains with Error States" "node system-map-auditor/dist/cli.js validate-ui-refresh-chains --check-error-states --quiet" 0
+    run_test "Validate Component Data Sync" "node system-map-auditor/dist/cli.js validate-component-data-sync --quiet" 0
+    run_test "Validate Component Data Sync with Dependency Graph" "node system-map-auditor/dist/cli.js validate-component-data-sync --build-dependency-graph --quiet" 0
+    run_test "Validate UI Consistency" "node system-map-auditor/dist/cli.js validate-ui-consistency --quiet" 0
+    run_test "Validate UI Consistency with Optimistic Updates" "node system-map-auditor/dist/cli.js validate-ui-consistency --check-optimistic-updates --quiet" 0
+    
+    # Integration Evidence Requirements Tests
+    run_test "Validate Integration Evidence" "node system-map-auditor/dist/cli.js validate-integration-evidence --quiet" 0
+    run_test "Validate Integration Evidence for Specific Feature" "node system-map-auditor/dist/cli.js validate-integration-evidence --feature chat --quiet" 0
+    run_test "Validate Integration Evidence with Freshness Check" "node system-map-auditor/dist/cli.js validate-integration-evidence --check-freshness --quiet" 0
+    run_test "Validate Integration Evidence with End-to-End Requirement" "node system-map-auditor/dist/cli.js validate-integration-evidence --require-end-to-end --quiet" 0
+    run_test "Validate Feature Integration Status" "node system-map-auditor/dist/cli.js validate-feature-integration-status --quiet" 0
+    run_test "Validate Feature Integration Status for Health Feature" "node system-map-auditor/dist/cli.js validate-feature-integration-status --feature health --quiet" 0
+    run_test "Validate Feature Integration Status with Report Generation" "node system-map-auditor/dist/cli.js validate-feature-integration-status --generate-status-report --quiet" 0
+    
+    # Combined Enhanced Validation Tests
+    run_test "Validate Complete Integration (All Enhanced Features)" "node system-map-auditor/dist/cli.js validate-complete-integration --quiet" 0
+    run_test "Prevent False Active Status" "node system-map-auditor/dist/cli.js prevent-false-active-status --quiet" 0
+    run_test "Validate Hook Consistency" "node system-map-auditor/dist/cli.js validate-hook-consistency --quiet" 0
+    
     print_header "CONFIGURATION AND OPTIONS TESTS"
     
     # Test with different configurations
@@ -193,9 +232,21 @@ main() {
     echo -e "${RED}❌ Failed: $FAILED_TESTS${NC}"
     echo -e "${BLUE}📝 Total:  $TOTAL_TESTS${NC}"
     
+    echo -e "\n${PURPLE}🚀 Enhanced Features Tested:${NC}"
+    echo -e "${GREEN}✅ Component-to-API Call Tracing (4 tests)${NC}"
+    echo -e "${GREEN}✅ Cache Invalidation Chain Validation (6 tests)${NC}"
+    echo -e "${GREEN}✅ UI Refresh Dependency Validation (7 tests)${NC}"
+    echo -e "${GREEN}✅ Integration Evidence Requirements (7 tests)${NC}"
+    echo -e "${GREEN}✅ Combined Enhanced Validation (3 tests)${NC}"
+    
     if [ $FAILED_TESTS -eq 0 ]; then
         echo -e "\n${GREEN}🎉 All tests passed successfully!${NC}"
-        echo -e "${GREEN}System Map Auditor is fully functional across all phases.${NC}"
+        echo -e "${GREEN}System Map Auditor is fully functional with all enhanced features.${NC}"
+        echo -e "${GREEN}Critical gaps from the implementation plan have been addressed:${NC}"
+        echo -e "${GREEN}  ✅ Component-to-API Call Tracing${NC}"
+        echo -e "${GREEN}  ✅ Cache Invalidation Chain Validation${NC}"
+        echo -e "${GREEN}  ✅ UI Refresh Dependency Validation${NC}"
+        echo -e "${GREEN}  ✅ Integration Evidence Requirements${NC}"
         exit 0
     else
         echo -e "\n${RED}❌ Some tests failed.${NC}"

@@ -44,22 +44,28 @@ To ensure scalability, maintainability, and token efficiency, the system map emp
 - `planned`: Feature is designed but not yet implemented
 - `broken`: Feature exists but fails during execution
 
-### 2.1. Refactoring Triggers (MANDATORY ENFORCEMENT)
+### 2.1. File Size Creation Rules (MANDATORY ENFORCEMENT)
 
-To maintain clarity and prevent maps from becoming unwieldy, the following quantitative triggers **MANDATE IMMEDIATE REFACTORING** of a domain map:
+To maintain clarity and prevent maps from becoming unwieldy, the following quantitative rules **MUST BE FOLLOWED DURING CREATION**:
 
--   **🚨 MANDATORY: Split into Sub-Domain Directories when:**
-    -   The total line count of a single `[domain].map.json` file exceeds **300 lines**.
-    -   OR the number of top-level `featureGroups` in a single map exceeds **5**.
-    -   **IMMEDIATE ACTION REQUIRED:** Create a directory (e.g., `/.system-maps/[domain]/`) and split the `featureGroups` into logical, smaller sub-domain map files within it (e.g., `[feature-group-A].map.json`, `[feature-group-B].map.json`). Update the `root.map.json` path to point to the new directory.
-    -   **VIOLATION CONSEQUENCE:** System Map Auditor will flag this as a critical error and block validation until resolved.
+-   **🚨 MANDATORY CREATION RULE: Sub-Domain Directory Structure Required when:**
+    -   A domain analysis indicates it would require more than **300 lines** in a single file.
+    -   OR the domain would contain more than **5** top-level `featureGroups`.
+    -   **PROACTIVE ACTION REQUIRED:** Estimate the domain size before creation. If it exceeds limits, immediately create a directory structure (e.g., `/.system-maps/[domain]/`) and split the `featureGroups` into logical, smaller sub-domain map files within it (e.g., `[feature-group-A].map.json`, `[feature-group-B].map.json`). Update the `root.map.json` path to point to the new directory.
+    -   **PLANNING PRINCIPLE:** Choose the directory structure approach from the outset rather than creating oversized files that require refactoring.
 
--   **🚨 MANDATORY: Extract to a Mega-Feature File when:**
-    -   The JSON definition for a *single feature* within a `featureGroup` exceeds **100 lines**.
-    -   **IMMEDIATE ACTION REQUIRED:** Create a new `[feature-name].feature.json` file. Move the entire feature object into this new file. In the original domain map, replace the feature object with a `$ref` pointer (e.g., `"$ref": "./[feature-name].feature.json"`). This should be used only for individual features that are disproportionately large.
-    -   **VIOLATION CONSEQUENCE:** System Map Auditor will flag this as a critical error and require immediate extraction.
+-   **🚨 MANDATORY CREATION RULE: Mega-Feature File Required when:**
+    -   A single feature analysis indicates it would exceed **100 lines** in JSON definition.
+    -   **PROACTIVE ACTION REQUIRED:** Create a new `[feature-name].feature.json` file immediately. Move the entire feature object into this new file. In the parent domain map, reference it with a `$ref` pointer (e.g., `"$ref": "./[feature-name].feature.json"`).
 
-**CRITICAL RULE:** No exceptions to these limits. If you encounter a domain that would exceed 300 lines, you MUST implement sub-domain directory structure instead of creating an oversized single file.
+### 2.2. Refactoring Triggers (If Rules Were Missed)
+
+If existing files violate the creation rules above:
+
+-   **🚨 IMMEDIATE REFACTORING REQUIRED:** Any existing file exceeding 300 lines or 5 feature groups must be split immediately.
+-   **VIOLATION CONSEQUENCE:** System Map Auditor will flag this as a critical error and block validation until resolved.
+
+**CRITICAL PRINCIPLE:** Proactive structure planning prevents oversized files entirely. Always estimate and plan the appropriate structure before creating system maps.
 
 #### Metadata Requirements for Extracted Features
 

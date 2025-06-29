@@ -6,6 +6,16 @@
     "parentFile": "./dashboard.map.json",
     "domain": "health"
   },
+  "integrationStatus": {
+    "status": "partial",
+    "lastVerified": "2025-01-28",
+    "knownIssues": [
+      "iOS HealthKit integration incomplete",
+      "Background sync permissions not configured",
+      "Android Google Fit API authentication pending",
+      "Real-time sync notifications not implemented"
+    ]
+  },
   "description": "Direct integration with native mobile health platforms (HealthKit on iOS, Google Fit on Android) for real-time health data synchronization.",
   "userFlow": [
     "User clicks 'Sync with Phone' button in HealthDataSection.",
@@ -20,6 +30,21 @@
     "Health dashboard updates with newly synced data.",
     "Sync completion status and statistics are shown."
   ],
+  "systemFlow": [
+    "NativeHealthIntegration detects platform capabilities",
+    "native-health-service requests platform-specific permissions",
+    "HealthKitManager/GoogleFitManager fetch native health data",
+    "Data transformation maps native formats to app schema",
+    "POST /api/health-data/native-sync sends normalized data",
+    "Server deduplicates and inserts into healthData table",
+    "React Query invalidates health data cache",
+    "HealthDataSection updates with sync statistics"
+  ],
+  "apiIntegration": {
+    "expectedEndpoints": ["POST /api/health-data/native-sync"],
+    "actualEndpoints": ["POST /api/health-data/native-sync"],
+    "integrationGaps": []
+  },
   "components": {
     "$ref": "../dashboard.map.json#/components"
   },

@@ -6,6 +6,15 @@
     "parentFile": "./dashboard.map.json",
     "domain": "health"
   },
+  "integrationStatus": {
+    "status": "partial",
+    "lastVerified": "2025-01-28",
+    "knownIssues": [
+      "Large file upload optimization pending",
+      "Background processing not fully implemented",
+      "Error recovery for corrupted files needs enhancement"
+    ]
+  },
   "description": "Comprehensive health data import system supporting multiple file formats from various health platforms and devices.",
   "userFlow": [
     "User clicks 'Import Health Data' button in HealthDataSection.",
@@ -69,7 +78,19 @@
       "parser": "FitbitJSONParser"
     }
   ],
+  "systemFlow": [
+    "HealthDataImport component validates file size and format",
+    "useFileUpload handles secure file transmission to server",
+    "POST /api/health-data/import processes file with HealthDataParser",
+    "HealthDataDeduplicationService identifies duplicate records",
+    "Server performs batch insertion into healthData table",
+    "React Query invalidates 'query:healthData' cache",
+    "HealthDataSection re-renders with imported data"
+  ],
   "apiIntegration": {
+    "expectedEndpoints": ["POST /api/health-data/import"],
+    "actualEndpoints": ["POST /api/health-data/import"],
+    "integrationGaps": [],
     "endpoint": "POST /api/health-data/import",
     "processingSteps": [
       "File validation and virus scanning",

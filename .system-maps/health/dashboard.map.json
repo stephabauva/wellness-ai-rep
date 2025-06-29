@@ -1,8 +1,57 @@
 {
   "tableOfContents": {
-    "metrics-management": ["add-metrics", "remove-metrics"],
-    "data-filtering": ["time-range-filtering", "data-reset"],
-    "data-operations": ["health-data-import", "pdf-export", "native-health-sync"]
+    "metrics-management": {
+      "features": ["add-metrics", "remove-metrics"],
+      "components": ["HealthDataSection", "AddMetricsModal", "RemoveMetricsModal", "useHealthVisibilitySettings"],
+      "endpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"]
+    },
+    "data-filtering": {
+      "features": ["time-range-filtering", "data-reset"],
+      "components": ["HealthDataSection", "HealthMetricsCard", "useHealthDataApi"],
+      "endpoints": ["GET /api/health-data", "GET /api/health-data/categories", "DELETE /api/health-data/reset"]
+    },
+    "data-operations": {
+      "features": ["health-data-import", "pdf-export", "native-health-sync"],
+      "components": ["HealthDataImport", "NativeHealthIntegration", "useHealthReport"],
+      "endpoints": ["POST /api/health-data/import", "POST /api/health-data/export/pdf", "POST /api/health-data/native-sync"]
+    }
+  },
+  "integrationStatus": {
+    "add-metrics": {
+      "status": "active",
+      "lastVerified": "2025-01-28",
+      "knownIssues": []
+    },
+    "remove-metrics": {
+      "status": "active",
+      "lastVerified": "2025-01-28",
+      "knownIssues": []
+    },
+    "time-range-filtering": {
+      "status": "active",
+      "lastVerified": "2025-01-28",
+      "knownIssues": []
+    },
+    "data-reset": {
+      "status": "active",
+      "lastVerified": "2025-01-28",
+      "knownIssues": []
+    },
+    "health-data-import": {
+      "status": "partial",
+      "lastVerified": "2025-01-28",
+      "knownIssues": ["Large file upload optimization pending", "Background processing not fully implemented"]
+    },
+    "pdf-export": {
+      "status": "active",
+      "lastVerified": "2025-01-28",
+      "knownIssues": []
+    },
+    "native-health-sync": {
+      "status": "partial",
+      "lastVerified": "2025-01-28",
+      "knownIssues": ["iOS HealthKit integration incomplete", "Background sync permissions not configured"]
+    }
   },
   "lastUpdated": "2025-01-28T18:20:00Z",
   "dependencies": [],
@@ -20,11 +69,24 @@
             "A PATCH request updates the user's visibility preferences.",
             "Client-side cache invalidates and dashboard re-renders with new metrics."
           ],
+          "systemFlow": [
+            "HealthDataSection renders AddMetricsModal",
+            "AddMetricsModal fetches current visibility settings via useHealthVisibilitySettings",
+            "User selection triggers PATCH /api/health-consent/visibility",
+            "Server updates users.preferences.healthVisibilitySettings",
+            "React Query invalidates 'query:healthVisibilitySettings'",
+            "HealthDataSection re-renders with updated metric visibility"
+          ],
           "components": [
             "HealthDataSection",
             "AddMetricsModal",
             "useHealthVisibilitySettings"
-          ]
+          ],
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"],
+            "actualEndpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"],
+            "integrationGaps": []
+          }
         },
         "remove-metrics": {
           "description": "Allows a user to hide health metrics from their dashboard view. This does not delete the data, but updates the user's visibility preferences.",
@@ -37,12 +99,25 @@
             "The client-side cache for visibility settings is invalidated, causing a re-render.",
             "The HealthMetricsCard components re-render, hiding the selected metrics."
           ],
+          "systemFlow": [
+            "HealthDataSection enables removal mode state",
+            "HealthMetricsCard components show selection checkboxes",
+            "RemoveMetricsModal confirms user selection",
+            "useHealthVisibilitySettings triggers PATCH /api/health-consent/visibility",
+            "Server modifies users.preferences.healthVisibilitySettings",
+            "React Query cache invalidation updates UI state"
+          ],
           "components": [
             "HealthDataSection",
             "HealthMetricsCard",
             "RemoveMetricsModal",
             "useHealthVisibilitySettings"
-          ]
+          ],
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"],
+            "actualEndpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"],
+            "integrationGaps": []
+          }
         }
       }
     },
@@ -57,11 +132,23 @@
             "Health data API is called with new date parameters.",
             "Charts and metrics re-render with filtered data."
           ],
+          "systemFlow": [
+            "HealthDataSection updates timeRange state",
+            "useHealthDataApi triggers new API calls with date filters",
+            "GET /api/health-data and /api/health-data/categories called with queryParams",
+            "Server filters healthData table by timestamp and userId",
+            "HealthMetricsCard components re-render with filtered datasets"
+          ],
           "components": [
             "HealthDataSection",
             "HealthMetricsCard",
             "useHealthDataApi"
-          ]
+          ],
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/health-data?timeRange={range}", "GET /api/health-data/categories?timeRange={range}"],
+            "actualEndpoints": ["GET /api/health-data", "GET /api/health-data/categories"],
+            "integrationGaps": []
+          }
         },
         "data-reset": {
           "description": "Allows users to reset/clear their health data.",

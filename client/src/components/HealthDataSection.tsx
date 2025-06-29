@@ -437,7 +437,8 @@ const HealthDataSection: React.FC = () => {
           <CoachingInsights />
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 export default HealthDataSection;

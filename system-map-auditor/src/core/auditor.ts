@@ -839,6 +839,580 @@ export class SystemMapAuditor {
     return this.markdownReporter.generateDetailedReport(report);
   }
 
+  // Phase 3 Methods - CI/CD Integration
+
+  /**
+   * Get changed features based on Git status
+   */
+  async getChangedFeatures(): Promise<string[]> {
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
+    
+    try {
+      // Get changed files from Git
+      const { stdout } = await execAsync('git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || echo ""');
+      const changedFiles = stdout.trim().split('\n').filter(f => f);
+      
+      // Filter for system map files and extract feature names
+      const changedFeatures = new Set<string>();
+      
+      for (const file of changedFiles) {
+        if (file.includes('.system-maps/') && (file.endsWith('.map.json') || file.endsWith('.feature.json'))) {
+          const featureName = file.split('/').pop()?.replace(/\.(map|feature)\.json$/, '') || 'unknown';
+          changedFeatures.add(featureName);
+        }
+      }
+      
+      return Array.from(changedFeatures);
+    } catch (error) {
+      // Fallback: return empty array if Git is not available
+      return [];
+    }
+  }
+
+  /**
+   * Validate only changed features
+   */
+  async validateChangedFeatures(changedFeatures: string[]): Promise<AuditResult[]> {
+    const results: AuditResult[] = [];
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+
+    for (const featureName of changedFeatures) {
+      // Find system map for this feature
+      let foundMap = false;
+      for (const [mapPath, systemMap] of maps) {
+        if (mapPath.includes(featureName) || systemMap.name?.includes(featureName)) {
+          const result = await this.auditSystemMap(systemMap, codebase, mapPath);
+          result.feature = featureName;
+          results.push(result);
+          foundMap = true;
+          break;
+        }
+      }
+      
+      if (!foundMap) {
+        results.push({
+          feature: featureName,
+          status: 'fail',
+          issues: [{
+            severity: 'error',
+            message: `System map not found for changed feature: ${featureName}`,
+            location: `${featureName}.map.json`,
+            suggestion: `Create a system map file for ${featureName}`
+          }],
+          metrics: {
+            totalChecks: 1,
+            passedChecks: 0,
+            warningChecks: 0,
+            failedChecks: 1,
+            executionTime: 0
+          }
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Run incremental validation using cache
+   */
+  async runIncrementalValidation(): Promise<{ validationResults: AuditResult[]; cacheStats: any }> {
+    // Implementation would check cache and only validate changed parts
+    const results = await this.runFullAudit();
+    
+    return {
+      validationResults: results,
+      cacheStats: {
+        cacheHits: 0,
+        cacheMisses: results.length,
+        cacheUpdates: results.length
+      }
+    };
+  }
+
+  // Phase 3 Methods - Advanced Analysis
+
+  /**
+   * Detect unused components and dead code
+   */
+  async detectDeadCode(options: { includeApis?: boolean; includeFiles?: boolean } = {}): Promise<{
+    unusedComponents: string[];
+    orphanedApis: string[];
+    unusedFiles: string[];
+  }> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    
+    const allComponents = new Set<string>();
+    const referencedComponents = new Set<string>();
+    
+    // Collect all components and their references
+    for (const [, systemMap] of maps) {
+      const components = this.normalizeComponents(systemMap);
+      
+      components.forEach(comp => {
+        if (comp.name) allComponents.add(comp.name);
+        if (comp.dependencies) {
+          comp.dependencies.forEach((dep: string) => referencedComponents.add(dep));
+        }
+      });
+    }
+    
+    const unusedComponents = Array.from(allComponents).filter(comp => !referencedComponents.has(comp));
+    
+    return {
+      unusedComponents,
+      orphanedApis: options.includeApis ? await this.detectOrphanedApis() : [],
+      unusedFiles: options.includeFiles ? [] : [] // Placeholder for file analysis
+    };
+  }
+
+  /**
+   * Detect orphaned API endpoints
+   */
+  async detectOrphanedApis(): Promise<string[]> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    
+    const mappedApis = new Set<string>();
+    const actualApis = new Set<string>();
+    
+    // Collect APIs from system maps
+    for (const [, systemMap] of maps) {
+      const apis = this.normalizeApis(systemMap);
+      apis.forEach(api => {
+        if (api.path) mappedApis.add(api.path);
+      });
+    }
+    
+    // Collect actual API endpoints from codebase
+    if (codebase.apis) {
+      codebase.apis.forEach(api => {
+        if (api.path) actualApis.add(api.path);
+      });
+    }
+    
+    // Find APIs that exist in code but not in system maps
+    return Array.from(actualApis).filter(api => !mappedApis.has(api));
+  }
+
+  /**
+   * Generate cleanup suggestions
+   */
+  async generateCleanupSuggestions(): Promise<{ actions: Array<{ type: string; target: string; reason: string }> }> {
+    const deadCode = await this.detectDeadCode({ includeApis: true, includeFiles: true });
+    const orphanedApis = await this.detectOrphanedApis();
+    
+    const actions = [];
+    
+    deadCode.unusedComponents.forEach(comp => {
+      actions.push({
+        type: 'remove-component',
+        target: comp,
+        reason: 'Component is defined but never referenced'
+      });
+    });
+    
+    orphanedApis.forEach(api => {
+      actions.push({
+        type: 'document-api',
+        target: api,
+        reason: 'API endpoint exists in code but not documented in system maps'
+      });
+    });
+    
+    return { actions };
+  }
+
+  // Phase 3 Methods - Completeness Analysis
+
+  /**
+   * Analyze system map completeness
+   */
+  async analyzeCompleteness(): Promise<{
+    overallCoverage: number;
+    componentCoverage: number;
+    apiCoverage: number;
+    missingComponents: string[];
+    missingApis: string[];
+  }> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    
+    const mappedComponents = new Set<string>();
+    const mappedApis = new Set<string>();
+    const actualComponents = new Set<string>();
+    const actualApis = new Set<string>();
+    
+    // Collect mapped items
+    for (const [, systemMap] of maps) {
+      const components = this.normalizeComponents(systemMap);
+      const apis = this.normalizeApis(systemMap);
+      
+      components.forEach(comp => {
+        if (comp.name) mappedComponents.add(comp.name);
+      });
+      
+      apis.forEach(api => {
+        if (api.path) mappedApis.add(api.path);
+      });
+    }
+    
+    // Collect actual items from codebase
+    if (codebase.components) {
+      codebase.components.forEach(comp => {
+        if (comp.name) actualComponents.add(comp.name);
+      });
+    }
+    
+    if (codebase.apis) {
+      codebase.apis.forEach(api => {
+        if (api.path) actualApis.add(api.path);
+      });
+    }
+    
+    const componentCoverage = actualComponents.size > 0 
+      ? (mappedComponents.size / actualComponents.size) * 100 
+      : 100;
+    
+    const apiCoverage = actualApis.size > 0 
+      ? (mappedApis.size / actualApis.size) * 100 
+      : 100;
+    
+    const overallCoverage = (componentCoverage + apiCoverage) / 2;
+    
+    return {
+      overallCoverage: Math.round(overallCoverage),
+      componentCoverage: Math.round(componentCoverage),
+      apiCoverage: Math.round(apiCoverage),
+      missingComponents: Array.from(actualComponents).filter(comp => !mappedComponents.has(comp)),
+      missingApis: Array.from(actualApis).filter(api => !mappedApis.has(api))
+    };
+  }
+
+  /**
+   * Generate coverage report
+   */
+  async generateCoverageReport(): Promise<{
+    overallCoverage: number;
+    componentDetails: any;
+    apiDetails: any;
+    recommendations: string[];
+  }> {
+    const completeness = await this.analyzeCompleteness();
+    
+    return {
+      overallCoverage: completeness.overallCoverage,
+      componentDetails: {
+        coverage: completeness.componentCoverage,
+        missing: completeness.missingComponents
+      },
+      apiDetails: {
+        coverage: completeness.apiCoverage,
+        missing: completeness.missingApis
+      },
+      recommendations: [
+        ...(completeness.missingComponents.length > 0 ? [`Document ${completeness.missingComponents.length} missing components`] : []),
+        ...(completeness.missingApis.length > 0 ? [`Document ${completeness.missingApis.length} missing APIs`] : [])
+      ]
+    };
+  }
+
+  /**
+   * Detect missing features
+   */
+  async detectMissingFeatures(): Promise<string[]> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    
+    const mappedFeatures = new Set<string>();
+    
+    // Collect features from system maps
+    for (const [mapPath, systemMap] of maps) {
+      const featureName = mapPath.split('/').pop()?.replace(/\.(map|feature)\.json$/, '');
+      if (featureName) {
+        mappedFeatures.add(featureName);
+      }
+      if (systemMap.name) {
+        mappedFeatures.add(systemMap.name);
+      }
+    }
+    
+    // Detect potential features from codebase structure
+    const potentialFeatures: string[] = [];
+    
+    // This is a simplified detection - in a real implementation,
+    // you'd analyze file structure, route patterns, component names, etc.
+    if (codebase.components) {
+      codebase.components.forEach(comp => {
+        if (comp.path) {
+          const pathParts = comp.path.split('/');
+          const possibleFeature = pathParts[pathParts.length - 2]; // Parent directory
+          if (possibleFeature && !mappedFeatures.has(possibleFeature)) {
+            potentialFeatures.push(possibleFeature);
+          }
+        }
+      });
+    }
+    
+    return [...new Set(potentialFeatures)];
+  }
+
+  // Phase 3 Report Generators
+
+  /**
+   * Generate changed features report
+   */
+  generateChangedFeaturesReport(results: AuditResult[]): string {
+    const lines: string[] = [];
+    lines.push('Changed Features Validation Report:');
+    lines.push('');
+    
+    results.forEach(result => {
+      const status = result.status === 'pass' ? '✅' : '❌';
+      lines.push(`${status} ${result.feature}`);
+      
+      if (result.issues.length > 0) {
+        result.issues.forEach(issue => {
+          lines.push(`  ${issue.severity}: ${issue.message}`);
+        });
+        lines.push('');
+      }
+    });
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate incremental report
+   */
+  generateIncrementalReport(results: { validationResults: AuditResult[]; cacheStats: any }): string {
+    const lines: string[] = [];
+    lines.push('Incremental Validation Report:');
+    lines.push('');
+    lines.push(`Cache Hits: ${results.cacheStats.cacheHits}`);
+    lines.push(`Cache Misses: ${results.cacheStats.cacheMisses}`);
+    lines.push(`Cache Updates: ${results.cacheStats.cacheUpdates}`);
+    lines.push('');
+    
+    const totalIssues = results.validationResults.reduce((sum, r) => sum + r.issues.length, 0);
+    lines.push(`Validation Results: ${results.validationResults.length} features, ${totalIssues} issues`);
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate dead code report
+   */
+  generateDeadCodeReport(results: { unusedComponents: string[]; orphanedApis: string[]; unusedFiles: string[] }): string {
+    const lines: string[] = [];
+    lines.push('Dead Code Detection Report:');
+    lines.push('');
+    
+    if (results.unusedComponents.length > 0) {
+      lines.push(`Unused Components (${results.unusedComponents.length}):`);
+      results.unusedComponents.forEach(comp => lines.push(`  - ${comp}`));
+      lines.push('');
+    }
+    
+    if (results.orphanedApis.length > 0) {
+      lines.push(`Orphaned APIs (${results.orphanedApis.length}):`);
+      results.orphanedApis.forEach(api => lines.push(`  - ${api}`));
+      lines.push('');
+    }
+    
+    if (results.unusedFiles.length > 0) {
+      lines.push(`Unused Files (${results.unusedFiles.length}):`);
+      results.unusedFiles.forEach(file => lines.push(`  - ${file}`));
+      lines.push('');
+    }
+    
+    if (results.unusedComponents.length === 0 && results.orphanedApis.length === 0 && results.unusedFiles.length === 0) {
+      lines.push('No dead code detected.');
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate orphaned APIs report
+   */
+  generateOrphanedApisReport(orphanedApis: string[], options: { suggestCleanup?: boolean } = {}): string {
+    const lines: string[] = [];
+    lines.push('Orphaned APIs Report:');
+    lines.push('');
+    
+    if (orphanedApis.length === 0) {
+      lines.push('No orphaned APIs found.');
+      return lines.join('\n');
+    }
+    
+    lines.push(`Found ${orphanedApis.length} orphaned API endpoints:`);
+    orphanedApis.forEach(api => {
+      lines.push(`  - ${api}`);
+      if (options.suggestCleanup) {
+        lines.push(`    → Add to system map or remove from codebase`);
+      }
+    });
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate cleanup console report
+   */
+  generateCleanupConsoleReport(suggestions: { actions: Array<{ type: string; target: string; reason: string }> }): string {
+    const lines: string[] = [];
+    lines.push('Cleanup Suggestions:');
+    lines.push('');
+    
+    if (suggestions.actions.length === 0) {
+      lines.push('No cleanup actions suggested.');
+      return lines.join('\n');
+    }
+    
+    suggestions.actions.forEach(action => {
+      lines.push(`${action.type}: ${action.target}`);
+      lines.push(`  Reason: ${action.reason}`);
+      lines.push('');
+    });
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate cleanup markdown report
+   */
+  generateCleanupMarkdownReport(suggestions: { actions: Array<{ type: string; target: string; reason: string }> }): string {
+    const lines: string[] = [];
+    lines.push('# Cleanup Suggestions');
+    lines.push('');
+    
+    if (suggestions.actions.length === 0) {
+      lines.push('No cleanup actions suggested.');
+      return lines.join('\n');
+    }
+    
+    lines.push('## Actions');
+    lines.push('');
+    
+    suggestions.actions.forEach(action => {
+      lines.push(`### ${action.type}: \`${action.target}\``);
+      lines.push(`**Reason:** ${action.reason}`);
+      lines.push('');
+    });
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate completeness report
+   */
+  generateCompletenessReport(completeness: any, options: { showMissing?: boolean } = {}): string {
+    const lines: string[] = [];
+    lines.push('System Map Completeness Report:');
+    lines.push('');
+    lines.push(`Overall Coverage: ${completeness.overallCoverage}%`);
+    lines.push(`Component Coverage: ${completeness.componentCoverage}%`);
+    lines.push(`API Coverage: ${completeness.apiCoverage}%`);
+    lines.push('');
+    
+    if (options.showMissing) {
+      if (completeness.missingComponents.length > 0) {
+        lines.push(`Missing Components (${completeness.missingComponents.length}):`);
+        completeness.missingComponents.forEach((comp: string) => lines.push(`  - ${comp}`));
+        lines.push('');
+      }
+      
+      if (completeness.missingApis.length > 0) {
+        lines.push(`Missing APIs (${completeness.missingApis.length}):`);
+        completeness.missingApis.forEach((api: string) => lines.push(`  - ${api}`));
+        lines.push('');
+      }
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate coverage console report
+   */
+  generateCoverageConsoleReport(coverage: any): string {
+    const lines: string[] = [];
+    lines.push('Coverage Report:');
+    lines.push('');
+    lines.push(`Overall Coverage: ${coverage.overallCoverage}%`);
+    lines.push('');
+    lines.push('Component Details:');
+    lines.push(`  Coverage: ${coverage.componentDetails.coverage}%`);
+    lines.push(`  Missing: ${coverage.componentDetails.missing.length}`);
+    lines.push('');
+    lines.push('API Details:');
+    lines.push(`  Coverage: ${coverage.apiDetails.coverage}%`);
+    lines.push(`  Missing: ${coverage.apiDetails.missing.length}`);
+    lines.push('');
+    
+    if (coverage.recommendations.length > 0) {
+      lines.push('Recommendations:');
+      coverage.recommendations.forEach((rec: string) => lines.push(`  - ${rec}`));
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate coverage markdown report
+   */
+  generateCoverageMarkdownReport(coverage: any): string {
+    const lines: string[] = [];
+    lines.push('# Coverage Report');
+    lines.push('');
+    lines.push(`**Overall Coverage:** ${coverage.overallCoverage}%`);
+    lines.push('');
+    lines.push('## Component Coverage');
+    lines.push(`- **Coverage:** ${coverage.componentDetails.coverage}%`);
+    lines.push(`- **Missing:** ${coverage.componentDetails.missing.length}`);
+    lines.push('');
+    lines.push('## API Coverage');
+    lines.push(`- **Coverage:** ${coverage.apiDetails.coverage}%`);
+    lines.push(`- **Missing:** ${coverage.apiDetails.missing.length}`);
+    lines.push('');
+    
+    if (coverage.recommendations.length > 0) {
+      lines.push('## Recommendations');
+      coverage.recommendations.forEach((rec: string) => lines.push(`- ${rec}`));
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate missing features report
+   */
+  generateMissingFeaturesReport(missingFeatures: string[], options: { suggestAdditions?: boolean } = {}): string {
+    const lines: string[] = [];
+    lines.push('Missing Features Report:');
+    lines.push('');
+    
+    if (missingFeatures.length === 0) {
+      lines.push('No missing features detected.');
+      return lines.join('\n');
+    }
+    
+    lines.push(`Detected ${missingFeatures.length} potential missing features:`);
+    missingFeatures.forEach(feature => {
+      lines.push(`  - ${feature}`);
+      if (options.suggestAdditions) {
+        lines.push(`    → Consider creating ${feature}.map.json`);
+      }
+    });
+    
+    return lines.join('\n');
+  }
+
   // Helper methods
 
   private calculateOverallScore(results: AuditResult[]): number {

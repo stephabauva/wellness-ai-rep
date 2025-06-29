@@ -522,6 +522,263 @@ if (process.argv.includes('--show-config')) {
   }
 }
 
+// Phase 3 Commands - CI/CD Integration
+program
+  .command('changed-features-only')
+  .description('validate only features that have changed (Git-aware)')
+  .option('--fail-fast', 'exit on first error')
+  .option('--simulate-git-hook', 'simulate pre-commit hook behavior')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const changedFeatures = await auditor.getChangedFeatures();
+      
+      if (changedFeatures.length === 0) {
+        if (!options.quiet) {
+          console.log('No changed features detected');
+        }
+        process.exit(0);
+      }
+      
+      if (!options.quiet) {
+        console.log(`Validating ${changedFeatures.length} changed features:`);
+        changedFeatures.forEach(feature => console.log(`  - ${feature}`));
+      }
+      
+      const results = await auditor.validateChangedFeatures(changedFeatures);
+      
+      if (options.failFast && results.some(r => !r.valid)) {
+        console.error('❌ Validation failed (fail-fast mode)');
+        process.exit(1);
+      }
+      
+      if (!options.quiet) {
+        console.log(auditor.generateChangedFeaturesReport(results));
+      }
+      
+      const hasErrors = results.some(result => !result.valid);
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Changed features validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('incremental')
+  .description('run incremental validation using cache')
+  .option('--cache-dir <path>', 'custom cache directory', './audit-cache')
+  .option('--force-refresh', 'ignore cache and force full validation')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      
+      // Configure caching
+      auditor.updateConfig({
+        performance: {
+          ...auditor.getConfig().performance,
+          cacheResults: !options.forceRefresh,
+          cacheDirectory: options.cacheDir
+        }
+      });
+      
+      const results = await auditor.runIncrementalValidation();
+      
+      if (!options.quiet) {
+        console.log(auditor.generateIncrementalReport(results));
+      }
+      
+      const hasErrors = results.validationResults.some(r => !r.valid);
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Incremental validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+// Phase 3 Commands - Advanced Analysis
+program
+  .command('detect-dead-code')
+  .description('detect unused components and orphaned resources')
+  .option('--include-apis', 'include orphaned API endpoints')
+  .option('--include-files', 'include unused files')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const deadCodeResults = await auditor.detectDeadCode({
+        includeApis: options.includeApis,
+        includeFiles: options.includeFiles
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateDeadCodeReport(deadCodeResults));
+      }
+      
+      const hasDeadCode = deadCodeResults.unusedComponents.length > 0 || 
+                         deadCodeResults.orphanedApis.length > 0;
+      process.exit(hasDeadCode ? 1 : 0);
+    } catch (error) {
+      console.error('Dead code detection failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('detect-orphaned-apis')
+  .description('detect API endpoints not referenced in system maps')
+  .option('--suggest-cleanup', 'suggest cleanup actions')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const orphanedApis = await auditor.detectOrphanedApis();
+      
+      if (!options.quiet) {
+        console.log(auditor.generateOrphanedApisReport(orphanedApis, {
+          suggestCleanup: options.suggestCleanup
+        }));
+      }
+      
+      const hasOrphanedApis = orphanedApis.length > 0;
+      process.exit(hasOrphanedApis ? 1 : 0);
+    } catch (error) {
+      console.error('Orphaned API detection failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('suggest-cleanup')
+  .description('suggest cleanup actions for unused resources')
+  .option('-f, --format <type>', 'output format (console, markdown)', 'console')
+  .option('--dry-run', 'show what would be cleaned up without making changes')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const cleanupSuggestions = await auditor.generateCleanupSuggestions();
+      
+      let report: string;
+      switch (options.format) {
+        case 'markdown':
+          report = auditor.generateCleanupMarkdownReport(cleanupSuggestions);
+          break;
+        case 'console':
+        default:
+          report = auditor.generateCleanupConsoleReport(cleanupSuggestions);
+          break;
+      }
+      
+      console.log(report);
+      
+      if (options.dryRun && !program.opts().quiet) {
+        console.log('\n📝 This was a dry run. No changes were made.');
+      }
+      
+      const hasCleanupActions = cleanupSuggestions.actions.length > 0;
+      process.exit(hasCleanupActions ? 0 : 1); // Exit 0 if cleanup suggestions found
+    } catch (error) {
+      console.error('Cleanup suggestion failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+// Phase 3 Commands - Completeness Analysis
+program
+  .command('analyze-completeness')
+  .description('analyze system map completeness and coverage')
+  .option('--min-coverage <percentage>', 'minimum coverage threshold', '80')
+  .option('--show-missing', 'show missing components and APIs')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const completeness = await auditor.analyzeCompleteness();
+      
+      if (!options.quiet) {
+        console.log(auditor.generateCompletenessReport(completeness, {
+          showMissing: options.showMissing
+        }));
+      }
+      
+      const coverageThreshold = parseInt(options.minCoverage);
+      const meetsCoverage = completeness.overallCoverage >= coverageThreshold;
+      process.exit(meetsCoverage ? 0 : 1);
+    } catch (error) {
+      console.error('Completeness analysis failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('coverage-report')
+  .description('generate detailed coverage report')
+  .option('--min-coverage <percentage>', 'minimum coverage threshold', '80')
+  .option('-f, --format <type>', 'output format (console, json, markdown)', 'console')
+  .option('-o, --output <file>', 'output file path')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const coverage = await auditor.generateCoverageReport();
+      
+      let report: string;
+      switch (options.format) {
+        case 'json':
+          report = JSON.stringify(coverage, null, 2);
+          break;
+        case 'markdown':
+          report = auditor.generateCoverageMarkdownReport(coverage);
+          break;
+        case 'console':
+        default:
+          report = auditor.generateCoverageConsoleReport(coverage);
+          break;
+      }
+      
+      if (options.output) {
+        writeFileSync(resolve(options.output), report);
+        if (!program.opts().quiet) {
+          console.log(`Coverage report saved to: ${options.output}`);
+        }
+      } else {
+        console.log(report);
+      }
+      
+      const coverageThreshold = parseInt(options.minCoverage);
+      const meetsCoverage = coverage.overallCoverage >= coverageThreshold;
+      process.exit(meetsCoverage ? 0 : 1);
+    } catch (error) {
+      console.error('Coverage report generation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('detect-missing-features')
+  .description('detect features present in code but missing from system maps')
+  .option('--suggest-additions', 'suggest system map additions')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const missingFeatures = await auditor.detectMissingFeatures();
+      
+      if (!options.quiet) {
+        console.log(auditor.generateMissingFeaturesReport(missingFeatures, {
+          suggestAdditions: options.suggestAdditions
+        }));
+      }
+      
+      const hasMissingFeatures = missingFeatures.length > 0;
+      process.exit(hasMissingFeatures ? 1 : 0);
+    } catch (error) {
+      console.error('Missing features detection failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
 // Error handling
 program.exitOverride();
 

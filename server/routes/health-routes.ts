@@ -247,28 +247,6 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Health metrics visibility endpoints
-  app.get("/api/health-consent/visibility", async (req, res) => {
-    try {
-      const visibilitySettings = await storage.getUserHealthVisibilitySettings(1);
-      res.json(visibilitySettings);
-    } catch (error) {
-      console.error('Error fetching visibility settings:', error);
-      res.status(500).json({ message: "Failed to fetch visibility settings" });
-    }
-  });
-
-  app.patch("/api/health-consent/visibility", async (req, res) => {
-    try {
-      const settings = req.body;
-      await storage.updateUserHealthVisibilitySettings(1, settings);
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error updating visibility settings:', error);
-      res.status(500).json({ message: "Failed to update visibility settings" });
-    }
-  });
-
   // Native health integration endpoints
   app.get("/api/native-health/capabilities", async (req, res) => {
     try {

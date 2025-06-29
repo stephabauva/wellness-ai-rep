@@ -42,8 +42,8 @@
           "components": ["AddMetricsModal", "useHealthVisibilitySettings"],
           "apiIntegration": {
             "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
-            "actualEndpoints": [],
-            "integrationGaps": ["API endpoint not implemented"]
+            "actualEndpoints": ["PATCH /api/health-consent/visibility"],
+            "integrationGaps": []
           }
         },
         "remove-metrics": {

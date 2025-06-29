@@ -530,3 +530,24 @@ main() {
 
 # Run the main function
 main "$@"
+
+# New Semantic Cache Validation Tests
+echo "📍 Cache Consistency Validation"
+node system-map-auditor/dist/cli.js validate-cache-consistency --quiet > /dev/null && echo "✅ Cache Consistency" || echo "❌ Cache Consistency"
+
+echo "📍 Missing Components Detection"
+node system-map-auditor/dist/cli.js detect-missing-components --quiet > /dev/null && echo "✅ Missing Components Detection" || echo "❌ Missing Components Detection"
+
+echo "📍 Broken Features Validation"
+node system-map-auditor/dist/cli.js validate-broken-features --quiet > /dev/null && echo "✅ Broken Features Validation" || echo "❌ Broken Features Validation"
+
+# Complete Integration Test
+echo "📍 Complete Integration Test"
+node system-map-auditor/dist/cli.js validate-complete-integration --quiet > /dev/null && echo "✅ Complete Integration" || echo "❌ Complete Integration"
+
+echo "================================================"
+echo "🏆 Enhanced Test Suite Complete"
+echo "🎯 New Semantic Cache Validation Commands Added:"
+echo "   ✅ validate-cache-consistency"
+echo "   ✅ detect-missing-components"
+echo "   ✅ validate-broken-features"

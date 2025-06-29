@@ -146,6 +146,14 @@ main() {
     echo -e "${YELLOW}  - Documentation structure suggestions${NC}"
     run_test "Detect Missing Features with Suggestions" "node system-map-auditor/dist/cli.js detect-missing-features --suggest-additions --quiet" 0
 
+    # Semantic Cache Validation in Completeness Context
+    echo -e "${BLUE}Expected Output: Cache consistency completeness:${NC}"
+    echo -e "${YELLOW}  - Cache pattern completeness across all system maps${NC}"
+    echo -e "${YELLOW}  - Missing cache invalidation patterns identified${NC}"
+    echo -e "${YELLOW}  - Component-cache relationship completeness${NC}"
+    echo -e "${YELLOW}  - Cache key naming convention compliance${NC}"
+    run_test "Validate Cache Consistency for Completeness" "node system-map-auditor/dist/cli.js validate-cache-consistency --quiet" 0
+
     # Test Summary
     echo -e "\n${PURPLE}📊 Completeness Analysis Test Results${NC}"
     echo -e "${PURPLE}====================================${NC}"
@@ -158,6 +166,7 @@ main() {
     echo -e "${GREEN}✅ Completeness Analysis (2 tests)${NC}"
     echo -e "${GREEN}✅ Coverage Reporting (3 tests)${NC}"
     echo -e "${GREEN}✅ Missing Feature Detection (2 tests)${NC}"
+    echo -e "${GREEN}✅ Semantic Cache Validation (1 test)${NC}"
 
     if [ $FAILED_TESTS -eq 0 ]; then
         echo -e "\n${GREEN}🎉 All completeness analysis tests passed!${NC}"

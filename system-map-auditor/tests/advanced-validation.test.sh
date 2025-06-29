@@ -150,6 +150,14 @@ main() {
     echo -e "${YELLOW}  - List of available features for reference${NC}"
     run_test "Audit Non-existent Feature" "node system-map-auditor/dist/cli.js audit-feature nonexistent-feature --quiet" 1
 
+    # Advanced Cache Validation
+    echo -e "${BLUE}Expected Output: Advanced cache pattern analysis:${NC}"
+    echo -e "${YELLOW}  - Deep cache pattern analysis across complex system maps${NC}"
+    echo -e "${YELLOW}  - Cross-component cache dependency verification${NC}"
+    echo -e "${YELLOW}  - Cache invalidation chain completeness${NC}"
+    echo -e "${YELLOW}  - Advanced cache inconsistency detection${NC}"
+    run_test "Advanced Cache Consistency Validation" "node system-map-auditor/dist/cli.js validate-cache-consistency --quiet" 0
+
     # Test Summary
     echo -e "\n${PURPLE}📊 Advanced Validation Test Results${NC}"
     echo -e "${PURPLE}=================================${NC}"

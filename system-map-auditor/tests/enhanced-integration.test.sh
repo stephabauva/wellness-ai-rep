@@ -236,6 +236,31 @@ main() {
     echo -e "${YELLOW}  - Actionable recommendations provided${NC}"
     run_test "Validate Feature Integration Status with Report Generation" "node system-map-auditor/dist/cli.js validate-feature-integration-status --generate-status-report --quiet" 0
 
+    # New Semantic Cache Validation Tests
+    echo -e "${BLUE}Expected Output: Cache consistency validation:${NC}"
+    echo -e "${YELLOW}  - 🔍 CACHE CONSISTENCY VALIDATION header${NC}"
+    echo -e "${YELLOW}  - Cache key pattern analysis across system maps${NC}"
+    echo -e "${YELLOW}  - Invalidation chain verification${NC}"
+    echo -e "${YELLOW}  - Cache key inconsistencies flagged (e.g., healthVisibilitySettings variations)${NC}"
+    echo -e "${YELLOW}  - Component cache dependencies validated${NC}"
+    run_test "Validate Cache Consistency" "node system-map-auditor/dist/cli.js validate-cache-consistency --quiet" 0
+
+    echo -e "${BLUE}Expected Output: Missing component detection:${NC}"
+    echo -e "${YELLOW}  - 🔍 MISSING COMPONENT DETECTION header${NC}"
+    echo -e "${YELLOW}  - Component references vs definitions analysis${NC}"
+    echo -e "${YELLOW}  - Missing components identified (e.g., HealthMetricsCard)${NC}"
+    echo -e "${YELLOW}  - Undefined component references flagged${NC}"
+    echo -e "${YELLOW}  - Fix suggestions for missing component definitions${NC}"
+    run_test "Detect Missing Components" "node system-map-auditor/dist/cli.js detect-missing-components --quiet" 0
+
+    echo -e "${BLUE}Expected Output: Broken feature status validation:${NC}"
+    echo -e "${YELLOW}  - 🔍 BROKEN FEATURE STATUS VALIDATION header${NC}"
+    echo -e "${YELLOW}  - Feature status accuracy verification${NC}"
+    echo -e "${YELLOW}  - Broken status validation against actual implementation${NC}"
+    echo -e "${YELLOW}  - 'remove-metrics' broken status verified with evidence${NC}"
+    echo -e "${YELLOW}  - Status mismatch detection and recommendations${NC}"
+    run_test "Validate Broken Features" "node system-map-auditor/dist/cli.js validate-broken-features --quiet" 0
+
     # Combined Enhanced Validation Tests
     echo -e "${BLUE}Expected Output: Comprehensive validation combining all enhanced features:${NC}"
     echo -e "${YELLOW}  - Complete validation pipeline covering all enhanced features${NC}"
@@ -270,6 +295,7 @@ main() {
     echo -e "${GREEN}✅ Cache Invalidation Chain Validation (6 tests)${NC}"
     echo -e "${GREEN}✅ UI Refresh Dependency Validation (7 tests)${NC}"
     echo -e "${GREEN}✅ Integration Evidence Requirements (7 tests)${NC}"
+    echo -e "${GREEN}✅ New Semantic Cache Validation (3 tests)${NC}"
     echo -e "${GREEN}✅ Combined Enhanced Validation (3 tests)${NC}"
 
     if [ $FAILED_TESTS -eq 0 ]; then

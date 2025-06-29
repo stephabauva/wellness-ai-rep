@@ -63,7 +63,7 @@ main() {
     # Basic CLI Commands
     echo -e "${BLUE}Expected Output: Complete help documentation showing:${NC}"
     echo -e "${YELLOW}  - Usage: system-map-auditor [options] [command]${NC}"
-    echo -e "${YELLOW}  - All available commands (help, version, parse-only, etc.)${NC}"
+    echo -e "${YELLOW}  - All available commands (help, version, parse-only, validate-cache-consistency, detect-missing-components, validate-broken-features, etc.)${NC}"
     echo -e "${YELLOW}  - Global options (-c, -v, -q, --dry-run, --show-config)${NC}"
     echo -e "${YELLOW}  - Detailed command descriptions and examples${NC}"
     run_test "Help Command" "node system-map-auditor/dist/cli.js --help" 0

@@ -20,7 +20,19 @@
     "Health dashboard updates with newly synced data.",
     "Sync completion status and statistics are shown."
   ],
-  "components": [
+  "components": {
+    "$ref": "../dashboard.map.json#/components"
+  },
+  "apiEndpoints": {
+    "$ref": "../dashboard.map.json#/apiEndpoints"
+  },
+  "logging": {
+    "$ref": "/.system-maps/infrastructure/logging.map.json#/health-logging"
+  },
+  "performance": {
+    "$ref": "/.system-maps/infrastructure/performance.map.json#/health-performance"
+  },
+  "featureComponents": [
     "NativeHealthIntegration",
     "native-health-service",
     "platform-detection",

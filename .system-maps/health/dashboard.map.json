@@ -72,10 +72,21 @@
             "DELETE request sent to clear user's health data.",
             "Dashboard refreshes showing empty state."
           ],
+          "systemFlow": [
+            "HealthDataSection shows confirmation dialog",
+            "User confirmation triggers useHealthDataApi.resetData()",
+            "DELETE /api/health-data/reset removes all user health records",
+            "Server deletes from healthData table where userId matches",
+            "React Query cache invalidation clears all health data queries",
+            "Dashboard components re-render showing empty state"
+          ],
           "components": [
             "HealthDataSection",
             "useHealthDataApi"
-          ]
+          ],
+          "logging": {
+            "$ref": "/.system-maps/infrastructure/logging.map.json#/health-logging"
+          }
         }
       }
     },

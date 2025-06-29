@@ -20,7 +20,19 @@
     "Health dashboard refreshes with new data.",
     "Import results are displayed to user."
   ],
-  "components": [
+  "components": {
+    "$ref": "../dashboard.map.json#/components"
+  },
+  "apiEndpoints": {
+    "$ref": "../dashboard.map.json#/apiEndpoints"
+  },
+  "logging": {
+    "$ref": "/.system-maps/infrastructure/logging.map.json#/health-logging"
+  },
+  "performance": {
+    "$ref": "/.system-maps/infrastructure/performance.map.json#/health-performance"
+  },
+  "featureComponents": [
     "HealthDataImport",
     "HealthDataParser",
     "HealthDataDeduplicationService",

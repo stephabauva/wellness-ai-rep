@@ -1428,6 +1428,289 @@ export class SystemMapAuditor {
     return lines.join('\n');
   }
 
+  // Enhanced Validation Methods - Component-to-API Call Tracing
+
+  /**
+   * Validate API call tracing across components
+   */
+  async validateApiCallTracing(options: {
+    component?: string;
+    checkCacheInvalidation?: boolean;
+    checkErrorHandling?: boolean;
+  }): Promise<any[]> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const results: any[] = [];
+
+    for (const [, map] of maps) {
+      if (!map.components) continue;
+
+      for (const component of map.components) {
+        if (options.component && component.name !== options.component) continue;
+
+        const tracingResult = this.enhancedComponentValidator.validateApiCallTracing(component, codebase);
+        results.push({
+          component: component.name,
+          ...tracingResult
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Generate API tracing report
+   */
+  generateApiTracingReport(results: any[]): string {
+    const lines: string[] = [];
+    lines.push('API Call Tracing Validation Results:');
+    lines.push('');
+    
+    for (const result of results) {
+      lines.push(`Component: ${result.component}`);
+      lines.push(`  Status: ${result.passed ? 'PASS' : 'FAIL'}`);
+      if (result.issues.length > 0) {
+        lines.push(`  Issues:`);
+        for (const issue of result.issues) {
+          lines.push(`    - ${issue.severity.toUpperCase()}: ${issue.message}`);
+        }
+      }
+      lines.push('');
+    }
+    
+    return lines.join('\n');
+  }
+
+  // Enhanced Validation Methods - Cache Invalidation Chain Validation
+
+  /**
+   * Validate cache dependencies
+   */
+  async validateCacheDependencies(options: { checkTiming?: boolean }): Promise<any> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    return await this.cacheValidationService.validateCacheDependencies(codebase);
+  }
+
+  /**
+   * Validate cache invalidation chains
+   */
+  async validateCacheInvalidationChains(options: { checkCompleteness?: boolean }): Promise<any> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    return await this.cacheValidationService.validateCacheInvalidationChains(codebase);
+  }
+
+  /**
+   * Validate query key consistency
+   */
+  async validateQueryKeyConsistency(options: { checkOrphans?: boolean }): Promise<any> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    return await this.cacheValidationService.validateQueryKeyConsistency(codebase);
+  }
+
+  /**
+   * Generate cache validation report
+   */
+  generateCacheValidationReport(result: any): string {
+    const lines: string[] = [];
+    lines.push('Cache Validation Results:');
+    lines.push('');
+    lines.push(`Status: ${result.passed ? 'PASS' : 'FAIL'}`);
+    lines.push(`Checks Performed: ${result.metrics.checksPerformed}`);
+    lines.push(`Execution Time: ${result.metrics.executionTime}ms`);
+    
+    if (result.issues.length > 0) {
+      lines.push('');
+      lines.push('Issues:');
+      for (const issue of result.issues) {
+        lines.push(`  - ${issue.severity.toUpperCase()}: ${issue.message}`);
+        if (issue.suggestion) {
+          lines.push(`    Suggestion: ${issue.suggestion}`);
+        }
+      }
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate invalidation chain report
+   */
+  generateInvalidationChainReport(result: any): string {
+    return this.generateCacheValidationReport(result);
+  }
+
+  /**
+   * Generate query key consistency report
+   */
+  generateQueryKeyConsistencyReport(result: any): string {
+    return this.generateCacheValidationReport(result);
+  }
+
+  // Enhanced Validation Methods - UI Refresh Dependency Validation
+
+  /**
+   * Validate UI refresh chains
+   */
+  async validateUiRefreshChains(options: {
+    checkLoadingStates?: boolean;
+    checkErrorStates?: boolean;
+  }): Promise<any> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    return await this.uiRefreshValidator.validateUiRefreshChains(codebase);
+  }
+
+  /**
+   * Validate component data sync
+   */
+  async validateComponentDataSync(options: { buildDependencyGraph?: boolean }): Promise<any> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    return await this.uiRefreshValidator.validateComponentDataSync(codebase);
+  }
+
+  /**
+   * Validate UI consistency
+   */
+  async validateUiConsistency(options: { checkOptimisticUpdates?: boolean }): Promise<any> {
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    return await this.uiRefreshValidator.validateUiConsistency(codebase);
+  }
+
+  /**
+   * Generate UI refresh report
+   */
+  generateUiRefreshReport(result: any): string {
+    const lines: string[] = [];
+    lines.push('UI Refresh Validation Results:');
+    lines.push('');
+    lines.push(`Status: ${result.passed ? 'PASS' : 'FAIL'}`);
+    lines.push(`Checks Performed: ${result.metrics.checksPerformed}`);
+    lines.push(`Execution Time: ${result.metrics.executionTime}ms`);
+    
+    if (result.issues.length > 0) {
+      lines.push('');
+      lines.push('Issues:');
+      for (const issue of result.issues) {
+        lines.push(`  - ${issue.severity.toUpperCase()}: ${issue.message}`);
+        if (issue.suggestion) {
+          lines.push(`    Suggestion: ${issue.suggestion}`);
+        }
+      }
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate data sync report
+   */
+  generateDataSyncReport(result: any): string {
+    return this.generateUiRefreshReport(result);
+  }
+
+  /**
+   * Generate UI consistency report
+   */
+  generateUiConsistencyReport(result: any): string {
+    return this.generateUiRefreshReport(result);
+  }
+
+  // Enhanced Validation Methods - Integration Evidence Requirements
+
+  /**
+   * Validate integration evidence
+   */
+  async validateIntegrationEvidence(options: {
+    feature?: string;
+    checkFreshness?: boolean;
+    requireEndToEnd?: boolean;
+  }): Promise<any> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    
+    const filteredMaps = options.feature 
+      ? Array.from(maps.values()).filter(m => m.name === options.feature)
+      : Array.from(maps.values());
+
+    return await this.integrationEvidenceValidator.validateIntegrationEvidence(filteredMaps, codebase);
+  }
+
+  /**
+   * Validate feature integration status
+   */
+  async validateFeatureIntegrationStatus(options: {
+    feature?: string;
+    generateStatusReport?: boolean;
+  }): Promise<any[]> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const { codebase } = await this.codebaseScanner.scanCodebase();
+    const results: any[] = [];
+    
+    const filteredMaps = options.feature 
+      ? Array.from(maps.values()).filter(m => m.name === options.feature)
+      : Array.from(maps.values());
+
+    for (const map of filteredMaps) {
+      const status = await this.integrationEvidenceValidator.validateFeatureIntegration(map, codebase);
+      results.push(status);
+    }
+
+    return results;
+  }
+
+  /**
+   * Generate integration evidence report
+   */
+  generateIntegrationEvidenceReport(result: any): string {
+    const lines: string[] = [];
+    lines.push('Integration Evidence Validation Results:');
+    lines.push('');
+    lines.push(`Status: ${result.passed ? 'PASS' : 'FAIL'}`);
+    lines.push(`Checks Performed: ${result.metrics.checksPerformed}`);
+    lines.push(`Execution Time: ${result.metrics.executionTime}ms`);
+    
+    if (result.issues.length > 0) {
+      lines.push('');
+      lines.push('Issues:');
+      for (const issue of result.issues) {
+        lines.push(`  - ${issue.severity.toUpperCase()}: ${issue.message}`);
+        if (issue.suggestion) {
+          lines.push(`    Suggestion: ${issue.suggestion}`);
+        }
+      }
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate feature integration report
+   */
+  generateFeatureIntegrationReport(results: any[]): string {
+    const lines: string[] = [];
+    lines.push('Feature Integration Status Report:');
+    lines.push('');
+    
+    for (const result of results) {
+      lines.push(`Feature: ${result.featureName}`);
+      lines.push(`  Overall Status: ${result.overallStatus.toUpperCase()}`);
+      lines.push(`  Components: ${result.components.length} (avg score: ${(result.components.reduce((sum: number, c: any) => sum + c.integrationScore, 0) / Math.max(result.components.length, 1)).toFixed(2)})`);
+      lines.push(`  APIs: ${result.apis.length} (avg score: ${(result.apis.reduce((sum: number, a: any) => sum + a.integrationScore, 0) / Math.max(result.apis.length, 1)).toFixed(2)})`);
+      lines.push(`  Flows: ${result.flows.length} (avg score: ${(result.flows.reduce((sum: number, f: any) => sum + f.integrationScore, 0) / Math.max(result.flows.length, 1)).toFixed(2)})`);
+      lines.push(`  Evidence: ${result.evidence.length} items`);
+      
+      if (result.blockers.length > 0) {
+        lines.push(`  Blockers: ${result.blockers.length}`);
+        for (const blocker of result.blockers) {
+          lines.push(`    - ${blocker.severity.toUpperCase()}: ${blocker.message}`);
+        }
+      }
+      lines.push('');
+    }
+    
+    return lines.join('\n');
+  }
+
   // Helper methods
 
   private calculateOverallScore(results: AuditResult[]): number {

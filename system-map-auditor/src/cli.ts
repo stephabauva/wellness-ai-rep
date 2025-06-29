@@ -531,7 +531,7 @@ program
         console.log(auditor.generateApiTracingReport(results));
       }
       
-      const hasErrors = results.some(r => r.issues.some(i => i.severity === 'error'));
+      const hasErrors = results.some((r: any) => r.issues.some((i: any) => i.severity === 'error'));
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('API call tracing validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -556,7 +556,7 @@ program
         console.log(auditor.generateCacheValidationReport(results));
       }
       
-      const hasErrors = results.issues.some(i => i.severity === 'error');
+      const hasErrors = results.issues.some((i: any) => i.severity === 'error');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('Cache dependency validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -580,7 +580,7 @@ program
         console.log(auditor.generateInvalidationChainReport(results));
       }
       
-      const hasErrors = results.issues.some(i => i.severity === 'error');
+      const hasErrors = results.issues.some((i: any) => i.severity === 'error');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('Cache invalidation chain validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -604,7 +604,7 @@ program
         console.log(auditor.generateQueryKeyConsistencyReport(results));
       }
       
-      const hasErrors = results.issues.some(i => i.severity === 'error');
+      const hasErrors = results.issues.some((i: any) => i.severity === 'error');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('Query key consistency validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -631,7 +631,7 @@ program
         console.log(auditor.generateUiRefreshReport(results));
       }
       
-      const hasErrors = results.issues.some(i => i.severity === 'error');
+      const hasErrors = results.issues.some((i: any) => i.severity === 'error');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('UI refresh chain validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -655,7 +655,7 @@ program
         console.log(auditor.generateDataSyncReport(results));
       }
       
-      const hasErrors = results.issues.some(i => i.severity === 'error');
+      const hasErrors = results.issues.some((i: any) => i.severity === 'error');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('Component data sync validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -679,7 +679,7 @@ program
         console.log(auditor.generateUiConsistencyReport(results));
       }
       
-      const hasErrors = results.issues.some(i => i.severity === 'error');
+      const hasErrors = results.issues.some((i: any) => i.severity === 'error');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('UI consistency validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -708,7 +708,7 @@ program
         console.log(auditor.generateIntegrationEvidenceReport(results));
       }
       
-      const hasErrors = results.issues.some(i => i.severity === 'error');
+      const hasErrors = results.issues.some((i: any) => i.severity === 'error');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('Integration evidence validation failed:', error instanceof Error ? error.message : 'Unknown error');

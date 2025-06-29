@@ -44,18 +44,22 @@ To ensure scalability, maintainability, and token efficiency, the system map emp
 - `planned`: Feature is designed but not yet implemented
 - `broken`: Feature exists but fails during execution
 
-### 2.1. Refactoring Triggers
+### 2.1. Refactoring Triggers (MANDATORY ENFORCEMENT)
 
-To maintain clarity and prevent maps from becoming unwieldy, the following quantitative triggers mandate refactoring a domain map:
+To maintain clarity and prevent maps from becoming unwieldy, the following quantitative triggers **MANDATE IMMEDIATE REFACTORING** of a domain map:
 
--   **Split into Sub-Domain Directories when:**
+-   **🚨 MANDATORY: Split into Sub-Domain Directories when:**
     -   The total line count of a single `[domain].map.json` file exceeds **300 lines**.
     -   OR the number of top-level `featureGroups` in a single map exceeds **5**.
-    -   **Action:** Create a directory (e.g., `/.system-maps/[domain]/`) and split the `featureGroups` into logical, smaller sub-domain map files within it (e.g., `[feature-group-A].map.json`, `[feature-group-B].map.json`). Update the `root.map.json` path to point to the new directory.
+    -   **IMMEDIATE ACTION REQUIRED:** Create a directory (e.g., `/.system-maps/[domain]/`) and split the `featureGroups` into logical, smaller sub-domain map files within it (e.g., `[feature-group-A].map.json`, `[feature-group-B].map.json`). Update the `root.map.json` path to point to the new directory.
+    -   **VIOLATION CONSEQUENCE:** System Map Auditor will flag this as a critical error and block validation until resolved.
 
--   **Extract to a Mega-Feature File when:**
+-   **🚨 MANDATORY: Extract to a Mega-Feature File when:**
     -   The JSON definition for a *single feature* within a `featureGroup` exceeds **100 lines**.
-    -   **Action:** Create a new `[feature-name].feature.json` file. Move the entire feature object into this new file. In the original domain map, replace the feature object with a `$ref` pointer (e.g., `"$ref": "./[feature-name].feature.json"`). This should be used only for individual features that are disproportionately large.
+    -   **IMMEDIATE ACTION REQUIRED:** Create a new `[feature-name].feature.json` file. Move the entire feature object into this new file. In the original domain map, replace the feature object with a `$ref` pointer (e.g., `"$ref": "./[feature-name].feature.json"`). This should be used only for individual features that are disproportionately large.
+    -   **VIOLATION CONSEQUENCE:** System Map Auditor will flag this as a critical error and require immediate extraction.
+
+**CRITICAL RULE:** No exceptions to these limits. If you encounter a domain that would exceed 300 lines, you MUST implement sub-domain directory structure instead of creating an oversized single file.
 
 #### Metadata Requirements for Extracted Features
 

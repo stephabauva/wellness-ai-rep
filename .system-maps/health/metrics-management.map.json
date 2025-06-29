@@ -1,0 +1,109 @@
+
+{
+  "tableOfContents": {
+    "visibility-control": {
+      "features": ["add-metrics", "remove-metrics"],
+      "components": ["AddMetricsModal", "RemoveMetricsModal", "useHealthVisibilitySettings"],
+      "endpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"]
+    }
+  },
+  "integrationStatus": {
+    "add-metrics": {
+      "status": "broken",
+      "lastVerified": "2025-01-28",
+      "knownIssues": ["Component integration not verified", "API endpoints need validation"]
+    },
+    "remove-metrics": {
+      "status": "broken", 
+      "lastVerified": "2025-01-28",
+      "knownIssues": ["Component integration not verified", "API endpoints need validation"]
+    }
+  },
+  "lastUpdated": "2025-01-28T18:20:00Z",
+  "dependencies": ["dashboard"],
+  "featureGroups": {
+    "visibility-control": {
+      "description": "User control over health metric visibility preferences.",
+      "features": {
+        "add-metrics": {
+          "description": "Add new health metrics to dashboard view.",
+          "userFlow": [
+            "User clicks 'Add Metrics' button",
+            "Modal shows available metrics",
+            "User selects metrics to add",
+            "Dashboard updates with new metrics"
+          ],
+          "systemFlow": [
+            "AddMetricsModal opens",
+            "useHealthVisibilitySettings fetches current settings", 
+            "PATCH request updates preferences",
+            "Dashboard re-renders"
+          ],
+          "components": ["AddMetricsModal", "useHealthVisibilitySettings"],
+          "apiIntegration": {
+            "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
+            "actualEndpoints": [],
+            "integrationGaps": ["API endpoint not implemented"]
+          }
+        },
+        "remove-metrics": {
+          "description": "Remove health metrics from dashboard view.",
+          "userFlow": [
+            "User enters removal mode",
+            "User selects metrics to remove", 
+            "Dashboard hides selected metrics"
+          ],
+          "systemFlow": [
+            "RemoveMetricsModal confirms selection",
+            "PATCH request updates visibility settings",
+            "Dashboard re-renders without hidden metrics"
+          ],
+          "components": ["RemoveMetricsModal", "useHealthVisibilitySettings"]
+        }
+      }
+    }
+  },
+  "components": {
+    "AddMetricsModal": {
+      "path": "client/src/components/health/AddMetricsModal.tsx",
+      "type": "React Component",
+      "description": "Modal for adding metrics to dashboard.",
+      "calls": [],
+      "uses": ["useHealthVisibilitySettings"],
+      "invalidates": []
+    },
+    "RemoveMetricsModal": {
+      "path": "client/src/components/health/RemoveMetricsModal.tsx",
+      "type": "React Component", 
+      "description": "Modal for removing metrics from dashboard.",
+      "calls": [],
+      "uses": ["useHealthVisibilitySettings"],
+      "invalidates": []
+    },
+    "useHealthVisibilitySettings": {
+      "path": "client/src/hooks/useHealthVisibilitySettings.ts",
+      "type": "React Hook",
+      "description": "Manages health metric visibility preferences.",
+      "calls": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"],
+      "uses": [],
+      "invalidates": ["query:healthVisibilitySettings"]
+    }
+  },
+  "apiEndpoints": {
+    "GET /api/health-consent/visibility": {
+      "description": "Get user's metric visibility preferences.",
+      "handlerFile": "server/routes.ts",
+      "response": "{ visible_metrics: string[] }",
+      "readsFrom": ["users.preferences"],
+      "modifies": []
+    },
+    "PATCH /api/health-consent/visibility": {
+      "description": "Update user's metric visibility preferences.",
+      "handlerFile": "server/routes.ts",
+      "requestBody": "{ visible_metrics: string[] }",
+      "response": "{ success: boolean }",
+      "readsFrom": ["users"],
+      "modifies": ["users.preferences"]
+    }
+  }
+}

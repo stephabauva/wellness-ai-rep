@@ -1,0 +1,88 @@
+
+{
+  "tableOfContents": {
+    "data-management": {
+      "features": ["data-reset", "pdf-export"],
+      "components": ["useHealthDataApi", "useHealthReport"],
+      "endpoints": ["DELETE /api/health-data/reset", "POST /api/health-data/export/pdf"]
+    }
+  },
+  "integrationStatus": {
+    "data-reset": {
+      "status": "active",
+      "lastVerified": "2025-01-28", 
+      "knownIssues": []
+    },
+    "pdf-export": {
+      "status": "active",
+      "lastVerified": "2025-01-28",
+      "knownIssues": []
+    }
+  },
+  "lastUpdated": "2025-01-28T18:20:00Z",
+  "dependencies": ["dashboard"],
+  "featureGroups": {
+    "data-management": {
+      "description": "Health data management operations.",
+      "features": {
+        "data-reset": {
+          "description": "Reset/clear user's health data.",
+          "userFlow": [
+            "User clicks 'Reset Data'",
+            "Confirmation dialog appears",
+            "User confirms reset",
+            "Dashboard shows empty state"
+          ],
+          "systemFlow": [
+            "Confirmation dialog shown",
+            "DELETE request clears data",
+            "Cache invalidated",
+            "Dashboard re-renders"
+          ],
+          "components": ["useHealthDataApi"]
+        },
+        "pdf-export": {
+          "description": "Generate PDF reports of health data.",
+          "userFlow": [
+            "User clicks 'Download Report'",
+            "PDF generated with current data",
+            "File automatically downloaded"
+          ],
+          "systemFlow": [
+            "useHealthReport triggered",
+            "POST request generates PDF",
+            "Browser downloads file"
+          ],
+          "components": ["useHealthReport"]
+        }
+      }
+    }
+  },
+  "components": {
+    "useHealthReport": {
+      "path": "client/src/hooks/useHealthReport.ts",
+      "type": "React Hook",
+      "description": "Generates PDF reports of health data.",
+      "calls": ["POST /api/health-data/export/pdf"],
+      "uses": [],
+      "invalidates": []
+    }
+  },
+  "apiEndpoints": {
+    "DELETE /api/health-data/reset": {
+      "description": "Delete all health data for user.",
+      "handlerFile": "server/routes.ts",
+      "response": "{ success: boolean, deletedCount: number }",
+      "readsFrom": ["healthData"],
+      "modifies": ["healthData"]
+    },
+    "POST /api/health-data/export/pdf": {
+      "description": "Generate PDF report of health data.",
+      "handlerFile": "server/routes.ts",
+      "requestBody": "{ timeRange?: string }",
+      "response": "PDF file download",
+      "readsFrom": ["healthData"],
+      "modifies": []
+    }
+  }
+}

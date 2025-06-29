@@ -431,8 +431,8 @@ const HealthDataSection: React.FC = () => {
 
             <TabsContent value="overview" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {healthCategories.map(cat => (
-                  categorizedData?.[cat.id as keyof CategorizedHealthData] && (
+                {healthCategories.map(cat => 
+                  categorizedData?.[cat.id as keyof CategorizedHealthData] ? (
                     <HealthMetricsCard
                       key={cat.id}
                       title={cat.name}
@@ -444,8 +444,8 @@ const HealthDataSection: React.FC = () => {
                       onMetricSelectionChange={setSelectedMetricsForRemoval}
                       visibilitySettings={visibilitySettings}
                     />
-                  )
-                ))}
+                  ) : null
+                )}
               </div>
             </TabsContent>
 

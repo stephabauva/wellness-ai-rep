@@ -247,6 +247,68 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Health metrics visibility endpoints
+  app.get("/api/health-consent/visibility", async (req, res) => {
+    try {
+      const consentSettings = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+      
+      // Extract visibility settings from health consent
+      const visibilitySettings = {
+        visible_categories: healthConsent.data_visibility?.visible_categories || [],
+        hidden_categories: healthConsent.data_visibility?.hidden_categories || [],
+        dashboard_preferences: {
+          visible_metrics: healthConsent.data_visibility?.dashboard_preferences?.visible_metrics || [],
+          hidden_metrics: healthConsent.data_visibility?.dashboard_preferences?.hidden_metrics || [],
+          metric_order: healthConsent.data_visibility?.dashboard_preferences?.metric_order || []
+        }
+      };
+      
+      res.json(visibilitySettings);
+    } catch (error) {
+      console.error('Error fetching visibility settings:', error);
+      res.status(500).json({ message: "Failed to fetch visibility settings" });
+    }
+  });
+
+  app.patch("/api/health-consent/visibility", async (req, res) => {
+    try {
+      const visibilityUpdates = req.body;
+      
+      // Get current consent settings
+      const currentSettings = await healthConsentService.getUserConsentSettings(1);
+      const currentConsent = healthConsentService.transformConsentToSettings(currentSettings);
+      
+      // Update visibility settings within the consent structure
+      const updatedConsent = {
+        ...currentConsent,
+        data_visibility: {
+          ...currentConsent.data_visibility,
+          visible_categories: visibilityUpdates.visible_categories || currentConsent.data_visibility?.visible_categories || [],
+          hidden_categories: visibilityUpdates.hidden_categories || currentConsent.data_visibility?.hidden_categories || [],
+          dashboard_preferences: {
+            ...currentConsent.data_visibility?.dashboard_preferences,
+            ...visibilityUpdates.dashboard_preferences
+          }
+        }
+      };
+      
+      await healthConsentService.updateConsentSettings(1, updatedConsent);
+      
+      // Return the updated visibility settings
+      const responseSettings = {
+        visible_categories: updatedConsent.data_visibility.visible_categories,
+        hidden_categories: updatedConsent.data_visibility.hidden_categories,
+        dashboard_preferences: updatedConsent.data_visibility.dashboard_preferences
+      };
+      
+      res.json(responseSettings);
+    } catch (error) {
+      console.error('Error updating visibility settings:', error);
+      res.status(500).json({ message: "Failed to update visibility settings" });
+    }
+  });
+
   // Native health integration endpoints
   app.get("/api/native-health/capabilities", async (req, res) => {
     try {

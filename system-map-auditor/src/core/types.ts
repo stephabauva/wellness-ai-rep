@@ -6,7 +6,7 @@ export interface AuditResult {
 }
 
 export interface ValidationIssue {
-  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found' | 'cross-reference-error' | 'integration-point-error' | 'performance-issue' | 'architecture-violation' | 'missing-system-map' | 'cache-invalidation-missing' | 'ui-refresh-missing' | 'api-call-tracing' | 'integration-evidence-missing';
+  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found' | 'cross-reference-error' | 'integration-point-error' | 'performance-issue' | 'architecture-violation' | 'missing-system-map' | 'cache-invalidation-missing' | 'ui-refresh-missing' | 'api-call-tracing' | 'integration-evidence-missing' | 'cache-key-inconsistency' | 'broken-feature-status' | 'missing-component-definition' | 'handler-file-mismatch' | 'incomplete-cache-chain';
   severity: 'error' | 'warning' | 'info';
   message: string;
   location: string;

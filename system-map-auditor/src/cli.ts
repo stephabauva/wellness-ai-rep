@@ -897,7 +897,18 @@ program
       if (options.file) {
         const systemMap = await auditor.parseSystemMap(options.file);
         const cacheIssues = auditor.validateCacheConsistency(systemMap, options.file);
-        results = [{ feature: options.file, issues: cacheIssues, status: cacheIssues.some(i => i.severity === 'error') ? 'fail' : 'pass' }];
+        results = [{
+          feature: options.file,
+          issues: cacheIssues,
+          status: cacheIssues.some((i: any) => i.severity === 'error') ? 'fail' as const : 'pass' as const,
+          metrics: {
+            totalChecks: cacheIssues.length,
+            passedChecks: cacheIssues.filter((i: any) => i.severity === 'info').length,
+            warningChecks: cacheIssues.filter((i: any) => i.severity === 'warning').length,
+            failedChecks: cacheIssues.filter((i: any) => i.severity === 'error').length,
+            executionTime: 0
+          }
+        }];
       } else {
         results = await auditor.runCacheConsistencyAudit();
       }
@@ -928,7 +939,18 @@ program
       if (options.file) {
         const systemMap = await auditor.parseSystemMap(options.file);
         const missingComponents = auditor.detectMissingComponents(systemMap, options.file);
-        results = [{ feature: options.file, missingComponents, status: missingComponents.length > 0 ? 'fail' : 'pass' }];
+        results = [{
+          feature: options.file,
+          issues: [],
+          status: missingComponents.length > 0 ? 'fail' as const : 'pass' as const,
+          metrics: {
+            totalChecks: 1,
+            passedChecks: missingComponents.length === 0 ? 1 : 0,
+            warningChecks: 0,
+            failedChecks: missingComponents.length > 0 ? 1 : 0,
+            executionTime: 0
+          }
+        }];
       } else {
         results = await auditor.runMissingComponentsAudit();
       }
@@ -959,7 +981,18 @@ program
       if (options.file) {
         const systemMap = await auditor.parseSystemMap(options.file);
         const brokenFeatures = auditor.validateBrokenFeatures(systemMap, options.file);
-        results = [{ feature: options.file, brokenFeatures, status: brokenFeatures.length > 0 ? 'fail' : 'pass' }];
+        results = [{
+          feature: options.file,
+          issues: brokenFeatures,
+          status: brokenFeatures.length > 0 ? 'fail' as const : 'pass' as const,
+          metrics: {
+            totalChecks: brokenFeatures.length,
+            passedChecks: 0,
+            warningChecks: brokenFeatures.filter((i: any) => i.severity === 'warning').length,
+            failedChecks: brokenFeatures.filter((i: any) => i.severity === 'error').length,
+            executionTime: 0
+          }
+        }];
       } else {
         results = await auditor.runBrokenFeaturesAudit();
       }

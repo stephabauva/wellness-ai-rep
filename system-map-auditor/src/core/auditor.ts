@@ -177,8 +177,11 @@ export class SystemMapAuditor {
    * Parse a single system map
    */
   async parseSystemMap(filePath: string): Promise<SystemMap> {
-    const { systemMap } = await this.systemMapParser.parseSystemMap(filePath);
-    return systemMap;
+    const { map } = await this.systemMapParser.parseSystemMap(filePath);
+    if (!map) {
+      throw new Error(`Failed to parse system map: ${filePath}`);
+    }
+    return map;
   }
 
   /**

@@ -510,6 +510,238 @@ program
     }
   });
 
+// Enhanced Validation Commands - Component-to-API Call Tracing
+program
+  .command('validate-api-call-tracing')
+  .description('validate component-to-API call tracing and relationships')
+  .option('-c, --component <name>', 'validate specific component')
+  .option('--check-cache-invalidation', 'verify cache invalidation patterns')
+  .option('--check-error-handling', 'verify error handling patterns')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateApiCallTracing({
+        component: options.component,
+        checkCacheInvalidation: options.checkCacheInvalidation,
+        checkErrorHandling: options.checkErrorHandling
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateApiTracingReport(results));
+      }
+      
+      const hasErrors = results.some(r => r.issues.some(i => i.severity === 'error'));
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('API call tracing validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+// Enhanced Validation Commands - Cache Invalidation Chain Validation
+program
+  .command('validate-cache-dependencies')
+  .description('validate cache invalidation dependencies across components')
+  .option('--check-timing', 'verify invalidation timing in callbacks')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateCacheDependencies({
+        checkTiming: options.checkTiming
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateCacheValidationReport(results));
+      }
+      
+      const hasErrors = results.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Cache dependency validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-cache-invalidation-chains')
+  .description('validate complete cache invalidation chains for mutations')
+  .option('--check-completeness', 'verify all expected invalidations are present')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateCacheInvalidationChains({
+        checkCompleteness: options.checkCompleteness
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateInvalidationChainReport(results));
+      }
+      
+      const hasErrors = results.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Cache invalidation chain validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-query-key-consistency')
+  .description('validate query key consistency across the codebase')
+  .option('--check-orphans', 'check for orphaned invalidations')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateQueryKeyConsistency({
+        checkOrphans: options.checkOrphans
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateQueryKeyConsistencyReport(results));
+      }
+      
+      const hasErrors = results.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Query key consistency validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+// Enhanced Validation Commands - UI Refresh Dependency Validation
+program
+  .command('validate-ui-refresh-chains')
+  .description('validate UI refresh chains and dependency patterns')
+  .option('--check-loading-states', 'verify loading state patterns')
+  .option('--check-error-states', 'verify error state patterns')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateUiRefreshChains({
+        checkLoadingStates: options.checkLoadingStates,
+        checkErrorStates: options.checkErrorStates
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateUiRefreshReport(results));
+      }
+      
+      const hasErrors = results.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('UI refresh chain validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-component-data-sync')
+  .description('validate component data synchronization patterns')
+  .option('--build-dependency-graph', 'build and analyze data flow dependency graph')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateComponentDataSync({
+        buildDependencyGraph: options.buildDependencyGraph
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateDataSyncReport(results));
+      }
+      
+      const hasErrors = results.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Component data sync validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-ui-consistency')
+  .description('validate UI consistency after data changes')
+  .option('--check-optimistic-updates', 'verify optimistic update patterns')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateUiConsistency({
+        checkOptimisticUpdates: options.checkOptimisticUpdates
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateUiConsistencyReport(results));
+      }
+      
+      const hasErrors = results.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('UI consistency validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+// Enhanced Validation Commands - Integration Evidence Requirements
+program
+  .command('validate-integration-evidence')
+  .description('validate integration evidence requirements for features')
+  .option('-f, --feature <name>', 'validate specific feature')
+  .option('--check-freshness', 'verify evidence freshness (within 30 days)')
+  .option('--require-end-to-end', 'require end-to-end test evidence')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateIntegrationEvidence({
+        feature: options.feature,
+        checkFreshness: options.checkFreshness,
+        requireEndToEnd: options.requireEndToEnd
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateIntegrationEvidenceReport(results));
+      }
+      
+      const hasErrors = results.issues.some(i => i.severity === 'error');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Integration evidence validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-feature-integration-status')
+  .description('validate complete feature integration status with evidence')
+  .option('-f, --feature <name>', 'validate specific feature')
+  .option('--generate-status-report', 'generate detailed status report')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      const results = await auditor.validateFeatureIntegrationStatus({
+        feature: options.feature,
+        generateStatusReport: options.generateStatusReport
+      });
+      
+      if (!options.quiet) {
+        console.log(auditor.generateFeatureIntegrationReport(results));
+      }
+      
+      const hasBrokenFeatures = results.some(r => r.overallStatus === 'broken');
+      process.exit(hasBrokenFeatures ? 1 : 0);
+    } catch (error) {
+      console.error('Feature integration status validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
 // Handle global --show-config option
 if (process.argv.includes('--show-config')) {
   try {

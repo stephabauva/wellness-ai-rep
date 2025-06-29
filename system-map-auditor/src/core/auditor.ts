@@ -5,6 +5,10 @@ import { ComponentValidator } from '../validators/component-validator.js';
 import { ApiValidator } from '../validators/api-validator.js';
 import { FlowValidator } from '../validators/flow-validator.js';
 import { DependencyAnalyzer } from '../analyzers/dependency-analyzer.js';
+import { EnhancedComponentValidator } from '../validators/enhanced-component-validator.js';
+import { CacheValidationService } from '../validators/cache-validation-service.js';
+import { UiRefreshValidator } from '../validators/ui-refresh-validator.js';
+import { IntegrationEvidenceValidator } from '../validators/integration-evidence-validator.js';
 import { ConsoleReporter } from '../reporters/console-reporter.js';
 import { JsonReporter } from '../reporters/json-reporter.js';
 import { MarkdownReporter } from '../reporters/markdown-reporter.js';
@@ -34,6 +38,10 @@ export class SystemMapAuditor {
   private apiValidator: ApiValidator;
   private flowValidator: FlowValidator | null = null;
   private dependencyAnalyzer: DependencyAnalyzer | null = null;
+  private enhancedComponentValidator: EnhancedComponentValidator;
+  private cacheValidationService: CacheValidationService;
+  private uiRefreshValidator: UiRefreshValidator;
+  private integrationEvidenceValidator: IntegrationEvidenceValidator;
   private consoleReporter: ConsoleReporter;
   private jsonReporter: JsonReporter;
   private markdownReporter: MarkdownReporter;
@@ -47,6 +55,12 @@ export class SystemMapAuditor {
     this.codebaseScanner = new CodebaseScanner(this.config, projectRoot);
     this.componentValidator = new ComponentValidator(projectRoot);
     this.apiValidator = new ApiValidator(projectRoot);
+    
+    // Initialize enhanced validators
+    this.enhancedComponentValidator = new EnhancedComponentValidator(projectRoot);
+    this.cacheValidationService = new CacheValidationService(projectRoot);
+    this.uiRefreshValidator = new UiRefreshValidator(projectRoot);
+    this.integrationEvidenceValidator = new IntegrationEvidenceValidator(projectRoot);
     
     // Initialize reporters
     this.consoleReporter = new ConsoleReporter(

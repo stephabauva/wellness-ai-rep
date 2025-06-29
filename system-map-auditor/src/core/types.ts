@@ -6,7 +6,7 @@ export interface AuditResult {
 }
 
 export interface ValidationIssue {
-  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found' | 'cross-reference-error' | 'integration-point-error' | 'performance-issue' | 'architecture-violation' | 'missing-system-map';
+  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found' | 'cross-reference-error' | 'integration-point-error' | 'performance-issue' | 'architecture-violation' | 'missing-system-map' | 'cache-invalidation-missing' | 'ui-refresh-missing' | 'api-call-tracing' | 'integration-evidence-missing';
   severity: 'error' | 'warning' | 'info';
   message: string;
   location: string;
@@ -324,4 +324,120 @@ export interface ReportMetadata {
   projectPath: string;
   configurationUsed: Partial<AuditConfig>;
   executionTime: number;
+}
+
+// Enhanced Validation Types - Component-to-API Call Tracing
+export interface ApiCallTrace {
+  componentName: string;
+  componentPath: string;
+  apiCalls: ApiCallInfo[];
+  cacheInvalidations: CacheInvalidationInfo[];
+  uiRefreshPatterns: UiRefreshInfo[];
+}
+
+export interface ApiCallInfo {
+  endpoint: string;
+  method: string;
+  lineNumber: number;
+  functionName: string;
+  isInMutation: boolean;
+  hasErrorHandling: boolean;
+  hasCacheInvalidation: boolean;
+}
+
+export interface CacheInvalidationInfo {
+  queryKey: string;
+  invalidationType: 'specific' | 'pattern' | 'all';
+  lineNumber: number;
+  relatedApiCall?: string;
+  isImmediate: boolean;
+}
+
+export interface UiRefreshInfo {
+  triggerType: 'query-invalidation' | 'refetch' | 'manual-update';
+  affectedComponents: string[];
+  isAutomatic: boolean;
+  hasLoadingState: boolean;
+}
+
+// Cache Invalidation Chain Validation Types
+export interface CacheInvalidationChain {
+  startingAction: string;
+  apiEndpoint: string;
+  expectedInvalidations: string[];
+  actualInvalidations: string[];
+  missingInvalidations: string[];
+  chainComplete: boolean;
+  affectedComponents: string[];
+}
+
+export interface CacheConsistencyCheck {
+  queryKey: string;
+  expectedUpdaters: string[];
+  actualUpdaters: string[];
+  consistencyScore: number;
+  issues: ValidationIssue[];
+}
+
+// UI Refresh Dependency Validation Types
+export interface UiRefreshDependency {
+  component: string;
+  dependsOnQueries: string[];
+  refreshTriggers: RefreshTrigger[];
+  hasLoadingStates: boolean;
+  hasErrorStates: boolean;
+  refreshCompleteness: number;
+}
+
+export interface RefreshTrigger {
+  type: 'automatic' | 'manual' | 'conditional';
+  trigger: string;
+  conditions?: string[];
+  validated: boolean;
+}
+
+// Integration Evidence Requirements Types
+export interface IntegrationEvidence {
+  featureName: string;
+  evidenceType: 'end-to-end-test' | 'manual-verification' | 'automated-check';
+  evidenceLocation: string;
+  lastVerified: string;
+  verificationStatus: 'verified' | 'failed' | 'needs-verification' | 'outdated';
+  requiredFor: string[];
+}
+
+export interface FeatureIntegrationStatus {
+  featureName: string;
+  components: ComponentIntegrationStatus[];
+  apis: ApiIntegrationStatus[];
+  flows: FlowIntegrationStatus[];
+  overallStatus: 'fully-integrated' | 'partially-integrated' | 'broken' | 'unverified';
+  evidence: IntegrationEvidence[];
+  blockers: ValidationIssue[];
+}
+
+export interface ComponentIntegrationStatus {
+  name: string;
+  exists: boolean;
+  apiCallsValidated: boolean;
+  cacheInvalidationComplete: boolean;
+  uiRefreshWorking: boolean;
+  integrationScore: number;
+}
+
+export interface ApiIntegrationStatus {
+  endpoint: string;
+  method: string;
+  handlerExists: boolean;
+  calledByComponents: string[];
+  triggersCacheInvalidation: boolean;
+  integrationScore: number;
+}
+
+export interface FlowIntegrationStatus {
+  flowName: string;
+  stepsValidated: boolean;
+  endToEndWorking: boolean;
+  evidenceProvided: boolean;
+  integrationScore: number;
 }

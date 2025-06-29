@@ -1,4 +1,3 @@
-
 # System Map Auditor - Manual Testing Guide
 
 This document provides step-by-step instructions for manually testing each phase of the System Map Auditor implementation using terminal commands.
@@ -468,17 +467,70 @@ system-map-auditor --full-audit --verbose --debug
 
 ---
 
-## Automated Test Execution
+### Advanced Validation Examples
 
-### Batch Testing Script
+### Cache Validation Example Results
+```bash
+# Example of what cache validation should catch:
+❌ Feature: add-metrics
+   Status: ACTIVE (❌ INVALID - Missing Cache Evidence)
 
-Create a test runner script:
+   Cache Issues:
+   - Missing cache invalidation for query:healthVisibilitySettings
+   - Component HealthDataSection doesn't refresh after API call
+   - RemoveMetricsModal → KeyMetricsOverview refresh chain broken
+   - Query key inconsistency: 'healthData' vs 'health-data'
+
+   Recommendation: Change status to 'broken' until cache issues resolved
+```
+
+### UI Refresh Validation Example Results
+```bash
+# Example of what UI refresh validation should catch:
+❌ Component: KeyMetricsOverview
+   Data Source: query:healthVisibilitySettings
+
+   UI Issues:
+   - Component doesn't re-render after successful API mutations
+   - Missing refresh dependency in system map
+   - Cache invalidation doesn't trigger UI updates
+   - Stale data displayed to user after changes
+
+   Recommendation: Add proper refresh dependencies and cache invalidation
+```
+
+### Integration Evidence Example Results
+```bash
+# Example of what integration evidence validation should catch:
+❌ Feature: add-metrics
+   Status: ACTIVE (❌ REQUIRES EVIDENCE)
+
+   Missing Evidence:
+   - No end-to-end test file found
+   - Component-API calls not documented in code
+   - UI consistency not validated
+   - Cache invalidation not tested
+
+   Required Actions:
+   1. Create integration test file
+   2. Document actual API calls in components
+   3. Validate UI refresh after API operations
+   4. Test complete user flow functionality
+
+   Cannot mark as 'active' until evidence provided
+```
+
+### Automated Test Execution
+
+### Enhanced Batch Testing Script
+
+Create a comprehensive test runner script:
 
 ```bash
 #!/bin/bash
 # save as test-system-map-auditor.sh
 
-echo "🧪 System Map Auditor - Comprehensive Test Suite"
+echo "🧪 System Map Auditor - Enhanced Test Suite"
 echo "================================================"
 
 # Phase 1 Tests
@@ -493,13 +545,20 @@ system-map-auditor --validate-components --quiet > /dev/null && echo "✅ Compon
 system-map-auditor --validate-flows --quiet > /dev/null && echo "✅ Flows" || echo "❌ Flows"
 system-map-auditor --detect-circular --quiet > /dev/null && echo "✅ Dependencies" || echo "❌ Dependencies"
 
-# Phase 3 Tests
-echo "📍 Phase 3: Integration"
-system-map-auditor --full-audit --quiet > /dev/null && echo "✅ Full Audit" || echo "❌ Full Audit"
-system-map-auditor --incremental --quiet > /dev/null && echo "✅ Incremental" || echo "❌ Incremental"
+# Phase 3 Tests - New Cache & UI Validation
+echo "📍 Phase 3: Enhanced Integration"
+system-map-auditor --validate-cache-dependencies --quiet > /dev/null && echo "✅ Cache Dependencies" || echo "❌ Cache Dependencies"
+system-map-auditor --validate-ui-refresh-chains --quiet > /dev/null && echo "✅ UI Refresh Chains" || echo "❌ UI Refresh Chains"
+system-map-auditor --validate-integration-evidence --quiet > /dev/null && echo "✅ Integration Evidence" || echo "❌ Integration Evidence"
+system-map-auditor --validate-hook-consistency --quiet > /dev/null && echo "✅ Hook Consistency" || echo "❌ Hook Consistency"
+system-map-auditor --prevent-false-active-status --quiet > /dev/null && echo "✅ False Active Prevention" || echo "❌ False Active Prevention"
+
+# Complete Integration Test
+echo "📍 Complete Integration Test"
+system-map-auditor --validate-complete-integration --quiet > /dev/null && echo "✅ Complete Integration" || echo "❌ Complete Integration"
 
 echo "================================================"
-echo "🏆 Test Suite Complete"
+echo "🏆 Enhanced Test Suite Complete"
 ```
 
 **Usage:**
@@ -508,4 +567,26 @@ chmod +x test-system-map-auditor.sh
 ./test-system-map-auditor.sh
 ```
 
-This comprehensive testing guide ensures that each phase of the System Map Auditor can be thoroughly validated through manual terminal testing, providing confidence in the implementation quality and functionality.
+### Critical Issue Prevention Test
+```bash
+#!/bin/bash
+# save as test-add-metrics-prevention.sh
+# This test specifically validates that "Add Metrics" type issues are caught
+
+echo "🔍 Testing Add Metrics Issue Prevention"
+echo "======================================="
+
+echo "Testing feature: add-metrics"
+system-map-auditor --feature=add-metrics --validate-complete-integration --verbose
+
+echo "Testing cache invalidation chains..."
+system-map-auditor --validate-cache-invalidation-chains --domain=health --verbose
+
+echo "Testing UI refresh dependencies..."
+system-map-auditor --validate-ui-refresh-chains --feature=add-metrics --verbose
+
+echo "Testing integration evidence..."
+system-map-auditor --validate-integration-evidence --feature=add-metrics --strict
+
+echo "======================================="
+echo "🛡️ Add Metrics Prevention Test Complete"

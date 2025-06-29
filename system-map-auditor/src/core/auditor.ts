@@ -43,6 +43,7 @@ export class SystemMapAuditor {
   private cacheValidationService: CacheValidationService;
   private uiRefreshValidator: UiRefreshValidator;
   private integrationEvidenceValidator: IntegrationEvidenceValidator;
+  private semanticCacheValidator: SemanticCacheValidator;
   private consoleReporter: ConsoleReporter;
   private jsonReporter: JsonReporter;
   private markdownReporter: MarkdownReporter;
@@ -62,6 +63,7 @@ export class SystemMapAuditor {
     this.cacheValidationService = new CacheValidationService(projectRoot);
     this.uiRefreshValidator = new UiRefreshValidator(projectRoot);
     this.integrationEvidenceValidator = new IntegrationEvidenceValidator(projectRoot);
+    this.semanticCacheValidator = new SemanticCacheValidator();
     
     // Initialize reporters
     this.consoleReporter = new ConsoleReporter(
@@ -145,6 +147,155 @@ export class SystemMapAuditor {
   }
 
   /**
+   * Run cache consistency audit across all system maps
+   */
+  async runCacheConsistencyAudit(): Promise<AuditResult[]> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const results: AuditResult[] = [];
+
+    for (const [mapPath, systemMap] of maps) {
+      const cacheIssues = this.semanticCacheValidator.validateCacheConsistency(systemMap, mapPath);
+      
+      results.push({
+        feature: systemMap.name || mapPath,
+        status: cacheIssues.some(i => i.severity === 'error') ? 'fail' : 'pass',
+        issues: cacheIssues,
+        metrics: {
+          totalChecks: cacheIssues.length,
+          passedChecks: cacheIssues.filter(i => i.severity === 'info').length,
+          warningChecks: cacheIssues.filter(i => i.severity === 'warning').length,
+          failedChecks: cacheIssues.filter(i => i.severity === 'error').length,
+          executionTime: 0
+        }
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Parse a single system map
+   */
+  async parseSystemMap(filePath: string): Promise<SystemMap> {
+    const { systemMap } = await this.systemMapParser.parseSystemMap(filePath);
+    return systemMap;
+  }
+
+  /**
+   * Validate cache consistency for a specific system map
+   */
+  validateCacheConsistency(systemMap: SystemMap, mapPath: string): ValidationIssue[] {
+    return this.semanticCacheValidator.validateCacheConsistency(systemMap, mapPath);
+  }
+
+  /**
+   * Detect missing components in a system map
+   */
+  detectMissingComponents(systemMap: SystemMap, mapPath: string): string[] {
+    const issues = this.semanticCacheValidator.validateCacheConsistency(systemMap, mapPath);
+    return issues
+      .filter(issue => issue.type === 'missing-component-definition')
+      .map(issue => issue.metadata?.componentName || 'unknown');
+  }
+
+  /**
+   * Validate broken features in a system map
+   */
+  validateBrokenFeatures(systemMap: SystemMap, mapPath: string): ValidationIssue[] {
+    const issues = this.semanticCacheValidator.validateCacheConsistency(systemMap, mapPath);
+    return issues.filter(issue => issue.type === 'broken-feature-status');
+  }
+
+  /**
+   * Run missing components audit across all system maps
+   */
+  async runMissingComponentsAudit(): Promise<AuditResult[]> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const results: AuditResult[] = [];
+
+    for (const [mapPath, systemMap] of maps) {
+      const missingComponents = this.detectMissingComponents(systemMap, mapPath);
+      
+      results.push({
+        feature: systemMap.name || mapPath,
+        status: missingComponents.length > 0 ? 'fail' : 'pass',
+        issues: [],
+        metrics: {
+          totalChecks: 1,
+          passedChecks: missingComponents.length === 0 ? 1 : 0,
+          warningChecks: 0,
+          failedChecks: missingComponents.length > 0 ? 1 : 0,
+          executionTime: 0
+        }
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Run broken features audit across all system maps
+   */
+  async runBrokenFeaturesAudit(): Promise<AuditResult[]> {
+    const { maps } = await this.systemMapParser.parseAllSystemMaps();
+    const results: AuditResult[] = [];
+
+    for (const [mapPath, systemMap] of maps) {
+      const brokenFeatures = this.validateBrokenFeatures(systemMap, mapPath);
+      
+      results.push({
+        feature: systemMap.name || mapPath,
+        status: brokenFeatures.length > 0 ? 'fail' : 'pass',
+        issues: brokenFeatures,
+        metrics: {
+          totalChecks: brokenFeatures.length,
+          passedChecks: 0,
+          warningChecks: brokenFeatures.filter(i => i.severity === 'warning').length,
+          failedChecks: brokenFeatures.filter(i => i.severity === 'error').length,
+          executionTime: 0
+        }
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Generate cache consistency report
+   */
+  generateCacheConsistencyReport(results: AuditResult[], options: { showCacheKeys?: boolean } = {}): string {
+    return this.consoleReporter.generateReport(results);
+  }
+
+  /**
+   * Generate missing components report
+   */
+  generateMissingComponentsReport(results: any[], options: { suggestFixes?: boolean } = {}): string {
+    let report = '\n=== Missing Components Analysis ===\n\n';
+    
+    for (const result of results) {
+      report += `📁 ${result.feature}: `;
+      if (result.missingComponents && result.missingComponents.length > 0) {
+        report += `❌ ${result.missingComponents.length} missing components\n`;
+        for (const component of result.missingComponents) {
+          report += `   - ${component}\n`;
+        }
+      } else {
+        report += `✅ All components defined\n`;
+      }
+    }
+    
+    return report;
+  }
+
+  /**
+   * Generate broken features report
+   */
+  generateBrokenFeaturesReport(results: AuditResult[], options: { showDetails?: boolean } = {}): string {
+    return this.consoleReporter.generateReport(results);
+  }
+
+  /**
    * Audit a single system map
    */
   async auditSystemMap(
@@ -202,6 +353,20 @@ export class SystemMapAuditor {
         } else if (issue.severity === 'warning') {
           warningChecks++;
         }
+      }
+    }
+
+    // Add semantic cache validation
+    const semanticCacheIssues = this.semanticCacheValidator.validateCacheConsistency(systemMap, mapPath);
+    allIssues.push(...semanticCacheIssues);
+    totalChecks += semanticCacheIssues.length;
+    
+    // Count semantic cache issues
+    for (const issue of semanticCacheIssues) {
+      if (issue.severity === 'error') {
+        failedChecks++;
+      } else if (issue.severity === 'warning') {
+        warningChecks++;
       }
     }
 

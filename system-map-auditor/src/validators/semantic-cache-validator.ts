@@ -365,7 +365,8 @@ export class SemanticCacheValidator {
    */
   private validateComponentDefinitions(systemMap: SystemMap, mapPath: string): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
-    const definedComponents = new Set(Object.keys(systemMap.components || {}));
+    const componentMap = this.getComponentMapFromSystemMap(systemMap);
+    const definedComponents = new Set(Object.keys(componentMap || {}));
     const referencedComponents = new Set<string>();
     
     // Collect all component references

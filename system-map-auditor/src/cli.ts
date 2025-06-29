@@ -882,6 +882,100 @@ program
     }
   });
 
+// New Commands - Semantic Cache Analysis for Custom System Maps
+program
+  .command('validate-cache-consistency')
+  .description('validate cache invalidation patterns and consistency')
+  .option('-f, --file <path>', 'specific system map to validate')
+  .option('--show-cache-keys', 'show detailed cache key analysis')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      let results;
+      
+      if (options.file) {
+        const systemMap = await auditor.parseSystemMap(options.file);
+        const cacheIssues = auditor.validateCacheConsistency(systemMap, options.file);
+        results = [{ feature: options.file, issues: cacheIssues, status: cacheIssues.some(i => i.severity === 'error') ? 'fail' : 'pass' }];
+      } else {
+        results = await auditor.runCacheConsistencyAudit();
+      }
+      
+      if (!options.quiet) {
+        console.log(auditor.generateCacheConsistencyReport(results, { showCacheKeys: options.showCacheKeys }));
+      }
+      
+      const hasErrors = results.some(r => r.status === 'fail');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Cache consistency validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('detect-missing-components')
+  .description('detect components referenced but not defined in custom system maps')
+  .option('-f, --file <path>', 'specific system map to check')
+  .option('--suggest-fixes', 'suggest component definitions')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      let results;
+      
+      if (options.file) {
+        const systemMap = await auditor.parseSystemMap(options.file);
+        const missingComponents = auditor.detectMissingComponents(systemMap, options.file);
+        results = [{ feature: options.file, missingComponents, status: missingComponents.length > 0 ? 'fail' : 'pass' }];
+      } else {
+        results = await auditor.runMissingComponentsAudit();
+      }
+      
+      if (!options.quiet) {
+        console.log(auditor.generateMissingComponentsReport(results, { suggestFixes: options.suggestFixes }));
+      }
+      
+      const hasErrors = results.some(r => r.status === 'fail');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Missing components detection failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
+program
+  .command('validate-broken-features')
+  .description('validate broken feature status indicators in custom system maps')
+  .option('-f, --file <path>', 'specific system map to validate')
+  .option('--show-details', 'show detailed broken feature analysis')
+  .option('--quiet', 'suppress output except errors')
+  .action(async (options) => {
+    try {
+      const auditor = new SystemMapAuditor(program.opts().config);
+      let results;
+      
+      if (options.file) {
+        const systemMap = await auditor.parseSystemMap(options.file);
+        const brokenFeatures = auditor.validateBrokenFeatures(systemMap, options.file);
+        results = [{ feature: options.file, brokenFeatures, status: brokenFeatures.length > 0 ? 'fail' : 'pass' }];
+      } else {
+        results = await auditor.runBrokenFeaturesAudit();
+      }
+      
+      if (!options.quiet) {
+        console.log(auditor.generateBrokenFeaturesReport(results, { showDetails: options.showDetails }));
+      }
+      
+      const hasErrors = results.some(r => r.status === 'fail');
+      process.exit(hasErrors ? 1 : 0);
+    } catch (error) {
+      console.error('Broken features validation failed:', error instanceof Error ? error.message : 'Unknown error');
+      process.exit(1);
+    }
+  });
+
 program
   .command('suggest-cleanup')
   .description('suggest cleanup actions for unused resources')

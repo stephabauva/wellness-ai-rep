@@ -41,7 +41,7 @@ const HealthDataSection: React.FC = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [isRemovalMode, setIsRemovalMode] = useState<boolean>(false);
   const [selectedMetricsForRemoval, setSelectedMetricsForRemoval] = useState<string[]>([]);
-  
+
   const { categorizedData, allHealthData, isLoading, refetchHealthData } = useHealthDataApi(timeRange);
   const { downloadHealthReport, isDownloadingReport } = useHealthReport();
   const { toast } = useToast();
@@ -56,7 +56,7 @@ const HealthDataSection: React.FC = () => {
         throw new Error('Failed to fetch visibility settings');
       }
       const currentSettings = await response.json();
-      
+
       // Update visibility settings to hide selected metrics
       const updatedSettings = {
         ...currentSettings,
@@ -118,7 +118,7 @@ const HealthDataSection: React.FC = () => {
     if (!allHealthData || allHealthData.length === 0) {
       return [];
     }
-    
+
     // Process actual health data for activity metrics
     const activityData = allHealthData.filter(item => 
       item.dataType === 'steps' || 
@@ -127,22 +127,22 @@ const HealthDataSection: React.FC = () => {
       item.dataType === 'physical_effort' ||
       item.dataType === 'calories_burned'
     );
-    
+
     if (activityData.length === 0) {
       return [];
     }
-    
+
     // Group by day and aggregate
     const dayMap = new Map<string, { steps?: number; active?: number; calories?: number }>();
-    
+
     activityData.forEach(item => {
       const day = new Date(item.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
       const value = parseFloat(item.value);
-      
+
       if (!dayMap.has(day)) {
         dayMap.set(day, {});
       }
-      
+
       const dayData = dayMap.get(day)!;
       if (item.dataType === 'steps') dayData.steps = value;
       // Don't map daily_activity to steps since they are different metrics
@@ -150,7 +150,7 @@ const HealthDataSection: React.FC = () => {
       if (item.dataType === 'physical_effort') dayData.active = value; // Map physical_effort to active minutes
       if (item.dataType === 'calories_burned') dayData.calories = value;
     });
-    
+
     return Array.from(dayMap.entries()).map(([day, data]) => ({ day, ...data }));
   }, [allHealthData]);
 
@@ -158,7 +158,7 @@ const HealthDataSection: React.FC = () => {
     if (!allHealthData || allHealthData.length === 0) {
       return [];
     }
-    
+
     // Process actual health data for sleep metrics
     const sleepData = allHealthData.filter(item => 
       item.dataType === 'sleep_deep' || 
@@ -166,29 +166,29 @@ const HealthDataSection: React.FC = () => {
       item.dataType === 'sleep_rem' ||
       item.dataType === 'sleep_total'
     );
-    
+
     if (sleepData.length === 0) {
       return [];
     }
-    
+
     // Group by day and aggregate
     const dayMap = new Map<string, { deep?: number; light?: number; rem?: number; total?: number }>();
-    
+
     sleepData.forEach(item => {
       const day = new Date(item.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
       const value = parseFloat(item.value);
-      
+
       if (!dayMap.has(day)) {
         dayMap.set(day, {});
       }
-      
+
       const dayData = dayMap.get(day)!;
       if (item.dataType === 'sleep_deep') dayData.deep = value;
       if (item.dataType === 'sleep_light') dayData.light = value;
       if (item.dataType === 'sleep_rem') dayData.rem = value;
       if (item.dataType === 'sleep_total') dayData.total = value;
     });
-    
+
     return Array.from(dayMap.entries()).map(([day, data]) => ({ day, ...data }));
   }, [allHealthData]);
 
@@ -196,7 +196,7 @@ const HealthDataSection: React.FC = () => {
     if (!allHealthData || allHealthData.length === 0) {
       return [];
     }
-    
+
     // Process actual health data for nutrition metrics
     const nutritionData = allHealthData.filter(item => 
       item.dataType === 'protein' || 
@@ -209,25 +209,25 @@ const HealthDataSection: React.FC = () => {
       item.dataType === 'sugar' ||
       item.dataType === 'bmr'
     );
-    
+
     if (nutritionData.length === 0) {
       return [];
     }
-    
+
     // Aggregate nutrition data by type (sum for the time period)
     const nutritionMap = new Map<string, { value: number; unit: string }>();
-    
+
     nutritionData.forEach(item => {
       const value = parseFloat(item.value);
       const unit = item.unit || '';
-      
+
       if (nutritionMap.has(item.dataType)) {
         nutritionMap.get(item.dataType)!.value += value;
       } else {
         nutritionMap.set(item.dataType, { value, unit });
       }
     });
-    
+
     // Convert to nutrition items with goals (these would ideally come from user settings)
     const nutritionGoals = {
       protein: 110,
@@ -237,7 +237,7 @@ const HealthDataSection: React.FC = () => {
       calories: 2200,
       sugar: 50
     };
-    
+
     return Array.from(nutritionMap.entries()).map(([type, data]) => ({
       name: type.charAt(0).toUpperCase() + type.slice(1),
       value: Math.round(data.value),
@@ -251,25 +251,25 @@ const HealthDataSection: React.FC = () => {
     if (!allHealthData || allHealthData.length === 0) {
       return { consumed: 0, goal: 8, unit: 'glasses' };
     }
-    
+
     // Process actual health data for hydration metrics
     const hydrationData = allHealthData.filter(item => 
       item.dataType === 'water_intake' || 
       item.dataType === 'hydration'
     );
-    
+
     if (hydrationData.length === 0) {
       return { consumed: 0, goal: 8, unit: 'glasses' };
     }
-    
+
     // Sum up hydration for the time period
     const totalConsumed = hydrationData.reduce((sum, item) => {
       return sum + parseFloat(item.value);
     }, 0);
-    
+
     const unit = hydrationData[0]?.unit || 'glasses';
     const goal = unit === 'L' ? 2 : 8; // Default goals based on unit
-    
+
     return { 
       consumed: Math.round(totalConsumed * 10) / 10, // Round to 1 decimal
       goal, 
@@ -291,7 +291,7 @@ const HealthDataSection: React.FC = () => {
 
       // Refresh the health data after successful reset
       refetchHealthData();
-      
+
       toast({
         title: "Health Data Reset",
         description: "All health data has been successfully cleared. You can now import fresh data.",
@@ -338,90 +338,26 @@ const HealthDataSection: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto min-h-0">
-      <div className="p-4 md:p-6 pb-8 min-h-full">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">Health Dashboard</h1>
-            <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-              <AddMetricsModal />
-              <Button 
-                variant="outline" 
-                onClick={() => setIsRemovalMode(!isRemovalMode)}
-                className={isRemovalMode ? "bg-destructive/10 border-destructive" : ""}
-              >
-                <Minus className="h-4 w-4 mr-2" />
-                {isRemovalMode ? "Cancel" : "Remove Metrics"}
-              </Button>
-              {isRemovalMode && selectedMetricsForRemoval.length > 0 && (
-                <Button 
-                  variant="destructive" 
-                  onClick={handleRemoveSelectedMetrics}
-                  disabled={removeMetricsMutation.isPending}
-                >
-                  {removeMetricsMutation.isPending ? "Removing..." : `Remove Selected (${selectedMetricsForRemoval.length})`}
-                </Button>
-              )}
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select time range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 90 days</SelectItem>
-                  {/* <SelectItem value="custom">Custom range</SelectItem> */}
-                </SelectContent>
-              </Select>
-              <HealthDataImport />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="outline"
-                    disabled={isResetting}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Reset Data
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Reset All Health Data</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete all your health data from the system. This action cannot be undone. 
-                      You'll be able to import fresh data afterwards.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleResetHealthData}
-                      disabled={isResetting}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {isResetting ? "Resetting..." : "Reset All Data"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <Button 
-                onClick={() => downloadHealthReport()}
-                disabled={isDownloadingReport}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {isDownloadingReport ? "Downloading..." : "Download PDF"}
-              </Button>
-            </div>
-          </div>
+    <div className="flex-1 p-4 md:p-6 space-y-6 overflow-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Health Data Overview</h1>
+          <p className="text-muted-foreground">
+            Monitor your health metrics and trends over time
+          </p>
+        </div>
 
-          <KeyMetricsOverview 
-            healthData={allHealthData}
-            isRemovalMode={isRemovalMode}
-            selectedMetricsForRemoval={selectedMetricsForRemoval}
-            onMetricSelectionChange={setSelectedMetricsForRemoval}
-          />
+        {/* Metrics Management Controls */}
+        <div className="flex gap-2">
+          <AddMetricsModal />
+          <RemoveMetricsModal />
+        </div>
+      </div>
 
-          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
+      {/* Key Metrics Overview */}
+      <KeyMetricsOverview healthData={allHealthData} />
+
+      <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto gap-1">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
               {healthCategories.map(cat => (
@@ -497,11 +433,11 @@ const HealthDataSection: React.FC = () => {
               }}
             />
           </div>
-          
+
           <CoachingInsights />
         </div>
       </div>
-    </div>
+    
   );
 };
 

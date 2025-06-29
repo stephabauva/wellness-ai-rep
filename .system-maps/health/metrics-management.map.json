@@ -9,14 +9,14 @@
   },
   "integrationStatus": {
     "add-metrics": {
-      "status": "broken",
+      "status": "active",
       "lastVerified": "2025-01-28",
-      "knownIssues": ["Component integration not verified", "API endpoints need validation"]
+      "knownIssues": []
     },
     "remove-metrics": {
-      "status": "broken", 
+      "status": "active", 
       "lastVerified": "2025-01-28",
-      "knownIssues": ["Component integration not verified", "API endpoints need validation"]
+      "knownIssues": []
     }
   },
   "lastUpdated": "2025-01-28T18:20:00Z",
@@ -42,8 +42,8 @@
           "components": ["AddMetricsModal", "useHealthVisibilitySettings"],
           "apiIntegration": {
             "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
-            "actualEndpoints": [],
-            "integrationGaps": ["API endpoint not implemented"]
+            "actualEndpoints": ["GET /api/health-consent/visibility", "PATCH /api/health-consent/visibility"],
+            "integrationGaps": []
           }
         },
         "remove-metrics": {

@@ -32,18 +32,18 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserSettings(id: number, settings: EnhancedSettingsUpdate): Promise<User>;
-  
+
   // Message methods
   getMessages(userId: number): Promise<ChatMessage[]>;
   createMessage(message: InsertChatMessage): Promise<ChatMessage>;
-  
+
   // Health data methods
   getHealthData(userId: number, timeRange: string): Promise<HealthData[]>;
   createHealthData(data: InsertHealthData): Promise<HealthData>;
   createHealthDataBatch(data: InsertHealthData[]): Promise<HealthData[]>;
   clearAllHealthData(userId: number): Promise<void>;
   deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }>;
-  
+
   // Device methods
   getDevices(userId: number): Promise<ConnectedDevice[]>;
   getDevice(id: number): Promise<ConnectedDevice | undefined>;
@@ -71,7 +71,7 @@ export class MemStorage implements IStorage {
     this.messageId = 1;
     this.healthDataId = 1;
     this.deviceId = 1;
-    
+
     // Initialize with a default user
     this.initializeDefaultData();
   }
@@ -104,7 +104,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date()
     };
     this.users.set(1, defaultUser);
-    
+
     // Create welcome message
     const initialMessages: ChatMessage[] = [
       {
@@ -116,11 +116,11 @@ export class MemStorage implements IStorage {
       }
     ];
     this.messages.set(1, initialMessages);
-    
+
     // Create comprehensive health data
     const today = new Date();
     const healthDataEntries: HealthData[] = [];
-    
+
     // Body Composition Data (from smart scale)
     const bodyCompositionData = [
       { dataType: "weight", value: "165", unit: "lbs", category: "body_composition" },
@@ -181,12 +181,12 @@ export class MemStorage implements IStorage {
         metadata: null
       });
     });
-    
+
     // Time series data for trending (last 7 days)
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      
+
       // Lifestyle metrics with daily variation
       const lifestyleMetrics = [
         { 
@@ -264,7 +264,7 @@ export class MemStorage implements IStorage {
           metadata: null
         });
       });
-      
+
       // Some cardiovascular data that varies daily
       healthDataEntries.push({
         id: this.healthDataId++,
@@ -278,9 +278,9 @@ export class MemStorage implements IStorage {
         metadata: null
       });
     }
-    
+
     this.healthData.set(1, healthDataEntries);
-    
+
     // Create connected devices
     const smartwatch: ConnectedDevice = {
       id: this.deviceId++,
@@ -294,7 +294,7 @@ export class MemStorage implements IStorage {
       },
       createdAt: new Date()
     };
-    
+
     const scale: ConnectedDevice = {
       id: this.deviceId++,
       userId: 1,
@@ -307,7 +307,7 @@ export class MemStorage implements IStorage {
       },
       createdAt: new Date()
     };
-    
+
     this.devices.set(smartwatch.id, smartwatch);
     this.devices.set(scale.id, scale);
   }
@@ -344,18 +344,18 @@ export class MemStorage implements IStorage {
     this.users.set(id, user);
     return user;
   }
-  
+
   async updateUserSettings(id: number, settings: EnhancedSettingsUpdate): Promise<User> {
     const user = await this.getUser(id);
     if (!user) {
       throw new Error(`User with id ${id} not found`);
     }
-    
+
     // Directly parse 'settings' to extract and validate preference fields
     // .partial() allows only a subset of preference fields to be present
     // Zod will strip any fields from 'settings' not in 'userPreferenceSchema' (its default behavior)
     const validatedPreferenceUpdates = userPreferenceSchema.partial().parse(settings);
-    
+
     const updatedUser: User = {
         ...user,
         // Update top-level User fields from settings if they exist
@@ -374,39 +374,39 @@ export class MemStorage implements IStorage {
             ...validatedPreferenceUpdates, // Spread the Zod-validated preference fields
         },
     };
-    
+
     this.users.set(id, updatedUser);
     return updatedUser;
   }
-  
+
   // Message methods
   async getMessages(userId: number): Promise<ChatMessage[]> {
     return this.messages.get(userId) || [];
   }
-  
+
   async createMessage(message: InsertChatMessage): Promise<ChatMessage> {
     const id = this.messageId++;
     const userMessages = this.messages.get(message.userId) || [];
-    
+
     const newMessage: ChatMessage = {
       id,
       ...message,
       timestamp: new Date()
     };
-    
+
     userMessages.push(newMessage);
     this.messages.set(message.userId, userMessages);
     return newMessage;
   }
-  
+
   // Health data methods
   async getHealthData(userId: number, timeRange: string): Promise<HealthData[]> {
     const allData = this.healthData.get(userId) || [];
-    
+
     // Filter based on time range
     const now = new Date();
     let startDate: Date;
-    
+
     switch (timeRange) {
       case "7days":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -420,14 +420,14 @@ export class MemStorage implements IStorage {
       default:
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
-    
+
     return allData.filter(data => data.timestamp != null && data.timestamp >= startDate);
   }
-  
+
   async createHealthData(data: InsertHealthData): Promise<HealthData> {
     const id = this.healthDataId++;
     const userHealthData = this.healthData.get(data.userId) || [];
-    
+
     const newHealthData: HealthData = {
       id,
       ...data,
@@ -437,7 +437,7 @@ export class MemStorage implements IStorage {
       metadata: data.metadata ?? null, // Coalesce undefined to null
       timestamp: data.timestamp || new Date()
     };
-    
+
     userHealthData.push(newHealthData);
     this.healthData.set(data.userId, userHealthData);
     return newHealthData;
@@ -445,11 +445,11 @@ export class MemStorage implements IStorage {
 
   async createHealthDataBatch(dataArray: InsertHealthData[]): Promise<HealthData[]> {
     const results: HealthData[] = [];
-    
+
     for (const data of dataArray) {
       const id = this.healthDataId++;
       const userHealthData = this.healthData.get(data.userId) || [];
-      
+
       const newHealthData: HealthData = {
         id,
         ...data,
@@ -459,12 +459,12 @@ export class MemStorage implements IStorage {
         metadata: data.metadata ?? null, // Coalesce undefined to null
         timestamp: data.timestamp || new Date()
       };
-      
+
       userHealthData.push(newHealthData);
       this.healthData.set(data.userId, userHealthData);
       results.push(newHealthData);
     }
-    
+
     return results;
   }
 
@@ -475,29 +475,29 @@ export class MemStorage implements IStorage {
   async deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }> {
     const userHealthData = this.healthData.get(userId) || [];
     const beforeCount = userHealthData.length;
-    
+
     // Filter out records matching the dataType
     const filteredData = userHealthData.filter(item => item.dataType !== dataType);
     const deletedCount = beforeCount - filteredData.length;
-    
+
     // Update the stored data
     this.healthData.set(userId, filteredData);
-    
+
     return { deletedCount };
   }
-  
+
   // Device methods
   async getDevices(userId: number): Promise<ConnectedDevice[]> {
     return Array.from(this.devices.values()).filter(device => device.userId === userId);
   }
-  
+
   async getDevice(id: number): Promise<ConnectedDevice | undefined> {
     return this.devices.get(id);
   }
-  
+
   async createDevice(device: InsertConnectedDevice): Promise<ConnectedDevice> {
     const id = this.deviceId++;
-    
+
     const newDevice: ConnectedDevice = {
       id,
       ...device,
@@ -506,17 +506,17 @@ export class MemStorage implements IStorage {
       metadata: device.metadata ?? null,
       createdAt: new Date()
     };
-    
+
     this.devices.set(id, newDevice);
     return newDevice;
   }
-  
+
   async updateDevice(id: number, settings: any): Promise<ConnectedDevice> {
     const device = await this.getDevice(id);
     if (!device) {
       throw new Error(`Device with id ${id} not found`);
     }
-    
+
     const updatedDevice: ConnectedDevice = {
       ...device,
       metadata: {
@@ -525,16 +525,16 @@ export class MemStorage implements IStorage {
       },
       lastSync: new Date()
     };
-    
+
     this.devices.set(id, updatedDevice);
     return updatedDevice;
   }
-  
+
   async removeDevice(id: number): Promise<void> {
     if (!this.devices.has(id)) {
       throw new Error(`Device with id ${id} not found`);
     }
-    
+
     this.devices.delete(id);
   }
 }
@@ -547,12 +547,12 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
-  
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const dataToInsert: InsertUser = { ...insertUser };
 
@@ -574,7 +574,7 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.insert(users).values(dataToInsert).returning();
     return user;
   }
-  
+
   async updateUserSettings(id: number, settings: EnhancedSettingsUpdate): Promise<User> {
     const [currentUser] = await db.select().from(users).where(eq(users.id, id));
     if (!currentUser) {
@@ -631,10 +631,10 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
-    
+
     return updatedUser;
   }
-  
+
   // Message methods
   async getMessages(userId: number): Promise<ChatMessage[]> {
     const messages = await db
@@ -642,10 +642,10 @@ export class DatabaseStorage implements IStorage {
       .from(chatMessages)
       .where(eq(chatMessages.userId, userId))
       .orderBy(chatMessages.timestamp);
-    
+
     return messages;
   }
-  
+
   async createMessage(message: InsertChatMessage): Promise<ChatMessage> {
     const [newMessage] = await db
       .insert(chatMessages)
@@ -654,10 +654,10 @@ export class DatabaseStorage implements IStorage {
         timestamp: new Date()
       })
       .returning();
-    
+
     return newMessage;
   }
-  
+
   // Health data methods with caching
   async getHealthData(userId: number, timeRange: string): Promise<HealthData[]> {
     // Check cache first
@@ -668,7 +668,7 @@ export class DatabaseStorage implements IStorage {
 
     const now = new Date();
     let startDate: Date;
-    
+
     switch (timeRange) {
       case "7days":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -682,7 +682,7 @@ export class DatabaseStorage implements IStorage {
       default:
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
-    
+
     const data = await db
       .select()
       .from(healthData)
@@ -693,13 +693,13 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(healthData.timestamp));
-    
+
     // Cache the results for future requests
     cacheService.setHealthData(userId, timeRange, data);
-    
+
     return data;
   }
-  
+
   async createHealthData(data: InsertHealthData): Promise<HealthData> {
     const [newData] = await db
       .insert(healthData)
@@ -708,20 +708,20 @@ export class DatabaseStorage implements IStorage {
         timestamp: data.timestamp || new Date()
       })
       .returning();
-    
+
     // Invalidate health data cache for this user
     cacheService.invalidateUserData(data.userId);
-    
+
     return newData;
   }
 
   async createHealthDataBatch(dataArray: InsertHealthData[]): Promise<HealthData[]> {
     const BATCH_SIZE = 1000; // Process in chunks to avoid memory issues
     const results: HealthData[] = [];
-    
+
     for (let i = 0; i < dataArray.length; i += BATCH_SIZE) {
       const batch = dataArray.slice(i, i + BATCH_SIZE);
-      
+
       const batchResults = await db
         .insert(healthData)
         .values(
@@ -731,29 +731,79 @@ export class DatabaseStorage implements IStorage {
           }))
         )
         .returning();
-      
+
       results.push(...batchResults);
-      
+
       // Log progress for large imports
       if (dataArray.length > 1000) {
         console.log(`Batch insert progress: ${Math.min(i + BATCH_SIZE, dataArray.length)}/${dataArray.length} records`);
       }
     }
-    
+
     // Invalidate health data cache for all affected users
     const userIds = Array.from(new Set(dataArray.map(d => d.userId)));
     userIds.forEach(userId => cacheService.invalidateUserData(userId));
-    
+
     return results;
   }
 
+  // Clear all health data for a user
   async clearAllHealthData(userId: number): Promise<void> {
-    await db
-      .delete(healthData)
-      .where(eq(healthData.userId, userId));
-    
-    // Invalidate health data cache for this user
-    cacheService.invalidateUserData(userId);
+    await db.delete(healthData).where(eq(healthData.userId, userId));
+  }
+
+  // Health visibility settings
+  async getUserHealthVisibilitySettings(userId: number) {
+    const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const user = userResult[0];
+
+    if (!user?.preferences) {
+      // Return default settings
+      return {
+        visible_categories: ['Activity', 'Cardiovascular', 'Sleep'],
+        hidden_categories: ['Medical', 'Reproductive Health', 'Integration'],
+        dashboard_preferences: {
+          visible_metrics: ['steps', 'heart_rate', 'sleep_duration', 'active_energy'],
+          hidden_metrics: [],
+          metric_order: ['steps', 'heart_rate', 'sleep_duration', 'active_energy']
+        }
+      };
+    }
+
+    const preferences = typeof user.preferences === 'string' 
+      ? JSON.parse(user.preferences) 
+      : user.preferences;
+
+    return preferences.health_visibility || {
+      visible_categories: ['Activity', 'Cardiovascular', 'Sleep'],
+      hidden_categories: ['Medical', 'Reproductive Health', 'Integration'],
+      dashboard_preferences: {
+        visible_metrics: ['steps', 'heart_rate', 'sleep_duration', 'active_energy'],
+        hidden_metrics: [],
+        metric_order: ['steps', 'heart_rate', 'sleep_duration', 'active_energy']
+      }
+    };
+  }
+
+  async updateUserHealthVisibilitySettings(userId: number, settings: any) {
+    const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const user = userResult[0];
+
+    let preferences = {};
+    if (user?.preferences) {
+      preferences = typeof user.preferences === 'string' 
+        ? JSON.parse(user.preferences) 
+        : user.preferences;
+    }
+
+    preferences = {
+      ...preferences,
+      health_visibility: settings
+    };
+
+    await db.update(users)
+      .set({ preferences: JSON.stringify(preferences) })
+      .where(eq(users.id, userId));
   }
 
   async deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }> {
@@ -765,23 +815,23 @@ export class DatabaseStorage implements IStorage {
           eq(healthData.dataType, dataType)
         )
       );
-    
+
     // Invalidate health data cache for this user
     cacheService.invalidateUserData(userId);
-    
+
     return { deletedCount: result.rowCount || 0 };
   }
-  
+
   // Device methods
   async getDevices(userId: number): Promise<ConnectedDevice[]> {
     const devices = await db
       .select()
       .from(connectedDevices)
       .where(eq(connectedDevices.userId, userId));
-    
+
     return devices;
   }
-  
+
   async getDevice(id: number): Promise<ConnectedDevice | undefined> {
     // Check cache first
     const cached = await cacheService.getDeviceSettings(id);
@@ -793,37 +843,37 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(connectedDevices)
       .where(eq(connectedDevices.id, id));
-    
+
     // Cache the device settings
     if (device) {
       cacheService.setDeviceSettings(id, device);
     }
-    
+
     return device;
   }
-  
+
   async createDevice(device: InsertConnectedDevice): Promise<ConnectedDevice> {
     const [newDevice] = await db
       .insert(connectedDevices)
       .values(device)
       .returning();
-    
+
     return newDevice;
   }
-  
+
   async updateDevice(id: number, settings: any): Promise<ConnectedDevice> {
     const [currentDevice] = await db
       .select()
       .from(connectedDevices)
       .where(eq(connectedDevices.id, id));
-    
+
     if (!currentDevice) {
       throw new Error(`Device with id ${id} not found`);
     }
 
     // Invalidate device cache before update
     cacheService.invalidateDeviceData(id);
-    
+
     // If metadata is being updated, merge it with existing metadata
     let updatedSettings = { ...settings };
     if (settings.metadata) {
@@ -832,25 +882,23 @@ export class DatabaseStorage implements IStorage {
         ...((settings.metadata && typeof settings.metadata === 'object') ? settings.metadata : {})
       };
     }
-    
+
     updatedSettings.lastSync = new Date();
-    
+
     const [updatedDevice] = await db
       .update(connectedDevices)
       .set(updatedSettings)
       .where(eq(connectedDevices.id, id))
       .returning();
-    
+
     return updatedDevice;
   }
-  
+
   async removeDevice(id: number): Promise<void> {
     await db
       .delete(connectedDevices)
       .where(eq(connectedDevices.id, id));
   }
-  
-
 }
 
 // Initialize in-memory storage (fallback for when database is not available)

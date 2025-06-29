@@ -1,34 +1,35 @@
-
-# System Map Auditor Implementation Plan
+# System Map Auditor Implementation Plan v2.0
 
 ## Overview
 
-This document outlines the complete implementation plan for the System Map Auditor - a tool designed to maintain integrity and accuracy of system maps through automated validation, consistency checking, and dependency cycle detection.
+This document outlines the updated implementation plan for the System Map Auditor - enhanced to address the critical gaps that allowed features like "Add Metrics" to be marked as "active" when actually broken. The auditor now validates complete cache invalidation chains, UI refresh dependencies, and integration evidence requirements.
 
 ## Architecture Overview
 
 ### Core Purpose
 The System Map Auditor ensures that system maps remain accurate representations of the codebase by:
-- Validating component/API references against actual code
-- Checking consistency between user flows and implementations
-- Detecting circular dependencies in component relationships
-- Preventing system map drift from actual codebase state
+- **Cache Invalidation Chain Validation**: Verifying complete data refresh cycles
+- **UI Refresh Dependency Validation**: Ensuring components refresh after API operations
+- **Integration Evidence Requirements**: Requiring proof of end-to-end functionality
+- **Component-to-API Call Tracing**: Documenting actual API calls in component code
+- **Cross-Reference Validation**: Verifying component calls match server implementations
 
-### Design Principles
-1. **Zero Breaking Changes**: Auditor runs independently without modifying existing code
-2. **Multi-Modal Execution**: Manual, automated, and CI/CD integration
-3. **Incremental Validation**: Can validate specific features or full codebase
-4. **Developer-Friendly Output**: Clear, actionable error messages and suggestions
+### Updated Design Principles
+1. **Prevent "Active but Broken" Features**: Cannot mark features active without validation evidence
+2. **Cache Consistency Enforcement**: Validates complete cache invalidation chains
+3. **UI Consistency Validation**: Ensures UI components refresh after successful API calls
+4. **End-to-End Integration Testing**: Requires proof of working user flows
+5. **Zero Breaking Changes**: Auditor runs independently without modifying existing code
 
-## Implementation Plan
+## Updated Implementation Plan
 
-### Phase 1: Core Infrastructure (Days 1-3)
+### Phase 1: Enhanced Core Infrastructure (Days 1-3)
 
-#### Day 1: Project Setup and CLI Foundation
-**Objective**: Establish basic CLI tool structure and core validation framework
+#### Day 1: Project Setup and Enhanced CLI Foundation
+**Objective**: Establish CLI tool with cache and UI validation capabilities
 
-**Tasks**:
-1. **Project Structure Setup**
+**Updated Tasks**:
+1. **Enhanced Project Structure**
    ```
    system-map-auditor/
    ├── src/
@@ -39,25 +40,21 @@ The System Map Auditor ensures that system maps remain accurate representations 
    │   ├── validators/
    │   │   ├── component-validator.ts
    │   │   ├── api-validator.ts
+   │   │   ├── cache-validator.ts          # NEW
+   │   │   ├── ui-refresh-validator.ts     # NEW
+   │   │   ├── integration-validator.ts    # NEW
    │   │   └── flow-validator.ts
    │   ├── parsers/
    │   │   ├── system-map-parser.ts
    │   │   ├── codebase-scanner.ts
+   │   │   ├── cache-dependency-parser.ts  # NEW
    │   │   └── dependency-analyzer.ts
    │   ├── reporters/
    │   │   ├── console-reporter.ts
    │   │   ├── json-reporter.ts
+   │   │   ├── integration-reporter.ts     # NEW
    │   │   └── markdown-reporter.ts
-   │   ├── utils/
-   │   │   ├── file-utils.ts
-   │   │   ├── path-resolver.ts
-   │   │   └── glob-matcher.ts
    │   └── cli.ts
-   ├── config/
-   │   └── default-config.json
-   ├── package.json
-   ├── tsconfig.json
-   └── README.md
    ```
 
 2. **CLI Interface Implementation**
@@ -66,21 +63,37 @@ The System Map Auditor ensures that system maps remain accurate representations 
    - Basic help and version commands
    - Error handling and exit codes
 
-3. **Core Types Definition**
+3. **Enhanced Core Types**
    ```typescript
-   interface AuditResult {
+   interface CacheValidationResult {
      feature: string;
-     status: 'pass' | 'fail' | 'warning';
-     issues: ValidationIssue[];
-     metrics: AuditMetrics;
+     cacheDependencies: {
+       invalidates: string[];
+       refreshesComponents: string[];
+       documented: boolean;
+       verified: boolean;
+     };
+     issues: CacheValidationIssue[];
    }
 
-   interface ValidationIssue {
-     type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency';
-     severity: 'error' | 'warning' | 'info';
-     message: string;
-     location: string;
-     suggestion?: string;
+   interface UiRefreshValidationResult {
+     component: string;
+     dataSource: string;
+     refreshTriggers: string[];
+     verified: boolean;
+     issues: UiRefreshIssue[];
+   }
+
+   interface IntegrationEvidenceResult {
+     feature: string;
+     status: 'active' | 'partial' | 'planned' | 'broken';
+     evidence: {
+       endToEndTested: boolean;
+       componentApiCallsVerified: boolean;
+       uiRefreshValidated: boolean;
+       cacheInvalidationTested: boolean;
+     };
+     issues: IntegrationIssue[];
    }
    ```
 
@@ -96,33 +109,35 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ Core type definitions
 - ✅ Basic command structure (`--help`, `--version`)
 
-#### Day 2: System Map Parser and Codebase Scanner
-**Objective**: Implement robust parsing of system maps and codebase analysis
+#### Day 2: Cache Dependency Parser and UI Refresh Scanner
+**Objective**: Implement parsing of cache patterns and UI refresh dependencies
 
-**Tasks**:
-1. **System Map Parser Implementation**
-   - JSON schema validation for system maps
-   - Recursive parsing of federated maps (`$ref` resolution)
-   - Component dependency graph construction
-   - API endpoint extraction and normalization
+**New Tasks**:
+1. **Cache Dependency Parser Implementation**
+   ```typescript
+   class CacheDependencyParser {
+     parseCacheInvalidationChains(systemMap: SystemMap): CacheChain[]
+     extractQueryKeyPatterns(codebase: ParsedCodebase): QueryKeyPattern[]
+     validateCacheDocumentation(feature: FeatureDef): CacheDocumentationResult
+     mapComponentRefreshDependencies(components: ComponentDef[]): RefreshMapping[]
+   }
+   ```
 
-2. **Codebase Scanner Development**
-   - File system traversal with configurable patterns
-   - TypeScript/JavaScript AST parsing for component discovery
-   - Import/export relationship mapping
-   - Route handler detection in server files
+2. **UI Refresh Dependency Scanner**
+   ```typescript
+   class UiRefreshScanner {
+     scanComponentDataSources(component: ComponentDef): DataSource[]
+     detectRefreshTriggers(component: ComponentDef): RefreshTrigger[]
+     validateRefreshChains(feature: FeatureDef): RefreshChainResult[]
+     analyzeHookConsistency(hooks: HookUsage[]): HookConsistencyResult[]
+   }
+   ```
 
-3. **Dependency Graph Builder**
-   - Component usage relationship mapping
-   - API call tracking from components to endpoints
-   - Database table access pattern detection
-   - Cache invalidation chain analysis
-
-4. **Path Resolution System**
-   - Relative path resolution for system map references
-   - Workspace root detection and path normalization
-   - Cross-platform path handling
-   - Symlink and alias resolution
+3. **React Query Pattern Detection**
+   - Query key usage pattern analysis
+   - Cache invalidation call detection
+   - Hook dependency mapping
+   - Component re-render trigger validation
 
 **Deliverables**:
 - ✅ Complete system map parsing with `$ref` support
@@ -130,27 +145,28 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ Dependency graph construction
 - ✅ Path resolution utilities
 
-#### Day 3: Component and API Validation Engine
-**Objective**: Implement core validation logic for components and API endpoints
+#### Day 3: Enhanced Component and API Validation
+**Objective**: Update existing validators with cache and UI awareness
 
-**Tasks**:
-1. **Component Validator Implementation**
+**Enhanced Tasks**:
+1. **Enhanced Component Validator**
    ```typescript
    class ComponentValidator {
      validateExists(component: ComponentDef): ValidationResult
      validateDependencies(component: ComponentDef): ValidationResult
-     validateUsagePatterns(component: ComponentDef): ValidationResult
-     validateProps(component: ComponentDef): ValidationResult
+     validateCacheUsage(component: ComponentDef): CacheValidationResult    # NEW
+     validateRefreshBehavior(component: ComponentDef): UiRefreshResult     # NEW
+     validateApiCallTracing(component: ComponentDef): ApiTracingResult     # NEW
    }
    ```
 
-2. **API Validator Implementation**
+2. **Enhanced API Validator**
    ```typescript
    class ApiValidator {
      validateEndpointExists(endpoint: ApiEndpoint): ValidationResult
      validateHandlerFile(endpoint: ApiEndpoint): ValidationResult
-     validateRequestResponse(endpoint: ApiEndpoint): ValidationResult
-     validateDatabaseAccess(endpoint: ApiEndpoint): ValidationResult
+     validateCacheInvalidation(endpoint: ApiEndpoint): CacheValidationResult  # NEW
+     validateUiImpact(endpoint: ApiEndpoint): UiImpactResult                  # NEW
    }
    ```
 
@@ -172,39 +188,33 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ Database schema consistency checking
 - ✅ Cache invalidation pattern validation
 
-### Phase 2: Advanced Validation Features (Days 4-6)
+### Phase 2: Cache & UI Integration Validation (Days 4-6)
 
-#### Day 4: User Flow and Consistency Validation
-**Objective**: Implement sophisticated validation of user flows against actual implementation
+#### Day 4: Cache Invalidation Chain Validator
+**Objective**: Implement sophisticated cache dependency validation
 
-**Tasks**:
-1. **Flow Validator Implementation**
+**New Tasks**:
+1. **Cache Validator Implementation**
    ```typescript
-   class FlowValidator {
-     validateFlowSteps(feature: FeatureDef): ValidationResult
-     validateApiCallsInFlow(feature: FeatureDef): ValidationResult
-     validateComponentSequence(feature: FeatureDef): ValidationResult
-     validateDataFlow(feature: FeatureDef): ValidationResult
+   class CacheValidator {
+     validateInvalidationChains(feature: FeatureDef): CacheChainResult[]
+     validateQueryKeyConsistency(feature: FeatureDef): QueryKeyResult[]
+     validateRefreshDependencies(feature: FeatureDef): RefreshDepResult[]
+     validateCacheStrategyConsistency(hooks: HookDef[]): StrategyResult[]
    }
    ```
 
-2. **Consistency Checker Development**
-   - Component capability vs. user flow step matching
-   - API signature consistency with flow expectations
-   - State management pattern validation
-   - Error handling path verification
+2. **Cache Chain Analysis**
+   - Parse `invalidates` arrays in system maps
+   - Verify actual `queryClient.invalidateQueries()` calls
+   - Map cache dependencies across components
+   - Detect cache strategy inconsistencies
 
-3. **Cross-Reference Validator**
-   - Component usage in multiple features
-   - API endpoint shared usage validation
-   - Database table access pattern consistency
-   - Cache key usage across components
-
-4. **Integration Point Validator**
-   - External service integration validation
-   - Third-party API usage verification
-   - Environment variable dependency checking
-   - Configuration consistency validation
+3. **Query Key Pattern Validation**
+   - Validate query key naming conventions
+   - Check for duplicate or conflicting patterns
+   - Verify cache key consistency across hooks
+   - Detect potential race conditions
 
 **Deliverables**:
 - ✅ User flow step validation against components
@@ -212,37 +222,31 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ Cross-feature reference validation
 - ✅ Integration point verification
 
-#### Day 5: Circular Dependency Detection and Performance Analysis
-**Objective**: Implement sophisticated dependency analysis and performance validation
+#### Day 5: UI Refresh Dependency Validator
+**Objective**: Implement UI consistency validation after API operations
 
-**Tasks**:
-1. **Circular Dependency Detector**
+**New Tasks**:
+1. **UI Refresh Validator Implementation**
    ```typescript
-   class DependencyAnalyzer {
-     detectCircularDependencies(graph: DependencyGraph): CircularDependency[]
-     analyzeDependencyDepth(component: string): DependencyAnalysis
-     findShortestDependencyPath(from: string, to: string): string[]
-     suggestDependencyOptimizations(): OptimizationSuggestion[]
+   class UiRefreshValidator {
+     validateComponentRefreshChains(feature: FeatureDef): RefreshChainResult[]
+     validateDataFlowConsistency(components: ComponentDef[]): DataFlowResult[]
+     validateRefreshTriggers(mutations: MutationDef[]): TriggerResult[]
+     validateUiConsistency(feature: FeatureDef): UiConsistencyResult[]
    }
    ```
 
-2. **Performance Impact Analyzer**
-   - Bundle size impact assessment
-   - Runtime dependency loading analysis
-   - Critical path dependency identification
-   - Lazy loading opportunity detection
+2. **Refresh Chain Validation**
+   - Map components using same data sources
+   - Verify refresh triggers after successful mutations
+   - Validate component re-render after cache invalidation
+   - Check for missing refresh dependencies
 
-3. **Architecture Pattern Validator**
-   - Layer separation enforcement (UI, API, Database)
-   - Unidirectional data flow validation
-   - Single responsibility principle checking
-   - Interface segregation validation
-
-4. **Scalability Analyzer**
-   - Feature complexity metrics calculation
-   - Component reusability assessment
-   - API endpoint efficiency evaluation
-   - Database query optimization opportunities
+3. **Cross-Component Data Flow Analysis**
+   - Trace data flow between related components
+   - Validate dependency refresh propagation
+   - Check for orphaned UI components
+   - Detect missing refresh notifications
 
 **Deliverables**:
 - ✅ Circular dependency detection with path visualization
@@ -250,37 +254,34 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ Architecture pattern validation
 - ✅ Scalability assessment metrics
 
-#### Day 6: Reporting and Output Systems
-**Objective**: Implement comprehensive reporting and multiple output formats
+#### Day 6: Integration Evidence Validator
+**Objective**: Implement validation that prevents marking broken features as "active"
 
-**Tasks**:
-1. **Console Reporter Enhancement**
+**New Tasks**:
+1. **Integration Evidence Validator**
    ```typescript
-   class ConsoleReporter {
-     renderSummary(results: AuditResult[]): void
-     renderDetailedErrors(results: AuditResult[]): void
-     renderProgressiveOutput(feature: string, status: string): void
-     renderPerformanceMetrics(metrics: PerformanceMetrics): void
+   class IntegrationValidator {
+     validateIntegrationEvidence(feature: FeatureDef): IntegrationEvidenceResult
+     validateEndToEndFunctionality(feature: FeatureDef): EndToEndResult
+     validateComponentApiTracing(feature: FeatureDef): ApiTracingResult
+     validateIntegrationStatus(feature: FeatureDef): StatusValidationResult
    }
    ```
 
-2. **JSON Reporter Implementation**
-   - Machine-readable output for CI/CD integration
-   - Structured error categorization
-   - Metrics and performance data export
-   - Historical comparison support
+2. **Evidence Requirements**
+   - Component-to-API call documentation
+   - End-to-end functionality proof
+   - UI refresh validation evidence
+   - Cache invalidation testing proof
 
-3. **Markdown Reporter Development**
-   - Human-readable documentation generation
-   - Feature-specific validation reports
-   - Dependency visualization diagrams
-   - Actionable improvement suggestions
-
-4. **Integration Utilities**
-   - Git hook integration scripts
-   - CI/CD pipeline configuration templates
-   - IDE plugin interface preparation
-   - Monitoring system webhook support
+3. **Status Validation Rules**
+   ```typescript
+   // Cannot mark as "active" without:
+   - endToEndTested: true
+   - componentApiCallsVerified: true
+   - uiRefreshValidated: true
+   - cacheInvalidationTested: true
+   ```
 
 **Deliverables**:
 - ✅ Multi-format reporting system
@@ -288,40 +289,27 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ CI/CD integration utilities
 - ✅ Documentation generation tools
 
-### Phase 3: Integration and Advanced Features (Days 7-9)
+### Phase 3: Enhanced Integration and Advanced Features (Days 7-9)
 
-#### Day 7: CI/CD Integration and Git Hooks
-**Objective**: Implement seamless integration with development workflows
+#### Day 7: Integration Evidence Enforcement
+**Objective**: Implement strict validation for integration status
 
-**Tasks**:
-1. **Git Hook Integration**
-   ```bash
-   # Pre-commit hook
-   #!/bin/bash
-   ./system-map-auditor --changed-features-only --fail-fast
-   
-   # Pre-push hook
-   #!/bin/bash
-   ./system-map-auditor --full-audit --strict --format=json
+**Enhanced Tasks**:
+1. **Status Enforcement Engine**
+   ```typescript
+   class StatusEnforcer {
+     enforceActiveStatusRequirements(feature: FeatureDef): StatusEnforcementResult
+     validateIntegrationTestEvidence(feature: FeatureDef): TestEvidenceResult
+     requireEndToEndProof(feature: FeatureDef): EndToEndProofResult
+     preventFalseActiveStatus(features: FeatureDef[]): PreventionResult[]
+   }
    ```
 
-2. **CI/CD Pipeline Integration**
-   - GitHub Actions workflow template
-   - GitLab CI configuration
-   - Generic CI/CD integration guide
-   - Pull request comment automation
-
-3. **Incremental Validation**
-   - Git diff-based feature detection
-   - Changed file impact analysis
-   - Selective validation execution
-   - Performance-optimized scanning
-
-4. **Caching System**
-   - Validation result caching
-   - Incremental re-validation
-   - Cache invalidation strategies
-   - Performance optimization
+2. **Evidence Documentation Requirements**
+   - Integration test file existence
+   - End-to-end test execution proof
+   - Component-API integration validation
+   - UI consistency test evidence
 
 **Deliverables**:
 - ✅ Git hook scripts and installation
@@ -329,37 +317,29 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ Incremental validation system
 - ✅ Performance caching implementation
 
-#### Day 8: Advanced Analysis and Monitoring
-**Objective**: Implement sophisticated analysis features and monitoring capabilities
+#### Day 8: Advanced Cache and UI Analysis
+**Objective**: Implement sophisticated analysis beyond basic validation
 
-**Tasks**:
-1. **Dead Code Detection**
+**Enhanced Tasks**:
+1. **Advanced Cache Analyzer**
    ```typescript
-   class DeadCodeDetector {
-     findUnusedComponents(): UnusedComponent[]
-     identifyOrphanedApis(): OrphanedApi[]
-     detectUnreferencedDatabaseTables(): UnreferencedTable[]
-     suggestCleanupActions(): CleanupSuggestion[]
+   class AdvancedCacheAnalyzer {
+     analyzeOptimalCacheStrategies(features: FeatureDef[]): CacheStrategyAnalysis[]
+     detectCachePerformanceIssues(cacheUsage: CacheUsagePattern[]): PerformanceIssue[]
+     suggestCacheOptimizations(inefficiencies: CacheInefficiency[]): OptimizationSuggestion[]
+     validateCacheSynchronization(crossFeatureCache: CrossFeatureCache[]): SyncResult[]
    }
    ```
 
-2. **System Map Completeness Analyzer**
-   - Coverage percentage calculation
-   - Missing feature identification
-   - Undocumented component detection
-   - API coverage gap analysis
-
-3. **Trend Analysis**
-   - Historical validation metrics tracking
-   - Quality trend visualization
-   - Technical debt accumulation monitoring
-   - Architecture evolution tracking
-
-4. **Alerting System**
-   - Quality threshold monitoring
-   - Regression detection
-   - Performance degradation alerts
-   - Architecture violation notifications
+2. **UI Consistency Analyzer**
+   ```typescript
+   class UiConsistencyAnalyzer {
+     analyzeUiDataSynchronization(components: ComponentDef[]): SyncAnalysis[]
+     detectUiInconsistencies(dataFlow: DataFlow[]): InconsistencyReport[]
+     validateRealTimeUpdates(realtimeFeatures: RealtimeFeature[]): RealtimeValidation[]
+     suggestUiOptimizations(uiPatterns: UiPattern[]): UiOptimization[]
+   }
+   ```
 
 **Deliverables**:
 - ✅ Dead code and orphaned resource detection
@@ -367,45 +347,33 @@ The System Map Auditor ensures that system maps remain accurate representations 
 - ✅ Historical trend analysis
 - ✅ Automated alerting system
 
-#### Day 9: Testing, Documentation, and Deployment
-**Objective**: Comprehensive testing, documentation, and deployment preparation
+#### Day 9: Enhanced Testing and Documentation
+**Objective**: Comprehensive testing with focus on new validation capabilities
 
-**Tasks**:
-1. **Comprehensive Testing Suite**
+**Enhanced Tasks**:
+1. **Cache and UI Validation Tests**
    ```typescript
-   // Unit tests for all core modules
-   describe('ComponentValidator', () => {
-     test('validates existing components correctly')
-     test('detects missing components')
-     test('identifies dependency mismatches')
+   describe('Cache Validation', () => {
+     test('detects missing cache invalidation')
+     test('validates query key consistency')
+     test('checks refresh chain completeness')
+     test('identifies cache strategy conflicts')
    })
-   
-   // Integration tests
-   describe('Full Audit Flow', () => {
-     test('validates sample project completely')
-     test('handles edge cases gracefully')
-     test('produces consistent results')
+
+   describe('UI Refresh Validation', () => {
+     test('validates component refresh after mutation')
+     test('detects missing refresh dependencies')
+     test('checks cross-component data synchronization')
+     test('validates UI consistency requirements')
+   })
+
+   describe('Integration Evidence', () => {
+     test('prevents false active status')
+     test('requires end-to-end test evidence')
+     test('validates component-API tracing')
+     test('enforces integration status requirements')
    })
    ```
-
-2. **Documentation Creation**
-   - Installation and setup guide
-   - Configuration reference
-   - Command-line usage documentation
-   - Integration best practices
-   - Troubleshooting guide
-
-3. **Example Configurations**
-   - Different project type configurations
-   - Custom validation rule examples
-   - CI/CD integration templates
-   - Performance tuning guidelines
-
-4. **Deployment and Distribution**
-   - NPM package preparation
-   - Binary distribution setup
-   - Docker container creation
-   - Installation script development
 
 **Deliverables**:
 - ✅ Complete testing suite with high coverage
@@ -443,6 +411,30 @@ The System Map Auditor ensures that system maps remain accurate representations 
 # Development and debugging
 ./system-map-auditor --dry-run --verbose --debug
 ./system-map-auditor --cache-dir ./audit-cache --no-cache-read
+```
+
+### New Command-Line Interface
+
+### Cache and UI Validation Commands
+```bash
+# Cache validation
+./system-map-auditor --validate-cache-dependencies
+./system-map-auditor --validate-cache-invalidation-chains
+./system-map-auditor --validate-query-key-consistency
+
+# UI refresh validation
+./system-map-auditor --validate-ui-refresh-chains
+./system-map-auditor --validate-component-data-sync
+./system-map-auditor --validate-ui-consistency
+
+# Integration evidence validation
+./system-map-auditor --validate-integration-evidence
+./system-map-auditor --validate-active-status-requirements
+./system-map-auditor --require-end-to-end-proof
+
+# Combined validation (prevents "Add Metrics" type issues)
+./system-map-auditor --validate-complete-integration
+./system-map-auditor --prevent-false-active-status
 ```
 
 ### Configuration System
@@ -488,6 +480,38 @@ The System Map Auditor ensures that system maps remain accurate representations 
     "maxWorkers": 4,
     "cacheResults": true,
     "timeoutMs": 30000
+  }
+}
+```
+
+### Enhanced Configuration
+
+```json
+{
+  "validation": {
+    "cacheValidation": {
+      "validateInvalidationChains": true,
+      "requireQueryKeyConsistency": true,
+      "validateRefreshDependencies": true,
+      "checkCacheStrategyConsistency": true
+    },
+    "uiRefreshValidation": {
+      "validateRefreshChains": true,
+      "requireComponentDataSync": true,
+      "validateUiConsistency": true,
+      "checkRefreshTriggers": true
+    },
+    "integrationEvidence": {
+      "requireEndToEndTests": true,
+      "validateComponentApiTracing": true,
+      "enforceActiveStatusRequirements": true,
+      "preventFalseActiveStatus": true
+    },
+    "statusEnforcement": {
+      "activeRequiresEvidence": true,
+      "partialRequiresDocumentation": true,
+      "brokenRequiresIssueTracking": true
+    }
   }
 }
 ```
@@ -545,6 +569,33 @@ jobs:
             // Generate comment from results
 ```
 
+### Preventing "Add Metrics" Type Issues
+```yaml
+# CI/CD validation that would have caught the Add Metrics issue
+name: System Map Integration Validation
+on:
+  pull_request:
+    paths:
+      - '.system-maps/**'
+
+jobs:
+  validate-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Cache Dependencies
+        run: |
+          npx system-map-auditor --validate-cache-dependencies --fail-fast
+      - name: Validate UI Refresh Chains
+        run: |
+          npx system-map-auditor --validate-ui-refresh-chains --fail-fast
+      - name: Validate Integration Evidence
+        run: |
+          npx system-map-auditor --validate-integration-evidence --fail-fast
+      - name: Prevent False Active Status
+        run: |
+          npx system-map-auditor --prevent-false-active-status --fail-fast
+```
+
 #### Pre-commit Hook
 ```bash
 #!/bin/bash
@@ -566,6 +617,30 @@ if [[ -n "$STAGED_MAPS" || -n "$STAGED_COMPONENTS" ]]; then
     
     echo "✅ System map audit passed."
 fi
+```
+
+### Example Validation Results
+```bash
+# This would have caught the Add Metrics issue:
+❌ Feature: add-metrics
+   Status: ACTIVE (❌ INVALID - Missing Evidence)
+
+   Cache Issues:
+   - Missing cache invalidation for query:healthVisibilitySettings
+   - Component HealthDataSection doesn't refresh after API call
+   - RemoveMetricsModal → KeyMetricsOverview refresh chain broken
+
+   UI Issues:
+   - Components don't refresh after successful API operations
+   - Cache invalidation doesn't trigger UI updates
+   - User sees stale data after making changes
+
+   Integration Issues:
+   - No end-to-end test evidence
+   - Component-API calls not documented
+   - UI consistency not validated
+
+   Recommendation: Change status to 'broken' until issues resolved
 ```
 
 ### Error Handling and Recovery
@@ -612,6 +687,24 @@ class ErrorRecovery {
 - ✅ **API Validation**: Complete endpoint-to-handler verification
 - ✅ **Flow Consistency**: User flow steps match implementation capabilities
 - ✅ **Dependency Analysis**: Circular dependency detection with 0% false positives
+
+### Critical Issue Prevention
+- ✅ **False Active Status Prevention**: 100% detection of features marked active without evidence
+- ✅ **Cache Invalidation Validation**: Complete cache chain verification
+- ✅ **UI Refresh Validation**: 100% detection of missing refresh dependencies
+- ✅ **Integration Evidence**: Cannot mark active without proof of functionality
+
+### Cache and UI Validation
+- ✅ **Cache Chain Completeness**: Validates complete invalidation → refresh cycles
+- ✅ **UI Consistency**: Ensures components refresh after successful API operations
+- ✅ **Query Key Consistency**: Detects conflicts and inconsistencies
+- ✅ **Cross-Component Sync**: Validates data synchronization across related components
+
+### Integration Status Accuracy
+- ✅ **Active Status Accuracy**: Features marked active actually work end-to-end
+- ✅ **Evidence Requirements**: Cannot change to active without validation proof
+- ✅ **Broken Feature Detection**: Identifies features that exist but don't work
+- ✅ **Partial Status Validation**: Accurately reflects incomplete implementations
 
 ### Performance Requirements
 - ✅ **Execution Time**: Full audit completes in <30 seconds for typical project
@@ -700,18 +793,41 @@ class ErrorRecovery {
 - Comprehensive documentation and training materials
 - Flexible configuration options
 
+### New Risk Categories
+
+#### Risk: Complex Cache Validation Logic
+**Mitigation Strategies**:
+- Start with simple query key pattern detection
+- Gradually add sophisticated cache chain analysis
+- Provide clear error messages for cache issues
+- Include cache validation examples in documentation
+
+#### Risk: UI Refresh Validation Complexity
+**Mitigation Strategies**:
+- Focus on React Query patterns initially
+- Provide configuration for different UI frameworks
+- Clear documentation of refresh validation requirements
+- Examples of proper refresh chain implementation
+
+#### Risk: Integration Evidence Requirements Too Strict
+**Mitigation Strategies**:
+- Configurable evidence requirements
+- Gradual rollout with warning-only mode
+- Clear guidelines for evidence documentation
+- Bypass mechanisms for legacy features
+
 ## Conclusion
 
-The System Map Auditor represents a significant advancement in maintaining codebase-system map consistency. By implementing automated validation, consistency checking, and dependency analysis, it will:
+The enhanced System Map Auditor now addresses the critical gaps that allowed features like "Add Metrics" to be marked as "active" when actually broken. Key improvements include:
 
-1. **Prevent Architecture Drift**: Ensure system maps remain accurate representations of the actual codebase
-2. **Improve Development Velocity**: Catch issues early in the development cycle
-3. **Enhance Code Quality**: Enforce architectural best practices and patterns
-4. **Reduce Technical Debt**: Identify and prevent accumulation of technical debt
-5. **Enable Confident Refactoring**: Provide safety net for large-scale code changes
+1. **Cache Invalidation Chain Validation**: Ensures complete data refresh cycles
+2. **UI Refresh Dependency Validation**: Prevents stale UI after API operations  
+3. **Integration Evidence Requirements**: Cannot mark features active without proof
+4. **Component-to-API Call Tracing**: Documents actual API usage in components
+5. **Status Enforcement**: Prevents false "active" status assignments
 
-**Implementation Timeline**: 9 days for MVP, 2-3 additional weeks for advanced features
-**Risk Level**: **LOW** - Tool operates independently without modifying existing code
-**Impact**: **HIGH** - Dramatically improves development confidence and system reliability
+**Updated Timeline**: 9 days for enhanced MVP with cache/UI validation
+**Risk Level**: **MEDIUM** - More complex validation but critical for preventing broken features
+**Impact**: **VERY HIGH** - Prevents "Add Metrics" type issues and ensures system map accuracy
 
-The modular architecture and comprehensive testing strategy ensure that the auditor can be safely integrated into existing development workflows while providing immediate value through improved system map accuracy and architectural validation.
+This updated implementation ensures that system maps accurately reflect working functionality, not just the existence of components and APIs.

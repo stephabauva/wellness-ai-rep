@@ -18,7 +18,7 @@ To ensure scalability, maintainability, and token efficiency, the system map emp
 - **Sub-Domain Directories:** When a domain becomes too complex, its `path` in the `root.map.json` can point to a directory instead of a single file. This directory should contain multiple, more focused sub-domain map files.
 - **Mega-Feature Files (`*.feature.json`):** For exceptionally large and isolated features within a domain, a feature can be extracted into its own file and referenced from the parent domain map using a `$ref` key.
 
-### 2.2. Domain Scope Definition
+### 2.1. Domain Scope Definition
 
 **Core Domains** represent user-facing application areas and should contain all related functionality:
 - Business logic, UI components, API endpoints, database operations
@@ -30,7 +30,19 @@ To ensure scalability, maintainability, and token efficiency, the system map emp
 - Contain reusable patterns and shared infrastructure code
 - Examples: structured logging patterns, performance optimization hooks, testing utilities
 
-This hybrid architecture allows for surgical context loading. An LLM can be instructed to load a single sub-domain map for a targeted fix, or it can load all maps in a domain's directory for a comprehensive understanding, providing the optimal balance between context and cost.
+### 2.2. Integration Status Validation Requirements
+
+**MANDATORY**: Integration status cannot be marked as "active" without validation evidence. All features must include:
+
+1. **Component-to-API Call Tracing**: Document actual `fetch()`, `queryKey`, and API calls in component code
+2. **Endpoint Verification**: Validate that component calls match server route implementations
+3. **Integration Testing Evidence**: Proof that the feature works end-to-end
+
+**Integration Status Levels**:
+- `active`: Feature is implemented, tested, and working end-to-end
+- `partial`: Feature is implemented but has known gaps or incomplete functionality
+- `planned`: Feature is designed but not yet implemented
+- `broken`: Feature exists but fails during execution
 
 ### 2.1. Refactoring Triggers
 
@@ -74,17 +86,17 @@ To maintain clarity and prevent maps from becoming unwieldy, the following quant
 ```json
 {
   // ... required fields above ...
-  
+
   // Only include if feature implements structured logging
   "logging": {
     "$ref": "/.system-maps/infrastructure/logging.map.json#/health-logging"
   },
-  
+
   // Only include if feature has performance monitoring hooks
   "performance": {
     "$ref": "/.system-maps/infrastructure/performance.map.json#/health-performance"
   },
-  
+
   // Only include if feature has dedicated test infrastructure
   "testing": {
     "$ref": "/.system-maps/infrastructure/testing.map.json#/health-testing"

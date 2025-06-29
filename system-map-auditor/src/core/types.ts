@@ -29,16 +29,137 @@ export interface FeatureMetadata {
   domain: string;
 }
 
+// Base system map interface that can handle all variations
 export interface SystemMap {
-  name: string;
+  name?: string;
+  appName?: string; // for root.map.json
   version?: string;
   description?: string;
+  lastUpdated?: string;
+  
+  // Standard format
   components?: ComponentDef[];
   apis?: ApiEndpoint[];
   flows?: UserFlow[];
-  dependencies?: DependencyDef[];
+  dependencies?: string[] | DependencyDef[];
   references?: SystemMapReference[];
   _metadata?: FeatureMetadata;
+  
+  // Custom format support (metrics-management style)
+  tableOfContents?: TableOfContents;
+  integrationStatus?: IntegrationStatus;
+  featureGroups?: FeatureGroups;
+  apiEndpoints?: ApiEndpointMap;
+  
+  // Root format support
+  domains?: DomainsMap;
+  globalComponents?: ComponentMap;
+  architecture?: ArchitectureInfo;
+}
+
+export interface TableOfContents {
+  [groupName: string]: {
+    features?: string[];
+    components?: string[];
+    endpoints?: string[];
+  };
+}
+
+export interface IntegrationStatus {
+  [featureName: string]: {
+    status: 'active' | 'partial' | 'planned' | 'broken';
+    lastVerified: string;
+    knownIssues: string[];
+  };
+}
+
+export interface FeatureGroups {
+  [groupName: string]: {
+    description: string;
+    features: {
+      [featureName: string]: FeatureDefinition;
+    };
+  };
+}
+
+export interface FeatureDefinition {
+  description: string;
+  userFlow?: string[];
+  systemFlow?: string[];
+  components?: string[];
+  apiIntegration?: ApiIntegration;
+  cacheDependencies?: CacheDependencies;
+  uiConsistencyValidation?: UiConsistencyValidation;
+  logging?: SystemMapReference;
+  performance?: SystemMapReference;
+  tests?: string[];
+}
+
+export interface ApiIntegration {
+  expectedEndpoints?: string[];
+  actualEndpoints?: string[];
+  integrationGaps?: string[];
+  cacheDependencies?: CacheDependencies;
+  uiConsistencyValidation?: UiConsistencyValidation;
+}
+
+export interface CacheDependencies {
+  invalidates?: string[];
+  refreshesComponents?: string[];
+  missingInvalidations?: string[];
+  triggerEvents?: string[];
+}
+
+export interface UiConsistencyValidation {
+  tested: boolean;
+  knownIssues?: string[];
+}
+
+export interface ApiEndpointMap {
+  [endpoint: string]: {
+    description: string;
+    handlerFile?: string;
+    handler?: string;
+    requestBody?: string;
+    response?: string;
+    readsFrom?: string[];
+    modifies?: string[];
+    consumedBy?: string[];
+    calledBy?: string[];
+    requiresRefresh?: string[];
+  };
+}
+
+export interface ComponentMap {
+  [componentName: string]: {
+    path: string;
+    type?: string;
+    description?: string;
+    calls?: string[];
+    uses?: string[];
+    invalidates?: string[];
+    dependsOn?: string[];
+    refreshTrigger?: string;
+    cachingStrategy?: string;
+    criticalIssue?: string;
+  };
+}
+
+export interface DomainsMap {
+  [domainName: string]: {
+    description: string;
+    path: string;
+    dependencies: string[];
+  };
+}
+
+export interface ArchitectureInfo {
+  frontend?: string;
+  backend?: string;
+  database?: string;
+  ai?: string;
+  testing?: string;
+  microservices?: string[];
 }
 
 export interface ComponentDef {

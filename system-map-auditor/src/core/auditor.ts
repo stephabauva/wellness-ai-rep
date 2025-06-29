@@ -9,6 +9,7 @@ import { EnhancedComponentValidator } from '../validators/enhanced-component-val
 import { CacheValidationService } from '../validators/cache-validation-service.js';
 import { UiRefreshValidator } from '../validators/ui-refresh-validator.js';
 import { IntegrationEvidenceValidator } from '../validators/integration-evidence-validator.js';
+import { SemanticCacheValidator } from '../validators/semantic-cache-validator.js';
 import { ConsoleReporter } from '../reporters/console-reporter.js';
 import { JsonReporter } from '../reporters/json-reporter.js';
 import { MarkdownReporter } from '../reporters/markdown-reporter.js';

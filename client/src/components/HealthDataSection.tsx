@@ -435,6 +435,30 @@ const HealthDataSection: React.FC = () => {
           </div>
 
           <CoachingInsights />
+
+          {/* Native Health Integration - Phase 1 */}
+          <div className="mb-8">
+            <NativeHealthIntegration 
+              onDataImported={(result) => {
+                if (result.success) {
+                  refetchHealthData();
+                  toast({
+                    title: "Native Health Sync",
+                    description: `Successfully processed ${result.recordsProcessed} records.`,
+                  });
+                }
+              }}
+              onError={(error) => {
+                toast({
+                  title: "Native Health Error",
+                  description: error,
+                  variant: "destructive",
+                });
+              }}
+            />
+          </div>
+
+          <CoachingInsights />
         </div>
       </div>
     </div>

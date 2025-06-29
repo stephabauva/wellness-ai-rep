@@ -6,7 +6,7 @@ export interface AuditResult {
 }
 
 export interface ValidationIssue {
-  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found' | 'cross-reference-error' | 'integration-point-error' | 'performance-issue' | 'architecture-violation';
+  type: 'missing-component' | 'api-mismatch' | 'circular-dependency' | 'flow-inconsistency' | 'invalid-reference' | 'file-not-found' | 'cross-reference-error' | 'integration-point-error' | 'performance-issue' | 'architecture-violation' | 'missing-system-map';
   severity: 'error' | 'warning' | 'info';
   message: string;
   location: string;
@@ -124,6 +124,8 @@ export interface AuditConfig {
     maxExecutionTime: number;
     parallel: boolean;
     cacheEnabled: boolean;
+    cacheResults?: boolean;
+    cacheDirectory?: string;
   };
 }
 
@@ -143,6 +145,8 @@ export interface ParsedCodebase {
 }
 
 export interface ComponentInfo {
+  name?: string;
+  path?: string;
   filePath: string;
   exports: string[];
   imports: ImportInfo[];
@@ -150,6 +154,7 @@ export interface ComponentInfo {
 }
 
 export interface ApiInfo {
+  path?: string;
   endpoint: string;
   method: string;
   handlerFile: string;

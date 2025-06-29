@@ -548,7 +548,7 @@ program
       
       const results = await auditor.validateChangedFeatures(changedFeatures);
       
-      if (options.failFast && results.some(r => !r.valid)) {
+      if (options.failFast && results.some(r => r.status === 'fail')) {
         console.error('❌ Validation failed (fail-fast mode)');
         process.exit(1);
       }
@@ -557,7 +557,7 @@ program
         console.log(auditor.generateChangedFeaturesReport(results));
       }
       
-      const hasErrors = results.some(result => !result.valid);
+      const hasErrors = results.some(result => result.status === 'fail');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('Changed features validation failed:', error instanceof Error ? error.message : 'Unknown error');
@@ -590,7 +590,7 @@ program
         console.log(auditor.generateIncrementalReport(results));
       }
       
-      const hasErrors = results.validationResults.some(r => !r.valid);
+      const hasErrors = results.validationResults.some(r => r.status === 'fail');
       process.exit(hasErrors ? 1 : 0);
     } catch (error) {
       console.error('Incremental validation failed:', error instanceof Error ? error.message : 'Unknown error');

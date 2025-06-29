@@ -897,6 +897,7 @@ export class SystemMapAuditor {
           feature: featureName,
           status: 'fail',
           issues: [{
+            type: 'missing-system-map',
             severity: 'error',
             message: `System map not found for changed feature: ${featureName}`,
             location: `${featureName}.map.json`,
@@ -1006,7 +1007,7 @@ export class SystemMapAuditor {
     const deadCode = await this.detectDeadCode({ includeApis: true, includeFiles: true });
     const orphanedApis = await this.detectOrphanedApis();
     
-    const actions = [];
+    const actions: Array<{ type: string; target: string; reason: string }> = [];
     
     deadCode.unusedComponents.forEach(comp => {
       actions.push({

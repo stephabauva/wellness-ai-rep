@@ -36,16 +36,21 @@ run_test() {
     
     echo -e "\n${BLUE}🔍 Testing: $test_name${NC}"
     echo -e "${YELLOW}Command: $command${NC}"
+    echo -e "${PURPLE}Working Directory: $working_dir${NC}"
     
     # Change to working directory
     cd "$working_dir"
     
     # Run command and capture output
+    echo -e "\n${YELLOW}--- Command Output Start ---${NC}"
     if output=$(eval "$command" 2>&1); then
         actual_exit_code=0
+        echo "$output"
     else
         actual_exit_code=$?
+        echo "$output"
     fi
+    echo -e "${YELLOW}--- Command Output End ---${NC}\n"
     
     # Check result
     if [ $actual_exit_code -eq $expected_exit_code ]; then
@@ -53,9 +58,11 @@ run_test() {
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
         echo -e "${RED}❌ FAIL${NC}: Exit code $actual_exit_code (expected $expected_exit_code)"
-        echo -e "${RED}Output: $output${NC}"
         FAILED_TESTS=$((FAILED_TESTS + 1))
     fi
+    
+    # Add separator for readability
+    echo -e "${PURPLE}$(printf '─%.0s' $(seq 1 80))${NC}"
     
     # Return to original directory
     cd - > /dev/null

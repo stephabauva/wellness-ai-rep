@@ -36,13 +36,23 @@ To ensure scalability, maintainability, and token efficiency, the system map emp
 
 1. **Component-to-API Call Tracing**: Document actual `fetch()`, `queryKey`, and API calls in component code
 2. **Endpoint Verification**: Validate that component calls match server route implementations
-3. **Integration Testing Evidence**: Proof that the feature works end-to-end
+3. **UI Refresh Dependency Chain Validation**: Verify that all dependent UI components refresh after successful API operations
+4. **Integration Testing Evidence**: Proof that the feature works end-to-end with complete user experience validation
 
 **Integration Status Levels**:
-- `active`: Feature is implemented, tested, and working end-to-end
+- `active`: Feature is implemented, tested, and working end-to-end with complete UI consistency
 - `partial`: Feature is implemented but has known gaps or incomplete functionality
 - `planned`: Feature is designed but not yet implemented
 - `broken`: Feature exists but fails during execution
+
+### 2.3. UI Refresh Dependency Chain Requirements
+
+**CRITICAL**: Features that modify data must document and validate their complete refresh chain:
+
+1. **Cache Invalidation Mapping**: Document which query keys and hooks need invalidation
+2. **Cross-Component Dependencies**: Identify all components that display the same data
+3. **Hook Consistency Validation**: Ensure different hooks consuming the same API endpoint have synchronized caching strategies
+4. **End-to-End User Flow Testing**: Validate that the complete user experience works, not just API success
 
 ### 2.1. File Size Creation Rules (MANDATORY ENFORCEMENT)
 
@@ -177,7 +187,15 @@ A domain map can contain `featureGroups` and a reference to a mega-feature file.
           "apiIntegration": {
             "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
             "actualEndpoints": ["PATCH /api/health-consent"],
-            "integrationGaps": ["visibility endpoint missing"]
+            "integrationGaps": ["visibility endpoint missing"],
+            "cacheDependencies": {
+              "invalidates": ["query:healthVisibilitySettings", "query:/api/health-consent/visibility"],
+              "refreshesComponents": ["HealthDataSection", "KeyMetricsOverview"]
+            },
+            "uiConsistencyValidation": {
+              "tested": false,
+              "knownIssues": ["UI components don't refresh after successful API calls"]
+            }
           },
           "logging": {
             "$ref": "/.system-maps/infrastructure/logging.map.json#/chat-logging"

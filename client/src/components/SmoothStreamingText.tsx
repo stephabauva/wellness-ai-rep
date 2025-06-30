@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-// ChatGPT-style cursor animation styles (Phase 2)
+// ChatGPT-style cursor animation styles (Phase 2) + Character Reveal Effect
 const cursorStyles = `
   @keyframes chatgpt-cursor-blink {
     0%, 50% { opacity: 1; }
@@ -17,6 +17,39 @@ const cursorStyles = `
     margin-left: 1px;
     border-radius: 1px;
     vertical-align: text-top;
+  }
+  
+  /* Character reveal effect - ChatGPT style */
+  .character-reveal {
+    display: inline;
+    white-space: pre-wrap;
+  }
+  
+  .character-reveal .char {
+    display: inline-block;
+    opacity: 0;
+    transform: translateX(-2px);
+    animation: charReveal 0.15s ease-out forwards;
+  }
+  
+  @keyframes charReveal {
+    0% {
+      opacity: 0;
+      transform: translateX(-3px) scale(0.95);
+    }
+    50% {
+      opacity: 0.7;
+      transform: translateX(-1px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+  
+  /* Preserve whitespace for proper spacing */
+  .char-space {
+    white-space: pre;
   }
   
   .cursor-fade-in {
@@ -116,9 +149,11 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
     words: []
   });
   const [isActivelyStreaming, setIsActivelyStreaming] = useState(false);
+  const [revealedChars, setRevealedChars] = useState<number>(0);
   const currentIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
+  const charRevealTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ChatGPT-style pacing with natural randomization (Phase 1)
   const getPacingDelay = useCallback((char: string, prevChar?: string, nextChar?: string): number => {
@@ -339,6 +374,9 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       setDisplayedText(content.substring(0, currentIndexRef.current + 1));
       currentIndexRef.current++;
       
+      // Trigger character reveal animation
+      setRevealedChars(currentIndexRef.current);
+      
       // Schedule next character with enhanced context-aware pacing (Phase 3 & 6)
       const baseDelay = getPacingDelay(char, prevChar, nextChar);
       let adaptiveDelay = getAdaptivePacing(baseDelay, char, currentIndexRef.current - 1);
@@ -397,6 +435,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
         (streamingMode.mode === 'word' && streamingMode.wordIndex > 0 && content.length !== displayedText.length)) {
       currentIndexRef.current = 0;
       setDisplayedText('');
+      setRevealedChars(0);
       isTypingRef.current = false;
       // Reset word streaming if needed
       if (streamingMode.mode === 'word') {
@@ -464,6 +503,30 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
     }
   }, [isComplete, content.length]);
 
+  // Render characters with reveal animation
+  const renderTextWithReveal = () => {
+    if (!displayedText) return null;
+    
+    return displayedText.split('').map((char, index) => {
+      const isRevealed = index < revealedChars;
+      const animationDelay = isRevealed ? '0ms' : `${index * 15}ms`;
+      
+      return (
+        <span
+          key={`char-${index}`}
+          className={`char ${char === ' ' ? 'char-space' : ''}`}
+          style={{
+            animationDelay: animationDelay,
+            opacity: isRevealed ? 1 : 0,
+            transform: isRevealed ? 'translateX(0) scale(1)' : 'translateX(-3px) scale(0.95)'
+          }}
+        >
+          {char}
+        </span>
+      );
+    });
+  };
+
   return (
     <span 
       className={`relative streaming-container ${
@@ -478,7 +541,9 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
         transition: 'all 0.3s ease'
       }}
     >
-      <span className="whitespace-pre-wrap">{displayedText}</span>
+      <span className="character-reveal whitespace-pre-wrap">
+        {renderTextWithReveal()}
+      </span>
       {showCursor && (
         <span 
           className={`streaming-cursor-enhanced ${cursorFading ? 'cursor-fade-out' : 'cursor-fade-in'}`}

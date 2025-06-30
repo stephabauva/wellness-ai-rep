@@ -62,9 +62,9 @@
               "responseTime": "150ms to first token, 7.8s total for streaming",
               "throughput": "~2 characters/second streaming rate",
               "userExperienceQuality": "ChatGPT-level messaging experience with instant feedback",
-              "configurationValues": ["25ms base delay", "150ms period pauses", "80ms comma pauses"],
+              "configurationValues": ["15ms base delay", "150ms period pauses", "80ms comma pauses"],
               "domainSpecificMetrics": {
-                "streamingSpeed": "25ms per character with natural timing variations",
+                "streamingSpeed": "15ms per character with natural timing variations",
                 "responseLatency": "150ms to first token",
                 "streamingQuality": "ChatGPT-style with enhanced cursor and micro-animations"
               }
@@ -79,7 +79,7 @@
           "tests": ["client/src/components/ChatInputArea.test.tsx"]
         },
         "message-streaming": {
-          "description": "ChatGPT-style real-time streaming with natural typing rhythm, enhanced cursor animations, content-aware pacing, micro-animations, and character reveal effects",
+          "description": "ChatGPT-style real-time streaming with natural typing rhythm, enhanced cursor animations, content-aware pacing, and micro-animations",
           "userFlow": [
             "User sends message and sees immediate acknowledgment",
             "AI response begins appearing with natural typing rhythm variations",
@@ -151,16 +151,6 @@
                 "Streaming state visual indicators with enhanced animations",
                 "Prepared infrastructure for pause/resume functionality",
                 "Foundation for adaptive speed based on user behavior"
-              ]
-            },
-            "phase7_characterRevealEffect": {
-              "implemented": true,
-              "features": [
-                "ChatGPT-style character reveal animation with left-to-right sliding",
-                "Per-character opacity and transform animations",
-                "Smooth character appearance with subtle scale and position transitions",
-                "Synchronized reveal timing with streaming rhythm",
-                "Enhanced visual polish matching ChatGPT's character appearance effect"
               ]
             }
           },

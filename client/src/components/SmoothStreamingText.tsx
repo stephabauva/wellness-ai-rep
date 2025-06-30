@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-// ChatGPT-style cursor animation styles (Phase 2) + Character Reveal Effect
+// ChatGPT-style cursor animation styles (Phase 2)
 const cursorStyles = `
   @keyframes chatgpt-cursor-blink {
     0%, 50% { opacity: 1; }
@@ -17,119 +17,6 @@ const cursorStyles = `
     margin-left: 1px;
     border-radius: 1px;
     vertical-align: text-top;
-  }
-  
-  /* Character reveal effect - ChatGPT ghost/phantom style */
-  .character-reveal {
-    display: inline;
-    white-space: pre-wrap;
-  }
-  
-  .character-reveal .char {
-    display: inline-block;
-    opacity: 0;
-    transform: translateX(-8px) scale(0.7);
-    animation: charGhostReveal 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-    filter: blur(6px) brightness(1.4);
-    text-shadow: 
-      0 0 15px rgba(59, 130, 246, 0.8),
-      0 0 25px rgba(59, 130, 246, 0.6),
-      0 0 35px rgba(59, 130, 246, 0.4);
-  }
-  
-  @keyframes charGhostReveal {
-    0% {
-      opacity: 0;
-      transform: translateX(-8px) scale(0.7);
-      filter: blur(6px) brightness(1.4);
-      text-shadow: 
-        0 0 15px rgba(59, 130, 246, 0.8),
-        0 0 25px rgba(59, 130, 246, 0.6),
-        0 0 35px rgba(59, 130, 246, 0.4);
-      color: rgba(59, 130, 246, 0.6);
-    }
-    15% {
-      opacity: 0.2;
-      transform: translateX(-6px) scale(0.8);
-      filter: blur(5px) brightness(1.3);
-      text-shadow: 
-        0 0 12px rgba(59, 130, 246, 0.7),
-        0 0 20px rgba(59, 130, 246, 0.5),
-        0 0 30px rgba(59, 130, 246, 0.3);
-      color: rgba(59, 130, 246, 0.7);
-    }
-    35% {
-      opacity: 0.4;
-      transform: translateX(-4px) scale(0.85);
-      filter: blur(4px) brightness(1.2);
-      text-shadow: 
-        0 0 10px rgba(59, 130, 246, 0.6),
-        0 0 18px rgba(59, 130, 246, 0.4),
-        0 0 25px rgba(59, 130, 246, 0.2);
-      color: rgba(59, 130, 246, 0.8);
-    }
-    55% {
-      opacity: 0.6;
-      transform: translateX(-2px) scale(0.92);
-      filter: blur(3px) brightness(1.1);
-      text-shadow: 
-        0 0 8px rgba(59, 130, 246, 0.5),
-        0 0 15px rgba(59, 130, 246, 0.3),
-        0 0 20px rgba(59, 130, 246, 0.1);
-      color: rgba(59, 130, 246, 0.9);
-    }
-    75% {
-      opacity: 0.8;
-      transform: translateX(-1px) scale(0.96);
-      filter: blur(2px) brightness(1.05);
-      text-shadow: 
-        0 0 6px rgba(59, 130, 246, 0.4),
-        0 0 12px rgba(59, 130, 246, 0.2),
-        0 0 15px rgba(59, 130, 246, 0.1);
-      color: rgba(59, 130, 246, 0.95);
-    }
-    90% {
-      opacity: 0.95;
-      transform: translateX(-0.5px) scale(0.98);
-      filter: blur(1px) brightness(1.02);
-      text-shadow: 
-        0 0 4px rgba(59, 130, 246, 0.3),
-        0 0 8px rgba(59, 130, 246, 0.1);
-      color: currentColor;
-    }
-    100% {
-      opacity: 1;
-      transform: translateX(0) scale(1);
-      filter: blur(0) brightness(1);
-      text-shadow: none;
-      color: currentColor;
-    }
-  }
-  
-  /* Enhanced ghost effect for different content types */
-  .char-ghost-prose {
-    animation-duration: 0.55s;
-  }
-  
-  .char-ghost-code {
-    animation-duration: 0.45s;
-    text-shadow: 
-      0 0 12px rgba(34, 197, 94, 0.7),
-      0 0 20px rgba(34, 197, 94, 0.4),
-      0 0 30px rgba(34, 197, 94, 0.2);
-  }
-  
-  .char-ghost-emphasis {
-    animation-duration: 0.75s;
-    text-shadow: 
-      0 0 15px rgba(168, 85, 247, 0.8),
-      0 0 25px rgba(168, 85, 247, 0.5),
-      0 0 35px rgba(168, 85, 247, 0.3);
-  }
-  
-  /* Preserve whitespace for proper spacing */
-  .char-space {
-    white-space: pre;
   }
   
   .cursor-fade-in {
@@ -229,11 +116,9 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
     words: []
   });
   const [isActivelyStreaming, setIsActivelyStreaming] = useState(false);
-  const [revealedChars, setRevealedChars] = useState<number>(0);
   const currentIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
-  const charRevealTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ChatGPT-style pacing with natural randomization (Phase 1)
   const getPacingDelay = useCallback((char: string, prevChar?: string, nextChar?: string): number => {
@@ -253,7 +138,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       baseDelay = 25;
       variance = 3; // ±3ms for spaces
     } else {
-      baseDelay = 25; // Fast base typing speed like ChatGPT
+      baseDelay = 15; // Fast base typing speed like ChatGPT
       variance = 3; // ±3ms for regular characters
     }
     
@@ -454,9 +339,6 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       setDisplayedText(content.substring(0, currentIndexRef.current + 1));
       currentIndexRef.current++;
       
-      // Trigger character reveal animation
-      setRevealedChars(currentIndexRef.current);
-      
       // Schedule next character with enhanced context-aware pacing (Phase 3 & 6)
       const baseDelay = getPacingDelay(char, prevChar, nextChar);
       let adaptiveDelay = getAdaptivePacing(baseDelay, char, currentIndexRef.current - 1);
@@ -515,7 +397,6 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
         (streamingMode.mode === 'word' && streamingMode.wordIndex > 0 && content.length !== displayedText.length)) {
       currentIndexRef.current = 0;
       setDisplayedText('');
-      setRevealedChars(0);
       isTypingRef.current = false;
       // Reset word streaming if needed
       if (streamingMode.mode === 'word') {
@@ -583,57 +464,6 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
     }
   }, [isComplete, content.length]);
 
-  // Render characters with ghost reveal animation
-  const renderTextWithReveal = () => {
-    if (!displayedText) return null;
-    
-    return displayedText.split('').map((char, index) => {
-      const isRevealed = index < revealedChars;
-      const animationDelay = isRevealed ? '0ms' : `${index * 30}ms`;
-      
-      // Determine ghost effect class based on content analysis
-      let ghostClass = 'char';
-      if (contentAnalysis) {
-        switch (contentAnalysis.type) {
-          case 'code':
-            ghostClass += ' char-ghost-code';
-            break;
-          case 'prose':
-            ghostClass += ' char-ghost-prose';
-            break;
-          default:
-            break;
-        }
-      }
-      
-      // Add emphasis class for punctuation
-      if (char === '.' || char === '!' || char === '?') {
-        ghostClass += ' char-ghost-emphasis';
-      }
-      
-      if (char === ' ') {
-        ghostClass += ' char-space';
-      }
-      
-      return (
-        <span
-          key={`char-${index}`}
-          className={ghostClass}
-          style={{
-            animationDelay: animationDelay,
-            opacity: isRevealed ? 1 : 0,
-            transform: isRevealed ? 'translateX(0) scale(1)' : 'translateX(-8px) scale(0.7)',
-            filter: isRevealed ? 'blur(0) brightness(1)' : 'blur(6px) brightness(1.4)',
-            textShadow: isRevealed ? 'none' : '0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.6), 0 0 35px rgba(59, 130, 246, 0.4)',
-            color: isRevealed ? 'currentColor' : 'rgba(59, 130, 246, 0.6)'
-          }}
-        >
-          {char}
-        </span>
-      );
-    });
-  };
-
   return (
     <span 
       className={`relative streaming-container ${
@@ -648,9 +478,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
         transition: 'all 0.3s ease'
       }}
     >
-      <span className="character-reveal whitespace-pre-wrap">
-        {renderTextWithReveal()}
-      </span>
+      <span className="whitespace-pre-wrap">{displayedText}</span>
       {showCursor && (
         <span 
           className={`streaming-cursor-enhanced ${cursorFading ? 'cursor-fade-out' : 'cursor-fade-in'}`}

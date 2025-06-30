@@ -1,77 +1,42 @@
 {
-  "appName": "Wellness AI Rep",
+  "appName": "Wellness Coaching Application",
   "version": "1.0.0",
-  "lastUpdated": "2025-06-27T21:10:00Z",
+  "lastUpdated": "2025-01-27T10:00:00Z",
   "domains": {
     "chat": {
-      "description": "Handles all conversational AI, messaging, and related features.",
-      "path": "/.system-maps/chat/",
-      "dependencies": ["memory", "file-manager"]
-    },
-    "health": {
-      "description": "Health data management, metrics tracking, dashboard visibility controls, and data import/export functionality.",
-      "path": "/.system-maps/health/",
-      "dependencies": ["settings", "file-manager"]
-    },
-    "devices": {
-      "description": "Manages connections to external devices and data sources (e.g., native health kits).",
-      "path": "/.system-maps/devices.map.json",
-      "dependencies": ["health", "settings"]
+      "description": "Real-time conversational AI chat interface with streaming responses, attachments, and context management",
+      "path": "chat/",
+      "dependencies": ["memory", "health", "file-manager"]
     },
     "memory": {
-      "description": "Controls the AI's long-term memory, including storage, retrieval, and deduplication.",
-      "path": "/.system-maps/memory/",
-      "dependencies": ["chat"]
+      "description": "AI memory system for context persistence and intelligent memory management",
+      "path": "memory/",
+      "dependencies": []
+    },
+    "health": {
+      "description": "Health data management, metrics tracking, and native platform integration",
+      "path": "health/",
+      "dependencies": []
     },
     "file-manager": {
-      "description": "Comprehensive file management system with upload, categorization, sharing, Go acceleration, and intelligent retention policies.",
-      "path": "/.system-maps/file-manager/",
-      "dependencies": ["settings"]
+      "description": "File upload, categorization, retention management, and sharing capabilities",
+      "path": "file-manager/",
+      "dependencies": []
     },
     "settings": {
-      "description": "Manages user preferences, application settings, and configurations. Contains user information.",
-      "path": "/.system-maps/settings/",
+      "description": "Application configuration, user preferences, and system settings management",
+      "path": "settings/",
       "dependencies": []
-    },
-    "logging": {
-      "description": "Production-ready structured logging system with configurable levels and clean output formatting.",
-      "path": "/.system-maps/logging.map.json",
-      "dependencies": []
-    },
-    "performance": {
-      "description": "Application performance optimization including lazy loading, caching strategies, and startup optimization.",
-      "path": "/.system-maps/performance.map.json",
-      "dependencies": ["chat", "memory", "health"]
     },
     "routes": {
-      "description": "Modular routes architecture breaking down massive monolithic routes.ts into domain-specific modules with line count enforcement.",
-      "path": "/.system-maps/routes/",
-      "dependencies": ["chat", "health", "memory", "file-manager", "settings"]
+      "description": "Server-side API routing and middleware configuration",
+      "path": "routes/",
+      "dependencies": []
     },
-    "testing": {
-      "description": "Comprehensive testing infrastructure using Vitest with consistent mocking patterns and proper test environment configuration.",
-      "path": "/.system-maps/testing.map.json",
-      "dependencies": ["chat", "health", "memory", "performance"]
+    "infrastructure": {
+      "description": "Cross-cutting concerns: logging, performance monitoring, and testing utilities",
+      "path": "infrastructure/",
+      "dependencies": []
     }
-  },
-  "globalComponents": {
-    "AppContext": {
-      "path": "client/src/context/AppContext.tsx",
-      "description": "Global application state management",
-      "uses": []
-    },
-    "DatabaseConnection": {
-      "path": "server/db.ts",
-      "description": "PostgreSQL database connection and configuration",
-      "uses": []
-    }
-  },
-  "architecture": {
-    "frontend": "React + TypeScript + Vite",
-    "backend": "Node.js + Express + TypeScript",
-    "database": "PostgreSQL + Drizzle ORM",
-    "ai": "Multi-provider (OpenAI, Google Gemini)",
-    "testing": "Vitest + @testing-library/react + supertest",
-    "microservices": ["go-memory-service", "go-file-service", "go-ai-gateway"]
   }
 }

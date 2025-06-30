@@ -1,0 +1,196 @@
+
+{
+  "tableOfContents": {
+    "core-messaging": {
+      "features": ["send-message", "message-streaming", "message-display"],
+      "components": ["ChatInputArea", "MessageDisplayArea", "SmoothStreamingText"],
+      "endpoints": ["POST /api/chat", "GET /api/chat/stream"]
+    }
+  },
+  "integrationStatus": {
+    "send-message": {
+      "status": "active",
+      "lastVerified": "2025-01-27",
+      "knownIssues": []
+    },
+    "message-streaming": {
+      "status": "active", 
+      "lastVerified": "2025-01-27",
+      "knownIssues": []
+    },
+    "message-display": {
+      "status": "active",
+      "lastVerified": "2025-01-27", 
+      "knownIssues": []
+    }
+  },
+  "lastUpdated": "2025-01-27T10:00:00Z",
+  "dependencies": ["memory", "file-manager"],
+  "featureGroups": {
+    "core-messaging": {
+      "description": "Core chat messaging functionality including sending, streaming, and displaying messages",
+      "features": {
+        "send-message": {
+          "description": "Allows users to send text messages with optional attachments to the AI assistant",
+          "userFlow": [
+            "User types message in input area",
+            "User optionally attaches files via paperclip icon",
+            "User clicks send button or presses Enter",
+            "Message appears in chat with 'sending' status",
+            "AI response begins streaming immediately"
+          ],
+          "systemFlow": [
+            "Validate message content and attachments",
+            "Store message in database with conversation context",
+            "Send request to AI service with conversation history",
+            "Stream AI response back to client",
+            "Update message status and store complete response"
+          ],
+          "components": ["ChatInputArea", "ChatSection"],
+          "apiIntegration": {
+            "expectedEndpoints": ["POST /api/chat"],
+            "actualEndpoints": ["POST /api/chat"],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": ["query:messages", "query:conversations"],
+              "refreshesComponents": ["MessageDisplayArea", "ConversationHistory"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/chat-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/chat-performance"
+          },
+          "tests": ["client/src/components/ChatInputArea.test.tsx"]
+        },
+        "message-streaming": {
+          "description": "Real-time streaming of AI responses with smooth character-by-character display",
+          "userFlow": [
+            "User sends message and sees immediate acknowledgment",
+            "AI response begins appearing character by character",
+            "Streaming continues until response is complete",
+            "Message status updates to 'completed'"
+          ],
+          "systemFlow": [
+            "AI service processes request and begins streaming",
+            "Server forwards stream chunks to client via SSE",
+            "Client accumulates chunks and displays progressively",
+            "Complete response stored when streaming ends"
+          ],
+          "components": ["SmoothStreamingText", "StreamingText", "MessageDisplayArea"],
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/chat/stream"],
+            "actualEndpoints": ["GET /api/chat/stream"],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": ["query:messages"],
+              "refreshesComponents": ["MessageDisplayArea"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/streaming-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/streaming-performance"
+          },
+          "tests": []
+        },
+        "message-display": {
+          "description": "Display of chat messages with proper formatting, attachments, and interaction controls",
+          "userFlow": [
+            "User sees messages in chronological order",
+            "Messages show sender, timestamp, and content",
+            "Attachments display with preview capabilities",
+            "User can interact with message actions"
+          ],
+          "systemFlow": [
+            "Fetch messages from database with pagination",
+            "Render messages with appropriate formatting",
+            "Handle attachment previews and downloads",
+            "Manage scroll position and virtual scrolling"
+          ],
+          "components": ["MessageDisplayArea", "AttachmentPreview"],
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/chat/messages"],
+            "actualEndpoints": ["GET /api/chat/messages"],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": []
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/message-display-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/message-display-performance"
+          },
+          "tests": ["client/src/components/MessageDisplayArea.test.tsx"]
+        }
+      }
+    }
+  },
+  "components": {
+    "ChatInputArea": {
+      "name": "ChatInputArea",
+      "path": "client/src/components/ChatInputArea.tsx",
+      "description": "Text input area with send button, attachment support, and audio recording",
+      "uses": ["useStreamingChat", "useFileUpload", "AudioRecorder"]
+    },
+    "MessageDisplayArea": {
+      "name": "MessageDisplayArea", 
+      "path": "client/src/components/MessageDisplayArea.tsx",
+      "description": "Displays chat messages with streaming support and attachment previews",
+      "uses": ["useChatMessages", "AttachmentPreview", "SmoothStreamingText"]
+    },
+    "SmoothStreamingText": {
+      "name": "SmoothStreamingText",
+      "path": "client/src/components/SmoothStreamingText.tsx", 
+      "description": "Smooth character-by-character streaming text display component",
+      "uses": ["StreamingText"]
+    }
+  },
+  "apiEndpoints": {
+    "/api/chat": {
+      "method": "POST",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Send message and receive AI response",
+      "readsFrom": ["conversations", "conversation_messages"],
+      "modifies": ["conversations", "conversation_messages"]
+    },
+    "/api/chat/stream": {
+      "method": "GET",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Stream AI response in real-time",
+      "readsFrom": ["conversations", "conversation_messages"],
+      "modifies": []
+    }
+  },
+  "database": {
+    "tables": {
+      "conversations": {
+        "description": "Chat conversation metadata and context",
+        "columns": ["id", "title", "created_at", "updated_at"],
+        "relations": ["conversation_messages"]
+      },
+      "conversation_messages": {
+        "description": "Individual chat messages within conversations",
+        "columns": ["id", "conversation_id", "role", "content", "created_at"],
+        "relations": ["conversations", "message_attachments"]
+      }
+    }
+  }
+}

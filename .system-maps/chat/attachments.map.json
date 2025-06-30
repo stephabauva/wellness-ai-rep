@@ -1,0 +1,133 @@
+
+{
+  "tableOfContents": {
+    "attachments": {
+      "features": ["file-attachment", "attachment-preview", "audio-recording"],
+      "components": ["AttachmentPreview", "AudioRecorder"],
+      "endpoints": ["POST /api/chat/attachments", "GET /api/chat/attachments/:id"]
+    }
+  },
+  "integrationStatus": {
+    "file-attachment": {
+      "status": "active",
+      "lastVerified": "2025-01-27",
+      "knownIssues": []
+    },
+    "attachment-preview": {
+      "status": "active",
+      "lastVerified": "2025-01-27",
+      "knownIssues": []
+    },
+    "audio-recording": {
+      "status": "active",
+      "lastVerified": "2025-01-27",
+      "knownIssues": []
+    }
+  },
+  "lastUpdated": "2025-01-27T10:00:00Z",
+  "dependencies": ["file-manager"],
+  "featureGroups": {
+    "attachments": {
+      "description": "File attachment capabilities including upload, preview, and audio recording",
+      "features": {
+        "file-attachment": {
+          "description": "Upload and attach files to chat messages",
+          "userFlow": [
+            "User clicks paperclip icon in chat input",
+            "User selects files from device or camera",
+            "Files upload with progress indication",
+            "Attached files appear in message before sending"
+          ],
+          "systemFlow": [
+            "Handle file selection and validation",
+            "Upload files to server with progress tracking",
+            "Store file metadata and associate with message",
+            "Include file references in chat message"
+          ],
+          "components": ["ChatInputArea", "AttachmentPreview"],
+          "apiIntegration": {
+            "expectedEndpoints": ["POST /api/chat/attachments"],
+            "actualEndpoints": ["POST /api/chat/attachments"],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": ["query:attachments"],
+              "refreshesComponents": ["AttachmentPreview"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          }
+        },
+        "attachment-preview": {
+          "description": "Preview and display attached files in chat messages",
+          "userFlow": [
+            "User sees attachment previews in messages",
+            "User can click to view full attachment",
+            "Supports images, documents, and other file types"
+          ],
+          "systemFlow": [
+            "Fetch attachment metadata from database",
+            "Generate appropriate preview based on file type",
+            "Handle full-size viewing and download"
+          ],
+          "components": ["AttachmentPreview"],
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/chat/attachments/:id"],
+            "actualEndpoints": ["GET /api/chat/attachments/:id"],
+            "integrationGaps": []
+          }
+        },
+        "audio-recording": {
+          "description": "Record and attach audio messages to chat",
+          "userFlow": [
+            "User clicks microphone icon",
+            "User records audio message",
+            "Audio is transcribed and attached to message"
+          ],
+          "systemFlow": [
+            "Capture audio from user device",
+            "Send audio to transcription service",
+            "Attach both audio file and transcription"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": ["POST /api/chat/transcribe"],
+            "actualEndpoints": ["POST /api/chat/transcribe"],
+            "integrationGaps": []
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "AttachmentPreview": {
+      "name": "AttachmentPreview",
+      "path": "client/src/components/AttachmentPreview.tsx",
+      "description": "Displays file attachments with appropriate previews and actions",
+      "uses": ["useFileApi"]
+    },
+    "AudioRecorder": {
+      "name": "AudioRecorder",
+      "path": "client/src/components/AudioRecorder.tsx", 
+      "description": "Audio recording interface with transcription capabilities",
+      "uses": ["audio-service"]
+    }
+  },
+  "apiEndpoints": {
+    "/api/chat/attachments": {
+      "method": "POST",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Upload file attachments for chat messages",
+      "readsFrom": [],
+      "modifies": ["message_attachments", "files"]
+    },
+    "/api/chat/attachments/:id": {
+      "method": "GET", 
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Retrieve specific attachment file",
+      "readsFrom": ["message_attachments", "files"],
+      "modifies": []
+    }
+  }
+}

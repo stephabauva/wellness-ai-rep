@@ -1,63 +1,364 @@
 
 {
   "version": "2.0.0",
+  "corePhilosophy": {
+    "primaryObjective": "Create a structured, queryable, and unambiguous representation of the application's architecture serving as a single source of truth",
+    "targetFormat": "Federated set of JSON files for computational efficiency and LLM parsing optimization",
+    "designPrinciples": [
+      "Operational efficiency maximization",
+      "Token cost minimization", 
+      "Analytical accuracy maximization",
+      "Rigid structure adherence for LLM consumption"
+    ]
+  },
   "mandatoryChecks": {
     "beforeCreation": {
       "sizeEstimation": {
         "maxLines": 300,
         "maxFeatureGroups": 5,
-        "action": "CREATE_SUBDOMAIN_DIRECTORY"
+        "action": "CREATE_SUBDOMAIN_DIRECTORY",
+        "enforcement": "ALWAYS_ESTIMATE_DOMAIN_SIZE_BEFORE_CREATING_SYSTEM_MAPS"
       },
       "megaFeatureThreshold": {
         "maxLinesPerFeature": 100,
-        "action": "EXTRACT_TO_FEATURE_FILE"
+        "action": "EXTRACT_TO_FEATURE_FILE",
+        "enforcement": "PROACTIVE_ACTION_REQUIRED"
       }
+    }
+  },
+  "decisionFramework": {
+    "subDomainDirectoryTriggers": [
+      "Domain analysis indicates >300 lines in single file",
+      "Domain contains >5 top-level feature groups",
+      "Domain has distinct user workflow areas",
+      "Natural feature groupings exist",
+      "Domain spans multiple database schemas",
+      "Team ownership boundaries exist"
+    ],
+    "megaFeatureFileTriggers": [
+      "Single feature analysis indicates >100 lines in JSON definition"
+    ],
+    "domainClassification": {
+      "coreDomainsExamples": ["chat", "health", "file-manager", "settings", "connected-devices", "memory"],
+      "infrastructureDomainsExamples": ["logging", "performance", "testing"],
+      "coreDomainsCriteria": "Business logic, UI components, API endpoints, database operations",
+      "infrastructureDomainsCriteria": "Cross-cutting concerns referenced by core domains"
     }
   },
   "fileStructures": {
     "rootMap": {
       "required": ["appName", "version", "lastUpdated", "domains"],
-      "tableOfContents": false
+      "tableOfContents": false,
+      "schema": {
+        "appName": "String",
+        "version": "String",
+        "lastUpdated": "String (ISO 8601 timestamp)",
+        "domains": {
+          "[domainName]": {
+            "description": "String: Domain purpose summary",
+            "path": "String (relative path to file OR directory)",
+            "dependencies": ["String: Array of other domain keys"]
+          }
+        }
+      }
     },
     "domainMap": {
       "required": ["tableOfContents", "integrationStatus", "lastUpdated", "dependencies", "featureGroups"],
       "tableOfContents": true,
       "maxLines": 300,
-      "maxFeatureGroups": 5
+      "maxFeatureGroups": 5,
+      "schema": {
+        "tableOfContents": {
+          "[groupName]": {
+            "features": ["feature-name-1", "feature-name-2"],
+            "components": ["ComponentA", "ComponentB"],
+            "endpoints": ["POST /api/domain/action", "GET /api/domain/data"]
+          }
+        },
+        "integrationStatus": {
+          "[feature-name]": {
+            "status": "active|partial|planned|broken",
+            "lastVerified": "String (ISO 8601 date)",
+            "knownIssues": ["String: Array of specific issues"]
+          }
+        },
+        "lastUpdated": "String (ISO 8601 timestamp)",
+        "dependencies": ["String: Array of other domains"],
+        "featureGroups": {
+          "[groupName]": {
+            "description": "String: Feature group purpose",
+            "features": {
+              "[feature-name]": {
+                "description": "String: Clear feature description",
+                "userFlow": ["String: Array of user steps"],
+                "systemFlow": ["String: Array of system processes"],
+                "components": ["String: Array of component names"],
+                "apiIntegration": {
+                  "expectedEndpoints": ["String: Array of expected API endpoints"],
+                  "actualEndpoints": ["String: Array of actual API endpoints"],
+                  "integrationGaps": ["String: Array of gaps"],
+                  "cacheDependencies": {
+                    "invalidates": ["String: Array of cache keys/queries"],
+                    "refreshesComponents": ["String: Array of component names"]
+                  },
+                  "uiConsistencyValidation": {
+                    "tested": "Boolean",
+                    "knownIssues": ["String: Array of UI consistency issues"]
+                  }
+                },
+                "logging": {
+                  "$ref": "String: Reference to logging infrastructure"
+                },
+                "performance": {
+                  "$ref": "String: Reference to performance infrastructure"
+                },
+                "tests": ["String: Array of test file paths"]
+              }
+            }
+          }
+        },
+        "components": "Object: Component definitions",
+        "apiEndpoints": "Object: API endpoint definitions",
+        "database": "Object: Database schema definitions"
+      }
     },
     "featureFile": {
       "required": ["_metadata", "description", "userFlow", "systemFlow"],
-      "metadata": ["featureName", "featureGroup", "parentFile", "domain"]
+      "metadata": ["featureName", "featureGroup", "parentFile", "domain"],
+      "schema": {
+        "_metadata": {
+          "featureName": "String",
+          "featureGroup": "String",
+          "parentFile": "String: Path to parent domain map",
+          "domain": "String"
+        },
+        "description": "String: Feature description",
+        "userFlow": ["String: Array of user steps"],
+        "systemFlow": ["String: Array of system processes"],
+        "components": {
+          "$ref": "String: Reference to parent component definitions"
+        },
+        "apiEndpoints": {
+          "$ref": "String: Reference to parent API definitions"
+        },
+        "logging": {
+          "$ref": "String: Optional reference to logging infrastructure"
+        }
+      }
     }
   },
   "integrationValidation": {
     "statusLevels": {
-      "active": "REQUIRES_EVIDENCE",
-      "partial": "DOCUMENTED_GAPS",
-      "planned": "DESIGN_ONLY",
-      "broken": "EXECUTION_FAILURE"
+      "active": {
+        "description": "Implemented, tested, working end-to-end with complete UI consistency",
+        "requirement": "REQUIRES_EVIDENCE",
+        "validationCriteria": [
+          "Component-to-API call tracing documented",
+          "Endpoint verification completed",
+          "UI refresh dependency chain validated",
+          "Integration testing evidence provided"
+        ]
+      },
+      "partial": {
+        "description": "Implemented but has known gaps or incomplete functionality",
+        "requirement": "DOCUMENTED_GAPS",
+        "validationCriteria": [
+          "Specific gaps documented",
+          "Incomplete functionality identified"
+        ]
+      },
+      "planned": {
+        "description": "Designed but not yet implemented",
+        "requirement": "DESIGN_ONLY",
+        "validationCriteria": [
+          "Design documentation exists",
+          "Implementation plan defined"
+        ]
+      },
+      "broken": {
+        "description": "Exists but fails during execution",
+        "requirement": "EXECUTION_FAILURE",
+        "validationCriteria": [
+          "Failure modes documented",
+          "Root cause analysis completed"
+        ]
+      }
     },
     "evidenceRequired": [
       "componentToApiTracing",
-      "endpointVerification", 
+      "endpointVerification",
       "uiRefreshValidation",
       "integrationTesting"
-    ]
+    ],
+    "validationSteps": {
+      "componentToApiTracing": "Document actual fetch(), queryKey, and API calls in component code",
+      "endpointVerification": "Validate that component calls match server route implementations",
+      "uiRefreshValidation": "Verify all dependent UI components refresh after successful API operations",
+      "integrationTesting": "Proof of end-to-end functionality"
+    }
   },
   "cacheDependencies": {
     "required": ["invalidates", "refreshesComponents"],
     "patterns": {
-      "queryKey": "query:specificEndpoint",
-      "componentRefresh": "ComponentName",
-      "crossDomain": "document_when_affects_other_domains"
+      "queryKey": {
+        "format": "query:specificEndpoint",
+        "description": "Standard query key invalidation pattern"
+      },
+      "componentRefresh": {
+        "format": "ComponentName",
+        "description": "List all components displaying same data"
+      },
+      "crossDomain": {
+        "requirement": "document_when_affects_other_domains",
+        "description": "Document dependencies that cross domain boundaries"
+      }
+    },
+    "examples": {
+      "healthDataUpdate": {
+        "invalidates": ["query:healthData", "query:healthMetrics"],
+        "refreshesComponents": ["HealthDashboard", "MetricsCard", "TrendChart"],
+        "triggerEvents": ["health-data-updated", "metrics-recalculated"]
+      },
+      "chatMessage": {
+        "invalidates": ["query:messages", "query:conversations"],
+        "refreshesComponents": ["MessageDisplayArea", "ConversationHistory"],
+        "triggerEvents": ["message-sent", "conversation-updated"]
+      }
+    },
+    "validationRequirements": {
+      "cacheInvalidationMapping": "Document which query keys need invalidation",
+      "crossComponentDependencies": "Identify all components displaying same data",
+      "hookConsistencyValidation": "Ensure different hooks have synchronized caching",
+      "endToEndUserFlowTesting": "Validate complete user experience works"
     }
   },
   "workflowSteps": [
-    "ESTIMATE_DOMAIN_SIZE",
-    "CHECK_SIZE_CONSTRAINTS", 
-    "CHOOSE_STRUCTURE",
-    "RECURSIVE_DEPENDENCY_ANALYSIS",
-    "FLOW_TRACING",
-    "VALIDATION"
-  ]
+    {
+      "step": 1,
+      "name": "INITIALIZE_SYSTEM_MAPS_DIRECTORY",
+      "description": "Create /.system-maps/ directory and start with root.map.json",
+      "actions": [
+        "Create directory structure",
+        "Initialize root map with foundational context"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "DOMAIN_ANALYSIS_AND_PLANNING",
+      "description": "Analyze and plan domain structure",
+      "actions": [
+        "Identify entry points (primary UI components or server routes)",
+        "Estimate complexity (count potential features and file size)",
+        "Choose structure (single file vs directory based on size rules)",
+        "Plan dependencies (identify cross-domain relationships)"
+      ]
+    },
+    {
+      "step": 3,
+      "name": "RECURSIVE_DEPENDENCY_ANALYSIS",
+      "description": "Comprehensive dependency mapping",
+      "actions": [
+        "Start with entry points (load primary domain files)",
+        "Analyze imports (read all import statements meticulously)",
+        "Recursively follow (read and analyze each discovered dependency)",
+        "Continue until complete (map all files contributing to user-facing features)"
+      ],
+      "criticality": "CRITICAL"
+    },
+    {
+      "step": 4,
+      "name": "FLOW_TRACING_AND_INTEGRATION_MAPPING",
+      "description": "Map complete user and system flows",
+      "actions": [
+        "Trace user flows (from UI interaction through client logic to API)",
+        "Map API to database (from endpoint through services to database tables)",
+        "Document cache dependencies (map complete refresh chains)",
+        "Validate integration status (verify actual working implementations)"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "VALIDATION_AND_DOCUMENTATION",
+      "description": "Comprehensive validation and documentation",
+      "actions": [
+        "Test integration points (verify component-to-API connections)",
+        "Validate cache invalidation (test complete refresh chains)",
+        "Document known issues (record gaps and incomplete functionality)",
+        "Update integration status (mark accurate status levels)"
+      ]
+    }
+  ],
+  "architecturalPatterns": {
+    "hybridFederatedMaps": {
+      "components": {
+        "rootMap": "Single source of truth manifest pointing to domain entry points",
+        "coreDomainMaps": "User-facing application areas with complete functionality mapping",
+        "infrastructureMaps": "Cross-cutting concerns referenced by core domains using $ref",
+        "subDomainDirectories": "Complex domains split into focused sub-domain map files",
+        "megaFeatureFiles": "Large isolated features extracted with $ref references"
+      }
+    },
+    "refactoringTriggers": {
+      "immediateRefactoringRequired": "Any existing file exceeding 300 lines or 5 feature groups must be split immediately",
+      "warningSignals": [
+        "Domain analysis indicates potential size violations",
+        "Feature complexity exceeding single-file maintainability",
+        "Cross-domain dependencies becoming unmanageable"
+      ]
+    }
+  },
+  "discoveryTools": {
+    "recommendedTools": [
+      "glob for entry point discovery",
+      "search_file_content for pattern matching",
+      "read_file and read_many_files for comprehensive analysis",
+      "API mapping through server-side route handler analysis",
+      "Database schema analysis through schema files and SQL migrations"
+    ],
+    "analysisConstraints": {
+      "domainFocus": "Only focus on one domain per system map",
+      "integrationGaps": "Document unintegrated code at end of system map",
+      "criticalMisses": "Only modify other system maps if critical miss detected (explain why)"
+    }
+  },
+  "qualityStandards": {
+    "mandatoryEnforcement": {
+      "sizeConstraints": "All size rules must be enforced without exception",
+      "integrationEvidence": "Cannot mark features as active without validation proof",
+      "cacheConsistency": "Complete cache invalidation chains required",
+      "structuralCompliance": "Rigid adherence to schema definitions required"
+    },
+    "validationCheckpoints": {
+      "beforeCreation": "Size estimation and structure planning",
+      "duringImplementation": "Continuous validation of integration status",
+      "postCreation": "Complete validation of all dependencies and flows"
+    }
+  },
+  "implementationGuidelines": {
+    "priorityOrder": [
+      "Size constraint validation",
+      "Integration status accuracy",
+      "Cache dependency completeness",
+      "Cross-reference validation",
+      "Documentation completeness"
+    ],
+    "criticalRequirements": {
+      "noActiveWithoutEvidence": "Features cannot be marked active without complete validation evidence",
+      "completeCacheChains": "All cache invalidation must include complete refresh chains",
+      "accurateIntegrationStatus": "Integration status must reflect actual implementation state",
+      "comprehensiveDependencyMapping": "All dependencies must be traced and documented"
+    }
+  },
+  "complianceValidation": {
+    "structuralValidation": {
+      "schemaCompliance": "All files must adhere to defined schemas",
+      "requiredFieldsPresence": "All required fields must be present and properly formatted",
+      "referenceIntegrity": "All $ref references must point to valid targets"
+    },
+    "functionalValidation": {
+      "integrationAccuracy": "Integration status must match actual implementation",
+      "cacheConsistency": "Cache dependencies must be complete and accurate",
+      "flowCompleteness": "User and system flows must be comprehensive and traceable"
+    }
+  }
 }

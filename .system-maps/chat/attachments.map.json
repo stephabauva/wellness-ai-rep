@@ -3,8 +3,8 @@
   "tableOfContents": {
     "attachments": {
       "features": ["file-attachment", "attachment-preview", "audio-recording"],
-      "components": ["AttachmentPreview", "AudioRecorder"],
-      "endpoints": ["POST /api/chat/attachments", "GET /api/chat/attachments/:id"]
+      "components": ["AttachmentPreview", "AudioRecorder", "ChatInputArea"],
+      "endpoints": ["POST /api/chat/attachments", "GET /api/chat/attachments/:id", "POST /api/chat/transcribe"]
     }
   },
   "integrationStatus": {
@@ -25,7 +25,7 @@
     }
   },
   "lastUpdated": "2025-01-27T10:00:00Z",
-  "dependencies": ["file-manager"],
+  "dependencies": ["file-manager", "core-messaging"],
   "featureGroups": {
     "attachments": {
       "description": "File attachment capabilities including upload, preview, and audio recording",
@@ -50,14 +50,21 @@
             "actualEndpoints": ["POST /api/chat/attachments"],
             "integrationGaps": [],
             "cacheDependencies": {
-              "invalidates": ["query:attachments"],
-              "refreshesComponents": ["AttachmentPreview"]
+              "invalidates": ["query:attachments", "query:messages", "query:fileUploads"],
+              "refreshesComponents": ["AttachmentPreview", "MessageDisplayArea", "ChatInputArea"]
             },
             "uiConsistencyValidation": {
               "tested": true,
               "knownIssues": []
             }
-          }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/attachment-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/attachment-performance"
+          },
+          "tests": ["client/src/components/AttachmentPreview.test.tsx"]
         },
         "attachment-preview": {
           "description": "Preview and display attached files in chat messages",
@@ -75,8 +82,23 @@
           "apiIntegration": {
             "expectedEndpoints": ["GET /api/chat/attachments/:id"],
             "actualEndpoints": ["GET /api/chat/attachments/:id"],
-            "integrationGaps": []
-          }
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": ["query:attachments"],
+              "refreshesComponents": ["AttachmentPreview"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/attachment-preview-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/attachment-preview-performance"
+          },
+          "tests": ["client/src/tests/chat/AttachmentDisplay.test.tsx"]
         },
         "audio-recording": {
           "description": "Record and attach audio messages to chat",
@@ -94,8 +116,23 @@
           "apiIntegration": {
             "expectedEndpoints": ["POST /api/chat/transcribe"],
             "actualEndpoints": ["POST /api/chat/transcribe"],
-            "integrationGaps": []
-          }
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": ["query:attachments", "query:transcriptions"],
+              "refreshesComponents": ["AudioRecorder", "AttachmentPreview"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/audio-recording-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/audio-recording-performance"
+          },
+          "tests": []
         }
       }
     }
@@ -112,6 +149,12 @@
       "path": "client/src/components/AudioRecorder.tsx", 
       "description": "Audio recording interface with transcription capabilities",
       "uses": ["audio-service"]
+    },
+    "ChatInputArea": {
+      "name": "ChatInputArea",
+      "path": "client/src/components/ChatInputArea.tsx",
+      "description": "Text input area with attachment support",
+      "uses": ["useFileUpload", "AttachmentPreview", "AudioRecorder"]
     }
   },
   "apiEndpoints": {
@@ -128,6 +171,35 @@
       "description": "Retrieve specific attachment file",
       "readsFrom": ["message_attachments", "files"],
       "modifies": []
+    },
+    "/api/chat/transcribe": {
+      "method": "POST",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Transcribe audio files to text",
+      "readsFrom": [],
+      "modifies": ["message_attachments", "transcriptions"]
+    }
+  },
+  "database": {
+    "tables": {
+      "message_attachments": {
+        "description": "File attachments associated with chat messages",
+        "columns": ["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
+        "relations": ["conversation_messages"],
+        "indexes": ["message_id", "created_at"]
+      },
+      "files": {
+        "description": "File storage metadata",
+        "columns": ["id", "path", "name", "size", "mime_type", "created_at"],
+        "relations": ["message_attachments"],
+        "indexes": ["path", "created_at"]
+      },
+      "transcriptions": {
+        "description": "Audio transcription data",
+        "columns": ["id", "attachment_id", "text_content", "confidence_score", "created_at"],
+        "relations": ["message_attachments"],
+        "indexes": ["attachment_id"]
+      }
     }
   }
 }

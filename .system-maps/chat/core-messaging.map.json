@@ -3,8 +3,8 @@
   "tableOfContents": {
     "core-messaging": {
       "features": ["send-message", "message-streaming", "message-display"],
-      "components": ["ChatInputArea", "MessageDisplayArea", "SmoothStreamingText"],
-      "endpoints": ["POST /api/chat", "GET /api/chat/stream"]
+      "components": ["ChatInputArea", "MessageDisplayArea", "SmoothStreamingText", "ChatSection"],
+      "endpoints": ["POST /api/chat", "GET /api/chat/stream", "GET /api/chat/messages"]
     }
   },
   "integrationStatus": {
@@ -25,7 +25,7 @@
     }
   },
   "lastUpdated": "2025-01-27T10:00:00Z",
-  "dependencies": ["memory", "file-manager"],
+  "dependencies": ["memory", "file-manager", "attachments"],
   "featureGroups": {
     "core-messaging": {
       "description": "Core chat messaging functionality including sending, streaming, and displaying messages",
@@ -52,8 +52,8 @@
             "actualEndpoints": ["POST /api/chat"],
             "integrationGaps": [],
             "cacheDependencies": {
-              "invalidates": ["query:messages", "query:conversations"],
-              "refreshesComponents": ["MessageDisplayArea", "ConversationHistory"]
+              "invalidates": ["query:messages", "query:conversations", "query:chatMessages"],
+              "refreshesComponents": ["MessageDisplayArea", "ConversationHistory", "ChatSection"]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -88,8 +88,8 @@
             "actualEndpoints": ["GET /api/chat/stream"],
             "integrationGaps": [],
             "cacheDependencies": {
-              "invalidates": ["query:messages"],
-              "refreshesComponents": ["MessageDisplayArea"]
+              "invalidates": ["query:messages", "query:chatMessages"],
+              "refreshesComponents": ["MessageDisplayArea", "SmoothStreamingText"]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -102,7 +102,7 @@
           "performance": {
             "$ref": "../infrastructure/performance.map.json#/streaming-performance"
           },
-          "tests": []
+          "tests": ["client/src/tests/performance.test.ts"]
         },
         "message-display": {
           "description": "Display of chat messages with proper formatting, attachments, and interaction controls",
@@ -124,8 +124,8 @@
             "actualEndpoints": ["GET /api/chat/messages"],
             "integrationGaps": [],
             "cacheDependencies": {
-              "invalidates": [],
-              "refreshesComponents": []
+              "invalidates": ["query:messages"],
+              "refreshesComponents": ["MessageDisplayArea"]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -161,6 +161,12 @@
       "path": "client/src/components/SmoothStreamingText.tsx", 
       "description": "Smooth character-by-character streaming text display component",
       "uses": ["StreamingText"]
+    },
+    "ChatSection": {
+      "name": "ChatSection",
+      "path": "client/src/components/ChatSection.tsx",
+      "description": "Main chat interface container with input and message display areas",
+      "uses": ["ChatInputArea", "MessageDisplayArea", "ConversationHistory"]
     }
   },
   "apiEndpoints": {
@@ -168,7 +174,7 @@
       "method": "POST",
       "handler": "server/routes/chat-routes.ts",
       "description": "Send message and receive AI response",
-      "readsFrom": ["conversations", "conversation_messages"],
+      "readsFrom": ["conversations", "conversation_messages", "message_attachments"],
       "modifies": ["conversations", "conversation_messages"]
     },
     "/api/chat/stream": {
@@ -177,19 +183,34 @@
       "description": "Stream AI response in real-time",
       "readsFrom": ["conversations", "conversation_messages"],
       "modifies": []
+    },
+    "/api/chat/messages": {
+      "method": "GET",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Retrieve chat messages with pagination",
+      "readsFrom": ["conversations", "conversation_messages", "message_attachments"],
+      "modifies": []
     }
   },
   "database": {
     "tables": {
       "conversations": {
         "description": "Chat conversation metadata and context",
-        "columns": ["id", "title", "created_at", "updated_at"],
-        "relations": ["conversation_messages"]
+        "columns": ["id", "title", "created_at", "updated_at", "user_id"],
+        "relations": ["conversation_messages"],
+        "indexes": ["user_id", "created_at"]
       },
       "conversation_messages": {
         "description": "Individual chat messages within conversations",
-        "columns": ["id", "conversation_id", "role", "content", "created_at"],
-        "relations": ["conversations", "message_attachments"]
+        "columns": ["id", "conversation_id", "role", "content", "created_at", "message_type", "status"],
+        "relations": ["conversations", "message_attachments"],
+        "indexes": ["conversation_id", "created_at"]
+      },
+      "message_attachments": {
+        "description": "File attachments associated with messages",
+        "columns": ["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
+        "relations": ["conversation_messages"],
+        "indexes": ["message_id"]
       }
     }
   }

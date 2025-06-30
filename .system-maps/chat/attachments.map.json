@@ -9,9 +9,13 @@
   },
   "integrationStatus": {
     "file-attachment": {
-      "status": "active",
+      "status": "partial",
       "lastVerified": "2025-01-27",
-      "knownIssues": []
+      "knownIssues": [
+        "POST /api/chat/attachments endpoint not implemented in chat-routes.ts",
+        "File upload goes through /api/files instead of chat-specific endpoint",
+        "Missing attachment persistence to message_attachments table"
+      ]
     },
     "attachment-preview": {
       "status": "active",
@@ -19,9 +23,13 @@
       "knownIssues": []
     },
     "audio-recording": {
-      "status": "active",
+      "status": "partial",
       "lastVerified": "2025-01-27",
-      "knownIssues": []
+      "knownIssues": [
+        "POST /api/chat/transcribe endpoint not implemented in chat-routes.ts",
+        "AudioRecorder component exists but transcription integration incomplete",
+        "Missing transcriptions table integration"
+      ]
     }
   },
   "lastUpdated": "2025-01-27T10:00:00Z",
@@ -45,17 +53,32 @@
             "Include file references in chat message"
           ],
           "components": ["ChatInputArea", "AttachmentPreview"],
+          "dataFlowTrace": {
+            "requestPath": ["ChatInputArea", "useFileManagement", "POST /api/files", "file-routes.ts"],
+            "expectedPath": ["ChatInputArea", "useFileManagement", "POST /api/chat/attachments", "chat-routes.ts"],
+            "pathVerified": false,
+            "bypassedComponents": ["chat-specific attachment handler"],
+            "actualHandler": "server/routes/file-routes.ts:POST /api/files",
+            "streamingPattern": "N/A - file upload only"
+          },
           "apiIntegration": {
             "expectedEndpoints": ["POST /api/chat/attachments"],
-            "actualEndpoints": ["POST /api/chat/attachments"],
-            "integrationGaps": [],
+            "actualEndpoints": ["POST /api/files"],
+            "integrationGaps": [
+              "Missing POST /api/chat/attachments endpoint",
+              "No message_attachments table integration",
+              "File uploads not associated with chat messages"
+            ],
             "cacheDependencies": {
               "invalidates": ["query:attachments", "query:messages", "query:fileUploads"],
               "refreshesComponents": ["AttachmentPreview", "MessageDisplayArea", "ChatInputArea"]
             },
             "uiConsistencyValidation": {
               "tested": true,
-              "knownIssues": []
+              "knownIssues": [
+                "Attachments don't persist with chat messages",
+                "No chat-specific file categorization"
+              ]
             }
           },
           "logging": {
@@ -79,10 +102,20 @@
             "Handle full-size viewing and download"
           ],
           "components": ["AttachmentPreview"],
+          "dataFlowTrace": {
+            "requestPath": ["AttachmentPreview", "useFileApi", "GET /api/files/:id", "file-routes.ts"],
+            "expectedPath": ["AttachmentPreview", "useFileApi", "GET /api/chat/attachments/:id", "chat-routes.ts"],
+            "pathVerified": true,
+            "bypassedComponents": [],
+            "actualHandler": "server/routes/file-routes.ts:GET /api/files/:id",
+            "streamingPattern": "N/A - static file serving"
+          },
           "apiIntegration": {
             "expectedEndpoints": ["GET /api/chat/attachments/:id"],
-            "actualEndpoints": ["GET /api/chat/attachments/:id"],
-            "integrationGaps": [],
+            "actualEndpoints": ["GET /api/files/:id"],
+            "integrationGaps": [
+              "Using generic file endpoint instead of chat-specific"
+            ],
             "cacheDependencies": {
               "invalidates": ["query:attachments"],
               "refreshesComponents": ["AttachmentPreview"]
@@ -113,17 +146,34 @@
             "Attach both audio file and transcription"
           ],
           "components": ["AudioRecorder"],
+          "dataFlowTrace": {
+            "requestPath": ["AudioRecorder", "audio-service", "Web Speech API", "local transcription"],
+            "expectedPath": ["AudioRecorder", "POST /api/chat/transcribe", "transcription-service.ts"],
+            "pathVerified": false,
+            "bypassedComponents": ["server-side transcription service"],
+            "actualHandler": "client/src/services/audio-service.ts:Web Speech API",
+            "streamingPattern": "N/A - local transcription only"
+          },
           "apiIntegration": {
             "expectedEndpoints": ["POST /api/chat/transcribe"],
-            "actualEndpoints": ["POST /api/chat/transcribe"],
-            "integrationGaps": [],
+            "actualEndpoints": [],
+            "integrationGaps": [
+              "Missing POST /api/chat/transcribe endpoint",
+              "No server-side transcription integration",
+              "No transcriptions table integration",
+              "Audio files not stored with transcription metadata"
+            ],
             "cacheDependencies": {
               "invalidates": ["query:attachments", "query:transcriptions"],
               "refreshesComponents": ["AudioRecorder", "AttachmentPreview"]
             },
             "uiConsistencyValidation": {
-              "tested": true,
-              "knownIssues": []
+              "tested": false,
+              "knownIssues": [
+                "Audio transcription only works with Web Speech API",
+                "No fallback transcription service",
+                "Transcriptions not persisted"
+              ]
             }
           },
           "logging": {
@@ -142,19 +192,22 @@
       "name": "AttachmentPreview",
       "path": "client/src/components/AttachmentPreview.tsx",
       "description": "Displays file attachments with appropriate previews and actions",
-      "uses": ["useFileApi"]
+      "uses": ["useFileApi"],
+      "verified": true
     },
     "AudioRecorder": {
       "name": "AudioRecorder",
       "path": "client/src/components/AudioRecorder.tsx", 
       "description": "Audio recording interface with transcription capabilities",
-      "uses": ["audio-service"]
+      "uses": ["audio-service"],
+      "verified": true
     },
     "ChatInputArea": {
       "name": "ChatInputArea",
       "path": "client/src/components/ChatInputArea.tsx",
       "description": "Text input area with attachment support",
-      "uses": ["useFileUpload", "AttachmentPreview", "AudioRecorder"]
+      "uses": ["useFileUpload", "AttachmentPreview", "AudioRecorder"],
+      "verified": true
     }
   },
   "apiEndpoints": {
@@ -163,21 +216,27 @@
       "handler": "server/routes/chat-routes.ts",
       "description": "Upload file attachments for chat messages",
       "readsFrom": [],
-      "modifies": ["message_attachments", "files"]
+      "modifies": ["message_attachments", "files"],
+      "implemented": false,
+      "actualEndpoint": "POST /api/files"
     },
     "/api/chat/attachments/:id": {
       "method": "GET", 
       "handler": "server/routes/chat-routes.ts",
       "description": "Retrieve specific attachment file",
       "readsFrom": ["message_attachments", "files"],
-      "modifies": []
+      "modifies": [],
+      "implemented": false,
+      "actualEndpoint": "GET /api/files/:id"
     },
     "/api/chat/transcribe": {
       "method": "POST",
       "handler": "server/routes/chat-routes.ts",
       "description": "Transcribe audio files to text",
       "readsFrom": [],
-      "modifies": ["message_attachments", "transcriptions"]
+      "modifies": ["message_attachments", "transcriptions"],
+      "implemented": false,
+      "actualEndpoint": "client-side Web Speech API"
     }
   },
   "database": {
@@ -186,20 +245,40 @@
         "description": "File attachments associated with chat messages",
         "columns": ["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
         "relations": ["conversation_messages"],
-        "indexes": ["message_id", "created_at"]
+        "indexes": ["message_id", "created_at"],
+        "implemented": false,
+        "note": "Table schema defined but not actively used"
       },
       "files": {
         "description": "File storage metadata",
         "columns": ["id", "path", "name", "size", "mime_type", "created_at"],
         "relations": ["message_attachments"],
-        "indexes": ["path", "created_at"]
+        "indexes": ["path", "created_at"],
+        "implemented": true
       },
       "transcriptions": {
         "description": "Audio transcription data",
         "columns": ["id", "attachment_id", "text_content", "confidence_score", "created_at"],
         "relations": ["message_attachments"],
-        "indexes": ["attachment_id"]
+        "indexes": ["attachment_id"],
+        "implemented": false,
+        "note": "Table schema defined but not actively used"
       }
     }
+  },
+  "implementationGaps": {
+    "missingEndpoints": [
+      "POST /api/chat/attachments - for chat-specific file uploads",
+      "GET /api/chat/attachments/:id - for chat-specific file retrieval", 
+      "POST /api/chat/transcribe - for server-side audio transcription"
+    ],
+    "missingTableIntegrations": [
+      "message_attachments table not populated during file uploads",
+      "transcriptions table not used for audio transcription storage"
+    ],
+    "architecturalBypass": [
+      "File uploads bypass chat-specific handlers",
+      "Audio transcription bypasses server-side processing"
+    ]
   }
 }

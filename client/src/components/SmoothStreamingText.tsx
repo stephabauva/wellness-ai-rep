@@ -173,7 +173,7 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
       baseDelay = 25;
       variance = 3; // ±3ms for spaces
     } else {
-      baseDelay = 15; // Fast base typing speed like ChatGPT
+      baseDelay = 25; // Fast base typing speed like ChatGPT
       variance = 3; // ±3ms for regular characters
     }
     

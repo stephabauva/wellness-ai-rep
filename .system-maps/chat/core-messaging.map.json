@@ -62,9 +62,9 @@
               "responseTime": "150ms to first token, 7.8s total for streaming",
               "throughput": "~2 characters/second streaming rate",
               "userExperienceQuality": "ChatGPT-level messaging experience with instant feedback",
-              "configurationValues": ["15ms base delay", "150ms period pauses", "80ms comma pauses"],
+              "configurationValues": ["25ms base delay", "150ms period pauses", "80ms comma pauses"],
               "domainSpecificMetrics": {
-                "streamingSpeed": "15ms per character with natural timing variations",
+                "streamingSpeed": "25ms per character with natural timing variations",
                 "responseLatency": "150ms to first token",
                 "streamingQuality": "ChatGPT-style with enhanced cursor and micro-animations"
               }

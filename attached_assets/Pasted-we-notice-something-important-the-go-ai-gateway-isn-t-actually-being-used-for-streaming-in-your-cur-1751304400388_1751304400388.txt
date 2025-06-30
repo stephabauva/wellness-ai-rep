@@ -1,0 +1,24 @@
+we notice something important: the go-ai-gateway isn't actually being used for streaming in your current setup. Looking at the server routes and the streaming implementation, your chat streaming is going directly through the Node.js server at /api/messages/stream, not through the Go gateway.
+Let me trace the actual streaming flow:
+	1	Frontend: useStreamingChat.ts makes a POST to /api/messages/stream
+	2	Backend: server/routes/chat-routes.ts handles this directly via aiService.getChatResponseStream
+	3	AI Service: Calls OpenAI/Google providers directly from Node.js
+	4	Streaming: Uses the provider's native streaming (OpenAI's stream: true, Google's generateContentStream)
+The issue is in the SmoothStreamingText component. Despite all the ChatGPT-style enhancements implemented, there's a fundamental problem with how chunks are being processed.
+The real issue is that:
+	1	OpenAI and Google providers are sending chunks as they receive them from the APIs, but these chunks can be multiple tokens/words at once
+	2	SmoothStreamingText expects character-by-character streaming to work properly with its ChatGPT-style timing
+	3	The mismatch between chunk sizes from AI providers and the expected character-level streaming is causing the "batchy" appearance
+
+and because the flaw was not immediatly visible, we added :
+```
+ "performanceCharacteristics": {
+                    "responseTime": "String: Time to complete operation (e.g., '150ms', '2s')",
+                    "throughput": "String: Operations per time unit (e.g., '100 requests/sec')",
+                    "userExperienceQuality": "String: Subjective quality assessment",
+                    "configurationValues": ["String: Array of key performance config values"],
+                    "domainSpecificMetrics": "Object: Domain-specific performance metrics (optional)"
+                  }
+```
+
+but i don;t think this should be in the guide or system maps, the system map is just to understand how everythign flows together, all data, everything that is connected together

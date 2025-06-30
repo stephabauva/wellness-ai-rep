@@ -25,7 +25,27 @@ The primary objective of a system map is to create a structured, queryable, and 
 
 This guide is not for human consumption; it is a technical instruction set for an LLM. The format must be adhered to precisely to ensure operational efficiency, minimize token cost, and maximize analytical accuracy. The chosen format is a federated set of JSON files, as this format's rigid structure is the most computationally efficient for an LLM to parse and reason about.
 
-## 2. Decision Framework (START HERE)
+## 2. Domains vs Dependencies (CRITICAL DISTINCTION)
+
+### 2.1. What is a Domain?
+**Domains are top-level user-facing application areas** - the main sections users interact with:
+- **User Pages/Sections**: `chat`, `health`, `file-manager`, `settings`
+- **Infrastructure Systems**: `routes`, `infrastructure` (logging, performance, testing)
+
+### 2.2. What are Dependencies?
+**Dependencies are other domains that this domain relies on** - NOT sub-features:
+- `chat` depends on `memory` (uses memory system)
+- `chat` depends on `file-manager` (uses file attachments)
+- `health` depends on `file-manager` (imports health files)
+
+### 2.3. What are NOT Domains?
+**These should be features within domains, NOT separate domains:**
+- ❌ `conversation-history` → Feature within `chat` domain
+- ❌ `attachments` → Feature within `chat` domain  
+- ❌ `user-profile` → Feature within `settings` domain
+- ❌ `metrics-dashboard` → Feature within `health` domain
+
+## 3. Decision Framework (START HERE)
 
 ### 2.1. File Size Creation Rules (MANDATORY ENFORCEMENT)
 
@@ -42,13 +62,17 @@ This guide is not for human consumption; it is a technical instruction set for a
 
 ### 2.2. Domain vs Sub-Domain Decision Criteria
 
-**Core Domains** (user-facing application areas):
-- Business logic, UI components, API endpoints, database operations
-- Examples: `chat`, `health`, `file-manager`, `settings`, `connected-devices`, `memory`
+**Core Domains** (main user-facing application sections):
+- Complete user workflows with UI, API, and database operations
+- Examples: `chat` (messaging + history), `health` (dashboard + data), `file-manager` (upload + organize), `settings` (preferences + config)
 
-**Infrastructure Domains** (cross-cutting concerns):
-- Referenced by core domains, not standalone
-- Examples: `logging`, `performance`, `testing`
+**Infrastructure Domains** (cross-cutting technical concerns):
+- Referenced by core domains using `$ref`, not standalone user features
+- Examples: `routes` (API routing), `infrastructure` (logging, performance, testing)
+
+**Memory as Special Case**:
+- `memory` is a domain because it's a complete AI system with its own UI section and complex logic
+- Other domains depend on `memory` for AI context and intelligent features
 
 **Sub-Domain Triggers:**
 - Domain has distinct user workflow areas

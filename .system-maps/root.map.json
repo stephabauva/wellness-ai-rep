@@ -4,14 +4,9 @@
   "lastUpdated": "2025-01-27T10:00:00Z",
   "domains": {
     "chat": {
-      "description": "Core chat messaging functionality with AI streaming responses",
+      "description": "Core chat messaging functionality with AI streaming responses and conversation history",
       "path": ".system-maps/chat/",
-      "dependencies": ["memory", "file-manager", "attachments", "conversation-history"]
-    },
-    "conversation-history": {
-      "description": "Conversation history management and navigation functionality",
-      "path": ".system-maps/chat/conversation-history.map.json",
-      "dependencies": ["chat", "memory"]
+      "dependencies": ["memory", "file-manager"]
     },
     "memory": {
       "description": "AI memory system for context persistence and intelligent memory management",

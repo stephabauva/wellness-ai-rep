@@ -1,4 +1,35 @@
 import React, { useRef, useEffect, useMemo, useCallback, useState } from "react";
+
+// Phase 5: Message appearance animation styles
+const messageAnimationStyles = `
+  @keyframes messageAppear {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .message-appear {
+    animation: messageAppear 0.3s ease-out forwards;
+  }
+  
+  .message-appear-delayed {
+    opacity: 0;
+    animation: messageAppear 0.3s ease-out forwards;
+  }
+`;
+
+// Inject animation styles
+if (typeof document !== 'undefined' && !document.getElementById('message-animation-styles')) {
+  const styleElement = document.createElement('style');
+  styleElement.id = 'message-animation-styles';
+  styleElement.textContent = messageAnimationStyles;
+  document.head.appendChild(styleElement);
+}
 import { ChatMessage } from "@/components/ui/chat-message";
 import { AttachedFile } from "@/hooks/useFileManagement";
 import { useVirtualScrolling } from "@/hooks/useVirtualScrolling";
@@ -50,6 +81,7 @@ export function MessageDisplayArea({
   const [containerHeight, setContainerHeight] = useState(400);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [processedMessages, setProcessedMessages] = useState<any[]>([]);
+  const [messageAnimationKeys, setMessageAnimationKeys] = useState<Set<string>>(new Set());
 
   // All useCallback hooks together
   const onWorkerMessage = useCallback((data: any) => {
@@ -184,6 +216,24 @@ export function MessageDisplayArea({
 
   console.log("[MessageDisplayArea] About to render. Messages:", messagesToRender?.length);
 
+  // Track new messages for animation (Phase 5)
+  useEffect(() => {
+    if (messagesToRender && messagesToRender.length > 0) {
+      const currentKeys = new Set(messagesToRender.map((msg: Message) => msg.id));
+      const newKeys = new Set([...currentKeys].filter(key => !messageAnimationKeys.has(key)));
+      
+      if (newKeys.size > 0) {
+        setMessageAnimationKeys(currentKeys);
+      }
+    }
+  }, [messagesToRender, messageAnimationKeys]);
+
+  const shouldAnimateMessage = useCallback((messageId: string, index: number) => {
+    // Animate new messages that appear
+    const isNew = !messageAnimationKeys.has(messageId);
+    return isNew;
+  }, [messageAnimationKeys]);
+
   return (
     <div 
       ref={containerRef}
@@ -210,11 +260,18 @@ export function MessageDisplayArea({
             {messagesToRender.map((message: Message, index: number) => {
               const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
               
+              const shouldAnimate = shouldAnimateMessage(message.id, index);
+              
               return (
                 <div 
                   key={message.id}
-                  className="virtual-scroll-item chat-message-optimized"
+                  className={`virtual-scroll-item chat-message-optimized ${
+                    shouldAnimate ? 'message-appear' : ''
+                  }`}
                   data-index={index}
+                  style={{
+                    animationDelay: shouldAnimate ? `${Math.min(index * 50, 200)}ms` : '0ms'
+                  }}
                 >
                   <ChatMessage
                     message={message.content}
@@ -239,19 +296,28 @@ export function MessageDisplayArea({
             messagesToRender.map((message: Message, index: number) => {
               const isActivelyStreaming = message.id.startsWith('ai-streaming-') && !message.isUserMessage;
               
+              const shouldAnimate = shouldAnimateMessage(message.id, index);
+              
               return (
-                <ChatMessage
+                <div
                   key={message.id}
-                  message={message.content}
-                  isUser={message.isUserMessage}
-                  timestamp={message.timestamp}
-                  isStreaming={isActivelyStreaming}
-                  isStreamingComplete={false}
-                  attachments={message.attachments?.map((att: any) => ({
-                    name: att.name,
-                    type: att.type,
-                  }))}
-                />
+                  className={shouldAnimate ? 'message-appear' : ''}
+                  style={{
+                    animationDelay: shouldAnimate ? `${Math.min(index * 50, 200)}ms` : '0ms'
+                  }}
+                >
+                  <ChatMessage
+                    message={message.content}
+                    isUser={message.isUserMessage}
+                    timestamp={message.timestamp}
+                    isStreaming={isActivelyStreaming}
+                    isStreamingComplete={false}
+                    attachments={message.attachments?.map((att: any) => ({
+                      name: att.name,
+                      type: att.type,
+                    }))}
+                  />
+                </div>
               );
             })
           ) : (

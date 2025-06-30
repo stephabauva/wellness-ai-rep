@@ -8,6 +8,7 @@ interface StreamingMessage {
   content: string;
   isComplete: boolean;
   isStreaming: boolean;
+  isPaused?: boolean; // Phase 6
 }
 
 interface StreamingChatOptions {
@@ -21,6 +22,14 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
   const [isConnected, setIsConnected] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [pendingUserMessage, setPendingUserMessage] = useState<any>(null);
+  // Phase 6: Advanced streaming controls
+  const [isStreamingPaused, setIsStreamingPaused] = useState(false);
+  const [userBehaviorData, setUserBehaviorData] = useState({
+    lastScrollTime: Date.now(),
+    scrollDirection: 'down' as 'up' | 'down',
+    readingSpeed: 1.0, // Multiplier for adaptive speed
+    isScrollingUp: false
+  });
   const eventSourceRef = useRef<EventSource | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -256,6 +265,50 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
     }
   }, [streamingMessage?.id, options.onMessageComplete, queryClient, toast, refreshMessages, addOptimisticMessage]);
 
+  // Phase 6: Pause/Resume streaming functionality
+  const pauseStreaming = useCallback(() => {
+    if (isConnected && streamingMessage && !streamingMessage.isComplete) {
+      setIsStreamingPaused(true);
+      setStreamingMessage(prev => prev ? { ...prev, isPaused: true } : null);
+    }
+  }, [isConnected, streamingMessage]);
+
+  const resumeStreaming = useCallback(() => {
+    if (isConnected && streamingMessage && isStreamingPaused) {
+      setIsStreamingPaused(false);
+      setStreamingMessage(prev => prev ? { ...prev, isPaused: false } : null);
+    }
+  }, [isConnected, streamingMessage, isStreamingPaused]);
+
+  // Phase 6: Adaptive speed based on user behavior
+  const updateUserBehavior = useCallback((behaviorData: {
+    scrollPosition?: number;
+    scrollDirection?: 'up' | 'down';
+    interactionType?: 'scroll' | 'click' | 'hover';
+  }) => {
+    const now = Date.now();
+    
+    setUserBehaviorData(prev => {
+      const timeSinceLastScroll = now - prev.lastScrollTime;
+      let newReadingSpeed = prev.readingSpeed;
+      
+      // Slow down if user is scrolling up (re-reading)
+      if (behaviorData.scrollDirection === 'up') {
+        newReadingSpeed = Math.max(0.5, prev.readingSpeed * 0.8);
+      } else if (behaviorData.scrollDirection === 'down' && timeSinceLastScroll > 2000) {
+        // Speed up if user hasn't scrolled for a while and is scrolling down
+        newReadingSpeed = Math.min(1.5, prev.readingSpeed * 1.1);
+      }
+      
+      return {
+        lastScrollTime: now,
+        scrollDirection: behaviorData.scrollDirection || prev.scrollDirection,
+        readingSpeed: newReadingSpeed,
+        isScrollingUp: behaviorData.scrollDirection === 'up'
+      };
+    });
+  }, []);
+
   const stopStreaming = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -264,6 +317,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
     setIsConnected(false);
     setIsThinking(false);
     setStreamingMessage(null);
+    setIsStreamingPaused(false);
   }, []);
 
   return {
@@ -272,6 +326,12 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
     isThinking,
     startStreaming,
     stopStreaming,
-    pendingUserMessage
+    pendingUserMessage,
+    // Phase 6: Advanced features
+    isStreamingPaused,
+    pauseStreaming,
+    resumeStreaming,
+    userBehaviorData,
+    updateUserBehavior
   };
 }

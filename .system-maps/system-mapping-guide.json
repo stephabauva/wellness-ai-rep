@@ -1,0 +1,63 @@
+
+{
+  "version": "2.0.0",
+  "mandatoryChecks": {
+    "beforeCreation": {
+      "sizeEstimation": {
+        "maxLines": 300,
+        "maxFeatureGroups": 5,
+        "action": "CREATE_SUBDOMAIN_DIRECTORY"
+      },
+      "megaFeatureThreshold": {
+        "maxLinesPerFeature": 100,
+        "action": "EXTRACT_TO_FEATURE_FILE"
+      }
+    }
+  },
+  "fileStructures": {
+    "rootMap": {
+      "required": ["appName", "version", "lastUpdated", "domains"],
+      "tableOfContents": false
+    },
+    "domainMap": {
+      "required": ["tableOfContents", "integrationStatus", "lastUpdated", "dependencies", "featureGroups"],
+      "tableOfContents": true,
+      "maxLines": 300,
+      "maxFeatureGroups": 5
+    },
+    "featureFile": {
+      "required": ["_metadata", "description", "userFlow", "systemFlow"],
+      "metadata": ["featureName", "featureGroup", "parentFile", "domain"]
+    }
+  },
+  "integrationValidation": {
+    "statusLevels": {
+      "active": "REQUIRES_EVIDENCE",
+      "partial": "DOCUMENTED_GAPS",
+      "planned": "DESIGN_ONLY",
+      "broken": "EXECUTION_FAILURE"
+    },
+    "evidenceRequired": [
+      "componentToApiTracing",
+      "endpointVerification", 
+      "uiRefreshValidation",
+      "integrationTesting"
+    ]
+  },
+  "cacheDependencies": {
+    "required": ["invalidates", "refreshesComponents"],
+    "patterns": {
+      "queryKey": "query:specificEndpoint",
+      "componentRefresh": "ComponentName",
+      "crossDomain": "document_when_affects_other_domains"
+    }
+  },
+  "workflowSteps": [
+    "ESTIMATE_DOMAIN_SIZE",
+    "CHECK_SIZE_CONSTRAINTS", 
+    "CHOOSE_STRUCTURE",
+    "RECURSIVE_DEPENDENCY_ANALYSIS",
+    "FLOW_TRACING",
+    "VALIDATION"
+  ]
+}

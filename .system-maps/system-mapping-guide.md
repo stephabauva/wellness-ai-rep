@@ -1,6 +1,24 @@
 
 # System Mapping Generation Guide for LLMs
 
+## 🚨 MANDATORY FIRST CHECK (JSON Format)
+```json
+{
+  "beforeAnyCreation": {
+    "estimateDomainSize": "REQUIRED",
+    "sizeConstraints": {
+      "maxLines": 300,
+      "maxFeatureGroups": 5,
+      "violationAction": "CREATE_SUBDOMAIN_DIRECTORY"
+    },
+    "megaFeatureThreshold": {
+      "maxLinesPerFeature": 100,
+      "violationAction": "EXTRACT_TO_FEATURE_FILE"
+    }
+  }
+}
+```
+
 ## 1. Core Philosophy
 
 The primary objective of a system map is to create a structured, queryable, and unambiguous representation of the application's architecture. This map serves as a "single source of truth" for understanding how different parts of the codebase connect, from user-facing features down to specific database tables.

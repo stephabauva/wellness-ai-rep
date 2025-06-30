@@ -94,7 +94,11 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       const result = await aiService.getChatResponseStream(
         content, FIXED_USER_ID, conversationId || '', 0, coachingMode || 'weight-loss', [],
         { provider: userAiProvider, model: userAiModel }, attachments || [], userAutoSelection,
-        (chunk: string) => res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`),
+        (chunk: string) => {
+          // Send chunk immediately and flush the response
+          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
+          if (res.flush) res.flush();
+        },
         (complete: string) => res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`),
         (error: Error) => res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`)
       );

@@ -316,7 +316,13 @@ export class GoogleProvider implements AiProvider {
         const chunkText = chunk.text();
         if (chunkText) {
           fullResponse += chunkText;
-          onChunk(chunkText);
+          // Send each character individually for smoother streaming
+          for (let i = 0; i < chunkText.length; i++) {
+            const char = chunkText[i];
+            onChunk(char);
+            // Small delay to prevent overwhelming the client
+            await new Promise(resolve => setTimeout(resolve, 1));
+          }
         }
       }
 

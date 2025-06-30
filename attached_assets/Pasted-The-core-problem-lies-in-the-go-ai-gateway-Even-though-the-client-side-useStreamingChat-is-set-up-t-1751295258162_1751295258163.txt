@@ -1,0 +1,31 @@
+The core problem lies in the go-ai-gateway. Even though the client-side useStreamingChat is set up to handle chunk events, and the AI providers (like OpenAI) support streaming, the go-ai-gateway is not forwarding these chunks as they arrive. Instead, it's waiting for the entire AI response to be received, then sending it as a single, large chunk to the client. This explains why the client receives "big batches of text" rather than a continuous stream.
+
+To fix this, the makeHTTPRequest functions in both OpenAIHandler and GoogleHandler need to be modified to:
+
+Detect if the request is a streaming request (i.e., req.Stream is true).
+If it's a streaming request, instead of io.ReadAll, they should read the response body incrementally and forward each received chunk to the client as an SSE data: event. This will involve setting the Content-Type header to text/event-stream and flushing the response writer after each chunk.
+This will require significant changes to the makeHTTPRequest methods and potentially the chatHandler to handle the SSE connection properly.
+
+I will now outline the plan to implement this.
+
+Plan:
+
+Modify chatHandler in main.go:
+
+Change the chatHandler to handle streaming requests differently. If req.Stream is true, it should set up an SSE response and call a new streaming-specific processing function.
+Remove the caching for streaming requests, as streaming responses are not typically cached in their entirety.
+Create a new streaming function in providers.go (e.g., StreamRequest):
+
+This function will be called by chatHandler for streaming requests.
+It will take http.ResponseWriter and *http.Request (or *gin.Context) as arguments to directly write SSE events.
+Inside this function, it will make the actual HTTP request to the AI provider.
+It will then read the response body from the AI provider incrementally (e.g., using a bufio.Scanner or io.Reader with a small buffer).
+For each chunk received from the AI provider, it will format it as an SSE data: event and write it to the http.ResponseWriter, followed by a Flush().
+Update OpenAIHandler and GoogleHandler:
+
+Add a StreamRequest method to both OpenAIHandler and GoogleHandler interfaces and their implementations.
+The StreamRequest method will handle the specific parsing of the AI provider's streaming response format (e.g., OpenAI's data: events or Google's chunk objects) and extract the content.
+It will then send these extracted content chunks as data: events to the client.
+This is a complex change, as it involves transforming a blocking, full-response API call into a non-blocking, chunk-by-chunk streaming process.
+
+Before proceeding with the implementation, I need to confirm if the user wants to proceed with these changes, as it will involve modifying core server-side logic.

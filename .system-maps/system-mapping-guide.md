@@ -1,3 +1,4 @@
+
 # System Mapping Generation Guide for LLMs
 
 ## 🚨 MANDATORY FIRST CHECK (JSON Format)
@@ -216,13 +217,6 @@ Integration status cannot be marked as "active" without validation evidence:
             "uiConsistencyValidation": {
               "tested": false,
               "knownIssues": ["UI components don't refresh after API calls"]
-            },
-            "performanceCharacteristics": {
-              "responseTime": "String: Time to complete operation (e.g., '150ms', '2s')",
-              "throughput": "String: Operations per time unit (e.g., '100 requests/sec')",
-              "userExperienceQuality": "String: Subjective quality assessment",
-              "configurationValues": ["String: Array of key performance config values"],
-              "domainSpecificMetrics": "Object: Domain-specific performance metrics (optional)"
             }
           },
           "logging": {

@@ -44,7 +44,13 @@
 2. Implement progressive loading
 3. Add performance monitoring
 
-### Freeze Root Causes
-1. **Go Service Failures**: 503 errors causing timeouts
-2. **Memory Processing**: Background queues may block main thread
-3. **Bundle Size**: Large initial load affecting startup
+### Freeze Root Causes (CRITICAL)
+1. **Go File Accelerator (11MB)**: Massive bloat causing 503 health check failures
+2. **Recursive Settings Bug**: Infinite nested preferences objects in user settings
+3. **Excessive Component Re-renders**: Chat components re-instantiating on every render
+4. **18,433 TypeScript Files**: Extreme code bloat with most being unused
+
+### Emergency Fixes Required
+1. **Disable Go File Accelerator**: Service is broken and causing timeouts
+2. **Fix Settings Recursion**: User settings creating infinite nested objects
+3. **Remove Unused Files**: 90%+ of TypeScript files are likely unused imports

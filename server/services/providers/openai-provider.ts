@@ -106,12 +106,12 @@ export class OpenAiProvider implements AiProvider {
         const content = chunk.choices[0]?.delta?.content || '';
         if (content) {
           fullResponse += content;
-          // Send each token/character individually for smoother streaming
+          // Send each token/character individually with readable speed
           for (let i = 0; i < content.length; i++) {
             const char = content[i];
             onChunk(char);
-            // Small delay to prevent overwhelming the client
-            await new Promise(resolve => setTimeout(resolve, 1));
+            // Longer delay for more readable streaming speed
+            await new Promise(resolve => setTimeout(resolve, 25));
           }
         }
       }

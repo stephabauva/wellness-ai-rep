@@ -46,6 +46,14 @@
             "Update message status and store complete response"
           ],
           "components": ["ChatInputArea", "ChatSection"],
+          "dataFlowTrace": {
+            "requestPath": ["Frontend: ChatInputArea.tsx", "Hook: useStreamingChat.ts", "API: POST /api/chat", "Handler: server/routes/chat-routes.ts", "Service: server/services/ai-service.ts", "Provider: OpenAI/Google"],
+            "expectedPath": ["Frontend: ChatInputArea.tsx", "Hook: useStreamingChat.ts", "API: POST /api/chat", "Handler: server/routes/chat-routes.ts", "Service: server/services/ai-service.ts", "Provider: OpenAI/Google"],
+            "pathVerified": true,
+            "bypassedComponents": [],
+            "actualHandler": "server/routes/chat-routes.ts:POST /api/chat",
+            "streamingPattern": "Direct Node.js AI Service → Provider (no Go AI Gateway bypass detected)"
+          },
           "apiIntegration": {
             "expectedEndpoints": ["POST /api/chat"],
             "actualEndpoints": ["POST /api/chat"],
@@ -57,17 +65,6 @@
             "uiConsistencyValidation": {
               "tested": true,
               "knownIssues": []
-            },
-            "performanceCharacteristics": {
-              "responseTime": "150ms to first token, 7.8s total for streaming",
-              "throughput": "~2 characters/second streaming rate",
-              "userExperienceQuality": "ChatGPT-level messaging experience with instant feedback",
-              "configurationValues": ["15ms base delay", "150ms period pauses", "80ms comma pauses"],
-              "domainSpecificMetrics": {
-                "streamingSpeed": "15ms per character with natural timing variations",
-                "responseLatency": "150ms to first token",
-                "streamingQuality": "ChatGPT-style with enhanced cursor and micro-animations"
-              }
             }
           },
           "logging": {
@@ -101,6 +98,14 @@
             "Complete response stored when streaming ends"
           ],
           "components": ["SmoothStreamingText", "StreamingText", "MessageDisplayArea"],
+          "dataFlowTrace": {
+            "requestPath": ["Frontend: SmoothStreamingText.tsx", "Hook: useStreamingChat.ts", "API: GET /api/chat/stream", "Handler: server/routes/chat-routes.ts", "Service: server/services/ai-service.ts", "Provider: OpenAI/Google"],
+            "expectedPath": ["Frontend: SmoothStreamingText.tsx", "Hook: useStreamingChat.ts", "API: GET /api/chat/stream", "Gateway: Go AI Gateway", "Provider: OpenAI/Google"],
+            "pathVerified": false,
+            "bypassedComponents": ["Go AI Gateway"],
+            "actualHandler": "server/routes/chat-routes.ts:GET /api/chat/stream",
+            "streamingPattern": "Direct Node.js → AI Provider (bypasses Go AI Gateway architecture)"
+          },
           "streamingEnhancements": {
             "phase1_naturalTiming": {
               "implemented": true,
@@ -181,17 +186,6 @@
               "tested": true,
               "knownIssues": [],
               "chatgptComparison": "Achieved ChatGPT-level streaming smoothness with natural timing variations and enhanced visual polish"
-            },
-            "performanceCharacteristics": {
-              "responseTime": "150ms to first token, 7.8s total for streaming",
-              "throughput": "~2 characters/second streaming rate",
-              "userExperienceQuality": "ChatGPT-level messaging experience with instant feedback",
-              "configurationValues": ["15ms base delay", "150ms period pauses", "80ms comma pauses"],
-              "domainSpecificMetrics": {
-                "streamingSpeed": "15ms per character with natural timing variations",
-                "responseLatency": "150ms to first token",
-                "streamingQuality": "ChatGPT-style with enhanced cursor and micro-animations"
-              }
             }
           },
           "logging": {
@@ -223,6 +217,14 @@
             "Manage scroll position and virtual scrolling"
           ],
           "components": ["MessageDisplayArea", "AttachmentPreview"],
+          "dataFlowTrace": {
+            "requestPath": ["Frontend: MessageDisplayArea.tsx", "Hook: useChatMessages.ts", "API: GET /api/chat/messages", "Handler: server/routes/chat-routes.ts", "Database: conversation_messages"],
+            "expectedPath": ["Frontend: MessageDisplayArea.tsx", "Hook: useChatMessages.ts", "API: GET /api/chat/messages", "Handler: server/routes/chat-routes.ts", "Database: conversation_messages"],
+            "pathVerified": true,
+            "bypassedComponents": [],
+            "actualHandler": "server/routes/chat-routes.ts:GET /api/chat/messages",
+            "streamingPattern": "Standard REST API retrieval"
+          },
           "apiIntegration": {
             "expectedEndpoints": ["GET /api/chat/messages"],
             "actualEndpoints": ["GET /api/chat/messages"],
@@ -234,17 +236,6 @@
             "uiConsistencyValidation": {
               "tested": true,
               "knownIssues": []
-            },
-            "performanceCharacteristics": {
-              "responseTime": "< 100ms for message rendering",
-              "throughput": "Handles 100+ messages efficiently",
-              "userExperienceQuality": "Smooth scrolling and instant message display",
-              "configurationValues": ["Virtual scrolling enabled", "Pagination support", "Attachment preview optimization"],
-              "domainSpecificMetrics": {
-                "renderingSpeed": "Sub-100ms message display",
-                "scrollPerformance": "60fps smooth scrolling with virtual scrolling",
-                "attachmentPreview": "Instant preview generation"
-              }
             }
           },
           "logging": {

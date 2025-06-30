@@ -19,7 +19,7 @@ const cursorStyles = `
     vertical-align: text-top;
   }
   
-  /* Character reveal effect - ChatGPT style */
+  /* Character reveal effect - ChatGPT ghost/phantom style */
   .character-reveal {
     display: inline;
     white-space: pre-wrap;
@@ -29,22 +29,56 @@ const cursorStyles = `
     display: inline-block;
     opacity: 0;
     transform: translateX(-2px);
-    animation: charReveal 0.15s ease-out forwards;
+    animation: charGhostReveal 0.4s ease-out forwards;
+    filter: blur(2px);
   }
   
-  @keyframes charReveal {
+  @keyframes charGhostReveal {
     0% {
       opacity: 0;
-      transform: translateX(-3px) scale(0.95);
+      transform: translateX(-4px) scale(0.9);
+      filter: blur(3px);
+      text-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    }
+    25% {
+      opacity: 0.3;
+      transform: translateX(-2px) scale(0.95);
+      filter: blur(2px);
+      text-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
     }
     50% {
-      opacity: 0.7;
+      opacity: 0.6;
       transform: translateX(-1px) scale(0.98);
+      filter: blur(1px);
+      text-shadow: 0 0 4px rgba(59, 130, 246, 0.3);
+    }
+    75% {
+      opacity: 0.85;
+      transform: translateX(-0.5px) scale(0.99);
+      filter: blur(0.5px);
+      text-shadow: 0 0 2px rgba(59, 130, 246, 0.2);
     }
     100% {
       opacity: 1;
       transform: translateX(0) scale(1);
+      filter: blur(0);
+      text-shadow: none;
     }
+  }
+  
+  /* Enhanced ghost effect for different content types */
+  .char-ghost-prose {
+    animation-duration: 0.35s;
+  }
+  
+  .char-ghost-code {
+    animation-duration: 0.25s;
+    text-shadow: 0 0 4px rgba(34, 197, 94, 0.2);
+  }
+  
+  .char-ghost-emphasis {
+    animation-duration: 0.5s;
+    text-shadow: 0 0 6px rgba(168, 85, 247, 0.3);
   }
   
   /* Preserve whitespace for proper spacing */
@@ -503,22 +537,47 @@ export const SmoothStreamingText: React.FC<SmoothStreamingTextProps> = ({
     }
   }, [isComplete, content.length]);
 
-  // Render characters with reveal animation
+  // Render characters with ghost reveal animation
   const renderTextWithReveal = () => {
     if (!displayedText) return null;
     
     return displayedText.split('').map((char, index) => {
       const isRevealed = index < revealedChars;
-      const animationDelay = isRevealed ? '0ms' : `${index * 15}ms`;
+      const animationDelay = isRevealed ? '0ms' : `${index * 20}ms`;
+      
+      // Determine ghost effect class based on content analysis
+      let ghostClass = 'char';
+      if (contentAnalysis) {
+        switch (contentAnalysis.type) {
+          case 'code':
+            ghostClass += ' char-ghost-code';
+            break;
+          case 'prose':
+            ghostClass += ' char-ghost-prose';
+            break;
+          default:
+            break;
+        }
+      }
+      
+      // Add emphasis class for punctuation
+      if (char === '.' || char === '!' || char === '?') {
+        ghostClass += ' char-ghost-emphasis';
+      }
+      
+      if (char === ' ') {
+        ghostClass += ' char-space';
+      }
       
       return (
         <span
           key={`char-${index}`}
-          className={`char ${char === ' ' ? 'char-space' : ''}`}
+          className={ghostClass}
           style={{
             animationDelay: animationDelay,
             opacity: isRevealed ? 1 : 0,
-            transform: isRevealed ? 'translateX(0) scale(1)' : 'translateX(-3px) scale(0.95)'
+            transform: isRevealed ? 'translateX(0) scale(1)' : 'translateX(-4px) scale(0.9)',
+            filter: isRevealed ? 'blur(0)' : 'blur(3px)'
           }}
         >
           {char}

@@ -26,6 +26,36 @@
     }
   },
   "decisionFramework": {
+    "domainsVsDependencies": {
+      "whatIsDomain": {
+        "description": "Domains are top-level user-facing application areas - the main sections users interact with",
+        "examples": {
+          "userPagesSections": ["chat", "health", "file-manager", "settings"],
+          "infrastructureSystems": ["routes", "infrastructure"]
+        }
+      },
+      "whatAreDependencies": {
+        "description": "Dependencies are other domains that this domain relies on - NOT sub-features",
+        "examples": [
+          "chat depends on memory (uses memory system)",
+          "chat depends on file-manager (uses file attachments)",
+          "health depends on file-manager (imports health files)"
+        ]
+      },
+      "whatAreNOTDomains": {
+        "description": "These should be features within domains, NOT separate domains",
+        "examples": [
+          "conversation-history → Feature within chat domain",
+          "attachments → Feature within chat domain",
+          "user-profile → Feature within settings domain",
+          "metrics-dashboard → Feature within health domain"
+        ]
+      },
+      "memorySpecialCase": {
+        "description": "memory is a domain because it's a complete AI system with its own UI section and complex logic",
+        "note": "Other domains depend on memory for AI context and intelligent features"
+      }
+    },
     "subDomainDirectoryTriggers": [
       "Domain analysis indicates >300 lines in single file",
       "Domain contains >5 top-level feature groups",
@@ -39,9 +69,9 @@
     ],
     "domainClassification": {
       "coreDomainsExamples": ["chat", "health", "file-manager", "settings", "connected-devices", "memory"],
-      "infrastructureDomainsExamples": ["logging", "performance", "testing"],
-      "coreDomainsCriteria": "Business logic, UI components, API endpoints, database operations",
-      "infrastructureDomainsCriteria": "Cross-cutting concerns referenced by core domains"
+      "infrastructureDomainsExamples": ["routes", "infrastructure"],
+      "coreDomainsCriteria": "Complete user workflows with UI, API, and database operations",
+      "infrastructureDomainsCriteria": "Cross-cutting technical concerns referenced by core domains using $ref"
     }
   },
   "fileStructures": {

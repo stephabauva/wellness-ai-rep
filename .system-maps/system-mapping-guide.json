@@ -92,6 +92,14 @@
                 "userFlow": ["String: Array of user steps"],
                 "systemFlow": ["String: Array of system processes"],
                 "components": ["String: Array of component names"],
+                "dataFlowTrace": {
+                  "requestPath": ["String: Actual request path from frontend to final handler"],
+                  "expectedPath": ["String: Intended architectural path"],
+                  "pathVerified": "Boolean: Whether actual path matches expected",
+                  "bypassedComponents": ["String: Components that should be used but aren't"],
+                  "actualHandler": "String: File and function that actually processes the request",
+                  "streamingPattern": "String: For streaming features - actual streaming implementation path"
+                },
                 "apiIntegration": {
                   "expectedEndpoints": ["String: Array of expected API endpoints"],
                   "actualEndpoints": ["String: Array of actual API endpoints"],
@@ -155,7 +163,9 @@
           "Component-to-API call tracing documented",
           "Endpoint verification completed",
           "UI refresh dependency chain validated",
-          "Integration testing evidence provided"
+          "Integration testing evidence provided",
+          "Data flow path verified against architectural intent",
+          "No architectural component bypasses detected"
         ]
       },
       "partial": {
@@ -192,6 +202,8 @@
     "validationSteps": {
       "componentToApiTracing": "Document actual fetch(), queryKey, and API calls in component code",
       "endpointVerification": "Validate that component calls match server route implementations",
+      "dataFlowVerification": "Trace complete request path from frontend click to final data handler",
+      "architecturalIntentValidation": "Verify actual implementation matches intended architecture",
       "uiRefreshValidation": "Verify all dependent UI components refresh after successful API operations",
       "integrationTesting": "Proof of end-to-end functionality"
     }
@@ -267,10 +279,12 @@
     {
       "step": 4,
       "name": "FLOW_TRACING_AND_INTEGRATION_MAPPING",
-      "description": "Map complete user and system flows",
+      "description": "Map complete user and system flows with architectural verification",
       "actions": [
         "Trace user flows (from UI interaction through client logic to API)",
         "Map API to database (from endpoint through services to database tables)",
+        "Verify architectural intent vs actual implementation paths",
+        "Identify bypassed components or services in request flow",
         "Document cache dependencies (map complete refresh chains)",
         "Validate integration status (verify actual working implementations)"
       ]

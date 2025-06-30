@@ -30,7 +30,7 @@
       "whatIsDomain": {
         "description": "Domains are top-level user-facing application areas - the main sections users interact with",
         "examples": {
-          "userPagesSections": ["chat", "health", "file-manager", "settings"],
+          "userPagesSections": ["chat", "health", "devices", "memory", "file-manager", "settings"],
           "infrastructureSystems": ["routes", "infrastructure"]
         }
       },

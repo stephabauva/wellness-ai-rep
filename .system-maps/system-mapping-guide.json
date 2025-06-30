@@ -105,10 +105,11 @@
                     "knownIssues": ["String: Array of UI consistency issues"]
                   },
                   "performanceCharacteristics": {
-                    "streamingSpeed": "String: Character delay timing (e.g., '25ms per character')",
-                    "responseLatency": "String: Time to first token",
+                    "responseTime": "String: Time to complete operation (e.g., '150ms', '2s')",
+                    "throughput": "String: Operations per time unit (e.g., '100 requests/sec')",
                     "userExperienceQuality": "String: Subjective quality assessment",
-                    "configurationValues": ["String: Array of key performance config values"]
+                    "configurationValues": ["String: Array of key performance config values"],
+                    "domainSpecificMetrics": "Object: Domain-specific performance metrics (optional)"
                   }
                 },
                 "logging": {

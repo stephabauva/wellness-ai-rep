@@ -1,0 +1,244 @@
+
+{
+  "tableOfContents": {
+    "conversation-management": {
+      "features": ["conversation-list", "conversation-persistence", "conversation-navigation"],
+      "components": ["ConversationHistory", "ConversationListItem", "ConversationSearch"],
+      "endpoints": ["GET /api/conversations", "DELETE /api/conversations/:id", "PUT /api/conversations/:id"]
+    }
+  },
+  "integrationStatus": {
+    "conversation-list": {
+      "status": "partial",
+      "lastVerified": "2025-01-27",
+      "knownIssues": ["Latest conversations not appearing in history", "UI component exists but data flow incomplete"]
+    },
+    "conversation-persistence": {
+      "status": "active",
+      "lastVerified": "2025-01-27",
+      "knownIssues": []
+    },
+    "conversation-navigation": {
+      "status": "broken",
+      "lastVerified": "2025-01-27",
+      "knownIssues": ["Users cannot access previous conversations from history interface"]
+    }
+  },
+  "lastUpdated": "2025-01-27T10:30:00Z",
+  "dependencies": ["core-messaging", "memory"],
+  "featureGroups": {
+    "conversation-management": {
+      "description": "User interface and backend functionality for managing conversation history, including listing, searching, and navigating previous conversations",
+      "features": {
+        "conversation-list": {
+          "description": "Display list of user's previous conversations with titles, timestamps, and preview text",
+          "userFlow": [
+            "User clicks on conversation history section",
+            "System displays list of previous conversations",
+            "User sees conversation titles, timestamps, and message previews",
+            "User can scroll through paginated conversation list"
+          ],
+          "systemFlow": [
+            "Fetch conversations from database ordered by last activity",
+            "Generate conversation titles from first message or AI summary",
+            "Apply pagination to conversation results",
+            "Return formatted conversation metadata to frontend"
+          ],
+          "components": ["ConversationHistory", "ConversationListItem"],
+          "dataFlowTrace": {
+            "requestPath": ["Frontend: ConversationHistory.tsx", "Hook: useChatMessages.ts", "API: GET /api/conversations", "Handler: server/routes/chat-routes.ts", "Database: conversations"],
+            "expectedPath": ["Frontend: ConversationHistory.tsx", "Hook: useChatMessages.ts", "API: GET /api/conversations", "Handler: server/routes/chat-routes.ts", "Database: conversations"],
+            "pathVerified": false,
+            "bypassedComponents": [],
+            "actualHandler": "server/routes/chat-routes.ts:GET /api/conversations",
+            "streamingPattern": "Standard REST API retrieval"
+          },
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/conversations"],
+            "actualEndpoints": ["GET /api/conversations"],
+            "integrationGaps": ["Frontend not properly consuming conversation data", "Missing conversation title generation"],
+            "cacheDependencies": {
+              "invalidates": ["query:conversations"],
+              "refreshesComponents": ["ConversationHistory", "ChatSection"]
+            },
+            "uiConsistencyValidation": {
+              "tested": false,
+              "knownIssues": ["Latest conversations not displaying", "Conversation list appears empty"]
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/conversation-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/conversation-performance"
+          },
+          "tests": []
+        },
+        "conversation-persistence": {
+          "description": "Automatic saving and persistence of conversation data with proper metadata",
+          "userFlow": [
+            "User engages in chat conversation",
+            "System automatically saves conversation with metadata",
+            "Conversation appears in history with proper title and timestamp",
+            "User can access saved conversation later"
+          ],
+          "systemFlow": [
+            "Create conversation record on first message",
+            "Update conversation metadata on each new message",
+            "Generate or update conversation title based on content",
+            "Store conversation with proper indexing for retrieval"
+          ],
+          "components": ["ChatSection", "ConversationHistory"],
+          "dataFlowTrace": {
+            "requestPath": ["Frontend: ChatSection.tsx", "Hook: useStreamingChat.ts", "API: POST /api/chat", "Handler: server/routes/chat-routes.ts", "Database: conversations, conversation_messages"],
+            "expectedPath": ["Frontend: ChatSection.tsx", "Hook: useStreamingChat.ts", "API: POST /api/chat", "Handler: server/routes/chat-routes.ts", "Database: conversations, conversation_messages"],
+            "pathVerified": true,
+            "bypassedComponents": [],
+            "actualHandler": "server/routes/chat-routes.ts:POST /api/chat",
+            "streamingPattern": "Database persistence during chat flow"
+          },
+          "apiIntegration": {
+            "expectedEndpoints": ["POST /api/chat", "PUT /api/conversations/:id"],
+            "actualEndpoints": ["POST /api/chat"],
+            "integrationGaps": ["Missing conversation update endpoint"],
+            "cacheDependencies": {
+              "invalidates": ["query:conversations", "query:messages"],
+              "refreshesComponents": ["ConversationHistory", "ChatSection"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/conversation-persistence-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/conversation-persistence-performance"
+          },
+          "tests": []
+        },
+        "conversation-navigation": {
+          "description": "Allow users to click on previous conversations and resume them in the chat interface",
+          "userFlow": [
+            "User views conversation history",
+            "User clicks on a previous conversation",
+            "System loads conversation messages in chat interface",
+            "User can continue conversation from where they left off"
+          ],
+          "systemFlow": [
+            "Receive conversation selection from frontend",
+            "Load conversation messages from database",
+            "Set active conversation context",
+            "Update chat interface with conversation history",
+            "Enable continuation of selected conversation"
+          ],
+          "components": ["ConversationHistory", "ChatSection", "MessageDisplayArea"],
+          "dataFlowTrace": {
+            "requestPath": ["Frontend: ConversationHistory.tsx", "Hook: useChatMessages.ts", "Context: AppContext", "Component: ChatSection.tsx"],
+            "expectedPath": ["Frontend: ConversationHistory.tsx", "Hook: useChatMessages.ts", "API: GET /api/conversations/:id/messages", "Handler: server/routes/chat-routes.ts"],
+            "pathVerified": false,
+            "bypassedComponents": ["API endpoint for loading specific conversation"],
+            "actualHandler": "Missing: server/routes/chat-routes.ts:GET /api/conversations/:id/messages",
+            "streamingPattern": "Conversation context switching"
+          },
+          "apiIntegration": {
+            "expectedEndpoints": ["GET /api/conversations/:id/messages", "PUT /api/conversations/:id/select"],
+            "actualEndpoints": [],
+            "integrationGaps": ["Missing conversation selection API", "No conversation context switching mechanism"],
+            "cacheDependencies": {
+              "invalidates": ["query:messages", "query:currentConversation"],
+              "refreshesComponents": ["MessageDisplayArea", "ChatSection", "ConversationHistory"]
+            },
+            "uiConsistencyValidation": {
+              "tested": false,
+              "knownIssues": ["Cannot click to load previous conversations", "No active conversation indication"]
+            }
+          },
+          "logging": {
+            "$ref": "../infrastructure/logging.map.json#/conversation-navigation-logging"
+          },
+          "performance": {
+            "$ref": "../infrastructure/performance.map.json#/conversation-navigation-performance"
+          },
+          "tests": []
+        }
+      }
+    }
+  },
+  "components": {
+    "ConversationHistory": {
+      "name": "ConversationHistory",
+      "path": "client/src/components/ConversationHistory.tsx",
+      "description": "Main conversation history interface displaying list of previous conversations",
+      "uses": ["useChatMessages", "ConversationListItem", "ConversationSearch"],
+      "integrationIssues": ["Not properly consuming conversation API data", "Missing click handlers for conversation selection"]
+    },
+    "ConversationListItem": {
+      "name": "ConversationListItem",
+      "path": "client/src/components/ConversationListItem.tsx",
+      "description": "Individual conversation item in history list with title, timestamp, and preview",
+      "uses": [],
+      "integrationIssues": ["Component may not exist", "Missing conversation selection functionality"]
+    },
+    "ConversationSearch": {
+      "name": "ConversationSearch",
+      "path": "client/src/components/ConversationSearch.tsx",
+      "description": "Search functionality for filtering conversation history",
+      "uses": [],
+      "integrationIssues": ["Component may not exist", "Search functionality not implemented"]
+    }
+  },
+  "apiEndpoints": {
+    "/api/conversations": {
+      "method": "GET",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Retrieve user's conversation history with pagination",
+      "readsFrom": ["conversations", "conversation_messages"],
+      "modifies": [],
+      "implementationStatus": "active"
+    },
+    "/api/conversations/:id": {
+      "method": "DELETE",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Delete a specific conversation and its messages",
+      "readsFrom": ["conversations"],
+      "modifies": ["conversations", "conversation_messages"],
+      "implementationStatus": "missing"
+    },
+    "/api/conversations/:id": {
+      "method": "PUT",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Update conversation metadata (title, etc.)",
+      "readsFrom": ["conversations"],
+      "modifies": ["conversations"],
+      "implementationStatus": "missing"
+    },
+    "/api/conversations/:id/messages": {
+      "method": "GET",
+      "handler": "server/routes/chat-routes.ts",
+      "description": "Load messages for a specific conversation",
+      "readsFrom": ["conversation_messages", "message_attachments"],
+      "modifies": [],
+      "implementationStatus": "missing"
+    }
+  },
+  "database": {
+    "tables": {
+      "conversations": {
+        "description": "Chat conversation metadata and context",
+        "columns": ["id", "title", "created_at", "updated_at", "user_id"],
+        "relations": ["conversation_messages"],
+        "indexes": ["user_id", "created_at"],
+        "integrationIssues": ["Missing title generation logic", "No conversation selection tracking"]
+      },
+      "conversation_messages": {
+        "description": "Individual chat messages within conversations",
+        "columns": ["id", "conversation_id", "role", "content", "created_at", "message_type", "status"],
+        "relations": ["conversations", "message_attachments"],
+        "indexes": ["conversation_id", "created_at"],
+        "integrationIssues": ["Messages not properly linked to conversation history interface"]
+      }
+    }
+  }
+}

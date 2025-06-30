@@ -56,13 +56,26 @@
         "note": "Other domains depend on memory for AI context and intelligent features"
       }
     },
-    "subDomainDirectoryTriggers": [
-      "Domain analysis indicates >300 lines in single file",
-      "Domain contains >5 top-level feature groups",
-      "Domain has distinct user workflow areas",
-      "Natural feature groupings exist",
-      "Domain spans multiple database schemas",
-      "Team ownership boundaries exist"
+    "domainDirectoryStructure": {
+      "description": "Each domain gets its own directory with focused map files organized by feature groups",
+      "standardPattern": ".system-maps/[domain-name]/[feature-group].map.json",
+      "examples": [
+        ".system-maps/chat/core-messaging.map.json",
+        ".system-maps/chat/attachments.map.json", 
+        ".system-maps/health/dashboard.map.json",
+        ".system-maps/health/data-operations.map.json",
+        ".system-maps/settings/ai-configuration.map.json"
+      ],
+      "benefits": [
+        "Clear domain boundaries from the start",
+        "Focused feature group organization", 
+        "Easy navigation and maintenance",
+        "Natural team ownership alignment"
+      ]
+    },
+    "megaFeatureFileTriggers": [
+      "Single feature analysis indicates >100 lines in JSON definition",
+      "Feature has complex nested structure requiring separate documentation"
     ],
     "megaFeatureFileTriggers": [
       "Single feature analysis indicates >100 lines in JSON definition"
@@ -289,8 +302,8 @@
       "description": "Analyze and plan domain structure",
       "actions": [
         "Identify entry points (primary UI components or server routes)",
-        "Estimate complexity (count potential features and file size)",
-        "Choose structure (single file vs directory based on size rules)",
+        "Estimate complexity (count potential feature groups)",
+        "Create domain directory structure (.system-maps/[domain-name]/)",
         "Plan dependencies (identify cross-domain relationships)"
       ]
     },
@@ -337,7 +350,7 @@
         "rootMap": "Single source of truth manifest pointing to domain entry points",
         "coreDomainMaps": "User-facing application areas with complete functionality mapping",
         "infrastructureMaps": "Cross-cutting concerns referenced by core domains using $ref",
-        "subDomainDirectories": "Complex domains split into focused sub-domain map files",
+        "domainDirectories": "Each domain organized in its own directory with focused feature group map files",
         "megaFeatureFiles": "Large isolated features extracted with $ref references"
       }
     },

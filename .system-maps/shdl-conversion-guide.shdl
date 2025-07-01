@@ -1,0 +1,180 @@
+
+@context{domain:format_conversion, target:ai_consumption, complexity:medium, enforcement:strict}
+@meta{tokens:420, critical_paths:3, validation_rules:8, processing_priority:1}
+
+#ROOT{confidence:1.0}
+  ##conversion_philosophy{id:core_conversion, type:foundational, confidence:1.0, @critical}
+    "Transform human-readable formats into AI-optimized structured data"
+    @enforce:mandatory
+    @trigger:format_validation[json|text|markdown→shdl]
+    @optimize:token_efficiency+semantic_density
+
+    ##size_constraints{id:shdl_limits, type:hard_rule, confidence:1.0, @blocking}
+      "Max 1000 tokens per SHDL block, 15 nested levels max"
+      @enforce:token_counting
+      @trigger:split_when[exceeded]
+      @validate:structure_depth
+
+  ##input_formats{id:source_types, type:classification, confidence:0.95}
+    "Supported conversion sources with processing rules"
+
+    ##format{id:json_input, type:structured, confidence:1.0, @priority:high}
+      "JSON → SHDL direct mapping with hierarchy preservation"
+      @processing{
+        1.parse_json_structure,
+        2.extract_semantic_relationships,
+        3.compress_verbose_keys,
+        4.embed_confidence_scores
+      }
+      @mapping{
+        objects→##blocks,
+        arrays→@cluster{},
+        primitives→compressed_notation,
+        nested→hierarchical_inheritance
+      }
+
+    ##format{id:markdown_input, type:semi_structured, confidence:0.9, @priority:medium}
+      "Markdown → SHDL semantic extraction with context preservation"
+      @processing{
+        1.extract_heading_hierarchy,
+        2.identify_semantic_blocks,
+        3.convert_lists_to_clusters,
+        4.compress_prose_to_directives
+      }
+      @mapping{
+        headers→##hierarchy,
+        lists→@cluster{},
+        code→@processing{},
+        text→semantic_compression
+      }
+
+    ##format{id:text_input, type:unstructured, confidence:0.8, @priority:low}
+      "Plain text → SHDL intelligent structuring"
+      @processing{
+        1.detect_logical_sections,
+        2.identify_relationships,
+        3.extract_procedural_steps,
+        4.infer_confidence_levels
+      }
+      @mapping{
+        paragraphs→##concepts,
+        procedures→@processing{},
+        relationships→@ref_chains,
+        emphasis→@critical
+      }
+
+  ##optimization_rules{id:shdl_compression, type:enhancement, confidence:1.0, @critical}
+    "Token efficiency and semantic density maximization"
+
+    ##compression{id:syntax_optimization, type:technique, confidence:1.0}
+      "Replace verbose patterns with compact operators"
+      @examples{
+        "enforcement:mandatory"→"@enforce:mandatory",
+        "triggers_when:"→"@trigger:",
+        "confidence_level:"→"confidence:",
+        "processing_directive:"→"@",
+        "reference_pointer:"→"$ref:"
+      }
+
+    ##inheritance{id:confidence_propagation, type:efficiency, confidence:1.0}
+      "Hierarchical confidence with selective overrides"
+      @pattern{
+        parent{confidence:1.0}→children{confidence:inherit},
+        explicit_override{confidence:0.8}→breaks_inheritance,
+        @cluster{confidence:0.9}→applies_to_all_members
+      }
+
+    ##clustering{id:semantic_grouping, type:organization, confidence:0.9}
+      "Group related concepts for processing efficiency"
+      @syntax{
+        "@cluster{domain, confidence:X, @attributes}",
+        "  ##concept{id:name, @shared_attrs}",
+        "  ##concept{id:name2, @shared_attrs}",
+        "@/cluster"
+      }
+
+  ##conversion_workflow{id:transform_process, type:procedure, confidence:1.0, @sequential}
+    "Step-by-step conversion methodology"
+
+    ##step{id:parse_input, order:1, confidence:1.0, @blocking}
+      "Analyze source format and extract structure"
+      @processing{
+        detect_format[json|markdown|text],
+        validate_syntax,
+        extract_semantic_elements,
+        identify_relationships
+      }
+      @output{
+        format_type,
+        structure_tree,
+        semantic_map,
+        relationship_graph
+      }
+
+    ##step{id:map_semantics, order:2, confidence:1.0, @critical}
+      "Transform semantic elements to SHDL constructs"
+      @processing{
+        map_hierarchy_to_blocks,
+        convert_relationships_to_refs,
+        compress_verbose_elements,
+        assign_confidence_scores
+      }
+      @validation{
+        !semantic_loss,
+        +relationship_preservation,
+        ?optimization_applied
+      }
+
+    ##step{id:optimize_structure, order:3, confidence:0.9}
+      "Apply compression and efficiency optimizations"
+      @processing{
+        compress_syntax,
+        apply_inheritance,
+        create_clusters,
+        embed_processing_hints
+      }
+      @metrics{
+        token_reduction_target:20%,
+        semantic_density_increase:15%,
+        parsing_efficiency_gain:25%
+      }
+
+    ##step{id:validate_output, order:4, confidence:1.0, @blocking}
+      "Ensure SHDL compliance and semantic integrity"
+      @validation{
+        !syntax_errors,
+        !broken_references,
+        +confidence_propagation,
+        +processing_directives_valid,
+        ?optimization_metrics_met
+      }
+
+@processing{
+  critical_concepts:[format_detection, semantic_mapping, syntax_compression, validation],
+  enforcement_points:[token_limits, confidence_inheritance, reference_integrity],
+  sequential_required:[parse_input, map_semantics, optimize_structure, validate_output],
+  parallel_possible:[syntax_compression, clustering, confidence_assignment],
+  quality_gates:[semantic_preservation, optimization_metrics, validation_rules]
+}
+
+@validation{
+  mandatory_checks:[format_detection, semantic_integrity, syntax_compliance],
+  blocking_violations:[token_exceeded, broken_references, invalid_syntax],
+  optimization_targets:[token_reduction:20%, density_increase:15%, efficiency_gain:25%],
+  compliance_requirements:[shdl_schema, confidence_propagation, processing_directives]
+}
+
+@examples{
+  json_conversion:{
+    input:"{'name':'feature','status':'active','components':['A','B']}",
+    output:"##feature{id:name, status:active, confidence:1.0} @cluster{components} ##comp{id:A} ##comp{id:B} @/cluster"
+  },
+  markdown_conversion:{
+    input:"# Feature\n## Components\n- Component A\n- Component B",
+    output:"##feature{confidence:1.0} @cluster{components, confidence:inherit} ##comp{id:A} ##comp{id:B} @/cluster"
+  },
+  text_conversion:{
+    input:"The feature requires two components that work together",
+    output:"##feature{confidence:0.8, @requires} @cluster{components, relationship:interdependent} ##comp{id:comp1} ##comp{id:comp2} @/cluster"
+  }
+}

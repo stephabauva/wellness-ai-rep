@@ -1,0 +1,537 @@
+@context{domain:memory, feature_group:storage-retrieval, format:shdl, version:2.0.0, complexity:high}
+@meta{
+  featureName:"memory-storage-retrieval", 
+  featureGroup:"storage-retrieval",
+  parentFile:"./memory-domain.shdl",
+  domain:"memory",
+  lastUpdated:"2025-07-01T18:40:00Z",
+  mappingVersion:"2.0.0",
+  validation_status:"active",
+  token_estimate:920
+}
+
+#MEMORY_STORAGE_RETRIEVAL{confidence:1.0, feature_group_status:active, @critical}
+  ##feature_group_overview{id:storage_retrieval_overview, type:complete_mapping, @comprehensive}
+    "Intelligent memory storage and contextual retrieval system providing semantic search capabilities, memory graph relationships, and atomic facts extraction with three-tier retrieval architecture and ChatGPT-style deduplication for optimal memory organization and accessibility"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "Seamless memory storage and intelligent retrieval for enhanced conversations"
+      @processing{
+        step1:"User memories are automatically stored with embeddings and metadata",
+        step2:"Memory content organized into semantic relationships and categories",
+        step3:"During conversations, relevant memories are retrieved based on context",
+        step4:"AI responses enhanced with contextually relevant memory information",
+        step5:"Memory graph relationships provide deeper context understanding",
+        step6:"User experiences improved conversation continuity and personalization"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "Intelligent memory storage and contextual retrieval processing workflow"
+      @processing{
+        process1:"Memory content processed with embedding generation for semantic search",
+        process2:"Atomic facts extracted and stored with relationship mapping",
+        process3:"Memory graph relationships established between related memories",
+        process4:"Contextual retrieval analyzes conversation for relevant memory identification",
+        process5:"Three-tier retrieval system ranks memories by relevance and importance",
+        process6:"Retrieved memories integrated into AI conversation context"
+      }
+    
+    ##dataFlowTrace{id:complete_cycle, type:request_response, @critical}
+      "Complete memory storage and retrieval data flow cycle"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "Memory storage or contextual retrieval request triggered"
+        @processing{memory_content→storage_processing OR conversation_context→retrieval_processing}
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side memory storage and retrieval integration"
+        
+        ##triggerComponent{id:initiator}
+          "MemorySection, ChatInputArea, or automatic context triggers"
+          @ref:MemorySection_ChatInputArea_ContextualRetrieval
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "handleMemoryStorage, handleContextualRetrieval, handleSemanticSearch, handleMemoryGraphNavigation"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "memoryStorage, retrievalResults, memoryGraph, semanticSearchResults, contextualMemories"
+          @/cluster
+        
+        ##memoryHooks{id:memory_hooks, @critical}
+          "Memory storage and retrieval integration hooks"
+          @cluster{hooks, type:memory_operations}
+            "useMemoryStorage, useContextualRetrieval, useSemanticSearch, useMemoryGraph, useAtomicFacts"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "Memory storage and retrieval API integration"
+          @processing{
+            endpoints:["/api/memory/create", "/api/memory/contextual", "/api/memory/semantic-search", "/api/memory/graph"],
+            methods:["POST", "GET"],
+            requestPayload:"Memory content + embeddings OR context + search parameters"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Memory storage and retrieval transport and routing"
+        @processing{
+          requestRoute:"Frontend → Memory routes with storage/retrieval handlers",
+          routeHandler:"Memory service handlers with Go service integration"
+        }
+        @cluster{memoryMiddleware, type:processing}
+          "Content validation, embedding preparation, retrieval authorization"
+        @/cluster
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side memory storage and retrieval processing"
+        
+        ##routeHandler{id:entry_point}
+          "Memory storage and retrieval route handlers with service integration"
+          @ref:memory_routes_storage_retrieval
+        
+        ##memoryStorageServices{id:storage_logic, @critical}
+          "Memory storage business logic services"
+          @cluster{services, type:storage_services}
+            "memory-service, enhanced-memory-service, atomic-facts-extractor"
+          @/cluster
+        
+        ##memoryRetrievalServices{id:retrieval_logic, @critical}
+          "Memory retrieval business logic services"
+          @cluster{services, type:retrieval_services}
+            "intelligent-memory-retrieval, contextual-memory-retrieval, semantic-search-service"
+          @/cluster
+        
+        ##memoryGraphServices{id:graph_logic, @critical}
+          "Memory graph and relationship management services"
+          @cluster{services, type:graph_services}
+            "memory-graph-service, memory-relationship-engine, relationship-mapper"
+          @/cluster
+        
+        ##aiServiceIntegration{id:ai_enhancement, @critical}
+          "AI service integration for embeddings and semantic analysis"
+          @cluster{ai_processing, type:ai_services}
+            "Embedding generation, semantic similarity analysis, contextual relevance scoring"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Memory storage and retrieval database operations"
+          @cluster{queries, type:memory_sql}
+            "Memory insertion with embeddings, similarity search queries, graph relationship queries"
+          @/cluster
+          @cluster{tables, type:schema}
+            "memories, memory_embeddings, memory_relationships, atomic_facts, memory_graph_nodes"
+          @/cluster
+          @cluster{operations, type:crud}
+            "CREATE memory entries, READ contextual memories, UPDATE relationships, DELETE duplicate memories"
+          @/cluster
+        
+        ##goServiceIntegration{id:go_memory_service, @critical}
+          "Go memory service integration for high-performance operations"
+          @cluster{go_operations, type:go_service}
+            "High-performance similarity search, embedding processing, graph traversal operations"
+          @/cluster
+          @processing{
+            service_port:5002,
+            health_check:"GET /health with timeout handling",
+            fallback:"TypeScript memory service with graceful degradation"
+          }
+        
+        ##cacheOperations{id:cache_layer}
+          "Memory caching for performance optimization"
+          @cluster{cache_actions, type:cache}
+            "Frequent memory cache, retrieval result cache, embedding cache, graph relationship cache"
+          @/cluster
+      
+      ##responseFlow{id:response_processing, type:layer, @sequential}
+        "Memory storage and retrieval response generation"
+        @cluster{storageResult, type:processing}
+          "Memory storage confirmation with generated embeddings and relationships"
+        @/cluster
+        @cluster{retrievalResult, type:processing}
+          "Contextual memories with relevance scores and retrieval reasoning"
+        @/cluster
+        @processing{
+          responsePayload:"Stored memory details OR retrieved memories with relevance context",
+          memoryContext:"Updated memory graph and relationship information"
+        }
+      
+      ##frontendUpdateFlow{id:ui_refresh, type:layer}
+        "UI refresh with memory storage and retrieval results"
+        @cluster{storageConfirmation, type:rendering}
+          "Memory storage confirmation, relationship updates"
+        @/cluster
+        @cluster{retrievalDisplay, type:rendering}
+          "Contextual memories display, semantic search results"
+        @/cluster
+        @cluster{memoryGraphUpdate, type:state_updates}
+          "Memory graph visualization and relationship updates"
+        @/cluster
+
+    ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
+      "Complete architectural layer dependency mapping for memory storage and retrieval"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        "Frontend presentation with memory storage and retrieval interfaces"
+        
+        ##components{id:ui_components, @critical}
+          "Memory storage and retrieval UI components"
+          @cluster{primary, type:main_features}
+            "MemorySection, MemorySearch, MemoryGraph, ContextualMemoryDisplay"
+          @/cluster
+          @cluster{storage_components, type:memory_creation}
+            "AddMemoryButton, MemoryCreationForm, AtomicFactsDisplay"
+          @/cluster
+          @cluster{retrieval_components, type:memory_access}
+            "SemanticSearch, ContextualRetrieval, MemoryRelationshipView"
+          @/cluster
+        
+        ##hooks{id:custom_hooks}
+          @cluster{storage_hooks, type:storage_logic}
+            "useMemoryStorage, useMemoryCreation, useAtomicFactsExtraction"
+          @/cluster
+          @cluster{retrieval_hooks, type:retrieval_logic}
+            "useContextualRetrieval, useSemanticSearch, useMemoryGraph, useMemoryRelationships"
+          @/cluster
+        
+        ##types{id:frontend_types}
+          @cluster{memory_types, type:type_definitions}
+            "Memory, MemoryEmbedding, MemoryRelationship, AtomicFact, SemanticSearchResult, ContextualMemory"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        "Server-side memory storage and retrieval logic"
+        
+        ##routes{id:api_routes, @critical}
+          @cluster{storage_routes, type:route_handlers}
+            "POST /api/memory/create, POST /api/memory/atomic-facts, POST /api/memory/relationships"
+          @/cluster
+          @cluster{retrieval_routes, type:route_handlers}
+            "GET /api/memory/contextual, POST /api/memory/semantic-search, GET /api/memory/graph"
+          @/cluster
+        
+        ##services{id:business_services, @critical}
+          "Memory storage and retrieval business logic services"
+          @cluster{storage_services, type:storage_logic}
+            "memory-service, enhanced-memory-service, atomic-facts-extractor, memory-embeddings-service"
+          @/cluster
+          @cluster{retrieval_services, type:retrieval_logic}
+            "intelligent-memory-retrieval, contextual-memory-retrieval, semantic-search-service, three-tier-retrieval"
+          @/cluster
+          @cluster{graph_services, type:graph_logic}
+            "memory-graph-service, memory-relationship-engine, relationship-mapper, graph-traversal-service"
+          @/cluster
+        
+        ##middleware{id:server_middleware}
+          @cluster{memory_middleware, type:processing}
+            "Memory content validation, embedding authorization, retrieval access control"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        "Memory storage and retrieval data persistence"
+        
+        ##database{id:relational_db, @critical}
+          "Memory storage and retrieval database schema"
+          @cluster{tables, type:schema}
+            "memories, memory_embeddings, memory_relationships, atomic_facts, memory_graph_nodes, memory_similarity_cache"
+          @/cluster
+          @cluster{relationships, type:foreign_keys}
+            "Memory-user relationships, memory-embedding relationships, graph node relationships"
+          @/cluster
+          @cluster{indexes, type:performance}
+            "Embedding similarity indexes, content search indexes, relationship traversal indexes"
+          @/cluster
+          @cluster{migrations, type:schema_changes}
+            "Memory schema evolution, embedding column additions, graph relationship tables"
+          @/cluster
+        
+        ##cache{id:cache_layer}
+          "Memory storage and retrieval caching strategy"
+          @cluster{memoryCache, type:cache_keys}
+            "Frequent memories, retrieval results, embedding cache, similarity calculations"
+          @/cluster
+          @cluster{invalidationPatterns, type:cache_invalidation}
+            "Memory updates, relationship changes, embedding regeneration"
+          @/cluster
+        
+        ##vectorStorage{id:embedding_storage}
+          "Vector embedding storage and similarity search"
+          @cluster{embeddingStorage, type:vector_db}
+            "Memory embeddings for semantic similarity search"
+          @/cluster
+          @cluster{similaritySearch, type:vector_operations}
+            "Cosine similarity calculations, nearest neighbor search"
+          @/cluster
+      
+      ##integration{id:external_layer, type:integration_layer}
+        "External integrations for memory storage and retrieval"
+        
+        ##aiProviders{id:ai_services}
+          "AI provider integration for embeddings and semantic analysis"
+          @cluster{providers, type:external_services}
+            "OpenAI embeddings, Google AI embeddings, semantic analysis services"
+          @/cluster
+        
+        ##goServices{id:go_microservices, @critical}
+          "Go microservice integrations for high-performance memory operations"
+          @cluster{memoryService, type:memory_management}
+            "High-performance similarity search, embedding operations, graph traversal"
+          @/cluster
+          @processing{
+            service_port:5002,
+            integration_pattern:"Express proxy with health checks and fallback mechanisms",
+            performance_target:"<50ms memory storage and retrieval operations"
+          }
+
+    ##errorBoundaries{id:error_management, type:error_system, @comprehensive}
+      "Error handling for memory storage and retrieval"
+      
+      ##frontendErrors{id:client_errors, type:ui_errors, @critical}
+        "Client-side memory storage and retrieval error handling"
+        @cluster{storageErrors, type:storage_failures}
+          "Memory creation failures, embedding generation errors, relationship mapping issues"
+        @/cluster
+        @cluster{retrievalErrors, type:retrieval_failures}
+          "Contextual retrieval failures, semantic search errors, graph traversal issues"
+        @/cluster
+        @cluster{fallbackBehavior, type:graceful_degradation}
+          "Graceful degradation to basic memory operations on service failures"
+        @/cluster
+      
+      ##backendErrors{id:server_errors, type:backend_failures, @critical}
+        "Server-side memory storage and retrieval error handling"
+        @cluster{storageServiceErrors, type:service_errors}
+          "Database storage failures, embedding generation issues, relationship creation errors"
+        @/cluster
+        @cluster{retrievalServiceErrors, type:retrieval_errors}
+          "Similarity search failures, contextual retrieval errors, graph query issues"
+        @/cluster
+        @cluster{goServiceErrors, type:external_failures}
+          "Go memory service failures, health check timeouts, fallback activation"
+        @/cluster
+        @cluster{recoveryStrategies, type:resilience}
+          "Automatic retry mechanisms, fallback to TypeScript services, data consistency protection"
+        @/cluster
+
+    ##performanceConsiderations{id:optimization_strategy, type:performance_system, @comprehensive}
+      "Performance optimization for memory storage and retrieval"
+      
+      ##frontendOptimizations{id:client_performance, type:ui_optimization, @critical}
+        "Client-side memory storage and retrieval performance"
+        @cluster{memoryUI, type:ui_optimization}
+          "Lazy loading of memory components, virtual scrolling for large memory lists"
+        @/cluster
+        @cluster{retrievalCaching, type:client_cache}
+          "Client-side caching of retrieval results, semantic search result optimization"
+        @/cluster
+      
+      ##backendOptimizations{id:server_performance, type:backend_optimization, @critical}
+        "Server-side memory storage and retrieval performance"
+        @cluster{databaseOptimization, type:query_optimization}
+          "Strategic indexing for similarity search, optimized graph traversal queries"
+        @/cluster
+        @cluster{goServiceOptimization, type:high_performance}
+          "Go service acceleration for embedding operations and similarity calculations"
+        @/cluster
+        @cluster{cacheStrategy, type:memory_cache}
+          "Intelligent caching of frequent memories and retrieval results"
+        @/cluster
+
+    ##securityConsiderations{id:security_framework, type:security_system, @comprehensive}
+      "Security for memory storage and retrieval system"
+      
+      ##dataProtection{id:memory_security, type:privacy_protection, @blocking}
+        "Memory storage and retrieval data protection"
+        @cluster{memoryPrivacy, type:pii_handling}
+          "Sensitive memory content protection, user-scoped access control"
+        @/cluster
+        @cluster{embeddingPrivacy, type:vector_security}
+          "Embedding data protection, user isolation in vector space"
+        @/cluster
+      
+      ##authorization{id:memory_access_control, type:permission_system, @critical}
+        "Memory storage and retrieval access control"
+        @cluster{userMemories, type:data_access}
+          "User-specific memory access, cross-user memory isolation"
+        @/cluster
+        @cluster{retrievalAuthorization, type:contextual_access}
+          "Authorized contextual retrieval, conversation context validation"
+        @/cluster
+
+    ##integrationEvidence{id:validation_framework, type:evidence_system, @comprehensive}
+      "Integration validation for memory storage and retrieval"
+      
+      ##implementationStatus{id:feature_status, type:status_tracking, @critical}
+        "Memory storage and retrieval implementation status"
+        @processing{
+          status:"active",
+          lastVerified:"2025-07-01T18:40:00Z",
+          verificationMethod:"integration-testing",
+          evidenceLocation:"server/services/memory-service.ts, server/services/intelligent-memory-retrieval.ts"
+        }
+      
+      ##testingEvidence{id:test_coverage, type:validation_evidence, @critical}
+        "Testing evidence for memory storage and retrieval"
+        @cluster{storageTests, type:memory_tests}
+          "Memory storage tests, embedding generation tests, relationship creation tests"
+        @/cluster
+        @cluster{retrievalTests, type:retrieval_tests}
+          "Contextual retrieval tests, semantic search accuracy tests, three-tier retrieval validation"
+        @/cluster
+        @cluster{performanceTests, type:storage_retrieval_performance}
+          "Memory storage performance tests, retrieval speed validation, <50ms target verification"
+        @/cluster
+
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      "Memory storage and retrieval feature dependencies"
+      @cluster{internal, type:internal_features}
+        "Database operations, AI service integration, cache management"
+      @/cluster
+      @cluster{external, type:third_party}
+        "AI providers for embeddings, Go memory service, vector similarity services"
+      @/cluster
+      @cluster{cross_domain, type:cross_domain_deps}
+        "Chat domain for contextual input, AI service for semantic analysis"
+      @/cluster
+    
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      "Impact analysis for memory storage and retrieval"
+      @cluster{affects, type:affected_features}
+        "Chat response quality, conversation intelligence, memory-based personalization"
+      @/cluster
+      @cluster{sharedServices, type:shared_logic}
+        "AI service, database operations, caching services, Go memory service"
+      @/cluster
+
+##memory_storage_features{id:storage_feature_mapping, confidence:1.0}
+  memory_creation{
+    description:"Storage of memory entries with embeddings and metadata",
+    implementation:"Enhanced memory service with embedding generation and relationship mapping",
+    storage_pattern:"Database with vector embeddings and strategic indexing",
+    performance:"Efficient storage with batch processing and connection pooling",
+    intelligence:"Automatic metadata extraction and category assignment"
+  },
+  
+  contextual_memory_retrieval{
+    description:"Retrieve relevant memories based on conversation context",
+    implementation:"Three-tier retrieval with semantic similarity and contextual re-ranking",
+    retrieval_pattern:"Context analysis → similarity search → relevance ranking",
+    performance:"<50ms retrieval time with intelligent caching",
+    intelligence:"ChatGPT-style contextual understanding and memory integration"
+  },
+  
+  semantic_search{
+    description:"Vector-based similarity search with embeddings",
+    implementation:"Cosine similarity search with configurable thresholds",
+    search_pattern:"Query embedding → similarity calculation → ranked results",
+    performance:"Optimized with Go service acceleration and caching",
+    intelligence:"Semantic understanding beyond keyword matching"
+  },
+  
+  memory_graph{
+    description:"Relationship mapping between memories with graph structure",
+    implementation:"Memory graph service with relationship engine",
+    graph_pattern:"Node-based memory representation with relationship edges",
+    performance:"Optimized graph traversal with relationship caching",
+    intelligence:"Automatic relationship discovery and mapping"
+  },
+  
+  atomic_facts_extraction{
+    description:"Break complex memories into individual facts",
+    implementation:"AI-powered fact extraction with atomic fact storage",
+    extraction_pattern:"Complex memory → fact identification → atomic storage",
+    performance:"Efficient fact processing with relationship linking",
+    intelligence:"Granular fact-based memory organization"
+  }
+
+##memory_retrieval_features{id:retrieval_feature_mapping, confidence:1.0}
+  three_tier_retrieval{
+    description:"Advanced three-tier memory retrieval with deduplication",
+    implementation:"Tier 1: Direct similarity, Tier 2: Contextual relevance, Tier 3: Importance scoring",
+    retrieval_architecture:"Multi-layer retrieval with ChatGPT-style deduplication",
+    performance:"Optimized retrieval with configurable similarity thresholds",
+    intelligence:"Sophisticated relevance determination and memory ranking"
+  },
+  
+  contextual_re_ranking{
+    description:"Context-aware re-ranking of retrieved memories",
+    implementation:"Conversation context analysis with relevance scoring",
+    ranking_pattern:"Initial retrieval → context analysis → relevance re-ranking",
+    performance:"Real-time re-ranking with conversation context integration",
+    intelligence:"Dynamic relevance assessment based on conversation flow"
+  },
+  
+  deduplication_engine{
+    description:"ChatGPT-style memory deduplication and conflict resolution",
+    implementation:"Semantic similarity analysis with intelligent consolidation",
+    deduplication_strategy:"Conflict detection → similarity analysis → intelligent merging",
+    performance:"Efficient duplicate detection with relationship preservation",
+    intelligence:"Context-aware memory consolidation and conflict resolution"
+  }
+
+##semantic_search_architecture{id:semantic_search_system, confidence:1.0}
+  embedding_generation{
+    pattern:"AI-powered embedding generation for semantic similarity",
+    implementation:"Multi-provider embedding services with fallback mechanisms",
+    performance:"Efficient embedding generation with caching optimization",
+    providers:[OpenAI_embeddings, Google_AI_embeddings, custom_embedding_models]
+  },
+  
+  similarity_calculation{
+    pattern:"Cosine similarity calculation with configurable thresholds",
+    implementation:"Go service acceleration with TypeScript fallback",
+    performance:"<50ms similarity calculations with intelligent caching",
+    optimization:"Strategic indexing and batch processing for large-scale operations"
+  },
+  
+  vector_storage{
+    pattern:"Optimized vector storage with similarity search capabilities",
+    implementation:"Database vector columns with specialized indexing",
+    performance:"Strategic indexing for optimal similarity search performance",
+    scalability:"Efficient storage and retrieval for large memory collections"
+  }
+
+##memory_graph_architecture{id:memory_graph_system, confidence:1.0}
+  relationship_discovery{
+    pattern:"Automatic relationship discovery between memories",
+    implementation:"AI-powered relationship analysis with graph construction",
+    intelligence:"Context-aware relationship identification and mapping",
+    performance:"Efficient relationship processing with fast relationship engine"
+  },
+  
+  graph_traversal{
+    pattern:"Optimized graph traversal for memory exploration",
+    implementation:"Memory graph service with relationship caching",
+    performance:"Fast graph operations with intelligent relationship mapping",
+    user_experience:"Visual memory relationship exploration and navigation"
+  },
+  
+  relationship_engine{
+    pattern:"Advanced relationship engine with fast processing",
+    implementation:"Memory relationship engine with fast relationship engine optimization",
+    performance:"High-performance relationship analysis and mapping",
+    intelligence:"Sophisticated relationship types and strength analysis"
+  }
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[errorBoundaries, performanceConsiderations, securityConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}
+
+@validation{
+  required_sections:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  evidence_required:[implementationStatus, testingEvidence],
+  integration_status:active_and_validated,
+  performance_validation:[memory_storage_under_50ms, retrieval_under_50ms, three_tier_retrieval_operational],
+  feature_completeness:storage_and_retrieval_fully_operational
+}
+
+@dependencies{
+  internal:[database_operations, ai_service_integration, cache_management],
+  external:[AI_providers_for_embeddings, Go_memory_service, vector_similarity_services],
+  cross_domain:[chat_domain_for_context, ai_service_for_semantic_analysis],
+  architectural:[memory_storage_system, semantic_search_architecture, memory_graph_system]
+}

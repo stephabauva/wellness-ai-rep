@@ -1,0 +1,471 @@
+@context{domain:memory, feature_group:detection-processing, format:shdl, version:2.0.0, complexity:high}
+@meta{
+  featureName:"memory-detection-processing", 
+  featureGroup:"detection-processing",
+  parentFile:"./memory-domain.shdl",
+  domain:"memory",
+  lastUpdated:"2025-07-01T18:35:00Z",
+  mappingVersion:"2.0.0",
+  validation_status:"active",
+  token_estimate:950
+}
+
+#MEMORY_DETECTION_PROCESSING{confidence:1.0, feature_group_status:active, @critical}
+  ##feature_group_overview{id:detection_processing_overview, type:complete_mapping, @comprehensive}
+    "Intelligent memory detection and background processing system providing ChatGPT-style automatic memory creation with AI-powered categorization, importance scoring, and deduplication through non-blocking background processing with priority queue management"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "Seamless automatic memory processing during natural conversation"
+      @processing{
+        step1:"User engages in natural conversation with AI assistant",
+        step2:"System automatically analyzes conversation content for memory-worthy information",
+        step3:"Background processing detects preferences, personal information, context, and instructions",
+        step4:"Memories are categorized, scored for importance, and deduplicated automatically",
+        step5:"Memory intelligence enhances future conversations without user intervention",
+        step6:"User experiences improved contextual understanding from AI over time"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "Intelligent background memory processing workflow"
+      @processing{
+        process1:"Chat message content analyzed by AI for memory potential",
+        process2:"Memory-worthy content extracted and categorized into preference/personal_info/context/instruction",
+        process3:"Importance scoring applied based on content relevance and user patterns",
+        process4:"Deduplication engine checks for conflicts and consolidates similar memories",
+        process5:"Background processor queues memory operations with priority handling",
+        process6:"Memory storage completed with relationship mapping and indexing"
+      }
+    
+    ##dataFlowTrace{id:complete_cycle, type:request_response, @critical}
+      "Complete memory detection and processing data flow cycle"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "User sends message triggering background memory analysis"
+        @processing{user_message→content_analysis→memory_extraction}
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side transparent memory processing integration"
+        
+        ##triggerComponent{id:initiator}
+          "ChatInputArea or direct memory creation triggers processing"
+          @ref:ChatInputArea_MessageDisplayArea
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "handleMessageSend, handleMemoryDetection, handleBackgroundProcessing"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "memoryProcessingState, detectionResults, backgroundTaskStatus"
+          @/cluster
+        
+        ##memoryHooks{id:memory_hooks, @critical}
+          "Memory detection and processing integration hooks"
+          @cluster{hooks, type:memory_processing}
+            "useMemoryDetection, useBackgroundProcessor, useMemoryCategories"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "Memory processing API integration"
+          @processing{
+            endpoint:"/api/memory/detect-and-process",
+            method:"POST",
+            requestPayload:"Message content + user context + processing preferences"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Memory processing transport and routing"
+        @processing{
+          requestRoute:"Frontend → Memory routes with detection processing",
+          routeHandler:"Memory detection handler with background processing"
+        }
+        @cluster{memoryMiddleware, type:processing}
+          "Content validation, user authorization, processing queue management"
+        @/cluster
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side memory detection and background processing"
+        
+        ##routeHandler{id:entry_point}
+          "Memory detection route handler with background processing integration"
+          @ref:memory_routes_detection_processing
+        
+        ##memoryDetectionServices{id:detection_logic, @critical}
+          "Memory detection business logic services"
+          @cluster{services, type:detection_services}
+            "chatgpt-memory-enhancement, memory-service, automatic-memory-detection"
+          @/cluster
+        
+        ##backgroundProcessingServices{id:background_logic, @critical}
+          "Background processing and queue management services"
+          @cluster{services, type:background_processing}
+            "enhanced-background-processor, priority-queue-manager, circuit-breaker-service"
+          @/cluster
+        
+        ##aiServiceIntegration{id:ai_enhancement, @critical}
+          "AI service integration for memory analysis and categorization"
+          @cluster{ai_processing, type:ai_services}
+            "Memory content analysis, categorization AI, importance scoring AI, deduplication analysis"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Memory detection and storage database operations"
+          @cluster{queries, type:memory_sql}
+            "Memory insertion, similarity search, deduplication queries, relationship mapping"
+          @/cluster
+          @cluster{tables, type:schema}
+            "memories, memory_embeddings, memory_categories, memory_relationships, memory_deduplication_log"
+          @/cluster
+        
+        ##backgroundProcessing{id:async_processing, @critical}
+          "Non-blocking background processing operations"
+          @cluster{async_ops, type:background}
+            "Memory detection queuing, embedding generation, relationship analysis, deduplication processing"
+          @/cluster
+        
+        ##goServiceIntegration{id:go_memory_service, @critical}
+          "Go memory service integration for high-performance processing"
+          @cluster{go_operations, type:go_service}
+            "High-performance similarity calculations, embedding processing, batch memory operations"
+          @/cluster
+          @processing{
+            service_port:5002,
+            health_check:"GET /health with AbortController timeout",
+            fallback:"TypeScript memory service graceful degradation"
+          }
+      
+      ##responseFlow{id:response_processing, type:layer, @sequential}
+        "Memory processing response generation and feedback"
+        @cluster{processingResult, type:processing}
+          "Memory detection results with categorization and importance scores"
+        @/cluster
+        @processing{
+          responsePayload:"Processing status + detected memories + background task IDs",
+          memoryFeedback:"Memory creation confirmations and relationship updates"
+        }
+      
+      ##frontendUpdateFlow{id:ui_refresh, type:layer}
+        "UI refresh with memory processing feedback"
+        @cluster{processingFeedback, type:rendering}
+          "Background processing indicators, memory creation notifications"
+        @/cluster
+        @cluster{memoryState, type:state_updates}
+          "Memory processing state and detection result updates"
+        @/cluster
+
+    ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
+      "Complete architectural layer dependency mapping for memory detection and processing"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        "Frontend presentation with memory processing integration"
+        
+        ##components{id:ui_components, @critical}
+          "Memory detection and processing UI components"
+          @cluster{primary, type:main_features}
+            "ChatSection, MessageDisplayArea, MemoryProcessingIndicator"
+          @/cluster
+          @cluster{processing_indicators, type:visual_feedback}
+            "Background processing status, memory detection notifications"
+          @/cluster
+        
+        ##hooks{id:custom_hooks}
+          @cluster{memory_hooks, type:memory_processing}
+            "useMemoryDetection, useBackgroundProcessor, useMemoryCategories, useMemoryDeduplication"
+          @/cluster
+          @cluster{processing_hooks, type:background_processing}
+            "useAsyncMemoryProcessing, useMemoryQueue, useProcessingStatus"
+          @/cluster
+        
+        ##types{id:frontend_types}
+          @cluster{memory_types, type:type_definitions}
+            "MemoryDetectionResult, ProcessingStatus, MemoryCategory, ImportanceScore"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        "Server-side memory detection and processing logic"
+        
+        ##routes{id:api_routes, @critical}
+          @cluster{memory_routes, type:route_handlers}
+            "POST /api/memory/detect, POST /api/memory/process-background, GET /api/memory/processing-status"
+          @/cluster
+        
+        ##services{id:business_services, @critical}
+          "Memory detection and processing business logic services"
+          @cluster{detection_services, type:detection_logic}
+            "chatgpt-memory-enhancement, automatic-memory-detection, memory-content-analyzer"
+          @/cluster
+          @cluster{processing_services, type:background_processing}
+            "enhanced-background-processor, priority-queue-manager, memory-deduplication-engine"
+          @/cluster
+          @cluster{ai_services, type:ai_integration}
+            "memory-categorization-ai, importance-scoring-ai, deduplication-analyzer-ai"
+          @/cluster
+        
+        ##middleware{id:server_middleware}
+          @cluster{memory_middleware, type:processing}
+            "Memory content validation, processing queue authorization, background task management"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        "Memory detection and processing data persistence"
+        
+        ##database{id:relational_db, @critical}
+          "Memory detection and processing database schema"
+          @cluster{tables, type:schema}
+            "memories, memory_embeddings, memory_categories, memory_processing_queue, memory_deduplication_log"
+          @/cluster
+          @cluster{relationships, type:foreign_keys}
+            "Memory-user relationships, category assignments, processing task relationships"
+          @/cluster
+          @cluster{indexes, type:performance}
+            "Content similarity indexes, category lookup indexes, processing queue indexes"
+          @/cluster
+        
+        ##cache{id:cache_layer}
+          "Memory processing caching for performance optimization"
+          @cluster{processingCache, type:cache_keys}
+            "Recent detection results, processing queue status, category lookup cache"
+          @/cluster
+          @cluster{invalidationPatterns, type:cache_invalidation}
+            "Memory updates, category changes, processing completion"
+          @/cluster
+      
+      ##integration{id:external_layer, type:integration_layer}
+        "External integrations for memory detection and processing"
+        
+        ##aiProviders{id:ai_services}
+          "AI provider integration for memory detection and analysis"
+          @cluster{providers, type:external_services}
+            "OpenAI for content analysis, Google AI for categorization, embedding services"
+          @/cluster
+        
+        ##goServices{id:go_microservices, @critical}
+          "Go microservice integrations for high-performance memory processing"
+          @cluster{memoryService, type:memory_management}
+            "High-performance memory detection, similarity processing, batch operations"
+          @/cluster
+          @processing{
+            service_port:5002,
+            integration_pattern:"Express proxy with health checks and graceful fallback",
+            performance_target:"<50ms memory processing operations"
+          }
+
+    ##errorBoundaries{id:error_management, type:error_system, @comprehensive}
+      "Error handling for memory detection and processing"
+      
+      ##frontendErrors{id:client_errors, type:ui_errors, @critical}
+        "Client-side memory processing error handling"
+        @cluster{processingErrors, type:processing_failures}
+          "Memory detection failures, background processing timeouts, queue status errors"
+        @/cluster
+        @cluster{fallbackBehavior, type:graceful_degradation}
+          "Continue chat without memory enhancement on processing failure"
+        @/cluster
+      
+      ##backendErrors{id:server_errors, type:backend_failures, @critical}
+        "Server-side memory processing error handling"
+        @cluster{detectionErrors, type:service_errors}
+          "AI service failures, content analysis errors, categorization failures"
+        @/cluster
+        @cluster{processingErrors, type:background_failures}
+          "Queue processing failures, background task errors, priority queue issues"
+        @/cluster
+        @cluster{recoveryStrategies, type:resilience}
+          "Circuit breaker protection, retry mechanisms, graceful degradation"
+        @/cluster
+
+    ##performanceConsiderations{id:optimization_strategy, type:performance_system, @comprehensive}
+      "Performance optimization for memory detection and processing"
+      
+      ##frontendOptimizations{id:client_performance, type:ui_optimization, @critical}
+        "Client-side memory processing performance"
+        @cluster{nonBlockingProcessing, type:async_processing}
+          "Background processing indicators, non-blocking UI updates"
+        @/cluster
+        @cluster{processingFeedback, type:user_experience}
+          "Real-time processing status, completion notifications"
+        @/cluster
+      
+      ##backendOptimizations{id:server_performance, type:backend_optimization, @critical}
+        "Server-side memory processing performance"
+        @cluster{backgroundProcessing, type:async_optimization}
+          "Priority queue processing, circuit breaker protection, <50ms target achievement"
+        @/cluster
+        @cluster{goServiceIntegration, type:high_performance}
+          "Go service acceleration for large-scale memory processing"
+        @/cluster
+        @cluster{cacheStrategy, type:processing_cache}
+          "Detection result caching, category lookup optimization"
+        @/cluster
+
+    ##securityConsiderations{id:security_framework, type:security_system, @comprehensive}
+      "Security for memory detection and processing system"
+      
+      ##dataProtection{id:memory_security, type:privacy_protection, @blocking}
+        "Memory processing data protection and privacy"
+        @cluster{contentPrivacy, type:pii_handling}
+          "Sensitive content detection and protection during processing"
+        @/cluster
+        @cluster{processingAccess, type:access_control}
+          "User-scoped memory processing, authorized background operations"
+        @/cluster
+      
+      ##authorization{id:processing_access_control, type:permission_system, @critical}
+        "Memory processing access control and user permissions"
+        @cluster{userProcessing, type:data_access}
+          "User-specific memory processing, conversation context isolation"
+        @/cluster
+
+    ##integrationEvidence{id:validation_framework, type:evidence_system, @comprehensive}
+      "Integration validation for memory detection and processing"
+      
+      ##implementationStatus{id:feature_status, type:status_tracking, @critical}
+        "Memory detection and processing implementation status"
+        @processing{
+          status:"active",
+          lastVerified:"2025-07-01T18:35:00Z",
+          verificationMethod:"performance-testing",
+          evidenceLocation:"server/services/chatgpt-memory-enhancement.ts, server/services/enhanced-background-processor.ts"
+        }
+      
+      ##testingEvidence{id:test_coverage, type:validation_evidence, @critical}
+        "Testing evidence for memory detection and processing"
+        @cluster{detectionTests, type:memory_tests}
+          "Memory detection accuracy tests, categorization validation tests"
+        @/cluster
+        @cluster{processingTests, type:background_tests}
+          "Background processing tests, queue management tests, circuit breaker tests"
+        @/cluster
+        @cluster{performanceTests, type:processing_performance}
+          "Memory processing performance validation, <50ms target verification"
+        @/cluster
+
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      "Memory detection and processing feature dependencies"
+      @cluster{internal, type:internal_features}
+        "Chat messaging, AI service integration, database operations"
+      @/cluster
+      @cluster{external, type:third_party}
+        "AI providers, Go memory service, embedding services"
+      @/cluster
+      @cluster{cross_domain, type:cross_domain_deps}
+        "Chat domain for content input, AI service for analysis"
+      @/cluster
+    
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      "Impact analysis for memory detection and processing"
+      @cluster{affects, type:affected_features}
+        "Chat response quality, conversation intelligence, memory retrieval accuracy"
+      @/cluster
+      @cluster{sharedServices, type:shared_logic}
+        "AI service, background processing, memory storage services"
+      @/cluster
+
+##memory_detection_features{id:detection_feature_mapping, confidence:1.0}
+  automatic_memory_detection{
+    description:"AI-powered detection of memory-worthy content from conversations",
+    implementation:"ChatGPT-style content analysis with confidence scoring",
+    trigger:"Every user message analyzed for memory potential",
+    categories:[preference, personal_info, context, instruction],
+    performance:"<50ms detection time with background processing",
+    intelligence:"AI categorization with importance scoring"
+  },
+  
+  background_memory_processing{
+    description:"Non-blocking memory processing with priority queue management",
+    implementation:"Enhanced background processor with circuit breaker protection",
+    pattern:"Priority queue processing with graceful degradation",
+    performance:"Phase 1-4 memory system operational, targets achieved",
+    reliability:"5-failure threshold, 60s recovery circuit breaker"
+  },
+  
+  memory_categorization{
+    description:"Automatic categorization into preference, personal_info, context, instruction",
+    implementation:"AI-powered categorization with confidence scoring",
+    intelligence:"Context-aware category assignment based on content analysis",
+    accuracy:"High confidence scoring with manual override capability",
+    integration:"Seamless categorization during memory creation"
+  },
+  
+  importance_scoring{
+    description:"AI-based scoring of memory importance for retrieval prioritization",
+    implementation:"Machine learning based importance evaluation",
+    scoring_factors:[conversation_context, user_patterns, content_relevance, temporal_significance],
+    performance:"Real-time scoring during memory detection",
+    optimization:"Importance-based retrieval prioritization"
+  },
+  
+  memory_deduplication{
+    description:"ChatGPT-style memory deduplication and conflict resolution",
+    implementation:"Semantic similarity analysis with intelligent consolidation",
+    deduplication_strategy:"Smart consolidation or replacement of conflicting memories",
+    performance:"Efficient duplicate detection with relationship mapping",
+    intelligence:"Context-aware conflict resolution and memory merging"
+  }
+
+##background_processing_architecture{id:background_processing_system, confidence:1.0}
+  priority_queue_system{
+    pattern:"Priority-based memory processing queue with performance optimization",
+    implementation:"Enhanced background processor with intelligent task prioritization",
+    performance:"Non-blocking processing maintaining chat responsiveness",
+    reliability:"Circuit breaker protection prevents system degradation"
+  },
+  
+  circuit_breaker_protection{
+    pattern:"Circuit breaker pattern for memory processing reliability",
+    implementation:"5-failure threshold with 60-second recovery window",
+    protection:"Graceful degradation on memory service failures",
+    monitoring:"Memory performance monitor tracks circuit breaker status"
+  },
+  
+  graceful_degradation{
+    pattern:"Fallback mechanisms for memory processing failures",
+    implementation:"Chat continues normally without memory enhancement on processing failure",
+    user_impact:"Transparent handling of memory service issues",
+    recovery:"Automatic recovery when memory services return to health"
+  }
+
+##performance_achievements{id:memory_processing_performance, confidence:1.0}
+  detection_performance{
+    target:"<50ms memory detection per conversation message",
+    achieved:"Phase 1-4 memory system operational with performance targets met", 
+    pattern:"Background processing with priority queue optimization",
+    monitoring:"Real-time performance tracking and validation"
+  },
+  
+  processing_performance{
+    target:"Non-blocking background processing maintaining chat responsiveness",
+    achieved:"Enhanced background processor operational with circuit breaker protection",
+    pattern:"Priority queue processing with intelligent task management",
+    reliability:"Consistent performance under load with graceful degradation"
+  },
+  
+  integration_performance{
+    target:"Seamless memory processing without user experience impact",
+    achieved:"Transparent integration with chat system",
+    user_experience:"Memory processing invisible to users, enhanced AI responses",
+    architectural_success:"Enhanced beyond original requirements"
+  }
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[errorBoundaries, performanceConsiderations, securityConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}
+
+@validation{
+  required_sections:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  evidence_required:[implementationStatus, testingEvidence],
+  integration_status:active_and_validated,
+  performance_validation:[memory_detection_under_50ms, background_processing_non_blocking, circuit_breaker_operational],
+  feature_completeness:phase_1_4_operational_chatgpt_style_achieved
+}
+
+@dependencies{
+  internal:[chat_messaging, ai_service_integration, database_operations],
+  external:[AI_providers, Go_memory_service, embedding_services],
+  cross_domain:[chat_domain_for_content, ai_service_for_analysis],
+  architectural:[background_processing_system, memory_detection_intelligence, circuit_breaker_protection]
+}

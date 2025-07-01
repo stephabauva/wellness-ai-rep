@@ -1,0 +1,433 @@
+@context{domain:chat, feature_group:advanced-features, format:shdl, version:2.0.0, complexity:high}
+@meta{
+  featureName:"memory-integration", 
+  featureGroup:"advanced-features",
+  parentFile:"./chat-domain.shdl",
+  domain:"chat",
+  lastUpdated:"2025-07-01T17:52:00Z",
+  mappingVersion:"2.0.0",
+  validation_status:"active",
+  token_estimate:850
+}
+
+#CHAT_MEMORY_INTEGRATION{confidence:1.0, integration_status:active, @critical}
+  ##feature{id:memory_integration, type:complete_mapping, @comprehensive}
+    "Automatic memory detection and retrieval in conversations providing ChatGPT-style contextual intelligence where relevant memories enhance AI responses without disrupting conversation flow"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "Seamless memory-enhanced conversation experience"
+      @processing{
+        step1:"User engages in natural conversation with AI assistant",
+        step2:"System automatically detects memory-worthy content in background",
+        step3:"AI responses are enhanced with relevant retrieved memories",
+        step4:"User experiences improved contextual understanding from AI",
+        step5:"Memory system learns and improves from conversation patterns",
+        step6:"No explicit memory management required from user"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "Intelligent memory processing integrated with chat workflow"
+      @processing{
+        process1:"Chat message analyzed for memory-worthy content",
+        process2:"Background memory detection runs non-blocking analysis",
+        process3:"Relevant memories retrieved based on semantic similarity",
+        process4:"Memory context integrated into AI service requests",
+        process5:"AI response enhanced with memory-driven insights",
+        process6:"New memories created and existing ones updated automatically"
+      }
+    
+    ##dataFlowTrace{id:complete_cycle, type:request_response, @critical}
+      "Complete memory-integrated chat request/response cycle"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "User sends message triggering memory-enhanced processing"
+        @processing{user_message→content_analysis→memory_context_building}
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side chat with transparent memory integration"
+        
+        ##triggerComponent{id:initiator}
+          "ChatInputArea initiates memory-enhanced chat request"
+          @ref:ChatInputArea
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "handleSendMessage, handleMemoryContext, handleEnhancedResponse"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "chatMessages, memoryContext, conversationState, aiResponseEnhanced"
+          @/cluster
+        
+        ##memoryHooks{id:memory_hooks, @critical}
+          "Memory system integration hooks"
+          @cluster{hooks, type:memory_integration}
+            "useMemoryContext, useMemoryDetection, useContextualRetrieval"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "Memory-enhanced chat API integration"
+          @processing{
+            endpoint:"/api/chat with memory context",
+            method:"POST",
+            requestPayload:"Message + conversation context + memory preferences"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Memory context transport and processing"
+        @processing{
+          requestRoute:"Frontend → Chat routes with memory integration",
+          routeHandler:"Chat handler with memory service calls"
+        }
+        @cluster{memoryMiddleware, type:processing}
+          "Memory context validation and preparation"
+        @/cluster
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side memory-enhanced chat processing"
+        
+        ##routeHandler{id:entry_point}
+          "Chat route handler with memory service integration"
+          @ref:chat_routes_memory_enhanced
+        
+        ##memoryServices{id:memory_logic, @critical}
+          "Memory system business logic services"
+          @cluster{services, type:memory_services}
+            "chatgpt-memory-enhancement, intelligent-memory-retrieval, memory-performance-monitor"
+          @/cluster
+        
+        ##aiServiceIntegration{id:ai_enhancement, @critical}
+          "AI service integration with memory context"
+          @cluster{enhancement, type:ai_processing}
+            "Memory context injection, response enhancement, learning feedback"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Memory and chat database operations"
+          @cluster{queries, type:memory_sql}
+            "Memory retrieval, similarity search, conversation storage"
+          @/cluster
+          @cluster{tables, type:schema}
+            "memories, conversation_messages, memory_embeddings, memory_relationships"
+          @/cluster
+        
+        ##backgroundProcessing{id:async_processing, @critical}
+          "Non-blocking memory processing operations"
+          @cluster{async_ops, type:background}
+            "Memory detection, embedding generation, relationship mapping"
+          @/cluster
+      
+      ##responseFlow{id:response_processing, type:layer, @sequential}
+        "Memory-enhanced response generation and delivery"
+        @cluster{memoryEnhancement, type:processing}
+          "AI response enriched with memory insights"
+        @/cluster
+        @processing{
+          responsePayload:"Enhanced AI response with memory context",
+          memoryFeedback:"Memory learning and relationship updates"
+        }
+      
+      ##frontendUpdateFlow{id:ui_refresh, type:layer}
+        "UI refresh with memory-enhanced responses"
+        @cluster{responseDisplay, type:rendering}
+          "Enhanced responses displayed with memory indicators"
+        @/cluster
+        @cluster{memoryState, type:state_updates}
+          "Memory context and conversation state updates"
+        @/cluster
+
+    ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
+      "Complete architectural layer dependency mapping for memory integration"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        "Frontend presentation with memory integration indicators"
+        
+        ##components{id:ui_components, @critical}
+          "Memory-integrated chat components"
+          @cluster{primary, type:main_features}
+            "ChatSection, MessageDisplayArea, ChatInputArea"
+          @/cluster
+          @cluster{memory_indicators, type:visual_feedback}
+            "Memory context indicators, enhanced response markers"
+          @/cluster
+        
+        ##hooks{id:custom_hooks}
+          @cluster{memory_hooks, type:memory_logic}
+            "useMemoryContext, useContextualRetrieval, useMemoryDetection"
+          @/cluster
+          @cluster{chat_hooks, type:enhanced_chat}
+            "useStreamingChat enhanced with memory integration"
+          @/cluster
+        
+        ##types{id:frontend_types}
+          @cluster{memory_types, type:type_definitions}
+            "MemoryContext, ConversationMemory, MemoryEnhancedResponse"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        "Server-side memory-enhanced chat logic"
+        
+        ##routes{id:api_routes, @critical}
+          @cluster{chat_routes, type:route_handlers}
+            "POST /api/chat with memory enhancement integration"
+          @/cluster
+        
+        ##services{id:business_services, @critical}
+          "Memory system business logic services"
+          @cluster{memory_services, type:memory_logic}
+            "chatgpt-memory-enhancement, intelligent-memory-retrieval, memory-relationship-engine"
+          @/cluster
+          @cluster{ai_services, type:enhanced_ai}
+            "AI service with memory context injection"
+          @/cluster
+        
+        ##middleware{id:server_middleware}
+          @cluster{memory_middleware, type:processing}
+            "Memory context validation, conversation tracking"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        "Memory and conversation data persistence"
+        
+        ##database{id:relational_db, @critical}
+          "Memory-enhanced database schema"
+          @cluster{tables, type:schema}
+            "memories, conversation_messages, memory_embeddings, memory_relationships, conversation_memory_context"
+          @/cluster
+          @cluster{relationships, type:foreign_keys}
+            "Memory-conversation relationships, memory hierarchies"
+          @/cluster
+          @cluster{indexes, type:performance}
+            "Semantic search indexes, conversation lookup indexes"
+          @/cluster
+        
+        ##cache{id:cache_layer}
+          "Memory caching for performance optimization"
+          @cluster{memoryCache, type:cache_keys}
+            "Recent memories, conversation context, embedding cache"
+          @/cluster
+          @cluster{invalidationPatterns, type:cache_invalidation}
+            "Memory updates, conversation changes, relationship modifications"
+          @/cluster
+      
+      ##integration{id:external_layer, type:integration_layer}
+        "External integrations for memory processing"
+        
+        ##aiProviders{id:ai_services}
+          "AI provider integration with memory enhancement"
+          @cluster{providers, type:external_services}
+            "OpenAI embeddings, Google AI, memory-enhanced prompts"
+          @/cluster
+        
+        ##goServices{id:go_microservices, @critical}
+          "Go microservice integrations for memory processing"
+          @cluster{memoryService, type:memory_management}
+            "High-performance memory operations, similarity search"
+          @/cluster
+
+    ##errorBoundaries{id:error_management, type:error_system, @comprehensive}
+      "Error handling for memory-integrated chat"
+      
+      ##frontendErrors{id:client_errors, type:ui_errors, @critical}
+        "Client-side memory integration error handling"
+        @cluster{memoryErrors, type:memory_failures}
+          "Memory context loading failures, memory service timeouts"
+        @/cluster
+        @cluster{fallbackBehavior, type:graceful_degradation}
+          "Chat continues without memory enhancement on memory service failure"
+        @/cluster
+      
+      ##backendErrors{id:server_errors, type:backend_failures, @critical}
+        "Server-side memory processing error handling"
+        @cluster{memoryServiceErrors, type:service_errors}
+          "Memory detection failures, retrieval errors, embedding generation issues"
+        @/cluster
+        @cluster{aiEnhancementErrors, type:ai_failures}
+          "Memory context injection failures, AI service integration errors"
+        @/cluster
+        @cluster{recoveryStrategies, type:resilience}
+          "Memory service circuit breaker, fallback to basic chat"
+        @/cluster
+
+    ##performanceConsiderations{id:optimization_strategy, type:performance_system, @comprehensive}
+      "Performance optimization for memory-integrated chat"
+      
+      ##frontendOptimizations{id:client_performance, type:ui_optimization, @critical}
+        "Client-side memory integration performance"
+        @cluster{memoryContextCaching, type:client_cache}
+          "Recent memory context caching, conversation state optimization"
+        @/cluster
+        @cluster{asyncMemoryLoading, type:non_blocking}
+          "Non-blocking memory context loading, progressive enhancement"
+        @/cluster
+      
+      ##backendOptimizations{id:server_performance, type:backend_optimization, @critical}
+        "Server-side memory processing performance"
+        @cluster{memoryIndexing, type:database_optimization}
+          "Optimized similarity search, efficient memory retrieval"
+        @/cluster
+        @cluster{backgroundProcessing, type:async_processing}
+          "Non-blocking memory detection, priority queue processing"
+        @/cluster
+        @cluster{cacheStrategy, type:memory_cache}
+          "Intelligent memory caching, conversation context cache"
+        @/cluster
+
+    ##securityConsiderations{id:security_framework, type:security_system, @comprehensive}
+      "Security for memory-integrated chat system"
+      
+      ##dataProtection{id:memory_security, type:privacy_protection, @blocking}
+        "Memory data protection and privacy"
+        @cluster{memoryPrivacy, type:pii_handling}
+          "Sensitive memory content protection, user consent for memory usage"
+        @/cluster
+        @cluster{memoryAccess, type:access_control}
+          "User-specific memory access, conversation context isolation"
+        @/cluster
+      
+      ##authorization{id:memory_access_control, type:permission_system, @critical}
+        "Memory access control and user permissions"
+        @cluster{userMemories, type:data_access}
+          "User-scoped memory access, conversation privacy"
+        @/cluster
+
+    ##integrationEvidence{id:validation_framework, type:evidence_system, @comprehensive}
+      "Integration validation for memory-enhanced chat"
+      
+      ##implementationStatus{id:feature_status, type:status_tracking, @critical}
+        "Memory integration implementation status"
+        @processing{
+          status:"active",
+          lastVerified:"2025-07-01T17:52:00Z",
+          verificationMethod:"integration-testing",
+          evidenceLocation:"server/services/chatgpt-memory-enhancement.ts"
+        }
+      
+      ##testingEvidence{id:test_coverage, type:validation_evidence, @critical}
+        "Testing evidence for memory integration"
+        @cluster{memoryTests, type:memory_tests}
+          "Memory detection tests, retrieval accuracy tests"
+        @/cluster
+        @cluster{integrationTests, type:e2e_tests}
+          "End-to-end memory-enhanced chat tests"
+        @/cluster
+        @cluster{performanceTests, type:memory_performance}
+          "Memory system performance validation, <50ms targets"
+        @/cluster
+
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      "Memory integration feature dependencies"
+      @cluster{internal, type:internal_features}
+        "Core messaging, conversation management, background processing"
+      @/cluster
+      @cluster{external, type:third_party}
+        "AI providers, embedding services, Go memory service"
+      @/cluster
+      @cluster{cross_domain, type:cross_domain_deps}
+        "Memory domain services, intelligent memory retrieval"
+      @/cluster
+    
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      "Impact analysis for memory integration"
+      @cluster{affects, type:affected_features}
+        "Chat response quality, conversation intelligence, user experience"
+      @/cluster
+      @cluster{sharedServices, type:shared_logic}
+        "AI service, conversation persistence, memory services"
+      @/cluster
+
+##memory_integration_architecture{id:memory_system_integration, confidence:1.0}
+  detection_system{
+    pattern:"Automatic memory-worthy content detection during chat",
+    implementation:"Background processing with priority queues",
+    performance:"Non-blocking detection, <50ms processing time",
+    trigger:"Every user message analyzed for memory potential"
+  },
+  
+  retrieval_system{
+    pattern:"Contextual memory retrieval based on conversation",
+    implementation:"Semantic similarity search with embeddings",
+    performance:"Three-tier retrieval with deduplication",
+    optimization:"Cached frequently accessed memories"
+  },
+  
+  enhancement_system{
+    pattern:"AI response enhancement with memory context",
+    implementation:"Memory context injection into AI prompts",
+    performance:"Seamless integration without latency increase",
+    quality:"ChatGPT-style contextual intelligence"
+  },
+  
+  learning_system{
+    pattern:"Continuous learning from conversation patterns",
+    implementation:"Automatic memory creation and relationship mapping",
+    performance:"Background processing with circuit breaker protection",
+    intelligence:"Adaptive importance scoring and categorization"
+  }
+
+##memory_performance_characteristics{id:memory_performance_targets, confidence:1.0}
+  detection_performance{
+    target:"<50ms memory detection per message",
+    achieved:"Phase 1-4 memory system operational",
+    optimization:"Background processing with priority queues",
+    monitoring:"Memory performance monitor active"
+  },
+  
+  retrieval_performance{
+    target:"<50ms memory retrieval for context building",
+    pattern:"Three-tier retrieval with semantic similarity",
+    caching:"LRU cache for frequently accessed memories",
+    deduplication:"ChatGPT-style memory consolidation"
+  },
+  
+  integration_performance{
+    target:"Seamless chat experience with memory enhancement",
+    achieved:"Memory integration transparent to users",
+    fallback:"Graceful degradation on memory service failure",
+    monitoring:"Circuit breaker protection active"
+  }
+
+##chatgpt_style_features{id:memory_intelligence_features, confidence:1.0}
+  automatic_detection{
+    description:"AI-powered detection of memory-worthy content",
+    categories:"preference, personal_info, context, instruction",
+    confidence_scoring:"AI-based importance evaluation",
+    background_processing:"Non-blocking analysis during chat"
+  },
+  
+  contextual_retrieval{
+    description:"Retrieve relevant memories based on conversation context",
+    similarity_search:"Vector-based embeddings with configurable thresholds",
+    re_ranking:"Contextual relevance scoring",
+    deduplication:"Conflict resolution and memory consolidation"
+  },
+  
+  seamless_enhancement{
+    description:"Memory context seamlessly enhances AI responses",
+    integration:"Transparent memory context injection",
+    user_experience:"No explicit memory management required",
+    intelligence:"ChatGPT-level contextual understanding"
+  }
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[errorBoundaries, performanceConsiderations, securityConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}
+
+@validation{
+  required_sections:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  evidence_required:[implementationStatus, testingEvidence],
+  integration_status:active_and_verified,
+  performance_validation:[memory_operations_under_50ms, background_processing_operational],
+  feature_completeness:phase_1_4_operational_chatgpt_style_achieved
+}
+
+@dependencies{
+  internal:[core_messaging, conversation_management, background_processing],
+  external:[AI_providers, embedding_services, Go_memory_service],
+  cross_domain:[memory_domain_services, intelligent_memory_retrieval],
+  architectural:[memory_system_integration, conversation_context_management]
+}

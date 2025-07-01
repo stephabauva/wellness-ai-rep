@@ -165,3 +165,209 @@
   refactoring_triggers:[300_line_exceeded, 5_group_exceeded, mega_feature_detected],
   compliance_requirements:[schema_adherence, reference_integrity, integration_accuracy]
 }
+@context{domain:system_mapping, target:ai_consumption, complexity:high, enforcement:strict}
+@meta{tokens:850, critical_paths:5, validation_rules:12, processing_priority:1}
+
+#ROOT{confidence:1.0, version:"2.0.0"}
+  ##core_philosophy{id:mapping_foundation, type:foundational, confidence:1.0, @critical}
+    "Create structured, queryable, unambiguous application architecture representation"
+    @enforce:single_source_of_truth
+    @optimize:computational_efficiency+llm_parsing+token_cost_minimization
+    @target:federated_json_files
+
+    ##design_principles{id:core_principles, confidence:1.0, @cluster}
+      operational_efficiency_maximization,
+      token_cost_minimization,
+      analytical_accuracy_maximization,
+      rigid_structure_adherence_for_llm_consumption
+    @/cluster
+
+  ##mandatory_checks{id:size_constraints, type:hard_rule, confidence:1.0, @blocking}
+    "Proactive size validation before creation"
+    @enforce:always_estimate_domain_size_before_creating_system_maps
+    
+    ##size_estimation{id:creation_limits, confidence:1.0, @blocking}
+      "Max 300 lines, 5 feature groups per domain"
+      @trigger:create_subdomain_directory[exceeded]
+      @action:extract_to_feature_file[feature>100_lines]
+
+  ##decision_framework{id:domain_classification, confidence:1.0, @critical}
+    "Domain vs dependency classification rules"
+
+    ##domains_definition{id:what_is_domain, confidence:1.0}
+      "Top-level user-facing application areas"
+      @examples{
+        user_pages:["chat","health","devices","memory","file-manager","settings"],
+        infrastructure:["routes","infrastructure"]
+      }
+
+    ##dependencies_definition{id:what_are_dependencies, confidence:1.0}
+      "Other domains this domain relies on - NOT sub-features"
+      @examples{
+        "chat→memory[uses_memory_system]",
+        "chat→file-manager[uses_file_attachments]",
+        "health→file-manager[imports_health_files]"
+      }
+
+    ##anti_patterns{id:what_not_domains, confidence:1.0, @warning}
+      "These should be features within domains, NOT separate domains"
+      @examples{
+        "conversation-history→feature_within_chat",
+        "attachments→feature_within_chat",
+        "user-profile→feature_within_settings",
+        "metrics-dashboard→feature_within_health"
+      }
+
+  ##directory_structure{id:domain_organization, confidence:1.0, @sequential}
+    "Domain-focused directory organization"
+    @pattern:".system-maps/[domain-name]/[feature-group].map.json"
+    @benefits{
+      clear_domain_boundaries,
+      focused_feature_organization,
+      easy_navigation_maintenance,
+      natural_team_ownership_alignment
+    }
+
+  ##file_structures{id:schema_definitions, confidence:1.0, @critical}
+    "Rigid schema enforcement for computational efficiency"
+
+    ##root_map{id:root_schema, confidence:1.0, @required}
+      "Application manifest and domain directory"
+      @required:[appName,version,lastUpdated,domains]
+      @schema{
+        appName:string,
+        version:string,
+        lastUpdated:iso8601_timestamp,
+        domains:{
+          "[domainName]":{
+            description:string,
+            path:string,
+            dependencies:string_array
+          }
+        }
+      }
+
+    ##domain_map{id:domain_schema, confidence:1.0, @required}
+      "Complete domain functionality mapping"
+      @constraints{max_lines:300, max_feature_groups:5}
+      @required:[tableOfContents,integrationStatus,lastUpdated,dependencies,featureGroups]
+      @schema{
+        tableOfContents:grouped_feature_index,
+        integrationStatus:validation_evidence,
+        featureGroups:detailed_feature_definitions,
+        components:component_definitions,
+        apiEndpoints:api_definitions,
+        database:schema_definitions
+      }
+
+    ##feature_file{id:mega_feature_schema, confidence:1.0}
+      "Extracted large feature definitions"
+      @trigger:feature>100_lines
+      @required:[_metadata,description,userFlow,systemFlow]
+      @refs:parent_component_definitions
+
+  ##integration_validation{id:evidence_framework, confidence:1.0, @critical}
+    "Mandatory integration evidence requirements"
+
+    ##status_levels{id:validation_states, confidence:1.0, @cluster}
+      ##active{status:"implemented+tested+working", @requires:evidence}
+        @validation{
+          component_to_api_tracing,
+          endpoint_verification,
+          ui_refresh_dependency_validation,
+          integration_testing_evidence,
+          data_flow_verification,
+          !architectural_bypasses
+        }
+
+      ##partial{status:"implemented+gaps", @requires:documented_gaps}
+      ##planned{status:"designed+not_implemented", @requires:design_only}
+      ##broken{status:"exists+execution_failure", @requires:failure_analysis}
+    @/cluster
+
+    ##evidence_requirements{id:validation_steps, confidence:1.0, @sequential}
+      component_to_api_tracing,
+      endpoint_verification,
+      data_flow_verification,
+      architectural_intent_validation,
+      ui_refresh_validation,
+      integration_testing_proof
+
+  ##cache_dependencies{id:refresh_chain_mapping, confidence:1.0, @critical}
+    "Complete cache invalidation and UI refresh chains"
+    @required:[invalidates,refreshesComponents]
+    @patterns{
+      query_key:"query:specificEndpoint",
+      component_refresh:"ComponentName",
+      cross_domain:document_when_affects_other_domains
+    }
+    @examples{
+      health_data_update:{
+        invalidates:["query:healthData","query:healthMetrics"],
+        refreshes:["HealthDashboard","MetricsCard","TrendChart"],
+        triggers:["health-data-updated","metrics-recalculated"]
+      }
+    }
+
+  ##workflow_steps{id:implementation_process, confidence:1.0, @sequential}
+    ##step{id:initialize, order:1, @blocking}
+      "Create .system-maps directory and root.map.json"
+
+    ##step{id:domain_analysis, order:2, @critical}
+      "Analyze and plan domain structure"
+      @processing{
+        identify_entry_points,
+        estimate_complexity,
+        create_domain_directories,
+        plan_dependencies
+      }
+
+    ##step{id:recursive_dependency_analysis, order:3, @critical}
+      "Comprehensive dependency mapping"
+      @processing{
+        start_with_entry_points,
+        analyze_imports_meticulously,
+        recursively_follow_dependencies,
+        continue_until_complete_mapping
+      }
+
+    ##step{id:flow_tracing, order:4, @critical}
+      "Complete user and system flow mapping"
+      @processing{
+        trace_user_flows,
+        map_api_to_database,
+        verify_architectural_intent,
+        identify_bypassed_components,
+        document_cache_dependencies,
+        validate_integration_status
+      }
+
+    ##step{id:validation_documentation, order:5, @blocking}
+      "Comprehensive validation and evidence documentation"
+      @processing{
+        test_integration_points,
+        validate_cache_invalidation,
+        document_known_issues,
+        update_integration_status
+      }
+
+@processing{
+  critical_concepts:[domain_classification, size_constraints, integration_validation, cache_dependencies],
+  enforcement_points:[mandatory_size_estimation, evidence_requirements, schema_compliance],
+  sequential_required:[initialize, domain_analysis, dependency_analysis, flow_tracing, validation],
+  parallel_possible:[schema_validation, cache_mapping, integration_testing],
+  quality_gates:[size_compliance, integration_evidence, cache_completeness, schema_validation]
+}
+
+@validation{
+  mandatory_checks:[size_estimation, integration_evidence, cache_dependencies, schema_compliance],
+  blocking_violations:[size_exceeded, missing_evidence, broken_references, invalid_schema],
+  compliance_requirements:[rigid_structure_adherence, computational_efficiency, llm_optimization],
+  quality_standards:[no_active_without_evidence, complete_cache_chains, accurate_integration_status]
+}
+
+@discovery_tools{
+  recommended:[glob, search_file_content, read_file, read_many_files],
+  analysis_patterns:[api_mapping, database_schema_analysis, route_handler_analysis],
+  constraints:[domain_focus, integration_gap_documentation, critical_miss_modification]
+}

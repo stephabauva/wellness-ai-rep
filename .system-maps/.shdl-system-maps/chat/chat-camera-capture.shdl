@@ -1,0 +1,75 @@
+@context{domain:camera_capture_architecture, type:complete_system_map}
+
+#ROOT
+  ##feature{id:camera_capture, domain:chat}
+    "Complete system map for Camera Capture functionality in Chat domain"
+
+    ##dataFlowTrace{id:user_interaction, type:workflow, @critical}
+      "User triggers camera capture through UI button"
+      @processing{user_action→component_activation}
+
+    ##frontendArchitecture{id:chat_ui, type:presentation_layer, @comprehensive, @critical}
+      "Client-side structure for camera integration"
+      
+      ##components{id:trigger_elements, type:ui_components, @critical}
+        "React components managing camera UI"
+        @cluster{primary, type:main_features}
+          ChatInputArea.tsx
+          VideoPreview.tsx
+        @/cluster
+      
+      ##hooks{id:media_hooks, type:custom_hooks, @blocking}
+        "Custom hooks for media stream handling"
+        useMediaStream.tsx
+
+      ##api{id:browserApis, type:external_api_calls}
+        "Browser APIs for camera access"
+        @cluster{permissions, type:ui_authorization}
+          navigator.mediaDevices.getUserMedia
+        @/cluster
+        @cluster{streaming, type:media_stream_processing}
+          MediaStreamTrack.kind
+        @/cluster
+
+    ##backendServices{id:file_processing, type:server_layer, @critical}
+      "Server-side services managing file storage and processing"
+      @processing{file_upload→chat_attachment}
+      
+      ##services{id:media_processing_integration, type:media_service, @critical, @sequential}
+        @cluster{uploadHandlers, type:backend_integration_points}
+          upload_file_controller.ts
+          attach_media_to_chat.ts
+        @/cluster
+
+      ##externalIntegration{id:go_services, type:microservice_calls}
+        "Go microservices for file compression and processing"
+        @cluster{fileAccelerator, type:file_optimization}
+          go-file-accelerator/upload.go
+        @/cluster
+
+    ##errorBoundaries{id:error_handling_strategy, type:resilience_framework}
+      "Error handling and recovery mechanisms"
+      @cluster{userAuthorizationFailures, type:permission_errors}
+        getUserMedia_error_handling.ts
+        browser_permission_denial.ts
+      @/cluster
+
+    ##securityConsiderations{id:privacy_protection, type:data_security_layer}
+      "Security and privacy safeguards for media capture"
+      @processing{media_metadata_protection}
+      @cluster{encryption, type:data_encryption}
+        media_encryption_policy.ts
+      @/cluster
+
+##performanceConsiderations{id:optimization_framework, type:performance_layer, @critical}
+  "Performance optimization strategies for camera capture"
+  @processing{memory_usage_reduction, @critical}
+  @cluster{media_stream_optimization, type:stream_efficiency}
+    stream_bitrate_management.ts
+    canvas_rendering_optimizations.ts
+  @/cluster
+  @cluster{ui_responsiveness, type:ui_efficiency}
+    camera_interface_debouncing.ts
+  @/cluster
+
+@processing{feature:camera_capture, dependencies:[frontendArchitecture, backendServices, browserApis, errorBoundaries], critical_paths:[user_interaction, media_hooks, uploadHandlers], performance_metrics:[stream_efficiency, ui_responsiveness]}

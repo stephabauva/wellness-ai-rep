@@ -5,15 +5,15 @@
 This report provides an analysis of the system maps, comparing the defined features in `.system-maps/features-by-domain.md` with the created system maps in `.system-maps/.shdl-system-maps`.
 
 *   **Total Features Defined:** 120
-*   **System Maps Created:** 86
-*   **Missing System Maps:** 34
+*   **System Maps Created:** 87
+*   **Missing System Maps:** 33
 
 ## Missing System Maps by Domain
 
 The following is a list of features for which system maps have not yet been created, categorized by their respective domains.
 
 ### Chat Domain
-*   Camera Capture
+*   Camera Capture [done : .system-maps/.shdl-system-maps/chat/chat-camera-capture.shdl]
 
 ### Cross-Domain Features
 *   Caching System

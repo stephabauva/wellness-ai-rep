@@ -1,24 +1,23 @@
-
 @context{domain:format_conversion, target:ai_consumption, complexity:medium, enforcement:strict}
 @meta{tokens:420, critical_paths:3, validation_rules:8, processing_priority:1}
 
-#ROOT{confidence:1.0}
-  ##conversion_philosophy{id:core_conversion, type:foundational, confidence:1.0, @critical}
+#ROOT
+  ##conversion_philosophy{id:core_conversion, type:foundational, @critical}
     "Transform human-readable formats into AI-optimized structured data"
     @enforce:mandatory
     @trigger:format_validation[json|text|markdown→shdl]
     @optimize:token_efficiency+semantic_density
 
-    ##size_constraints{id:shdl_limits, type:hard_rule, confidence:1.0, @blocking}
+    ##size_constraints{id:shdl_limits, type:hard_rule, @blocking}
       "Max 1000 tokens per SHDL block, 15 nested levels max"
       @enforce:token_counting
       @trigger:split_when[exceeded]
       @validate:structure_depth
 
-  ##input_formats{id:source_types, type:classification, confidence:0.95}
+  ##input_formats{id:source_types, type:classification}
     "Supported conversion sources with processing rules"
 
-    ##format{id:json_input, type:structured, confidence:1.0, @priority:high}
+    ##format{id:json_input, type:structured, @priority:high}
       "JSON → SHDL direct mapping with hierarchy preservation"
       @processing{
         1.parse_json_structure,
@@ -33,7 +32,7 @@
         nested→hierarchical_inheritance
       }
 
-    ##format{id:markdown_input, type:semi_structured, confidence:0.9, @priority:medium}
+    ##format{id:markdown_input, type:semi_structured, @priority:medium}
       "Markdown → SHDL semantic extraction with context preservation"
       @processing{
         1.extract_heading_hierarchy,
@@ -48,7 +47,7 @@
         text→semantic_compression
       }
 
-    ##format{id:text_input, type:unstructured, confidence:0.8, @priority:low}
+    ##format{id:text_input, type:unstructured, @priority:low}
       "Plain text → SHDL intelligent structuring"
       @processing{
         1.detect_logical_sections,
@@ -63,10 +62,10 @@
         emphasis→@critical
       }
 
-  ##optimization_rules{id:shdl_compression, type:enhancement, confidence:1.0, @critical}
+  ##optimization_rules{id:shdl_compression, type:enhancement, @critical}
     "Token efficiency and semantic density maximization"
 
-    ##compression{id:syntax_optimization, type:technique, confidence:1.0}
+    ##compression{id:syntax_optimization, type:technique}
       "Replace verbose patterns with compact operators"
       @examples{
         "enforcement:mandatory"→"@enforce:mandatory",
@@ -76,7 +75,7 @@
         "reference_pointer:"→"$ref:"
       }
 
-    ##inheritance{id:confidence_propagation, type:efficiency, confidence:1.0}
+    ##inheritance{id:confidence_propagation, type:efficiency}
       "Hierarchical confidence with selective overrides"
       @pattern{
         parent{confidence:1.0}→children{confidence:inherit},
@@ -84,7 +83,7 @@
         @cluster{confidence:1.0}→applies_to_all_members
       }
 
-    ##clustering{id:semantic_grouping, type:organization, confidence:0.9}
+    ##clustering{id:semantic_grouping, type:organization}
       "Group related concepts for processing efficiency"
       @syntax{
         "@cluster{domain, confidence:1.0, @attributes}",
@@ -93,10 +92,10 @@
         "@/cluster"
       }
 
-  ##conversion_workflow{id:transform_process, type:procedure, confidence:1.0, @sequential}
+  ##conversion_workflow{id:transform_process, type:procedure, @sequential}
     "Step-by-step conversion methodology"
 
-    ##step{id:parse_input, order:1, confidence:1.0, @blocking}
+    ##step{id:parse_input, order:1, @blocking}
       "Analyze source format and extract structure"
       @processing{
         detect_format[json|markdown|text],
@@ -111,7 +110,7 @@
         relationship_graph
       }
 
-    ##step{id:map_semantics, order:2, confidence:1.0, @critical}
+    ##step{id:map_semantics, order:2, @critical}
       "Transform semantic elements to SHDL constructs"
       @processing{
         map_hierarchy_to_blocks,
@@ -125,7 +124,7 @@
         ?optimization_applied
       }
 
-    ##step{id:optimize_structure, order:3, confidence:0.9}
+    ##step{id:optimize_structure, order:3}
       "Apply compression and efficiency optimizations"
       @processing{
         compress_syntax,
@@ -139,7 +138,7 @@
         parsing_efficiency_gain:25%
       }
 
-    ##step{id:validate_output, order:4, confidence:1.0, @blocking}
+    ##step{id:validate_output, order:4, @blocking}
       "Ensure SHDL compliance and semantic integrity"
       @validation{
         !syntax_errors,

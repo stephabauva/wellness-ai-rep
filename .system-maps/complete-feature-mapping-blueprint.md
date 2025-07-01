@@ -1,4 +1,5 @@
 
+
 # Complete Feature Mapping Blueprint
 
 ## Core Philosophy: Tree-Based Architecture Mapping
@@ -13,39 +14,39 @@ Each feature is a **tree** where:
 
 ### 1.1 Complete Request/Response Cycle
 ```shdl
-@context{domain:data_flow_trace, type:request_response, confidence:1.0}
+@context{domain:data_flow_trace, type:request_response}
 
-#ROOT{confidence:1.0}
-  ##dataFlowTrace{id:complete_cycle, type:workflow, confidence:1.0, @critical}
+#ROOT
+  ##dataFlowTrace{id:complete_cycle, type:workflow, @critical}
     "Complete request/response cycle mapping"
     
-    ##userAction{id:trigger, type:interaction, confidence:1.0, @blocking}
+    ##userAction{id:trigger, type:interaction, @blocking}
       "Specific user interaction that triggers the feature"
       @processing{user_input→component_activation}
     
-    ##frontendFlow{id:client_processing, type:layer, confidence:1.0, @sequential}
+    ##frontendFlow{id:client_processing, type:layer, @sequential}
       "Client-side request processing and state management"
       
-      ##triggerComponent{id:initiator, confidence:1.0}
+      ##triggerComponent{id:initiator}
         "Component that initiates the action"
         @ref:eventHandlers
       
-      ##eventHandlers{id:handlers, confidence:1.0}
+      ##eventHandlers{id:handlers}
         @cluster{functions, type:handlers}
           "Functions that handle the user action"
         @/cluster
       
-      ##stateChanges{id:react_state, confidence:1.0}
+      ##stateChanges{id:react_state}
         @cluster{updates, type:react_state}
           "React state updates triggered"
         @/cluster
       
-      ##reactQueryHooks{id:query_system, confidence:1.0}
+      ##reactQueryHooks{id:query_system}
         @cluster{hooks, type:tanstack_query}
           "Query keys and mutations involved"
         @/cluster
       
-      ##apiCalls{id:network_requests, confidence:1.0, @critical}
+      ##apiCalls{id:network_requests, @critical}
         "API call configuration and routing"
         @processing{
           endpoint:"Actual API endpoint called",
@@ -59,7 +60,7 @@ Each feature is a **tree** where:
           "Authentication, Content-Type, etc."
         @/cluster
     
-    ##networkLayer{id:transport, type:layer, confidence:1.0}
+    ##networkLayer{id:transport, type:layer}
       "Network transport and routing layer"
       @processing{
         requestRoute:"Frontend → Server route path",
@@ -69,24 +70,24 @@ Each feature is a **tree** where:
         "Authentication, Validation, etc."
       @/cluster
     
-    ##backendFlow{id:server_processing, type:layer, confidence:1.0, @sequential}
+    ##backendFlow{id:server_processing, type:layer, @sequential}
       "Server-side request processing and data operations"
       
-      ##routeHandler{id:entry_point, confidence:1.0}
+      ##routeHandler{id:entry_point}
         "File and function that processes request"
         @ref:servicesCalled
       
-      ##servicesCalled{id:business_logic, confidence:1.0}
+      ##servicesCalled{id:business_logic}
         @cluster{services, type:business_logic}
           "Business logic services invoked"
         @/cluster
       
-      ##externalApiCalls{id:third_party, confidence:0.9}
+      ##externalApiCalls{id:third_party}
         @cluster{external_services, type:api_calls}
           "Third-party services called"
         @/cluster
       
-      ##databaseOperations{id:data_layer, confidence:1.0, @critical}
+      ##databaseOperations{id:data_layer, @critical}
         "Database interaction patterns"
         @cluster{queries, type:sql}
           "SQL queries executed"
@@ -101,17 +102,17 @@ Each feature is a **tree** where:
           "Multi-table operations"
         @/cluster
       
-      ##cacheOperations{id:cache_layer, confidence:0.9}
+      ##cacheOperations{id:cache_layer}
         @cluster{cache_actions, type:cache}
           "Cache reads/writes/invalidations"
         @/cluster
       
-      ##fileSystemOperations{id:file_layer, confidence:0.8}
+      ##fileSystemOperations{id:file_layer}
         @cluster{file_ops, type:filesystem}
           "File uploads/downloads/processing"
         @/cluster
     
-    ##responseFlow{id:response_processing, type:layer, confidence:1.0, @sequential}
+    ##responseFlow{id:response_processing, type:layer, @sequential}
       "Response data transformation and delivery"
       @cluster{dataTransformation, type:processing}
         "How data is shaped for response"
@@ -124,7 +125,7 @@ Each feature is a **tree** where:
         "Database → Service → Route → Network → Frontend"
       @/cluster
     
-    ##frontendUpdateFlow{id:ui_refresh, type:layer, confidence:1.0}
+    ##frontendUpdateFlow{id:ui_refresh, type:layer}
       "Frontend state updates and UI refresh patterns"
       @cluster{reactQueryInvalidation, type:cache_invalidation}
         "Query keys invalidated"
@@ -152,16 +153,16 @@ Each feature is a **tree** where:
 
 ### 1.2 Complete File Dependency Mapping
 ```shdl
-@context{domain:architectural_mapping, type:dependency_analysis, confidence:1.0}
+@context{domain:architectural_mapping, type:dependency_analysis}
 
-#ROOT{confidence:1.0}
-  ##architecturalLayers{id:system_layers, type:architecture, confidence:1.0, @comprehensive}
+#ROOT
+  ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
     "Complete architectural layer dependency mapping"
     
-    ##presentation{id:frontend_layer, type:ui_layer, confidence:1.0}
+    ##presentation{id:frontend_layer, type:ui_layer}
       "Frontend presentation layer components and utilities"
       
-      ##components{id:ui_components, confidence:1.0, @critical}
+      ##components{id:ui_components, @critical}
         "React component hierarchy and organization"
         @cluster{primary, type:main_features}
           "Main components implementing the feature"
@@ -173,58 +174,58 @@ Each feature is a **tree** where:
           "Reusable components from ui/ folder"
         @/cluster
       
-      ##hooks{id:custom_hooks, confidence:1.0}
+      ##hooks{id:custom_hooks}
         @cluster{react_hooks, type:state_logic}
           "Custom hooks used"
         @/cluster
       
-      ##utilities{id:frontend_utils, confidence:1.0}
+      ##utilities{id:frontend_utils}
         @cluster{client_utilities, type:helpers}
           "Frontend utilities and helpers"
         @/cluster
       
-      ##types{id:frontend_types, confidence:1.0}
+      ##types{id:frontend_types}
         @cluster{typescript_interfaces, type:type_definitions}
           "TypeScript interfaces and types"
         @/cluster
       
-      ##styles{id:styling, confidence:1.0}
+      ##styles{id:styling}
         @cluster{css_classes, type:styling}
           "CSS/Tailwind classes and style files"
         @/cluster
     
-    ##businessLogic{id:backend_layer, type:server_layer, confidence:1.0}
+    ##businessLogic{id:backend_layer, type:server_layer}
       "Server-side business logic and processing"
       
-      ##routes{id:api_routes, confidence:1.0, @critical}
+      ##routes{id:api_routes, @critical}
         @cluster{express_handlers, type:route_handlers}
           "Express route handlers"
         @/cluster
       
-      ##services{id:business_services, confidence:1.0, @critical}
+      ##services{id:business_services, @critical}
         @cluster{logic_services, type:business_logic}
           "Business logic services"
         @/cluster
       
-      ##middleware{id:server_middleware, confidence:1.0}
+      ##middleware{id:server_middleware}
         @cluster{middleware_stack, type:processing}
           "Authentication, validation, etc."
         @/cluster
       
-      ##utilities{id:backend_utils, confidence:1.0}
+      ##utilities{id:backend_utils}
         @cluster{server_utilities, type:helpers}
           "Backend utilities and helpers"
         @/cluster
       
-      ##types{id:shared_types, confidence:1.0}
+      ##types{id:shared_types}
         @cluster{common_types, type:shared_definitions}
           "Shared TypeScript types"
         @/cluster
     
-    ##dataLayer{id:persistence_layer, type:data_layer, confidence:1.0}
+    ##dataLayer{id:persistence_layer, type:data_layer}
       "Data persistence and storage mechanisms"
       
-      ##database{id:relational_db, confidence:1.0, @critical}
+      ##database{id:relational_db, @critical}
         "Database schema and access patterns"
         @cluster{tables, type:schema}
           "Primary tables accessed"
@@ -239,7 +240,7 @@ Each feature is a **tree** where:
           "Schema changes required"
         @/cluster
       
-      ##cache{id:cache_layer, confidence:0.9}
+      ##cache{id:cache_layer}
         "Caching strategy and invalidation patterns"
         @cluster{cacheKeys, type:cache_keys}
           "Redis/memory cache keys"
@@ -251,7 +252,7 @@ Each feature is a **tree** where:
           "TTL, invalidation policies"
         @/cluster
       
-      ##fileSystem{id:file_storage, confidence:0.8}
+      ##fileSystem{id:file_storage}
         "File system operations and management"
         @cluster{uploadPaths, type:directories}
           "File upload directories"
@@ -263,10 +264,10 @@ Each feature is a **tree** where:
           "File processing pipelines"
         @/cluster
     
-    ##integration{id:external_layer, type:integration_layer, confidence:1.0}
+    ##integration{id:external_layer, type:integration_layer}
       "External service integrations and APIs"
       
-      ##externalApis{id:third_party_apis, confidence:0.9}
+      ##externalApis{id:third_party_apis}
         "Third-party service integrations"
         @cluster{services, type:external_services}
           "Third-party services called"
@@ -281,7 +282,7 @@ Each feature is a **tree** where:
           "Error handling for external failures"
         @/cluster
       
-      ##browserApis{id:web_apis, confidence:0.9}
+      ##browserApis{id:web_apis}
         "Browser API integrations and requirements"
         @cluster{apis, type:web_apis}
           "Web APIs used (FileReader, Camera, etc.)"
@@ -293,7 +294,7 @@ Each feature is a **tree** where:
           "Browser support requirements"
         @/cluster
       
-      ##goServices{id:go_microservices, confidence:1.0, @critical}
+      ##goServices{id:go_microservices, @critical}
         "Go microservice integrations"
         @cluster{aiGateway, type:ai_services}
           "AI service integrations"
@@ -316,13 +317,13 @@ Each feature is a **tree** where:
 ## 2. Error Boundary & Edge Case Mapping
 
 ```shdl
-@context{domain:error_handling, type:resilience_mapping, confidence:1.0}
+@context{domain:error_handling, type:resilience_mapping}
 
-#ROOT{confidence:1.0}
-  ##errorBoundaries{id:error_management, type:error_system, confidence:1.0, @comprehensive}
+#ROOT
+  ##errorBoundaries{id:error_management, type:error_system, @comprehensive}
     "Complete error handling and recovery strategy mapping"
     
-    ##frontendErrors{id:client_errors, type:ui_errors, confidence:1.0, @critical}
+    ##frontendErrors{id:client_errors, type:ui_errors, @critical}
       "Client-side error handling and user experience protection"
       @cluster{componentErrors, type:react_errors}
         "React error boundaries"
@@ -337,7 +338,7 @@ Each feature is a **tree** where:
         "Invalid data handling"
       @/cluster
     
-    ##backendErrors{id:server_errors, type:backend_failures, confidence:1.0, @critical}
+    ##backendErrors{id:server_errors, type:backend_failures, @critical}
       "Server-side error handling and data integrity protection"
       @cluster{validationErrors, type:request_validation}
         "Request validation failures"
@@ -352,7 +353,7 @@ Each feature is a **tree** where:
         "Third-party API failures"
       @/cluster
     
-    ##systemErrors{id:infrastructure_errors, type:system_failures, confidence:1.0, @blocking}
+    ##systemErrors{id:infrastructure_errors, type:system_failures, @blocking}
       "Infrastructure and resource limitation handling"
       @cluster{memoryErrors, type:resource_limits}
         "Out of memory conditions"
@@ -367,7 +368,7 @@ Each feature is a **tree** where:
         "Request timeout handling"
       @/cluster
     
-    ##recoveryStrategies{id:error_recovery, type:resilience, confidence:1.0, @critical}
+    ##recoveryStrategies{id:error_recovery, type:resilience, @critical}
       "Error recovery and system resilience mechanisms"
       @cluster{retryMechanisms, type:retry_logic}
         "Exponential backoff patterns"
@@ -393,13 +394,13 @@ Each feature is a **tree** where:
 ## 3. Performance & Optimization Mapping
 
 ```shdl
-@context{domain:performance_optimization, type:efficiency_mapping, confidence:1.0}
+@context{domain:performance_optimization, type:efficiency_mapping}
 
-#ROOT{confidence:1.0}
-  ##performanceConsiderations{id:optimization_strategy, type:performance_system, confidence:1.0, @comprehensive}
+#ROOT
+  ##performanceConsiderations{id:optimization_strategy, type:performance_system, @comprehensive}
     "Complete performance optimization and efficiency mapping"
     
-    ##frontendOptimizations{id:client_performance, type:ui_optimization, confidence:1.0, @critical}
+    ##frontendOptimizations{id:client_performance, type:ui_optimization, @critical}
       "Client-side performance optimization strategies"
       @cluster{bundleSize, type:code_splitting}
         "Component lazy loading"
@@ -414,7 +415,7 @@ Each feature is a **tree** where:
         "Progressive loading patterns"
       @/cluster
     
-    ##backendOptimizations{id:server_performance, type:backend_optimization, confidence:1.0, @critical}
+    ##backendOptimizations{id:server_performance, type:backend_optimization, @critical}
       "Server-side performance optimization strategies"
       @cluster{databaseOptimization, type:query_optimization}
         "Query optimization, indexing"
@@ -429,7 +430,7 @@ Each feature is a **tree** where:
         "Memory usage patterns"
       @/cluster
     
-    ##dataTransferOptimization{id:network_optimization, type:transfer_efficiency, confidence:1.0}
+    ##dataTransferOptimization{id:network_optimization, type:transfer_efficiency}
       "Data transfer and network optimization strategies"
       @cluster{payloadSize, type:data_minimization}
         "Response data minimization"
@@ -455,13 +456,13 @@ Each feature is a **tree** where:
 ## 4. Security & Privacy Mapping
 
 ```shdl
-@context{domain:security_privacy, type:protection_mapping, confidence:1.0}
+@context{domain:security_privacy, type:protection_mapping}
 
-#ROOT{confidence:1.0}
-  ##securityConsiderations{id:security_framework, type:security_system, confidence:1.0, @comprehensive}
+#ROOT
+  ##securityConsiderations{id:security_framework, type:security_system, @comprehensive}
     "Complete security and privacy protection mapping"
     
-    ##authentication{id:user_auth, type:identity_verification, confidence:1.0, @critical}
+    ##authentication{id:user_auth, type:identity_verification, @critical}
       "User identity verification and session management"
       @cluster{userVerification, type:auth_requirements}
         "Authentication requirements"
@@ -473,7 +474,7 @@ Each feature is a **tree** where:
         "JWT token verification"
       @/cluster
     
-    ##authorization{id:access_control, type:permission_system, confidence:1.0, @critical}
+    ##authorization{id:access_control, type:permission_system, @critical}
       "User authorization and access control mechanisms"
       @cluster{permissions, type:user_permissions}
         "User permission requirements"
@@ -485,7 +486,7 @@ Each feature is a **tree** where:
         "Data access controls"
       @/cluster
     
-    ##dataProtection{id:data_security, type:privacy_protection, confidence:1.0, @blocking}
+    ##dataProtection{id:data_security, type:privacy_protection, @blocking}
       "Data protection and privacy safeguards"
       @cluster{sensitiveData, type:pii_handling}
         "PII, health data handling"
@@ -500,7 +501,7 @@ Each feature is a **tree** where:
         "Secure data transmission"
       @/cluster
     
-    ##inputValidation{id:input_security, type:validation_system, confidence:1.0, @critical}
+    ##inputValidation{id:input_security, type:validation_system, @critical}
       "Input validation and injection prevention"
       @cluster{frontendValidation, type:client_validation}
         "Client-side validation"
@@ -526,13 +527,13 @@ Each feature is a **tree** where:
 ## 5. Integration Status & Evidence Blueprint
 
 ```shdl
-@context{domain:integration_validation, type:evidence_tracking, confidence:1.0}
+@context{domain:integration_validation, type:evidence_tracking}
 
-#ROOT{confidence:1.0}
-  ##integrationEvidence{id:validation_framework, type:evidence_system, confidence:1.0, @comprehensive}
+#ROOT
+  ##integrationEvidence{id:validation_framework, type:evidence_system, @comprehensive}
     "Complete integration validation and evidence tracking"
     
-    ##implementationStatus{id:feature_status, type:status_tracking, confidence:1.0, @critical}
+    ##implementationStatus{id:feature_status, type:status_tracking, @critical}
       "Feature implementation status and verification"
       @processing{
         status:"active|partial|planned|broken",
@@ -547,7 +548,7 @@ Each feature is a **tree** where:
         +evidence_accessible
       }
     
-    ##testingEvidence{id:test_coverage, type:validation_evidence, confidence:1.0, @critical}
+    ##testingEvidence{id:test_coverage, type:validation_evidence, @critical}
       "Comprehensive testing evidence and coverage"
       @cluster{unitTests, type:component_tests}
         "Component and service unit tests"
@@ -562,7 +563,7 @@ Each feature is a **tree** where:
         "Load and performance testing"
       @/cluster
     
-    ##deploymentEvidence{id:deployment_validation, type:production_evidence, confidence:1.0, @blocking}
+    ##deploymentEvidence{id:deployment_validation, type:production_evidence, @blocking}
       "Production deployment validation and monitoring"
       @cluster{stagingValidation, type:staging_tests}
         "Staging environment testing"
@@ -597,7 +598,7 @@ Each feature is a **tree** where:
 Use this template for mapping any feature:
 
 ```shdl
-@context{domain:feature_mapping, type:template, confidence:1.0}
+@context{domain:feature_mapping, type:template}
 @meta{
   featureName:"specific-feature-name",
   featureGroup:"domain-group", 
@@ -607,11 +608,11 @@ Use this template for mapping any feature:
   mappingVersion:"2.0.0"
 }
 
-#ROOT{confidence:1.0}
-  ##feature{id:feature_name, type:complete_mapping, confidence:1.0, @comprehensive}
+#ROOT
+  ##feature{id:feature_name, type:complete_mapping, @comprehensive}
     "Clear, concise feature description"
     
-    ##userFlow{id:user_workflow, type:user_journey, confidence:1.0, @sequential}
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
       "User interaction workflow and experience"
       @processing{
         step1:"User performs specific action",
@@ -619,7 +620,7 @@ Use this template for mapping any feature:
         step3:"User sees specific result"
       }
     
-    ##systemFlow{id:system_workflow, type:system_processing, confidence:1.0, @sequential}
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
       "System processing workflow and operations"
       @processing{
         process1:"Specific system operation",
@@ -627,31 +628,31 @@ Use this template for mapping any feature:
         process3:"Response generation"
       }
     
-    ##dataFlowTrace{id:data_flow, type:request_response, confidence:1.0, @ref}
+    ##dataFlowTrace{id:data_flow, type:request_response, @ref}
       "Complete request/response cycle mapping"
       @ref:section_1_1_blueprint
     
-    ##architecturalLayers{id:architecture, type:dependency_analysis, confidence:1.0, @ref}
+    ##architecturalLayers{id:architecture, type:dependency_analysis, @ref}
       "Complete architectural layer dependency mapping"
       @ref:section_1_2_blueprint
     
-    ##errorBoundaries{id:error_handling, type:resilience_mapping, confidence:1.0, @ref}
+    ##errorBoundaries{id:error_handling, type:resilience_mapping, @ref}
       "Complete error handling and recovery strategy mapping"
       @ref:section_2_blueprint
     
-    ##performanceConsiderations{id:optimization, type:efficiency_mapping, confidence:1.0, @ref}
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping, @ref}
       "Complete performance optimization and efficiency mapping"
       @ref:section_3_blueprint
     
-    ##securityConsiderations{id:security, type:protection_mapping, confidence:1.0, @ref}
+    ##securityConsiderations{id:security, type:protection_mapping, @ref}
       "Complete security and privacy protection mapping"
       @ref:section_4_blueprint
     
-    ##integrationEvidence{id:validation, type:evidence_tracking, confidence:1.0, @ref}
+    ##integrationEvidence{id:validation, type:evidence_tracking, @ref}
       "Complete integration validation and evidence tracking"
       @ref:section_5_blueprint
     
-    ##dependencies{id:feature_dependencies, type:dependency_tracking, confidence:1.0}
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
       "Feature dependency mapping and relationships"
       @cluster{internal, type:internal_features}
         "Other features this depends on"
@@ -663,7 +664,7 @@ Use this template for mapping any feature:
         "Dependencies from other domains"
       @/cluster
     
-    ##impacts{id:feature_impacts, type:impact_analysis, confidence:1.0}
+    ##impacts{id:feature_impacts, type:impact_analysis}
       "Feature impact analysis and shared resource mapping"
       @cluster{affects, type:affected_features}
         "Other features impacted by this feature"

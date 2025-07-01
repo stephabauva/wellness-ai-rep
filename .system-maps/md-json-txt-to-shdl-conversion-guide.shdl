@@ -80,14 +80,14 @@
       "Hierarchical confidence with selective overrides"
       @pattern{
         parent{confidence:1.0}→children{confidence:inherit},
-        explicit_override{confidence:0.8}→breaks_inheritance,
-        @cluster{confidence:0.9}→applies_to_all_members
+        explicit_override{confidence:1.0}→breaks_inheritance,
+        @cluster{confidence:1.0}→applies_to_all_members
       }
 
     ##clustering{id:semantic_grouping, type:organization, confidence:0.9}
       "Group related concepts for processing efficiency"
       @syntax{
-        "@cluster{domain, confidence:X, @attributes}",
+        "@cluster{domain, confidence:1.0, @attributes}",
         "  ##concept{id:name, @shared_attrs}",
         "  ##concept{id:name2, @shared_attrs}",
         "@/cluster"
@@ -175,6 +175,6 @@
   },
   text_conversion:{
     input:"The feature requires two components that work together",
-    output:"##feature{confidence:0.8, @requires} @cluster{components, relationship:interdependent} ##comp{id:comp1} ##comp{id:comp2} @/cluster"
+    output:"##feature{confidence:1.0, @requires} @cluster{components, relationship:interdependent} ##comp{id:comp1} ##comp{id:comp2} @/cluster"
   }
 }

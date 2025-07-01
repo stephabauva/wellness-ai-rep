@@ -293,21 +293,74 @@
       ui_refresh_validation,
       integration_testing_proof
 
-  ##cache_dependencies{id:refresh_chain_mapping, confidence:1.0, @critical}
-    "Complete cache invalidation and UI refresh chains"
-    @required:[invalidates,refreshesComponents]
+  ##flow_patterns{id:tracing_methodology, confidence:1.0, @critical}
+    "Standardized patterns for user/system flow documentation"
     @patterns{
-      query_key:"query:specificEndpoint",
+      user_flow:"UI_interaction→API_call→database_operation→cache_update→UI_refresh",
+      system_flow:"service_trigger→background_process→data_transformation→storage→notification",
+      integration_flow:"external_api→validation→transformation→internal_storage→ui_update",
+      streaming_flow:"user_input→go_ai_gateway→ai_provider→streaming_response→ui_display",
+      error_flow:"failure_point→error_detection→fallback_strategy→user_notification→recovery_action"
+    }
+    @tracing_requirements{
+      document_complete_paths:true,
+      identify_bypass_routes:true,
+      validate_architectural_compliance:true,
+      map_error_boundaries:true
+    }
+
+  ##cache_dependencies{id:refresh_chain_mapping, confidence:1.0, @critical}
+    "Complete cache invalidation and UI refresh chains with dependency patterns"
+    @required:[invalidates,refreshesComponents,dependencyChain]
+    @standard_patterns{
+      query_invalidation:"query:endpoint_name",
       component_refresh:"ComponentName",
-      cross_domain:document_when_affects_other_domains
+      cross_domain_cascade:"domain:affected_domain",
+      dependency_chain:"parent→child→grandchild"
     }
     @examples{
       health_data_update:{
         invalidates:["query:healthData","query:healthMetrics"],
         refreshes:["HealthDashboard","MetricsCard","TrendChart"],
-        triggers:["health-data-updated","metrics-recalculated"]
+        triggers:["health-data-updated","metrics-recalculated"],
+        dependencyChain:["health-data→metrics→dashboard→insights"]
+      },
+      memory_update:{
+        invalidates:["query:memories","query:memoryInsights"],
+        refreshes:["MemoryDisplay","ChatContext","RelationshipMap"],
+        dependencyChain:["memory-entry→context→chat-enhancement→ui-display"]
       }
     }
+
+  ##error_state_framework{id:failure_mode_documentation, confidence:1.0, @critical}
+    "Comprehensive error state and failure boundary documentation"
+    @required:[errorBoundaries,failureModes,recoveryStrategies,fallbackBehaviors]
+    
+    ##error_types{id:failure_categories, confidence:1.0, @cluster}
+      network_failures:"API timeouts, connection errors, service unavailability",
+      data_failures:"parsing errors, validation failures, corrupted data",
+      system_failures:"memory exhaustion, disk space, service crashes",
+      integration_failures:"external service errors, authentication failures, rate limits",
+      user_input_failures:"invalid formats, missing required fields, constraint violations"
+    @/cluster
+
+    ##documentation_requirements{id:error_state_mapping, confidence:1.0}
+      @for_each_feature{
+        identify_failure_points:true,
+        document_error_boundaries:true,
+        specify_fallback_behaviors:true,
+        define_recovery_strategies:true,
+        map_user_impact:true
+      }
+      @examples{
+        chat_message_failure:{
+          failure_points:["AI service unavailable","network timeout","rate limit exceeded"],
+          error_boundaries:["ChatInputArea","MessageDisplayArea"],
+          fallback_behaviors:["queue message for retry","show error state","disable input"],
+          recovery_strategies:["exponential backoff","service health check","user notification"],
+          user_impact:"message sending temporarily disabled with clear feedback"
+        }
+      }
 
   ##workflow_steps{id:implementation_process, confidence:1.0, @sequential}
     ##step{id:initialize, order:1, @blocking}
@@ -332,14 +385,23 @@
       }
 
     ##step{id:flow_tracing, order:4, @critical}
-      "Complete user and system flow mapping"
+      "Complete user and system flow mapping with standardized patterns"
       @processing{
-        trace_user_flows,
-        map_api_to_database,
-        verify_architectural_intent,
-        identify_bypassed_components,
-        document_cache_dependencies,
-        validate_integration_status
+        apply_flow_patterns[user_flow,system_flow,integration_flow,streaming_flow,error_flow],
+        trace_complete_request_paths,
+        map_api_to_database_operations,
+        verify_architectural_compliance,
+        identify_service_bypasses,
+        document_cache_dependency_chains,
+        map_error_boundaries_and_fallbacks,
+        validate_go_ai_gateway_usage,
+        ensure_streaming_compliance
+      }
+      @architectural_validation{
+        enforce_go_ai_gateway_for_streaming:true,
+        detect_direct_ai_provider_calls:true,
+        validate_service_utilization:true,
+        document_bypass_justifications:required
       }
 
     ##step{id:validation_documentation, order:5, @blocking}
@@ -352,18 +414,19 @@
       }
 
 @processing{
-  critical_concepts:[domain_classification, size_constraints, integration_validation, cache_dependencies],
-  enforcement_points:[mandatory_size_estimation, evidence_requirements, schema_compliance],
+  critical_concepts:[domain_classification, size_constraints, integration_validation, cache_dependencies, flow_patterns, error_state_mapping],
+  enforcement_points:[mandatory_size_estimation, evidence_requirements, schema_compliance, architectural_compliance],
   sequential_required:[initialize, domain_analysis, dependency_analysis, flow_tracing, validation],
-  parallel_possible:[schema_validation, cache_mapping, integration_testing],
-  quality_gates:[size_compliance, integration_evidence, cache_completeness, schema_validation]
+  parallel_possible:[schema_validation, cache_mapping, integration_testing, error_boundary_mapping],
+  quality_gates:[size_compliance, integration_evidence, cache_completeness, schema_validation, flow_pattern_compliance, error_state_coverage]
 }
 
 @validation{
-  mandatory_checks:[size_estimation, integration_evidence, cache_dependencies, schema_compliance],
-  blocking_violations:[size_exceeded, missing_evidence, broken_references, invalid_schema],
-  compliance_requirements:[rigid_structure_adherence, computational_efficiency, llm_optimization],
-  quality_standards:[no_active_without_evidence, complete_cache_chains, accurate_integration_status]
+  mandatory_checks:[size_estimation, integration_evidence, cache_dependencies, schema_compliance, flow_pattern_adherence, error_state_coverage],
+  blocking_violations:[size_exceeded, missing_evidence, broken_references, invalid_schema, architectural_bypass_without_justification, missing_error_boundaries],
+  compliance_requirements:[rigid_structure_adherence, computational_efficiency, llm_optimization, architectural_compliance, go_ai_gateway_usage],
+  quality_standards:[no_active_without_evidence, complete_cache_chains, accurate_integration_status, comprehensive_flow_documentation, error_boundary_coverage],
+  architectural_enforcement:[streaming_through_go_ai_gateway, no_direct_ai_provider_calls, service_utilization_validation, bypass_documentation_required]
 }
 
 @discovery_tools{

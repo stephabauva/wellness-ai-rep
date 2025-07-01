@@ -1,0 +1,167 @@
+@context{domain:software_architecture, format:system_mapping, complexity:high, enforcement:mandatory}
+@meta{estimated_tokens:850, critical_paths:4, validation_rules:12, size_constraints:enforced}
+
+#ROOT
+  ##philosophy{id:core_phil, type:foundational_principle, confidence:1.0, enforcement:mandatory}
+    "Create structured, queryable application architecture maps"
+    →size_constraint[max_300_lines, max_5_groups]
+    →triggers_refactoring_when[exceeded]
+    →computational_optimization:true
+
+    ##constraint{id:size_limit, type:hard_rule, confidence:1.0, violation:immediate_action}
+      "300 lines max, 5 feature groups max per domain"
+      →enforcement:proactive_checking
+      →action_required:CREATE_SUBDOMAIN_DIRECTORY
+      →applies_to[domain_maps, feature_files]
+
+    ##constraint{id:mega_feature, type:extraction_rule, confidence:1.0}
+      "100+ lines per feature requires extraction"
+      →action:EXTRACT_TO_FEATURE_FILE
+      →timing:before_main_file_creation
+
+  ##taxonomy{id:domain_classification, type:decision_framework, confidence:0.95}
+    "Domain vs Dependency Classification Rules"
+
+    ##domain_type{id:core_domains, type:category, confidence:1.0}
+      "User-facing application areas with complete UI workflows"
+      @examples{6}
+        ##domain{id:chat_domain, type:core_domain, ui_section:true}
+          "chat"
+          →depends_on[memory_domain, file_manager_domain]
+          →user_workflow:complete
+
+        ##domain{id:health_domain, type:core_domain, ui_section:true}
+          "health" 
+          →depends_on[file_manager_domain]
+          →integration_pattern:data_import
+
+        ##domain{id:memory_domain, type:core_domain, special_case:true}
+          "memory - AI system with own UI and complex logic"
+          →depended_on_by[chat_domain, health_domain]
+          →provides:ai_context
+
+    ##domain_type{id:infrastructure_domains, type:category, confidence:1.0}
+      "Cross-cutting technical concerns"
+      →referenced_via:$ref_pattern
+      →examples[routes, logging, infrastructure]
+
+    ##anti_pattern{id:not_domains, type:classification_error, confidence:0.9}
+      "Features mistakenly classified as domains"
+      →should_be_features_within[parent_domain]
+      @examples{4}
+        "conversation-history → Feature within chat domain"
+        "user-profile → Feature within settings domain"
+        "metrics-dashboard → Feature within health domain"
+        "attachments → Feature within chat domain"
+
+  ##validation_framework{id:integration_validation, type:quality_gate, confidence:1.0, enforcement:mandatory}
+    "Integration Status Validation Requirements"
+
+    ##status{id:active_status, type:quality_level, confidence:1.0, evidence:required}
+      "Implemented, tested, working end-to-end"
+      →requires_evidence[component_api_tracing, endpoint_verification, ui_refresh_validation, integration_testing]
+      →validation_chain:complete
+      →cannot_mark_without:documented_proof
+
+      ##evidence{id:component_tracing, type:validation_step, confidence:1.0}
+        "Component-to-API call tracing documented"
+        →traces[fetch_calls, query_keys, api_endpoints]
+        →verifies:actual_vs_expected_paths
+        →detects:bypassed_components
+
+      ##evidence{id:cache_validation, type:validation_step, confidence:0.9}
+        "Cache invalidation and UI refresh dependencies"
+        →maps[invalidation_keys, refresh_components, cross_domain_effects]
+        →validates:complete_refresh_chains
+        →prevents:stale_ui_state
+
+    ##status{id:partial_status, type:quality_level, confidence:0.8}
+      "Implemented but with documented gaps"
+      →requires:gap_documentation
+      →allows:incomplete_functionality
+      →blocks:full_deployment
+
+    ##status{id:broken_status, type:quality_level, confidence:0.7}
+      "Exists but fails during execution"
+      →requires[failure_modes, root_cause_analysis]
+      →execution_state:failing
+
+  ##workflow{id:mapping_process, type:procedure, confidence:1.0, sequence:mandatory}
+    "System Mapping Creation Workflow"
+
+    ##step{id:initialize, type:action, order:1, confidence:1.0}
+      "Initialize system maps directory structure"
+      →creates[root_map, domain_directories]
+      →establishes:foundational_context
+      →next_step[domain_analysis]
+
+    ##step{id:domain_analysis, type:action, order:2, confidence:0.9, critical:true}
+      "Analyze and plan domain structure"
+      →analyzes[entry_points, complexity_estimation, dependency_mapping]
+      →triggers_size_check:before_creation
+      →creates:domain_directory_structure
+      →next_step[dependency_analysis]
+
+    ##step{id:dependency_analysis, type:action, order:3, confidence:1.0, critical:true}
+      "Comprehensive recursive dependency mapping"
+      →starts_with:entry_points
+      →follows:import_statements_meticulously  
+      →continues_until:complete_mapping
+      →maps:all_contributing_files
+      →next_step[flow_tracing]
+
+    ##step{id:flow_tracing, type:action, order:4, confidence:0.9, critical:true}
+      "Complete user and system flow tracing"
+      →traces[ui_to_api, api_to_database, cache_dependencies]
+      →verifies:architectural_intent_vs_actual
+      →identifies:bypassed_components
+      →documents:integration_gaps
+      →next_step[validation]
+
+    ##step{id:validation, type:action, order:5, confidence:1.0, critical:true}
+      "Comprehensive validation and documentation"
+      →tests:integration_points
+      →validates:cache_invalidation_chains
+      →documents:known_issues
+      →updates:integration_status
+      →ensures:accuracy
+
+  ##architecture_patterns{id:federated_structure, type:design_pattern, confidence:1.0}
+    "Hybrid Federated Maps Architecture"
+
+    ##component{id:root_map, type:manifest, confidence:1.0}
+      "Single source of truth pointing to domain entry points"
+      →contains[app_metadata, domain_registry, dependency_overview]
+      →references:domain_maps
+
+    ##component{id:domain_maps, type:feature_container, confidence:1.0}
+      "User-facing application areas with complete functionality"
+      →organized_by:domain_directories
+      →size_limited[300_lines, 5_feature_groups]
+      →contains:complete_user_workflows
+
+    ##component{id:infrastructure_maps, type:reference_target, confidence:1.0}
+      "Cross-cutting concerns referenced via $ref"
+      →shared_across:multiple_domains
+      →accessed_via:reference_pattern
+
+    ##component{id:mega_feature_files, type:extracted_feature, confidence:0.9}
+      "Large features extracted with $ref references"
+      →triggered_by:100_plus_lines
+      →maintains:parent_references
+      →keeps:domain_context
+
+@processing{
+  critical_concepts:[size_constraints, integration_evidence, dependency_mapping, validation_workflow],
+  enforcement_points:[size_estimation, status_validation, evidence_requirements],
+  sequential_required:[initialize, domain_analysis, dependency_analysis, flow_tracing, validation],
+  parallel_possible:[domain_directories, feature_extraction, cache_mapping],
+  quality_gates:[size_check, evidence_validation, integration_testing]
+}
+
+@validation{
+  mandatory_checks:[size_estimation_before_creation, evidence_for_active_status, complete_cache_chains],
+  blocking_violations:[size_exceeded, active_without_evidence, incomplete_validation],
+  refactoring_triggers:[300_line_exceeded, 5_group_exceeded, mega_feature_detected],
+  compliance_requirements:[schema_adherence, reference_integrity, integration_accuracy]
+}

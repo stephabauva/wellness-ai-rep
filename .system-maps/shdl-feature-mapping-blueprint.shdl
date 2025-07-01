@@ -1,0 +1,311 @@
+
+@context{domain:feature_mapping, target:shdl_generation, complexity:high, enforcement:strict, output_format:shdl}
+@meta{tokens:950, critical_paths:7, validation_rules:12, processing_priority:1, format:shdl_only}
+
+#ROOT{confidence:1.0, output_format:shdl}
+  ##feature_mapping_philosophy{id:core_philosophy, type:foundational, confidence:1.0, @critical}
+    "Tree-based architecture mapping with complete system visibility - OUTPUT IN SHDL FORMAT ONLY"
+    @enforce:mandatory
+    @output_format:shdl_structured_hierarchical_data_language
+    @trigger:feature_analysis[user_action→system_response]
+    @note:"All system maps generated using this blueprint MUST be in .shdl format, NOT JSON"
+    
+    ##tree_structure{id:feature_tree, type:architecture, confidence:1.0}
+      "Root: feature/functionality, Trunk: core workflow, Branches: arch layers, Leaves: all touchpoints"
+      @components{
+        root→feature_definition,
+        trunk→core_user_workflow+primary_components,
+        branches→[frontend, backend, database, services],
+        leaves→[files, apis, db_tables, external_services, browser_apis]
+      }
+      @shdl_format:required
+
+  ##shdl_format_requirements{id:shdl_output_specification, type:format_enforcement, confidence:1.0, @critical}
+    "Mandatory SHDL format specifications for all generated system maps"
+    @enforce:shdl_syntax_only
+    @file_extension:.shdl
+    @no_json_output:true
+    
+    ##shdl_structure{id:required_shdl_elements, confidence:1.0}
+      "@context{domain, target, complexity, enforcement}"
+      "@meta{tokens, critical_paths, validation_rules, processing_priority}"
+      "#ROOT{confidence}"
+      "##sections{id, type, confidence, @tags}"
+      "@cluster{} and @/cluster for groupings"
+      "@processing{} for execution flows"
+      "@validation{} for validation rules"
+
+  ##data_flow_tracing{id:complete_request_cycle, type:mapping_technique, confidence:1.0, @critical}
+    "End-to-end request/response cycle documentation in SHDL format"
+    
+    ##flow_stages{id:request_response_stages, type:sequential, confidence:1.0}
+      @cluster{user_interaction, confidence:1.0}
+        ##trigger{id:user_action, type:input, confidence:1.0}
+          "Specific user interaction triggering feature"
+        ##frontend_flow{id:ui_processing, type:client_side, confidence:1.0}
+          @processing{
+            trigger_component→event_handlers→state_changes→react_query_hooks→api_calls
+          }
+          @data_flow{
+            request_path:[ui_component, hook, api_call, network],
+            payload_structure,
+            headers:[auth, content_type, custom]
+          }
+      @/cluster
+
+      @cluster{network_processing, confidence:1.0}
+        ##network_layer{id:request_routing, type:transport, confidence:1.0}
+          @routing{
+            frontend→server_route,
+            middlewares:[auth, validation, logging],
+            route_handler→business_logic
+          }
+      @/cluster
+
+      @cluster{backend_processing, confidence:1.0}
+        ##backend_flow{id:server_processing, type:server_side, confidence:1.0}
+          @processing{
+            route_handler→services→external_apis→database_ops→cache_ops→file_ops
+          }
+          @database_operations{
+            queries:[sql_statements],
+            tables:[accessed_tables],
+            operations:[create, read, update, delete],
+            transactions:[multi_table_ops]
+          }
+      @/cluster
+
+      @cluster{response_processing, confidence:1.0}
+        ##response_flow{id:data_return, type:response, confidence:1.0}
+          @transformation{
+            data_shaping→response_payload→status_codes→response_path
+          }
+          @path{database→service→route→network→frontend}
+        ##frontend_update{id:ui_refresh, type:client_update, confidence:1.0}
+          @updates{
+            react_query_invalidation→state_updates→ui_refresh→cache_consistency→user_feedback
+          }
+      @/cluster
+
+  ##architectural_layers{id:complete_file_mapping, type:comprehensive, confidence:1.0, @critical}
+    "Complete dependency mapping across all architectural layers in SHDL format"
+    
+    ##presentation_layer{id:frontend_arch, type:client_side, confidence:1.0}
+      @cluster{react_components, confidence:1.0}
+        ##primary_components{id:main_feature_components, confidence:1.0}
+        ##supporting_components{id:helper_ui_elements, confidence:1.0}
+        ##shared_components{id:reusable_ui_folder, confidence:1.0}
+      @/cluster
+      @cluster{frontend_logic, confidence:1.0}
+        ##hooks{id:custom_hooks, confidence:1.0}
+        ##utilities{id:frontend_utils, confidence:1.0}
+        ##types{id:typescript_interfaces, confidence:1.0}
+        ##styles{id:css_tailwind_classes, confidence:1.0}
+      @/cluster
+
+    ##business_logic_layer{id:backend_arch, type:server_side, confidence:1.0}
+      @cluster{server_components, confidence:1.0}
+        ##routes{id:express_route_handlers, confidence:1.0}
+        ##services{id:business_logic_services, confidence:1.0}
+        ##middleware{id:auth_validation_etc, confidence:1.0}
+        ##utilities{id:backend_utils, confidence:1.0}
+        ##types{id:shared_typescript_types, confidence:1.0}
+      @/cluster
+
+    ##data_layer{id:persistence_arch, type:data_storage, confidence:1.0}
+      @cluster{database, confidence:1.0}
+        ##tables{id:primary_tables, confidence:1.0}
+        ##relationships{id:foreign_keys, confidence:1.0}
+        ##indexes{id:performance_indexes, confidence:1.0}
+        ##migrations{id:schema_changes, confidence:1.0}
+      @/cluster
+      @cluster{caching, confidence:1.0}
+        ##cache_keys{id:redis_memory_keys, confidence:1.0}
+        ##invalidation{id:cache_clearing_patterns, confidence:1.0}
+        ##strategy{id:ttl_policies, confidence:1.0}
+      @/cluster
+      @cluster{file_system, confidence:1.0}
+        ##upload_paths{id:file_directories, confidence:1.0}
+        ##file_types{id:supported_formats, confidence:1.0}
+        ##processing{id:file_pipelines, confidence:1.0}
+      @/cluster
+
+    ##integration_layer{id:external_connections, type:third_party, confidence:0.9}
+      @cluster{external_apis, confidence:0.9}
+        ##services{id:third_party_services, confidence:0.9}
+        ##authentication{id:api_keys_oauth, confidence:0.9}
+        ##endpoints{id:external_endpoints, confidence:0.9}
+        ##fallbacks{id:error_handling, confidence:0.9}
+      @/cluster
+      @cluster{browser_apis, confidence:0.8}
+        ##apis{id:web_apis_used, confidence:0.8}
+        ##permissions{id:browser_permissions, confidence:0.8}
+        ##compatibility{id:browser_support, confidence:0.8}
+      @/cluster
+      @cluster{go_services, confidence:0.9}
+        ##ai_gateway{id:ai_service_integration, confidence:0.9}
+        ##file_accelerator{id:file_processing, confidence:0.9}
+        ##memory_service{id:memory_management, confidence:0.9}
+      @/cluster
+
+  ##error_boundaries{id:comprehensive_error_handling, type:resilience, confidence:1.0, @critical}
+    "Complete error boundary and edge case mapping in SHDL format"
+    
+    @cluster{error_types, confidence:1.0}
+      ##frontend_errors{id:client_side_errors, confidence:1.0}
+        @types{
+          component_errors→react_error_boundaries,
+          network_errors→api_call_failures,
+          validation_errors→form_validation_failures,
+          user_input_errors→invalid_data_handling
+        }
+      ##backend_errors{id:server_side_errors, confidence:1.0}
+        @types{
+          validation_errors→request_validation_failures,
+          business_logic_errors→service_layer_errors,
+          database_errors→query_failures+constraint_violations,
+          external_service_errors→third_party_api_failures
+        }
+      ##system_errors{id:infrastructure_errors, confidence:0.9}
+        @types{
+          memory_errors→out_of_memory_conditions,
+          disk_space_errors→storage_limitations,
+          network_errors→connection_failures,
+          timeout_errors→request_timeout_handling
+        }
+    @/cluster
+
+    @cluster{recovery_strategies, confidence:1.0}
+      ##retry_mechanisms{id:backoff_patterns, confidence:1.0}
+      ##fallback_behaviors{id:alternative_workflows, confidence:1.0}
+      ##user_notifications{id:error_message_display, confidence:1.0}
+      ##data_recovery{id:partial_data_preservation, confidence:1.0}
+    @/cluster
+
+  ##performance_optimization{id:perf_considerations, type:optimization, confidence:1.0}
+    "Performance mapping across all layers in SHDL format"
+    
+    @cluster{frontend_optimizations, confidence:1.0}
+      ##bundle_optimization{id:lazy_loading, confidence:1.0}
+      ##render_optimization{id:react_memo_patterns, confidence:1.0}
+      ##cache_strategy{id:react_query_config, confidence:1.0}
+      ##loading_states{id:progressive_loading, confidence:1.0}
+    @/cluster
+
+    @cluster{backend_optimizations, confidence:1.0}
+      ##database_optimization{id:query_indexing, confidence:1.0}
+      ##cache_strategy{id:redis_patterns, confidence:1.0}
+      ##service_optimization{id:business_logic_efficiency, confidence:1.0}
+      ##memory_management{id:memory_usage_patterns, confidence:1.0}
+    @/cluster
+
+    @cluster{data_transfer_optimization, confidence:1.0}
+      ##payload_optimization{id:response_minimization, confidence:1.0}
+      ##compression{id:gzip_file_compression, confidence:1.0}
+      ##streaming{id:large_data_streaming, confidence:1.0}
+      ##pagination{id:data_pagination_strategies, confidence:1.0}
+    @/cluster
+
+  ##security_privacy{id:security_considerations, type:protection, confidence:1.0, @critical}
+    "Comprehensive security and privacy mapping in SHDL format"
+    
+    @cluster{authentication, confidence:1.0}
+      ##user_verification{id:auth_requirements, confidence:1.0}
+      ##session_management{id:session_handling, confidence:1.0}
+      ##token_validation{id:jwt_verification, confidence:1.0}
+    @/cluster
+
+    @cluster{authorization, confidence:1.0}
+      ##permissions{id:user_permission_requirements, confidence:1.0}
+      ##role_based_access{id:role_verification, confidence:1.0}
+      ##data_access{id:data_access_controls, confidence:1.0}
+    @/cluster
+
+    @cluster{data_protection, confidence:1.0}
+      ##sensitive_data{id:pii_health_data_handling, confidence:1.0}
+      ##encryption{id:data_encryption_requirements, confidence:1.0}
+      ##storage{id:secure_storage_practices, confidence:1.0}
+      ##transmission{id:secure_data_transmission, confidence:1.0}
+    @/cluster
+
+    @cluster{input_validation, confidence:1.0}
+      ##frontend_validation{id:client_side_validation, confidence:1.0}
+      ##backend_validation{id:server_side_validation, confidence:1.0}
+      ##sanitization{id:data_sanitization, confidence:1.0}
+      ##sql_injection_prevention{id:sql_protection, confidence:1.0}
+    @/cluster
+
+  ##integration_evidence{id:validation_evidence, type:verification, confidence:1.0, @critical}
+    "Implementation status and evidence tracking in SHDL format"
+    
+    @cluster{implementation_status, confidence:1.0}
+      ##status{id:feature_status, type:enum, confidence:1.0}
+        @values{active, partial, planned, broken}
+      ##verification{id:last_verified, type:timestamp, confidence:1.0}
+      ##method{id:verification_method, type:enum, confidence:1.0}
+        @values{automated, manual, integration_test}
+      ##evidence_location{id:test_files_docs, confidence:1.0}
+    @/cluster
+
+    @cluster{testing_evidence, confidence:1.0}
+      ##unit_tests{id:component_service_tests, confidence:1.0}
+      ##integration_tests{id:end_to_end_tests, confidence:1.0}
+      ##manual_testing{id:manual_procedures, confidence:1.0}
+      ##performance_tests{id:load_performance_testing, confidence:1.0}
+    @/cluster
+
+    @cluster{deployment_evidence, confidence:1.0}
+      ##staging_validation{id:staging_testing, confidence:1.0}
+      ##production_validation{id:production_verification, confidence:1.0}
+      ##rollback_procedures{id:rollback_strategies, confidence:1.0}
+      ##monitoring_setup{id:production_monitoring, confidence:1.0}
+    @/cluster
+
+@processing{
+  critical_concepts:[tree_architecture, data_flow_tracing, architectural_layers, error_boundaries, performance_optimization, security_privacy, integration_evidence],
+  enforcement_points:[size_constraints, token_limits, hierarchy_depth, comprehensive_mapping, shdl_format_only],
+  sequential_required:[feature_discovery, architectural_mapping, data_flow_tracing, performance_analysis, integration_evidence],
+  parallel_possible:[layer_mapping, error_boundary_analysis, security_analysis, performance_optimization],
+  quality_gates:[complete_mapping, evidence_validation, size_compliance, semantic_integrity, shdl_format_compliance],
+  output_format:shdl_only
+}
+
+@validation{
+  mandatory_checks:[feature_completeness, architectural_coverage, data_flow_integrity, error_handling_completeness, shdl_format_validation],
+  blocking_violations:[token_exceeded, hierarchy_too_deep, missing_critical_paths, broken_references, non_shdl_format],
+  optimization_targets:[token_efficiency:20%, semantic_density:15%, processing_speed:25%],
+  compliance_requirements:[size_constraints, comprehensive_mapping, evidence_tracking, shdl_format_only],
+  format_enforcement:shdl_structured_hierarchical_data_language
+}
+
+@examples{
+  shdl_feature_template:{
+    root:"##user_authentication{id:auth_feature, confidence:1.0, @critical}",
+    trunk:"@cluster{core_workflow} ##login_flow ##session_management @/cluster",
+    branches:"##frontend_components ##backend_services ##database_tables ##external_integrations",
+    leaves:"##LoginForm.tsx ##AuthService.ts ##users_table ##OAuth_provider",
+    format:"SHDL with proper @context, @meta, #ROOT structure"
+  },
+  shdl_splitting_example:{
+    original:"##large_feature{tokens:1200, hierarchy:18}",
+    split:"##feature_frontend{$ref:feature_backend.shdl} ##feature_backend{$ref:feature_database.shdl}",
+    benefits:"token_reduction:40%, maintainability:improved, processing:faster",
+    note:"All references use .shdl extension, NOT .json"
+  },
+  shdl_format_reminder:{
+    always_use:"@context{}, @meta{}, #ROOT{}, ##sections{}, @cluster{}/@/cluster",
+    never_use:"JSON syntax, curly braces for objects, square brackets for arrays",
+    file_extension:".shdl",
+    structure:"hierarchical with confidence levels and semantic tags"
+  }
+}
+
+@format_enforcement{
+  output_format:shdl_only,
+  file_extension:.shdl,
+  syntax:structured_hierarchical_data_language,
+  no_json:true,
+  no_yaml:true,
+  no_xml:true,
+  mandatory_elements:[context_block, meta_block, root_section, processing_block, validation_block]
+}

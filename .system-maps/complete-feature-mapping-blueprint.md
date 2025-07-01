@@ -1,13 +1,6 @@
 
 # Complete Feature Mapping Blueprint
 
-## Size Constraints & Optimization
-- **Maximum 1000 tokens per system map file**
-- **Maximum 15 nested hierarchy levels**
-- **Feature splitting required** when limits exceeded
-- **Preferred format: SHDL** for 20% token reduction and better semantic density
-- **Use conversion guide** (.system-maps/md-json-txt-to-shdl-conversion-guide.shdl) for optimization
-
 ## Core Philosophy: Tree-Based Architecture Mapping
 
 Each feature is a **tree** where:
@@ -251,27 +244,7 @@ Each feature is a **tree** where:
 }
 ```
 
-## 6. Feature Size Management
-
-### When to Split Features
-- **Token limit exceeded**: Over 1000 tokens
-- **Hierarchy too deep**: More than 15 nested levels  
-- **Component overload**: More than 20 components
-- **API endpoint overload**: More than 10 endpoints
-
-### Splitting Strategies
-- **By user flow**: Split complex workflows into sub-features
-- **By architectural layer**: Separate frontend/backend into distinct maps
-- **By business domain**: Group related functionality together
-- **Parent-child refs**: Use `$ref:` links between split features
-
-### SHDL Optimization Benefits
-- **Token efficiency**: 20% reduction in file size
-- **Semantic density**: 15% increase in meaning per token
-- **Processing speed**: 25% faster AI parsing
-- **Cost reduction**: Significant savings for large codebases
-
-## 7. Complete Feature Template
+## 6. Complete Feature Template
 
 Use this template for mapping any feature:
 

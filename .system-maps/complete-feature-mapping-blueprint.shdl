@@ -17,21 +17,7 @@
         leaves→[files, apis, db_tables, external_services, browser_apis]
       }
 
-  ##size_constraints{id:optimization_limits, type:hard_rule, confidence:1.0, @blocking}
-    "Token and complexity limits for maintainable system maps"
-    @enforce:strict_validation
-    @limits{
-      max_tokens:1000,
-      max_hierarchy_depth:15,
-      max_components:20,
-      max_api_endpoints:10
-    }
-    @splitting_triggers{
-      token_exceeded→split_by_user_flow,
-      hierarchy_deep→split_by_arch_layer,
-      component_overload→split_by_domain,
-      api_overload→split_by_service_boundary
-    }
+  
 
   ##data_flow_tracing{id:complete_request_cycle, type:mapping_technique, confidence:1.0, @critical}
     "End-to-end request/response cycle documentation"

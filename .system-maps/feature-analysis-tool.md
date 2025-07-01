@@ -1,6 +1,33 @@
 
 # Feature Analysis Tool
 
+## Size Constraints & Optimization Guidelines
+
+### Token and Complexity Limits
+- **Maximum 1000 tokens per system map file**
+- **Maximum 15 nested hierarchy levels**
+- **Maximum 20 components per feature map**
+- **Maximum 10 API endpoints per feature map**
+
+### When to Split Features
+- **Token limit exceeded**: Over 1000 tokens
+- **Hierarchy too deep**: More than 15 nested levels  
+- **Component overload**: More than 20 components
+- **API endpoint overload**: More than 10 endpoints
+
+### Splitting Strategies
+- **By user flow**: Split complex workflows into sub-features
+- **By architectural layer**: Separate frontend/backend into distinct maps
+- **By business domain**: Group related functionality together
+- **Parent-child refs**: Use `$ref:` links between split features
+
+### SHDL Format Benefits
+- **Token efficiency**: 20% reduction in file size
+- **Semantic density**: 15% increase in meaning per token
+- **Processing speed**: 25% faster AI parsing
+- **Cost reduction**: Significant savings for large codebases
+- **Use conversion guide**: (.system-maps/md-json-txt-to-shdl-conversion-guide.shdl) for optimization
+
 ## Quick Feature Mapping Checklist
 
 Use this checklist to ensure complete coverage when mapping any feature:

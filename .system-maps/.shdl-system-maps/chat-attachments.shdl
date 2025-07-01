@@ -1,0 +1,151 @@
+
+@context{domain:chat, feature_group:attachments, format:shdl, version:2.0.0}
+@meta{last_updated:"2025-01-27T10:00:00Z", validation_status:partial, token_estimate:350}
+
+#CHAT_ATTACHMENTS{confidence:1.0, integration_status:partial}
+  ##feature_group{id:file_attachments, type:media_handling, confidence:1.0}
+    "File upload and preview capabilities for chat messages"
+    →dependencies[file_manager, core_messaging]
+    →user_workflows[attach_files, preview_attachments, manage_media]
+
+    ##feature{id:file_attachment, status:partial, confidence:0.8, @integration_gaps}
+      "Upload and attach files to chat messages"
+      
+      ##user_flow{id:file_attachment_flow, confidence:1.0}
+        user_clicks_paperclip→user_selects_files_device_camera→files_upload_with_progress→attached_files_appear_before_send
+      
+      ##system_flow{id:file_attachment_system, confidence:1.0}
+        handle_file_selection_validation→upload_with_progress_tracking→store_metadata_associate_message→include_references_in_chat
+      
+      ##components{id:file_attachment_components, confidence:1.0}
+        ChatInputArea{
+          path:"client/src/components/ChatInputArea.tsx",
+          uses:[useFileManagement, AttachmentPreview, AudioRecorder]
+        },
+        AttachmentPreview{path:"client/src/components/AttachmentPreview.tsx"}
+      
+      ##data_flow{id:file_attachment_trace, confidence:0.7, validation:architectural_bypass}
+        ChatInputArea→useFileManagement→POST_/api/files→file_routes
+        @expected_path[ChatInputArea→useFileManagement→POST_/api/chat/attachments→chat_routes]
+        @architectural_issue{bypasses_chat_specific_handling:true}
+      
+      ##integration_gaps{id:file_attachment_gaps, confidence:1.0, @blocking}
+        ["missing_POST_api_chat_attachments_endpoint", "no_message_attachments_table_integration", "attachments_dont_persist_with_messages"]
+
+    ##feature{id:attachment_preview, status:active, confidence:1.0}
+      "Preview and display attached files in chat messages"
+      
+      ##user_flow{id:preview_flow, confidence:1.0}
+        user_sees_attachment_previews→user_clicks_view_full→supports_images_documents_files
+      
+      ##system_flow{id:preview_system, confidence:1.0}
+        fetch_attachment_metadata→generate_preview_by_type→handle_fullsize_viewing_download
+      
+      ##components{id:preview_components, confidence:1.0}
+        AttachmentPreview{
+          path:"client/src/components/AttachmentPreview.tsx",
+          uses:[useFileApi],
+          status:verified
+        }
+      
+      ##data_flow{id:preview_trace, confidence:1.0, validation:verified}
+        AttachmentPreview→useFileApi→GET_/api/files/:id→file_routes
+        @integration_note{using_generic_file_endpoint_instead_of_chat_specific}
+
+  ##feature_group{id:audio_processing, type:media_processing, confidence:0.7}
+    "Audio recording and transcription for chat messages"
+    →dependencies[transcription_service, audio_storage]
+    →user_workflows[record_audio, transcribe_speech, attach_audio]
+
+    ##feature{id:audio_recording, status:partial, confidence:0.7, @server_side_gaps}
+      "Record and attach audio messages to chat"
+      
+      ##user_flow{id:audio_flow, confidence:1.0}
+        user_clicks_microphone→user_records_audio→audio_transcribed_attached
+      
+      ##system_flow{id:audio_system, confidence:1.0}
+        capture_audio_from_device→send_to_transcription_service→attach_audio_and_transcription
+      
+      ##components{id:audio_components, confidence:1.0}
+        AudioRecorder{
+          path:"client/src/components/AudioRecorder.tsx",
+          uses:[audio_service],
+          status:verified
+        }
+      
+      ##data_flow{id:audio_trace, confidence:0.4, validation:server_side_missing}
+        AudioRecorder→audio_service→Web_Speech_API→local_transcription
+        @expected_path[AudioRecorder→POST_/api/chat/transcribe→transcription_service]
+        @architectural_issue{no_server_side_transcription:true}
+      
+      ##critical_gaps{id:audio_gaps, confidence:1.0, @blocking}
+        ["missing_POST_api_chat_transcribe_endpoint", "no_server_side_transcription_integration", "audio_files_not_stored_with_metadata", "transcriptions_not_persisted"]
+
+  ##api_endpoints{id:attachments_apis, confidence:1.0}
+    POST_/api/chat/attachments{
+      handler:"server/routes/chat-routes.ts",
+      description:"Upload file attachments for chat messages",
+      status:missing,
+      actual_endpoint:"POST /api/files",
+      @critical_gap
+    },
+    GET_/api/chat/attachments/:id{
+      handler:"server/routes/chat-routes.ts",
+      description:"Retrieve specific attachment file",
+      status:missing,
+      actual_endpoint:"GET /api/files/:id"
+    },
+    POST_/api/chat/transcribe{
+      handler:"server/routes/chat-routes.ts",
+      description:"Transcribe audio files to text",
+      status:missing,
+      actual_implementation:"client-side Web Speech API",
+      @critical_gap
+    }
+
+  ##database_schema{id:attachments_db, confidence:1.0}
+    message_attachments{
+      description:"File attachments associated with chat messages",
+      columns:["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
+      status:schema_defined_but_not_used,
+      @integration_gap
+    },
+    transcriptions{
+      description:"Audio transcription data",
+      columns:["id", "attachment_id", "text_content", "confidence_score", "created_at"],
+      status:schema_defined_but_not_used,
+      @integration_gap
+    }
+
+  ##integration_status_summary{id:attachments_integration_status, confidence:1.0}
+    file_attachments{
+      status:partial,
+      issues:["bypasses_chat_specific_handling", "attachments_not_persisted_with_messages"],
+      impact:medium,
+      workaround:uses_generic_file_endpoints
+    },
+    attachment_preview{
+      status:active,
+      gaps:["uses_generic_endpoint_instead_of_chat_specific"],
+      impact:low
+    },
+    audio_processing{
+      status:partial,
+      issues:["no_server_side_transcription", "audio_not_persisted"],
+      impact:high,
+      limitation:client_side_web_speech_api_only
+    }
+
+@validation{
+  integration_evidence:[attachment_preview_verified, audio_recorder_component_verified],
+  critical_gaps:[chat_specific_attachment_api_missing, server_side_transcription_missing, database_tables_not_integrated],
+  architectural_issues:[bypasses_chat_attachment_handlers, uses_generic_file_endpoints],
+  user_impact:[attachments_dont_persist_with_chat_messages, audio_transcription_limited_to_web_speech_api]
+}
+
+@dependencies{
+  internal:[file_manager, core_messaging],
+  external:[Web_Speech_API_client_side_only],
+  missing:[server_side_transcription_service, chat_specific_attachment_handlers],
+  architectural:[chat_attachment_integration_incomplete]
+}

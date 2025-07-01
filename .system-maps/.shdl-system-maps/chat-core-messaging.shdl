@@ -1,0 +1,151 @@
+
+@context{domain:chat, feature_group:core-messaging, format:shdl, version:2.0.0}
+@meta{last_updated:"2025-01-27T10:00:00Z", validation_status:active, token_estimate:420}
+
+#CHAT_CORE_MESSAGING{confidence:1.0, integration_status:active}
+  ##feature_group{id:core_messaging, type:primary_functionality, confidence:1.0}
+    "Core chat messaging functionality including sending, streaming, and displaying messages"
+    →dependencies[memory_domain, file_manager_domain, attachments]
+    →user_workflows[send_message, stream_response, display_messages]
+
+    ##feature{id:send_message, status:active, confidence:1.0, @critical}
+      "Allows users to send text messages with optional attachments to the AI assistant"
+      
+      ##user_flow{id:send_message_flow, confidence:1.0}
+        user_types_message→user_attaches_files_optional→user_clicks_send→message_appears_sending→ai_response_streams
+      
+      ##system_flow{id:send_message_system, confidence:1.0}
+        validate_content→store_message_with_context→send_to_ai_service→stream_response→update_status
+      
+      ##components{id:send_message_components, confidence:1.0}
+        ChatInputArea{path:"client/src/components/ChatInputArea.tsx", uses:[useStreamingChat, useFileUpload, AudioRecorder]},
+        ChatSection{path:"client/src/components/ChatSection.tsx", uses:[ChatInputArea, MessageDisplayArea, ConversationHistory]}
+      
+      ##data_flow{id:send_message_trace, confidence:1.0, validation:verified}
+        Frontend_ChatInputArea→Hook_useStreamingChat→API_POST_chat→Handler_chat_routes→Service_ai_service→Provider_OpenAI_Google
+        @architectural_compliance{go_ai_gateway_bypass:detected, streaming_pattern:"Direct Node.js AI Service"}
+      
+      ##api_integration{id:send_message_api, confidence:1.0}
+        endpoints[POST_/api/chat],
+        cache_dependencies{
+          invalidates:["query:messages", "query:conversations", "query:chatMessages"],
+          refreshes:["MessageDisplayArea", "ConversationHistory", "ChatSection"]
+        }
+
+    ##feature{id:message_streaming, status:active, confidence:1.0, @critical}
+      "ChatGPT-style real-time streaming with natural typing rhythm and enhanced animations"
+      
+      ##user_flow{id:streaming_flow, confidence:1.0}
+        user_sends_message→immediate_acknowledgment→ai_response_streams_naturally→enhanced_cursor_animations→streaming_completes→message_completed
+      
+      ##system_flow{id:streaming_system, confidence:1.0}
+        ai_service_processes→server_forwards_sse→smooth_streaming_analyzes_content→natural_timing_applied→cursor_animations_render→response_accumulated
+      
+      ##components{id:streaming_components, confidence:1.0}
+        SmoothStreamingText{
+          path:"client/src/components/SmoothStreamingText.tsx",
+          features:[natural_timing_variations, enhanced_cursor_animations, content_aware_pacing, word_boundary_intelligence, micro_animations],
+          uses:[StreamingText]
+        },
+        MessageDisplayArea{path:"client/src/components/MessageDisplayArea.tsx", uses:[SmoothStreamingText]}
+      
+      ##streaming_enhancements{id:chatgpt_level_features, confidence:1.0, @implemented}
+        phase1_natural_timing{randomization:"±3-7ms", micro_variations:character_context_based},
+        phase2_enhanced_cursor{animation:"1.2s cycle with 0.3s fade transitions", alignment:text_baseline},
+        phase3_content_aware{code_blocks:"20% faster", lists:"bullet_point_pauses", urls:"no_punctuation_delays"},
+        phase4_word_boundary{threshold:"2000+ chars", transition:seamless_char_to_word},
+        phase5_micro_animations{fade_in:"300ms ease-out", container_glow:active_streaming, pulse:"2s ease-in-out"},
+        phase6_advanced{visual_indicators:streaming_state, pause_resume:infrastructure_prepared}
+      
+      ##timing_configuration{id:streaming_timing, confidence:1.0}
+        base_delay:"15ms per character",
+        punctuation_delays{periods:"150ms", commas:"80ms", line_breaks:"200ms"},
+        randomization:"±3-7ms variance",
+        content_multipliers{code:"0.8x", prose:"1.0x", lists:"1.0x with pauses", urls:"0.8x no_punctuation"}
+      
+      ##data_flow{id:streaming_trace, confidence:0.8, validation:architectural_bypass_detected}
+        Frontend_SmoothStreamingText→Hook_useStreamingChat→API_GET_chat_stream→Handler_chat_routes→Service_ai_service→Provider_Direct
+        @architectural_issue{expected_path:Go_AI_Gateway, actual_path:Direct_Node_Service, bypass:true}
+
+    ##feature{id:message_display, status:active, confidence:1.0}
+      "Display of chat messages with proper formatting, attachments, and interaction controls"
+      
+      ##user_flow{id:display_flow, confidence:1.0}
+        user_views_messages→chronological_order→sender_timestamp_content→attachment_previews→message_actions
+      
+      ##system_flow{id:display_system, confidence:1.0}
+        fetch_messages_paginated→render_with_formatting→handle_attachment_previews→manage_scroll_position
+      
+      ##components{id:display_components, confidence:1.0}
+        MessageDisplayArea{
+          path:"client/src/components/MessageDisplayArea.tsx",
+          uses:[useChatMessages, AttachmentPreview, SmoothStreamingText]
+        },
+        AttachmentPreview{path:"client/src/components/AttachmentPreview.tsx"}
+      
+      ##data_flow{id:display_trace, confidence:1.0, validation:verified}
+        Frontend_MessageDisplayArea→Hook_useChatMessages→API_GET_chat_messages→Handler_chat_routes→Database_conversation_messages
+
+  ##api_endpoints{id:core_messaging_apis, confidence:1.0}
+    POST_/api/chat{
+      handler:"server/routes/chat-routes.ts",
+      description:"Send message and receive AI response",
+      reads_from:["conversations", "conversation_messages", "message_attachments"],
+      modifies:["conversations", "conversation_messages"],
+      status:active
+    },
+    GET_/api/chat/stream{
+      handler:"server/routes/chat-routes.ts", 
+      description:"Stream AI response in real-time",
+      reads_from:["conversations", "conversation_messages"],
+      status:active,
+      architectural_issue:"bypasses Go AI Gateway"
+    },
+    GET_/api/chat/messages{
+      handler:"server/routes/chat-routes.ts",
+      description:"Retrieve chat messages with pagination", 
+      reads_from:["conversations", "conversation_messages", "message_attachments"],
+      status:active
+    }
+
+  ##database_schema{id:core_messaging_db, confidence:1.0}
+    conversations{
+      description:"Chat conversation metadata and context",
+      columns:["id", "title", "created_at", "updated_at", "user_id"],
+      relations:["conversation_messages"],
+      indexes:["user_id", "created_at"]
+    },
+    conversation_messages{
+      description:"Individual chat messages within conversations",
+      columns:["id", "conversation_id", "role", "content", "created_at", "message_type", "status"],
+      relations:["conversations", "message_attachments"],
+      indexes:["conversation_id", "created_at"]
+    },
+    message_attachments{
+      description:"File attachments associated with messages",
+      columns:["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
+      relations:["conversation_messages"],
+      indexes:["message_id"]
+    }
+
+  ##performance_characteristics{id:core_messaging_performance, confidence:1.0}
+    streaming_optimizations{
+      content_analysis:chunked_non_blocking,
+      lazy_analysis:cached,
+      animations:request_animation_frame,
+      memory:efficient_word_boundary_buffering
+    },
+    chatgpt_comparison:"Achieved ChatGPT-level streaming smoothness with natural timing variations"
+
+@validation{
+  integration_evidence:[component_to_api_tracing_verified, endpoint_verification_complete, streaming_enhancement_tested],
+  architectural_issues:[go_ai_gateway_bypass_detected],
+  performance_validation:[chatgpt_level_smoothness_achieved],
+  known_gaps:[go_ai_gateway_integration_missing]
+}
+
+@dependencies{
+  internal:[memory_domain, file_manager_domain],
+  external:[OpenAI_Provider, Google_Provider],
+  architectural:[Go_AI_Gateway_planned_but_bypassed]
+}

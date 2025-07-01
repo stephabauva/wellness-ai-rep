@@ -1,0 +1,160 @@
+
+@context{domain:chat, format:shdl, version:2.0.0, scope:domain_overview}
+@meta{last_updated:"2025-01-27T11:00:00Z", validation_status:mixed, token_estimate:300}
+
+#CHAT_DOMAIN{confidence:1.0, domain_type:core_user_facing}
+  ##domain_overview{id:chat_domain_description, confidence:1.0}
+    "Complete chat interface and messaging system enabling users to communicate with AI assistant through text, attachments, and audio with conversation persistence and history management"
+    →primary_user_workflows[send_messages, view_responses, manage_conversation_history, attach_files, record_audio]
+    →integration_dependencies[memory_domain, file_manager_domain]
+    →architectural_pattern:real_time_streaming_with_persistence
+
+  ##feature_groups{id:chat_feature_organization, confidence:1.0}
+    core_messaging{
+      description:"Primary chat functionality with streaming responses",
+      status:active,
+      confidence:1.0,
+      features:[send_message, message_streaming, message_display],
+      components:[ChatInputArea, MessageDisplayArea, SmoothStreamingText, ChatSection],
+      $ref:"chat-core-messaging.shdl"
+    },
+    
+    conversation_history{
+      description:"Conversation persistence and navigation",
+      status:partial,
+      confidence:0.8,
+      features:[conversation_list, conversation_persistence, conversation_navigation],
+      components:[ConversationHistory, ConversationListItem],
+      critical_issues:[conversation_navigation_broken],
+      $ref:"chat-conversation-history.shdl"
+    },
+    
+    attachments{
+      description:"File and audio attachment handling",
+      status:partial,
+      confidence:0.7,
+      features:[file_attachment, attachment_preview, audio_recording],
+      components:[AttachmentPreview, AudioRecorder],
+      integration_gaps:[chat_specific_endpoints_missing],
+      $ref:"chat-attachments.shdl"
+    }
+
+  ##domain_architecture{id:chat_domain_architecture, confidence:1.0}
+    streaming_architecture{
+      pattern:"Real-time AI response streaming with ChatGPT-style smoothness",
+      implementation:SmoothStreamingText_with_natural_timing,
+      performance:chatgpt_level_achieved,
+      architectural_issue:bypasses_go_ai_gateway
+    },
+    
+    persistence_architecture{
+      pattern:"Automatic conversation and message persistence",
+      implementation:database_driven_with_indexing,
+      status:active_for_core_messaging,
+      gaps:conversation_navigation_broken
+    },
+    
+    attachment_architecture{
+      pattern:"Multi-media support with preview capabilities",
+      implementation:file_manager_integration,
+      status:partial_implementation,
+      gaps:chat_specific_endpoints_missing
+    }
+
+  ##integration_status{id:chat_domain_integration, confidence:1.0}
+    core_messaging{
+      status:active,
+      evidence:[component_to_api_verified, streaming_performance_validated, chatgpt_level_smoothness],
+      issues:[go_ai_gateway_bypass],
+      user_impact:none
+    },
+    
+    conversation_history{
+      status:partial,
+      evidence:[conversation_persistence_working],
+      critical_issues:[conversation_navigation_completely_broken, users_cannot_access_history],
+      user_impact:high
+    },
+    
+    attachments{
+      status:partial,
+      evidence:[attachment_preview_working, audio_recording_ui_working],
+      issues:[attachments_not_persisted_with_messages, no_server_side_transcription],
+      user_impact:medium
+    }
+
+  ##dependencies{id:chat_domain_dependencies, confidence:1.0}
+    internal_dependencies{
+      memory_domain{
+        relationship:"Chat uses memory system for context enhancement",
+        integration_status:active,
+        data_flow:chat_messages→memory_detection→context_enhancement
+      },
+      file_manager_domain{
+        relationship:"Chat uses file manager for attachment handling",
+        integration_status:partial,
+        gaps:chat_specific_attachment_apis_missing
+      }
+    },
+    
+    external_dependencies{
+      ai_providers{
+        OpenAI_Provider{status:active, integration:direct_node_service},
+        Google_Provider{status:active, integration:direct_node_service},
+        Go_AI_Gateway{status:planned_but_bypassed, architectural_issue:true}
+      },
+      client_services{
+        Web_Speech_API{usage:audio_transcription, limitation:client_side_only}
+      }
+    }
+
+  ##critical_issues{id:chat_domain_critical_issues, confidence:1.0, @requires_immediate_attention}
+    conversation_navigation_broken{
+      description:"Users cannot click on previous conversations to resume them",
+      impact:high,
+      user_blocking:true,
+      required_fixes:[implement_conversation_selection_api, add_conversation_context_switching, fix_frontend_click_handlers]
+    },
+    
+    go_ai_gateway_bypass{
+      description:"Streaming bypasses intended Go AI Gateway architecture",
+      impact:medium,
+      architectural_debt:true,
+      required_fixes:[integrate_streaming_through_go_ai_gateway]
+    },
+    
+    attachment_persistence_gaps{
+      description:"File attachments not properly integrated with chat message persistence",
+      impact:medium,
+      data_integrity_issue:true,
+      required_fixes:[implement_chat_specific_attachment_endpoints, integrate_message_attachments_table]
+    }
+
+  ##performance_characteristics{id:chat_domain_performance, confidence:1.0}
+    streaming_performance{
+      achievement:"ChatGPT-level streaming smoothness with natural timing variations",
+      optimizations:[content_aware_pacing, word_boundary_intelligence, micro_animations],
+      benchmark:chatgpt_comparable
+    },
+    
+    message_handling{
+      pattern:optimistic_updates,
+      caching:intelligent_invalidation,
+      pagination:virtual_scrolling_ready
+    }
+
+@validation{
+  domain_status:mixed_active_and_partial,
+  user_blocking_issues:[conversation_navigation_broken],
+  architectural_debt:[go_ai_gateway_bypass],
+  integration_completeness:70_percent,
+  critical_gaps:[conversation_navigation, chat_specific_attachment_apis, server_side_transcription],
+  user_experience_impact:[conversation_history_inaccessible, attachments_not_persisted]
+}
+
+@architectural_compliance{
+  streaming_architecture:enhanced_beyond_requirements,
+  go_ai_gateway_usage:bypassed_architectural_intent,
+  database_integration:active_for_core_partial_for_features,
+  component_organization:well_structured
+}

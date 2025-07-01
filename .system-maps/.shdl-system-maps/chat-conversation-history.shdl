@@ -1,0 +1,142 @@
+
+@context{domain:chat, feature_group:conversation-history, format:shdl, version:2.0.0}
+@meta{last_updated:"2025-01-27T10:30:00Z", validation_status:partial, token_estimate:380}
+
+#CHAT_CONVERSATION_HISTORY{confidence:1.0, integration_status:partial}
+  ##feature_group{id:conversation_management, type:data_management, confidence:1.0}
+    "User interface and backend functionality for managing conversation history, including listing, searching, and navigating previous conversations"
+    →dependencies[core_messaging, memory]
+    →user_workflows[view_history, navigate_conversations, search_conversations]
+
+    ##feature{id:conversation_list, status:partial, confidence:0.8, @integration_gaps}
+      "Display list of user's previous conversations with titles, timestamps, and preview text"
+      
+      ##user_flow{id:conversation_list_flow, confidence:1.0}
+        user_clicks_history_section→system_displays_conversations→user_sees_titles_timestamps→user_scrolls_paginated_list
+      
+      ##system_flow{id:conversation_list_system, confidence:1.0}
+        fetch_conversations_ordered→generate_titles_from_content→apply_pagination→return_formatted_metadata
+      
+      ##components{id:conversation_list_components, confidence:0.8}
+        ConversationHistory{
+          path:"client/src/components/ConversationHistory.tsx",
+          uses:[useChatMessages, ConversationListItem, ConversationSearch],
+          integration_issues:["not_properly_consuming_api_data", "missing_click_handlers"]
+        },
+        ConversationListItem{
+          path:"client/src/components/ConversationListItem.tsx",
+          integration_issues:["component_may_not_exist", "missing_selection_functionality"]
+        }
+      
+      ##data_flow{id:conversation_list_trace, confidence:0.7, validation:incomplete}
+        Frontend_ConversationHistory→Hook_useChatMessages→API_GET_conversations→Handler_chat_routes→Database_conversations
+        @integration_gaps["frontend_not_consuming_data", "missing_title_generation"]
+      
+      ##known_issues{id:conversation_list_issues, confidence:1.0, @blocking}
+        ["latest_conversations_not_appearing", "ui_component_exists_but_data_flow_incomplete", "conversation_list_appears_empty"]
+
+    ##feature{id:conversation_persistence, status:active, confidence:1.0}
+      "Automatic saving and persistence of conversation data with proper metadata"
+      
+      ##user_flow{id:persistence_flow, confidence:1.0}
+        user_engages_chat→system_auto_saves→conversation_appears_in_history→user_accesses_later
+      
+      ##system_flow{id:persistence_system, confidence:1.0}
+        create_conversation_record→update_metadata_per_message→generate_update_title→store_with_indexing
+      
+      ##data_flow{id:persistence_trace, confidence:1.0, validation:verified}
+        Frontend_ChatSection→Hook_useStreamingChat→API_POST_chat→Handler_chat_routes→Database_conversations_messages
+      
+      ##integration_gaps{id:persistence_gaps, confidence:0.9}
+        ["missing_conversation_update_endpoint"]
+
+    ##feature{id:conversation_navigation, status:broken, confidence:1.0, @critical_issue}
+      "Allow users to click on previous conversations and resume them in the chat interface"
+      
+      ##user_flow{id:navigation_flow, confidence:1.0}
+        user_views_history→user_clicks_conversation→system_loads_messages→user_continues_conversation
+      
+      ##system_flow{id:navigation_system, confidence:1.0}
+        receive_conversation_selection→load_conversation_messages→set_active_context→update_chat_interface→enable_continuation
+      
+      ##components{id:navigation_components, confidence:0.7}
+        ConversationHistory{integration_issues:["missing_click_handlers"]},
+        ChatSection{integration_issues:["no_conversation_context_switching"]},
+        MessageDisplayArea{integration_issues:["no_active_conversation_indication"]}
+      
+      ##data_flow{id:navigation_trace, confidence:0.3, validation:failed}
+        Frontend_ConversationHistory→Hook_useChatMessages→Context_AppContext→Component_ChatSection
+        @missing_components["API_GET_conversations_id_messages", "conversation_selection_mechanism"]
+      
+      ##critical_gaps{id:navigation_failures, confidence:1.0, @blocking}
+        ["missing_conversation_selection_api", "no_conversation_context_switching", "cannot_click_to_load_conversations"]
+
+  ##api_endpoints{id:conversation_history_apis, confidence:1.0}
+    GET_/api/conversations{
+      handler:"server/routes/chat-routes.ts",
+      description:"Retrieve user's conversation history with pagination",
+      reads_from:["conversations", "conversation_messages"],
+      status:active
+    },
+    DELETE_/api/conversations/:id{
+      handler:"server/routes/chat-routes.ts",
+      description:"Delete a specific conversation and its messages",
+      status:missing,
+      required_for:conversation_management
+    },
+    PUT_/api/conversations/:id{
+      handler:"server/routes/chat-routes.ts", 
+      description:"Update conversation metadata (title, etc.)",
+      status:missing,
+      required_for:conversation_management
+    },
+    GET_/api/conversations/:id/messages{
+      handler:"server/routes/chat-routes.ts",
+      description:"Load messages for a specific conversation",
+      status:missing,
+      required_for:conversation_navigation,
+      @critical_gap
+    }
+
+  ##database_schema{id:conversation_history_db, confidence:1.0}
+    conversations{
+      description:"Chat conversation metadata and context",
+      columns:["id", "title", "created_at", "updated_at", "user_id"],
+      integration_issues:["missing_title_generation_logic", "no_conversation_selection_tracking"]
+    },
+    conversation_messages{
+      description:"Individual chat messages within conversations", 
+      columns:["id", "conversation_id", "role", "content", "created_at", "message_type", "status"],
+      integration_issues:["messages_not_linked_to_history_interface"]
+    }
+
+  ##integration_status_summary{id:history_integration_status, confidence:1.0}
+    conversation_list{
+      status:partial,
+      issues:["latest_conversations_not_displaying", "data_flow_incomplete"],
+      impact:medium
+    },
+    conversation_persistence{
+      status:active,
+      gaps:["missing_update_endpoint"],
+      impact:low
+    },
+    conversation_navigation{
+      status:broken,
+      issues:["cannot_access_previous_conversations", "missing_api_endpoints"],
+      impact:high,
+      @user_blocking
+    }
+
+@validation{
+  integration_evidence:[conversation_persistence_verified],
+  critical_gaps:[conversation_navigation_completely_broken, missing_conversation_selection_api],
+  user_impact:[cannot_access_conversation_history, broken_user_workflow],
+  required_fixes:[implement_conversation_navigation_api, fix_frontend_data_consumption, add_conversation_selection_ui]
+}
+
+@dependencies{
+  internal:[core_messaging, memory],
+  blocking_issues:[conversation_navigation_broken],
+  architectural:[conversation_context_switching_missing]
+}

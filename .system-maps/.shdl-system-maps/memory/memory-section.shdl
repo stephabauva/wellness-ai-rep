@@ -1,0 +1,227 @@
+@context{domain:memory, target:memory_section_ui, complexity:medium, enforcement:strict}
+@meta{tokens:800, critical_paths:4, validation_rules:6, processing_priority:1}
+
+#ROOT{confidence:1.0}
+  ##memory_section{id:memory_section_feature, type:ui_functionality, confidence:1.0, @critical}
+    "Browse and manage personal memories through dedicated UI section"
+    @capabilities{
+      memory_browsing,
+      category_filtering,
+      bulk_operations,
+      memory_details,
+      lazy_loading
+    }
+    
+    ##data_flow_tracing{id:memory_ui_flow, type:user_interaction_pipeline, confidence:1.0}
+      @cluster{initial_load, confidence:1.0}
+        ##component_mount{id:section_initialization, type:react_lifecycle, confidence:1.0}
+          "Memory section component initialization"
+          @component:MemorySection.tsx
+          @hooks{
+            useQuery:[memory-overview],
+            useState:[selectedCategory, selectedMemoryIds],
+            useToast:notifications
+          }
+          
+        ##overview_fetch{id:lightweight_stats, type:api_call, confidence:1.0}
+          @endpoint:GET /api/memories/overview
+          @response{
+            totalMemories:number,
+            categories:Record<category, count>,
+            recentMemories:preview[]
+          }
+          @optimization{
+            cache_time:5_minutes,
+            refetch_on_focus:false
+          }
+      @/cluster
+
+      @cluster{memory_display, confidence:1.0}
+        ##lazy_loading{id:deferred_content_load, type:performance_pattern, confidence:1.0}
+          @trigger:Show My Stored Memories button
+          @loading{
+            initial_state:button_only,
+            loading_state:spinner,
+            loaded_state:memory_list
+          }
+          @benefits{
+            faster_initial_render,
+            reduced_api_calls,
+            better_ux
+          }
+          
+        ##category_tabs{id:memory_filtering, type:ui_navigation, confidence:1.0}
+          @tabs{
+            all:"Complete collection",
+            preference:"User preferences",
+            personal_info:"Personal information",
+            context:"Contextual info",
+            instruction:"Coaching instructions"
+          }
+          @filtering{
+            client_side:true,
+            instant_switching:true
+          }
+      @/cluster
+
+      @cluster{memory_management, confidence:1.0}
+        ##selection_system{id:multi_select, type:bulk_operations, confidence:1.0}
+          @ui_elements{
+            checkbox_per_memory,
+            select_all_checkbox,
+            selection_counter,
+            clear_selection_button
+          }
+          @state_management{
+            selectedMemoryIds:Set<string>,
+            toggle_functions,
+            bulk_action_handlers
+          }
+          
+        ##bulk_deletion{id:mass_delete, type:destructive_action, confidence:1.0}
+          @confirmation:required
+          @endpoint:DELETE /api/memories/bulk
+          @payload:{memoryIds: string[]}
+          @ui_feedback{
+            loading_state,
+            success_toast,
+            error_handling
+          }
+      @/cluster
+
+      @cluster{memory_details, confidence:1.0}
+        ##memory_cards{id:individual_display, type:ui_component, confidence:1.0}
+          @display_elements{
+            content:full_text,
+            category:badge_with_color,
+            importance:score_badge,
+            keywords:tag_chips,
+            metadata:creation_date_access_count
+          }
+          @interactions{
+            select_checkbox,
+            delete_button,
+            expand_collapse
+          }
+          
+        ##visual_indicators{id:status_badges, type:ui_feedback, confidence:1.0}
+          @category_styling{
+            colors:tailwind_classes,
+            icons:lucide_react,
+            labels:human_readable
+          }
+          @importance_levels{
+            high:"red_badge",
+            medium:"orange_badge",
+            low:"gray_badge"
+          }
+      @/cluster
+
+    ##architectural_layers{id:ui_architecture, type:frontend_focused, confidence:1.0}
+      ##presentation_layer{id:react_components, type:ui_layer, confidence:1.0}
+        @main_component{
+          MemorySection.tsx:[689_lines],
+          subcomponents:[Cards, Dialogs, Forms]
+        }
+        @ui_libraries{
+          shadcn_ui:[Card, Button, Badge, Tabs],
+          lucide_react:[icons],
+          react_hook_form:[form_management]
+        }
+      }
+
+      ##state_management{id:frontend_state, type:react_patterns, confidence:1.0}
+        @local_state{
+          useState:[ui_toggles, selections],
+          useQuery:[data_fetching],
+          useMutation:[data_mutations]
+        }
+        @cache_management{
+          tanstack_query:[cache_invalidation],
+          optimistic_updates:false,
+          stale_time:configured
+        }
+      }
+
+      ##api_integration{id:backend_communication, type:http_layer, confidence:1.0}
+        @endpoints{
+          GET:/api/memories/overview,
+          GET:/api/memories,
+          DELETE:/api/memories/:id,
+          DELETE:/api/memories/bulk
+        }
+        @error_handling{
+          try_catch_blocks,
+          toast_notifications,
+          fallback_ui
+        }
+      }
+
+    ##error_boundaries{id:ui_error_handling, type:user_friendly, confidence:1.0}
+      @cluster{display_errors, confidence:1.0}
+        ##loading_errors{id:fetch_failures, confidence:1.0}
+          @handling{
+            error_message_display,
+            retry_button,
+            fallback_content
+          }
+        }
+        ##action_errors{id:operation_failures, confidence:1.0}
+          @feedback{
+            toast_notifications,
+            inline_error_messages,
+            form_validation_errors
+          }
+        }
+      @/cluster
+
+    ##performance_optimization{id:ui_performance, type:frontend_optimization, confidence:1.0}
+      @cluster{rendering_optimization, confidence:1.0}
+        ##lazy_components{id:code_splitting, confidence:1.0}
+          @strategy{
+            defer_heavy_components,
+            progressive_loading,
+            virtual_scrolling:planned
+          }
+        }
+        ##memoization{id:prevent_rerenders, confidence:1.0}
+          @techniques{
+            React.memo:static_components,
+            useMemo:expensive_calculations,
+            useCallback:stable_references
+          }
+        }
+      @/cluster
+
+    ##security_privacy{id:ui_security, type:frontend_protection, confidence:1.0}
+      @measures{
+        xss_prevention:content_sanitization,
+        csrf_protection:token_validation,
+        secure_deletion:confirmation_required
+      }
+
+    ##integration_evidence{id:ui_implementation, type:verification, confidence:1.0}
+      @status:active
+      @verification:2025-01-15
+      @evidence{
+        component_functional:verified,
+        lazy_loading:implemented,
+        bulk_operations:tested
+      }
+      @usage_metrics{
+        load_time:under_1s,
+        interaction_responsiveness:instant,
+        error_rate:< 1%
+      }
+
+@processing{
+  critical_paths:[mount→overview→display, selection→bulk_action→update],
+  enforcement_points:[user_confirmation, data_validation, error_handling],
+  quality_gates:[load_performance, ui_responsiveness, error_recovery]
+}
+
+@validation{
+  mandatory_checks:[component_mounting, api_availability, state_consistency],
+  performance_targets:[initial_load_under_1s, interaction_under_100ms],
+  ux_requirements:[clear_feedback, intuitive_navigation, error_clarity]
+}

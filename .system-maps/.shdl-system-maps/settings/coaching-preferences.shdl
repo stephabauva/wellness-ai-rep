@@ -1,0 +1,264 @@
+@context{domain:settings, type:coaching_preferences}
+@meta{
+  featureName:"coaching-preferences",
+  featureGroup:"settings", 
+  parentFile:"./settings.map.json",
+  domain:"settings",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##coachingPreferences{id:coaching_feature, type:complete_mapping, @comprehensive}
+    "Coaching mode configuration including style, goals, reminders, and focus areas"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User interaction workflow for configuring coaching preferences"
+      @processing{
+        step1:"User navigates to Settings and clicks Coaching section",
+        step2:"User selects primary goal, communication style, reminder frequency", 
+        step3:"User selects multiple focus areas via checkboxes",
+        step4:"User saves changes and receives confirmation"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System processing workflow for coaching preference updates"
+      @processing{
+        process1:"Form collects multi-field coaching preferences",
+        process2:"Validation ensures at least one focus area selected",
+        process3:"API updates user preferences in database",
+        process4:"AppContext updates coachingMode if changed"
+      }
+    
+    ##dataFlowTrace{id:data_flow, type:request_response, @critical}
+      "Complete request/response cycle for coaching preferences"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "User configures coaching preferences via form controls"
+        @processing{
+          dropdown_selections→radio_button_choices→checkbox_selections→save
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side request processing and state management"
+        
+        ##triggerComponent{id:initiator}
+          "CoachingPreferencesSettings component"
+          @ref:CoachingPreferencesSettings.tsx
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "Select onValueChange handlers"
+            "RadioGroup onValueChange handlers"
+            "Checkbox onCheckedChange handlers"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "form state for primaryGoal"
+            "form state for coachStyle"
+            "form state for reminderFrequency"
+            "form state for focusAreas array"
+            "AppContext coachingMode update"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "API call configuration and routing"
+          @processing{
+            endpoint:"/api/settings",
+            method:"PATCH",
+            requestPayload:"{primaryGoal, coachStyle, reminderFrequency, focusAreas}"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Network transport and routing layer"
+        @processing{
+          requestRoute:"PATCH /api/settings",
+          routeHandler:"settings-routes.ts"
+        }
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side request processing and data operations"
+        
+        ##routeHandler{id:entry_point}
+          "app.patch('/api/settings') in settings-routes.ts"
+          @ref:enhancedSettingsUpdateSchema validation
+        
+        ##servicesCalled{id:business_logic}
+          @cluster{services, type:business_logic}
+            "storage.updateUserSettings()"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Database interaction patterns"
+          @cluster{queries, type:sql}
+            "UPDATE users SET preferences = jsonb_set(...) WHERE id=$1"
+          @/cluster
+          @cluster{tables, type:schema}
+            "users table - preferences JSONB column"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPDATE preferences.primaryGoal"
+            "UPDATE preferences.coachStyle"
+            "UPDATE preferences.reminderFrequency"
+            "UPDATE preferences.focusAreas"
+          @/cluster
+      
+      ##responseFlow{id:response_processing, type:layer, @sequential}
+        "Response data transformation and delivery"
+        @cluster{dataTransformation, type:processing}
+          "Updated user object with merged preferences"
+        @/cluster
+        @processing{
+          responsePayload:"Complete updated settings object",
+          statusCodes:"200 OK, 400 Bad Request, 500 Server Error"
+        }
+      
+      ##frontendUpdateFlow{id:ui_refresh, type:layer}
+        "Frontend state updates and UI refresh patterns"
+        @cluster{reactQueryInvalidation, type:cache_invalidation}
+          "queryClient.invalidateQueries(['userSettings', '/api/settings'])"
+        @/cluster
+        @cluster{stateUpdates, type:component_state}
+          "Form values updated"
+          "AppContext coachingMode synchronized"
+        @/cluster
+        @cluster{userFeedback, type:ux}
+          "Success toast notification"
+          "Form reflects saved values"
+        @/cluster
+    
+    ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
+      "Complete architectural layer dependency mapping"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        "Frontend presentation layer components and utilities"
+        
+        ##components{id:ui_components, @critical}
+          @cluster{primary, type:main_features}
+            "/client/src/components/settings/CoachingPreferencesSettings.tsx"
+            "/client/src/components/SettingsSection.tsx"
+          @/cluster
+          @cluster{supporting, type:helpers}
+            "/client/src/components/ui/select.tsx"
+            "/client/src/components/ui/radio-group.tsx"
+            "/client/src/components/ui/checkbox.tsx"
+            "/client/src/components/ui/card.tsx"
+          @/cluster
+        
+        ##hooks{id:custom_hooks}
+          @cluster{react_hooks, type:state_logic}
+            "useFormContext from react-hook-form"
+            "useAppContext for coachingMode"
+          @/cluster
+        
+        ##types{id:frontend_types}
+          @cluster{typescript_interfaces, type:type_definitions}
+            "UserSettingsFormValues interface"
+            "FOCUS_AREAS_OPTIONS constant"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        "Server-side business logic and processing"
+        
+        ##routes{id:api_routes, @critical}
+          @cluster{express_handlers, type:route_handlers}
+            "/server/routes/settings-routes.ts"
+          @/cluster
+        
+        ##services{id:business_services, @critical}
+          @cluster{logic_services, type:business_logic}
+            "/server/storage.ts - updateUserSettings()"
+          @/cluster
+        
+        ##types{id:shared_types}
+          @cluster{common_types, type:shared_definitions}
+            "/shared/schema.ts - UserPreferences"
+            "userPreferenceSchema with coaching fields"
+            "coachingModes type definition"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        "Data persistence and storage mechanisms"
+        
+        ##database{id:relational_db, @critical}
+          @cluster{tables, type:schema}
+            "users table - preferences JSONB column"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPDATE JSONB fields within preferences"
+          @/cluster
+    
+    ##errorBoundaries{id:error_management, type:error_system}
+      "Error handling and recovery strategy"
+      
+      ##frontendErrors{id:client_errors, type:ui_errors}
+        @cluster{validationErrors, type:form_validation}
+          "Focus areas minimum selection validation"
+          "Required field validation"
+        @/cluster
+      
+      ##backendErrors{id:server_errors, type:backend_failures}
+        @cluster{validationErrors, type:request_validation}
+          "Invalid coaching mode values"
+          "Invalid reminder frequency"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      "Performance optimization strategies"
+      
+      ##frontendOptimizations{id:client_performance, type:ui_optimization}
+        @cluster{renderOptimization, type:react_optimization}
+          "Controlled components for form inputs"
+          "Memoized option lists"
+        @/cluster
+    
+    ##securityConsiderations{id:security, type:protection_mapping}
+      "Security and privacy protection"
+      
+      ##inputValidation{id:input_security, type:validation_system}
+        @cluster{frontendValidation, type:client_validation}
+          "Enum validation for coaching styles"
+          "Array validation for focus areas"
+        @/cluster
+        @cluster{backendValidation, type:server_validation}
+          "Zod schema validation on server"
+        @/cluster
+    
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      "Integration validation and evidence"
+      @processing{
+        status:"active",
+        lastVerified:"2025-01-01T00:00:00Z",
+        verificationMethod:"manual",
+        evidenceLocation:"Component actively used in settings flow"
+      }
+    
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "AppContext for coachingMode state"
+        "User settings system"
+      @/cluster
+      @cluster{external, type:third_party}
+        "react-hook-form for form state"
+      @/cluster
+    
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{affects, type:affected_features}
+        "AI coaching responses (uses coachStyle)"
+        "Reminder system (uses reminderFrequency)"
+        "Content recommendations (uses focusAreas)"
+        "Goal tracking (uses primaryGoal)"
+      @/cluster
+      @cluster{sharedComponents, type:shared_ui}
+        "Select components"
+        "RadioGroup components"
+        "Checkbox components"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[errorBoundaries, performanceConsiderations, securityConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

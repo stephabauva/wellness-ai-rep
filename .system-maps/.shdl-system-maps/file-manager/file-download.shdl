@@ -1,0 +1,181 @@
+@context{domain:file_manager, feature_group:sharing_export, format:shdl, version:2.0.0, complexity:low, enforcement:strict}
+@meta{last_updated:"2025-01-01T10:00:00Z", validation_status:complete, token_estimate:550, critical_paths:4, processing_priority:3}
+
+#FILE_DOWNLOAD{confidence:1.0, integration_status:complete, @standard}
+  ##feature_definition{id:file_download_root, type:export_mechanism, confidence:1.0}
+    "Direct file download functionality with browser integration"
+    →primary_user_workflow[locate_file→click_download→save_to_device]
+    →dependencies[static_file_serving, browser_download_api]
+    →user_workflows[individual_download, view_in_browser, save_as]
+
+  @cluster{core_workflow, confidence:1.0}
+    ##download_workflow{id:primary_download_flow, type:file_export, confidence:1.0}
+      "Direct file download process"
+      @processing{
+        user_clicks_download→browser_requests_file→server_serves_file→
+        browser_download_prompt→user_saves_file
+      }
+      @data_flow{
+        trigger:[Download_button_icon],
+        request:[GET_/uploads/{fileName}],
+        response:[static_file_stream],
+        browser:[download_attribute_handling]
+      }
+  @/cluster
+
+  @cluster{frontend_implementation, confidence:1.0}
+    ##download_controls{id:ui_elements, type:interactive_buttons, confidence:1.0}
+      download_button_list_view{
+        location:"FileList component lines 445-459",
+        structure:{
+          element:"Button with anchor",
+          icon:"Download (h-4 w-4)",
+          variant:"ghost",
+          size:"sm"
+        },
+        implementation:{
+          tag:"<a>",
+          href:"/uploads/{fileName}",
+          download:"{displayName}",
+          target:"_blank",
+          rel:"noopener noreferrer"
+        }
+      },
+      download_button_grid_view{
+        location:"FileList component lines 301-318",
+        structure:{
+          position:"top-right overlay",
+          size:"h-6 w-6 p-0",
+          hover:"hover:bg-background/80",
+          icon:"Download (h-3 w-3)"
+        },
+        behavior:"same as list view",
+        click_isolation:"stopPropagation"
+      }
+
+    ##anchor_attributes{id:download_behavior, confidence:1.0}
+      html5_download{
+        attribute:"download='{displayName}'",
+        behavior:"forces download vs display",
+        filename:"suggests original name",
+        browser_support:"universal"
+      },
+      security_attributes{
+        target:"_blank",
+        rel:"noopener noreferrer",
+        purpose:"prevent window.opener access"
+      }
+  @/cluster
+
+  @cluster{backend_serving, confidence:1.0}
+    ##static_file_serving{id:file_delivery, type:express_static, confidence:1.0}
+      express_static_middleware{
+        configuration:"app.use('/uploads', express.static('uploads'))",
+        location:"likely in server/index.ts",
+        behavior:"serves files from uploads directory",
+        mime_types:"automatic detection"
+      },
+      file_access{
+        url_pattern:"/uploads/{fileName}",
+        direct_access:"no authentication currently",
+        file_resolution:"uploads/{fileName} on disk"
+      }
+  @/cluster
+
+  @cluster{file_delivery, confidence:1.0}
+    ##response_headers{id:http_headers, confidence:1.0}
+      content_type{
+        detection:"based on file extension",
+        header:"Content-Type: {mimeType}",
+        handled_by:"express.static"
+      },
+      content_disposition{
+        current:"not explicitly set",
+        browser_behavior:"varies by file type",
+        images:"may display inline",
+        documents:"typically download"
+      }
+  @/cluster
+
+  @cluster{browser_behavior, confidence:1.0}
+    ##download_handling{id:browser_integration, confidence:1.0}
+      download_prompt{
+        trigger:"download attribute",
+        behavior:"Save As dialog",
+        default_name:"from download attribute",
+        location:"user's Downloads folder"
+      },
+      file_types{
+        images:"may preview despite download attr",
+        pdfs:"browser-dependent behavior",
+        other:"generally downloads directly"
+      }
+  @/cluster
+
+  @cluster{security_considerations, confidence:1.0}
+    ##access_control{id:download_security, confidence:1.0}
+      current_state{
+        authentication:"none required",
+        authorization:"all files public",
+        url_pattern:"predictable with fileName",
+        risk:"unauthorized access possible"
+      },
+      future_improvements{
+        authenticated_downloads:"require user session",
+        signed_urls:"temporary access tokens",
+        audit_logging:"track downloads",
+        rate_limiting:"prevent abuse"
+      }
+  @/cluster
+
+  @cluster{user_experience, confidence:1.0}
+    ##download_ux{id:user_feedback, confidence:1.0}
+      visual_indicators{
+        button_placement:"end of row/card",
+        icon:"universally recognized",
+        hover_state:"subtle background",
+        tooltip:"Download file"
+      },
+      download_progress{
+        small_files:"instant",
+        large_files:"browser progress bar",
+        no_custom_progress:"using native browser"
+      }
+  @/cluster
+
+@processing{
+  flow_sequence:[
+    download_click, http_request, file_serving,
+    browser_download, user_save
+  ],
+  critical_paths:[
+    file_serving, browser_handling
+  ],
+  synchronous_flow:true
+}
+
+@dependencies{
+  frontend:[
+    HTML5_download_attribute, anchor_element
+  ],
+  backend:[
+    Express_static_middleware, file_system
+  ],
+  browser:[
+    native_download_manager
+  ]
+}
+
+@integration_evidence{
+  verified_flows:[
+    "Download buttons visible in both views",
+    "Click initiates browser download",
+    "Original filename preserved",
+    "Files download successfully"
+  ],
+  browser_testing:[
+    "Chrome downloads work",
+    "Safari downloads work",
+    "Mobile browser downloads work"
+  ]
+}

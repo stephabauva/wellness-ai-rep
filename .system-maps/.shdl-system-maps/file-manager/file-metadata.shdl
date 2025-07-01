@@ -1,0 +1,240 @@
+@context{domain:file_manager, feature_group:core_operations, format:shdl, version:2.0.0, complexity:medium, enforcement:strict}
+@meta{last_updated:"2025-01-01T10:00:00Z", validation_status:complete, token_estimate:650, critical_paths:7, processing_priority:2}
+
+#FILE_METADATA{confidence:1.0, integration_status:complete, @standard}
+  ##feature_definition{id:file_metadata_root, type:informational, confidence:1.0}
+    "Complete file metadata management and display system"
+    →primary_user_workflow[upload_file→extract_metadata→store_metadata→display_properties]
+    →dependencies[file_system, database_schema, ui_components]
+    →user_workflows[view_metadata, retention_info_display, file_properties]
+
+  @cluster{core_workflow, confidence:1.0}
+    ##metadata_extraction_workflow{id:metadata_generation, type:data_processing, confidence:1.0}
+      "File metadata extraction and storage"
+      @processing{
+        file_upload→extract_basic_properties→determine_retention→
+        generate_metadata_object→store_in_jsonb→display_in_ui
+      }
+      @data_flow{
+        extraction:[multer_file_object, file_system_stats],
+        enrichment:[retention_policy_logic, file_type_detection],
+        storage:[files.metadata_jsonb_column],
+        display:[FileList, file_properties_display]
+      }
+
+    ##retention_metadata_workflow{id:retention_tracking, type:policy_application, confidence:1.0}
+      "Retention policy metadata management"
+      @processing{
+        analyze_file_type→apply_retention_rules→calculate_deletion_date→
+        store_retention_info→display_retention_badge
+      }
+      @retention_rules{
+        health_data:[xml, json, csv]→high_retention(-1_days),
+        general_files→medium_retention(90_days),
+        temporary_files→low_retention(30_days)
+      }
+  @/cluster
+
+  @cluster{metadata_structure, confidence:1.0}
+    ##core_metadata{id:file_properties, confidence:1.0}
+      basic_properties{
+        fileName:unique_disk_name,
+        displayName:original_filename,
+        fileType:mime_type,
+        fileSize:bytes,
+        uploadDate:timestamp,
+        filePath:absolute_path
+      },
+      extended_properties{
+        categoryId:uuid_or_null,
+        uploadSource:["chat", "direct"],
+        conversationId:optional_chat_reference,
+        messageId:optional_message_reference
+      }
+
+    ##retention_metadata{id:retention_info, confidence:1.0}
+      retention_properties{
+        retentionPolicy:["high", "medium", "low"],
+        retentionDays:number_or_-1,
+        scheduledDeletion:timestamp_or_null,
+        reason:human_readable_explanation
+      },
+      retention_display{
+        high:"Permanent",
+        medium:"90d",
+        low:"30d",
+        badge_colors:[green, yellow, red]
+      }
+  @/cluster
+
+  @cluster{frontend_display, confidence:1.0}
+    ##presentation_layer{id:metadata_ui, confidence:1.0}
+      FileList{
+        path:"client/src/components/filemanager/FileList.tsx",
+        metadata_display:[
+          file_size_formatted,
+          upload_date,
+          retention_badge,
+          category_badge
+        ],
+        formatting_utils:[formatFileSize, formatDate],
+        status:verified
+      },
+      FileItem_component{
+        displays:{
+          displayName:truncated_with_tooltip,
+          fileSize:human_readable_format,
+          retentionInfo:{
+            category:color_coded_badge,
+            days:retention_period,
+            reason:tooltip_text
+          }
+        },
+        status:active
+      }
+
+    ##metadata_utilities{id:formatting_helpers, confidence:1.0}
+      formatFileSize{
+        path:"client/src/utils/fileManagerUtils.ts",
+        conversion:[bytes→KB/MB/GB],
+        precision:2_decimal_places,
+        status:active
+      },
+      formatDate{
+        path:"client/src/utils/fileManagerUtils.ts",
+        format:locale_string,
+        relative_time:optional,
+        status:active
+      },
+      getFileIcon{
+        path:"client/src/utils/fileManagerUtils.ts",
+        mapping:mime_type→icon_component,
+        fallback:generic_file_icon,
+        status:active
+      }
+  @/cluster
+
+  @cluster{backend_processing, confidence:1.0}
+    ##metadata_generation{id:server_side_enrichment, confidence:1.0}
+      upload_handler{
+        path:"server/routes/file-routes.ts:46-120",
+        metadata_creation:{
+          retentionInfo:{
+            category:policy_determination,
+            retentionDays:calculated_value,
+            reason:descriptive_text
+          },
+          source_tracking:upload_source,
+          timestamps:automatic
+        },
+        status:active
+      },
+      file_listing{
+        path:"server/routes/file-routes.ts:123-192",
+        metadata_retrieval:{
+          joins:[files, fileCategories],
+          includes:all_metadata_fields,
+          transforms:database_to_api_format
+        },
+        status:active
+      }
+  @/cluster
+
+  @cluster{data_layer, confidence:1.0}
+    ##database_schema{id:metadata_storage, confidence:1.0}
+      files_table_metadata{
+        metadata_column:{
+          type:"jsonb",
+          nullable:true,
+          structure:{
+            retentionInfo:object,
+            processingStatus:optional,
+            thumbnails:optional,
+            customProperties:extensible
+          }
+        },
+        indexed:false,
+        queryable:true_via_jsonb_operators,
+        status:active
+      }
+  @/cluster
+
+  @cluster{metadata_types, confidence:1.0}
+    ##type_definitions{id:typescript_interfaces, confidence:1.0}
+      FileRetentionInfo{
+        path:"client/src/types/fileManager.ts:3-7",
+        properties:[category, retentionDays, reason],
+        used_in:[FileItem, API_responses]
+      },
+      FileItem{
+        path:"client/src/types/fileManager.ts:9-24",
+        includes:[
+          core_properties,
+          retentionInfo,
+          category_info,
+          optional_fields
+        ]
+      }
+  @/cluster
+
+  @cluster{api_responses, confidence:1.0}
+    ##metadata_in_responses{id:api_data_format, confidence:1.0}
+      upload_response{
+        includes:[
+          basic_file_info,
+          url_for_access,
+          retentionInfo_object
+        ],
+        format:JSON,
+        status:active
+      },
+      file_list_response{
+        array_of:{
+          complete_metadata,
+          computed_fields,
+          category_joins
+        },
+        sorted_by:upload_date_desc,
+        status:active
+      }
+  @/cluster
+
+@processing{
+  flow_sequence:[
+    file_received, metadata_extraction, policy_application,
+    database_storage, api_formatting, ui_display
+  ],
+  critical_paths:[
+    metadata_extraction, policy_determination, storage
+  ],
+  computed_fields:[
+    formatted_size, retention_badge, file_icon
+  ]
+}
+
+@dependencies{
+  frontend:[
+    React, TypeScript, fileManagerUtils
+  ],
+  backend:[
+    Express, Multer, Drizzle_ORM, PostgreSQL
+  ],
+  storage:[
+    JSONB_column, file_system_stats
+  ]
+}
+
+@integration_evidence{
+  verified_flows:[
+    "Metadata extracted on upload",
+    "Retention policies correctly applied",
+    "Metadata displayed in file list",
+    "JSONB storage working properly"
+  ],
+  metadata_fields_tracked:[
+    "File size, type, upload date",
+    "Retention category and days",
+    "Category assignment",
+    "Upload source"
+  ]
+}

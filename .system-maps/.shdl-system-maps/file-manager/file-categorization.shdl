@@ -1,0 +1,300 @@
+@context{domain:file_manager, feature_group:core_operations, format:shdl, version:2.0.0, complexity:high, enforcement:strict}
+@meta{last_updated:"2025-01-01T10:00:00Z", validation_status:complete, token_estimate:850, critical_paths:12, processing_priority:1}
+
+#FILE_CATEGORIZATION{confidence:1.0, integration_status:complete, @critical}
+  ##feature_definition{id:file_categorization_root, type:organizational, confidence:1.0}
+    "Complete file categorization system with custom categories and bulk operations"
+    →primary_user_workflow[select_files→choose_category→apply_categorization→view_by_category]
+    →dependencies[category_service, file_api, database_schema]
+    →user_workflows[single_categorization, bulk_categorization, category_management, uncategorized_handling]
+
+  @cluster{core_workflow, confidence:1.0}
+    ##categorization_workflow{id:primary_categorization_flow, type:user_journey, confidence:1.0}
+      "Complete file categorization process"
+      @processing{
+        select_files→open_category_menu→select_or_create_category→
+        validate_category→update_files→refresh_ui→update_tabs
+      }
+      @data_flow{
+        ui_trigger:[FileActionsToolbar, categorize_menu],
+        category_selection:[CategorySelector, dropdown_with_creation],
+        api_call:[PATCH_/api/files/categorize],
+        database_update:[files.categoryId_update]
+      }
+
+    ##category_management_workflow{id:category_crud, type:administrative, confidence:1.0}
+      "Category creation, update, and deletion"
+      @processing{
+        create_custom_category→assign_properties→save_to_database→
+        update_category_list→make_available_for_selection
+      }
+      @data_flow{
+        creation:[POST_/api/categories, insertFileCategory],
+        update:[PUT_/api/categories/:id, updateCategory],
+        deletion:[DELETE_/api/categories/:id, soft_or_hard_delete]
+      }
+  @/cluster
+
+  @cluster{frontend_components, confidence:1.0}
+    ##presentation_layer{id:ui_components, type:client_side, confidence:1.0}
+      CategorySelector{
+        path:"client/src/components/filemanager/CategorySelector.tsx",
+        uses:[useFileApi.categories, custom_category_creation],
+        functions:[dropdown_menu, create_new_option, icon_display],
+        status:verified
+      },
+      CategoryTabs{
+        path:"client/src/components/filemanager/CategoryTabs.tsx",
+        uses:[categories_list, file_counts],
+        functions:[tab_navigation, category_filtering, count_display],
+        tabs:["All", "Uncategorized", ...custom_categories],
+        status:verified
+      },
+      FileActionsToolbar{
+        path:"client/src/components/filemanager/FileActionsToolbar.tsx",
+        categorize_action:{
+          enabled_when:"selectedFilesCount > 0",
+          shows:CategorySelector,
+          callback:onCategorize
+        },
+        status:verified
+      }
+
+    ##frontend_logic{id:hooks_and_state, confidence:1.0}
+      useFileApi{
+        path:"client/src/hooks/useFileApi.ts",
+        category_functions:[
+          categorizeFiles,
+          categories_query,
+          createCategory,
+          updateCategory,
+          deleteCategory
+        ],
+        mutations:{
+          categorizeFilesMutation:"PATCH /api/files/categorize",
+          createCategoryMutation:"POST /api/categories",
+          updateCategoryMutation:"PUT /api/categories/:id",
+          deleteCategoryMutation:"DELETE /api/categories/:id"
+        },
+        status:active
+      }
+  @/cluster
+
+  @cluster{backend_services, confidence:1.0}
+    ##business_logic_layer{id:server_components, type:server_side, confidence:1.0}
+      file_routes{
+        path:"server/routes/file-routes.ts",
+        categorization_endpoint:{
+          route:"PATCH /api/files/categorize",
+          handler_lines:"250-297",
+          validation:[category_exists, user_owns_category],
+          batch_update:true
+        },
+        status:active
+      },
+      category_service{
+        path:"server/services/category-service.ts",
+        functions:[
+          getCategoryById,
+          createCategory,
+          updateCategory,
+          deleteCategory,
+          getUserCategories
+        ],
+        status:active
+      }
+
+    ##api_routes{id:category_endpoints, confidence:1.0}
+      category_routes{
+        endpoints:[
+          "GET /api/categories",
+          "POST /api/categories",
+          "PUT /api/categories/:id",
+          "DELETE /api/categories/:id"
+        ],
+        middleware:[authentication, validation],
+        status:active
+      }
+  @/cluster
+
+  @cluster{data_layer, confidence:1.0}
+    ##database{id:persistence_schema, confidence:1.0}
+      fileCategories_table{
+        schema:"shared/schema.ts:144-154",
+        columns:[
+          "id:uuid",
+          "name:text",
+          "description:text",
+          "icon:text",
+          "color:text",
+          "isCustom:boolean",
+          "userId:integer",
+          "createdAt:timestamp"
+        ],
+        relationships:[userId→users.id],
+        system_categories:[isCustom=false, userId=null],
+        status:active
+      },
+      files_table_relationship{
+        column:"categoryId:uuid",
+        foreign_key:"fileCategories.id",
+        nullable:true,
+        null_means:uncategorized,
+        status:active
+      }
+
+    ##categorization_query{id:batch_update, confidence:1.0}
+      update_operation{
+        sql:"UPDATE files SET categoryId = ?, updatedAt = NOW() WHERE fileName IN (?)",
+        batch_capable:true,
+        validation:category_exists_check,
+        status:active
+      }
+  @/cluster
+
+  @cluster{api_endpoints, confidence:1.0}
+    ##categorization_endpoint{id:primary_api, confidence:1.0}
+      PATCH_/api/files/categorize{
+        handler:"server/routes/file-routes.ts:250-297",
+        request:{
+          fileIds:array_of_strings,
+          categoryId:string_or_null
+        },
+        response:{
+          success:boolean,
+          updatedCount:number,
+          categoryId:string_or_null
+        },
+        status:active
+      }
+
+    ##category_management_endpoints{id:crud_apis, confidence:1.0}
+      GET_/api/categories{
+        returns:array_of_categories,
+        includes:[system_categories, user_categories],
+        status:active
+      },
+      POST_/api/categories{
+        creates:new_category,
+        required:[name],
+        optional:[description, icon, color],
+        status:active
+      },
+      PUT_/api/categories/:id{
+        updates:existing_category,
+        validates:user_ownership,
+        status:active
+      },
+      DELETE_/api/categories/:id{
+        deletes:category,
+        uncategorizes:associated_files,
+        status:active
+      }
+  @/cluster
+
+  @cluster{ui_features, confidence:1.0}
+    ##category_visualization{id:visual_organization, confidence:1.0}
+      category_tabs{
+        display:[icon, name, file_count],
+        special_tabs:["All", "Uncategorized"],
+        custom_tabs:user_created_categories,
+        active_state:highlighted_tab
+      },
+      category_badges{
+        shown_in:file_list_items,
+        displays:[category_name, color],
+        click_behavior:filter_by_category
+      },
+      category_icons{
+        default_icons:provided,
+        custom_icons:user_selectable,
+        fallback:folder_icon
+      }
+  @/cluster
+
+  @cluster{error_boundaries, confidence:1.0}
+    ##error_handling{id:failure_management, confidence:1.0}
+      validation_errors{
+        no_files_selected→disabled_action,
+        invalid_category→400_bad_request,
+        category_not_found→400_error
+      },
+      permission_errors{
+        wrong_user_category→403_forbidden,
+        system_category_edit→403_forbidden
+      },
+      database_errors{
+        foreign_key_violation→rollback,
+        update_failure→500_error
+      }
+  @/cluster
+
+  @cluster{performance_optimizations, confidence:1.0}
+    ##optimization_strategies{id:categorization_performance, confidence:1.0}
+      batch_operations{
+        bulk_categorization:single_query_multiple_files,
+        transaction_wrapping:atomic_updates,
+        partial_success_handling:report_results
+      },
+      caching{
+        category_list_cache:5_minute_ttl,
+        invalidation_on:[create, update, delete],
+        file_count_caching:computed_on_fetch
+      }
+  @/cluster
+
+  @cluster{special_categories, confidence:1.0}
+    ##uncategorized_handling{id:null_category, confidence:1.0}
+      uncategorized_state{
+        database_value:null,
+        ui_representation:"Uncategorized",
+        special_tab:true,
+        filterable:true
+      },
+      system_categories{
+        predefined:["Documents", "Images", "Data"],
+        non_deletable:true,
+        non_editable:true,
+        available_to_all_users:true
+      }
+  @/cluster
+
+@processing{
+  flow_sequence:[
+    file_selection, category_menu_open, category_selection,
+    validation, batch_update, cache_invalidation,
+    ui_refresh, tab_update
+  ],
+  critical_paths:[
+    category_validation, batch_update, ui_consistency
+  ],
+  error_recovery:[
+    partial_success_reporting, rollback_on_failure
+  ]
+}
+
+@dependencies{
+  frontend:[
+    React, TanStack_Query, useFileApi,
+    CategorySelector, CategoryTabs
+  ],
+  backend:[
+    Express, Drizzle_ORM, PostgreSQL,
+    category-service
+  ]
+}
+
+@integration_evidence{
+  verified_flows:[
+    "Single file categorization works",
+    "Bulk categorization updates all selected files",
+    "Category creation from selector",
+    "Tab filtering by category",
+    "Uncategorized files properly filtered"
+  ],
+  test_coverage:[
+    "Category CRUD operations",
+    "File-category association",
+    "UI state consistency"
+  ]
+}

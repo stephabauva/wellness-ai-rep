@@ -1,0 +1,222 @@
+@context{domain:file_manager, feature_group:display_organization, format:shdl, version:2.0.0, complexity:medium, enforcement:strict}
+@meta{last_updated:"2025-01-01T10:00:00Z", validation_status:complete, token_estimate:700, critical_paths:8, processing_priority:2}
+
+#FILE_SELECTION{confidence:1.0, integration_status:complete, @critical}
+  ##feature_definition{id:file_selection_root, type:interaction_system, confidence:1.0}
+    "Complete file selection system with individual and bulk selection capabilities"
+    →primary_user_workflow[select_files→perform_actions→clear_selection]
+    →dependencies[file_manager_state, ui_components, selection_persistence]
+    →user_workflows[individual_selection, bulk_selection, select_all, selection_clearing]
+
+  @cluster{core_workflow, confidence:1.0}
+    ##selection_workflow{id:primary_selection_flow, type:user_interaction, confidence:1.0}
+      "File selection state management and UI synchronization"
+      @processing{
+        user_clicks_checkbox→update_selection_set→reflect_in_ui→
+        enable_bulk_actions→maintain_across_operations→clear_after_action
+      }
+      @data_flow{
+        state_storage:[useFileManagerState, selectedFiles_Set],
+        ui_binding:[checkbox_checked_prop, visual_highlighting],
+        action_enablement:[toolbar_buttons, selection_count],
+        persistence:[maintains_during_refresh, clears_on_delete]
+      }
+
+    ##bulk_selection_workflow{id:select_all_flow, type:batch_operation, confidence:1.0}
+      "Select all functionality with category awareness"
+      @processing{
+        click_select_all→determine_active_files→toggle_all_selection→
+        update_ui_state→show_selection_count
+      }
+      @logic{
+        if_none_selected:select_all_visible,
+        if_some_selected:select_remaining,
+        if_all_selected:deselect_all
+      }
+  @/cluster
+
+  @cluster{frontend_state_management, confidence:1.0}
+    ##selection_state{id:state_architecture, confidence:1.0}
+      useFileManagerState{
+        path:"client/src/hooks/useFileManagerState.ts",
+        state_structure:{
+          selectedFiles:"Set<string>",
+          setSelectedFiles:"React.Dispatch<SetStateAction<Set<string>>>"
+        },
+        functions:[
+          handleSelectFile,
+          handleSelectAll,
+          clearSelection
+        ],
+        status:active
+      },
+      selection_logic{
+        individual_toggle:{
+          implementation:"Set.has() ? delete : add",
+          immutability:"new Set(previous)"
+        },
+        bulk_operations:{
+          select_all:"new Set(activeFiles.map(f => f.id))",
+          clear_all:"new Set()"
+        }
+      }
+
+    ##state_synchronization{id:ui_state_sync, confidence:1.0}
+      component_integration{
+        FileList:{
+          receives:"selectedFiles, onSelectFile, onSelectAll",
+          renders:"checkbox states based on Set"
+        },
+        FileActionsToolbar:{
+          receives:"selectedFilesCount",
+          enables:"actions based on count > 0"
+        }
+      },
+      effect_cleanup{
+        on_files_change:"remove non-existent from selection",
+        implementation:"useEffect in FileManagerSection",
+        lines:"85-96"
+      }
+  @/cluster
+
+  @cluster{ui_components, confidence:1.0}
+    ##selection_controls{id:interactive_elements, confidence:1.0}
+      individual_checkboxes{
+        component:"Checkbox from @/components/ui/checkbox",
+        placement:{
+          list_view:"start of each row",
+          grid_view:"top-left overlay"
+        },
+        behavior:{
+          click:"toggle individual file",
+          propagation:"stopped for precise control"
+        }
+      },
+      select_all_checkbox{
+        placement:"card header",
+        states:{
+          unchecked:"no files selected",
+          checked:"all files selected",
+          indeterminate:"some files selected"
+        },
+        label:"dynamic based on selection"
+      }
+
+    ##visual_feedback{id:selection_indicators, confidence:1.0}
+      selected_state_styling{
+        list_view:"bg-accent on row",
+        grid_view:"bg-accent border-primary on card",
+        transition:"smooth color transition"
+      },
+      selection_count_display{
+        location:"header and toolbar",
+        format:"{count} selected",
+        updates:"real-time with selection"
+      }
+  @/cluster
+
+  @cluster{selection_persistence, confidence:1.0}
+    ##persistence_behavior{id:state_lifecycle, confidence:1.0}
+      persistence_rules{
+        during_refresh:"selection maintained",
+        after_deletion:"deleted items removed from selection",
+        after_categorization:"selection cleared",
+        on_upload:"selection maintained"
+      },
+      implementation{
+        deletion_sync:"useEffect watches files array",
+        automatic_cleanup:"filters non-existent files",
+        explicit_clear:"clearSelection() after actions"
+      }
+  @/cluster
+
+  @cluster{bulk_actions_integration, confidence:1.0}
+    ##action_enablement{id:selection_driven_actions, confidence:1.0}
+      toolbar_actions{
+        enabled_when:"selectedFiles.size > 0",
+        actions:[
+          "Delete selected",
+          "Categorize selected",
+          "Share selected",
+          "Generate QR for selected"
+        ]
+      },
+      action_callbacks{
+        delete:"deleteFiles(Array.from(selectedFiles))",
+        categorize:"handleCategorize(selectedFiles, categoryId)",
+        share:"shareSelectedFiles(selectedFiles)",
+        qr_code:"generateAndShowQRCode(selectedFiles)"
+      }
+  @/cluster
+
+  @cluster{edge_cases, confidence:1.0}
+    ##selection_edge_handling{id:special_cases, confidence:1.0}
+      empty_file_list{
+        select_all:"disabled",
+        selection_state:"empty Set",
+        ui_feedback:"no files to select"
+      },
+      filtered_views{
+        category_filter:"selection limited to visible files",
+        select_all:"only selects filtered files",
+        hidden_selections:"maintained but not visible"
+      },
+      concurrent_operations{
+        during_deletion:"selection UI disabled",
+        during_upload:"selection maintained",
+        during_refresh:"selection preserved"
+      }
+  @/cluster
+
+  @cluster{performance_optimizations, confidence:1.0}
+    ##selection_performance{id:efficiency_measures, confidence:1.0}
+      set_operations{
+        advantage:"O(1) lookups for selection state",
+        memory:"efficient for large selections",
+        immutability:"new Set() for React updates"
+      },
+      render_optimization{
+        checkbox_memoization:"not implemented",
+        stable_callbacks:"maintained by hooks",
+        minimal_rerenders:"Set comparison efficient"
+      }
+  @/cluster
+
+@processing{
+  flow_sequence:[
+    user_interaction, state_update, ui_sync,
+    action_enablement, persistence_check
+  ],
+  critical_paths:[
+    state_immutability, selection_sync, action_integration
+  ],
+  state_transitions:[
+    empty→partial→full→empty
+  ]
+}
+
+@dependencies{
+  frontend:[
+    React, useFileManagerState, Set_data_structure,
+    Checkbox_component, FileList, FileActionsToolbar
+  ],
+  patterns:[
+    immutable_state_updates, effect_synchronization
+  ]
+}
+
+@integration_evidence{
+  verified_flows:[
+    "Individual file selection toggles correctly",
+    "Select all works with proper logic",
+    "Selection persists during refresh",
+    "Deleted files removed from selection",
+    "Bulk actions enabled based on selection",
+    "Visual feedback updates immediately"
+  ],
+  state_management:[
+    "Set-based selection efficient",
+    "Cleanup effects working",
+    "Cross-component sync verified"
+  ]
+}

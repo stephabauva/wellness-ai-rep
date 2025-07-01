@@ -1,0 +1,262 @@
+@context{domain:settings, type:health_data_consent}
+@meta{
+  featureName:"health-data-consent",
+  featureGroup:"settings", 
+  parentFile:"./settings.map.json",
+  domain:"settings",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##healthDataConsent{id:health_consent_feature, type:complete_mapping, @comprehensive}
+    "GDPR-compliant health data consent management with AI access controls and retention policies"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User interaction workflow for managing health data consent"
+      @processing{
+        step1:"User navigates to Settings and clicks Health Data Privacy section",
+        step2:"User toggles AI access consent for each health category", 
+        step3:"User sets retention policies per category (30 days to forever)",
+        step4:"User configures export settings and can export/view access logs"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System processing workflow for health consent updates"
+      @processing{
+        process1:"Consent toggles update health_consent settings object",
+        process2:"API updates consent records in database",
+        process3:"Health data access service enforces new permissions",
+        process4:"Access logs track all health data usage for compliance"
+      }
+    
+    ##dataFlowTrace{id:data_flow, type:request_response, @critical}
+      "Complete request/response cycle for health consent management"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "User configures health data consent settings"
+        @processing{
+          category_toggle→retention_selection→export_config→save
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side request processing and state management"
+        
+        ##triggerComponent{id:initiator}
+          "HealthDataConsentSettings component"
+          @ref:HealthDataConsentSettings.tsx
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "handleConsentUpdate for AI access toggles"
+            "handleRetentionUpdate for retention policies"
+            "handleExportSettingUpdate for export controls"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "health_consent.data_visibility updates"
+            "health_consent.ai_access_consent updates"
+            "health_consent.retention_policies updates"
+            "health_consent.export_controls updates"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "API call configuration and routing"
+          @processing{
+            endpoint:"/api/settings",
+            method:"PATCH",
+            requestPayload:"{health_consent: {data_visibility, ai_access_consent, retention_policies, export_controls}}"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Network transport and routing layer"
+        @processing{
+          requestRoute:"PATCH /api/settings",
+          routeHandler:"settings-routes.ts"
+        }
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side request processing and data operations"
+        
+        ##routeHandler{id:entry_point}
+          "app.patch('/api/settings') in settings-routes.ts"
+          @ref:health_consent validation in enhancedSettingsUpdateSchema
+        
+        ##servicesCalled{id:business_logic}
+          @cluster{services, type:business_logic}
+            "healthConsentService.updateConsentSettings()"
+            "healthConsentService.upsertConsent()"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Database interaction patterns"
+          @cluster{queries, type:sql}
+            "INSERT/UPDATE user_health_consent records"
+            "INSERT health_data_access_log entries"
+          @/cluster
+          @cluster{tables, type:schema}
+            "user_health_consent table"
+            "health_data_access_log table"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPSERT consent records by category"
+            "INSERT access log entries"
+          @/cluster
+      
+      ##responseFlow{id:response_processing, type:layer, @sequential}
+        "Response data transformation and delivery"
+        @cluster{dataTransformation, type:processing}
+          "transformConsentToSettings() converts DB records to UI format"
+        @/cluster
+        @processing{
+          responsePayload:"Updated settings with health_consent object",
+          statusCodes:"200 OK, 400 Bad Request, 500 Server Error"
+        }
+      
+      ##frontendUpdateFlow{id:ui_refresh, type:layer}
+        "Frontend state updates and UI refresh patterns"
+        @cluster{reactQueryInvalidation, type:cache_invalidation}
+          "Settings query invalidated and refetched"
+        @/cluster
+        @cluster{stateUpdates, type:component_state}
+          "Consent toggles reflect new state"
+          "Category visibility updated"
+        @/cluster
+        @cluster{userFeedback, type:ux}
+          "Toast notifications for each change"
+          "GDPR compliance notice displayed"
+        @/cluster
+    
+    ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
+      "Complete architectural layer dependency mapping"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        "Frontend presentation layer components and utilities"
+        
+        ##components{id:ui_components, @critical}
+          @cluster{primary, type:main_features}
+            "/client/src/components/settings/HealthDataConsentSettings.tsx"
+            "/client/src/components/SettingsSection.tsx"
+          @/cluster
+          @cluster{supporting, type:helpers}
+            "/client/src/components/ui/switch.tsx"
+            "/client/src/components/ui/select.tsx"
+            "/client/src/components/ui/card.tsx"
+            "/client/src/components/ui/badge.tsx"
+            "/client/src/components/ui/button.tsx"
+          @/cluster
+        
+        ##types{id:frontend_types}
+          @cluster{typescript_interfaces, type:type_definitions}
+            "HealthConsentSettings interface"
+            "Category descriptions and icons"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        "Server-side business logic and processing"
+        
+        ##routes{id:api_routes, @critical}
+          @cluster{express_handlers, type:route_handlers}
+            "/server/routes/settings-routes.ts"
+            "/server/routes/health-routes.ts (enforces consent)"
+          @/cluster
+        
+        ##services{id:business_services, @critical}
+          @cluster{logic_services, type:business_logic}
+            "/server/services/health-consent-service.ts"
+          @/cluster
+        
+        ##types{id:shared_types}
+          @cluster{common_types, type:shared_definitions}
+            "/shared/schema.ts - HealthConsentSettings"
+            "userHealthConsent table schema"
+            "healthDataAccessLog table schema"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        "Data persistence and storage mechanisms"
+        
+        ##database{id:relational_db, @critical}
+          @cluster{tables, type:schema}
+            "user_health_consent (category-based consent)"
+            "health_data_access_log (GDPR compliance)"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPSERT consent records"
+            "INSERT access logs"
+            "SELECT consent checks"
+          @/cluster
+    
+    ##errorBoundaries{id:error_management, type:error_system}
+      "Error handling and recovery strategy"
+      
+      ##frontendErrors{id:client_errors, type:ui_errors}
+        @cluster{networkErrors, type:network_failures}
+          "Consent update failure handling"
+        @/cluster
+      
+      ##backendErrors{id:server_errors, type:backend_failures}
+        @cluster{consentErrors, type:consent_failures}
+          "Default to restrictive (no access) on error"
+          "Fail-safe consent checking"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      "Performance optimization strategies"
+      
+      ##backendOptimizations{id:server_performance, type:backend_optimization}
+        @cluster{cacheStrategy, type:server_cache}
+          "Consent settings cached per user"
+          "Access permissions cached"
+        @/cluster
+    
+    ##securityConsiderations{id:security, type:protection_mapping, @critical}
+      "Security and privacy protection"
+      
+      ##dataProtection{id:data_security, type:privacy_protection}
+        @cluster{gdprCompliance, type:compliance}
+          "Full consent management system"
+          "Access logging for audit trails"
+          "Data export capabilities"
+          "Right to be forgotten support"
+        @/cluster
+        @cluster{accessControl, type:permission_enforcement}
+          "Category-based access control"
+          "Default deny for new categories"
+          "Granular consent per data type"
+        @/cluster
+    
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      "Integration validation and evidence"
+      @processing{
+        status:"active",
+        lastVerified:"2025-01-01T00:00:00Z",
+        verificationMethod:"manual",
+        evidenceLocation:"GDPR compliance implementation active"
+      }
+    
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "Health data storage system"
+        "AI coaching system (respects consent)"
+        "Data export system"
+      @/cluster
+    
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{affects, type:affected_features}
+        "AI health insights (filtered by consent)"
+        "Health dashboard (shows consented data only)"
+        "Data retention policies"
+        "Export functionality"
+      @/cluster
+      @cluster{sharedServices, type:shared_logic}
+        "healthConsentService used by all health features"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[errorBoundaries, performanceConsiderations, securityConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

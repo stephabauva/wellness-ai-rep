@@ -1,0 +1,234 @@
+@context{domain:chat, feature:image_attachments}
+@meta{
+  featureName:"image-attachments",
+  featureGroup:"attachments-media", 
+  parentFile:"./chat-domain.shdl",
+  domain:"chat",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##imageAttachments{id:image_attachments_feature, type:complete_mapping, @comprehensive}
+    "Image upload and preview in chat with AI vision capabilities"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User experience for image attachments"
+      @processing{
+        step1:"User selects image file(s) to attach",
+        step2:"Image thumbnails preview instantly",
+        step3:"User can remove images before sending", 
+        step4:"Images sent with message to AI",
+        step5:"AI analyzes images and responds"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System processing of image attachments"
+      @processing{
+        process1:"Validate image file types and sizes",
+        process2:"Generate preview thumbnails",
+        process3:"Upload images to server storage",
+        process4:"Enable vision-capable AI model",
+        process5:"Process images with AI response"
+      }
+    
+    ##dataFlowTrace{id:data_flow, type:image_pipeline, @critical}
+      "Image attachment specific flow"
+      
+      ##imageValidation{id:image_checks, type:validation, @blocking}
+        "Image-specific validation"
+        @processing{
+          fileTypes:["image/jpeg", "image/png", "image/gif", "image/webp"],
+          maxSize:"25MB per image",
+          dimensions:"No specific limits"
+        }
+      
+      ##imageProcessing{id:image_handling, type:layer, @sequential}
+        "Image-specific processing"
+        
+        ##previewGeneration{id:thumbnail_creation}
+          "Client-side preview generation"
+          @cluster{preview_logic, type:image_display}
+            "FileReader API for data URLs",
+            "Immediate thumbnail display",
+            "Aspect ratio preservation",
+            "20x20 preview size"
+          @/cluster
+        
+        ##aiModelSelection{id:vision_model}
+          "Automatic vision model selection"
+          @cluster{model_logic, type:ai_selection}
+            "Detect image attachments",
+            "automaticModelSelection flag",
+            "Switch to vision-capable model",
+            "Provider-specific handling"
+          @/cluster
+        
+        ##visionProcessing{id:ai_vision}
+          "AI vision capabilities"
+          @cluster{vision_features, type:ai_capabilities}
+            "Image content analysis",
+            "Object detection",
+            "Text extraction (OCR)",
+            "Scene understanding"
+          @/cluster
+      
+      ##imageDisplay{id:preview_ui, type:layer}
+        "Image preview interface"
+        @processing{
+          component:"AttachmentPreview",
+          condition:"fileType.startsWith('image/')",
+          display:"Thumbnail with remove button"
+        }
+        @cluster{ui_elements, type:display_features}
+          "80x80 thumbnail size",
+          "Rounded corners",
+          "Object-cover scaling",
+          "Hover effects"
+        @/cluster
+
+    ##architecturalLayers{id:architecture, type:dependency_analysis}
+      "Image attachment architecture"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        ##components{id:ui_components, @critical}
+          @cluster{image_components, type:specialized}
+            "AttachmentPreview - Image branch",
+            "img element for display",
+            "Remove button overlay"
+          @/cluster
+        
+        ##imageHandling{id:client_image_logic}
+          @cluster{client_processing, type:image_specific}
+            "FileReader for previews",
+            "Data URL generation",
+            "Image load events",
+            "Error handling"
+          @/cluster
+        
+        ##visualDesign{id:image_ui_design}
+          @cluster{design_elements, type:ui_polish}
+            "Thumbnail grid layout",
+            "Consistent sizing",
+            "Loading states",
+            "Error placeholders"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        ##imageServices{id:image_processing_services}
+          @cluster{services, type:image_specific}
+            "Image validation service",
+            "EXIF data handling",
+            "Orientation correction",
+            "Format conversion"
+          @/cluster
+        
+        ##aiIntegration{id:vision_ai_integration}
+          @cluster{ai_config, type:provider_setup}
+            "OpenAI GPT-4 Vision",
+            "Google Gemini Vision",
+            "Model auto-selection",
+            "Vision prompts"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        ##imageStorage{id:image_file_storage}
+          @cluster{storage_strategy, type:optimization}
+            "Original image preservation",
+            "Thumbnail generation",
+            "CDN integration ready",
+            "Compression options"
+          @/cluster
+
+    ##imageFeatures{id:image_capabilities, type:functionality}
+      "Image-specific features"
+      
+      ##supportedFormats{id:image_formats}
+        @cluster{formats, type:image_types}
+          "JPEG - photos",
+          "PNG - screenshots",
+          "GIF - animations",
+          "WebP - modern format"
+        @/cluster
+      
+      ##aiVisionFeatures{id:vision_capabilities}
+        @cluster{ai_features, type:vision_ai}
+          "Describe image content",
+          "Answer questions about images",
+          "Compare multiple images",
+          "Extract text from images"
+        @/cluster
+      
+      ##userInteractions{id:image_interactions}
+        @cluster{interactions, type:ux_features}
+          "Drag and drop support",
+          "Paste from clipboard",
+          "Multiple image selection",
+          "Reorder before sending"
+        @/cluster
+
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      ##imageOptimization{id:image_performance}
+        @cluster{optimizations, type:performance}
+          "Lazy loading previews",
+          "Progressive image loading",
+          "Client-side compression",
+          "Efficient thumbnails"
+        @/cluster
+      
+      ##memoryManagement{id:image_memory}
+        @cluster{memory_handling, type:resource_management}
+          "Revoke object URLs",
+          "Limit preview count",
+          "Clean up on unmount",
+          "Efficient data URLs"
+        @/cluster
+
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      ##implementationStatus{id:feature_status, type:status_tracking}
+        @processing{
+          status:"active",
+          lastVerified:"2025-01-01T00:00:00Z",
+          verificationMethod:"manual",
+          evidenceLocation:"AttachmentPreview.tsx:30-44"
+        }
+      
+      ##codeEvidence{id:implementation_proof}
+        @cluster{image_implementation, type:code_references}
+          "Image preview branch (lines 30-44)",
+          "fileType.startsWith('image/')",
+          "Thumbnail rendering logic",
+          "Remove button for images"
+        @/cluster
+
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "File Attachments (base)",
+        "AI Model Selection",
+        "Attachment Preview"
+      @/cluster
+      @cluster{browser, type:web_apis}
+        "FileReader API",
+        "Image element",
+        "Object URLs"
+      @/cluster
+
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{enables, type:functionality}
+        "Visual communication",
+        "Screenshot sharing",
+        "Image-based queries",
+        "Multi-modal AI"
+      @/cluster
+      @cluster{triggers, type:system_behavior}
+        "Automatic vision model",
+        "Enhanced AI context",
+        "Richer responses"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[imageFeatures, performanceConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

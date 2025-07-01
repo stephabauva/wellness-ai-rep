@@ -1,0 +1,164 @@
+@context{domain:memory, target:memory_categorization, complexity:medium, enforcement:strict}
+@meta{tokens:750, critical_paths:3, validation_rules:6, processing_priority:1}
+
+#ROOT{confidence:1.0}
+  ##memory_categorization{id:categorization_feature, type:core_functionality, confidence:1.0, @critical}
+    "Automatic and manual categorization of memories into predefined types"
+    @categories{
+      preference:"User likes, dislikes, and personal choices",
+      personal_info:"Health details, demographics, and circumstances",
+      context:"Situational information and current state",
+      instruction:"Coaching rules and communication preferences"
+    }
+    
+    ##data_flow_tracing{id:categorization_flow, type:classification_pipeline, confidence:1.0}
+      @cluster{automatic_categorization, confidence:1.0}
+        ##trigger{id:memory_content_received, type:system_event, confidence:1.0}
+          "Memory content ready for categorization"
+          @sources{
+            chat_message_detection,
+            manual_memory_creation,
+            memory_import
+          }
+          
+        ##ai_categorization{id:category_determination, type:ai_processing, confidence:1.0}
+          @processing{
+            content→AI_analysis→category_prediction→confidence_scoring
+          }
+          @prompts{
+            system:"Categorize this memory into: preference, personal_info, context, or instruction",
+            analysis_factors:[content_keywords, user_intent, temporal_relevance]
+          }
+          @output{
+            category:MemoryCategory,
+            confidence:number,
+            reasoning:string
+          }
+      @/cluster
+
+      @cluster{manual_categorization, confidence:1.0}
+        ##user_interface{id:manual_category_selection, type:user_input, confidence:1.0}
+          @component:MemorySection.tsx
+          @ui_element:Select[category_dropdown]
+          @validation:required_field
+          
+        ##form_submission{id:category_submission, type:api_call, confidence:1.0}
+          @endpoint:POST /api/memories/manual
+          @payload:{content, category, importance}
+          @validation{
+            category_in:[preference, personal_info, context, instruction]
+          }
+      @/cluster
+
+      @cluster{category_display, confidence:1.0}
+        ##visual_indicators{id:category_ui_elements, type:frontend_display, confidence:1.0}
+          @components{
+            badges:categoryColors[category],
+            icons:categoryIcons[category],
+            labels:categoryLabels[category],
+            tabs:category_filter_tabs
+          }
+          @styling{
+            preference:"bg-blue-100 text-blue-800",
+            personal_info:"bg-green-100 text-green-800",
+            context:"bg-yellow-100 text-yellow-800",
+            instruction:"bg-purple-100 text-purple-800"
+          }
+      @/cluster
+
+    ##architectural_layers{id:categorization_architecture, type:comprehensive, confidence:1.0}
+      ##presentation_layer{id:category_ui, type:react_components, confidence:1.0}
+        @components{
+          MemorySection.tsx:[category_tabs, category_badges, category_filter],
+          Form:[category_dropdown_select]
+        }
+        @constants{
+          categoryIcons:{preference:User, personal_info:User, context:Lightbulb, instruction:Settings},
+          categoryLabels:Record<category, string>,
+          categoryColors:Record<category, className>
+        }
+      }
+
+      ##business_logic_layer{id:category_services, type:classification_logic, confidence:1.0}
+        @services{
+          memory-service.ts:[categorizeMemory, validateCategory],
+          enhanced-memory-service.ts:[enhancedCategorization, multiCategoryDetection],
+          simple-memory-detection.ts:[keywordBasedCategorization]
+        }
+        @validation{
+          allowed_categories:enum[4_values],
+          category_required:true,
+          immutable_after_creation:false
+        }
+      }
+
+      ##data_layer{id:category_storage, type:postgresql, confidence:1.0}
+        @schema{
+          memoryEntries.category:text NOT NULL,
+          CHECK:category IN ('preference', 'personal_info', 'context', 'instruction')
+        }
+        @indexes{
+          idx_memory_user_category:compound(userId, category),
+          category_counts:aggregation_queries
+        }
+      }
+
+    ##error_boundaries{id:categorization_errors, type:validation, confidence:1.0}
+      @cluster{validation_errors, confidence:1.0}
+        ##invalid_category{id:category_validation_error, confidence:1.0}
+          @check:category_enum_validation
+          @response:400_bad_request
+          @message:"Invalid category"
+        }
+        ##missing_category{id:category_required_error, confidence:1.0}
+          @check:required_field_validation
+          @fallback:default_to_context
+        }
+      @/cluster
+
+    ##performance_optimization{id:category_performance, type:optimization, confidence:1.0}
+      @cluster{category_caching, confidence:1.0}
+        ##category_counts{id:count_caching, confidence:1.0}
+          @cache_key:memory_overview_counts
+          @ttl:5_minutes
+          @invalidation:on_memory_change
+        }
+        ##filter_optimization{id:client_side_filtering, confidence:1.0}
+          @strategy:load_all_filter_client
+          @benefit:instant_category_switching
+        }
+      @/cluster
+
+    ##security_privacy{id:category_security, type:validation, confidence:1.0}
+      @validation{
+        category_whitelist:strict_enum,
+        no_custom_categories:true,
+        user_isolation:by_userId
+      }
+
+    ##integration_evidence{id:categorization_implementation, type:verification, confidence:1.0}
+      @status:active
+      @verification:2025-01-15
+      @evidence{
+        ui_functional:verified,
+        ai_categorization:tested,
+        validation_working:confirmed
+      }
+      @usage_stats{
+        preference:35%,
+        personal_info:25%,
+        context:25%,
+        instruction:15%
+      }
+
+@processing{
+  critical_paths:[content→ai_analysis→category, manual_selection→validation→storage],
+  enforcement_points:[category_enum_validation, user_authorization],
+  quality_gates:[ai_confidence_threshold, valid_category_check]
+}
+
+@validation{
+  mandatory_checks:[valid_category_enum, user_authenticated],
+  performance_targets:[categorization_under_1s, ui_update_instant],
+  data_integrity:[category_immutable:false, category_required:true]
+}

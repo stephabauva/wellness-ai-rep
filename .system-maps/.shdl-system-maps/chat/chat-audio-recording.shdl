@@ -1,0 +1,250 @@
+@context{domain:chat, feature:audio_recording}
+@meta{
+  featureName:"audio-recording",
+  featureGroup:"attachments-media", 
+  parentFile:"./chat-domain.shdl",
+  domain:"chat",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##audioRecording{id:audio_recording_feature, type:complete_mapping, @comprehensive}
+    "Record and send audio messages with multi-provider transcription"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User experience for audio recording"
+      @processing{
+        step1:"User clicks microphone button",
+        step2:"Recording starts with visual feedback",
+        step3:"User speaks their message", 
+        step4:"User stops recording",
+        step5:"Audio is transcribed and added to input"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System handling of audio recording"
+      @processing{
+        process1:"Request microphone permission",
+        process2:"Start MediaRecorder with audio stream",
+        process3:"Capture audio chunks during recording",
+        process4:"Process audio blob on stop",
+        process5:"Transcribe using selected provider"
+      }
+    
+    ##dataFlowTrace{id:data_flow, type:audio_pipeline, @critical}
+      "Audio recording and transcription flow"
+      
+      ##audioCapture{id:recording_process, type:media_capture, @blocking}
+        "Audio capture pipeline"
+        @processing{
+          permission:"navigator.mediaDevices.getUserMedia",
+          constraints:{audio: true},
+          recorder:"MediaRecorder API"
+        }
+      
+      ##recordingFlow{id:audio_processing, type:layer, @sequential}
+        "Audio recording implementation"
+        
+        ##permissionHandling{id:mic_permission}
+          "Microphone permission flow"
+          @cluster{permission_states, type:access_control}
+            "Check existing permission",
+            "Request if not granted",
+            "Handle denial gracefully",
+            "Update UI accordingly"
+          @/cluster
+        
+        ##audioStream{id:media_stream}
+          "MediaStream management"
+          @cluster{stream_handling, type:media_api}
+            "getUserMedia for audio",
+            "MediaRecorder instance",
+            "Chunk collection",
+            "Blob creation"
+          @/cluster
+        
+        ##transcriptionProviders{id:transcription_services}
+          "Multi-provider transcription"
+          @cluster{providers, type:transcription_options}
+            "webspeech - Browser API",
+            "openai - Whisper API",
+            "google - Speech-to-Text"
+          @/cluster
+          @cluster{provider_features, type:capabilities}
+            "Language detection",
+            "Real-time (webspeech)",
+            "High accuracy (openai)",
+            "Multi-language (google)"
+          @/cluster
+      
+      ##transcriptionFlow{id:speech_to_text, type:layer}
+        "Transcription processing"
+        @processing{
+          webspeech:"Real-time browser transcription",
+          openai:"POST /api/transcribe/openai",
+          google:"POST /api/transcribe/google"
+        }
+        @cluster{api_endpoints, type:backend_routes}
+          "Multer for audio upload",
+          "Provider-specific processing",
+          "Language configuration",
+          "Error handling"
+        @/cluster
+
+    ##architecturalLayers{id:architecture, type:dependency_analysis}
+      "Audio recording architecture"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        ##components{id:ui_components, @critical}
+          @cluster{primary, type:main_features}
+            "AudioRecorder.tsx - Main component",
+            "Mic/MicOff icons - Visual state"
+          @/cluster
+          @cluster{ui_states, type:visual_feedback}
+            "Idle state - mic icon",
+            "Recording - mic off icon",
+            "Processing - loader spinner",
+            "Online/offline indicators"
+          @/cluster
+        
+        ##audioService{id:client_audio_service}
+          @cluster{service_methods, type:audio_api}
+            "requestMicrophonePermission",
+            "startRecording",
+            "stopRecording",
+            "transcribe",
+            "transcribeWithWebSpeech"
+          @/cluster
+        
+        ##stateManagement{id:recording_state}
+          @cluster{component_state, type:react_state}
+            "isRecording - Active state",
+            "isProcessing - Transcription",
+            "isListening - WebSpeech",
+            "hasPermission - Mic access"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        ##transcriptionRoutes{id:api_routes, @critical}
+          @cluster{endpoints, type:transcription_apis}
+            "POST /api/transcribe/openai",
+            "POST /api/transcribe/google",
+            "Audio file validation",
+            "Provider routing"
+          @/cluster
+        
+        ##transcriptionService{id:transcription_logic}
+          @cluster{service_implementation, type:business_logic}
+            "transcriptionService module",
+            "Provider abstraction",
+            "Language handling",
+            "Error recovery"
+          @/cluster
+      
+      ##integration{id:external_layer, type:integration_layer}
+        ##providerAPIs{id:third_party_services}
+          @cluster{external_apis, type:transcription_providers}
+            "OpenAI Whisper API",
+            "Google Cloud Speech-to-Text",
+            "Web Speech API (browser)"
+          @/cluster
+          @cluster{api_features, type:provider_capabilities}
+            "Multiple language support",
+            "Automatic language detection",
+            "Confidence scores",
+            "Punctuation addition"
+          @/cluster
+
+    ##audioFeatures{id:feature_capabilities, type:functionality}
+      "Audio recording features"
+      
+      ##recordingCapabilities{id:recording_features}
+        @cluster{features, type:audio_capture}
+          "Push-to-talk interface",
+          "Visual recording feedback",
+          "Automatic gain control",
+          "Noise suppression"
+        @/cluster
+      
+      ##transcriptionFeatures{id:transcription_options}
+        @cluster{options, type:user_choice}
+          "Provider selection",
+          "Language preferences",
+          "Real-time vs batch",
+          "Accuracy vs speed"
+        @/cluster
+      
+      ##errorHandling{id:audio_errors}
+        @cluster{error_states, type:resilience}
+          "No microphone access",
+          "Recording failure",
+          "Transcription errors",
+          "Network issues"
+        @/cluster
+
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      ##audioOptimization{id:recording_performance}
+        @cluster{optimizations, type:performance}
+          "Efficient chunk collection",
+          "Memory-limited recording",
+          "Audio compression",
+          "Stream management"
+        @/cluster
+      
+      ##transcriptionPerformance{id:transcription_efficiency}
+        @cluster{strategies, type:optimization}
+          "Provider selection logic",
+          "Caching transcriptions",
+          "Timeout handling",
+          "Fallback providers"
+        @/cluster
+
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      ##implementationStatus{id:feature_status, type:status_tracking}
+        @processing{
+          status:"active",
+          lastVerified:"2025-01-01T00:00:00Z",
+          verificationMethod:"manual",
+          evidenceLocation:"client/src/components/AudioRecorder.tsx"
+        }
+      
+      ##providerEvidence{id:provider_integration}
+        @cluster{integration_proof, type:api_evidence}
+          "WebSpeech implementation (lines 49-91)",
+          "OpenAI route (chat-routes.ts:263-274)",
+          "Google route (chat-routes.ts:276-284)"
+        @/cluster
+
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "Send Message (text input)",
+        "User Settings (provider)",
+        "Toast notifications"
+      @/cluster
+      @cluster{external, type:apis}
+        "MediaRecorder API",
+        "Web Speech API",
+        "OpenAI Whisper",
+        "Google Speech"
+      @/cluster
+
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{enables, type:functionality}
+        "Voice input",
+        "Hands-free messaging",
+        "Accessibility",
+        "Multi-language support"
+      @/cluster
+      @cluster{enhances, type:user_experience}
+        "Input flexibility",
+        "Speed of input",
+        "Mobile usability"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[audioFeatures, performanceConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

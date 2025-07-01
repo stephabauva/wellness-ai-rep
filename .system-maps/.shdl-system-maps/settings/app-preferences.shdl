@@ -1,0 +1,255 @@
+@context{domain:settings, type:app_preferences}
+@meta{
+  featureName:"app-preferences",
+  featureGroup:"settings", 
+  parentFile:"./settings.map.json",
+  domain:"settings",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##appPreferences{id:app_prefs_feature, type:complete_mapping, @comprehensive}
+    "Application preferences including theme, notifications, and data sharing settings"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User interaction workflow for configuring app preferences"
+      @processing{
+        step1:"User navigates to Settings and clicks App Preferences section",
+        step2:"User toggles switches for dark mode, notifications, email summaries, data sharing", 
+        step3:"Settings auto-save or user clicks Save Changes",
+        step4:"UI immediately reflects changes (e.g., dark mode activates)"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System processing workflow for app preference updates"
+      @processing{
+        process1:"Switch toggles update form state",
+        process2:"Form submission sends preference updates",
+        process3:"Server updates user preferences in database",
+        process4:"Client applies theme changes and notification settings"
+      }
+    
+    ##dataFlowTrace{id:data_flow, type:request_response, @critical}
+      "Complete request/response cycle for app preferences"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "User toggles preference switches"
+        @processing{
+          switch_toggle→form_state_update→auto_save_or_manual_save
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side request processing and state management"
+        
+        ##triggerComponent{id:initiator}
+          "AppPreferencesSettings component"
+          @ref:AppPreferencesSettings.tsx
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "Switch onCheckedChange handlers"
+            "Form field onChange handlers"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "form state for darkMode"
+            "form state for pushNotifications"
+            "form state for emailSummaries"
+            "form state for dataSharing"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "API call configuration and routing"
+          @processing{
+            endpoint:"/api/settings",
+            method:"PATCH",
+            requestPayload:"{darkMode, pushNotifications, emailSummaries, dataSharing}"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Network transport and routing layer"
+        @processing{
+          requestRoute:"PATCH /api/settings",
+          routeHandler:"settings-routes.ts"
+        }
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side request processing and data operations"
+        
+        ##routeHandler{id:entry_point}
+          "app.patch('/api/settings') in settings-routes.ts"
+          @ref:enhancedSettingsUpdateSchema validation
+        
+        ##servicesCalled{id:business_logic}
+          @cluster{services, type:business_logic}
+            "storage.updateUserSettings()"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Database interaction patterns"
+          @cluster{queries, type:sql}
+            "UPDATE users SET preferences = jsonb_set(...) WHERE id=$1"
+          @/cluster
+          @cluster{tables, type:schema}
+            "users table - preferences JSONB column"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPDATE preferences.darkMode"
+            "UPDATE preferences.pushNotifications"
+            "UPDATE preferences.emailSummaries"
+            "UPDATE preferences.dataSharing"
+          @/cluster
+      
+      ##responseFlow{id:response_processing, type:layer, @sequential}
+        "Response data transformation and delivery"
+        @cluster{dataTransformation, type:processing}
+          "Updated user object with merged preferences"
+        @/cluster
+        @processing{
+          responsePayload:"Complete updated settings object",
+          statusCodes:"200 OK, 400 Bad Request, 500 Server Error"
+        }
+      
+      ##frontendUpdateFlow{id:ui_refresh, type:layer}
+        "Frontend state updates and UI refresh patterns"
+        @cluster{reactQueryInvalidation, type:cache_invalidation}
+          "queryClient.invalidateQueries(['userSettings', '/api/settings'])"
+        @/cluster
+        @cluster{stateUpdates, type:component_state}
+          "Form values updated"
+          "Theme applied if darkMode changed"
+        @/cluster
+        @cluster{userFeedback, type:ux}
+          "Success toast notification"
+          "Immediate UI theme change"
+        @/cluster
+    
+    ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
+      "Complete architectural layer dependency mapping"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        "Frontend presentation layer components and utilities"
+        
+        ##components{id:ui_components, @critical}
+          @cluster{primary, type:main_features}
+            "/client/src/components/settings/AppPreferencesSettings.tsx"
+            "/client/src/components/SettingsSection.tsx"
+          @/cluster
+          @cluster{supporting, type:helpers}
+            "/client/src/components/ui/switch.tsx"
+            "/client/src/components/ui/card.tsx"
+            "/client/src/components/ui/form.tsx"
+            "/client/src/components/ui/label.tsx"
+          @/cluster
+        
+        ##hooks{id:custom_hooks}
+          @cluster{react_hooks, type:state_logic}
+            "useFormContext from react-hook-form"
+          @/cluster
+        
+        ##types{id:frontend_types}
+          @cluster{typescript_interfaces, type:type_definitions}
+            "UserSettingsFormValues interface"
+            "preferenceItems array configuration"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        "Server-side business logic and processing"
+        
+        ##routes{id:api_routes, @critical}
+          @cluster{express_handlers, type:route_handlers}
+            "/server/routes/settings-routes.ts"
+          @/cluster
+        
+        ##services{id:business_services, @critical}
+          @cluster{logic_services, type:business_logic}
+            "/server/storage.ts - updateUserSettings()"
+          @/cluster
+        
+        ##types{id:shared_types}
+          @cluster{common_types, type:shared_definitions}
+            "/shared/schema.ts - UserPreferences"
+            "Boolean preference fields in schema"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        "Data persistence and storage mechanisms"
+        
+        ##database{id:relational_db, @critical}
+          @cluster{tables, type:schema}
+            "users table - preferences JSONB column"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPDATE boolean fields in preferences JSONB"
+          @/cluster
+    
+    ##errorBoundaries{id:error_management, type:error_system}
+      "Error handling and recovery strategy"
+      
+      ##frontendErrors{id:client_errors, type:ui_errors}
+        @cluster{networkErrors, type:network_failures}
+          "API call failure handling"
+        @/cluster
+      
+      ##backendErrors{id:server_errors, type:backend_failures}
+        @cluster{validationErrors, type:request_validation}
+          "Boolean type validation"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      "Performance optimization strategies"
+      
+      ##frontendOptimizations{id:client_performance, type:ui_optimization}
+        @cluster{renderOptimization, type:react_optimization}
+          "Minimal re-renders on switch toggles"
+          "Debounced save operations"
+        @/cluster
+    
+    ##securityConsiderations{id:security, type:protection_mapping}
+      "Security and privacy protection"
+      
+      ##dataProtection{id:data_security, type:privacy_protection}
+        @cluster{sensitiveData, type:pii_handling}
+          "Data sharing preference controls analytics"
+          "Email notification preferences"
+        @/cluster
+    
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      "Integration validation and evidence"
+      @processing{
+        status:"active",
+        lastVerified:"2025-01-01T00:00:00Z",
+        verificationMethod:"manual",
+        evidenceLocation:"Component actively used in settings"
+      }
+    
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "Theme system for dark mode"
+        "Notification service for push notifications"
+        "Email service for summaries"
+      @/cluster
+      @cluster{external, type:third_party}
+        "react-hook-form for form state"
+      @/cluster
+    
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{affects, type:affected_features}
+        "UI theme across entire application"
+        "Notification delivery system"
+        "Email communication system"
+        "Analytics data collection"
+      @/cluster
+      @cluster{sharedComponents, type:shared_ui}
+        "Switch components"
+        "Form components"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[errorBoundaries, performanceConsiderations, securityConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

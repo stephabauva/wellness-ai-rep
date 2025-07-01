@@ -1,0 +1,244 @@
+@context{domain:health_dashboard, feature:activity_trend_chart, version:1.0}
+
+#ROOT
+  ##activityTrendChart{id:activity_visualization, type:feature, @critical}
+    "Activity trend chart showing steps, active minutes, and calories over time"
+    
+    ##dataFlowTrace{id:complete_cycle, type:workflow, @critical}
+      "Complete data flow for activity trend visualization"
+      
+      ##userAction{id:trigger, type:interaction, @passive}
+        "Chart loads automatically with dashboard"
+        @processing{
+          trigger:"Dashboard render with activity data",
+          dataSource:"Processed activity metrics from parent"
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side chart data processing and rendering"
+        
+        ##componentProps{id:input_data}
+          "Props for ActivityTrendChart"
+          @cluster{props, type:interface}
+            "data: ActivityDataPoint[]"
+            "ActivityDataPoint: { day: string; steps?: number; active?: number; calories?: number; }"
+          @/cluster
+        
+        ##dataPreparation{id:chart_data_prep}
+          "Prepare data for Recharts"
+          @processing{
+            source:"Parent component processes healthData",
+            filtering:"Filter for activity-related metrics",
+            grouping:"Group by day",
+            aggregation:"Sum values per day"
+          }
+          @cluster{metrics_mapped, type:data_mapping}
+            "'steps' → steps"
+            "'active_minutes' → active"
+            "'physical_effort' → active"
+            "'calories_burned' → calories"
+          @/cluster
+        
+        ##chartConfiguration{id:recharts_config}
+          "Configure Recharts components"
+          @cluster{chart_setup, type:configuration}
+            "ResponsiveContainer for adaptive sizing"
+            "BarChart with stacked bars"
+            "CartesianGrid for readability"
+            "XAxis showing day names"
+            "YAxis with formatted values"
+            "Tooltip with custom content"
+            "Legend at bottom"
+          @/cluster
+        
+        ##dataSeriesMapping{id:bar_configuration}
+          "Map data to visual elements"
+          @cluster{bars, type:visualization}
+            "Steps bar (primary color, bottom)"
+            "Active Minutes bar (secondary, stacked)"
+            "Calories bar (accent, top)"
+          @/cluster
+      
+      ##dataTransformation{id:parent_processing, type:layer}
+        "Parent component data transformation"
+        
+        ##activityDataExtraction{id:extract_metrics}
+          "Extract activity metrics from health data"
+          @evidence{
+            file:"HealthDataSection.tsx",
+            lines:"117-154",
+            code:"const activityChartData: ActivityDataPoint[] = useMemo(() => {...})"
+          }
+          @processing{
+            filtering:"item.dataType in ['steps', 'daily_activity', 'active_minutes', 'physical_effort', 'calories_burned']",
+            grouping:"Group by day using Map",
+            dayFormat:"toLocaleDateString('en-US', { weekday: 'short' })"
+          }
+        
+        ##memoization{id:performance_cache}
+          "Memoize processed data"
+          @processing{
+            hook:"useMemo",
+            dependencies:"[allHealthData]",
+            purpose:"Prevent recalculation on re-renders"
+          }
+      
+      ##renderingFlow{id:chart_rendering, type:layer}
+        "Chart component rendering"
+        
+        ##emptyStateHandling{id:no_data_display}
+          "Handle missing data scenarios"
+          @processing{
+            check:"if (!data || data.length === 0)",
+            display:"Empty state message with icon"
+          }
+        
+        ##chartLayout{id:visual_structure}
+          "Chart visual layout"
+          @cluster{layout, type:ui_structure}
+            "Card container with title"
+            "Responsive height (h-[350px])"
+            "Padding and margins"
+            "Bottom legend placement"
+          @/cluster
+        
+        ##interactivity{id:user_interaction}
+          "Interactive chart features"
+          @cluster{features, type:interaction}
+            "Hover tooltips with values"
+            "Click events on bars (if implemented)"
+            "Responsive resize handling"
+          @/cluster
+    
+    ##architecturalLayers{id:layers, type:architecture}
+      "Component architecture"
+      
+      ##presentationLayer{id:ui_components}
+        @cluster{components, type:react}
+          "ActivityTrendChart.tsx - Main component"
+          "Card components from Shadcn/ui"
+          "Recharts components (BarChart, Bar, etc.)"
+          "Custom tooltip component"
+        @/cluster
+        @cluster{styling, type:ui}
+          "Tailwind classes for layout"
+          "Chart color scheme from theme"
+          "Responsive design utilities"
+        @/cluster
+      
+      ##dataVisualizationLayer{id:chart_logic}
+        @cluster{recharts_config, type:library}
+          "ResponsiveContainer for sizing"
+          "BarChart with stacked layout"
+          "Custom axis formatters"
+          "Theme-aware colors"
+        @/cluster
+      
+      ##dataProcessingLayer{id:data_prep}
+        @cluster{transformations, type:data}
+          "Day grouping logic"
+          "Metric aggregation"
+          "Missing data handling"
+          "Value formatting"
+        @/cluster
+    
+    ##errorBoundaries{id:error_handling, type:reliability}
+      "Error handling strategies"
+      
+      ##dataValidation{id:input_validation}
+        @cluster{checks, type:validation}
+          "Empty data array handling"
+          "Invalid value protection"
+          "Missing property defaults"
+        @/cluster
+      
+      ##chartErrors{id:render_protection}
+        @cluster{safeguards, type:ui}
+          "Recharts error boundaries"
+          "Fallback to empty state"
+          "Console error logging"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:performance}
+      "Performance optimizations"
+      
+      ##dataEfficiency{id:processing_optimization}
+        @cluster{strategies, type:performance}
+          "Parent-level data memoization"
+          "Efficient day grouping with Map"
+          "Single pass data transformation"
+        @/cluster
+      
+      ##renderOptimization{id:chart_performance}
+        @cluster{optimizations, type:rendering}
+          "ResponsiveContainer prevents reflows"
+          "Static chart configuration"
+          "Debounced resize handling"
+        @/cluster
+    
+    ##securityConsiderations{id:security, type:protection}
+      "Security measures"
+      
+      ##dataIntegrity{id:safe_display}
+        @cluster{safeguards, type:security}
+          "No raw data exposure"
+          "Sanitized tooltip content"
+          "Protected number formatting"
+        @/cluster
+    
+    ##integrationEvidence{id:verified_integration, type:validation}
+      "Integration verification"
+      
+      ##parentIntegration{id:dashboard_usage}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"470",
+          code:"<ActivityTrendChart data={activityChartData} />"
+        }
+      
+      ##dataProcessing{id:activity_extraction}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"122-132",
+          code:"const activityData = allHealthData.filter(item => ...)"
+        }
+      
+      ##componentImplementation{id:chart_component}
+        @evidence{
+          file:"client/src/components/health/ActivityTrendChart.tsx",
+          exists:true,
+          purpose:"Renders activity data as bar chart"
+        }
+    
+    ##dependencies{id:feature_dependencies, type:graph}
+      "Component dependencies"
+      
+      ##dataDependencies{id:data_source}
+        @cluster{sources, type:dependency}
+          "Processed activity data from parent"
+          "Health data time range from dashboard"
+        @/cluster
+      
+      ##libraryDependencies{id:external_libs}
+        @cluster{libraries, type:dependency}
+          "Recharts for visualization"
+          "Shadcn/ui for card container"
+          "date-fns for date formatting (if used)"
+        @/cluster
+    
+    ##impacts{id:affected_features, type:graph}
+      "Features impacted by activity chart"
+      
+      ##visualInsights{id:user_understanding}
+        @cluster{effects, type:impact}
+          "Shows activity patterns over time"
+          "Reveals weekly exercise habits"
+          "Correlates steps with calories"
+        @/cluster
+      
+      ##dashboardComposition{id:layout_impact}
+        @cluster{effects, type:impact}
+          "Takes significant dashboard space"
+          "Sets visual style for other charts"
+          "Influences time range selection"
+        @/cluster

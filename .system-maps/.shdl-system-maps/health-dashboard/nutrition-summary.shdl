@@ -1,0 +1,225 @@
+@context{domain:health_dashboard, feature:nutrition_summary, version:1.0}
+
+#ROOT
+  ##nutritionSummary{id:nutrition_display, type:feature, @important}
+    "Nutrition summary showing macronutrient intake and goals"
+    
+    ##dataFlowTrace{id:complete_cycle, type:workflow, @critical}
+      "Complete data flow for nutrition summary display"
+      
+      ##userAction{id:trigger, type:interaction, @passive}
+        "Nutrition summary loads with dashboard"
+        @processing{
+          trigger:"Dashboard render with nutrition data",
+          dataSource:"Aggregated nutrition metrics"
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side nutrition data processing"
+        
+        ##componentProps{id:input_data}
+          "Props for NutritionSummary"
+          @cluster{props, type:interface}
+            "data: NutritionItemData[]"
+            "NutritionItemData: { name: string; value: number; goal: number; unit?: string; percent?: number; color?: string; }"
+          @/cluster
+        
+        ##dataPreparation{id:nutrition_data_prep}
+          "Parent processes nutrition data"
+          @evidence{
+            file:"HealthDataSection.tsx",
+            lines:"195-248",
+            code:"const nutritionSummaryData: NutritionItemData[] = useMemo(() => {...})"
+          }
+          @processing{
+            filtering:"Filter nutrition metrics",
+            metrics:['protein', 'carbs', 'fat', 'fiber', 'calories', 'sugar'],
+            aggregation:"Sum values by type",
+            goals:"Predefined nutritional goals"
+          }
+        
+        ##nutritionGoals{id:goal_configuration}
+          "Default nutrition goals"
+          @cluster{goals, type:configuration}
+            {
+              "protein": 110,
+              "carbs": 250,
+              "fat": 73,
+              "fiber": 30,
+              "calories": 2200,
+              "sugar": 50
+            }
+          @/cluster
+      
+      ##visualizationLogic{id:nutrition_display, type:layer}
+        "Render nutrition summary"
+        
+        ##macroDisplay{id:macronutrient_cards}
+          "Display macronutrient information"
+          @cluster{macros, type:visualization}
+            "Protein card with progress"
+            "Carbohydrates with goal"
+            "Fats with percentage"
+            "Fiber intake tracking"
+          @/cluster
+        
+        ##progressVisualization{id:goal_progress}
+          "Visualize progress towards goals"
+          @cluster{indicators, type:ui_elements}
+            "Progress bars per nutrient"
+            "Percentage of goal"
+            "Color coding for status"
+            "Actual vs Goal display"
+          @/cluster
+        
+        ##calorieBreakdown{id:calorie_display}
+          "Calorie information display"
+          @cluster{calories, type:metrics}
+            "Total calories consumed"
+            "Calories from each macro"
+            "Daily calorie goal"
+            "Surplus/deficit indicator"
+          @/cluster
+    
+    ##architecturalLayers{id:layers, type:architecture}
+      "Component architecture"
+      
+      ##presentationLayer{id:ui_components}
+        @cluster{components, type:react}
+          "NutritionSummary.tsx - Main component"
+          "Card container layout"
+          "Progress bar components"
+          "Nutrient item components"
+        @/cluster
+        @cluster{styling, type:ui}
+          "Nutrition-themed colors"
+          "Grid layout for nutrients"
+          "Responsive design"
+        @/cluster
+      
+      ##calculationLayer{id:nutrition_logic}
+        @cluster{calculations, type:logic}
+          "Percentage calculations"
+          "Calorie breakdowns"
+          "Macro ratios"
+          "Goal comparisons"
+        @/cluster
+      
+      ##dataProcessingLayer{id:data_aggregation}
+        @cluster{processing, type:data}
+          "Nutrient aggregation"
+          "Time-based summing"
+          "Unit normalization"
+          "Goal mapping"
+        @/cluster
+    
+    ##errorBoundaries{id:error_handling, type:reliability}
+      "Error handling strategies"
+      
+      ##dataValidation{id:nutrient_validation}
+        @cluster{checks, type:validation}
+          "Validate nutrient values"
+          "Handle missing data"
+          "Protect against negatives"
+        @/cluster
+      
+      ##displayFallbacks{id:ui_safety}
+        @cluster{fallbacks, type:ui}
+          "Default to 0 for missing"
+          "Show dashes for no data"
+          "Graceful empty states"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:performance}
+      "Performance optimizations"
+      
+      ##dataEfficiency{id:processing_optimization}
+        @cluster{strategies, type:performance}
+          "Parent-level memoization"
+          "Efficient aggregation"
+          "Cached calculations"
+        @/cluster
+      
+      ##renderOptimization{id:ui_efficiency}
+        @cluster{optimizations, type:rendering}
+          "Static nutrient configs"
+          "Minimal re-renders"
+          "CSS-based progress bars"
+        @/cluster
+    
+    ##nutritionalInsights{id:health_understanding, type:educational}
+      "Nutritional health insights"
+      
+      ##macroBalance{id:macro_ratios}
+        @cluster{insights, type:nutrition}
+          "Protein for muscle"
+          "Carbs for energy"
+          "Healthy fats importance"
+          "Fiber for digestion"
+        @/cluster
+      
+      ##goalAlignment{id:nutritional_goals}
+        @cluster{recommendations, type:health}
+          "Daily recommended values"
+          "Activity-based adjustments"
+          "Personal goal setting"
+          "Deficit/surplus tracking"
+        @/cluster
+    
+    ##integrationEvidence{id:verified_integration, type:validation}
+      "Integration verification"
+      
+      ##parentUsage{id:dashboard_integration}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"475",
+          code:"<NutritionSummary data={nutritionSummaryData} />"
+        }
+      
+      ##dataProcessing{id:nutrition_aggregation}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"201-211",
+          code:"const nutritionData = allHealthData.filter(item => ...)"
+        }
+      
+      ##componentFile{id:nutrition_component}
+        @evidence{
+          file:"client/src/components/health/NutritionSummary.tsx",
+          exists:true,
+          purpose:"Displays nutrition breakdown"
+        }
+    
+    ##dependencies{id:feature_dependencies, type:graph}
+      "Component dependencies"
+      
+      ##dataDependencies{id:data_source}
+        @cluster{sources, type:dependency}
+          "Nutrition data from health metrics"
+          "User nutritional goals"
+          "Time range from dashboard"
+        @/cluster
+      
+      ##visualDependencies{id:ui_components}
+        @cluster{libraries, type:dependency}
+          "Progress components"
+          "Grid layout system"
+          "Color utilities"
+        @/cluster
+    
+    ##impacts{id:affected_features, type:graph}
+      "Features impacted by nutrition summary"
+      
+      ##dietaryAwareness{id:nutrition_tracking}
+        @cluster{effects, type:impact}
+          "Macro tracking visibility"
+          "Goal achievement awareness"
+          "Dietary pattern insights"
+        @/cluster
+      
+      ##coachingRelevance{id:ai_nutrition}
+        @cluster{effects, type:impact}
+          "AI dietary recommendations"
+          "Meal planning suggestions"
+          "Nutritional deficit alerts"
+        @/cluster

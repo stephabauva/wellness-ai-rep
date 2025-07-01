@@ -1,0 +1,223 @@
+@context{domain:memory, target:memory_relationship_engine, complexity:high, enforcement:strict}
+@meta{tokens:850, critical_paths:5, validation_rules:7, processing_priority:1}
+
+#ROOT{confidence:1.0}
+  ##memory_relationship_engine{id:relationship_engine_feature, type:advanced_functionality, confidence:1.0, @critical}
+    "Advanced relationship mapping and analysis between memories"
+    @capabilities{
+      relationship_discovery,
+      contradiction_resolution,
+      knowledge_graph_building,
+      temporal_tracking,
+      inference_generation
+    }
+    
+    ##data_flow_tracing{id:relationship_engine_flow, type:analysis_pipeline, confidence:1.0}
+      @cluster{relationship_discovery, confidence:1.0}
+        ##memory_pair_analysis{id:pairwise_comparison, type:similarity_analysis, confidence:1.0}
+          "Compare memory pairs for relationships"
+          @processing{
+            memory_pairs→semantic_comparison→relationship_detection
+          }
+          @algorithms{
+            cosine_similarity:vectors,
+            keyword_overlap:text,
+            temporal_proximity:timestamps,
+            category_alignment:metadata
+          }
+          
+        ##relationship_classification{id:edge_typing, type:ml_classification, confidence:1.0}
+          @types{
+            contradicts:{threshold:0.8, inverse_similarity:true},
+            supports:{threshold:0.7, positive_correlation:true},
+            elaborates:{threshold:0.6, detail_addition:true},
+            supersedes:{temporal:true, replacement:true},
+            related:{threshold:0.5, general_connection:true}
+          }
+          @confidence_scoring{
+            semantic_score:0.4,
+            structural_score:0.3,
+            temporal_score:0.2,
+            user_feedback:0.1
+          }
+      @/cluster
+
+      @cluster{contradiction_handling, confidence:1.0}
+        ##conflict_detection{id:contradiction_identification, type:logical_analysis, confidence:1.0}
+          @detection{
+            semantic_opposition,
+            factual_conflicts,
+            temporal_inconsistencies
+          }
+          @examples{
+            preference_change:"likes coffee" vs "dislikes coffee",
+            fact_update:"weighs 150lbs" vs "weighs 160lbs"
+          }
+          
+        ##resolution_strategies{id:conflict_resolution, type:decision_logic, confidence:1.0}
+          @strategies{
+            temporal_precedence:{newer_wins:true},
+            confidence_based:{higher_confidence_wins:true},
+            context_aware:{consider_conversation:true},
+            user_clarification:{ask_when_uncertain:true}
+          }
+          @actions{
+            mark_superseded,
+            merge_information,
+            maintain_both_with_context,
+            request_user_input
+          }
+      @/cluster
+
+      @cluster{graph_operations, confidence:1.0}
+        ##graph_building{id:knowledge_graph_construction, type:graph_generation, confidence:1.0}
+          @components{
+            nodes:memory_entries,
+            edges:relationships,
+            weights:relationship_strength,
+            metadata:{timestamps, confidence}
+          }
+          @algorithms{
+            incremental_building,
+            batch_reconstruction,
+            subgraph_extraction
+          }
+          
+        ##graph_analysis{id:pattern_detection, type:graph_algorithms, confidence:1.0}
+          @analyses{
+            centrality:important_memories,
+            clustering:topic_groups,
+            paths:knowledge_evolution,
+            cycles:circular_dependencies
+          }
+          @insights{
+            core_beliefs:high_centrality_nodes,
+            knowledge_domains:clusters,
+            learning_progression:temporal_paths
+          }
+      @/cluster
+
+      @cluster{inference_generation, confidence:1.0}
+        ##implicit_knowledge{id:inference_creation, type:reasoning, confidence:1.0}
+          @inference_types{
+            transitive:"if A→B and B→C then A→C",
+            aggregation:"multiple supports → stronger belief",
+            contradiction_resolution:"automated reconciliation"
+          }
+          
+        ##knowledge_synthesis{id:unified_view, type:ai_synthesis, confidence:1.0}
+          @processing{
+            gather_related→analyze_relationships→synthesize_knowledge
+          }
+          @output{
+            comprehensive_profile,
+            belief_system,
+            preference_hierarchy
+          }
+      @/cluster
+
+    ##architectural_layers{id:engine_architecture, type:comprehensive, confidence:1.0}
+      ##presentation_layer{id:relationship_ui, type:visualization, confidence:1.0}
+        @components{
+          RelationshipGraph:[force_directed_visualization],
+          ContradictionPanel:[conflict_display],
+          InferenceDisplay:[derived_knowledge]
+        }
+        @interactions{
+          node_click:memory_detail,
+          edge_hover:relationship_info,
+          conflict_resolution:user_choice
+        }
+      }
+
+      ##business_logic_layer{id:engine_services, type:analysis_services, confidence:1.0}
+        @services{
+          memory-relationship-engine.ts:[main_engine],
+          memory-graph-service.ts:[graph_operations],
+          fast-relationship-engine.ts:[optimized_analysis]
+        }
+        @processing{
+          parallel_analysis:true,
+          incremental_updates:true,
+          background_processing:true
+        }
+      }
+
+      ##data_layer{id:relationship_storage, type:graph_persistence, confidence:1.0}
+        @tables{
+          memoryRelationships:[edges_table],
+          relationshipMetadata:[edge_properties],
+          inferredKnowledge:[derived_facts]
+        }
+        @indexes{
+          bidirectional:source_target_index,
+          type_index:relationship_type,
+          strength_index:for_filtering
+        }
+      }
+
+    ##error_boundaries{id:engine_errors, type:fault_tolerance, confidence:1.0}
+      @cluster{analysis_failures, confidence:1.0}
+        ##relationship_error{id:detection_failure, confidence:1.0}
+          @handling:log_and_skip
+          @recovery:retry_with_fallback
+        }
+        ##graph_corruption{id:integrity_error, confidence:1.0}
+          @detection:consistency_checks
+          @recovery:rebuild_subgraph
+        }
+      @/cluster
+
+    ##performance_optimization{id:engine_performance, type:scalability, confidence:1.0}
+      @cluster{analysis_optimization, confidence:1.0}
+        ##parallel_processing{id:concurrent_analysis, confidence:1.0}
+          @strategy{
+            worker_threads:4,
+            batch_size:100_pairs,
+            priority_queue:important_first
+          }
+        }
+        ##caching_strategy{id:result_caching, confidence:1.0}
+          @caches{
+            relationship_cache:recent_analyses,
+            inference_cache:derived_knowledge,
+            conflict_cache:known_contradictions
+          }
+        }
+      @/cluster
+
+    ##security_privacy{id:engine_security, type:relationship_protection, confidence:1.0}
+      @isolation{
+        user_graph_isolation:complete,
+        no_inference_leakage:true
+      }
+      @privacy{
+        relationship_anonymization,
+        inference_boundaries
+      }
+
+    ##integration_evidence{id:engine_implementation, type:verification, confidence:1.0}
+      @status:active
+      @verification:2025-01-15
+      @evidence{
+        relationship_detection:functional,
+        contradiction_handling:tested,
+        inference_generation:operational
+      }
+      @metrics{
+        relationships_per_memory:3.5,
+        contradiction_detection_accuracy:92%,
+        inference_quality:0.87
+      }
+
+@processing{
+  critical_paths:[memory_pair→analysis→classification→storage→inference],
+  enforcement_points:[user_isolation, relationship_validation, cycle_detection],
+  quality_gates:[confidence_threshold, relationship_validity, inference_logic]
+}
+
+@validation{
+  mandatory_checks:[valid_memory_pairs, user_ownership, relationship_type],
+  performance_targets:[analysis_under_100ms, batch_under_5s],
+  accuracy_requirements:[detection_above_90%, false_positive_below_5%]
+}

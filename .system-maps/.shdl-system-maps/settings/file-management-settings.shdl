@@ -1,0 +1,266 @@
+@context{domain:settings, type:file_management_settings}
+@meta{
+  featureName:"file-management-settings",
+  featureGroup:"settings", 
+  parentFile:"./settings.map.json",
+  domain:"settings",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##fileManagementSettings{id:file_mgmt_feature, type:complete_mapping, @comprehensive}
+    "File retention policy configuration for different file categories with automatic cleanup"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User interaction workflow for configuring file retention policies"
+      @processing{
+        step1:"User navigates to Settings and clicks File Management section",
+        step2:"User sets retention periods for medical documents (high value)", 
+        step3:"User sets retention for health plans/routines (medium value)",
+        step4:"User sets retention for photos/temp files (low value) and saves"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System processing workflow for file retention updates"
+      @processing{
+        process1:"Form collects retention day values for each category",
+        process2:"API updates retention settings in user preferences",
+        process3:"Attachment retention service applies new policies",
+        process4:"Background job schedules file cleanup based on policies"
+      }
+    
+    ##dataFlowTrace{id:data_flow, type:request_response, @critical}
+      "Complete request/response cycle for file retention settings"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "User configures file retention periods"
+        @processing{
+          retention_selection→category_mapping→policy_save
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side request processing and state management"
+        
+        ##triggerComponent{id:initiator}
+          "FileManagementSettings component"
+          @ref:FileManagementSettings.tsx
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "Select onValueChange for retention periods"
+            "parseInt conversion for numeric values"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "form state for highValueRetentionDays"
+            "form state for mediumValueRetentionDays"
+            "form state for lowValueRetentionDays"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "API call configuration and routing"
+          @processing{
+            endpoint:"/api/settings",
+            method:"PATCH",
+            requestPayload:"{highValueRetentionDays, mediumValueRetentionDays, lowValueRetentionDays}"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Network transport and routing layer"
+        @processing{
+          requestRoute:"PATCH /api/settings",
+          routeHandler:"settings-routes.ts"
+        }
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side request processing and data operations"
+        
+        ##routeHandler{id:entry_point}
+          "app.patch('/api/settings') in settings-routes.ts"
+          @ref:retention settings update logic
+        
+        ##servicesCalled{id:business_logic}
+          @cluster{services, type:business_logic}
+            "attachmentRetentionService.updateRetentionDurations()"
+            "storage.updateUserSettings()"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Database interaction patterns"
+          @cluster{queries, type:sql}
+            "UPDATE users SET preferences = jsonb_set(...) WHERE id=$1"
+            "UPDATE files SET retentionPolicy based on category"
+          @/cluster
+          @cluster{tables, type:schema}
+            "users table - preferences.retention settings"
+            "files table - retentionPolicy, scheduledDeletion"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPDATE retention day values"
+            "UPDATE file retention policies"
+            "UPDATE scheduled deletion dates"
+          @/cluster
+      
+      ##responseFlow{id:response_processing, type:layer, @sequential}
+        "Response data transformation and delivery"
+        @cluster{dataTransformation, type:processing}
+          "Updated user settings with retention values"
+        @/cluster
+        @processing{
+          responsePayload:"Complete updated settings object",
+          statusCodes:"200 OK, 400 Bad Request, 500 Server Error"
+        }
+      
+      ##frontendUpdateFlow{id:ui_refresh, type:layer}
+        "Frontend state updates and UI refresh patterns"
+        @cluster{reactQueryInvalidation, type:cache_invalidation}
+          "queryClient.invalidateQueries(['retentionSettings'])"
+        @/cluster
+        @cluster{stateUpdates, type:component_state}
+          "Form reflects saved retention values"
+        @/cluster
+        @cluster{userFeedback, type:ux}
+          "Success toast notification"
+          "Retention period labels update"
+        @/cluster
+    
+    ##architecturalLayers{id:system_layers, type:architecture, @comprehensive}
+      "Complete architectural layer dependency mapping"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        "Frontend presentation layer components and utilities"
+        
+        ##components{id:ui_components, @critical}
+          @cluster{primary, type:main_features}
+            "/client/src/components/settings/FileManagementSettings.tsx"
+            "/client/src/components/SettingsSection.tsx"
+          @/cluster
+          @cluster{supporting, type:helpers}
+            "/client/src/components/ui/select.tsx"
+            "/client/src/components/ui/card.tsx"
+            "/client/src/components/ui/form.tsx"
+          @/cluster
+        
+        ##hooks{id:custom_hooks}
+          @cluster{react_hooks, type:state_logic}
+            "/client/src/hooks/useRetentionSettings.ts"
+            "useFormContext from react-hook-form"
+          @/cluster
+        
+        ##types{id:frontend_types}
+          @cluster{typescript_interfaces, type:type_definitions}
+            "RetentionField interface"
+            "RetentionSettingsFormValues"
+            "retentionFields configuration array"
+          @/cluster
+      
+      ##businessLogic{id:backend_layer, type:server_layer}
+        "Server-side business logic and processing"
+        
+        ##routes{id:api_routes, @critical}
+          @cluster{express_handlers, type:route_handlers}
+            "/server/routes/settings-routes.ts"
+            "/server/routes/file-routes.ts (applies policies)"
+          @/cluster
+        
+        ##services{id:business_services, @critical}
+          @cluster{logic_services, type:business_logic}
+            "/server/services/attachment-retention-service.ts"
+          @/cluster
+        
+        ##types{id:shared_types}
+          @cluster{common_types, type:shared_definitions}
+            "/shared/schema.ts - retention fields in UserPreferences"
+            "files table schema with retention fields"
+          @/cluster
+      
+      ##dataLayer{id:persistence_layer, type:data_layer}
+        "Data persistence and storage mechanisms"
+        
+        ##database{id:relational_db, @critical}
+          @cluster{tables, type:schema}
+            "users table - retention preferences"
+            "files table - retention policies"
+            "file_retention_settings table"
+          @/cluster
+          @cluster{operations, type:crud}
+            "UPDATE retention duration preferences"
+            "UPDATE file retention policies"
+            "Schedule deletion dates"
+          @/cluster
+        
+        ##fileSystem{id:file_storage}
+          @cluster{fileManagement, type:cleanup}
+            "Scheduled file deletion based on policies"
+            "File categorization for retention"
+          @/cluster
+    
+    ##errorBoundaries{id:error_management, type:error_system}
+      "Error handling and recovery strategy"
+      
+      ##frontendErrors{id:client_errors, type:ui_errors}
+        @cluster{validationErrors, type:form_validation}
+          "Invalid retention day values"
+          "Negative values (except -1)"
+        @/cluster
+      
+      ##backendErrors{id:server_errors, type:backend_failures}
+        @cluster{serviceErrors, type:retention_failures}
+          "Retention service update failures"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      "Performance optimization strategies"
+      
+      ##backendOptimizations{id:server_performance, type:backend_optimization}
+        @cluster{batchProcessing, type:file_operations}
+          "Batch file retention updates"
+          "Scheduled cleanup jobs"
+        @/cluster
+    
+    ##securityConsiderations{id:security, type:protection_mapping}
+      "Security and privacy protection"
+      
+      ##dataProtection{id:data_security, type:privacy_protection}
+        @cluster{fileRetention, type:data_lifecycle}
+          "Automatic file cleanup for privacy"
+          "Medical document protection (indefinite option)"
+          "Temporary file cleanup"
+        @/cluster
+    
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      "Integration validation and evidence"
+      @processing{
+        status:"active",
+        lastVerified:"2025-01-01T00:00:00Z",
+        verificationMethod:"manual",
+        evidenceLocation:"File retention system actively manages files"
+      }
+    
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "File upload system"
+        "File categorization system"
+        "Background job scheduler"
+      @/cluster
+    
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{affects, type:affected_features}
+        "File storage costs (cleanup reduces storage)"
+        "File availability (deleted after retention)"
+        "Compliance (medical record retention)"
+        "User privacy (automatic cleanup)"
+      @/cluster
+      @cluster{sharedServices, type:shared_logic}
+        "attachmentRetentionService"
+        "File categorization logic"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[errorBoundaries, performanceConsiderations, securityConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

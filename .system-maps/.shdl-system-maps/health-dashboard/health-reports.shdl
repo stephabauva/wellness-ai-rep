@@ -1,0 +1,246 @@
+@context{domain:health_dashboard, feature:health_reports, version:1.0}
+
+#ROOT
+  ##healthReports{id:report_generation, type:feature, @important}
+    "Health report generation and export functionality"
+    
+    ##dataFlowTrace{id:complete_cycle, type:workflow, @critical}
+      "Complete health report generation flow"
+      
+      ##userAction{id:trigger, type:interaction, @active}
+        "User initiates report download"
+        @processing{
+          trigger:"Click 'Download PDF' button",
+          context:"Current dashboard state",
+          timeRange:"Selected period"
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side report generation"
+        
+        ##reportHook{id:report_hook}
+          "useHealthReport custom hook"
+          @file{path:"client/src/hooks/useHealthReport.ts"}
+          @cluster{functionality, type:hook}
+            "downloadHealthReport function"
+            "isDownloadingReport state"
+            "Error handling"
+            "Progress tracking"
+          @/cluster
+        
+        ##dataCollection{id:report_data}
+          "Collect data for report"
+          @processing{
+            sources:[
+              "Current health metrics",
+              "Time range data",
+              "User preferences",
+              "Visibility settings"
+            ],
+            aggregation:"Client-side compilation"
+          }
+        
+        ##reportRequest{id:pdf_generation, @critical}
+          "Request PDF report generation"
+          @processing{
+            endpoint:"/api/health-report/generate",
+            method:"POST",
+            payload:{
+              timeRange: "selected period",
+              categories: "included categories",
+              metrics: "selected metrics",
+              format: "pdf"
+            }
+          }
+      
+      ##backendGeneration{id:server_processing, type:layer}
+        "Server-side report generation"
+        
+        ##dataAggregation{id:report_data_prep}
+          "Aggregate health data for report"
+          @cluster{processing, type:data}
+            "Query health data by range"
+            "Calculate statistics"
+            "Generate trend analysis"
+            "Prepare visualizations"
+          @/cluster
+        
+        ##pdfGeneration{id:pdf_creation}
+          "Generate PDF document"
+          @cluster{components, type:pdf}
+            "Report header with user info"
+            "Executive summary"
+            "Metric sections by category"
+            "Charts and graphs"
+            "Trend analysis"
+            "Recommendations"
+          @/cluster
+        
+        ##templateEngine{id:report_template}
+          "Report template system"
+          @processing{
+            engine:"PDF generation library",
+            templates:"Health report layouts",
+            styling:"Professional formatting",
+            branding:"App branding elements"
+          }
+      
+      ##reportContent{id:content_structure, type:layer}
+        "Report content organization"
+        
+        ##executiveSummary{id:report_summary}
+          "High-level health overview"
+          @cluster{content, type:summary}
+            "Key health indicators"
+            "Period comparison"
+            "Goal progress"
+            "Notable changes"
+          @/cluster
+        
+        ##categoryBreakdown{id:detailed_sections}
+          "Detailed category reports"
+          @cluster{sections, type:content}
+            "Body Composition trends"
+            "Cardiovascular health"
+            "Lifestyle metrics"
+            "Medical indicators"
+            "Advanced metrics"
+          @/cluster
+        
+        ##visualizations{id:report_charts}
+          "Charts and graphs"
+          @cluster{visuals, type:graphics}
+            "Trend line charts"
+            "Progress bars"
+            "Comparison charts"
+            "Distribution graphs"
+          @/cluster
+    
+    ##exportFormats{id:export_options, type:feature}
+      "Multiple export format support"
+      
+      ##pdfExport{id:pdf_format}
+        "PDF report generation"
+        @cluster{features, type:pdf}
+          "Professional layout"
+          "Embedded charts"
+          "Print-friendly"
+          "Digital signatures"
+        @/cluster
+      
+      ##dataExports{id:raw_formats}
+        "Raw data export options"
+        @cluster{formats, type:export}
+          "JSON export"
+          "CSV download"
+          "Excel format"
+          "API integration"
+        @/cluster
+    
+    ##architecturalLayers{id:layers, type:architecture}
+      "Report generation architecture"
+      
+      ##presentationLayer{id:ui_trigger}
+        @cluster{components, type:react}
+          "Download button"
+          "Format selector"
+          "Progress indicator"
+          "Success notification"
+        @/cluster
+      
+      ##generationLayer{id:report_service}
+        @cluster{services, type:backend}
+          "Report generation service"
+          "PDF creation library"
+          "Chart rendering service"
+          "Template engine"
+        @/cluster
+      
+      ##dataLayer{id:report_data}
+        @cluster{data, type:aggregation}
+          "Data query service"
+          "Statistics calculator"
+          "Trend analyzer"
+          "Cache layer"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:performance}
+      "Report generation performance"
+      
+      ##asyncGeneration{id:background_processing}
+        @cluster{strategies, type:performance}
+          "Queue-based generation"
+          "Progress streaming"
+          "Chunked processing"
+          "Result caching"
+        @/cluster
+      
+      ##optimization{id:speed_improvements}
+        @cluster{optimizations, type:efficiency}
+          "Pre-rendered charts"
+          "Data pagination"
+          "Lazy loading"
+          "CDN delivery"
+        @/cluster
+    
+    ##integrationEvidence{id:verified_integration, type:validation}
+      "Report generation integration"
+      
+      ##hookUsage{id:dashboard_integration}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"47",
+          code:"const { downloadHealthReport, isDownloadingReport } = useHealthReport();"
+        }
+      
+      ##buttonImplementation{id:ui_trigger}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"407-413",
+          code:"<Button onClick={() => downloadHealthReport()} ..."
+        }
+      
+      ##hookFile{id:report_hook}
+        @evidence{
+          file:"client/src/hooks/useHealthReport.ts",
+          exists:true,
+          purpose:"Health report generation hook"
+        }
+    
+    ##dependencies{id:feature_dependencies, type:graph}
+      "Report generation dependencies"
+      
+      ##dataDependencies{id:health_data}
+        @cluster{data, type:dependency}
+          "Health metrics data"
+          "Time range selection"
+          "User preferences"
+          "Category definitions"
+        @/cluster
+      
+      ##libraryDependencies{id:generation_libs}
+        @cluster{libraries, type:dependency}
+          "PDF generation library"
+          "Chart rendering library"
+          "Export utilities"
+          "Compression tools"
+        @/cluster
+    
+    ##impacts{id:affected_features, type:graph}
+      "Features impacted by reports"
+      
+      ##dataPortability{id:user_ownership}
+        @cluster{effects, type:impact}
+          "User data ownership"
+          "Healthcare provider sharing"
+          "Personal records"
+          "Compliance support"
+        @/cluster
+      
+      ##insightSharing{id:communication}
+        @cluster{effects, type:impact}
+          "Share health progress"
+          "Medical consultations"
+          "Insurance documentation"
+          "Personal tracking"
+        @/cluster

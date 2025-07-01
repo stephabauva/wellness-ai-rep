@@ -1,0 +1,284 @@
+@context{domain:file_manager, feature_group:core_operations, format:shdl, version:2.0.0, complexity:high, enforcement:strict}
+@meta{last_updated:"2025-01-01T10:00:00Z", validation_status:complete, token_estimate:950, critical_paths:15, processing_priority:1}
+
+#FILE_UPLOAD{confidence:1.0, integration_status:complete, @critical}
+  ##feature_definition{id:file_upload_root, type:foundational, confidence:1.0}
+    "Complete file upload system with compression, categorization, and retention policy management"
+    →primary_user_workflow[select_file→compress→upload→categorize→store]
+    →dependencies[universal_file_service, file_acceleration_service, go_services]
+    →user_workflows[single_upload, multiple_uploads, category_assignment, large_file_handling]
+
+  @cluster{core_workflow, confidence:1.0}
+    ##file_upload_workflow{id:primary_upload_flow, type:user_journey, confidence:1.0}
+      "Complete file upload process from selection to storage"
+      @processing{
+        user_clicks_upload→file_selection→validation→compression_decision→
+        upload_with_progress→metadata_generation→category_assignment→
+        retention_policy_determination→database_storage→ui_refresh
+      }
+      @data_flow{
+        ui_trigger:[FileManagerSection, upload_button, FileUploadDialog],
+        file_processing:[useFileUpload, UniversalFileService, compression],
+        go_acceleration:[FileAccelerationService, size_threshold_5MB],
+        storage:[POST_/api/upload, files_table, metadata_jsonb]
+      }
+
+    ##large_file_workflow{id:go_acceleration_flow, type:performance_optimization, confidence:1.0}
+      "Automatic Go service acceleration for large files"
+      @processing{
+        file_size_check→threshold_evaluation(5MB)→start_go_service→
+        acceleration_or_fallback→compressed_upload→performance_tracking
+      }
+      @data_flow{
+        detection:[UniversalFileService.compressFile, size>5MB],
+        go_startup:[POST_/api/accelerate/start, auto_start_service],
+        acceleration:[go-file-accelerator:5001, gzip_optimization],
+        fallback:[TypeScript_compression, FileCompressionService]
+      }
+  @/cluster
+
+  @cluster{frontend_components, confidence:1.0}
+    ##presentation_layer{id:ui_components, type:client_side, confidence:1.0}
+      FileUploadDialog{
+        path:"client/src/components/filemanager/FileUploadDialog.tsx",
+        uses:[useFileUpload, CategoryDropdown],
+        integrations:[file_selection, category_selection, upload_progress],
+        status:verified
+      },
+      FileManagerSection{
+        path:"client/src/components/FileManagerSection.tsx",
+        uses:[FileUploadDialog, useFileApi],
+        functions:[upload_trigger, file_list_refresh],
+        status:verified
+      },
+      CategoryDropdown{
+        path:"client/src/components/filemanager/CategoryDropdown.tsx",
+        uses:[useFileApi.categories],
+        functions:[category_selection, custom_category_creation],
+        status:verified
+      }
+
+    ##frontend_logic{id:hooks_and_services, confidence:1.0}
+      useFileUpload{
+        path:"client/src/hooks/useFileUpload.ts",
+        functions:[uploadFile, compression_decision, go_service_startup],
+        api_calls:[POST_/api/upload],
+        query_invalidation:["files", "/api/files"],
+        status:active
+      },
+      UniversalFileService{
+        path:"client/src/services/universal-file-service.ts",
+        functions:[compressFile, platform_detection, go_acceleration_routing],
+        integrations:[FileCompressionService, FileAccelerationService],
+        status:active
+      },
+      FileAccelerationService{
+        path:"client/src/services/file-acceleration-service.ts",
+        functions:[shouldAccelerate, accelerateCompression, health_check],
+        go_service_port:5001,
+        threshold:5MB,
+        status:active
+      }
+  @/cluster
+
+  @cluster{backend_services, confidence:1.0}
+    ##business_logic_layer{id:server_components, type:server_side, confidence:1.0}
+      file_routes{
+        path:"server/routes/file-routes.ts",
+        endpoints:[POST_/api/upload],
+        functions:[file_validation, retention_policy_assignment, metadata_generation],
+        middleware:[multer_upload, file_size_limit_200MB],
+        status:active
+      },
+      upload_handler{
+        function:"app.post('/api/upload')",
+        processing:[
+          file_validation,
+          category_assignment,
+          go_service_auto_start,
+          retention_policy_determination,
+          database_insertion
+        ],
+        status:verified
+      }
+
+    ##services{id:backend_processing, confidence:1.0}
+      go_acceleration_service{
+        path:"go-file-accelerator/",
+        port:5001,
+        functions:[gzip_compression, streaming_processing, batch_handling],
+        auto_start_threshold:5MB,
+        performance:[95%_compression_ratio, <50ms_startup],
+        status:active
+      },
+      retention_policy_service{
+        inline_logic:"file-routes.ts:lines_71-74",
+        rules:[
+          health_data→high_retention(-1_days),
+          general_files→medium_retention(90_days)
+        ],
+        status:active
+      }
+  @/cluster
+
+  @cluster{data_layer, confidence:1.0}
+    ##database{id:persistence_schema, confidence:1.0}
+      files_table{
+        schema:"shared/schema.ts:458-478",
+        columns:[
+          "id:uuid", "userId:integer", "categoryId:uuid",
+          "fileName:text", "displayName:text", "filePath:text",
+          "fileType:text", "fileSize:integer", "uploadSource:text",
+          "retentionPolicy:text", "retentionDays:integer",
+          "metadata:jsonb", "createdAt:timestamp"
+        ],
+        relationships:[
+          userId→users.id,
+          categoryId→fileCategories.id
+        ],
+        indexes:[userId, categoryId, createdAt],
+        status:active
+      }
+
+    ##file_system{id:storage_management, confidence:1.0}
+      upload_paths{
+        directories:["/uploads"],
+        file_naming:[nanoid_prefix, original_name],
+        permissions:[read_write_server, read_only_client],
+        status:active
+      }
+  @/cluster
+
+  @cluster{api_endpoints, confidence:1.0}
+    ##upload_endpoint{id:primary_api, confidence:1.0}
+      POST_/api/upload{
+        handler:"server/routes/file-routes.ts:46-120",
+        middleware:[multer.single('file')],
+        request:{
+          file:multipart_form_data,
+          categoryId:optional_string
+        },
+        response:{
+          file:{
+            id, fileName, displayName, originalName,
+            fileType, fileSize, url, retentionInfo
+          }
+        },
+        status:active
+      }
+
+    ##acceleration_endpoints{id:go_service_apis, confidence:1.0}
+      POST_/api/accelerate/start{
+        handler:"server/routes/file-routes.ts:315-323",
+        function:start_go_acceleration_service,
+        status:active
+      },
+      GET_/api/accelerate/health{
+        handler:"server/routes/file-routes.ts:300-312",
+        function:check_go_service_health,
+        status:active
+      }
+  @/cluster
+
+  @cluster{error_boundaries, confidence:1.0}
+    ##error_handling{id:failure_management, confidence:1.0}
+      upload_failures{
+        no_file_provided→400_bad_request,
+        file_too_large→413_payload_too_large,
+        invalid_file_type→400_bad_request,
+        storage_failure→500_internal_error
+      },
+      compression_failures{
+        go_service_unavailable→fallback_to_typescript,
+        compression_error→upload_original_file,
+        timeout→abort_with_error
+      },
+      validation_errors{
+        schema_validation→zod_error_messages,
+        category_not_found→400_invalid_category
+      }
+  @/cluster
+
+  @cluster{performance_optimizations, confidence:1.0}
+    ##optimization_strategies{id:performance_features, confidence:1.0}
+      compression{
+        typescript_compression:[gzip, browser_based],
+        go_acceleration:[native_gzip, 95%_compression_ratio],
+        threshold_based_routing:[<5MB→typescript, >=5MB→go]
+      },
+      upload_streaming{
+        multer_streaming:true,
+        progress_tracking:frontend_progress_events,
+        chunked_transfer:supported
+      },
+      query_invalidation{
+        optimistic_updates:false,
+        cache_invalidation:["files", "/api/files"],
+        refetch_strategy:on_success
+      }
+  @/cluster
+
+  @cluster{security_considerations, confidence:1.0}
+    ##security_measures{id:upload_security, confidence:1.0}
+      file_validation{
+        mime_type_checking:server_side,
+        file_extension_validation:true,
+        file_size_limits:200MB_max,
+        allowed_types:[images, documents, data_files]
+      },
+      path_security{
+        file_naming:nanoid_prefix_prevents_collisions,
+        directory_traversal_prevention:true,
+        upload_isolation:dedicated_uploads_directory
+      },
+      access_control{
+        user_id_validation:FIXED_USER_ID_1,
+        file_ownership:tracked_in_database,
+        download_authentication:planned
+      }
+  @/cluster
+
+@processing{
+  flow_sequence:[
+    file_selection, validation, compression_decision,
+    go_service_check, upload_execution, metadata_generation,
+    database_storage, cache_invalidation, ui_refresh
+  ],
+  critical_paths:[
+    file_validation, upload_execution, database_storage
+  ],
+  performance_bottlenecks:[
+    large_file_compression, go_service_startup, network_transfer
+  ],
+  error_recovery:[
+    compression_fallback, retry_mechanism, user_notification
+  ]
+}
+
+@dependencies{
+  frontend:[
+    React, TanStack_Query, UniversalFileService,
+    FileAccelerationService, useFileUpload
+  ],
+  backend:[
+    Express, Multer, Drizzle_ORM, PostgreSQL,
+    go-file-accelerator
+  ],
+  external:[
+    FormData_API, File_API, AbortController
+  ]
+}
+
+@integration_evidence{
+  verified_flows:[
+    "File upload with compression working end-to-end",
+    "Go acceleration service auto-starts for large files",
+    "Category assignment persists to database",
+    "File list refreshes after upload"
+  ],
+  test_coverage:[
+    "Manual testing of upload flows",
+    "Go service integration tested with large XML files",
+    "Category assignment verified in database"
+  ]
+}

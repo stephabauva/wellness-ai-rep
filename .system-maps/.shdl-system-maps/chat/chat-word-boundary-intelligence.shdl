@@ -1,0 +1,231 @@
+@context{domain:chat, feature:word_boundary_intelligence}
+@meta{
+  featureName:"word-boundary-intelligence",
+  featureGroup:"core-messaging", 
+  parentFile:"./chat-domain.shdl",
+  domain:"chat",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##wordBoundaryIntelligence{id:word_boundary_feature, type:complete_mapping, @comprehensive}
+    "Automatic switch to word-level streaming for responses >2000 chars"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User experience with intelligent streaming modes"
+      @processing{
+        step1:"User receives short AI response (<2000 chars)",
+        step2:"Text streams character by character smoothly",
+        step3:"User receives long AI response (>2000 chars)", 
+        step4:"Text streams word by word for readability",
+        step5:"Natural pacing maintained in both modes"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System implementation of hybrid streaming"
+      @processing{
+        process1:"Analyze incoming content length",
+        process2:"Determine optimal streaming mode",
+        process3:"Prepare content for selected mode",
+        process4:"Execute mode-specific streaming logic",
+        process5:"Maintain natural pacing throughout"
+      }
+    
+    ##dataFlowTrace{id:streaming_mode_flow, type:mode_selection, @critical}
+      "Streaming mode selection and execution"
+      
+      ##modeDetection{id:length_analysis, type:decision, @blocking}
+        "Content length analysis for mode selection"
+        @processing{
+          threshold:2000,
+          decision:"content.length > threshold ? 'word' : 'character'",
+          timing:"On content change"
+        }
+      
+      ##streamingPipeline{id:mode_execution, type:layer, @sequential}
+        "Mode-specific streaming implementation"
+        
+        ##characterMode{id:char_streaming}
+          "Character-by-character streaming"
+          @cluster{implementation, type:streaming_logic}
+            "Index through each character",
+            "Apply timing delays per char",
+            "Update display text incrementally",
+            "Natural punctuation pauses"
+          @/cluster
+          @cluster{benefits, type:user_experience}
+            "Smooth visual flow",
+            "Natural typing effect",
+            "Good for short content",
+            "Familiar ChatGPT-style"
+          @/cluster
+        
+        ##wordMode{id:word_streaming}
+          "Word-by-word streaming"
+          @cluster{implementation, type:streaming_logic}
+            "Split content by whitespace",
+            "Stream complete words",
+            "Calculate delays per word length",
+            "Maintain reading rhythm"
+          @/cluster
+          @cluster{benefits, type:user_experience}
+            "Better for long content",
+            "Easier to read",
+            "Less visual noise",
+            "Faster overall delivery"
+          @/cluster
+        
+        ##hybridLogic{id:mode_switching}
+          "Seamless mode switching logic"
+          @processing{
+            detection:"shouldStreamByWords function",
+            preparation:"prepareWordStreaming splits text",
+            execution:"typeNextToken branches by mode",
+            state:"streamingMode tracks current mode"
+          }
+      
+      ##timingCalculations{id:word_timing, type:layer}
+        "Word-mode timing calculations"
+        @cluster{delay_formula, type:algorithm}
+          "Base: avgCharDelay * wordLength",
+          "Add punctuation delays",
+          "Add word spacing (25ms)",
+          "Apply randomization"
+        @/cluster
+        @cluster{timing_goals, type:performance}
+          "Maintain character-mode feel",
+          "Natural word boundaries",
+          "Readable pace",
+          "Consistent throughput"
+        @/cluster
+
+    ##architecturalLayers{id:architecture, type:dependency_analysis}
+      "Word boundary intelligence architecture"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        ##components{id:streaming_components, @critical}
+          @cluster{primary, type:implementation}
+            "SmoothStreamingText.tsx - All logic"
+          @/cluster
+        
+        ##streamingState{id:mode_state}
+          @cluster{state_structure, type:react_state}
+            "streamingMode object:",
+            "- mode: 'character' | 'word'",
+            "- threshold: 2000",
+            "- words: string[]",
+            "- wordIndex: number"
+          @/cluster
+        
+        ##modeFunctions{id:streaming_functions}
+          @cluster{core_functions, type:algorithms}
+            "shouldStreamByWords - Mode decision",
+            "prepareWordStreaming - Word splitting",
+            "getWordStreamingDelay - Timing calc",
+            "hybridStreaming - Mode selector",
+            "typeNextToken - Unified renderer"
+          @/cluster
+      
+      ##algorithmLayer{id:intelligence_layer, type:decision_layer}
+        ##thresholdLogic{id:threshold_decision}
+          @cluster{decision_factors, type:heuristics}
+            "Fixed 2000 char threshold",
+            "Could be dynamic in future",
+            "Consider content type",
+            "User preference override"
+          @/cluster
+        
+        ##wordProcessing{id:word_preparation}
+          @cluster{processing_steps, type:text_parsing}
+            "Split by /\\s+/ regex",
+            "Filter empty strings",
+            "Preserve punctuation",
+            "Maintain word order"
+          @/cluster
+
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      "Performance benefits of word streaming"
+      
+      ##renderingEfficiency{id:word_mode_performance}
+        @cluster{benefits, type:performance_gains}
+          "Fewer setState calls",
+          "Larger text chunks",
+          "Reduced re-renders",
+          "Better for long content"
+        @/cluster
+      
+      ##memoryUsage{id:memory_optimization}
+        @cluster{memory_efficiency, type:resource_usage}
+          "Word array pre-computed",
+          "Single pass splitting",
+          "No string accumulation",
+          "Efficient indexing"
+        @/cluster
+
+    ##userExperience{id:ux_benefits, type:user_impact}
+      "User experience improvements"
+      
+      ##readability{id:reading_experience}
+        @cluster{improvements, type:ux_enhancement}
+          "Complete words appear",
+          "No mid-word breaks",
+          "Natural reading flow",
+          "Less eye strain"
+        @/cluster
+      
+      ##perceivedPerformance{id:speed_perception}
+        @cluster{perception, type:user_feeling}
+          "Feels faster for long text",
+          "Still natural pacing",
+          "Efficient information delivery",
+          "Professional appearance"
+        @/cluster
+
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      ##implementationStatus{id:feature_status, type:status_tracking}
+        @processing{
+          status:"active",
+          lastVerified:"2025-01-01T00:00:00Z",
+          verificationMethod:"manual",
+          evidenceLocation:"SmoothStreamingText.tsx:hybridStreaming"
+        }
+      
+      ##codeEvidence{id:implementation_proof}
+        @cluster{implementation, type:code_references}
+          "shouldStreamByWords (line 252)",
+          "prepareWordStreaming (line 256)",
+          "getWordStreamingDelay (lines 261-287)",
+          "Word mode execution (lines 296-323)"
+        @/cluster
+
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "Smooth Streaming Text",
+        "Natural Timing Variations",
+        "Message Streaming"
+      @/cluster
+      @cluster{algorithms, type:text_processing}
+        "String split by whitespace",
+        "Array indexing"
+      @/cluster
+
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{improves, type:enhancements}
+        "Long message readability",
+        "Streaming performance",
+        "User comprehension",
+        "Overall UX"
+      @/cluster
+      @cluster{coordinates_with, type:related_features}
+        "Natural Timing Variations",
+        "Enhanced Cursor Animations",
+        "Content adaptation logic"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[performanceConsiderations, userExperience],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

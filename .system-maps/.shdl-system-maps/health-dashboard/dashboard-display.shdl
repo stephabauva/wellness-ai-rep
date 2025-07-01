@@ -1,0 +1,280 @@
+@context{domain:health_dashboard, feature:dashboard_display, version:1.0}
+
+#ROOT
+  ##dashboardDisplay{id:health_dashboard_main, type:feature, @critical}
+    "Main health dashboard display showing overview of all health metrics"
+    
+    ##dataFlowTrace{id:complete_cycle, type:workflow, @critical}
+      "Complete request/response cycle for dashboard display"
+      
+      ##userAction{id:trigger, type:interaction, @blocking}
+        "User navigates to health dashboard section"
+        @processing{
+          navigation:"Sidebar → Health button click",
+          component_activation:"HealthDataSection component mount"
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side dashboard rendering and data fetching"
+        
+        ##triggerComponent{id:initiator}
+          "HealthDataSection component initialization"
+          @file{path:"client/src/components/HealthDataSection.tsx"}
+          @ref:eventHandlers
+        
+        ##eventHandlers{id:handlers}
+          @cluster{functions, type:handlers}
+            "useEffect for initial data load"
+            "setTimeRange handler"
+            "setActiveCategory handler"
+          @/cluster
+        
+        ##stateChanges{id:react_state}
+          @cluster{updates, type:react_state}
+            "timeRange state (default: '7days')"
+            "activeCategory state (default: 'overview')"
+            "isLoading state from useHealthDataApi"
+            "categorizedData from useHealthDataApi"
+          @/cluster
+        
+        ##reactQueryHooks{id:query_system}
+          @cluster{hooks, type:tanstack_query}
+            "useHealthDataApi custom hook"
+            "queryKey: ['/api/health-data/categories', timeRange]"
+            "useHealthVisibilitySettings hook"
+            "queryKey: ['/api/health-consent/visibility']"
+          @/cluster
+        
+        ##apiCalls{id:network_requests, @critical}
+          "Multiple API calls for dashboard data"
+          @processing{
+            endpoints:[
+              "/api/health-data/categories?range={timeRange}",
+              "/api/health-consent/visibility"
+            ],
+            method:"GET",
+            requestPayload:"Query parameters only"
+          }
+      
+      ##networkLayer{id:transport, type:layer}
+        "Network routing to health endpoints"
+        @processing{
+          requestRoute:"GET /api/health-data/categories",
+          routeHandler:"health-routes.ts → app.get('/api/health-data/categories')"
+        }
+        @cluster{middlewares, type:processing}
+          "Authentication middleware (assumed)"
+          "CORS handling"
+        @/cluster
+      
+      ##backendFlow{id:server_processing, type:layer, @sequential}
+        "Server-side health data aggregation"
+        
+        ##routeHandler{id:entry_point}
+          "health-routes.ts categorized data endpoint"
+          @file{path:"server/routes/health-routes.ts", lines:"82-98"}
+          @ref:servicesCalled
+        
+        ##servicesCalled{id:business_logic}
+          @cluster{services, type:business_logic}
+            "storage.getHealthData(userId, range)"
+            "Data categorization logic"
+          @/cluster
+        
+        ##databaseOperations{id:data_layer, @critical}
+          "Health data retrieval from database"
+          @cluster{queries, type:sql}
+            "SELECT from health_data WHERE userId = ? AND timestamp > ?"
+            "ORDER BY timestamp DESC"
+          @/cluster
+          @cluster{tables, type:schema}
+            "health_data table"
+            "users table (for preferences)"
+          @/cluster
+          @cluster{operations, type:crud}
+            "READ operations only"
+          @/cluster
+      
+      ##responseFlow{id:response_processing, type:layer}
+        "Data transformation and response"
+        @processing{
+          transformation:"Group health data by category",
+          format:"Categorized JSON structure"
+        }
+        @cluster{responseStructure, type:data}
+          {
+            "body_composition": [...metrics],
+            "cardiovascular": [...metrics],
+            "lifestyle": [...metrics],
+            "medical": [...metrics],
+            "advanced": [...metrics]
+          }
+        @/cluster
+      
+      ##frontendReceive{id:client_update, type:layer}
+        "Frontend receives and processes dashboard data"
+        @processing{
+          dataProcessing:"Transform categorized data for display",
+          stateUpdate:"Update React state with new data",
+          rendering:"Render dashboard components"
+        }
+        @cluster{components, type:react}
+          "HealthMetricsCard components for each category"
+          "KeyMetricsOverview component"
+          "Tabs for category navigation"
+        @/cluster
+    
+    ##architecturalLayers{id:layers, type:architecture}
+      "Complete architectural layer mapping"
+      
+      ##presentationLayer{id:ui_components}
+        @cluster{components, type:react}
+          "HealthDataSection.tsx - Main dashboard container"
+          "HealthMetricsCard.tsx - Individual metric cards"
+          "KeyMetricsOverview.tsx - Top metrics display"
+          "Tabs component - Category navigation"
+          "Skeleton components - Loading states"
+        @/cluster
+        @cluster{styling, type:ui}
+          "Tailwind CSS classes"
+          "Shadcn/ui components"
+          "Responsive grid layouts"
+        @/cluster
+      
+      ##businessLogicLayer{id:data_processing}
+        @cluster{hooks, type:react_hooks}
+          "useHealthDataApi - Data fetching and caching"
+          "useHealthVisibilitySettings - User preferences"
+          "useMemo - Data transformation optimization"
+        @/cluster
+        @cluster{utilities, type:helpers}
+          "Date range calculations"
+          "Metric categorization logic"
+          "Data aggregation functions"
+        @/cluster
+      
+      ##dataAccessLayer{id:api_integration}
+        @cluster{endpoints, type:rest_api}
+          "/api/health-data/categories - Categorized data"
+          "/api/health-data - Raw health data"
+          "/api/health-consent/visibility - User preferences"
+        @/cluster
+        @cluster{storage, type:backend_service}
+          "storage.getHealthData() - Database abstraction"
+          "Query builders for date ranges"
+        @/cluster
+      
+      ##integrationLayer{id:external_systems}
+        @cluster{database, type:postgresql}
+          "health_data table - Main data storage"
+          "users table - User preferences"
+          "Drizzle ORM for queries"
+        @/cluster
+    
+    ##errorBoundaries{id:error_handling, type:reliability}
+      "Error handling at each layer"
+      
+      ##frontendErrors{id:ui_errors}
+        @cluster{handling, type:error_boundary}
+          "Loading error states with retry"
+          "Empty data states with guidance"
+          "Network error toasts"
+        @/cluster
+      
+      ##backendErrors{id:api_errors}
+        @cluster{handling, type:error_response}
+          "500 status for database errors"
+          "400 status for invalid parameters"
+          "Error logging to console"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:performance}
+      "Performance optimizations implemented"
+      
+      ##caching{id:data_caching}
+        @cluster{strategies, type:cache}
+          "React Query caching with staleTime"
+          "Memoized data transformations"
+          "Component-level memoization"
+        @/cluster
+      
+      ##dataFetching{id:efficient_loading}
+        @cluster{strategies, type:optimization}
+          "Categorized endpoint reduces payload"
+          "Time range filtering at database level"
+          "Parallel API calls for independent data"
+        @/cluster
+    
+    ##securityConsiderations{id:security, type:protection}
+      "Security measures for health data"
+      
+      ##authentication{id:auth_check}
+        @cluster{validation, type:security}
+          "User authentication required"
+          "userId extracted from session"
+          "Health data filtered by userId"
+        @/cluster
+      
+      ##dataPrivacy{id:privacy_controls}
+        @cluster{consent, type:privacy}
+          "Visibility settings respected"
+          "Category-level access control"
+          "Metric-level filtering"
+        @/cluster
+    
+    ##integrationEvidence{id:verified_integration, type:validation}
+      "Evidence of working integration"
+      
+      ##componentIntegration{id:ui_data_flow}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"45-47",
+          code:"const { categorizedData, allHealthData, isLoading, refetchHealthData } = useHealthDataApi(timeRange);"
+        }
+      
+      ##apiIntegration{id:backend_endpoint}
+        @evidence{
+          file:"health-routes.ts",
+          lines:"82-98",
+          code:"app.get('/api/health-data/categories', async (req, res) => {...})"
+        }
+      
+      ##databaseIntegration{id:data_storage}
+        @evidence{
+          file:"schema.ts",
+          lines:"87-108",
+          code:"export const healthData = pgTable('health_data', {...})"
+        }
+    
+    ##dependencies{id:feature_dependencies, type:graph}
+      "Features and systems this depends on"
+      
+      ##internalDependencies{id:same_domain}
+        @cluster{health_features, type:dependency}
+          "Health Data Import - Provides data"
+          "Health Category Management - Defines categories"
+          "Data Visibility Settings - Controls display"
+        @/cluster
+      
+      ##externalDependencies{id:other_domains}
+        @cluster{infrastructure, type:dependency}
+          "Authentication System - User context"
+          "Database System - Data storage"
+          "React Query - Data fetching"
+        @/cluster
+    
+    ##impacts{id:affected_features, type:graph}
+      "Features affected by this component"
+      
+      ##directImpacts{id:immediate_effects}
+        @cluster{features, type:impact}
+          "All visualization components depend on this"
+          "Health reports use dashboard data"
+          "AI coaching references dashboard metrics"
+        @/cluster
+      
+      ##indirectImpacts{id:cascading_effects}
+        @cluster{features, type:impact}
+          "Memory system stores dashboard interactions"
+          "File exports include dashboard snapshots"
+        @/cluster

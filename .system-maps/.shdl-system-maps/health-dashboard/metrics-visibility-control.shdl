@@ -1,0 +1,231 @@
+@context{domain:health_dashboard, feature:metrics_visibility_control, version:1.0}
+
+#ROOT
+  ##metricsVisibilityControl{id:visibility_management, type:feature, @critical}
+    "Control which health metrics are visible on dashboard"
+    
+    ##dataFlowTrace{id:complete_cycle, type:workflow, @critical}
+      "Complete visibility control workflow"
+      
+      ##userAction{id:trigger, type:interaction, @active}
+        "User manages metric visibility"
+        @processing{
+          triggers:[
+            "Add Metrics button click",
+            "Remove Metrics mode",
+            "Settings configuration"
+          ]
+        }
+      
+      ##frontendFlow{id:client_processing, type:layer, @sequential}
+        "Client-side visibility management"
+        
+        ##addMetricsModal{id:add_metrics_ui}
+          "AddMetricsModal component"
+          @file{path:"client/src/components/health/AddMetricsModal.tsx"}
+          @cluster{features, type:ui}
+            "Available metrics list"
+            "Search/filter functionality" 
+            "Category grouping"
+            "Bulk selection"
+          @/cluster
+        
+        ##removalMode{id:remove_metrics_ui}
+          "Metric removal interface"
+          @evidence{
+            file:"HealthDataSection.tsx",
+            lines:"42-44",
+            code:"const [isRemovalMode, setIsRemovalMode] = useState<boolean>(false);"
+          }
+          @cluster{features, type:interaction}
+            "Checkbox overlays on metrics"
+            "Multi-select capability"
+            "Batch removal action"
+            "Visual mode indicators"
+          @/cluster
+        
+        ##visibilityHook{id:settings_hook}
+          "useHealthVisibilitySettings hook"
+          @file{path:"client/src/hooks/useHealthVisibilitySettings.ts"}
+          @processing{
+            query:"Fetch current settings",
+            mutation:"Update visibility",
+            cache:"React Query caching"
+          }
+      
+      ##visibilityAPI{id:backend_processing, type:layer}
+        "Backend visibility management"
+        
+        ##settingsEndpoint{id:visibility_api}
+          "Visibility settings endpoints"
+          @evidence{
+            file:"health-routes.ts",
+            lines:"251-272",
+            code:"app.get('/api/health-consent/visibility', ...)"
+          }
+          @cluster{endpoints, type:api}
+            "GET /api/health-consent/visibility"
+            "PATCH /api/health-consent/visibility"
+          @/cluster
+        
+        ##dataStructure{id:visibility_schema}
+          "Visibility settings structure"
+          @cluster{schema, type:data}
+            {
+              visible_categories: ["array of categories"],
+              hidden_categories: ["array of categories"],
+              dashboard_preferences: {
+                visible_metrics: ["array of metrics"],
+                hidden_metrics: ["array of metrics"],
+                metric_order: ["ordered array"]
+              }
+            }
+          @/cluster
+        
+        ##persistenceLogic{id:settings_storage}
+          "Store visibility preferences"
+          @processing{
+            storage:"User preferences JSON",
+            merge:"Partial updates supported",
+            validation:"Schema validation"
+          }
+      
+      ##visibilityApplication{id:display_filtering, type:layer}
+        "Apply visibility settings"
+        
+        ##componentFiltering{id:metric_filtering}
+          "Filter metrics in components"
+          @evidence{
+            file:"HealthMetricsCard.tsx",
+            lines:"102-120",
+            code:"const filteredMetrics = visibilitySettings ? ..."
+          }
+          @processing{
+            logic:"Check hidden_metrics array",
+            cascade:"Apply to all views",
+            consistency:"Dashboard-wide"
+          }
+        
+        ##keyMetricsFiltering{id:overview_filtering}
+          "Filter in KeyMetricsOverview"
+          @evidence{
+            file:"KeyMetricsOverview.tsx",
+            lines:"229-240",
+            code:"const visibleMetrics = currentSettings.dashboard_preferences.visible_metrics"
+          }
+        
+        ##categoryRespect{id:category_visibility}
+          "Respect category-level hiding"
+          @processing{
+            hierarchy:"Category > Metric",
+            inheritance:"Hidden category hides all metrics",
+            override:"Explicit metric visibility"
+          }
+    
+    ##architecturalLayers{id:layers, type:architecture}
+      "Visibility control architecture"
+      
+      ##presentationLayer{id:ui_components}
+        @cluster{components, type:react}
+          "AddMetricsModal.tsx"
+          "RemoveMetricsModal.tsx"
+          "MetricsVisibilityCard.tsx"
+          "Visibility checkboxes"
+        @/cluster
+      
+      ##stateManagement{id:visibility_state}
+        @cluster{state, type:management}
+          "React Query for server state"
+          "Component state for UI"
+          "Optimistic updates"
+          "Cache invalidation"
+        @/cluster
+      
+      ##dataLayer{id:settings_persistence}
+        @cluster{storage, type:database}
+          "User preferences table"
+          "JSON column for settings"
+          "Atomic updates"
+          "Default values"
+        @/cluster
+    
+    ##userExperience{id:ux_features, type:interaction}
+      "Visibility control UX"
+      
+      ##discoveryFeatures{id:metric_discovery}
+        @cluster{features, type:ux}
+          "Browse available metrics"
+          "Search functionality"
+          "Category organization"
+          "Metric descriptions"
+        @/cluster
+      
+      ##bulkOperations{id:efficiency}
+        @cluster{operations, type:bulk}
+          "Select all/none"
+          "Category-level toggle"
+          "Preset configurations"
+          "Import/export settings"
+        @/cluster
+    
+    ##integrationEvidence{id:verified_integration, type:validation}
+      "Visibility control integration"
+      
+      ##modalUsage{id:dashboard_integration}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"347",
+          code:"<AddMetricsModal />"
+        }
+      
+      ##removalMode{id:removal_implementation}
+        @evidence{
+          file:"HealthDataSection.tsx",
+          lines:"348-365",
+          code:"Remove Metrics button and mode handling"
+        }
+      
+      ##apiEndpoints{id:backend_support}
+        @evidence{
+          file:"health-routes.ts",
+          lines:"251-310",
+          code:"Visibility endpoints implementation"
+        }
+    
+    ##dependencies{id:feature_dependencies, type:graph}
+      "Visibility control dependencies"
+      
+      ##dataDependencies{id:settings_data}
+        @cluster{data, type:dependency}
+          "User preferences"
+          "Metric definitions"
+          "Category mappings"
+          "Default settings"
+        @/cluster
+      
+      ##uiDependencies{id:components}
+        @cluster{ui, type:dependency}
+          "Modal components"
+          "Checkbox components"
+          "State management"
+          "API hooks"
+        @/cluster
+    
+    ##impacts{id:affected_features, type:graph}
+      "Features impacted by visibility"
+      
+      ##dashboardCustomization{id:personalization}
+        @cluster{effects, type:impact}
+          "Personalized dashboards"
+          "Focused metric tracking"
+          "Reduced clutter"
+          "User preferences"
+        @/cluster
+      
+      ##performanceImpact{id:efficiency}
+        @cluster{effects, type:impact}
+          "Fewer components rendered"
+          "Reduced data queries"
+          "Faster load times"
+          "Better mobile experience"
+        @/cluster

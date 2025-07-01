@@ -1,0 +1,211 @@
+@context{domain:file_manager, feature_group:sharing_export, format:shdl, version:2.0.0, complexity:medium, enforcement:strict}
+@meta{last_updated:"2025-01-01T10:00:00Z", validation_status:complete, token_estimate:700, critical_paths:6, processing_priority:2}
+
+#WEB_SHARE{confidence:1.0, integration_status:complete, @standard}
+  ##feature_definition{id:web_share_root, type:sharing_system, confidence:1.0}
+    "Native web share API integration for file sharing"
+    →primary_user_workflow[select_files→click_share→native_share_dialog]
+    →dependencies[web_share_api, file_sharing_hook, browser_support]
+    →user_workflows[single_file_share, multiple_file_share, fallback_handling]
+
+  @cluster{core_workflow, confidence:1.0}
+    ##share_workflow{id:primary_share_flow, type:user_interaction, confidence:1.0}
+      "Web Share API file sharing process"
+      @processing{
+        select_files→click_share_button→check_api_support→
+        prepare_share_data→invoke_native_share→handle_result
+      }
+      @data_flow{
+        trigger:[FileActionsToolbar, share_button],
+        hook:[useFileSharing, shareSelectedFiles],
+        api:[navigator.share, browser_native],
+        fallback:[download_links, manual_copy]
+      }
+
+    ##multi_file_workflow{id:bulk_share_flow, type:batch_operation, confidence:0.8}
+      "Multiple file sharing strategy"
+      @processing{
+        multiple_selection→generate_download_urls→create_share_bundle→
+        share_as_text_or_files
+      }
+      @current_implementation{
+        strategy:"share_download_links_as_text",
+        limitation:"not_sharing_actual_files",
+        reason:"web_share_api_constraints"
+      }
+  @/cluster
+
+  @cluster{frontend_implementation, confidence:1.0}
+    ##share_hook{id:file_sharing_logic, type:custom_hook, confidence:1.0}
+      useFileSharing{
+        path:"client/src/hooks/useFileSharing.ts",
+        functions:{
+          shareSelectedFiles:"Main share function",
+          generateShareData:"Prepare share payload",
+          checkShareSupport:"API availability check"
+        },
+        state:[
+          "isSharing",
+          "shareError",
+          "shareSuccess"
+        ],
+        status:active
+      },
+      share_data_preparation{
+        single_file:{
+          title:"file.displayName",
+          text:"Share file: {name}",
+          url:"download_link"
+        },
+        multiple_files:{
+          title:"Sharing {count} files",
+          text:"Download links:\n{links}",
+          files:"not_currently_implemented"
+        }
+      }
+
+    ##ui_integration{id:share_controls, confidence:1.0}
+      FileActionsToolbar{
+        share_button:{
+          icon:"Share2",
+          enabled:"selectedFilesCount > 0",
+          onClick:"onShare callback",
+          tooltip:"Share selected files"
+        },
+        visual_state:{
+          loading:"button disabled during share",
+          success:"brief success indicator",
+          error:"error toast notification"
+        }
+      }
+  @/cluster
+
+  @cluster{browser_compatibility, confidence:1.0}
+    ##api_support{id:web_share_availability, confidence:1.0}
+      detection{
+        check:"'share' in navigator",
+        timing:"runtime detection",
+        caching:"per session"
+      },
+      requirements{
+        https_required:true,
+        mobile_support:"excellent",
+        desktop_support:"limited (Chrome, Edge, Safari)",
+        file_sharing:"navigator.canShare({files})"
+      }
+
+    ##fallback_strategies{id:no_api_fallback, confidence:0.9}
+      current_fallback{
+        implementation:"toast_with_download_links",
+        user_action:"manual_copy_paste",
+        limitation:"less_seamless"
+      },
+      potential_improvements{
+        clipboard_api:"copy_links_to_clipboard",
+        mailto_links:"email_with_attachments",
+        custom_modal:"share_options_dialog"
+      }
+  @/cluster
+
+  @cluster{share_data_format, confidence:1.0}
+    ##data_structure{id:share_payload, confidence:1.0}
+      web_share_api_format{
+        title:"string (optional)",
+        text:"string (optional)",
+        url:"string (optional)",
+        files:"File[] (optional)"
+      },
+      current_usage{
+        title:"dynamic based on selection",
+        text:"file names and descriptions",
+        url:"single file download link",
+        files:"not_used_currently"
+      }
+  @/cluster
+
+  @cluster{error_handling, confidence:1.0}
+    ##share_errors{id:failure_scenarios, confidence:1.0}
+      api_unavailable{
+        detection:"feature detection",
+        handling:"fallback to alternative",
+        user_feedback:"explanatory message"
+      },
+      user_cancellation{
+        detection:"promise rejection",
+        handling:"silent failure",
+        state_cleanup:"reset sharing state"
+      },
+      share_failure{
+        causes:["permission_denied", "invalid_data"],
+        handling:"error toast",
+        recovery:"offer alternatives"
+      }
+  @/cluster
+
+  @cluster{security_considerations, confidence:1.0}
+    ##share_security{id:data_protection, confidence:1.0}
+      url_generation{
+        current:"/uploads/{fileName}",
+        authentication:"not_implemented",
+        expiration:"permanent_links",
+        risk:"unauthorized_access"
+      },
+      future_improvements{
+        signed_urls:"time_limited_access",
+        share_tokens:"trackable_shares",
+        permissions:"recipient_based_access"
+      }
+  @/cluster
+
+  @cluster{user_experience, confidence:1.0}
+    ##ux_features{id:sharing_experience, confidence:1.0}
+      native_integration{
+        advantage:"familiar OS share sheet",
+        apps_available:"all installed share targets",
+        seamless:"no custom UI needed"
+      },
+      feedback{
+        loading:"button state change",
+        success:"native OS confirmation",
+        error:"toast notification"
+      }
+  @/cluster
+
+@processing{
+  flow_sequence:[
+    file_selection, share_trigger, api_check,
+    data_preparation, native_share_invocation,
+    result_handling, state_cleanup
+  ],
+  critical_paths:[
+    api_availability_check, fallback_handling
+  ],
+  async_operations:[
+    share_api_call, state_updates
+  ]
+}
+
+@dependencies{
+  frontend:[
+    React, Web_Share_API, useFileSharing,
+    FileActionsToolbar
+  ],
+  browser:[
+    navigator.share, HTTPS_requirement
+  ]
+}
+
+@integration_evidence{
+  verified_flows:[
+    "Share button enables with selection",
+    "Web Share API detection works",
+    "Single file sharing functional",
+    "Multiple file link sharing works",
+    "Fallback for unsupported browsers"
+  ],
+  limitations_identified:[
+    "No actual file sharing (only URLs)",
+    "No authentication on shared links",
+    "Limited desktop browser support"
+  ]
+}

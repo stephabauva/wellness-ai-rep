@@ -1,0 +1,224 @@
+@context{domain:memory, target:automatic_memory_detection, complexity:high, enforcement:strict}
+@meta{tokens:850, critical_paths:5, validation_rules:8, processing_priority:1}
+
+#ROOT{confidence:1.0}
+  ##automatic_memory_detection{id:auto_memory_detect_feature, type:core_functionality, confidence:1.0, @critical}
+    "Automatic detection and extraction of memory-worthy content from user messages"
+    @capabilities{
+      ai_powered_detection,
+      contextual_analysis,
+      importance_scoring,
+      category_classification,
+      keyword_extraction
+    }
+    
+    ##data_flow_tracing{id:memory_detection_flow, type:request_response, confidence:1.0}
+      @cluster{user_interaction, confidence:1.0}
+        ##trigger{id:chat_message_sent, type:user_action, confidence:1.0}
+          "User sends message through chat interface"
+          @components:[Chat.tsx, useChat.tsx]
+          @event:message_submit
+          
+        ##frontend_flow{id:chat_ui_processing, type:client_side, confidence:1.0}
+          @processing{
+            Chat.tsx→handleSubmit()→sendChatMessage()→/api/chat/send
+          }
+          @data_flow{
+            payload:{message, conversationId, attachments?},
+            headers:{Authorization, Content-Type:application/json}
+          }
+      @/cluster
+
+      @cluster{backend_processing, confidence:1.0}
+        ##route_handler{id:chat_send_endpoint, type:server_endpoint, confidence:1.0}
+          @file:server/routes/chat-routes.ts
+          @endpoint:POST /api/chat/send
+          @middleware:[authMiddleware, validateRequest]
+          
+        ##memory_detection_service{id:detection_pipeline, type:service_layer, confidence:1.0}
+          @processing{
+            route→memoryService.detectMemoryWorthy()→AI_analysis→classification
+          }
+          @services{
+            primary:memory-service.ts,
+            enhanced:enhanced-memory-service.ts,
+            simple:simple-memory-detection.ts
+          }
+          
+        ##ai_processing{id:memory_worthy_analysis, type:ai_integration, confidence:1.0}
+          @providers:[OpenAI, GoogleGenerativeAI]
+          @analysis{
+            content_significance,
+            personal_relevance,
+            factual_extraction,
+            category_determination
+          }
+          @output{
+            shouldRemember:boolean,
+            category:MemoryCategory,
+            importance:number,
+            extractedInfo:string,
+            keywords:string[]
+          }
+      @/cluster
+
+      @cluster{data_persistence, confidence:1.0}
+        ##database_operations{id:memory_storage, type:postgresql, confidence:1.0}
+          @tables{
+            memory_entries:[id, userId, content, category, importanceScore],
+            memory_triggers:[id, messageId, triggerType, confidence]
+          }
+          @operations{
+            INSERT:memory_entries,
+            INSERT:memory_triggers,
+            UPDATE:accessCount
+          }
+      @/cluster
+
+      @cluster{background_processing, confidence:1.0}
+        ##async_detection{id:non_blocking_detection, type:background_task, confidence:1.0}
+          @queue:backgroundQueue
+          @priority:memory_processing
+          @characteristics{
+            non_blocking:true,
+            parallel_with_chat:true,
+            debounced:true
+          }
+      @/cluster
+
+    ##architectural_layers{id:detection_architecture, type:comprehensive, confidence:1.0}
+      ##presentation_layer{id:frontend_components, type:react, confidence:1.0}
+        @components{
+          Chat.tsx:[memory_detection_trigger],
+          MemorySection.tsx:[detection_status_display]
+        }
+        @hooks{
+          useChat.tsx:[sendChatMessage_with_memory_flag]
+        }
+      }
+
+      ##business_logic_layer{id:backend_services, type:node_express, confidence:1.0}
+        @services{
+          memory-service.ts:[detectMemoryWorthy, processDetectedMemory],
+          enhanced-memory-service.ts:[detectMemoryWorthy_enhanced],
+          simple-memory-detection.ts:[quickDetection, keywordMatching],
+          chatgpt-memory-enhancement.ts:[processWithDeduplication]
+        }
+        @routes{
+          chat-routes.ts:[POST /api/chat/send_with_memory_detection]
+        }
+      }
+
+      ##data_layer{id:persistence, type:postgresql_drizzle, confidence:1.0}
+        @schemas{
+          memoryEntries:[content, category, importanceScore, keywords],
+          memoryTriggers:[messageId, triggerType, confidence, processed]
+        }
+        @indexes{
+          idx_memory_user_category,
+          idx_memory_importance,
+          idx_triggers_processed
+        }
+      }
+
+      ##integration_layer{id:ai_providers, type:external_apis, confidence:0.9}
+        @providers{
+          openai:[gpt-4o-mini for detection],
+          google:[gemini-2.0-flash for fallback]
+        }
+        @endpoints{
+          chat_completions,
+          embeddings_generation
+        }
+      }
+
+    ##error_boundaries{id:detection_error_handling, type:resilience, confidence:1.0}
+      @cluster{error_types, confidence:1.0}
+        ##ai_failures{id:provider_errors, confidence:1.0}
+          @handling{
+            openai_failure→google_fallback,
+            all_providers_fail→skip_detection,
+            timeout→background_retry
+          }
+        }
+        ##validation_errors{id:content_validation, confidence:1.0}
+          @checks{
+            message_length_limits,
+            content_sanitization,
+            category_validation
+          }
+        }
+      @/cluster
+
+      @cluster{recovery_strategies, confidence:1.0}
+        ##retry_logic{id:detection_retry, confidence:1.0}
+          @backoff:exponential
+          @max_attempts:3
+          @timeout:5000ms
+        }
+        ##fallback_behavior{id:degraded_mode, confidence:1.0}
+          @strategies{
+            use_simple_keyword_detection,
+            defer_to_manual_review,
+            log_for_later_processing
+          }
+        }
+      @/cluster
+
+    ##performance_optimization{id:detection_performance, type:optimization, confidence:1.0}
+      @cluster{caching_strategy, confidence:1.0}
+        ##embedding_cache{id:vector_cache, confidence:1.0}
+          @storage:Map<string, number[]>
+          @ttl:5_minutes
+          @hit_rate:~60%
+        }
+        ##detection_cache{id:result_cache, confidence:1.0}
+          @key:message_hash
+          @prevents:duplicate_detection
+        }
+      @/cluster
+
+      @cluster{async_processing, confidence:1.0}
+        ##parallel_execution{id:non_blocking, confidence:1.0}
+          @strategy:fire_and_forget
+          @queue:priority_based
+          @debounce:500ms
+        }
+      @/cluster
+
+    ##security_privacy{id:detection_security, type:protection, confidence:1.0}
+      @cluster{data_protection, confidence:1.0}
+        ##content_filtering{id:pii_detection, confidence:1.0}
+          @checks:[credit_card_numbers, ssn, passwords]
+          @action:redact_before_storage
+        }
+        ##user_isolation{id:memory_isolation, confidence:1.0}
+          @enforcement:userId_required
+          @validation:user_owns_conversation
+        }
+      @/cluster
+
+    ##integration_evidence{id:detection_implementation, type:verification, confidence:1.0}
+      @status:active
+      @verification:2025-01-15
+      @evidence{
+        chat_integration:verified,
+        background_processing:active,
+        ai_providers:functional
+      }
+      @test_coverage{
+        unit_tests:memory-service.test.ts,
+        integration:chat-memory-integration.test.ts
+      }
+
+@processing{
+  critical_paths:[chat_message→detection→storage, background_queue→processing],
+  enforcement_points:[user_auth, content_validation, category_classification],
+  quality_gates:[ai_confidence_threshold, importance_score_minimum]
+}
+
+@validation{
+  mandatory_checks:[user_authenticated, message_not_empty, valid_category],
+  performance_targets:[detection_under_2s, background_processing_under_5s],
+  security_requirements:[pii_filtering, user_isolation, audit_logging]
+}

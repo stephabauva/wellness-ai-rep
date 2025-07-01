@@ -1,0 +1,259 @@
+@context{domain:file_manager, feature_group:advanced_processing, format:shdl, version:2.0.0, complexity:high, enforcement:strict}
+@meta{last_updated:"2025-01-01T10:00:00Z", validation_status:complete, token_estimate:850, critical_paths:11, processing_priority:1}
+
+#UNIVERSAL_FILE_SERVICE{confidence:1.0, integration_status:complete, @critical}
+  ##feature_definition{id:universal_file_service_root, type:routing_system, confidence:1.0}
+    "Smart routing service for optimal file processing method selection"
+    →primary_user_workflow[file_input→analyze_characteristics→route_to_best_processor]
+    →dependencies[compression_services, platform_detection, performance_optimization]
+    →user_workflows[automatic_routing, platform_optimization, batch_processing]
+
+  @cluster{core_workflow, confidence:1.0}
+    ##routing_workflow{id:smart_routing_flow, type:decision_engine, confidence:1.0}
+      "Intelligent file processing routing"
+      @processing{
+        receive_file→detect_platform→analyze_file_characteristics→
+        check_service_availability→select_best_processor→execute_with_fallback
+      }
+      @routing_logic{
+        small_files:"TypeScript compression",
+        large_files:"Go acceleration if available",
+        compressed_files:"skip processing",
+        platform_specific:"future optimization"
+      }
+
+    ##service_initialization{id:startup_flow, type:service_management, confidence:1.0}
+      "Service initialization and capability detection"
+      @initialization{
+        on_first_use→detect_platform→check_go_availability→
+        cache_capabilities→ready_for_routing
+      }
+      @singleton_pattern{
+        initialized_flag:"prevents duplicate init",
+        promise_caching:"concurrent init safety",
+        timeout:"1 second for Go check"
+      }
+  @/cluster
+
+  @cluster{service_architecture, confidence:1.0}
+    ##universal_service_class{id:main_service, type:static_class, confidence:1.0}
+      UniversalFileService{
+        path:"client/src/services/universal-file-service.ts",
+        pattern:"static class methods",
+        responsibilities:{
+          routing:"select best processor",
+          initialization:"service setup",
+          platform_detection:"environment awareness",
+          fallback_handling:"graceful degradation"
+        },
+        key_methods:[
+          "initialize()",
+          "compressFile()",
+          "optimizeForPlatform()",
+          "compressBatch()",
+          "detectPlatform()"
+        ]
+      },
+      capability_tracking{
+        platform_capabilities:{
+          web:{
+            nativeCompression:false,
+            backgroundProcessing:false,
+            goAcceleration:"conditional"
+          },
+          capacitor:{
+            nativeCompression:true,
+            backgroundProcessing:true,
+            goAcceleration:"conditional"
+          }
+        }
+      }
+
+    ##routing_engine{id:decision_logic, type:smart_routing, confidence:1.0}
+      compression_routing{
+        decision_factors:[
+          "file.size > 5MB",
+          "file.name matches [.xml, .json, .csv]",
+          "Go service available",
+          "compression not disabled"
+        ],
+        routing_table:{
+          large_data_files:"Go acceleration",
+          small_files:"TypeScript compression",
+          already_compressed:"skip",
+          compression_failure:"return original"
+        }
+      }
+  @/cluster
+
+  @cluster{platform_detection, confidence:1.0}
+    ##platform_awareness{id:environment_detection, type:capability_system, confidence:1.0}
+      platform_detection{
+        method:"detectPlatform()",
+        checks:{
+          capacitor:"window.Capacitor",
+          react_native:"window.ReactNativeWebView",
+          default:"web"
+        },
+        capabilities_mapping:{
+          web:"basic browser APIs only",
+          capacitor:"native APIs available",
+          react_native:"native with restrictions"
+        }
+      },
+      capability_matrix{
+        getCapabilities_return:{
+          nativeCompression:"platform specific",
+          backgroundProcessing:"platform specific",
+          healthDataAccess:"platform specific",
+          fileSystemAccess:"platform specific",
+          goAcceleration:"runtime detected"
+        }
+      }
+  @/cluster
+
+  @cluster{compression_integration, confidence:1.0}
+    ##service_orchestration{id:compression_routing, type:integration_layer, confidence:1.0}
+      compressFile_method{
+        flow:[
+          "initialize service",
+          "detect large files",
+          "attempt Go start if needed",
+          "use TypeScript compression",
+          "handle errors gracefully"
+        ],
+        go_startup_trigger:{
+          condition:"file > 5MB AND data file",
+          action:"startGoAccelerationService()",
+          non_blocking:"continues on failure"
+        },
+        result_normalization:{
+          unified_format:"CompressionResult",
+          includes:["file", "ratio", "sizes", "time"]
+        }
+      }
+
+    ##batch_processing{id:multi_file_optimization, confidence:1.0}
+      compressBatch_method{
+        strategy:{
+          separation:"large vs regular files",
+          large_files:"Go batch if available",
+          regular_files:"sequential TypeScript",
+          error_isolation:"per-file handling"
+        },
+        optimization:"parallel where possible",
+        fallback:"individual processing"
+      }
+  @/cluster
+
+  @cluster{error_handling, confidence:1.0}
+    ##resilience_patterns{id:fault_tolerance, type:error_management, confidence:1.0}
+      compression_failures{
+        strategy:"always return usable file",
+        typescript_fail:"return original",
+        go_fail:"fallback to TypeScript",
+        both_fail:"return original with warning"
+      },
+      service_availability{
+        go_unavailable:"silent fallback",
+        initialization_fail:"continue with basic",
+        timeout_handling:"1s max for checks"
+      }
+  @/cluster
+
+  @cluster{performance_features, confidence:1.0}
+    ##optimization_strategies{id:performance_patterns, confidence:1.0}
+      service_initialization{
+        lazy_loading:"on first use only",
+        non_blocking:"Promise.race with timeout",
+        caching:"capability results cached"
+      },
+      routing_optimization{
+        quick_decisions:"size/type checks first",
+        cached_health:"avoid repeated checks",
+        threshold_based:"5MB cutoff"
+      }
+  @/cluster
+
+  @cluster{monitoring_features, confidence:1.0}
+    ##observability{id:service_health, type:monitoring, confidence:1.0}
+      health_tracking{
+        getServiceHealth:{
+          returns:[
+            "initialized state",
+            "detected platform",
+            "current capabilities",
+            "Go service status"
+          ]
+        }
+      },
+      capability_testing{
+        testCompressionCapabilities:{
+          tests:["TypeScript compression", "Go acceleration"],
+          returns:"capability report",
+          useful_for:"diagnostics"
+        }
+      }
+  @/cluster
+
+  @cluster{emergency_controls, confidence:1.0}
+    ##service_controls{id:manual_overrides, type:admin_features, confidence:1.0}
+      acceleration_toggle{
+        disableAcceleration:"force TypeScript only",
+        enableAcceleration:"re-enable Go routing",
+        use_case:"troubleshooting or performance issues"
+      },
+      manual_start{
+        startGoAccelerationService:{
+          endpoint:"POST /api/accelerate/start",
+          reason:"explicit Go service startup",
+          logging:"detailed status"
+        }
+      }
+  @/cluster
+
+@processing{
+  flow_sequence:[
+    service_initialization, platform_detection,
+    file_analysis, routing_decision, processor_selection,
+    compression_execution, error_handling, result_return
+  ],
+  critical_paths:[
+    initialization_singleton, routing_logic,
+    fallback_chains, error_recovery
+  ],
+  optimization_points:[
+    lazy_initialization, cached_capabilities,
+    smart_thresholds
+  ]
+}
+
+@dependencies{
+  frontend:[
+    FileCompressionService, FileAccelerationService,
+    Platform_detection_APIs
+  ],
+  routing_targets:[
+    TypeScript_compression, Go_acceleration_service
+  ],
+  apis:[
+    File_API, Compression_APIs, Platform_APIs
+  ]
+}
+
+@integration_evidence{
+  verified_flows:[
+    "Service initializes on first use",
+    "Platform detection works correctly",
+    "Smart routing based on file size",
+    "Go service auto-start for large files",
+    "Graceful fallback on failures",
+    "Batch processing handles mixed files"
+  ],
+  architectural_benefits:[
+    "Single entry point for compression",
+    "Transparent optimization",
+    "Platform-agnostic interface",
+    "Future extensibility"
+  ]
+}

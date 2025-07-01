@@ -1,0 +1,219 @@
+@context{domain:memory, target:memory_search, complexity:medium, enforcement:strict}
+@meta{tokens:750, critical_paths:4, validation_rules:6, processing_priority:1}
+
+#ROOT{confidence:1.0}
+  ##memory_search{id:memory_search_feature, type:ui_functionality, confidence:1.0, @critical}
+    "Search through stored memories with semantic and keyword-based search"
+    @capabilities{
+      semantic_search,
+      keyword_search,
+      real_time_results,
+      search_filters,
+      result_ranking
+    }
+    
+    ##data_flow_tracing{id:search_flow, type:query_pipeline, confidence:1.0}
+      @cluster{search_interface, confidence:1.0}
+        ##search_input{id:query_entry, type:ui_component, confidence:1.0}
+          "Search input field in memory section"
+          @component:MemorySection.tsx[SearchInput]
+          @features{
+            placeholder:"Search memories...",
+            debouncing:300ms,
+            clear_button:true,
+            search_icon:true
+          }
+          @state{
+            searchQuery:string,
+            isSearching:boolean
+          }
+          
+        ##search_filters{id:filter_options, type:ui_controls, confidence:1.0}
+          @filters{
+            category:dropdown_select,
+            importance:range_slider,
+            date_range:date_picker,
+            has_keywords:checkbox
+          }
+          @state_management{
+            activeFilters:object,
+            filter_combination:AND_logic
+          }
+      @/cluster
+
+      @cluster{search_execution, confidence:1.0}
+        ##api_request{id:search_endpoint, type:http_post, confidence:1.0}
+          @endpoint:POST /api/memories/search
+          @payload{
+            query:string,
+            filters:FilterObject,
+            limit:number,
+            offset:number
+          }
+          @headers{
+            Content-Type:application/json,
+            Authorization:bearer_token
+          }
+          
+        ##search_processing{id:backend_search, type:multi_strategy, confidence:1.0}
+          @strategies{
+            semantic:embedding_similarity,
+            keyword:text_matching,
+            hybrid:combined_scoring
+          }
+          @ranking{
+            relevance_score:0.0-1.0,
+            boost_factors:[recency, importance, access_frequency]
+          }
+      @/cluster
+
+      @cluster{result_display, confidence:1.0}
+        ##search_results{id:memory_list, type:ui_display, confidence:1.0}
+          @display{
+            result_count:total_found,
+            result_cards:memory_items,
+            relevance_indicators:score_badges,
+            highlight:matching_terms
+          }
+          @interactions{
+            result_click:expand_memory,
+            load_more:pagination,
+            clear_search:reset_view
+          }
+          
+        ##empty_states{id:no_results, type:ui_feedback, confidence:1.0}
+          @scenarios{
+            no_matches:"No memories match your search",
+            search_error:"Search failed, please try again",
+            initial_state:"Type to search memories"
+          }
+          @suggestions{
+            try_different_terms,
+            remove_filters,
+            browse_categories
+          }
+      @/cluster
+
+      @cluster{real_time_features, confidence:1.0}
+        ##live_search{id:instant_results, type:performance_feature, confidence:1.0}
+          @implementation{
+            debounced_requests:300ms,
+            request_cancellation:abort_controller,
+            result_streaming:planned
+          }
+          @optimizations{
+            cache_recent_searches,
+            preload_common_queries,
+            progressive_loading
+          }
+          
+        ##search_suggestions{id:autocomplete, type:ux_enhancement, confidence:1.0}
+          @sources{
+            previous_searches,
+            common_keywords,
+            category_names
+          }
+          @display{
+            dropdown_list,
+            keyboard_navigation,
+            click_to_select
+          }
+      @/cluster
+
+    ##architectural_layers{id:search_architecture, type:full_stack, confidence:1.0}
+      ##presentation_layer{id:search_ui, type:react_components, confidence:1.0}
+        @components{
+          SearchInput:[text_field],
+          SearchFilters:[filter_controls],
+          SearchResults:[result_list],
+          SearchSuggestions:[dropdown]
+        }
+        @state_management{
+          local_state:search_specific,
+          query_state:tanstack_query
+        }
+      }
+
+      ##business_logic_layer{id:search_services, type:backend_processing, confidence:1.0}
+        @services{
+          memory-service.ts:[semanticSearch],
+          intelligent-memory-retrieval.ts:[advancedSearch],
+          search-routes.ts:[search_endpoint]
+        }
+        @algorithms{
+          text_processing:tokenization,
+          similarity_calculation:cosine,
+          result_fusion:weighted_scoring
+        }
+      }
+
+      ##data_layer{id:search_indexes, type:optimized_queries, confidence:1.0}
+        @indexes{
+          text_search:gin_index,
+          vector_search:ivfflat,
+          composite:multi_column
+        }
+        @caching{
+          query_results:redis,
+          common_searches:memory,
+          user_preferences:local_storage
+        }
+      }
+
+    ##error_boundaries{id:search_errors, type:graceful_handling, confidence:1.0}
+      @cluster{search_failures, confidence:1.0}
+        ##api_errors{id:request_failures, confidence:1.0}
+          @handling{
+            network_timeout:retry_with_backoff,
+            server_error:show_error_message,
+            invalid_query:validation_feedback
+          }
+        }
+        ##ui_errors{id:display_issues, confidence:1.0}
+          @recovery{
+            render_error:fallback_ui,
+            state_corruption:reset_search
+          }
+        }
+      @/cluster
+
+    ##performance_optimization{id:search_performance, type:speed_focused, confidence:1.0}
+      @optimizations{
+        index_optimization:covering_indexes,
+        query_optimization:limit_initial_results,
+        ui_optimization:virtual_scrolling,
+        network_optimization:request_batching
+      }
+
+    ##security_privacy{id:search_security, type:data_protection, confidence:1.0}
+      @measures{
+        query_sanitization:prevent_injection,
+        result_filtering:user_owned_only,
+        search_history:optional_storage
+      }
+
+    ##integration_evidence{id:search_implementation, type:verification, confidence:1.0}
+      @status:active
+      @verification:2025-01-15
+      @evidence{
+        semantic_search:functional,
+        real_time:implemented,
+        filters:working
+      }
+      @performance{
+        search_latency:~100ms,
+        result_accuracy:88%,
+        user_satisfaction:high
+      }
+
+@processing{
+  critical_paths:[input→search→results→display],
+  enforcement_points:[query_validation, user_authorization, result_filtering],
+  quality_gates:[search_relevance, response_time, result_accuracy]
+}
+
+@validation{
+  mandatory_checks:[query_sanitization, user_authenticated, valid_filters],
+  performance_targets:[search_under_200ms, ui_response_under_50ms],
+  ux_requirements:[intuitive_interface, helpful_feedback, fast_results]
+}

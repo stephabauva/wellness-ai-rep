@@ -1,0 +1,236 @@
+@context{domain:chat, feature:attachment_preview}
+@meta{
+  featureName:"attachment-preview",
+  featureGroup:"attachments-media", 
+  parentFile:"./chat-domain.shdl",
+  domain:"chat",
+  lastUpdated:"2025-01-01T00:00:00Z",
+  mappingVersion:"2.0.0"
+}
+
+#ROOT
+  ##attachmentPreview{id:attachment_preview_feature, type:complete_mapping, @comprehensive}
+    "Preview capabilities for various file types with rich UI"
+    
+    ##userFlow{id:user_workflow, type:user_journey, @sequential}
+      "User experience with attachment previews"
+      @processing{
+        step1:"User attaches files to message",
+        step2:"Previews appear below input field",
+        step3:"Different preview styles per file type", 
+        step4:"User can remove individual attachments",
+        step5:"Previews clear after message sent"
+      }
+    
+    ##systemFlow{id:system_workflow, type:system_processing, @sequential}
+      "System rendering of attachment previews"
+      @processing{
+        process1:"Receive attached files array",
+        process2:"Determine preview type per file",
+        process3:"Render appropriate preview component",
+        process4:"Handle remove actions",
+        process5:"Clean up after send"
+      }
+    
+    ##dataFlowTrace{id:data_flow, type:preview_pipeline, @critical}
+      "Attachment preview rendering flow"
+      
+      ##previewTrigger{id:attachment_state, type:data_source, @blocking}
+        "Preview data source"
+        @processing{
+          source:"attachedFiles from useFileManagement",
+          structure:"AttachedFile[] | null",
+          updates:"On file add/remove"
+        }
+      
+      ##previewLogic{id:rendering_logic, type:layer, @sequential}
+        "Preview rendering implementation"
+        
+        ##componentStructure{id:preview_component}
+          "AttachmentPreview component"
+          @ref:AttachmentPreview.tsx
+          @cluster{props, type:component_interface}
+            "attachedFiles: AttachedFile[]",
+            "onRemoveAttachment: (id) => void"
+          @/cluster
+        
+        ##typeDetection{id:file_type_branching}
+          "File type based rendering"
+          @cluster{type_checks, type:conditional_rendering}
+            "fileType.startsWith('image/')",
+            "Determines preview style",
+            "Image vs generic file"
+          @/cluster
+        
+        ##imagePreview{id:image_preview_branch}
+          "Image-specific preview"
+          @cluster{image_rendering, type:ui_elements}
+            "img element with src",
+            "80x80 thumbnail size",
+            "object-cover scaling",
+            "Rounded corners"
+          @/cluster
+        
+        ##genericPreview{id:file_preview_branch}
+          "Non-image file preview"
+          @cluster{file_rendering, type:ui_elements}
+            "File icon from utils",
+            "File name with truncation",
+            "Max width 150px",
+            "Title for full name"
+          @/cluster
+      
+      ##interactionHandling{id:user_interactions, type:layer}
+        "User interaction with previews"
+        @processing{
+          removeAction:"Click × button",
+          callback:"onRemoveAttachment(file.id)",
+          stateUpdate:"Remove from attachedFiles"
+        }
+        @cluster{ui_feedback, type:interactions}
+          "Hover states",
+          "Remove button visibility",
+          "Click feedback"
+        @/cluster
+
+    ##architecturalLayers{id:architecture, type:dependency_analysis}
+      "Attachment preview architecture"
+      
+      ##presentation{id:frontend_layer, type:ui_layer}
+        ##components{id:ui_components, @critical}
+          @cluster{primary, type:main_component}
+            "AttachmentPreview.tsx",
+            "Self-contained component",
+            "Reusable across app"
+          @/cluster
+          @cluster{ui_library, type:component_deps}
+            "Card, CardContent - Container",
+            "Button styling - Remove buttons"
+          @/cluster
+        
+        ##visualDesign{id:preview_styling}
+          @cluster{layout, type:css_structure}
+            "Flexbox wrap layout",
+            "Gap spacing",
+            "Responsive design",
+            "Card container"
+          @/cluster
+          @cluster{preview_styles, type:visual_design}
+            "Secondary background",
+            "Rounded corners (lg)",
+            "Padding consistency",
+            "Shadow effects"
+          @/cluster
+        
+        ##utilities{id:preview_helpers}
+          @cluster{helper_functions, type:utilities}
+            "getFileIcon - Icon mapping",
+            "File type detection",
+            "Name truncation logic"
+          @/cluster
+      
+      ##dataFlow{id:data_layer, type:state_management}
+        ##stateManagement{id:attachment_state}
+          @cluster{data_flow, type:state_flow}
+            "useFileManagement hook",
+            "attachedFiles state",
+            "removeAttachedFile action"
+          @/cluster
+        
+        ##fileStructure{id:attachment_data}
+          @cluster{data_model, type:typescript}
+            "id: unique identifier",
+            "fileName: storage name",
+            "displayName: user name",
+            "fileType: MIME type",
+            "url: optional preview URL"
+          @/cluster
+
+    ##previewFeatures{id:feature_capabilities, type:functionality}
+      "Rich preview capabilities"
+      
+      ##supportedPreviews{id:preview_types}
+        @cluster{preview_modes, type:file_support}
+          "Image thumbnails",
+          "File type icons",
+          "Name display",
+          "Size indicators"
+        @/cluster
+      
+      ##interactiveElements{id:user_controls}
+        @cluster{controls, type:ui_interactions}
+          "Remove buttons",
+          "Hover effects",
+          "Tooltip hints",
+          "Keyboard support"
+        @/cluster
+      
+      ##responsiveDesign{id:adaptive_ui}
+        @cluster{responsive, type:layout}
+          "Flex wrap for multiple files",
+          "Mobile-friendly sizing",
+          "Touch targets",
+          "Scroll handling"
+        @/cluster
+
+    ##performanceConsiderations{id:optimization, type:efficiency_mapping}
+      ##renderingEfficiency{id:preview_performance}
+        @cluster{optimizations, type:performance}
+          "Conditional rendering",
+          "Minimal re-renders",
+          "Efficient key usage",
+          "Image lazy loading"
+        @/cluster
+      
+      ##memoryManagement{id:preview_memory}
+        @cluster{memory_handling, type:resource_usage}
+          "Object URL management",
+          "Preview size limits",
+          "Component cleanup"
+        @/cluster
+
+    ##integrationEvidence{id:validation, type:evidence_tracking}
+      ##implementationStatus{id:feature_status, type:status_tracking}
+        @processing{
+          status:"active",
+          lastVerified:"2025-01-01T00:00:00Z",
+          verificationMethod:"manual",
+          evidenceLocation:"client/src/components/AttachmentPreview.tsx"
+        }
+      
+      ##testingEvidence{id:test_coverage}
+        @cluster{tests, type:validation}
+          "AttachmentPreview.test.tsx",
+          "Component unit tests",
+          "Interaction tests"
+        @/cluster
+
+    ##dependencies{id:feature_dependencies, type:dependency_tracking}
+      @cluster{internal, type:internal_features}
+        "File Attachments",
+        "Image Attachments",
+        "useFileManagement hook"
+      @/cluster
+      @cluster{utilities, type:helper_deps}
+        "getFileIcon from chatUtils"
+      @/cluster
+
+    ##impacts{id:feature_impacts, type:impact_analysis}
+      @cluster{enhances, type:user_experience}
+        "Attachment visibility",
+        "Error prevention",
+        "User confidence",
+        "Visual feedback"
+      @/cluster
+      @cluster{supports, type:features}
+        "All attachment types",
+        "Drag and drop",
+        "Multi-file handling"
+      @/cluster
+
+@processing{
+  mapping_sequence:[userFlow, systemFlow, dataFlowTrace, architecturalLayers],
+  quality_gates:[previewFeatures, performanceConsiderations],
+  validation_requirements:[integrationEvidence],
+  relationship_analysis:[dependencies, impacts]
+}

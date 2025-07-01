@@ -1,0 +1,287 @@
+@context{domain:health_dashboard, feature:health_data_parsing, version:1.0}
+
+#ROOT
+  ##healthDataParsing{id:data_parsing_system, type:feature, @critical}
+    "Health data parsing service for multiple file formats"
+    
+    ##dataFlowTrace{id:complete_cycle, type:workflow, @critical}
+      "Complete data flow for health file parsing"
+      
+      ##inputProcessing{id:file_reception, type:layer}
+        "Receive and identify file format"
+        @processing{
+          input:"Buffer or file content",
+          filename:"Original filename for format hints",
+          detection:"Auto-detect file format"
+        }
+      
+      ##formatDetection{id:file_format_identification, type:processing}
+        "Identify health data file format"
+        @cluster{detection_methods, type:algorithm}
+          "File extension checking"
+          "MIME type validation"
+          "Content pattern matching"
+          "Magic byte detection"
+        @/cluster
+        @cluster{supported_formats, type:formats}
+          "Apple Health Export (XML)"
+          "Google Fit/Takeout (JSON)"
+          "CDA/CCDA (Clinical XML)"
+          "Generic CSV/TSV"
+          "Compressed formats (GZ/ZIP)"
+        @/cluster
+      
+      ##parsingFlow{id:format_specific_parsing, type:layer, @sequential}
+        "Format-specific parsing logic"
+        
+        ##appleHealthParser{id:apple_health_xml}
+          "Parse Apple Health export XML"
+          @processing{
+            structure:"HKQuantityTypeIdentifier records",
+            extraction:[
+              "Record type mapping",
+              "Value and unit extraction",
+              "Timestamp parsing",
+              "Source device info"
+            ]
+          }
+          @cluster{metrics_mapped, type:apple_health}
+            "HKQuantityTypeIdentifierStepCount → steps"
+            "HKQuantityTypeIdentifierHeartRate → heart_rate"
+            "HKQuantityTypeIdentifierBodyMass → weight"
+            "HKCategoryTypeIdentifierSleepAnalysis → sleep stages"
+          @/cluster
+        
+        ##googleFitParser{id:google_fit_json}
+          "Parse Google Fit/Takeout JSON"
+          @processing{
+            structure:"Activity segments and datasets",
+            extraction:[
+              "Activity type mapping",
+              "Point value arrays",
+              "Timestamp conversion",
+              "Data source attribution"
+            ]
+          }
+          @cluster{datasets, type:google_fit}
+            "com.google.step_count.delta → steps"
+            "com.google.heart_rate.bpm → heart_rate"
+            "com.google.activity.segment → activities"
+            "com.google.nutrition → nutrition data"
+          @/cluster
+        
+        ##cdaParser{id:clinical_xml}
+          "Parse CDA/CCDA clinical documents"
+          @processing{
+            structure:"Clinical Document Architecture",
+            sections:[
+              "Vital Signs",
+              "Laboratory Results",
+              "Medications",
+              "Problems"
+            ]
+          }
+        
+        ##csvParser{id:generic_csv}
+          "Parse generic CSV health data"
+          @processing{
+            detection:"Header row analysis",
+            mapping:"Column to metric mapping",
+            validation:"Data type inference",
+            flexibility:"Custom column support"
+          }
+      
+      ##dataTransformation{id:normalization, type:layer}
+        "Transform parsed data to standard schema"
+        
+        ##valueNormalization{id:unit_conversion}
+          "Normalize values and units"
+          @cluster{conversions, type:transformation}
+            "Weight: lbs ↔ kg"
+            "Height: ft/in ↔ cm"
+            "Temperature: °F ↔ °C"
+            "Distance: mi ↔ km"
+          @/cluster
+        
+        ##categoryAssignment{id:health_categories}
+          "Assign health categories"
+          @processing{
+            mapping:"Metric type to category",
+            categories:[
+              "body_composition",
+              "cardiovascular",
+              "lifestyle",
+              "medical",
+              "advanced"
+            ]
+          }
+        
+        ##timestampProcessing{id:date_handling}
+          "Process and validate timestamps"
+          @processing{
+            parsing:"Multiple date formats",
+            timezone:"UTC conversion",
+            validation:"Future date rejection",
+            deduplication:"Same timestamp handling"
+          }
+    
+    ##architecturalLayers{id:layers, type:architecture}
+      "Parser service architecture"
+      
+      ##serviceLayer{id:parser_service}
+        @cluster{structure, type:service}
+          "HealthDataParser main class"
+          "Format-specific parsers"
+          "Streaming parser interface"
+          "Result aggregation"
+        @/cluster
+        @file{path:"server/services/health-data-parser.ts"}
+      
+      ##utilityLayer{id:parsing_utilities}
+        @cluster{utilities, type:helpers}
+          "XML parsing utilities"
+          "JSON stream parser"
+          "CSV parser library"
+          "Date parsing helpers"
+          "Unit conversion tables"
+        @/cluster
+      
+      ##validationLayer{id:data_validation}
+        @cluster{validators, type:validation}
+          "Value range validators"
+          "Data type checkers"
+          "Category validators"
+          "Timestamp validators"
+        @/cluster
+    
+    ##errorBoundaries{id:error_handling, type:reliability}
+      "Parser error handling"
+      
+      ##parseErrors{id:format_errors}
+        @cluster{handling, type:errors}
+          "Malformed XML/JSON"
+          "Invalid CSV structure"
+          "Encoding issues"
+          "Partial parse recovery"
+        @/cluster
+      
+      ##dataErrors{id:validation_errors}
+        @cluster{handling, type:errors}
+          "Invalid metric values"
+          "Out-of-range data"
+          "Missing required fields"
+          "Corrupt data blocks"
+        @/cluster
+      
+      ##performanceErrors{id:resource_errors}
+        @cluster{handling, type:errors}
+          "Memory overflow protection"
+          "Timeout handling"
+          "Large file strategies"
+          "Stream processing fallback"
+        @/cluster
+    
+    ##performanceConsiderations{id:optimization, type:performance}
+      "Parser performance optimizations"
+      
+      ##streamingParsers{id:memory_efficiency}
+        @cluster{strategies, type:streaming}
+          "SAX parser for large XML"
+          "JSON streaming parser"
+          "Line-by-line CSV reading"
+          "Chunk-based processing"
+        @/cluster
+      
+      ##goAcceleration{id:native_performance}
+        @cluster{acceleration, type:go_service}
+          "Go parser for files >5MB"
+          "Native performance benefits"
+          "Parallel processing"
+          "Memory-mapped files"
+        @/cluster
+        @evidence{
+          trigger:"File size > 5MB",
+          service:"go-file-accelerator",
+          fallback:"TypeScript parser"
+        }
+    
+    ##dataQuality{id:quality_assurance, type:validation}
+      "Ensure data quality"
+      
+      ##deduplication{id:duplicate_handling}
+        @cluster{strategies, type:dedup}
+          "Timestamp-based deduplication"
+          "Value comparison"
+          "Source priority rules"
+          "Merge strategies"
+        @/cluster
+      
+      ##validation{id:data_integrity}
+        @cluster{checks, type:validation}
+          "Physiological range checks"
+          "Temporal consistency"
+          "Cross-metric validation"
+          "Outlier detection"
+        @/cluster
+    
+    ##integrationEvidence{id:verified_integration, type:validation}
+      "Parser integration verification"
+      
+      ##serviceUsage{id:import_integration}
+        @evidence{
+          file:"health-routes.ts",
+          lines:"192-195",
+          code:"const parseResult = await HealthDataParser.parseFile(...)"
+        }
+      
+      ##parserService{id:service_file}
+        @evidence{
+          file:"server/services/health-data-parser.ts",
+          exists:true,
+          purpose:"Main parsing service"
+        }
+      
+      ##formatSupport{id:file_validation}
+        @evidence{
+          file:"health-routes.ts",
+          lines:"40-52",
+          code:"allowedMimeTypes and allowedExtensions arrays"
+        }
+    
+    ##dependencies{id:feature_dependencies, type:graph}
+      "Parser dependencies"
+      
+      ##libraryDependencies{id:parsing_libs}
+        @cluster{libraries, type:dependency}
+          "XML parsing library"
+          "JSON streaming parser"
+          "CSV parser"
+          "Compression libraries"
+        @/cluster
+      
+      ##serviceDependencies{id:internal_deps}
+        @cluster{services, type:dependency}
+          "File system access"
+          "Go acceleration service"
+          "Validation utilities"
+          "Type definitions"
+        @/cluster
+    
+    ##impacts{id:affected_features, type:graph}
+      "Features impacted by parser"
+      
+      ##dataAvailability{id:import_success}
+        @cluster{effects, type:impact}
+          "Enables health data import"
+          "Populates all metrics"
+          "Multi-format support"
+          "User flexibility"
+        @/cluster
+      
+      ##systemReliability{id:robust_parsing}
+        @cluster{effects, type:impact}
+          "Handles corrupt files gracefully"
+          "Partial import capability"
+          "Format evolution support"
+          "Error reporting quality"
+        @/cluster

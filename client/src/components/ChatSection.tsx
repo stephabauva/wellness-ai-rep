@@ -13,6 +13,7 @@ import { MessageDisplayArea } from "@/components/MessageDisplayArea";
 import { ChatInputArea } from "@/components/ChatInputArea";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { ConversationHistory } from "@/components/ConversationHistory";
+import { ChatErrorBoundary } from "@/components/ChatErrorBoundary";
 
 function ChatSection() {
   const [inputMessage, setInputMessage] = useState("");
@@ -58,70 +59,76 @@ function ChatSection() {
 
   console.log("[ChatSection] Component render - Messages:", messages?.length, "ConversationId:", currentConversationId, "Loading:", loadingMessages);
 
-  // The loading state from useChatMessages can be passed to MessageDisplayArea
-  if (loadingMessages && !currentConversationId) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading conversation...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 flex flex-col h-full">
-      {/* Header */}
-      <div className="border-b p-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">AI Wellness Coach</h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNewChat}
-          >
-            New Chat
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsConversationHistoryOpen(true)}
-          >
-            <History className="h-4 w-4 mr-2" />
-            History
-          </Button>
-        </div>
-      </div>
+      <ChatErrorBoundary onReset={() => {
+        handleNewChat();
+        setIsConversationHistoryOpen(false);
+      }}>
+        {/* Loading state */}
+        {loadingMessages && !currentConversationId ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading conversation...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="border-b p-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">AI Wellness Coach</h2>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNewChat}
+                >
+                  New Chat
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsConversationHistoryOpen(true)}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  History
+                </Button>
+              </div>
+            </div>
 
-      {/* Messages Area */}
-      <MessageDisplayArea
-        messagesToDisplay={messagesToDisplay}
-        isLoading={loadingMessages && !!currentConversationId} // Show inline loader when switching conversations
-        streamingMessage={streamingMessage}
-        isThinking={isThinking}
-      />
+            {/* Messages Area */}
+            <MessageDisplayArea
+              messagesToDisplay={messagesToDisplay}
+              isLoading={loadingMessages && !!currentConversationId} // Show inline loader when switching conversations
+              streamingMessage={streamingMessage}
+              isThinking={isThinking}
+            />
 
-      {/* Attached Files Preview */}
-      <AttachmentPreview
-        attachedFiles={attachedFiles} // From chatActions
-        onRemoveAttachment={removeAttachedFile} // From chatActions
-      />
+            {/* Attached Files Preview */}
+            <AttachmentPreview
+              attachedFiles={attachedFiles} // From chatActions
+              onRemoveAttachment={removeAttachedFile} // From chatActions
+            />
 
-      {/* Input Area */}
-      <ChatInputArea
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
-        chatActions={chatActions}
-        settings={appSettings}
-      />
+            {/* Input Area */}
+            <ChatInputArea
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              chatActions={chatActions}
+              settings={appSettings}
+            />
+          </>
+        )}
 
-      {/* Conversation History Modal */}
-      <ConversationHistory
-        isOpen={isConversationHistoryOpen}
-        onClose={() => setIsConversationHistoryOpen(false)}
-        onConversationSelect={handleConversationSelect}
-      />
+        {/* Conversation History Modal */}
+        <ConversationHistory
+          isOpen={isConversationHistoryOpen}
+          onClose={() => setIsConversationHistoryOpen(false)}
+          onConversationSelect={handleConversationSelect}
+          currentConversationId={currentConversationId || undefined}
+        />
+      </ChatErrorBoundary>
     </div>
   );
 }

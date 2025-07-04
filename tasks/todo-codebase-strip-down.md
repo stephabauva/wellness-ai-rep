@@ -38,11 +38,11 @@ After thorough analysis, the codebase is not as catastrophically bloated as init
 ## Phase 1: Critical Bug Fixes (Days 1-3)
 
 ### Task 1.1: Fix Broken Chat Functionality
-- [ ] Debug missing conversation ID issue in chat-routes.ts
-- [ ] Fix React hook errors in ConversationHistory component
-- [ ] Resolve duplicate logging in memory service
-- [ ] Fix background queue overflow (implement proper circuit breaker)
-- [ ] Ensure audio transcriptions persist in input field
+- [x] Debug missing conversation ID issue in chat-routes.ts
+- [x] Fix React hook errors in ConversationHistory component
+- [x] Resolve duplicate logging in memory service
+- [x] Fix background queue overflow (implement proper circuit breaker)
+- [x] Ensure audio transcriptions persist in input field
 
 ### Task 1.2: Fix Go Service Integration
 - [ ] Debug go-file-accelerator 503 errors

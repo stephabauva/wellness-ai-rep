@@ -246,7 +246,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // CHATGPT-STYLE: Completely eliminate database reloads after streaming
     // Only load messages if we truly need to (new conversation with no messages)
     if (currentConversationId && activeMessages.length === 0) {
-      console.log("[AppContext] CHATGPT-STYLE: Loading messages for brand new conversation");
+      console.log("[AppContext] CHATGPT-STYLE: Loading messages for conversation with no messages");
       loadConversationMessages();
     } else if (currentConversationId === null && activeMessages.length > 1) {
       // Handle welcome message for null conversation (but preserve if we have messages)
@@ -340,6 +340,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         console.log("[AppContext sendMessage onSuccess] Changing currentConversationId from", currentConversationId, "to:", data.conversationId);
         setCurrentConversationIdState(data.conversationId);
       }
+      // Always invalidate conversations query to refresh history after ANY message
+      console.log('[QUERY_INVALIDATION_DEBUG] Invalidating conversations query after message:', {
+        conversationId: data.conversationId,
+        isNewConversation: variables.conversationId === null,
+        timestamp: new Date().toISOString()
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      
       if (variables.conversationId === null && data.conversationId) {
         setNewlyCreatedConvId(data.conversationId);
       } else {
@@ -373,10 +381,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setCurrentConversationIdState(id);
       
       if (id) {
-        console.log("[AppContext selectConversationHandler] New conversation detected, setting newlyCreatedConvId");
-        setNewlyCreatedConvId(id);
-        // DON'T clear messages immediately - let the useEffect handle loading
-        // setActiveMessages([]); // REMOVED - this was causing message disappearing
+        console.log("[AppContext selectConversationHandler] New conversation detected, clearing messages and loading");
+        // Clear messages immediately to show loading state
+        setActiveMessages([]);
+        setIsLoadingMessages(true);
+        // DON'T set newlyCreatedConvId for existing conversations
+        setNewlyCreatedConvId(null);
       }
     } else {
       console.log("[AppContext selectConversationHandler] Same conversation ID, no update needed");

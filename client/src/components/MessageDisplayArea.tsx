@@ -143,6 +143,12 @@ export function MessageDisplayArea({
     initialPage: 1
   });
 
+  // Stabilize virtual scrolling input to prevent hook violations
+  const virtualScrollInput = useMemo(() => 
+    enablePagination ? paginatedMessages : allDisplayMessages, 
+    [enablePagination, paginatedMessages, allDisplayMessages]
+  );
+
   // Virtual scrolling for performance - always call the hook
   const {
     visibleItems,
@@ -150,7 +156,7 @@ export function MessageDisplayArea({
     offsetY,
     handleScroll: handleVirtualScroll,
     scrollToIndex
-  } = useVirtualScrolling(enablePagination ? paginatedMessages : allDisplayMessages, {
+  } = useVirtualScrolling(virtualScrollInput, {
     itemHeight: 120, // Approximate message height
     containerHeight,
     overscan: 5,
@@ -200,23 +206,22 @@ export function MessageDisplayArea({
     return () => clearTimeout(timeoutId);
   }, [allDisplayMessages, showScrollToBottom, enableVirtualScrolling, scrollToIndex]);
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading conversation...</p>
-        </div>
+  // Loading state content - avoid early return to prevent hook violations
+  const loadingContent = (
+    <div className="flex-1 flex items-center justify-center p-4">
+      <div className="text-center">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading conversation...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   // Determine which messages to render based on optimization settings
   const messagesToRender = enableVirtualScrolling ? visibleItems : (enablePagination ? paginatedMessages : allDisplayMessages);
 
   console.log("[MessageDisplayArea] About to render. Messages:", messagesToRender?.length);
 
-  // Track new messages for animation (Phase 5)
+  // Track new messages for animation (Phase 5) - MOVED BEFORE LOADING CHECK
   useEffect(() => {
     if (messagesToRender && messagesToRender.length > 0) {
       const currentKeys = new Set(messagesToRender.map((msg: Message) => msg.id));
@@ -234,7 +239,8 @@ export function MessageDisplayArea({
     return isNew;
   }, [messageAnimationKeys]);
 
-  return (
+  // Use conditional rendering within return statement to prevent hook violations
+  return isLoading ? loadingContent : (
     <div 
       ref={containerRef}
       className="flex-1 overflow-y-auto p-4"

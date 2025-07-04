@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { History, MessageSquare, Clock, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,23 +33,31 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: conversations, isLoading } = useQuery({
+  const { data: conversations, isLoading, refetch } = useQuery({
     queryKey: ['/api/conversations'],
     queryFn: async () => {
       const response = await fetch('/api/conversations');
       if (!response.ok) throw new Error('Failed to fetch conversations');
       return await response.json() as Conversation[];
     },
-    enabled: isOpen
+    enabled: isOpen,
+    staleTime: 0, // Always refetch when opening
+    gcTime: 0  // Don't cache conversations to ensure fresh data
   });
+
+  // Refetch conversations when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+    }
+  }, [isOpen, refetch]);
 
   const filteredConversations = conversations?.filter(conv =>
     conv.title?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  if (!isOpen) return null;
-
-  return (
+  // Use conditional rendering instead of early return to avoid hook violations
+  return isOpen ? (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
       <Card className="w-full max-w-2xl h-[80vh] mx-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -132,5 +140,5 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         </CardContent>
       </Card>
     </div>
-  );
+  ) : null;
 };

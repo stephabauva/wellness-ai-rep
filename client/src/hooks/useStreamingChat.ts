@@ -263,7 +263,7 @@ export function useStreamingChat(options: StreamingChatOptions = {}) {
       default:
         console.log('[Streaming] Unknown event:', data);
     }
-  }, [streamingMessage?.id, options.onMessageComplete, queryClient, toast, refreshMessages, addOptimisticMessage]);
+  }, [options.onMessageComplete, queryClient, toast, refreshMessages, addOptimisticMessage, setStreamingActive]);
 
   // Phase 6: Pause/Resume streaming functionality
   const pauseStreaming = useCallback(() => {

@@ -152,7 +152,10 @@ export function ChatInputArea({
 
         {/* Audio Recording */}
         <AudioRecorder
-          onTranscriptionComplete={(text) => setInputMessage(text)}
+          onTranscriptionComplete={(text) => {
+            // Append transcription to existing message if there's already text
+            setInputMessage(prev => prev.trim() ? `${prev} ${text}` : text);
+          }}
           provider={(settings?.transcriptionProvider as any) || "webspeech"}
         />
 

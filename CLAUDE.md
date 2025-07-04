@@ -209,6 +209,9 @@ Avoid:
 - Introducing new workflows or bypassing Replit's own tooling
 - data samples / mock data
 
+## Debugging
+Think of all possibilities, don't just do 1 fix, think that the issue might be elsewhere, map all possible causes.
+
 ## Environment Configuration
 
 ### Database

@@ -44,6 +44,8 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
     try {
       const userId = 1; // Fixed user ID
       
+      console.log('[CONVERSATIONS_FETCH_DEBUG] Fetching conversations for user:', userId);
+      
       const userConversations = await db
         .select({
           id: conversations.id,
@@ -54,6 +56,16 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         .from(conversations)
         .where(eq(conversations.userId, userId))
         .orderBy(desc(conversations.updatedAt));
+      
+      console.log('[CONVERSATIONS_FETCH_DEBUG] Retrieved conversations:', {
+        count: userConversations.length,
+        conversations: userConversations.map(c => ({
+          id: c.id,
+          title: c.title?.substring(0, 30) + '...',
+          updatedAt: c.updatedAt,
+          timeSinceUpdate: new Date().getTime() - new Date(c.updatedAt).getTime()
+        }))
+      });
       
       res.json(userConversations);
     } catch (error) {
@@ -80,6 +92,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
   app.post("/api/messages/stream", async (req, res) => {
     try {
       const { content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection } = messageSchema.parse(req.body);
+      let currentConversationId = conversationId;
       const user = await storage.getUser(FIXED_USER_ID);
       const userAiProvider = aiProvider || user?.aiProvider || 'google';
       const userAiModel = aiModel || user?.aiModel || 'gemini-2.0-flash-exp';
@@ -91,21 +104,114 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         'Access-Control-Allow-Headers': 'Cache-Control'
       });
 
+      console.log('[STREAMING_DEBUG] Starting streaming request:', {
+        conversationId: currentConversationId,
+        hasContent: !!content,
+        timestamp: new Date().toISOString()
+      });
+
+      // Create or validate conversation
+      if (currentConversationId) {
+        const existingConv = await db.select().from(conversations).where(eq(conversations.id, currentConversationId)).limit(1);
+        if (existingConv.length === 0) {
+          currentConversationId = null;
+        }
+      }
+
+      if (!currentConversationId) {
+        let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
+        if (!title && attachments?.length) {
+          title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
+        }
+        if (!title) title = "New Conversation";
+
+        const [newConversation] = await db.insert(conversations).values({
+          userId: FIXED_USER_ID, title
+        }).returning();
+        currentConversationId = newConversation.id;
+        
+        console.log('[STREAMING_DEBUG] Created new conversation:', {
+          conversationId: currentConversationId,
+          title: title
+        });
+      }
+
+      // Save user message to database
+      const [savedUserMessage] = await db.insert(conversationMessages).values({
+        conversationId: currentConversationId, role: 'user', content,
+        metadata: attachments?.length ? { attachments } : undefined
+      }).returning();
+
+      console.log('[STREAMING_DEBUG] Saved user message:', {
+        messageId: savedUserMessage.id,
+        conversationId: currentConversationId
+      });
+
+      // Store AI response as it streams
+      let fullAiResponse = '';
+
       const result = await aiService.getChatResponseStream(
-        content, FIXED_USER_ID, conversationId || '', 0, coachingMode || 'weight-loss', [],
+        content, FIXED_USER_ID, currentConversationId || null, 0, coachingMode || 'weight-loss', [],
         { provider: userAiProvider, model: userAiModel }, attachments || [], userAutoSelection,
         (chunk: string) => {
+          fullAiResponse += chunk;
           // Send chunk immediately and flush the response
           res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
           if (res.flush) res.flush();
         },
-        (complete: string) => res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`),
+        (complete: string) => {
+          fullAiResponse = complete; // Use complete response if provided
+          res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`);
+        },
         (error: Error) => res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`)
       );
 
-      res.write(`data: ${JSON.stringify({ type: 'done', conversationId: result.conversationId })}\n\n`);
+      // Save AI response to database
+      const [savedAiMessage] = await db.insert(conversationMessages).values({
+        conversationId: currentConversationId, role: 'assistant', content: fullAiResponse
+      }).returning();
+
+      console.log('[STREAMING_DEBUG] Saved AI message:', {
+        messageId: savedAiMessage.id,
+        conversationId: currentConversationId,
+        responseLength: fullAiResponse.length
+      });
+
+      // Update conversation timestamp so it appears at top of history
+      try {
+        const updateResult = await db.update(conversations)
+          .set({ updatedAt: new Date() })
+          .where(eq(conversations.id, currentConversationId))
+          .returning();
+        
+        console.log('[CONVERSATION_UPDATE_DEBUG] STREAMING: Conversation timestamp updated:', {
+          conversationId: currentConversationId,
+          updateResult: updateResult,
+          newTimestamp: new Date().toISOString()
+        });
+        
+        // Verify the update actually happened
+        const verifyUpdate = await db.select()
+          .from(conversations)
+          .where(eq(conversations.id, currentConversationId))
+          .limit(1);
+        
+        console.log('[CONVERSATION_UPDATE_VERIFY] STREAMING: Updated conversation in DB:', {
+          conversationId: currentConversationId,
+          dbRecord: verifyUpdate[0],
+          updatedAt: verifyUpdate[0]?.updatedAt
+        });
+      } catch (updateError) {
+        console.error('[CONVERSATION_UPDATE_ERROR] STREAMING: Failed to update conversation timestamp:', {
+          conversationId: currentConversationId,
+          error: updateError
+        });
+      }
+
+      res.write(`data: ${JSON.stringify({ type: 'done', conversationId: currentConversationId })}\n\n`);
       res.end();
     } catch (error) {
+      console.error('[STREAMING_ERROR] Error in streaming endpoint:', error);
       res.write(`data: ${JSON.stringify({ 
         type: 'error', 
         message: error instanceof z.ZodError ? "Invalid request data" : "Failed to process message"
@@ -209,6 +315,38 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
           conversationId: currentConversationId, role: 'assistant', content: aiResult.response
         }).returning();
 
+        // Update conversation timestamp so it appears at top of history
+        try {
+          const updateResult = await db.update(conversations)
+            .set({ updatedAt: new Date() })
+            .where(eq(conversations.id, currentConversationId))
+            .returning();
+          
+          console.log('[CONVERSATION_UPDATE_DEBUG] Conversation timestamp updated:', {
+            conversationId: currentConversationId,
+            updateResult: updateResult,
+            newTimestamp: new Date().toISOString()
+          });
+          
+          // Verify the update actually happened
+          const verifyUpdate = await db.select()
+            .from(conversations)
+            .where(eq(conversations.id, currentConversationId))
+            .limit(1);
+          
+          console.log('[CONVERSATION_UPDATE_VERIFY] Updated conversation in DB:', {
+            conversationId: currentConversationId,
+            dbRecord: verifyUpdate[0],
+            updatedAt: verifyUpdate[0]?.updatedAt
+          });
+        } catch (updateError) {
+          console.error('[CONVERSATION_UPDATE_ERROR] Failed to update conversation timestamp:', {
+            conversationId: currentConversationId,
+            error: updateError
+          });
+          // Don't throw - this is not critical enough to fail the entire request
+        }
+
         const legacyAiMessage = await storage.createMessage({
           userId: FIXED_USER_ID, content: aiResult.response, isUserMessage: false
         });
@@ -242,14 +380,6 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/conversations", async (req, res) => {
-    try {
-      const convs = await db.select().from(conversations).where(eq(conversations.userId, FIXED_USER_ID)).orderBy(desc(conversations.updatedAt));
-      res.json(convs);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch conversations" });
-    }
-  });
 
   app.get("/api/conversations/:id/messages", async (req, res) => {
     try {

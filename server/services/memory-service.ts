@@ -77,13 +77,17 @@ class MemoryService {
     this.initializeBackgroundProcessor();
   }
 
-  // Tier 2 C: Initialize background processor
+  // Tier 2 C: Initialize background processor with circuit breaker
   private initializeBackgroundProcessor(): void {
     logger.debug('Initializing background processor', { service: 'memory' });
     
     setInterval(() => {
-      if (this.backgroundQueue.tasks.length > 10) {
-        logger.warn(`Background queue growing large: ${this.backgroundQueue.tasks.length} tasks`, { service: 'memory' });
+      // Circuit breaker: if queue gets too large, clear old low-priority tasks
+      if (this.backgroundQueue.tasks.length > 20) {
+        logger.warn(`Background queue overflow: ${this.backgroundQueue.tasks.length} tasks, clearing old low-priority tasks`, { service: 'memory' });
+        this.backgroundQueue.tasks = this.backgroundQueue.tasks
+          .filter(task => task.priority > 2 || (Date.now() - task.createdAt.getTime()) < 60000) // Keep high-priority or recent tasks
+          .slice(0, 10); // Limit to 10 tasks maximum
       }
       this.processBackgroundQueue();
     }, 5000); // Process queue every 5 seconds

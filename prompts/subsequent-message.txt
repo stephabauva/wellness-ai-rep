@@ -8,6 +8,7 @@ You MUST still follow the critical rules from the initial prompt:
 
 - Respect I1: DO NOT break or alter any existing feature’s behavior unless explicitly assessed
 - Respect I2: If something blocks your current plan, DO NOT guess — re-analyze from scratch
+- Respect I3 : Do not write code that user did not ask for. kwwp the codebase lean
 - All changes must include safety tests or rollback paths
 - Confirm that HMR, WebSocket, Vite dev server, and DB connection remain fully stable
 

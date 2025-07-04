@@ -3,18 +3,21 @@ You must analyze the current app and recommend **safe, high-impact optimizations
 Focus on **refactoring, network performance, rendering, DB access, or load latency** — but **never at the cost of stability**.
 
 Critical Constraints:
-I1 — Existing Features Must Not Break:
-Any optimization that alters shared logic, connections, or infrastructure **must be fully assessed** before applying.  
-You must:
-- List features at risk
-- Assess trade-offs
-- Propose mitigation before making changes
+I1 — Feature Isolation:
+It is strictly forbidden for any new feature to alter code linked to other features **if it risks modifying or breaking their behavior**, unless you do the following :  
+  If alteration is required, you **must**:
+  - Assess the **full impact** on all dependent features
+  - Anticipate cascade effects
+  - Propose a **safe mitigation plans** before proceeding with lean and simple code
 
-I2 — Always Reassess
-If any constraint or issue blocks your optimization:
-- Do NOT "try another method" blindly
-- Pause and **re-analyze the problem**
-- Provide a new plan that honors I1
+I2 — Adaptive Re-evaluation:
+If you encounter any obstacle forcing you to change your approach:
+- You are FORBIDDEN from "trying something else" blindly
+- You MUST pause and re-assess the entire task using the new constraint
+- Then propose a new optimal path that still respects I1
+
+I3 - unwanted code:
+You are strictly FORBIDDEN to add code that the user did not ask for, you MUST keep the codebase lean, simple and safe.
 
 Optional Cross-Language Refactor Assessment:
 You may propose a rewrite or partial replacement of performance-critical code in:

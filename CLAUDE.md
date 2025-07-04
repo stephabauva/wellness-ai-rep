@@ -18,8 +18,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm test` (if defined) - Run full test suite
 
 ### Validation Commands
-- `./validate-routes.sh` - Validate modular routes architecture
 - `npx tsc --noEmit` - TypeScript compilation check without output
+- `npm run check` - checks for typescript errors
 
 ### Go Services (Microservices)
 - `cd go-memory-service && go run .` - Start memory service (port 5002)
@@ -75,29 +75,23 @@ The system uses a modular routes architecture (breaking down a 3,848-line monoli
 ## Development Environment
 
 ### Multi-AI Development Setup
-- **Primary Development**: Claude Code (claude.ai/code) for complex features and architecture
+- **Primary Development**: Claude Code for complex features and architecture
 - **Secondary Development**: Replit.com AI agent for rapid prototyping and environment-specific tasks
 - **Environment Compatibility**: Always ensure changes are compatible with Replit environment to prevent deployment issues
 
 ## System Architecture Documentation
 
 ### System Mapping Workflow
-- **System Maps Directory**: `.system-maps/` contains structured JSON architecture documentation
-- **Mapping Guide**: Follow `.system-maps/system-mapping-guide.md` for creating/updating system maps
-- **Domain-Driven Mapping**: Each major feature domain has dedicated system map files
+- **System Maps Directory in JSON**: `.system-maps/json-system-maps/` contains structured JSON architecture documentation
+- **Mapping Guide for JSON system maps**: Follow `.system-maps/json-system-maps/system-mapping-guide.md` for creating/updating system maps in JSON
 - **Integration Validation**: System maps track actual vs expected API integrations with validation evidence
 
-### System Map Auditor
-- **Location**: `system-map-auditor/` directory with comprehensive validation tooling
-- **Purpose**: Prevents breaking changes by auditing system maps for architectural flaws
-- **Usage**: Run auditor regularly during development to catch integration gaps early
-- **Validation**: Ensures component-to-API consistency and cache invalidation patterns
-
 ### Architecture Change Process
-1. Update relevant system maps when adding/modifying features
-2. Run system map auditor to validate architectural integrity
-3. Ensure Replit environment compatibility
-4. Verify all integration points remain functional
+1. Deeply trace data flow and update relevant system maps when adding/modifying features
+2. Ensure Replit environment compatibility
+3. Verify all integration points remain functional
+4. All code must be lean and necessary, not 'nice-to-have', to keep the codebase's size small
+5. Propose lean Go code. as well as conversion from typescript to lean Go code as much as possible for best performance
 
 ## Development Guidelines
 
@@ -147,7 +141,7 @@ When working with memories:
 ## Critical Implementation Notes
 
 ### Routes Modularization
-- Line count limits are strictly enforced - validate with `./validate-routes.sh`
+- Line count limits are strictly enforced - the files must be refactor if it exceeds 300 lines of code but must NOT break existing functionalities
 - All route modules must be imported in `server/routes/index.ts`
 - Emergency rollback capability maintained via `USE_MONOLITHIC_ROUTES` flag
 - Shared dependencies and utilities have separate modules with enforced limits
@@ -170,6 +164,51 @@ When working with memories:
 - Batch insert operations prevent database bottlenecks
 - Original timestamp preservation critical for meaningful visualizations
 
+### Feature safety
+I1 — Feature Isolation:
+It is strictly forbidden for any new feature to alter code linked to other features **if it risks modifying or breaking their behavior**, unless you do the following :  
+  If alteration is required, you **must**:
+  - Assess the **full impact** on all dependent features
+  - Anticipate cascade effects
+  - Propose **safe mitigation plans** before proceeding
+
+I2 — Adaptive Re-evaluation:
+If you encounter any obstacle forcing you to change your approach:
+- You are forbidden from "trying something else" blindly
+- You must pause and re-assess the entire task using the new constraint
+- Then propose a new optimal path that still respects I1
+
+### Planning
+First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo-[title].md
+The plan should have a list of todo items that you can check off as you complete them
+
+Required Output when planning:
+1. Feature scope and technical context
+2. Dependency and risk assessment
+3. Test plan and safety checks
+4. Confirmation that app stability (HMR, DB, WebSockets) is preserved
+5. Ensure there are no unused pieces of code, all implemented code must be integrated.
+6. Ensure there are no conflicts between pieces of code.
+
+### Executing plan
+-Before you begin working on tasks of todo items in the tasks folder, check in with me and I will verify the plan.
+-Then begin working on the todo items, marking them as complete as you go
+-Every step of the way just give me a high level explanation of what changes you made
+-Make every task and code change you do as simple as possible. We want to avoid making any massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity
+-Finally, add a review section to the todo.md file with a summary of the changes you made and any other relevant information.
+
+### Replit-specific constraints:
+- Do NOT break Vite config, WebSocket, or HMR behavior
+- `vite.config.ts` and `server.hmr` are fragile and easily misconfigured
+- Even previously working commits have failed to restore a broken state — the system is delicate
+- Avoid touching build systems, persistent sockets, or compression unless necessary
+
+Avoid:
+- Over-aggressive deduplication or HTTP/2 changes
+- Modifying HMR setup or WebSocket handling
+- Introducing new workflows or bypassing Replit's own tooling
+- data samples / mock data
+
 ## Environment Configuration
 
 ### Database
@@ -189,5 +228,8 @@ When working with memories:
 - Port mapping: development (5000) → production (80)
 - Hot Module Replacement with stable WebSocket connections
 - Auto-provisioned PostgreSQL with migration on startup
+
+## Development Cleanup Guidelines
+- If you create any temporary new files, scripts, or helper files for iteration (e.g. dev.log), clean up these files by removing them at the end of the task
 
 This is a sophisticated wellness AI application with production-ready architecture, comprehensive testing, and high-performance processing capabilities for health data at scale.

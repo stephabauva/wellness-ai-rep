@@ -19,22 +19,21 @@ This analysis must:
 
 ## Critical Constraints
 
-### I1 — Safe Refactoring:
-When replacing a working system:
-- You must **map** all dependencies and usages of the existing system
-- Your plan must include:
-  - Full **before/after behavior comparison**
-  - A **temporary fallback mechanism** (feature flag, toggle, or sandboxing)
-  - A **step-by-step migration path**
-  - Full test coverage (unit, integration, runtime validation)
+I1 — Feature Isolation:
+It is strictly forbidden for any new feature to alter code linked to other features **if it risks modifying or breaking their behavior**, unless you do the following :  
+  If alteration is required, you **must**:
+  - Assess the **full impact** on all dependent features
+  - Anticipate cascade effects
+  - Propose a **safe mitigation plans** before proceeding with lean and simple code
 
-### I2 — Re-Evaluation Loop:
-If during the process you hit unexpected issues:
-- You are forbidden from improvising fixes
-- You must stop, reassess your entire plan using this new constraint
-- Then produce an updated, safer version of the refactor plan that:
-  - Still includes rollback options
-  - Is verifiably safer than the original approach
+I2 — Adaptive Re-evaluation:
+If you encounter any obstacle forcing you to change your approach:
+- You are FORBIDDEN from "trying something else" blindly
+- You MUST pause and re-assess the entire task using the new constraint
+- Then propose a new optimal path that still respects I1
+
+I3 - unwanted code:
+You are strictly FORBIDDEN to add code that the user did not ask for, you MUST keep the codebase lean, simple and safe
 
 ---
 

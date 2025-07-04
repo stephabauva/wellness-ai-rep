@@ -82,7 +82,7 @@ After thorough analysis, the codebase is not as catastrophically bloated as init
 ### Task 3.1: Streamline Settings
 - [ ] Reduce settings from 30+ to 8 essential options:
   - Language (keep UI, remove backend until implemented)
-  - Theme (fix dark mode or remove)
+  - Theme (fix dark mode)
   - AI Provider configuration
   - Privacy settings (simplified)
   - Account management

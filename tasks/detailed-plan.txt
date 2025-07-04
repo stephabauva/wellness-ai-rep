@@ -1,0 +1,2986 @@
+
+
+⏺ Update Todos
+  ⎿  ☐ Validate and fix critical bugs (broken chat, missing conversation IDs, React hook errors)
+     ☐ Remove truly unused code and consolidate duplicate functionality
+     ☐ Fix Go service integration issues (file accelerator 503 errors)
+     ☐ Refactor files exceeding 300 lines (file-routes.ts, health-routes.ts)
+     ☐ Simplify memory services architecture (consolidate 6 services to 1-2)
+     ☐ Streamline settings and remove unimplemented features
+     ☐ Optimize frontend state management and component re-renders
+     ☐ Clean up dependencies and remove unused packages
+     ☐ Create migration strategy for TypeScript to Go (if proceeding)
+
+  Recommended Approach:
+
+  Phase 1 (Days 1-3): Fix critical bugs first
+  - Restore chat functionality
+  - Fix Go service integration
+  - Stabilize core features
+
+  Phase 2 (Days 4-7): Simplify architecture
+  - Consolidate 6 memory services to 1-2
+  - Refactor files over 300 lines
+  - Remove truly unused code
+
+  Phase 3 (Days 8-10): Optimize
+  - Reduce settings from 30+ to 8 essential
+  - Fix frontend performance issues
+  - Simplify user flows
+
+  Phase 4 (Days 11-12): Clean dependencies
+  - Audit 100+ npm packages
+  - Remove unused libraries
+
+  Phase 5 (Days 13-15): Prepare for Go migration (if desired)
+  - Only after stabilization
+  - With proper fallbacks
+
+Detailed implementation :
+Overview
+
+  Clean up package.json by removing all unused dependencies while ensuring the application
+  remains fully functional.
+
+  Current State Analysis
+
+  - Multiple dependencies may be unused or redundant
+  - Some dependencies might be dev-only but listed in regular dependencies
+  - Need to preserve all working features (memory, chat, file upload, etc.)
+
+  Detailed Steps
+
+  1. Dependency Audit
+
+  # Run dependency check
+  npm list --depth=0
+  npx depcheck
+
+  # Document each dependency usage:
+  # - Where is it imported?
+  # - Is it actually used in the code?
+  # - Is it a peer dependency of another package?
+
+  2. Categorize Dependencies
+
+  MUST KEEP (Core Functionality):
+
+  - react, react-dom (UI framework)
+  - express (server)
+  - @ai-sdk/openai, @ai-sdk/google (AI providers)
+  - drizzle-orm, @neondatabase/serverless (database)
+  - vite (build tool)
+  - typescript (type checking)
+  - tailwindcss (styling)
+  - @radix-ui/* (UI components used by shadcn)
+  - lucide-react (icons)
+  - framer-motion (animations in use)
+  - recharts (charts for health data)
+  - date-fns (date formatting)
+  - zod (validation)
+  - jose (JWT handling)
+  - multer (file uploads)
+  - ws (websockets)
+
+  TO ANALYZE:
+
+  - Check each @types/* package - only keep if main package is used
+  - Review all dev dependencies - move to devDependencies if needed
+  - Check for duplicate functionality (multiple date libraries, etc.)
+
+  3. Safe Removal Process
+
+  For each dependency to remove:
+  1. Search entire codebase for imports
+  rg "from ['\"](dependency-name|@dependency/name)" --type ts --type tsx --type js --type jsx
+  rg "require\(['\"](dependency-name|@dependency/name)" --type ts --type tsx --type js --type jsx
+  2. Check package.json scripts that might use it
+  3. Verify no breaking changes after removal:
+    - npm run build succeeds
+    - npm run dev starts without errors
+    - All tests pass
+    - Memory system works
+    - Chat streaming works
+    - File uploads work
+
+  4. Dependencies to Remove (Preliminary List)
+
+  Based on initial analysis:
+  # Potentially unused (verify first):
+  - cookie-parser (if not using cookies)
+  - cors (if handled differently)
+  - dotenv (Vite has built-in env support)
+  - helmet (if security headers handled elsewhere)
+  - morgan (if using custom logging)
+  - compression (if handled by reverse proxy)
+  - body-parser (Express has built-in support)
+
+  # Dev dependencies in wrong section:
+  - Move @types/* to devDependencies
+  - Move testing libraries to devDependencies
+
+  5. Testing Checklist After Each Removal
+
+  - npm install completes without errors
+  - npm run build succeeds
+  - npm run dev starts
+  - Chat functionality works
+  - Memory saving/retrieval works
+  - File upload works
+  - Health data visualization works
+  - No console errors in browser
+  - No server startup errors
+
+  6. Update Configuration Files
+
+  After removing dependencies:
+  1. Update any config files that reference removed packages
+  2. Update TypeScript types if needed
+  3. Update build configs if needed
+
+  Risk Mitigation
+
+  - Create a backup of package.json before starting
+  - Remove one dependency at a time
+  - Test thoroughly after each removal
+  - Keep a list of removed dependencies in case rollback needed
+
+  Success Criteria
+
+  - All unused dependencies removed
+  - package.json is clean and minimal
+  - All existing features still work
+  - Build size reduced
+  - No runtime errors
+  - Faster npm install times
+
+  Overview
+
+  Identify and remove all unused API routes while preserving all functional endpoints that power
+  the application features.
+
+  Current Route Architecture
+
+  - Modular route system with separate files
+  - Routes organized by feature area
+  - Must preserve all working functionality
+
+  Detailed Analysis Steps
+
+  1. Map All Routes
+
+  Create inventory of all routes in each file:
+
+  // server/routes/chat-routes.ts
+  POST   /api/chat              - Main chat endpoint (KEEP - core feature)
+  POST   /api/chat/streaming    - Streaming responses (KEEP - core feature)
+  POST   /api/transcribe        - Audio transcription (CHECK USAGE)
+  GET    /api/models            - Available AI models (KEEP - settings)
+
+  // server/routes/health-routes.ts
+  POST   /api/health-data       - Upload health data (KEEP - core feature)
+  GET    /api/health-data/:id   - Get specific data (CHECK USAGE)
+  GET    /api/health-data/stats - Statistics (KEEP - used in dashboard)
+  DELETE /api/health-data/:id   - Delete data (CHECK USAGE)
+
+  // server/routes/memory-routes.ts
+  GET    /api/memories          - List memories (KEEP - memory page)
+  POST   /api/memories          - Create memory (KEEP - chat integration)
+  GET    /api/memories/:id      - Get memory (CHECK USAGE)
+  PUT    /api/memories/:id      - Update memory (CHECK USAGE)
+  DELETE /api/memories/:id      - Delete memory (KEEP - memory page)
+  POST   /api/memories/search   - Search memories (KEEP - chat context)
+
+  // server/routes/file-routes.ts
+  POST   /api/upload            - File upload (KEEP - core feature)
+  GET    /api/files             - List files (KEEP - file manager)
+  GET    /api/files/:id         - Download file (KEEP - file access)
+  DELETE /api/files/:id         - Delete file (CHECK USAGE)
+
+  // server/routes/settings-routes.ts
+  GET    /api/settings          - Get settings (KEEP - settings page)
+  PUT    /api/settings          - Update settings (KEEP - settings page)
+  GET    /api/settings/profile  - User profile (CHECK USAGE)
+
+  // server/routes/monitoring-routes.ts  
+  GET    /api/performance       - Performance metrics (CHECK USAGE)
+  GET    /api/health           - Health check (KEEP - monitoring)
+  GET    /api/metrics          - System metrics (CHECK USAGE)
+
+  2. Usage Detection Methods
+
+  Frontend Usage Check:
+
+  # For each route, search in client code:
+  rg "fetch\(['\"`]/api/route-name" client/src --type ts --type tsx
+  rg "axios.*['\"`]/api/route-name" client/src --type ts --type tsx
+  rg "['\"`]/api/route-name['\"`]" client/src --type ts --type tsx
+
+  # Check for dynamic route construction:
+  rg "api.*memories" client/src --type ts --type tsx
+
+  Check API Service Files:
+
+  // Look in client/src/services/api.ts or similar
+  // Check for route constants or functions
+
+  Check React Query / Hooks:
+
+  # Search for custom hooks using routes
+  rg "useQuery.*api" client/src/hooks --type ts
+  rg "useMutation.*api" client/src/hooks --type ts
+
+  3. Routes to Analyze in Detail
+
+  Potentially Unused (Need Verification):
+
+  GET    /api/health-data/:id   - Individual health record (bulk ops only?)
+  GET    /api/memories/:id      - Individual memory (list view only?)
+  PUT    /api/memories/:id      - Memory updates (immutable design?)
+  GET    /api/settings/profile  - Profile endpoint (settings has all?)
+  GET    /api/performance       - Performance metrics (monitoring page?)
+  GET    /api/metrics          - System metrics (duplicate of performance?)
+  POST   /api/transcribe        - Audio transcription (voice feature used?)
+
+  4. Safe Removal Process
+
+  For each potentially unused route:
+
+  1. Search Comprehensively:
+  # Search across entire codebase
+  rg "/api/endpoint-name" . --type-add 'web:*.{ts,tsx,js,jsx}' --type web
+
+  # Check for partial matches
+  rg "endpoint-name" . --type-add 'web:*.{ts,tsx,js,jsx}' --type web
+  2. Check Dynamic Usage:
+    - Look for template strings building routes
+    - Check for route parameters in variables
+    - Verify no indirect references
+  3. Test Removal:
+    - Comment out the route
+    - Run the application
+    - Test all features:
+        - Chat conversations
+      - Memory creation/viewing
+      - File uploads
+      - Settings changes
+      - Health data visualization
+  4. Remove Safely:
+    - Delete route handler
+    - Remove any associated middleware
+    - Clean up imports
+    - Update route documentation
+
+  5. Related Code Cleanup
+
+  After removing routes, also remove:
+  - Unused service functions
+  - Unused database queries
+  - Unused validation schemas
+  - Unused types/interfaces
+  - Unused middleware
+
+  6. Testing Matrix
+
+  | Feature  | Test Case           | Expected Result            |
+  |----------|---------------------|----------------------------|
+  | Chat     | Send message        | Response streams correctly |
+  | Memory   | Auto-save from chat | Memory created             |
+  | Memory   | View memory list    | All memories load          |
+  | Memory   | Delete memory       | Memory removed             |
+  | Files    | Upload file         | File processes             |
+  | Files    | View files          | File list loads            |
+  | Health   | Upload health data  | Data processes             |
+  | Health   | View charts         | Charts render              |
+  | Settings | Change AI model     | Setting saves              |
+  | Settings | Update preferences  | Changes persist            |
+
+  7. Documentation Update
+
+  Update any API documentation to reflect removed routes:
+  - Remove from OpenAPI/Swagger if exists
+  - Update README if routes listed
+  - Update system maps if documented
+
+  Risk Assessment
+
+  - Low Risk: Removing truly unused routes
+  - Medium Risk: Routes used in edge cases
+  - High Risk: Routes used dynamically or indirectly
+
+  Success Criteria
+
+  - All unused routes identified and removed
+  - No broken functionality in UI
+  - No console errors about missing endpoints
+  - Reduced API surface area
+  - Cleaner, more maintainable codebase
+  - All tests still pass
+
+  Overview
+
+  Streamline AI provider implementation by removing redundancy and creating a unified interface
+  while maintaining multi-provider support.
+
+  Current State Analysis
+
+  Files to Analyze:
+
+  server/services/ai-providers/
+  ├── base-ai-provider.ts
+  ├── openai-provider.ts
+  ├── google-ai-provider.ts
+  └── provider-factory.ts
+
+  server/services/
+  ├── ai-service.ts
+  ├── model-service.ts
+  └── embedding-service.ts
+
+  Consolidation Strategy
+
+  1. Identify Common Patterns
+
+  Current Duplication:
+
+  // Each provider likely has:
+  - Stream response handling
+  - Error handling
+  - Token counting
+  - Model configuration
+  - Retry logic
+  - Response formatting
+
+  Consolidation Opportunities:
+
+  // Create unified base class with:
+  abstract class UnifiedAIProvider {
+    // Common stream handling
+    protected async* streamResponse(response: any): AsyncGenerator<string> {
+      // Unified streaming logic
+    }
+
+    // Common error handling
+    protected handleError(error: any): AIError {
+      // Unified error handling
+    }
+
+    // Abstract methods for provider-specific logic
+    abstract createChatCompletion(messages: Message[]): Promise<Stream>;
+    abstract createEmbedding(text: string): Promise<number[]>;
+  }
+
+  2. Simplify Provider Factory
+
+  Current (likely verbose):
+
+  // Probably has complex logic for each provider
+  switch(provider) {
+    case 'openai':
+      // 20+ lines of OpenAI setup
+    case 'google':
+      // 20+ lines of Google setup
+  }
+
+  Target (simplified):
+
+  const providers = {
+    openai: OpenAIProvider,
+    google: GoogleProvider
+  };
+
+  return new providers[providerName](config);
+
+  3. Unify Configuration
+
+  Create Single Config Interface:
+
+  interface AIProviderConfig {
+    apiKey: string;
+    model: string;
+    temperature?: number;
+    maxTokens?: number;
+    streaming?: boolean;
+  }
+
+  // Each provider adapts this to their SDK
+
+  4. Consolidate Response Handling
+
+  Current Issues:
+
+  - Different response formats per provider
+  - Duplicate parsing logic
+  - Inconsistent error handling
+
+  Solution:
+
+  interface UnifiedResponse {
+    content: string;
+    usage?: TokenUsage;
+    model: string;
+    provider: string;
+  }
+
+  // Each provider converts to unified format
+
+  5. Merge Duplicate Services
+
+  Combine Related Services:
+
+  // Instead of:
+  // - ai-service.ts (chat)
+  // - embedding-service.ts (embeddings)
+  // - model-service.ts (model info)
+
+  // Create:
+  class UnifiedAIService {
+    async chat(messages: Message[]): Promise<UnifiedResponse>
+    async embed(text: string): Promise<number[]>
+    async getModels(): Promise<ModelInfo[]>
+  }
+
+  6. Remove Redundant Code
+
+  Areas to Clean:
+
+  1. Duplicate Error Handling
+    - Consolidate error types
+    - Single error handler
+    - Consistent retry logic
+  2. Duplicate Streaming Logic
+    - One stream parser
+    - Unified chunk handling
+    - Single abort controller pattern
+  3. Duplicate Configuration
+    - Single config loader
+    - Unified environment variables
+    - One validation schema
+
+  7. Implementation Plan
+
+  Phase 1: Create Unified Base
+
+  // base-ai-provider.ts
+  export abstract class BaseAIProvider {
+    protected config: AIProviderConfig;
+
+    constructor(config: AIProviderConfig) {
+      this.config = this.validateConfig(config);
+    }
+
+    // Common methods
+    protected async handleStream(stream: any): AsyncGenerator<string> {
+      // Unified streaming
+    }
+
+    // Abstract methods
+    abstract chat(messages: Message[]): Promise<Stream>;
+    abstract embed(text: string): Promise<number[]>;
+  }
+
+  Phase 2: Refactor Providers
+
+  // openai-provider.ts (simplified)
+  export class OpenAIProvider extends BaseAIProvider {
+    private client: OpenAI;
+
+    async chat(messages: Message[]) {
+      const response = await this.client.chat.completions.create({
+        messages: this.formatMessages(messages),
+        model: this.config.model,
+        stream: true
+      });
+
+      return this.handleStream(response);
+    }
+  }
+
+  Phase 3: Consolidate Services
+
+  // ai-service.ts (unified)
+  export class AIService {
+    private provider: BaseAIProvider;
+
+    constructor(providerName: string) {
+      this.provider = ProviderFactory.create(providerName);
+    }
+
+    // All AI operations in one place
+    async chat(messages: Message[]) { }
+    async embed(text: string) { }
+    async getModels() { }
+  }
+
+  8. Testing Requirements
+
+  Ensure No Regression:
+
+  - Chat streaming works for both providers
+  - Embeddings generate correctly
+  - Model switching works
+  - Error handling consistent
+  - Memory system still functions
+  - No performance degradation
+
+  Test Cases:
+
+  describe('Unified AI Service', () => {
+    test('OpenAI chat works', async () => {
+      const service = new AIService('openai');
+      const response = await service.chat([{role: 'user', content: 'test'}]);
+      expect(response).toBeDefined();
+    });
+
+    test('Google chat works', async () => {
+      const service = new AIService('google');
+      const response = await service.chat([{role: 'user', content: 'test'}]);
+      expect(response).toBeDefined();
+    });
+
+    test('Provider switching works', async () => {
+      // Test dynamic provider switching
+    });
+  });
+
+  9. Files to Remove After Consolidation
+
+  # Remove if fully consolidated:
+  - server/services/model-service.ts (merged into ai-service)
+  - server/services/embedding-service.ts (merged into ai-service)
+  - Duplicate provider utilities
+  - Redundant configuration files
+  - Old provider-specific error types
+
+  Success Criteria
+
+  - Single unified AI service interface
+  - Reduced code duplication by 50%+
+  - All providers work through same interface
+  - Simplified provider addition process
+  - No functionality lost
+  - Improved maintainability
+  - Clear separation of concerns
+
+  Overview
+
+  Identify and remove unused React components, hooks, and UI utilities while preserving all
+  active UI elements.
+
+  Component Analysis Strategy
+
+  1. Component Inventory
+
+  Map All Components:
+
+  # List all component files
+  find client/src/components -name "*.tsx" -o -name "*.jsx" | sort
+
+  # Expected structure:
+  client/src/components/
+  ├── ui/                    # Shadcn/ui components
+  ├── chat/                  # Chat-related components
+  ├── memory/                # Memory system components
+  ├── health/                # Health data visualization
+  ├── settings/              # Settings components
+  ├── common/                # Shared components
+  └── ...                    # Feature-specific components
+
+  2. Usage Detection Methods
+
+  Direct Import Search:
+
+  # For each component, search for imports
+  rg "import.*ComponentName" client/src --type ts --type tsx
+  rg "from ['\"].*ComponentName" client/src --type ts --type tsx
+
+  # Check lazy imports
+  rg "lazy.*ComponentName" client/src --type ts --type tsx
+
+  Dynamic Usage Check:
+
+  // Check for dynamic component rendering
+  rg "<[A-Z][a-zA-Z]*" client/src --type tsx | grep -v "^//"
+
+  // Check for component arrays/maps
+  rg "components\[" client/src --type ts --type tsx
+
+  3. Component Categories
+
+  MUST KEEP (Core UI):
+
+  # Chat Components
+  - ChatInterface.tsx       # Main chat UI
+  - MessageList.tsx        # Message display
+  - MessageInput.tsx       # Input field
+  - StreamingMessage.tsx   # Streaming responses
+
+  # Memory Components
+  - MemoryList.tsx         # Memory display
+  - MemoryCard.tsx         # Individual memory
+  - MemorySearch.tsx       # Search interface
+
+  # Health Components
+  - HealthDashboard.tsx    # Main health view
+  - HealthChart.tsx        # Data visualization
+  - DataUpload.tsx         # Upload interface
+
+  # Common Components
+  - Layout.tsx             # App layout
+  - Navigation.tsx         # Nav menu
+  - LoadingSpinner.tsx     # Loading states
+
+  TO ANALYZE:
+
+  # Potentially Unused
+  - Legacy components from old features
+  - Duplicate components (Button vs CustomButton)
+  - Experimental components never integrated
+  - Example/demo components
+  - Storybook-only components
+
+  4. Hook Analysis
+
+  Check Custom Hooks:
+
+  # List all hooks
+  find client/src/hooks -name "use*.ts" -o -name "use*.tsx"
+
+  # For each hook, check usage
+  rg "useHookName" client/src --type ts --type tsx
+
+  Common Unused Hooks:
+
+  - Experimental feature hooks
+  - Deprecated API hooks
+  - Over-engineered abstraction hooks
+  - Duplicate functionality hooks
+
+  5. Detailed Removal Process
+
+  For Each Component:
+
+  1. Check Direct Usage:
+  # Search for component imports
+  rg "ComponentName" client/src --type-add 'web:*.{ts,tsx,js,jsx}' -t web
+
+  # Check for namespace imports
+  rg "\.ComponentName" client/src -t web
+  2. Check Route Usage:
+  // Look in route definitions
+  // client/src/App.tsx or routes.tsx
+  <Route path="/path" component={ComponentName} />
+  3. Check Conditional Rendering:
+  // Dynamic component usage
+  {condition && <ComponentName />}
+
+  // Component maps
+  const components = { type1: Component1 };
+  4. Check Test Usage:
+  # Don't count test-only usage
+  rg "ComponentName" client/src --type test
+
+  6. UI Library Audit
+
+  Shadcn/ui Components:
+
+  # Check which shadcn components are actually used
+  # These are in client/src/components/ui/
+
+  # For each ui component:
+  rg "from ['\"]@/components/ui/button" client/src
+  rg "from ['\"]@/components/ui/card" client/src
+  # etc.
+
+  Remove Unused UI Components:
+
+  - Unused shadcn/ui components
+  - Unused icon imports
+  - Unused animation components
+  - Unused utility components
+
+  7. Style and Asset Cleanup
+
+  After Removing Components:
+
+  /* Remove associated styles */
+  - Component-specific CSS modules
+  - Unused Tailwind classes (use PurgeCSS)
+  - Orphaned style files
+
+  Remove Associated Assets:
+
+  - Component-specific images
+  - Component-specific icons
+  - Test fixtures
+  - Storybook stories
+
+  8. Type Definition Cleanup
+
+  // Remove unused types/interfaces
+  - Component prop types
+  - Component state types
+  - Event handler types
+  - Utility types
+
+  9. Testing Checklist
+
+  After each component removal:
+  - App builds successfully
+  - No console errors
+  - All routes render
+  - All features work:
+    - Chat interface loads
+    - Messages send/receive
+    - Memory list displays
+    - File upload works
+    - Settings save
+    - Health charts render
+
+  10. Common Pitfalls to Avoid
+
+  Don't Remove:
+
+  - Components used in lazy loading
+  - Components used in error boundaries
+  - Components used in portals
+  - Components referenced in strings
+  - Base/abstract components extended by others
+
+  Check For:
+
+  // Lazy loading
+  const Component = lazy(() => import('./Component'));
+
+  // Error boundaries
+  <ErrorBoundary fallback={<ComponentName />}>
+
+  // Portal usage
+  createPortal(<ComponentName />, element)
+
+  // String references
+  const componentName = 'ComponentName';
+
+  Implementation Order
+
+  1. Start with obvious candidates:
+    - Example components
+    - Test/demo components
+    - Old version components (v1, old, legacy in name)
+  2. Move to feature analysis:
+    - Unused feature folders
+    - Incomplete features
+    - Deprecated features
+  3. Finish with careful analysis:
+    - Utility components
+    - Higher-order components
+    - Context providers
+
+  Success Metrics
+
+  - Removed all unused components
+  - Reduced bundle size
+  - Cleaner component structure
+  - No broken UI elements
+  - All features still functional
+  - Improved build times
+
+  Overview
+
+  Clean up database schema, remove unused tables/columns, optimize queries, and ensure efficient
+  indexing while maintaining all functionality.
+
+  Current Database Analysis
+
+  1. Schema Inventory
+
+  Current Tables (from schema.ts):
+
+  // Analyze each table for usage
+  - users                 # User accounts
+  - conversations        # Chat sessions
+  - messages            # Chat messages
+  - memories            # User memories
+  - memory_embeddings   # Vector embeddings
+  - health_records      # Health data
+  - uploaded_files      # File metadata
+  - user_settings       # Preferences
+  - performance_metrics # System metrics
+
+  2. Column Usage Analysis
+
+  For Each Table, Check:
+
+  -- Find unused columns by checking for all NULL values
+  SELECT
+    COUNT(*) as total_rows,
+    COUNT(column_name) as non_null_count
+  FROM table_name;
+
+  -- Check for columns never queried
+  -- Search codebase for column references
+
+  Column Analysis Script:
+
+  # For each column in schema.ts
+  rg "columnName" server --type ts
+  rg "column_name" server --type ts  # snake_case version
+  rg "\.columnName" server --type ts  # dot notation
+  rg "\['columnName'\]" server --type ts  # bracket notation
+
+  3. Index Optimization
+
+  Current Index Analysis:
+
+  -- List all indexes
+  SELECT
+    schemaname,
+    tablename,
+    indexname,
+    indexdef
+  FROM pg_indexes
+  WHERE schemaname = 'public';
+
+  -- Check index usage
+  SELECT
+    schemaname,
+    tablename,
+    indexname,
+    idx_scan,
+    idx_tup_read,
+    idx_tup_fetch
+  FROM pg_stat_user_indexes;
+
+  Performance Critical Indexes to KEEP:
+
+  -- Memory search performance
+  CREATE INDEX idx_memories_user_created ON memories(user_id, created_at DESC);
+  CREATE INDEX idx_embeddings_memory ON memory_embeddings(memory_id);
+
+  -- Chat performance  
+  CREATE INDEX idx_messages_conversation ON messages(conversation_id, created_at);
+  CREATE INDEX idx_conversations_user ON conversations(user_id, updated_at DESC);
+
+  -- Health data queries
+  CREATE INDEX idx_health_records_user_date ON health_records(user_id, recorded_at);
+  CREATE INDEX idx_health_records_type ON health_records(record_type);
+
+  4. Query Optimization
+
+  Identify Slow Queries:
+
+  // Add query logging temporarily
+  const startTime = Date.now();
+  const result = await db.query(...);
+  const duration = Date.now() - startTime;
+  if (duration > 100) {
+    console.log(`Slow query (${duration}ms):`, query);
+  }
+
+  Common Query Optimizations:
+
+  1. Memory Search Query:
+  // Current (possibly inefficient)
+  const memories = await db
+    .select()
+    .from(memories)
+    .where(eq(memories.userId, userId))
+    .orderBy(desc(memories.createdAt));
+
+  // Optimized (with limit and specific columns)
+  const memories = await db
+    .select({
+      id: memories.id,
+      content: memories.content,
+      createdAt: memories.createdAt
+    })
+    .from(memories)
+    .where(eq(memories.userId, userId))
+    .orderBy(desc(memories.createdAt))
+    .limit(100);
+
+  2. Join Optimization:
+  // Avoid N+1 queries
+  // Bad: Fetch memories then fetch embeddings for each
+  // Good: Single query with join
+  const memoriesWithEmbeddings = await db
+    .select()
+    .from(memories)
+    .leftJoin(memoryEmbeddings, eq(memories.id, memoryEmbeddings.memoryId))
+    .where(eq(memories.userId, userId));
+
+  5. Schema Cleanup Plan
+
+  Tables/Columns to Analyze:
+
+  1. Potentially Unused Tables:
+  - performance_metrics  # Check if monitoring actually uses this
+  - audit_logs          # If exists, check usage
+  - temp_* tables       # Any temporary tables
+
+  2. Potentially Unused Columns:
+  // Common candidates:
+  - created_by/updated_by  # If not tracking user actions
+  - version               # If not using optimistic locking
+  - status                # If always same value
+  - metadata jsonb        # If empty or unused
+  - legacy_id             # Migration remnants
+
+  6. Safe Removal Process
+
+  For Each Schema Change:
+
+  1. Backup First:
+  -- Create backup of table
+  CREATE TABLE table_name_backup AS SELECT * FROM table_name;
+
+  2. Check Dependencies:
+  -- Find foreign key constraints
+  SELECT
+    conname,
+    conrelid::regclass AS table_name,
+    confrelid::regclass AS referenced_table
+  FROM pg_constraint
+  WHERE contype = 'f';
+
+  3. Search Code:
+  # Search for table/column usage
+  rg "table_name" . --type ts
+  rg "tableName" . --type ts
+
+  4. Migration Strategy:
+  // Create down migration first
+  export async function down(db: Database) {
+    // Recreate removed elements
+  }
+
+  // Then up migration
+  export async function up(db: Database) {
+    // Remove unused elements
+    await db.schema.dropTable('unused_table').execute();
+    await db.schema.alterTable('table_name')
+      .dropColumn('unused_column')
+      .execute();
+  }
+
+  7. Query Performance Testing
+
+  Before/After Metrics:
+
+  // Test critical queries
+  const testQueries = [
+    'Get recent memories',
+    'Search memories',
+    'Get chat history',
+    'Get health data range',
+    'File metadata lookup'
+  ];
+
+  // Measure performance
+  for (const query of testQueries) {
+    const times = [];
+    for (let i = 0; i < 10; i++) {
+      const start = performance.now();
+      await runQuery(query);
+      times.push(performance.now() - start);
+    }
+    console.log(`${query}: avg ${average(times)}ms`);
+  }
+
+  8. Database Size Optimization
+
+  Check Table Sizes:
+
+  SELECT
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+  FROM pg_tables
+  WHERE schemaname = 'public'
+  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+
+  Cleanup Operations:
+
+  -- Remove old data
+  DELETE FROM performance_metrics WHERE created_at < NOW() - INTERVAL '30 days';
+  DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL '90 days';
+
+  -- Vacuum tables
+  VACUUM ANALYZE table_name;
+
+  9. Connection Pool Optimization
+
+  // Review connection pool settings
+  const pool = new Pool({
+    max: 20,        // Reduce if too high
+    min: 2,         // Increase if too low
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+
+  10. Testing Checklist
+
+  After each optimization:
+  - All queries still work
+  - No data loss
+  - Performance improved or same
+  - Memory operations work
+  - Chat history loads
+  - Health data queries work
+  - File operations work
+  - Settings save/load
+
+  Success Criteria
+
+  - Removed all unused tables
+  - Removed all unused columns
+  - Optimized critical query paths
+  - Reduced database size
+  - Improved query performance
+  - Maintained data integrity
+  - All features still functional
+
+  Overview
+
+  Identify TypeScript services doing heavy processing and convert them to Go microservices for
+  better performance, focusing on data-intensive operations.
+
+  Current Go Services Analysis
+
+  Existing Go Services:
+
+  go-memory-service/      # Memory processing (Port 5002)
+  go-file-accelerator/    # Large file processing (Port 5001)
+  go-ai-gateway/          # AI request handling
+
+  Target Services for Conversion
+
+  1. Health Data Processing Pipeline
+
+  Current TypeScript Implementation:
+
+  // server/services/health-data-processor.ts
+  class HealthDataProcessor {
+    async processAppleHealthXML(file: Buffer): Promise<HealthRecord[]> {
+      // XML parsing - CPU intensive
+      // Data transformation - Memory intensive
+      // Batch processing - I/O intensive
+    }
+
+    async processGoogleFitJSON(file: Buffer): Promise<HealthRecord[]> {
+      // Large JSON parsing
+      // Nested data flattening
+      // Date range filtering
+    }
+  }
+
+  Go Implementation Plan:
+
+  // go-health-processor/main.go
+  package main
+
+  type HealthProcessor struct {
+    db *sql.DB
+  }
+
+  func (h *HealthProcessor) ProcessAppleHealthXML(data []byte) ([]HealthRecord, error) {
+    // Use encoding/xml for streaming parse
+    // Process in chunks to minimize memory
+    // Use goroutines for parallel processing
+  }
+
+  func (h *HealthProcessor) ProcessGoogleFitJSON(data []byte) ([]HealthRecord, error) {
+    // Use json.Decoder for streaming
+    // Process concurrently with worker pool
+  }
+
+  2. Embedding Generation Service
+
+  Current TypeScript:
+
+  // server/services/embedding-service.ts
+  class EmbeddingService {
+    async generateEmbeddings(texts: string[]): Promise<number[][]> {
+      // Batch processing
+      // API calls
+      // Vector computations
+    }
+
+    async findSimilar(embedding: number[], threshold: number): Promise<Memory[]> {
+      // Vector similarity computation
+      // Database queries
+      // Sorting and filtering
+    }
+  }
+
+  Go Implementation:
+
+  // go-embedding-service/main.go
+  type EmbeddingService struct {
+    aiClient AIClient
+    cache    *LRUCache
+  }
+
+  func (e *EmbeddingService) GenerateEmbeddings(texts []string) ([][]float32, error) {
+    // Concurrent batch processing
+    // Connection pooling for API calls
+    // Efficient memory usage with float32
+  }
+
+  func (e *EmbeddingService) FindSimilar(embedding []float32, threshold float32) ([]Memory, 
+  error) {
+    // SIMD operations for vector math
+    // Optimized similarity algorithms
+    // Parallel search
+  }
+
+  3. Data Export/Analytics Service
+
+  Current TypeScript:
+
+  // server/services/export-service.ts  
+  class ExportService {
+    async exportHealthData(userId: string, format: string): Promise<Buffer> {
+      // Large dataset queries
+      // Format conversions (CSV, JSON, PDF)
+      // Compression
+    }
+
+    async generateAnalytics(userId: string, dateRange: DateRange): Promise<Analytics> {
+      // Aggregation queries
+      // Statistical computations
+      // Trend analysis
+    }
+  }
+
+  Go Implementation:
+
+  // go-analytics-service/main.go
+  type AnalyticsService struct {
+    db         *sql.DB
+    calculator StatsCalculator
+  }
+
+  func (a *AnalyticsService) ExportData(userID string, format string) ([]byte, error) {
+    // Streaming database reads
+    // Concurrent format conversion
+    // Built-in compression
+  }
+
+  func (a *AnalyticsService) GenerateAnalytics(userID string, start, end time.Time) (*Analytics, 
+  error) {
+    // Optimized aggregation queries
+    // Parallel statistical computation
+    // Efficient memory usage
+  }
+
+  4. Implementation Strategy
+
+  Phase 1: Service Structure
+
+  // Shared structure for all Go services
+  // go-services-common/base.go
+  package common
+
+  type BaseService struct {
+    Port     int
+    DB       *sql.DB
+    Logger   *log.Logger
+    Metrics  *prometheus.Registry
+  }
+
+  func (s *BaseService) Start() error {
+    // Common HTTP server setup
+    // Health checks
+    // Graceful shutdown
+  }
+
+  Phase 2: TypeScript Fallback Pattern
+
+  // Keep TypeScript implementation as fallback
+  class HealthDataService {
+    private goServiceUrl = 'http://localhost:5003';
+
+    async processHealthData(file: Buffer): Promise<HealthRecord[]> {
+      try {
+        // Try Go service first
+        const response = await fetch(`${this.goServiceUrl}/process`, {
+          method: 'POST',
+          body: file
+        });
+
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (error) {
+        console.log('Go service unavailable, falling back to TypeScript');
+      }
+
+      // Fallback to TypeScript implementation
+      return this.processHealthDataTypeScript(file);
+    }
+  }
+
+  5. Performance Benchmarks
+
+  Metrics to Track:
+
+  // Benchmark comparisons
+  type Benchmark struct {
+    Operation      string
+    TypeScriptTime time.Duration
+    GoTime         time.Duration
+    MemoryTS       int64
+    MemoryGo       int64
+    Improvement    float64
+  }
+
+  // Expected improvements:
+  // - XML parsing: 5-10x faster
+  // - JSON processing: 3-5x faster  
+  // - Vector operations: 10-20x faster
+  // - Memory usage: 50-70% reduction
+
+  6. Deployment Configuration
+
+  Docker Compose Addition:
+
+  services:
+    go-health-processor:
+      build: ./go-health-processor
+      ports:
+        - "5003:5003"
+      environment:
+        - DATABASE_URL=${DATABASE_URL}
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+
+    go-embedding-service:
+      build: ./go-embedding-service
+      ports:
+        - "5004:5004"
+      environment:
+        - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+    go-analytics-service:
+      build: ./go-analytics-service
+      ports:
+        - "5005:5005"
+      environment:
+        - DATABASE_URL=${DATABASE_URL}
+
+  7. Migration Testing
+
+  Test Cases:
+
+  1. Functionality Tests:
+    - Process same file in both implementations
+    - Compare output for correctness
+    - Verify data integrity
+  2. Performance Tests:
+    - Large file processing (>100MB)
+    - Concurrent request handling
+    - Memory usage under load
+  3. Integration Tests:
+    - Fallback mechanism works
+    - Service discovery works
+    - Error handling correct
+
+  8. Code Removal Plan
+
+  After Go services are stable:
+  1. Remove TypeScript processing logic
+  2. Keep only API client code
+  3. Maintain fallback for 1 month
+  4. Remove fallback after validation
+
+  Success Criteria
+
+  - Go services handle 10x larger files
+  - Processing time reduced by 70%+
+  - Memory usage reduced by 50%+
+  - Zero data processing errors
+  - Seamless fallback mechanism
+  - All existing features work
+  - Improved system scalability
+
+  Overview
+
+  Clean up test suites by removing tests for deleted features, consolidating test utilities, and
+  ensuring only relevant tests remain.
+
+  Test Analysis Strategy
+
+  1. Test File Inventory
+
+  Current Test Structure:
+
+  # Find all test files
+  find . -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx"
+
+  # Expected structure:
+  client/src/
+  ├── components/__tests__/
+  ├── hooks/__tests__/
+  ├── services/__tests__/
+  └── utils/__tests__/
+
+  server/
+  ├── routes/__tests__/
+  ├── services/__tests__/
+  └── utils/__tests__/
+
+  2. Test Coverage Analysis
+
+  Generate Coverage Report:
+
+  # Run tests with coverage
+  npm test -- --coverage
+
+  # Identify:
+  # - Tests with 0% coverage (likely obsolete)
+  # - Test files for non-existent code
+  # - Redundant test cases
+
+  3. Categories of Tests to Remove
+
+  Dead Feature Tests:
+
+  // Tests for removed features
+  describe('LegacyFeature', () => {
+    // If LegacyFeature component removed, remove these tests
+  });
+
+  // Tests for removed endpoints
+  describe('DELETE /api/old-endpoint', () => {
+    // If endpoint removed, remove test
+  });
+
+  Obsolete Integration Tests:
+
+  // Tests for old workflows
+  test('old user flow', async () => {
+    // If workflow changed, update or remove
+  });
+
+  Redundant Unit Tests:
+
+  // Multiple tests for same functionality
+  test('adds 1 + 1', () => {
+    expect(add(1, 1)).toBe(2);
+  });
+
+  test('sum of 1 and 1', () => {
+    expect(add(1, 1)).toBe(2);  // Duplicate
+  });
+
+  4. Test Utility Consolidation
+
+  Current Test Utilities:
+
+  // Likely scattered across:
+  - test-utils.ts
+  - test-helpers.ts
+  - mock-data.ts
+  - test-fixtures.ts
+  - setupTests.ts
+
+  Consolidation Plan:
+
+  // Combine into single test-utils/index.ts
+  export * from './render-helpers';
+  export * from './mock-providers';
+  export * from './test-data';
+  export * from './api-mocks';
+
+  5. Mock and Fixture Cleanup
+
+  Identify Unused Mocks:
+
+  # Search for mock usage
+  rg "mockServiceName" . --type ts --type tsx -g "*.test.*"
+  rg "mockData" . --type ts --type tsx -g "*.test.*"
+
+  Remove Obsolete Fixtures:
+
+  // Old test data that no longer matches schema
+  const oldUserFormat = {
+    username: 'test',  // Field removed
+    email: 'test@example.com'
+  };
+
+  // API mocks for removed endpoints
+  jest.mock('/api/deleted-endpoint');
+
+  6. Framework Migration Cleanup
+
+  Remove Jest Remnants (if migrated to Vitest):
+
+  // Old Jest configuration
+  - jest.config.js
+  - jest.setup.js
+  - __mocks__/ directories
+
+  // Jest-specific syntax
+  global.fetch = jest.fn();  // Convert to vi.fn()
+  jest.setTimeout(10000);     // Convert to vi.setConfig()
+
+  Remove Old Testing Libraries:
+
+  // package.json - remove if not used
+  "@testing-library/jest-dom"
+  "jest-environment-jsdom"
+  "babel-jest"
+  "ts-jest"
+
+  7. Test File Analysis Script
+
+  #!/bin/bash
+  # Find potentially obsolete tests
+
+  # List test files for non-existent source files
+  for test_file in $(find . -name "*.test.ts" -o -name "*.test.tsx"); do
+    # Extract source file name
+    source_file=$(echo $test_file | sed 's/\.test\./\./g' | sed 's/__tests__\///g')
+
+    if [ ! -f "$source_file" ]; then
+      echo "Orphaned test: $test_file (no source: $source_file)"
+    fi
+  done
+
+  # Find empty or trivial tests
+  rg "it\.skip|test\.skip|describe\.skip" . --type ts
+  rg "it\.todo|test\.todo" . --type ts
+  rg "expect\(true\)\.toBe\(true\)" . --type ts
+
+  8. E2E Test Cleanup
+
+  Remove Obsolete E2E Tests:
+
+  // Cypress/Playwright tests for removed features
+  describe('Old Feature Flow', () => {
+    it('should navigate to deleted page', () => {
+      cy.visit('/deleted-route');  // Remove if route deleted
+    });
+  });
+
+  Update Selectors:
+
+  // Update selectors for changed UI
+  cy.get('[data-testid="old-button"]');  // Update if component changed
+  cy.contains('Old Text');                // Update if text changed
+
+  9. Snapshot Cleanup
+
+  Remove Obsolete Snapshots:
+
+  # Find unused snapshots
+  npm test -- -u  # Updates snapshots
+
+  # Remove snapshot files for deleted components
+  find . -name "*.snap" -exec grep -l "DeletedComponent" {} \; | xargs rm
+
+  10. Test Documentation Update
+
+  Update Test README:
+
+  # Testing Guide
+
+  ## Removed Test Categories
+  - Legacy API tests (migrated to new endpoints)
+  - Old component tests (components deleted)
+  - Integration tests for removed workflows
+
+  ## Current Test Structure
+  - Unit tests for business logic
+  - Component tests for active UI
+  - API tests for current endpoints
+  - E2E tests for critical paths
+
+  11. CI/CD Configuration Update
+
+  # Update test commands in CI
+  - run: npm test -- --run  # Remove obsolete flags
+  - run: npm run test:unit  # Remove if consolidated
+  - run: npm run test:integration  # Remove if consolidated
+
+  12. Implementation Checklist
+
+  Phase 1: Analysis
+
+  - Generate test coverage report
+  - List all test files
+  - Map tests to source files
+  - Identify orphaned tests
+
+  Phase 2: Cleanup
+
+  - Remove tests for deleted features
+  - Remove duplicate tests
+  - Consolidate test utilities
+  - Update test data/mocks
+
+  Phase 3: Validation
+
+  - All remaining tests pass
+  - Coverage still acceptable
+  - No broken imports
+  - CI/CD pipeline works
+
+  Success Criteria
+
+  - No tests for non-existent code
+  - Test utilities consolidated
+  - Test execution time reduced
+  - Clear test organization
+  - All active features tested
+  - Reduced test maintenance burden
+
+  Overview
+
+  Clean up static assets including images, fonts, CSS files, and other resources that are no
+  longer referenced in the codebase.
+
+  Asset Analysis Strategy
+
+  1. Asset Inventory
+
+  Map All Static Assets:
+
+  # Find all static files
+  find public -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o
+  -name "*.svg" -o -name "*.ico" -o -name "*.webp" \)
+  find client/src/assets -type f
+  find . -name "*.css" -o -name "*.scss" -o -name "*.sass"
+  find . -name "*.woff" -o -name "*.woff2" -o -name "*.ttf" -o -name "*.otf"
+
+  # Expected locations:
+  public/
+  ├── images/
+  ├── fonts/
+  ├── icons/
+  └── favicon.ico
+
+  client/src/
+  ├── assets/
+  │   ├── images/
+  │   ├── styles/
+  │   └── fonts/
+  └── styles/
+
+  2. Usage Detection Methods
+
+  Image Usage Search:
+
+  # Search for image references
+  for img in $(find public/images -type f); do
+    filename=$(basename "$img")
+    echo "Checking: $filename"
+    rg "$filename" client/src --type ts --type tsx --type css --type scss
+  done
+
+  # Check for dynamic image loading
+  rg "\.png|\.jpg|\.jpeg|\.svg|\.gif|\.webp" client/src --type ts --type tsx
+  rg "url\(.*\)" client/src --type css --type scss
+
+  CSS Usage Analysis:
+
+  # Find CSS imports
+  rg "import.*\.css|import.*\.scss" client/src --type ts --type tsx
+  rg "@import" client/src --type css --type scss
+
+  # Find unused CSS files
+  for css in $(find . -name "*.css" -o -name "*.scss"); do
+    filename=$(basename "$css" | sed 's/\.[^.]*$//')
+    if ! rg "$filename" client/src --type ts --type tsx; then
+      echo "Potentially unused: $css"
+    fi
+  done
+
+  3. Asset Categories to Analyze
+
+  Images:
+
+  // Check for references in:
+  - <img src="/images/logo.png" />
+  - background-image: url('/images/bg.jpg')
+  - import logo from '@/assets/logo.png'
+  - dynamic: `/images/${type}.png`
+
+  Icons:
+
+  // Common icon usage patterns:
+  - <Icon name="arrow-right" />  // sprite sheets
+  - import { ArrowRight } from 'lucide-react'  // icon libraries
+  - <img src="/icons/custom.svg" />
+
+  Fonts:
+
+  /* Check @font-face declarations */
+  @font-face {
+    font-family: 'CustomFont';
+    src: url('/fonts/custom.woff2') format('woff2');
+  }
+
+  /* Check font-family usage */
+  .element {
+    font-family: 'CustomFont', sans-serif;
+  }
+
+  4. Build Output Analysis
+
+  Check Vite Build:
+
+  # Build and analyze output
+  npm run build
+
+  # Check dist folder for included assets
+  ls -la dist/assets/
+
+  # Compare source assets with built assets
+  diff <(find public -type f | sort) <(find dist -type f | sort)
+
+  5. Safe Removal Process
+
+  For Each Asset:
+
+  1. Comprehensive Search:
+  # Search everywhere including:
+  - Source code (all file types)
+  - CSS/SCSS files
+  - Public HTML files
+  - Environment variables
+  - Configuration files
+  - Database content (if storing paths)
+
+  2. Check Dynamic Usage:
+  // Dynamic paths to check for
+  const getImagePath = (name: string) => `/images/${name}.png`;
+  const icons = ['home', 'user', 'settings'];
+  const iconPath = `/icons/${icons[index]}.svg`;
+
+  3. Check External References:
+  - README.md documentation
+  - API responses returning image URLs
+  - Email templates
+  - Error pages
+  - PWA manifest
+  - Social media meta tags
+
+  6. CSS Cleanup Strategy
+
+  Remove Unused Styles:
+
+  # Use PurgeCSS for Tailwind
+  # Already configured in tailwind.config.js
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ]
+
+  # For custom CSS, use tools like:
+  npm install -D purgecss
+  npx purgecss --css ./src/**/*.css --content ./src/**/*.tsx --output ./dist/css/
+
+  Consolidate Duplicate Styles:
+
+  /* Find and merge duplicate rules */
+  .button-primary { /* styles */ }
+  .btn-primary { /* same styles */ }  // Consolidate to one
+
+  /* Remove overridden styles */
+  .header { color: blue; }
+  .header { color: red; }  // Remove first rule
+
+  7. Font Optimization
+
+  Analyze Font Usage:
+
+  # Find all font families in CSS
+  rg "font-family:" . --type css --type scss | sort | uniq
+
+  # Check if custom fonts are used
+  rg "CustomFont|LocalFont" . --type css --type scss --type ts --type tsx
+
+  Remove Unused Font Files:
+
+  # If only using system fonts, remove:
+  - All .woff/.woff2/.ttf/.otf files
+  - @font-face declarations
+  - Font loading logic
+
+  8. Image Optimization
+
+  Before Removal, Optimize Remaining:
+
+  # Install image optimization tools
+  npm install -D imagemin imagemin-pngquant imagemin-mozjpeg imagemin-svgo
+
+  # Optimize images that will remain
+  npx imagemin public/images/* --out-dir=public/images
+
+  9. Asset Reference Audit
+
+  Create Asset Map:
+
+  // Document remaining assets
+  const assetMap = {
+    logos: {
+      main: '/images/logo.png',
+      favicon: '/favicon.ico'
+    },
+    backgrounds: {
+      hero: '/images/hero-bg.jpg'
+    },
+    icons: {
+      // List used icons
+    }
+  };
+
+  10. Bundle Size Analysis
+
+  Before/After Metrics:
+
+  # Analyze bundle before cleanup
+  npm run build
+  du -sh dist/
+
+  # After cleanup
+  npm run build
+  du -sh dist/
+
+  # Use bundle analyzer
+  npm install -D rollup-plugin-visualizer
+  # Add to vite.config.ts
+
+  11. Testing After Removal
+
+  Visual Regression Tests:
+
+  - All pages load without broken images
+  - All icons display correctly
+  - Fonts render properly
+  - Background images load
+  - No 404 errors in console
+
+  Functional Tests:
+
+  - Image upload still works
+  - Dynamic image loading works
+  - Lazy loading functions
+  - Error states show correct images
+
+  12. Common Assets to Keep
+
+  Essential Assets:
+
+  public/
+  ├── favicon.ico          # Browser tab icon
+  ├── robots.txt          # SEO
+  ├── manifest.json       # PWA
+  └── images/
+      ├── logo.png        # Brand identity
+      ├── default-avatar.png  # User fallback
+      └── error-404.png   # Error states
+
+  Implementation Plan
+
+  1. Create asset inventory
+  2. Run usage detection scripts
+  3. Mark confirmed unused assets
+  4. Create backup of assets folder
+  5. Remove unused assets in batches
+  6. Test after each batch
+  7. Optimize remaining assets
+  8. Update asset documentation
+
+  Success Criteria
+
+  - All unused images removed
+  - All unused CSS removed
+  - All unused fonts removed
+  - Bundle size reduced by 30%+
+  - No broken image references
+  - Page load time improved
+  - Build output cleaner
+
+  Overview
+
+  Consolidate and simplify configuration files, remove redundant settings, and streamline the
+  build process while maintaining all functionality.
+
+  Configuration File Inventory
+
+  1. Current Configuration Files
+
+  Root Level:
+
+  .
+  ├── package.json           # Main dependencies and scripts
+  ├── tsconfig.json         # TypeScript config
+  ├── vite.config.ts        # Vite bundler config
+  ├── tailwind.config.js    # Tailwind CSS config
+  ├── postcss.config.js     # PostCSS config
+  ├── .eslintrc.json        # ESLint config
+  ├── .prettierrc           # Prettier config
+  ├── .env.example          # Environment variables
+  └── docker-compose.yml    # Docker services
+
+  Potentially Redundant:
+
+  ├── .babelrc              # If using Vite, likely not needed
+  ├── webpack.config.js     # If migrated to Vite
+  ├── rollup.config.js      # If using Vite
+  ├── jest.config.js        # If migrated to Vitest
+  ├── .eslintignore         # Can be consolidated
+  ├── .prettierignore       # Can be consolidated
+
+  2. Package.json Simplification
+
+  Scripts Consolidation:
+
+  // Current (possibly redundant)
+  {
+    "scripts": {
+      "dev": "vite",
+      "dev:client": "vite",
+      "dev:server": "nodemon server",
+      "start": "node server",
+      "start:prod": "node server",
+      "build": "vite build",
+      "build:client": "vite build",
+      "build:server": "tsc -p server",
+      "test": "vitest",
+      "test:unit": "vitest unit",
+      "test:integration": "vitest integration",
+      "lint": "eslint .",
+      "lint:fix": "eslint . --fix",
+      "format": "prettier --write .",
+      "format:check": "prettier --check ."
+    }
+  }
+
+  // Simplified
+  {
+    "scripts": {
+      "dev": "concurrently \"vite\" \"tsx watch server/index.ts\"",
+      "build": "tsc && vite build",
+      "start": "node dist/server/index.js",
+      "test": "vitest",
+      "lint": "eslint . --fix",
+      "format": "prettier --write .",
+      "check": "tsc --noEmit && eslint . && prettier --check ."
+    }
+  }
+
+  3. TypeScript Configuration
+
+  Consolidate tsconfig files:
+
+  // Remove multiple configs, use one with references
+  // tsconfig.json
+  {
+    "compilerOptions": {
+      "target": "ES2020",
+      "module": "ESNext",
+      "lib": ["ES2020", "DOM"],
+      "jsx": "react-jsx",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "moduleResolution": "bundler",
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "noEmit": true,
+      "paths": {
+        "@/*": ["./client/src/*"],
+        "@shared/*": ["./shared/*"]
+      }
+    },
+    "include": ["client/src", "server", "shared"],
+    "references": [
+      { "path": "./client" },
+      { "path": "./server" }
+    ]
+  }
+
+  4. Vite Configuration Cleanup
+
+  Simplify vite.config.ts:
+
+  // Current (possibly complex)
+  export default defineConfig({
+    plugins: [
+      react(),
+      // Remove unused plugins
+      // visualizer(), // Only for analysis
+      // viteCompression(), // If handled by server
+    ],
+    resolve: {
+      alias: {
+        '@': '/src',
+      },
+    },
+    server: {
+      port: 5000,
+      proxy: {
+        '/api': 'http://localhost:3001',
+      },
+    },
+    build: {
+      // Remove redundant options
+      outDir: 'dist',
+      sourcemap: true,
+    },
+    // Remove experimental or unused features
+  });
+
+  5. ESLint Simplification
+
+  Consolidate ESLint config:
+
+  // .eslintrc.json - simplified
+  {
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:react-hooks/recommended"
+    ],
+    "ignorePatterns": ["dist", "*.config.js"],
+    "parser": "@typescript-eslint/parser",
+    "rules": {
+      // Only essential rules
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-explicit-any": "warn"
+    }
+  }
+
+  // Remove .eslintignore - use ignorePatterns instead
+
+  6. Environment Configuration
+
+  Simplify .env structure:
+
+  # .env.example - consolidated
+  # Database
+  DATABASE_URL=postgresql://user:pass@localhost/db
+
+  # AI Services  
+  OPENAI_API_KEY=sk-...
+  GOOGLE_AI_API_KEY=...
+
+  # Server
+  PORT=3001
+  NODE_ENV=development
+
+  # Remove unused variables
+  # LEGACY_API_URL=...
+  # FEATURE_FLAG_X=...
+
+  7. Docker Configuration
+
+  Simplify docker-compose.yml:
+
+  version: '3.8'
+
+  services:
+    app:
+      build: .
+      ports:
+        - "3000:3000"
+      environment:
+        - DATABASE_URL=${DATABASE_URL}
+      depends_on:
+        - postgres
+
+    postgres:
+      image: postgres:15-alpine
+      environment:
+        POSTGRES_PASSWORD: ${DB_PASSWORD}
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+
+    # Remove unused services
+    # redis:
+    # elasticsearch:
+
+  volumes:
+    postgres_data:
+
+  8. Build Tool Consolidation
+
+  Remove Redundant Configs:
+
+  # If using Vite, remove:
+  rm webpack.config.js
+  rm rollup.config.js
+  rm .babelrc
+  rm babel.config.js
+
+  # If using Vitest, remove:
+  rm jest.config.js
+  rm jest.setup.js
+
+  9. Git Configuration
+
+  Simplify .gitignore:
+
+  # Dependencies
+  node_modules/
+
+  # Build
+  dist/
+  build/
+  *.log
+
+  # Environment
+  .env
+  .env.local
+
+  # IDE
+  .vscode/
+  .idea/
+
+  # OS
+  .DS_Store
+  Thumbs.db
+
+  # Remove overly specific patterns
+
+  10. CI/CD Configuration
+
+  Simplify GitHub Actions:
+
+  # .github/workflows/ci.yml
+  name: CI
+
+  on: [push, pull_request]
+
+  jobs:
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - uses: actions/setup-node@v3
+          with:
+            node-version: 20
+            cache: 'npm'
+
+        - run: npm ci
+        - run: npm run check  # Combined type-check, lint, format
+        - run: npm test
+        - run: npm run build
+
+  11. Monorepo Configuration
+
+  If considering monorepo tools:
+
+  // Remove if not providing value
+  - lerna.json
+  - nx.json
+  - rush.json
+  - pnpm-workspace.yaml
+
+  // Keep simple structure without monorepo tools
+
+  12. Testing After Simplification
+
+  Verify all commands work:
+
+  # Development
+  npm run dev  # Both client and server start
+
+  # Building
+  npm run build  # Creates production build
+
+  # Testing
+  npm test  # All tests run
+
+  # Linting/Formatting
+  npm run check  # All checks pass
+
+  # Production
+  npm start  # Production server runs
+
+  Configuration Consolidation Checklist
+
+  Phase 1: Analysis
+
+  - List all config files
+  - Check which are actually used
+  - Identify duplicate settings
+  - Find conflicting configurations
+
+  Phase 2: Consolidation
+
+  - Merge related configs
+  - Remove unused tools
+  - Simplify scripts
+  - Update documentation
+
+  Phase 3: Validation
+
+  - All dev tools work
+  - Build process works
+  - Tests run correctly
+  - CI/CD passes
+
+  Success Criteria
+
+  - 50% fewer configuration files
+  - Simplified npm scripts
+  - Faster build times
+  - Easier onboarding
+  - No lost functionality
+  - Clear configuration hierarchy
+
+  Overview
+
+  Remove outdated documentation, clean up excessive code comments, and ensure remaining
+  documentation is accurate and valuable.
+
+  Documentation Inventory
+
+  1. Documentation Locations
+
+  Project Documentation:
+
+  .
+  ├── README.md              # Main project doc
+  ├── CLAUDE.md             # AI assistant guide (KEEP)
+  ├── docs/                 # Documentation folder
+  │   ├── API.md
+  │   ├── SETUP.md
+  │   ├── ARCHITECTURE.md
+  │   └── ...
+  ├── .system-maps/         # Architecture docs (KEEP)
+  └── tasks/                # Task documentation (KEEP)
+
+  Code Comments:
+
+  // Types of comments to review:
+  - TODO/FIXME comments
+  - Outdated explanations
+  - Obvious comments
+  - Commented-out code
+  - Auto-generated comments
+
+  2. README.md Cleanup
+
+  Current Issues to Fix:
+
+  <!-- Remove/Update: -->
+  - Outdated setup instructions
+  - Old feature descriptions
+  - Deprecated API endpoints
+  - Wrong dependency versions
+  - Broken links
+  - Unnecessary badges
+
+  <!-- Keep/Update: -->
+  - Project overview
+  - Quick start guide
+  - Core features
+  - Tech stack
+  - License
+
+  Simplified README Structure:
+
+  # Project Name
+
+  Brief description of what the project does.
+
+  ## Features
+  - ✨ Core feature 1
+  - 🚀 Core feature 2
+  - 💡 Core feature 3
+
+  ## Quick Start
+  \```bash
+  npm install
+  npm run dev
+  \```
+
+  ## Tech Stack
+  - Frontend: React, TypeScript, Vite
+  - Backend: Node.js, Express
+  - Database: PostgreSQL
+  - AI: OpenAI, Google AI
+
+  ## Development
+  See [CLAUDE.md](./CLAUDE.md) for development guidelines.
+
+  ## License
+  MIT
+
+  3. Code Comment Analysis
+
+  Find Excessive Comments:
+
+  # Find files with high comment density
+  for file in $(find . -name "*.ts" -o -name "*.tsx"); do
+    total_lines=$(wc -l < "$file")
+    comment_lines=$(grep -c "^\s*//" "$file" || echo 0)
+    if [ $comment_lines -gt $((total_lines / 3)) ]; then
+      echo "High comment density: $file ($comment_lines/$total_lines)"
+    fi
+  done
+
+  # Find TODO/FIXME comments
+  rg "TODO|FIXME|HACK|XXX" --type ts --type tsx
+
+  # Find commented-out code
+  rg "^\s*//.*\{|\}|function|class|const|let|var" --type ts --type tsx
+
+  4. Comment Categories to Remove
+
+  Obvious Comments:
+
+  // BAD - Remove these
+  let count = 0; // Initialize count to 0
+  count++; // Increment count
+  return count; // Return the count
+
+  // GOOD - Keep these
+  // Workaround for Safari's WebSocket bug (#123)
+  count = Math.max(0, count - 1);
+
+  Outdated Comments:
+
+  // Remove comments about:
+  - Old implementations
+  - Fixed bugs
+  - Completed TODOs
+  - Previous API versions
+  - Deprecated features
+
+  Commented-Out Code:
+
+  // Remove all commented code
+  // function oldImplementation() {
+  //   return "deprecated";
+  // }
+
+  // const LEGACY_CONFIG = {
+  //   oldField: true
+  // };
+
+  5. Documentation File Cleanup
+
+  API Documentation:
+
+  # Check API.md for:
+  - Removed endpoints
+  - Changed parameters
+  - Outdated examples
+  - Wrong response formats
+
+  # Update to match current implementation
+
+  Setup Documentation:
+
+  # Simplify SETUP.md:
+  - Remove optional steps
+  - Update dependencies
+  - Simplify environment setup
+  - Remove outdated warnings
+
+  6. JSDoc Comment Cleanup
+
+  Remove Redundant JSDoc:
+
+  // BAD - Redundant with TypeScript
+  /**
+   * Adds two numbers
+   * @param {number} a - First number
+   * @param {number} b - Second number
+   * @returns {number} The sum
+   */
+  function add(a: number, b: number): number {
+    return a + b;
+  }
+
+  // GOOD - Valuable context
+  /**
+   * Processes health data with automatic format detection.
+   * Supports Apple Health XML, Google Fit JSON, and CSV.
+   * Large files (>5MB) are automatically processed by Go service.
+   */
+  async function processHealthData(file: Buffer): Promise<HealthRecord[]> {
+
+  7. Inline Documentation
+
+  Keep Strategic Comments:
+
+  // KEEP: Complex algorithm explanations
+  // Binary search for memory similarity threshold
+  // Using cosine similarity with 0.85 threshold based on testing
+
+  // KEEP: Business logic explanations  
+  // Free tier users limited to 100 memories
+  // Premium users have unlimited storage
+
+  // KEEP: Performance notes
+  // Batch size of 1000 prevents OOM on large imports
+
+  8. System Maps Update
+
+  Verify .system-maps/ accuracy:
+
+  # For each system map:
+  - Check if components still exist
+  - Verify API endpoints are current
+  - Update data flow diagrams
+  - Remove deprecated features
+
+  9. Migration Guide Cleanup
+
+  Remove Old Migrations:
+
+  # Remove guides for:
+  - Migrations already completed
+  - Versions no longer supported
+  - Features already removed
+
+  10. License and Legal
+
+  Update Copyright:
+
+  MIT License
+
+  Copyright (c) 2024 [Your Name]
+
+  # Update year and attribution
+
+  11. Comment Cleanup Script
+
+  // Automated comment cleanup
+  import { readFileSync, writeFileSync } from 'fs';
+
+  function cleanComments(filePath: string) {
+    let content = readFileSync(filePath, 'utf-8');
+
+    // Remove obvious comments
+    content = content.replace(/\/\/\s*(Initialize|Increment|Decrement|Return|Set|Get)\s+\w+/gi,
+  '');
+
+    // Remove empty comment lines
+    content = content.replace(/^\s*\/\/\s*$/gm, '');
+
+    // Remove commented-out code (careful!)
+    // Manual review recommended
+
+    writeFileSync(filePath, content);
+  }
+
+  12. Documentation Standards
+
+  Establish Guidelines:
+
+  # Documentation Standards
+
+  ## When to Comment
+  - Complex algorithms
+  - Business logic decisions
+  - Performance optimizations
+  - Workarounds for bugs
+  - API integration quirks
+
+  ## When NOT to Comment
+  - Obvious code
+  - Type definitions (TypeScript handles this)
+  - Simple getters/setters
+  - Standard implementations
+
+  Implementation Checklist
+
+  Phase 1: Analysis
+
+  - Inventory all documentation
+  - Find outdated content
+  - Identify redundant comments
+  - List broken links
+
+  Phase 2: Cleanup
+
+  - Update README.md
+  - Clean code comments
+  - Update API docs
+  - Fix or remove broken links
+  - Update examples
+
+  Phase 3: Validation
+
+  - All links work
+  - Examples run correctly
+  - Setup instructions work
+  - No outdated information
+
+  Success Criteria
+
+  - Documentation matches current code
+  - No commented-out code remains
+  - Comments add value, not noise
+  - README is concise and accurate
+  - Setup instructions work first try
+  - Code is self-documenting where possible
+
+  Overview
+
+  Perform final optimizations including bundle size reduction, tree shaking, lazy loading, and
+  code splitting to achieve maximum performance.
+
+  Bundle Analysis
+
+  1. Current Bundle Analysis
+
+  Install Analysis Tools:
+
+  npm install -D rollup-plugin-visualizer @rollup/plugin-terser
+
+  Configure Vite for Analysis:
+
+  // vite.config.ts
+  import { visualizer } from 'rollup-plugin-visualizer';
+
+  export default defineConfig({
+    plugins: [
+      react(),
+      visualizer({
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      })
+    ],
+  });
+
+  Generate Bundle Report:
+
+  npm run build
+  # Opens visualization showing:
+  # - Module sizes
+  # - Dependencies
+  # - Duplicate modules
+
+  2. Tree Shaking Optimization
+
+  Enable Aggressive Tree Shaking:
+
+  // vite.config.ts
+  export default defineConfig({
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'ui-vendor': ['@radix-ui', 'framer-motion'],
+            'chart-vendor': ['recharts'],
+            'ai-vendor': ['@ai-sdk/openai', '@ai-sdk/google'],
+          },
+        },
+        treeshake: {
+          preset: 'smallest',
+          moduleSideEffects: false,
+        },
+      },
+    },
+  });
+
+  Mark Pure Functions:
+
+  // Add pure annotations for better tree shaking
+  export const pureFunction = /*#__PURE__*/ () => {
+    return computeExpensiveValue();
+  };
+
+  3. Import Optimization
+
+  Convert to Dynamic Imports:
+
+  // Before: Static imports
+  import { HealthDashboard } from './components/HealthDashboard';
+  import { MemoryManager } from './components/MemoryManager';
+  import { SettingsPanel } from './components/SettingsPanel';
+
+  // After: Dynamic imports with lazy loading
+  const HealthDashboard = lazy(() => import('./components/HealthDashboard'));
+  const MemoryManager = lazy(() => import('./components/MemoryManager'));
+  const SettingsPanel = lazy(() => import('./components/SettingsPanel'));
+
+  // Wrap in Suspense
+  <Suspense fallback={<LoadingSpinner />}>
+    <HealthDashboard />
+  </Suspense>
+
+  Optimize Library Imports:
+
+  // Before: Importing entire library
+  import _ from 'lodash';
+  import * as Icons from 'lucide-react';
+
+  // After: Import only what's needed
+  import debounce from 'lodash/debounce';
+  import { ArrowRight, Settings, User } from 'lucide-react';
+
+  4. Component Code Splitting
+
+  Route-Based Splitting:
+
+  // App.tsx
+  const routes = [
+    {
+      path: '/',
+      component: lazy(() => import('./pages/Home')),
+    },
+    {
+      path: '/chat',
+      component: lazy(() => import('./pages/Chat')),
+    },
+    {
+      path: '/memories',
+      component: lazy(() => import('./pages/Memories')),
+    },
+    {
+      path: '/health',
+      component: lazy(() => import('./pages/Health')),
+    },
+  ];
+
+  Feature-Based Splitting:
+
+  // Split heavy features
+  const FileUploader = lazy(() =>
+    import('./components/FileUploader' /* webpackChunkName: "uploader" */)
+  );
+
+  const DataVisualizer = lazy(() =>
+    import('./components/DataVisualizer' /* webpackChunkName: "visualizer" */)
+  );
+
+  5. Dependency Optimization
+
+  Find Duplicate Dependencies:
+
+  # Check for duplicate packages
+  npm ls --depth=0 | grep deduped
+
+  # Find heavy dependencies
+  npm list --production --depth=0 | xargs -I {} sh -c 'echo "{}: $(npm info {} size)"'
+
+  Replace Heavy Libraries:
+
+  // Replace moment.js with date-fns
+  // Before: 67kb gzipped
+  import moment from 'moment';
+  moment().format('YYYY-MM-DD');
+
+  // After: 2kb for specific function
+  import { format } from 'date-fns';
+  format(new Date(), 'yyyy-MM-dd');
+
+  6. Asset Optimization
+
+  Image Optimization:
+
+  // vite.config.ts
+  import imagemin from 'vite-plugin-imagemin';
+
+  export default defineConfig({
+    plugins: [
+      imagemin({
+        gifsicle: { optimizationLevel: 3 },
+        optipng: { optimizationLevel: 7 },
+        mozjpeg: { quality: 80 },
+        svgo: {
+          plugins: [
+            { name: 'removeViewBox', active: false },
+            { name: 'removeEmptyAttrs', active: true },
+          ],
+        },
+      }),
+    ],
+  });
+
+  Font Optimization:
+
+  /* Preload critical fonts */
+  <link rel="preload" href="/fonts/main.woff2" as="font" type="font/woff2" crossorigin>
+
+  /* Use font-display */
+  @font-face {
+    font-family: 'Custom';
+    src: url('/fonts/custom.woff2') format('woff2');
+    font-display: swap; /* Show fallback immediately */
+  }
+
+  7. Runtime Performance
+
+  Optimize React Rendering:
+
+  // Use React.memo for expensive components
+  export const ExpensiveComponent = memo(({ data }) => {
+    return <ComplexVisualization data={data} />;
+  });
+
+  // Use useMemo for expensive computations
+  const processedData = useMemo(() =>
+    expensiveDataProcessing(rawData),
+    [rawData]
+  );
+
+  // Use useCallback for stable function references
+  const handleSearch = useCallback((query: string) => {
+    searchMemories(query);
+  }, []);
+
+  Virtualize Long Lists:
+
+  // For memory list, file list, etc.
+  import { FixedSizeList } from 'react-window';
+
+  <FixedSizeList
+    height={600}
+    itemCount={memories.length}
+    itemSize={100}
+    width="100%"
+  >
+    {({ index, style }) => (
+      <div style={style}>
+        <MemoryCard memory={memories[index]} />
+      </div>
+    )}
+  </FixedSizeList>
+
+  8. Minification and Compression
+
+  Configure Advanced Minification:
+
+  // vite.config.ts
+  import { defineConfig } from 'vite';
+  import terser from '@rollup/plugin-terser';
+
+  export default defineConfig({
+    build: {
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+          pure_calls: ['console.log', 'console.info'],
+          passes: 2,
+        },
+        mangle: {
+          safari10: true,
+        },
+        format: {
+          comments: false,
+        },
+      },
+    },
+  });
+
+  Enable Compression:
+
+  // server/index.ts
+  import compression from 'compression';
+
+  app.use(compression({
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) return false;
+      return compression.filter(req, res);
+    },
+    level: 6, // Balance between speed and compression
+  }));
+
+  9. Preloading and Prefetching
+
+  Add Resource Hints:
+
+  <!-- index.html -->
+  <!-- Preload critical resources -->
+  <link rel="preload" href="/api/user" as="fetch" crossorigin>
+
+  <!-- Prefetch next likely routes -->
+  <link rel="prefetch" href="/js/memories.js">
+  <link rel="prefetch" href="/js/health.js">
+
+  <!-- DNS prefetch for external APIs -->
+  <link rel="dns-prefetch" href="https://api.openai.com">
+
+  10. Service Worker Optimization
+
+  Implement Caching Strategy:
+
+  // sw.js
+  self.addEventListener('fetch', (event) => {
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        // Cache-first for assets
+        if (response && event.request.url.includes('/assets/')) {
+          return response;
+        }
+
+        // Network-first for API calls
+        return fetch(event.request).then((response) => {
+          if (response.ok && event.request.url.includes('/assets/')) {
+            const responseClone = response.clone();
+            caches.open('v1').then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+  });
+
+  11. Final Build Configuration
+
+  // vite.config.ts - Final optimized config
+  export default defineConfig({
+    build: {
+      target: 'es2020',
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('@radix-ui') || id.includes('framer-motion')) {
+                return 'ui';
+              }
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'react';
+              }
+              if (id.includes('recharts')) {
+                return 'charts';
+              }
+              return 'vendor';
+            }
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom'],
+      exclude: ['@ai-sdk/openai', '@ai-sdk/google'], // Heavy, rarely changed
+    },
+  });
+
+  12. Performance Metrics
+
+  Target Metrics:
+
+  - Initial bundle size: <200KB gzipped
+  - Largest chunk: <50KB gzipped
+  - First Contentful Paint: <1.5s
+  - Time to Interactive: <3s
+  - Lighthouse Score: >90
+
+  Success Criteria
+
+  - Bundle size reduced by 50%+
+  - All routes lazy loaded
+  - No duplicate dependencies
+  - Efficient code splitting
+  - Optimized asset loading
+  - Service worker caching
+  - Lighthouse score >90
+  - No functionality regression
+
+  Now I'll create a summary file that ties all these tasks together:
+
+  Project Goal
+
+  Transform the codebase into a lean, high-performance application by removing all unnecessary
+  code while preserving core functionality.
+
+  Task Execution Order
+
+  Phase 1: Analysis and Inventory (Tasks 1-2)
+
+  1. Task 01: Remove unused npm dependencies
+  2. Task 02: Remove unused API routes
+
+  These tasks establish what's actually being used in the codebase.
+
+  Phase 2: Core Code Cleanup (Tasks 3-5)
+
+  3. Task 03: Consolidate AI provider code
+  4. Task 04: Remove dead UI components
+  5. Task 05: Database schema optimization
+
+  Focus on removing redundancy in core application code.
+
+  Phase 3: Performance Migration (Task 6)
+
+  6. Task 06: Convert heavy TypeScript services to Go
+
+  Critical for achieving performance goals.
+
+  Phase 4: Supporting Code Cleanup (Tasks 7-10)
+
+  7. Task 07: Remove obsolete test code
+  8. Task 08: Remove unused static assets
+  9. Task 09: Simplify configurations
+  10. Task 10: Documentation cleanup
+
+  Clean up everything around the core code.
+
+  Phase 5: Final Optimization (Task 11)
+
+  11. Task 11: Bundle optimization and tree shaking
+
+  Final pass to optimize what remains.
+
+  Critical Preservation Areas
+
+  Features That MUST Continue Working:
+
+  1. Chat System
+    - Message streaming
+    - AI provider switching
+    - Conversation history
+  2. Memory System
+    - Auto-save from chat
+    - Deduplication
+    - Semantic search
+    - Memory listing/viewing
+  3. File Upload
+    - Health data processing
+    - Go service acceleration
+    - File management
+  4. Health Data Visualization
+    - Charts and analytics
+    - Data import/export
+  5. Settings
+    - User preferences
+    - AI model selection
+
+  Implementation Guidelines
+
+  For Each Task:
+
+  1. Read the detailed task file
+  2. Run analysis scripts/commands
+  3. Create backup before changes
+  4. Test after each removal
+  5. Verify no functionality broken
+  6. Document what was removed
+
+  Testing Protocol:
+
+  After each major change:
+  - Chat sends and receives messages
+  - Memories save and retrieve correctly
+  - File uploads process successfully
+  - Health data displays properly
+  - Settings persist
+  - No console errors
+  - Build succeeds
+  - Tests pass
+
+  Expected Outcomes
+
+  Metrics:
+
+  - 50%+ reduction in bundle size
+  - 70%+ faster build times
+  - 50%+ reduction in dependencies
+  - 90%+ Lighthouse score
+  - Cleaner, more maintainable code
+
+  Risks to Avoid:
+
+  - Breaking memory deduplication
+  - Breaking chat streaming
+  - Breaking file processing
+  - Removing actively used features
+  - Creating runtime errors
+
+  Parallel Execution Strategy
+
+  Multiple developers can work on these tasks in parallel:
+
+  Group A: Dependencies & Routes (Tasks 1-2)
+
+  Can be done independently, low risk of conflicts.
+
+  Group B: Core Services (Tasks 3, 5, 6)
+
+  Coordinate on AI service and database changes.
+
+  Group C: UI & Assets (Tasks 4, 8)
+
+  Frontend-focused, minimal backend impact.
+
+  Group D: Testing & Config (Tasks 7, 9, 10)
+
+  Can proceed once core cleanup is done.
+
+  Final: Optimization (Task 11)
+
+  Must be done after all other tasks complete.
+
+  Communication Protocol
+
+  When working on tasks:
+  1. Mark task as "in-progress" in this file
+  2. Create a branch named task-XX-description
+  3. Test thoroughly before merging
+  4. Update this file when complete
+
+  Task Status Tracking
+
+  - Task 01: Remove unused dependencies
+  - Task 02: Remove unused routes
+  - Task 03: Consolidate AI providers
+  - Task 04: Remove dead UI components
+  - Task 05: Database optimization
+  - Task 06: TypeScript to Go conversion
+  - Task 07: Remove obsolete tests
+  - Task 08: Remove unused assets
+  - Task 09: Simplify configurations
+  - Task 10: Documentation cleanup
+  - Task 11: Final optimization
+
+  Next Steps
+
+  1. Review all task files
+  2. Assign tasks to team members
+  3. Set up tracking system
+  4. Begin parallel execution
+  5. Daily sync on progress
+  6. Integration testing after each phase
+
+  I've created detailed task files for all 11 tasks in the codebase strip-down project. Each file
+   contains:
+
+  1. Detailed pseudo-code and implementation steps
+  2. Specific commands and scripts to run
+  3. Analysis methods to identify what to remove
+  4. Safety checks to ensure functionality isn't broken
+  5. Testing procedures after each change
+
+  Key highlights:
+
+  - Task 01-02: Focus on dependency and route analysis with specific search patterns
+  - Task 03: Detailed plan for consolidating AI providers into a unified interface
+  - Task 04: Component usage detection methods and safe removal process
+  - Task 05: Database optimization with query analysis and index strategies
+  - Task 06: Complete plan for converting heavy TypeScript services to Go
+  - Task 07-08: Scripts for finding obsolete tests and unused assets
+  - Task 09-10: Configuration and documentation simplification strategies
+  - Task 11: Comprehensive bundle optimization techniques
+
+  The task-00-implementation-overview.md file provides:
+  - Execution order and phases
+  - Critical features to preserve
+  - Parallel execution strategy for multiple developers
+  - Testing protocols
+
+  Each task can be assigned to different developers (Sonnet 4.0 instances) to work in parallel,
+  with clear boundaries to avoid conflicts. The detailed steps ensure that working features like
+  memory deduplication and chat functionality remain intact throughout the process.
+

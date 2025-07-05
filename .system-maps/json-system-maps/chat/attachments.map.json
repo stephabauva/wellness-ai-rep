@@ -8,29 +8,29 @@
     "lastUpdated": "2025-01-27T10:00:00Z",
     "mappingVersion": "2.0.0"
   },
-  "description": "Complete file attachment and audio processing system for chat messages, including upload, preview, and transcription capabilities",
+  "description": "File attachment system for chat messages, including upload and preview capabilities via paperclip (files) and camera (photos)",
   "userFlow": [
-    "User clicks paperclip icon or microphone in chat input area",
-    "User selects files from device, camera, or records audio",
+    "User clicks paperclip icon to select files from device",
+    "User clicks camera icon to take photos via webcam/camera",
     "Files upload with progress indication and preview generation",
-    "Audio is transcribed and text appears in input field",
-    "Attached files appear as previews before sending message",
-    "Message is sent with file attachments and transcription data"
+    "Attached files appear as miniature previews next to input field",
+    "User can remove files by clicking 'x' on preview corners",
+    "Message is sent with file attachments appearing in chat"
   ],
   "systemFlow": [
     "Handle file selection and validation on frontend",
     "Upload files to server with progress tracking and metadata",
-    "Generate thumbnails and process audio transcription",
+    "Generate thumbnails for preview display",
     "Store file metadata and associate with chat message",
     "Stream message with attachment references to AI provider",
     "Persist final message with attachment relationships"
   ],
   "dataFlowTrace": {
-    "userAction": "User selects files via paperclip or records audio via microphone",
+    "userAction": "User selects files via paperclip or takes photos via camera",
     "frontendFlow": {
       "triggerComponent": "ChatInputArea",
-      "eventHandlers": ["handleFileChange", "handleCameraCapture", "handleAudioRecord"],
-      "stateChanges": ["attachedFiles", "audioRecording", "transcriptionText"],
+      "eventHandlers": ["handleFileChange", "handleCameraCapture"],
+      "stateChanges": ["attachedFiles"],
       "reactQueryHooks": ["useFileManagement", "uploadFileMutation"],
       "apiCalls": {
         "endpoint": "/api/files (actual) vs /api/chat/attachments (expected)",
@@ -75,8 +75,8 @@
   "architecturalLayers": {
     "presentation": {
       "components": {
-        "primary": ["AttachmentPreview", "ChatInputArea", "AudioRecorder"],
-        "supporting": ["FileUploadProgress", "ThumbnailDisplay", "TranscriptionDisplay"],
+        "primary": ["AttachmentPreview", "ChatInputArea"],
+        "supporting": ["FileUploadProgress", "ThumbnailDisplay"],
         "shared": ["Button", "Progress", "Dialog", "AlertDialog"]
       },
       "hooks": ["useFileManagement", "useChatActions", "useFileApi"],
@@ -86,14 +86,14 @@
     },
     "businessLogic": {
       "routes": ["file-routes.ts", "chat-routes.ts (planned)"],
-      "services": ["attachmentRetentionService", "transcriptionService", "chat-context-service"],
+      "services": ["attachmentRetentionService", "chat-context-service"],
       "middleware": ["multer upload", "file validation", "auth middleware"],
       "utilities": ["file processing", "thumbnail generation", "audio transcription"],
       "types": ["AttachmentData", "FileAttachment", "MessageContentPart"]
     },
     "dataLayer": {
       "database": {
-        "tables": ["files", "message_attachments", "transcriptions"],
+        "tables": ["files", "message_attachments"],
         "relationships": ["files → message_attachments", "message_attachments → conversation_messages"],
         "indexes": ["files.uploaded_by", "message_attachments.message_id"],
         "migrations": ["message_attachments table creation", "transcriptions table"]
@@ -224,11 +224,7 @@
       "components": ["AttachmentPreview", "ChatInputArea"],
       "endpoints": ["POST /api/chat/attachments", "GET /api/chat/attachments/:id"]
     },
-    "audio-processing": {
-      "features": ["audio-recording"],
-      "components": ["AudioRecorder"],
-      "endpoints": ["POST /api/chat/transcribe"]
-    }
+    
   },
   "integrationStatus": {
     "file-attachment": {
@@ -245,15 +241,7 @@
       "lastVerified": "2025-01-27",
       "knownIssues": []
     },
-    "audio-recording": {
-      "status": "partial",
-      "lastVerified": "2025-01-27",
-      "knownIssues": [
-        "POST /api/chat/transcribe endpoint missing",
-        "Server-side transcription not implemented",
-        "Audio files use client-side Web Speech API only"
-      ]
-    }
+    
   },
   "dependencies": {
     "internal": ["file-manager", "core-messaging", "memory-integration"],
@@ -273,9 +261,11 @@
           "description": "Upload and attach files to chat messages",
           "userFlow": [
             "User clicks paperclip icon in chat input",
-            "User selects files from device or camera",
+            "User selects files from device",
             "Files upload with progress indication",
-            "Attached files appear in message before sending"
+            "Attached files appear as miniature previews next to input field",
+            "User can remove files by clicking 'x' on preview corners",
+            "Upon sending, miniature files appear in chat and are sent to AI"
           ],
           "systemFlow": [
             "Handle file selection and validation",
@@ -313,11 +303,13 @@
           "tests": ["client/src/components/AttachmentPreview.test.tsx"]
         },
         "attachment-preview": {
-          "description": "Preview and display attached files in chat messages",
+          "description": "Preview and display attached files in chat messages and input area",
           "userFlow": [
-            "User sees attachment previews in messages",
+            "User sees miniature attachment previews next to input field before sending",
+            "User sees attachment previews in chat messages after sending",
             "User can click to view full attachment",
-            "Supports images, documents, and other file types"
+            "Supports images, documents, and other file types",
+            "User can remove attachments by clicking 'x' on preview corners"
           ],
           "systemFlow": [
             "Fetch attachment metadata from database",
@@ -352,56 +344,7 @@
         }
       }
     },
-    "audio-processing": {
-      "description": "Audio recording and transcription for chat messages",
-      "features": {
-        "audio-recording": {
-          "description": "Record and attach audio messages to chat",
-          "userFlow": [
-            "User clicks microphone icon",
-            "User records audio message",
-            "Audio is transcribed and attached to message"
-          ],
-          "systemFlow": [
-            "Capture audio from user device",
-            "Send audio to transcription service",
-            "Attach both audio file and transcription"
-          ],
-          "components": ["AudioRecorder"],
-          "dataFlowTrace": {
-            "requestPath": ["AudioRecorder", "audio-service", "Web Speech API", "local transcription"],
-            "expectedPath": ["AudioRecorder", "POST /api/chat/transcribe", "transcription-service.ts"],
-            "pathVerified": false,
-            "bypassedComponents": ["server-side transcription service"],
-            "actualHandler": "client/src/services/audio-service.ts:Web Speech API"
-          },
-          "apiIntegration": {
-            "expectedEndpoints": ["POST /api/chat/transcribe"],
-            "actualEndpoints": [],
-            "integrationGaps": [
-              "Missing POST /api/chat/transcribe endpoint",
-              "No server-side transcription integration",
-              "Audio files not stored with transcription metadata"
-            ],
-            "cacheDependencies": {
-              "invalidates": ["query:attachments", "query:transcriptions"],
-              "refreshesComponents": ["AudioRecorder", "AttachmentPreview"]
-            },
-            "uiConsistencyValidation": {
-              "tested": false,
-              "knownIssues": [
-                "Audio transcription only works with Web Speech API",
-                "Transcriptions not persisted"
-              ]
-            }
-          },
-          "logging": {
-            "$ref": "../infrastructure/logging.map.json#/audio-recording-logging"
-          },
-          "tests": []
-        }
-      }
-    }
+    
   },
   "components": {
     "AttachmentPreview": {
@@ -411,13 +354,7 @@
       "uses": ["useFileApi"],
       "verified": true
     },
-    "AudioRecorder": {
-      "name": "AudioRecorder",
-      "path": "client/src/components/AudioRecorder.tsx",
-      "description": "Audio recording interface with transcription capabilities",
-      "uses": ["audio-service"],
-      "verified": true
-    },
+    
     "ChatInputArea": {
       "name": "ChatInputArea",
       "path": "client/src/components/ChatInputArea.tsx",
@@ -441,13 +378,7 @@
       "implemented": false,
       "actualEndpoint": "GET /api/files/:id"
     },
-    "/api/chat/transcribe": {
-      "method": "POST",
-      "handler": "server/routes/chat-routes.ts",
-      "description": "Transcribe audio files to text",
-      "implemented": false,
-      "actualEndpoint": "client-side Web Speech API"
-    }
+    
   },
   "database": {
     "tables": {
@@ -457,12 +388,7 @@
         "implemented": false,
         "note": "Table schema defined but not actively used"
       },
-      "transcriptions": {
-        "description": "Audio transcription data",
-        "columns": ["id", "attachment_id", "text_content", "confidence_score", "created_at"],
-        "implemented": false,
-        "note": "Table schema defined but not actively used"
-      }
+      
     }
   }
 }

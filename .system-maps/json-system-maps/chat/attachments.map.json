@@ -1,4 +1,223 @@
+
 {
+  "_metadata": {
+    "featureName": "chat-attachments",
+    "featureGroup": "chat",
+    "parentFile": "./chat-domain.map.json",
+    "domain": "chat",
+    "lastUpdated": "2025-01-27T10:00:00Z",
+    "mappingVersion": "2.0.0"
+  },
+  "description": "Complete file attachment and audio processing system for chat messages, including upload, preview, and transcription capabilities",
+  "userFlow": [
+    "User clicks paperclip icon or microphone in chat input area",
+    "User selects files from device, camera, or records audio",
+    "Files upload with progress indication and preview generation",
+    "Audio is transcribed and text appears in input field",
+    "Attached files appear as previews before sending message",
+    "Message is sent with file attachments and transcription data"
+  ],
+  "systemFlow": [
+    "Handle file selection and validation on frontend",
+    "Upload files to server with progress tracking and metadata",
+    "Generate thumbnails and process audio transcription",
+    "Store file metadata and associate with chat message",
+    "Stream message with attachment references to AI provider",
+    "Persist final message with attachment relationships"
+  ],
+  "dataFlowTrace": {
+    "userAction": "User selects files via paperclip or records audio via microphone",
+    "frontendFlow": {
+      "triggerComponent": "ChatInputArea",
+      "eventHandlers": ["handleFileChange", "handleCameraCapture", "handleAudioRecord"],
+      "stateChanges": ["attachedFiles", "audioRecording", "transcriptionText"],
+      "reactQueryHooks": ["useFileManagement", "uploadFileMutation"],
+      "apiCalls": {
+        "endpoint": "/api/files (actual) vs /api/chat/attachments (expected)",
+        "method": "POST",
+        "requestPath": ["ChatInputArea → useFileManagement → POST /api/files → file-routes.ts"],
+        "requestPayload": "FormData with file, metadata, and chat context",
+        "headers": ["multipart/form-data", "Authorization"]
+      }
+    },
+    "networkLayer": {
+      "requestRoute": "Frontend → Express multer middleware → file-routes.ts",
+      "middlewares": ["multer file upload", "authentication", "file validation"],
+      "routeHandler": "server/routes/file-routes.ts:POST /api/files"
+    },
+    "backendFlow": {
+      "routeHandler": "file-routes.ts:uploadFile function",
+      "servicesCalled": ["attachmentRetentionService", "thumbnail generation", "Go file accelerator"],
+      "externalApiCalls": ["Go file service for large files", "transcription service"],
+      "databaseOperations": {
+        "queries": ["INSERT INTO files", "INSERT INTO message_attachments (planned)"],
+        "tables": ["files", "message_attachments", "transcriptions"],
+        "operations": ["CREATE file record", "CREATE attachment relationship"],
+        "transactions": ["File upload with metadata transaction"]
+      },
+      "cacheOperations": ["Cache file metadata", "Invalidate attachment queries"],
+      "fileSystemOperations": ["Store file to uploads directory", "Generate thumbnails"]
+    },
+    "responseFlow": {
+      "dataTransformation": ["File metadata normalization", "URL path generation"],
+      "responsePayload": "{ id, fileName, fileType, url, thumbnailUrl, transcription }",
+      "statusCodes": ["200 success", "400 validation error", "413 file too large"],
+      "responsePath": ["File system → Route handler → Network → Frontend state"]
+    },
+    "frontendUpdateFlow": {
+      "reactQueryInvalidation": ["query:files", "query:attachments"],
+      "stateUpdates": ["attachedFiles array", "uploadProgress", "transcriptionText"],
+      "uiRefresh": ["AttachmentPreview", "ChatInputArea", "progress indicators"],
+      "cacheConsistency": ["File list cache", "attachment preview cache"],
+      "userFeedback": ["Upload progress bar", "success checkmark", "error messages"]
+    }
+  },
+  "architecturalLayers": {
+    "presentation": {
+      "components": {
+        "primary": ["AttachmentPreview", "ChatInputArea", "AudioRecorder"],
+        "supporting": ["FileUploadProgress", "ThumbnailDisplay", "TranscriptionDisplay"],
+        "shared": ["Button", "Progress", "Dialog", "AlertDialog"]
+      },
+      "hooks": ["useFileManagement", "useChatActions", "useFileApi"],
+      "utilities": ["chatUtils.getFileIcon", "file validation", "audio processing"],
+      "types": ["AttachedFile", "FileAttachment", "AudioRecording"],
+      "styles": ["attachment preview styles", "upload progress styles", "audio recorder styles"]
+    },
+    "businessLogic": {
+      "routes": ["file-routes.ts", "chat-routes.ts (planned)"],
+      "services": ["attachmentRetentionService", "transcriptionService", "chat-context-service"],
+      "middleware": ["multer upload", "file validation", "auth middleware"],
+      "utilities": ["file processing", "thumbnail generation", "audio transcription"],
+      "types": ["AttachmentData", "FileAttachment", "MessageContentPart"]
+    },
+    "dataLayer": {
+      "database": {
+        "tables": ["files", "message_attachments", "transcriptions"],
+        "relationships": ["files → message_attachments", "message_attachments → conversation_messages"],
+        "indexes": ["files.uploaded_by", "message_attachments.message_id"],
+        "migrations": ["message_attachments table creation", "transcriptions table"]
+      },
+      "cache": {
+        "cacheKeys": ["files:user:", "attachments:message:", "transcriptions:"],
+        "invalidationPatterns": ["file upload", "message send", "attachment delete"],
+        "cacheStrategy": ["TTL 1 hour", "LRU eviction", "query invalidation"]
+      },
+      "fileSystem": {
+        "uploadPaths": ["uploads/attachments/", "uploads/thumbnails/"],
+        "fileTypes": ["images", "documents", "audio", "video"],
+        "processing": ["thumbnail generation", "audio transcription", "file compression"]
+      }
+    },
+    "integration": {
+      "externalApis": {
+        "services": ["Go file accelerator", "transcription service"],
+        "authentication": ["internal service tokens"],
+        "endpoints": [":8081/process-file", ":8082/transcribe"],
+        "fallbacks": ["TypeScript file processing", "Web Speech API"]
+      },
+      "browserApis": {
+        "apis": ["File API", "MediaRecorder", "Web Speech API", "Camera API"],
+        "permissions": ["microphone", "camera", "file system access"],
+        "compatibility": ["Chrome 60+", "Safari 14+", "Firefox 70+"]
+      },
+      "goServices": {
+        "fileAccelerator": ["Large file processing", "thumbnail generation"],
+        "memoryService": ["Attachment memory integration"],
+        "aiGateway": ["File content for AI processing"]
+      }
+    }
+  },
+  "errorBoundaries": {
+    "frontendErrors": {
+      "componentErrors": ["AttachmentPreview error boundary", "AudioRecorder failures"],
+      "networkErrors": ["Upload timeout", "File service unavailable"],
+      "validationErrors": ["File size exceeded", "Unsupported file type"],
+      "userInputErrors": ["No file selected", "Recording permission denied"]
+    },
+    "backendErrors": {
+      "validationErrors": ["File type validation", "File size limits"],
+      "businessLogicErrors": ["Storage quota exceeded", "Retention policy violations"],
+      "databaseErrors": ["File record creation failure", "Attachment relationship errors"],
+      "externalServiceErrors": ["Go service unavailable", "Transcription service down"]
+    },
+    "systemErrors": {
+      "memoryErrors": ["Large file processing OOM"],
+      "diskSpaceErrors": ["Upload directory full"],
+      "networkErrors": ["File upload interrupted"],
+      "timeoutErrors": ["Large file upload timeout"]
+    },
+    "recoveryStrategies": {
+      "retryMechanisms": ["Exponential backoff for uploads", "Service retry logic"],
+      "fallbackBehaviors": ["TypeScript processing fallback", "Client-side transcription"],
+      "userNotifications": ["Upload failed notification", "Retry suggestions"],
+      "dataRecovery": ["Partial upload resume", "File recovery from temp storage"]
+    }
+  },
+  "performanceConsiderations": {
+    "frontendOptimizations": {
+      "bundleSize": ["Lazy load AudioRecorder", "Dynamic import for large file processors"],
+      "renderOptimization": ["Virtualized file lists", "Thumbnail lazy loading"],
+      "cacheStrategy": ["Attachment preview cache", "File metadata cache"],
+      "loadingStates": ["Progressive upload states", "Transcription progress"]
+    },
+    "backendOptimizations": {
+      "databaseOptimization": ["Attachment query indexing", "Batch file operations"],
+      "cacheStrategy": ["File metadata caching", "Thumbnail cache"],
+      "serviceOptimization": ["Go service for large files", "Parallel processing"],
+      "memoryManagement": ["Stream large files", "Cleanup temp files"]
+    },
+    "dataTransferOptimization": {
+      "payloadSize": ["File compression", "Thumbnail optimization"],
+      "compression": ["Image compression", "Audio compression"],
+      "streaming": ["Large file streaming upload", "Progressive download"],
+      "pagination": ["Attachment list pagination", "Lazy loading previews"]
+    }
+  },
+  "securityConsiderations": {
+    "authentication": {
+      "userVerification": ["JWT token validation", "File upload permissions"],
+      "sessionManagement": ["Session-based file access"],
+      "tokenValidation": ["Bearer token for file operations"]
+    },
+    "authorization": {
+      "permissions": ["File upload permissions", "Attachment access control"],
+      "roleBasedAccess": ["User file ownership", "Admin file management"],
+      "dataAccess": ["User can only access own files", "Message attachment security"]
+    },
+    "dataProtection": {
+      "sensitiveData": ["Health data in files", "Personal documents"],
+      "encryption": ["File encryption at rest", "Secure file transmission"],
+      "storage": ["Secure upload directory", "File access logging"],
+      "transmission": ["HTTPS file upload", "Encrypted file URLs"]
+    },
+    "inputValidation": {
+      "frontendValidation": ["File type validation", "File size limits"],
+      "backendValidation": ["MIME type verification", "File content scanning"],
+      "sanitization": ["File name sanitization", "Metadata cleaning"],
+      "sqlInjectionPrevention": ["Parameterized queries", "File path validation"]
+    }
+  },
+  "integrationEvidence": {
+    "implementationStatus": {
+      "status": "partial",
+      "lastVerified": "2025-01-27T10:00:00Z",
+      "verificationMethod": "manual",
+      "evidenceLocation": "client/src/components/AttachmentPreview.test.tsx"
+    },
+    "testingEvidence": {
+      "unitTests": ["AttachmentPreview.test.tsx", "ChatInputArea.test.tsx"],
+      "integrationTests": ["client/src/tests/chat/AttachmentDisplay.test.tsx"],
+      "manualTesting": ["File upload flow", "Audio recording and transcription"],
+      "performanceTests": ["Large file upload testing", "Concurrent upload testing"]
+    },
+    "deploymentEvidence": {
+      "stagingValidation": ["File upload in staging environment"],
+      "productionValidation": ["Production file upload monitoring"],
+      "rollbackProcedures": ["File service rollback", "Database migration rollback"],
+      "monitoringSetup": ["File upload metrics", "Error rate monitoring"]
+    }
+  },
   "tableOfContents": {
     "file-attachments": {
       "features": ["file-attachment", "attachment-preview"],
@@ -36,8 +255,16 @@
       ]
     }
   },
-  "lastUpdated": "2025-01-27T10:00:00Z",
-  "dependencies": ["file-manager", "core-messaging"],
+  "dependencies": {
+    "internal": ["file-manager", "core-messaging", "memory-integration"],
+    "external": ["Go file accelerator", "transcription service"],
+    "cross-domain": ["health-data for file processing", "settings for retention policies"]
+  },
+  "impacts": {
+    "affects": ["core-messaging", "memory-detection", "ai-provider-integration"],
+    "sharedComponents": ["AttachmentPreview", "FileUploadProgress"],
+    "sharedServices": ["attachmentRetentionService", "Go file services"]
+  },
   "featureGroups": {
     "file-attachments": {
       "description": "File upload and preview capabilities for chat messages",

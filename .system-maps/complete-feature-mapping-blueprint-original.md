@@ -9,6 +9,9 @@ Each feature is a **tree** where:
 - **Branches**: All architectural layers (frontend, backend, database, services)
 - **Leaves**: Every element that touches the feature (files, APIs, database tables, external services, browser APIs, etc.)
 
+## User flows
+How the user interacts with the application is described in ./tasks/all-user-flows.
+
 ## 1. Data Flow Tracing Blueprint
 
 ### 1.1 Complete Request/Response Cycle

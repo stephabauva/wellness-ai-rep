@@ -1,11 +1,13 @@
 Two major events have happened that seem to have broken the application : fixes for numerous typescript errors after checking with 'npm run check', and the refactoring in smaller files of server/routes.ts that was almost 4000 lines of code (archive in server/routes.ts.archive).
 
+# General
+[ ] Need a central config file manage logging and some parts of settings that should not be handled by the user such as Performance Optimizations
 # Chat :
-[ ] user newer conversations not visible in the chat history window or not loadable. Note : i noticed in the console log ' [AiService] Starting ChatGPT memory deduplication processing { userId: 1, conversationId: '', messageLength: 11 }', there is no convesation Id.
+[x] user newer conversations not visible in the chat history window or not loadable. Note : i noticed in the console log ' [AiService] Starting ChatGPT memory deduplication processing { userId: 1, conversationId: '', messageLength: 11 }', there is no convesation Id.
 
-[ ] clicking on a past conversation in history results in error "[plugin:runtime-error-plugin] Rendered fewer hooks than expected. This may be caused by an accidental early return statement."
+[x] clicking on a past conversation in history results in error "[plugin:runtime-error-plugin] Rendered fewer hooks than expected. This may be caused by an accidental early return statement."
 
-[ ] Need to confirm if uploaded file and photo persists in the conversations of the chat history
+[X] Need to confirm if uploaded file and photo persists in the conversations of the chat history
 
 [ ] console log shows many duplicate logs, for example :
 "[MemoryService] getContextualMemories called for user 1, message: "hello coach"
@@ -100,6 +102,8 @@ But on screen the user sees '0 valid records', "0 skipped".
 [ ] after checking some files boxes and clicking 'categorise', there are no categories visible.
 
 # Settings :
+
+[ ] when scrolling down, the user can scroll much lower than the UI
 
 [ ] overall, the all settings can be stripped  down and simplified
 

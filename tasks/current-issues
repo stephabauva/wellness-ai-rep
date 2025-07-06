@@ -102,6 +102,8 @@ But on screen the user sees '0 valid records', "0 skipped".
 
 [ ] after checking some files boxes and clicking 'categorise', there are no categories visible.
 
+[ ] Go acceleration service health check fails at startup showing '[WARN ] [express] GET /api/accelerate/health 503' - this is expected behavior since Go service should only start on-demand for large files >5MB, but the health check creates unnecessary warnings
+
 # Settings :
 
 [ ] when scrolling down, the user can scroll much lower than the UI

@@ -300,17 +300,330 @@ Integration status cannot be marked as "active" without validation evidence:
 
 **🚨 IMMEDIATE REFACTORING REQUIRED**: Any existing file exceeding 300 lines or 5 feature groups must be split immediately.
 
-## 7. Discovery Tools & Analysis Methods
+## 7. Data Flow Tracing & Architectural Mapping
 
-### 7.1. Recommended Tool Usage
+### 7.1. Complete Data Flow Tracing (MANDATORY)
+
+**Objective**: Map the complete journey from user action to database and back to UI refresh.
+
+#### 7.1.1. User Action → Frontend Flow
+```json
+"dataFlow": {
+  "userAction": {
+    "trigger": "User clicks send button in ChatInputArea",
+    "component": "ChatInputArea.tsx",
+    "eventHandler": "handleSendMessage",
+    "stateChanges": ["setIsLoading(true)", "setMessages(optimistic)"]
+  },
+  "frontendProcessing": {
+    "hooks": ["useStreamingChat", "useChatActions"],
+    "queryKeys": ["messages", "conversations"],
+    "apiCall": {
+      "endpoint": "POST /api/chat/send",
+      "payload": "{ message, conversationId, attachments }",
+      "headers": "{ Authorization, Content-Type }"
+    }
+  }
+}
+```
+
+#### 7.1.2. Network Layer → Backend Flow
+```json
+"networkFlow": {
+  "routeMatching": "POST /api/chat/send → chat-routes.ts",
+  "middleware": ["authMiddleware", "validationMiddleware"],
+  "routeHandler": "sendMessage",
+  "servicesCalled": ["ChatContextService", "AiService", "MemoryService"],
+  "businessLogic": [
+    "Validate message content",
+    "Build conversation context",
+    "Process through AI provider",
+    "Detect and store memories"
+  ]
+}
+```
+
+#### 7.1.3. Database Operations Flow
+```json
+"databaseFlow": {
+  "operations": [
+    {
+      "type": "INSERT",
+      "table": "messages",
+      "query": "INSERT INTO messages (content, conversation_id, role) VALUES (?, ?, ?)",
+      "purpose": "Store user message"
+    },
+    {
+      "type": "SELECT",
+      "table": "messages",
+      "query": "SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 20",
+      "purpose": "Load conversation history"
+    }
+  ],
+  "transactions": "Single transaction for message + memory operations",
+  "indexes": ["idx_messages_conversation_id", "idx_messages_created_at"]
+}
+```
+
+#### 7.1.4. Response Flow → Frontend Update
+```json
+"responseFlow": {
+  "dataTransformation": "AI response → streaming chunks → final message",
+  "cacheInvalidation": ["query:messages", "query:conversations"],
+  "uiUpdates": [
+    "MessageDisplayArea re-renders",
+    "ConversationHistory updates",
+    "Loading states cleared"
+  ],
+  "errorHandling": "Toast notifications for failures"
+}
+```
+
+### 7.2. Architectural Layers Mapping (COMPREHENSIVE)
+
+#### 7.2.1. Presentation Layer Architecture
+```json
+"presentationLayer": {
+  "components": {
+    "primary": [
+      {
+        "name": "ChatInputArea",
+        "path": "client/src/components/ChatInputArea.tsx",
+        "purpose": "Message input and file attachments",
+        "dependencies": ["AttachmentPreview", "AudioRecorder"]
+      }
+    ],
+    "supporting": [
+      {
+        "name": "SmoothStreamingText",
+        "path": "client/src/components/SmoothStreamingText.tsx",
+        "purpose": "Natural typing animation for AI responses"
+      }
+    ]
+  },
+  "hooks": {
+    "state": ["useStreamingChat", "useChatActions"],
+    "api": ["useChatMessages", "useOptimisticUpdates"],
+    "performance": ["useVirtualScrolling", "useStaggeredLoading"]
+  },
+  "utilities": {
+    "helpers": ["chatUtils.tsx", "fileManagerUtils.ts"],
+    "types": ["fileManager.ts", "shared/schema.ts"]
+  }
+}
+```
+
+#### 7.2.2. Business Logic Layer Architecture
+```json
+"businessLogicLayer": {
+  "routes": {
+    "handlers": [
+      {
+        "path": "server/routes/chat-routes.ts",
+        "endpoints": ["POST /api/chat/send", "GET /api/chat/conversations"],
+        "middleware": ["authMiddleware", "rateLimitMiddleware"]
+      }
+    ]
+  },
+  "services": {
+    "core": [
+      {
+        "name": "ChatContextService",
+        "path": "server/services/chat-context-service.ts",
+        "purpose": "Build conversation context with memories"
+      },
+      {
+        "name": "AiService", 
+        "path": "server/services/ai-service.ts",
+        "purpose": "Handle AI provider communication"
+      }
+    ],
+    "supporting": [
+      {
+        "name": "MemoryService",
+        "path": "server/services/memory-service.ts", 
+        "purpose": "Background memory detection and storage"
+      }
+    ]
+  }
+}
+```
+
+#### 7.2.3. Data Layer Architecture
+```json
+"dataLayer": {
+  "database": {
+    "tables": [
+      {
+        "name": "messages",
+        "columns": ["id", "content", "conversation_id", "role", "created_at"],
+        "indexes": ["idx_messages_conversation_id", "idx_messages_created_at"],
+        "relationships": ["FOREIGN KEY conversation_id → conversations.id"]
+      },
+      {
+        "name": "conversations", 
+        "columns": ["id", "title", "created_at", "updated_at"],
+        "indexes": ["idx_conversations_updated_at"]
+      }
+    ],
+    "migrations": ["create_messages_table.sql", "add_message_indexes.sql"]
+  },
+  "cache": {
+    "strategy": "React Query with 5-minute TTL",
+    "keys": ["messages", "conversations", "memory-contexts"],
+    "invalidation": "Optimistic updates + server revalidation"
+  },
+  "fileStorage": {
+    "location": "uploads/ directory",
+    "types": ["images", "documents", "audio"],
+    "processing": "Go microservice for large files"
+  }
+}
+```
+
+### 7.3. Component-to-API Call Tracing (DETAILED)
+
+#### 7.3.1. Tracing Methodology
+1. **Component Discovery**: Identify all React components that make API calls
+2. **Hook Analysis**: Map custom hooks to specific API endpoints  
+3. **Query Key Mapping**: Document React Query keys and their associated endpoints
+4. **Integration Validation**: Verify actual API calls match documented endpoints
+
+#### 7.3.2. Component-API Mapping Template
+```json
+"componentApiTracing": {
+  "ChatInputArea": {
+    "apiCalls": [
+      {
+        "hook": "useStreamingChat",
+        "endpoint": "POST /api/chat/send",
+        "queryKey": "messages",
+        "triggerEvent": "handleSendMessage click",
+        "actualImplementation": "Verified in chat-routes.ts",
+        "integrationStatus": "active"
+      }
+    ],
+    "dependencies": [
+      {
+        "component": "AttachmentPreview", 
+        "apiCall": "POST /api/files/upload",
+        "integrationGap": "None - fully integrated"
+      }
+    ]
+  }
+}
+```
+
+#### 7.3.3. API Integration Validation Rules
+- **Endpoint Verification**: Every documented API call must exist in route handlers
+- **Payload Matching**: Request/response structures must match across frontend/backend
+- **Error Handling**: Document error scenarios and frontend error handling
+- **Cache Consistency**: Verify cache invalidation triggers UI refresh
+
+### 7.4. Request/Response Cycle Documentation (END-TO-END)
+
+#### 7.4.1. Complete Cycle Template
+```json
+"requestResponseCycle": {
+  "feature": "send-chat-message",
+  "cycle": {
+    "step1_userAction": {
+      "description": "User types message and clicks send",
+      "component": "ChatInputArea",
+      "eventHandler": "handleSendMessage",
+      "timing": "0ms"
+    },
+    "step2_frontendProcessing": {
+      "description": "Optimistic UI update and API call preparation",
+      "stateChanges": ["isLoading: true", "messages: [...existing, optimistic]"],
+      "hookInvocation": "useStreamingChat.mutate()",
+      "timing": "10ms"
+    },
+    "step3_networkRequest": {
+      "description": "HTTP request sent to backend",
+      "endpoint": "POST /api/chat/send",
+      "headers": {"Authorization": "Bearer token", "Content-Type": "application/json"},
+      "payload": {"message": "user input", "conversationId": "uuid"},
+      "timing": "50ms"
+    },
+    "step4_backendProcessing": {
+      "description": "Server processes request through business logic",
+      "routeHandler": "sendMessage in chat-routes.ts",
+      "servicesInvoked": ["ChatContextService", "AiService", "MemoryService"],
+      "databaseQueries": [
+        "INSERT message",
+        "SELECT conversation history",
+        "INSERT detected memories"
+      ],
+      "timing": "200ms"
+    },
+    "step5_responseGeneration": {
+      "description": "AI provider generates streaming response",
+      "provider": "OpenAI GPT-4",
+      "streamingChunks": "~50 chunks over 3 seconds",
+      "timing": "3000ms"
+    },
+    "step6_frontendUpdate": {
+      "description": "UI updates with streaming response",
+      "cacheInvalidation": ["query:messages"],
+      "componentUpdates": ["MessageDisplayArea", "ConversationHistory"],
+      "stateChanges": ["isLoading: false", "messages: [...existing, aiResponse]"],
+      "timing": "3050ms"
+    }
+  },
+  "totalCycleTime": "3050ms",
+  "criticalPath": ["userAction", "networkRequest", "backendProcessing", "responseGeneration"],
+  "errorScenarios": [
+    "Network failure → Show retry button",
+    "AI provider timeout → Fallback message",
+    "Database error → Preserve optimistic update"
+  ]
+}
+```
+
+#### 7.4.2. Performance Metrics Documentation
+```json
+"performanceMetrics": {
+  "targetMetrics": {
+    "firstResponse": "<100ms",
+    "streamingStart": "<500ms", 
+    "fullResponse": "<5000ms"
+  },
+  "bottleneckAnalysis": {
+    "databaseQueries": "Optimized with indexes",
+    "aiProvider": "Primary bottleneck - external service",
+    "memoryProcessing": "Background non-blocking"
+  },
+  "optimizations": [
+    "Optimistic updates for immediate feedback",
+    "Streaming responses for progressive display", 
+    "Background memory processing"
+  ]
+}
+```
+
+## 8. Discovery Tools & Analysis Methods
+
+### 8.1. Recommended Tool Usage
 - **Entry Point Discovery**: Use `glob` and `search_file_content` to find initial files
 - **Recursive Analysis**: Use `read_file` and `read_many_files` extensively  
 - **API Mapping**: Analyze server-side route handlers to populate `apiEndpoints`
 - **Database Schema**: Analyze schema files and SQL migrations for `database` section
+- **Data Flow Tracing**: Follow imports and function calls across file boundaries
+- **Integration Testing**: Verify actual API calls match documented endpoints
 
-### 7.2. Analysis Constraints
+### 8.2. Analysis Constraints
 1. **Domain Focus**: Only focus on one domain per system map
 2. **Integration Gaps**: Document unintegrated code at end of system map
 3. **Critical Misses**: Only modify other system maps if critical miss detected (explain why)
+4. **End-to-End Verification**: Validate complete data flow from UI to database
+5. **Performance Documentation**: Include timing and optimization considerations
+
+### 8.3. Required Documentation Standards
+- **Data Flow**: Complete user action → database → response cycle
+- **Component Integration**: Verified component-to-API call relationships  
+- **Performance Metrics**: Target timing and bottleneck analysis
+- **Error Handling**: Complete error scenario documentation
+- **Cache Strategy**: Invalidation patterns and consistency validation
 
 This guide is the definitive specification and must be followed without deviation to ensure system maps remain reliable and efficient tools for codebase analysis and modification.

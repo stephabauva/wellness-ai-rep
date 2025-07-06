@@ -12,7 +12,8 @@
     "knownIssues": [
       "Large file upload optimization pending",
       "Background processing not fully implemented",
-      "Error recovery for corrupted files needs enhancement"
+      "Error recovery for corrupted files needs enhancement",
+      "Critical UI-console mismatch: Console shows successful processing (e.g., '29460 valid records from 29954 total') but UI displays '0 valid records, 0 skipped' - data processing succeeds but results not reflected in user interface"
     ]
   },
   "description": "Comprehensive health data import system supporting multiple file formats from various health platforms and devices.",
@@ -90,7 +91,7 @@
   "apiIntegration": {
     "expectedEndpoints": ["POST /api/health-data/import"],
     "actualEndpoints": ["POST /api/health-data/import"],
-    "integrationGaps": [],
+    "integrationGaps": ["UI state not updating with import results - cache invalidation or component refresh issue"],
     "endpoint": "POST /api/health-data/import",
     "processingSteps": [
       "File validation and virus scanning",
@@ -99,14 +100,24 @@
       "Duplicate detection and resolution",
       "Batch database insertion",
       "Cache invalidation and UI updates"
-    ]
+    ],
+    "cacheDependencies": {
+      "invalidates": ["query:healthData", "query:healthDataCategories"],
+      "refreshesComponents": ["HealthDataSection", "HealthDataImport", "KeyMetricsOverview"],
+      "knownIssues": ["Import results not reflecting in UI despite successful backend processing"]
+    },
+    "uiConsistencyValidation": {
+      "tested": false,
+      "knownIssues": ["Console logs show successful data processing but UI components display zero results - indicates cache invalidation or state update failure"]
+    }
   },
   "errorHandling": [
     "Invalid file format detection",
     "Corrupted data recovery",
     "Partial import continuation",
     "User-friendly error messages",
-    "Import rollback on critical failures"
+    "Import rollback on critical failures",
+    "UI-console synchronization validation - ensure processed results are properly displayed to user"
   ],
   "performance": {
     "streaming": "Large files processed in chunks to prevent memory issues",

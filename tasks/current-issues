@@ -25,7 +25,7 @@ Two major events have happened that seem to have broken the application : fixes 
 [MemoryService] Processing background task: similarity_calculation
 /
 
-[ ] in console log i see "[WARN ] [memory] Background queue growing large: 14 tasks", this needs to be simplified and optimized
+[?] (!might be fixed) in console log i see "[WARN ] [memory] Background queue growing large: 14 tasks", this needs to be simplified and optimized
 
 [ ] Transcription of audio to text is not persistant in input field if the user do other audio transcriptions before sending
 

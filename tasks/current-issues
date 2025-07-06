@@ -4,6 +4,11 @@ Two major events have happened that seem to have broken the application : fixes 
 [ ] Need a central config file manage logging and some parts of settings that should not be handled by the user such as Performance Optimizations
 
 # Chat :
+[ ] npx vitest run --reporter=verbose)
+  ⎿  Error: stderr | client/src/components/ChatInputArea.test.tsx > ChatInputArea > 
+     should trigger camera input on Camera button click (when getUserMedia fails)
+     Error accessing camera: Error: Simulated camera access failure
+
 [x] user newer conversations not visible in the chat history window or not loadable. Note : i noticed in the console log ' [AiService] Starting ChatGPT memory deduplication processing { userId: 1, conversationId: '', messageLength: 11 }', there is no convesation Id.
 
 [x] clicking on a past conversation in history results in error "[plugin:runtime-error-plugin] Rendered fewer hooks than expected. This may be caused by an accidental early return statement."

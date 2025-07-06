@@ -9,7 +9,7 @@ let goServiceProcess: any = null;
 
 /**
  * Auto-start Go acceleration service for large file processing
- * Used by health and file routes when processing files >5MB
+ * Used by file routes when processing files >5MB
  */
 export async function startGoAccelerationService(): Promise<void> {
   try {

@@ -21,7 +21,6 @@ import { SleepQualityChart } from "./health/SleepQualityChart";
 import { NutritionSummary } from "./health/NutritionSummary";
 import { HydrationCard } from "./health/HydrationCard";
 import { CoachingInsights } from "./health/CoachingInsights";
-import { HealthDataImport } from "./health/HealthDataImport";
 import { NativeHealthIntegration } from "./health/NativeHealthIntegration";
 import { AddMetricsModal } from "./health/AddMetricsModal";
 import { Minus } from "lucide-react";
@@ -373,7 +372,6 @@ const HealthDataSection: React.FC = () => {
                   {/* <SelectItem value="custom">Custom range</SelectItem> */}
                 </SelectContent>
               </Select>
-              <HealthDataImport />
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 

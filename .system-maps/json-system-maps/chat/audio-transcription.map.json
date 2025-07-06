@@ -23,6 +23,15 @@
       "lastVerified": "2025-01-15",
       "knownIssues": []
     },
+    "transcription-state-management": {
+      "status": "degraded",
+      "lastVerified": "2025-01-15",
+      "knownIssues": [
+        "CRITICAL: Multiple audio transcriptions before sending message causes previous transcriptions to be lost",
+        "Audio service _isResultSentOrPromiseSettled flag blocks subsequent transcription processing",
+        "Web Speech API state conflicts prevent proper text accumulation in input field"
+      ]
+    },
     "audio-recording": {
       "status": "active", 
       "lastVerified": "2025-01-15",
@@ -46,7 +55,7 @@
     "text-input-integration": {
       "status": "active",
       "lastVerified": "2025-01-15",
-      "knownIssues": []
+      "knownIssues": ["Transcription of audio to text is not persistent in input field if the user does other audio transcriptions before sending"]
     }
   },
   "lastUpdated": "2025-01-15T00:00:00Z",
@@ -174,7 +183,11 @@
             },
             "uiConsistencyValidation": {
               "tested": true,
-              "knownIssues": ["Limited to English vocabulary"]
+              "knownIssues": [
+                "Limited to English vocabulary",
+                "Multiple transcriptions before sending overwrite previous results due to state flag conflicts",
+                "_isResultSentOrPromiseSettled flag prevents proper multiple transcription processing"
+              ]
             }
           }
         },
@@ -311,7 +324,9 @@
             "onTranscriptionComplete callback receives transcribed text",
             "ChatInputArea setInputMessage called with appended text",
             "Input field updates to show transcribed content",
-            "User can continue typing or send message"
+            "User can continue typing or send message",
+            "ISSUE: _isResultSentOrPromiseSettled flag in audio-service.ts prevents multiple transcriptions from being processed properly",
+            "ISSUE: Web Speech API state management interferes with subsequent transcription attempts"
           ],
           "components": ["AudioRecorder", "ChatInputArea"],
           "apiIntegration": {

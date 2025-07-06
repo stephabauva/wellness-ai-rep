@@ -66,6 +66,10 @@ SMART PROCESSING COMPLETE: 29460 valid records from 29954 total, 494 skipped by 
 "
 But on screen the user sees '0 valid records', "0 skipped".
 
+ [ ]  completely remove the upload file functionality from the health dashboard (keep th ego acceleration because the file manager uses it as well)
+
+ [ ] create some sample data to imitate the data coming from the health app from the iphone to populate the heath dashboard when pressing a 'load sample' button. With 7 days, 30 days and 90 days data to test the trend dropdown. 
+
 [ ] The metrics trend does not update after the user clicks on a dropdown to choose between 'last 7 days', 'last 30 days', 'last90 days'. Needs to check the implementation.
 
 [ ] clicking on 'download pdf' results in error [plugin:runtime-error-plugin] Method is not a valid HTTP token. need to verify the full implementation.

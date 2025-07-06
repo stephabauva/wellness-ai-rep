@@ -1,0 +1,388 @@
+
+{
+  "tableOfContents": {
+    "audioRecording": {
+      "features": ["microphone-permission", "audio-recording", "recording-state-management"],
+      "components": ["AudioRecorder"],
+      "endpoints": ["POST /api/transcribe"]
+    },
+    "transcriptionProviders": {
+      "features": ["webspeech-transcription", "openai-transcription", "google-transcription"],
+      "components": ["AudioRecorder"],
+      "endpoints": ["POST /api/transcribe"]
+    },
+    "userInterface": {
+      "features": ["microphone-button", "recording-indicators", "text-input-integration"],
+      "components": ["AudioRecorder", "ChatInputArea"],
+      "endpoints": []
+    }
+  },
+  "integrationStatus": {
+    "microphone-permission": {
+      "status": "active",
+      "lastVerified": "2025-01-15",
+      "knownIssues": []
+    },
+    "audio-recording": {
+      "status": "active", 
+      "lastVerified": "2025-01-15",
+      "knownIssues": []
+    },
+    "webspeech-transcription": {
+      "status": "active",
+      "lastVerified": "2025-01-15", 
+      "knownIssues": ["Only works for English vocabulary"]
+    },
+    "openai-transcription": {
+      "status": "partial",
+      "lastVerified": "2025-01-15",
+      "knownIssues": ["Backend implementation exists but not integrated with frontend"]
+    },
+    "google-transcription": {
+      "status": "partial",
+      "lastVerified": "2025-01-15",
+      "knownIssues": ["Backend implementation exists but not integrated with frontend"]
+    },
+    "text-input-integration": {
+      "status": "active",
+      "lastVerified": "2025-01-15",
+      "knownIssues": []
+    }
+  },
+  "lastUpdated": "2025-01-15T00:00:00Z",
+  "dependencies": ["settings"],
+  "featureGroups": {
+    "audioRecording": {
+      "description": "Handles microphone access, audio recording, and recording state management",
+      "features": {
+        "microphone-permission": {
+          "description": "Request and manage microphone permissions from the browser",
+          "userFlow": [
+            "User clicks microphone button for first time",
+            "Browser permission dialog appears",
+            "User grants or denies permission",
+            "Permission state is stored and checked"
+          ],
+          "systemFlow": [
+            "AudioRecorder component mounts",
+            "checkMicrophonePermission() calls audioService.requestMicrophonePermission()",
+            "Browser API navigator.mediaDevices.getUserMedia() called",
+            "Permission result stored in hasPermission state"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          }
+        },
+        "audio-recording": {
+          "description": "Record audio using MediaRecorder API with support for multiple formats",
+          "userFlow": [
+            "User clicks microphone button",
+            "Button turns red and pulses",
+            "User speaks into microphone",
+            "User clicks button again or waits for auto-stop",
+            "Recording stops and processing begins"
+          ],
+          "systemFlow": [
+            "handleRecording() determines provider type",
+            "For file-based: audioService.startRecording() creates MediaRecorder",
+            "Audio chunks collected in audioChunks array",
+            "stopRecording() creates Blob with proper MIME type",
+            "Blob returned for transcription processing"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          }
+        },
+        "recording-state-management": {
+          "description": "Manage recording states, UI indicators, and user feedback",
+          "userFlow": [
+            "Recording button shows current state (idle/recording/processing)",
+            "Visual feedback with pulsing animation during recording",
+            "Toast notifications for recording events",
+            "Online/offline status indicators"
+          ],
+          "systemFlow": [
+            "State managed via useState hooks: isRecording, isProcessing, isListening",
+            "getButtonIcon() returns appropriate icon based on state",
+            "getButtonText() returns appropriate text based on state and provider",
+            "Online status tracked via navigator.onLine events"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          }
+        }
+      }
+    },
+    "transcriptionProviders": {
+      "description": "Multiple transcription providers with fallback capabilities",
+      "features": {
+        "webspeech-transcription": {
+          "description": "Browser-based speech recognition using Web Speech API (real-time, offline capable)",
+          "userFlow": [
+            "User selects WebSpeech provider in settings",
+            "User clicks microphone button",
+            "Real-time transcription appears as user speaks",
+            "Final transcript added to input field"
+          ],
+          "systemFlow": [
+            "handleWebSpeechRecording() called for webspeech provider",
+            "audioService.transcribeWithWebSpeech() starts SpeechRecognition",
+            "Continuous results processed via onresult callback",
+            "Final transcript passed to onTranscriptionComplete callback"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder", "ChatInputArea"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": ["Limited to English vocabulary"]
+            }
+          }
+        },
+        "openai-transcription": {
+          "description": "OpenAI Whisper transcription via backend API (high accuracy, requires internet)",
+          "userFlow": [
+            "User selects OpenAI provider in settings",
+            "User records audio",
+            "Audio uploaded to backend for processing",
+            "Transcribed text returned and added to input field"
+          ],
+          "systemFlow": [
+            "handleFileBasedRecording() records audio to Blob",
+            "audioService.transcribe() sends Blob to POST /api/transcribe",
+            "Backend transcriptionService.transcribeWithOpenAI() processes via OpenAI API",
+            "Transcription result returned to frontend"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": ["POST /api/transcribe"],
+            "actualEndpoints": ["POST /api/transcribe"],
+            "integrationGaps": ["Frontend not fully integrated with backend transcription"],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder", "ChatInputArea"]
+            },
+            "uiConsistencyValidation": {
+              "tested": false,
+              "knownIssues": ["Backend implementation exists but frontend integration incomplete"]
+            }
+          }
+        },
+        "google-transcription": {
+          "description": "Google Cloud Speech-to-Text transcription via backend API",
+          "userFlow": [
+            "User selects Google provider in settings",
+            "User records audio", 
+            "Audio uploaded to backend for processing",
+            "Transcribed text returned and added to input field"
+          ],
+          "systemFlow": [
+            "handleFileBasedRecording() records audio to Blob",
+            "audioService.transcribe() sends Blob to POST /api/transcribe",
+            "Backend transcriptionService.transcribeWithGoogle() processes via Google API",
+            "Transcription result returned to frontend"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": ["POST /api/transcribe"],
+            "actualEndpoints": ["POST /api/transcribe"],
+            "integrationGaps": ["Frontend not fully integrated with backend transcription"],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder", "ChatInputArea"]
+            },
+            "uiConsistencyValidation": {
+              "tested": false,
+              "knownIssues": ["Backend implementation exists but frontend integration incomplete"]
+            }
+          }
+        }
+      }
+    },
+    "userInterface": {
+      "description": "UI components and integration with chat input",
+      "features": {
+        "microphone-button": {
+          "description": "Interactive microphone button with state-aware styling and accessibility",
+          "userFlow": [
+            "User sees microphone button in chat input area",
+            "Button shows current state (idle/recording/processing)",
+            "Button disabled when no permission or provider unavailable",
+            "Tooltip and ARIA labels for accessibility"
+          ],
+          "systemFlow": [
+            "Button component rendered with dynamic variant and icon",
+            "getButtonVariant() returns outline style",
+            "getButtonIcon() returns Mic with conditional styling",
+            "isDisabled calculated from permissions and provider availability"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          }
+        },
+        "recording-indicators": {
+          "description": "Visual indicators for recording state, network status, and permission status",
+          "userFlow": [
+            "Pulsing red microphone icon during recording",
+            "Network connectivity indicator (Wifi/WifiOff icons)",
+            "Permission grant button when microphone access denied",
+            "Loading indicators during transcription processing"
+          ],
+          "systemFlow": [
+            "Icon animation controlled by CSS classes and state",
+            "Network status tracked via isOnline state",
+            "Permission status tracked via hasPermission state", 
+            "Conditional rendering of status indicators"
+          ],
+          "components": ["AudioRecorder"],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["AudioRecorder"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          }
+        },
+        "text-input-integration": {
+          "description": "Integration with chat input field to append transcribed text",
+          "userFlow": [
+            "User completes audio transcription",
+            "Transcribed text appears in chat input field",
+            "Text appended to existing content if present",
+            "User can edit transcribed text before sending"
+          ],
+          "systemFlow": [
+            "onTranscriptionComplete callback receives transcribed text",
+            "ChatInputArea setInputMessage called with appended text",
+            "Input field updates to show transcribed content",
+            "User can continue typing or send message"
+          ],
+          "components": ["AudioRecorder", "ChatInputArea"],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {
+              "invalidates": [],
+              "refreshesComponents": ["ChatInputArea"]
+            },
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "AudioRecorder": {
+      "path": "client/src/components/AudioRecorder.tsx",
+      "description": "Main audio recording component with multi-provider transcription support",
+      "props": [
+        "onTranscriptionComplete: (text: string) => void",
+        "provider: TranscriptionProvider", 
+        "disabled?: boolean"
+      ],
+      "state": [
+        "isRecording: boolean",
+        "isProcessing: boolean", 
+        "isListening: boolean",
+        "isOnline: boolean",
+        "hasPermission: boolean | null"
+      ],
+      "dependencies": ["audioService", "useToast", "TranscriptionProvider"]
+    }
+  },
+  "apiEndpoints": {
+    "POST /api/transcribe": {
+      "description": "Transcribe audio using specified provider (OpenAI or Google)",
+      "handler": "transcriptionService.transcribeWithOpenAI() or transcribeWithGoogle()",
+      "requestFormat": "multipart/form-data with audio file",
+      "responseFormat": "{ text: string, confidence?: number, language?: string }",
+      "authentication": "Required",
+      "integrationStatus": "partial - backend exists, frontend integration incomplete"
+    }
+  },
+  "database": {},
+  "services": {
+    "audioService": {
+      "path": "client/src/services/audio-service.ts",
+      "description": "Frontend service handling audio recording and transcription coordination",
+      "methods": [
+        "requestMicrophonePermission()",
+        "startRecording()",
+        "stopRecording()",
+        "transcribeWithWebSpeech()",
+        "transcribe()",
+        "getProviderAvailability()"
+      ]
+    },
+    "transcriptionService": {
+      "path": "server/services/transcription-service.ts", 
+      "description": "Backend service for AI-powered transcription via OpenAI and Google APIs",
+      "methods": [
+        "transcribeWithOpenAI()",
+        "transcribeWithGoogle()",
+        "getFileFormatInfo()",
+        "getProviderCapabilities()"
+      ]
+    }
+  }
+}

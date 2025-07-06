@@ -91,7 +91,7 @@ The system uses a modular routes architecture (breaking down a 3,848-line monoli
 2. Ensure Replit environment compatibility
 3. Verify all integration points remain functional
 4. All code must be lean and necessary, not 'nice-to-have', to keep the codebase's size small
-5. Propose lean Go code. as well as conversion from typescript to lean Go code as much as possible for best performance
+5. Propose lean Go code. As well as conversion from typescript to lean Go code as much as possible for best performance
 
 ## Development Guidelines
 
@@ -189,6 +189,8 @@ Required Output when planning:
 4. Confirmation that app stability (HMR, DB, WebSockets) is preserved
 5. Ensure there are no unused pieces of code, all implemented code must be integrated.
 6. Ensure there are no conflicts between pieces of code.
+7. Each piece of code is production-ready.
+Important : no backward compatibility needed as it bloats the codebase and no 'optional' part.
 
 ### Executing plan
 -Before you begin working on tasks of todo items in the tasks folder, check in with me and I will verify the plan.

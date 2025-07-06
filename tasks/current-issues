@@ -2,6 +2,7 @@ Two major events have happened that seem to have broken the application : fixes 
 
 # General
 [ ] Need a central config file manage logging and some parts of settings that should not be handled by the user such as Performance Optimizations
+
 # Chat :
 [x] user newer conversations not visible in the chat history window or not loadable. Note : i noticed in the console log ' [AiService] Starting ChatGPT memory deduplication processing { userId: 1, conversationId: '', messageLength: 11 }', there is no convesation Id.
 

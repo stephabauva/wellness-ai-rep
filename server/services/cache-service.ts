@@ -279,10 +279,12 @@ export class IntelligentCacheService {
     
     if (cached) {
       this.recordHit('healthData');
+      console.log(`[CacheService] Cache HIT for health data - userId: ${userId}, range: ${timeRange}, count: ${cached.length}`);
       return cached;
     }
     
     this.recordMiss('healthData');
+    console.log(`[CacheService] Cache MISS for health data - userId: ${userId}, range: ${timeRange}`);
     return null;
   }
 
@@ -290,6 +292,7 @@ export class IntelligentCacheService {
     const cache = this.getCache('healthData');
     const key = CacheKeys.healthData(userId, timeRange);
     cache.set(key, data);
+    console.log(`[CacheService] Cached health data - userId: ${userId}, range: ${timeRange}, count: ${data.length}`);
   }
 
   // Device settings caching

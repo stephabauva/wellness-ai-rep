@@ -1,0 +1,176 @@
+{
+  "_metadata": {
+    "featureName": "timeframe-dropdown",
+    "featureGroup": "data-visualization",
+    "parentFile": "./dashboard.map.json",
+    "domain": "health",
+    "lastUpdated": "2025-01-06T16:30:00Z"
+  },
+  "description": "Time range selector dropdown that controls the data aggregation period for health metrics display across the dashboard",
+  "userFlow": [
+    "User clicks on the time range dropdown in HealthDataSection",
+    "User sees options: 'Last 24 hours', 'Last 7 days', 'Last 30 days', 'Last 90 days'",
+    "User selects a new time range (e.g., 'Last 7 days')",
+    "All health metrics and charts update to show aggregated data for selected period"
+  ],
+  "systemFlow": [
+    "TimeRangeDropdown selection triggers setTimeRange state update",
+    "useHealthDataApi hook's query key changes with new timeRange parameter",
+    "React Query triggers new API call to GET /api/health-data?range={timeRange}",
+    "Server fetches data from health_data table filtered by timestamp",
+    "Components receive new data and re-render with proper aggregation",
+    "KeyMetricsOverview aggregates cumulative/average values based on metric type",
+    "HealthMetricsCard aggregates values (sum/average/latest) based on data type",
+    "Charts (ActivityTrendChart, SleepQualityChart, etc.) recalculate with new data"
+  ],
+  "components": {
+    "primary": [
+      {
+        "name": "HealthDataSection",
+        "path": "client/src/components/HealthDataSection.tsx",
+        "purpose": "Main health dashboard container with time range state",
+        "stateManagement": {
+          "timeRange": "'24hours' | '7days' | '30days' | '90days'",
+          "default": "'7days'"
+        }
+      }
+    ],
+    "affected": [
+      {
+        "name": "KeyMetricsOverview",
+        "path": "client/src/components/health/KeyMetricsOverview.tsx",
+        "purpose": "Displays aggregated key health metrics",
+        "aggregationLogic": "getAggregatedMetricValue function - sums cumulative, averages continuous, uses latest for occasional"
+      },
+      {
+        "name": "HealthMetricsCard",
+        "path": "client/src/components/HealthMetricsCard.tsx",
+        "purpose": "Displays categorized health metrics",
+        "aggregationLogic": "aggregateMetrics function - similar logic to KeyMetricsOverview"
+      },
+      {
+        "name": "ActivityTrendChart",
+        "path": "client/src/components/health/ActivityTrendChart.tsx",
+        "purpose": "Shows activity data over time",
+        "dataProcessing": "Receives pre-processed activityChartData from parent"
+      },
+      {
+        "name": "SleepQualityChart",
+        "path": "client/src/components/health/SleepQualityChart.tsx",
+        "purpose": "Shows sleep metrics over time",
+        "dataProcessing": "Receives pre-processed sleepChartData from parent"
+      },
+      {
+        "name": "NutritionSummary",
+        "path": "client/src/components/health/NutritionSummary.tsx",
+        "purpose": "Shows nutrition intake summary",
+        "dataProcessing": "Receives pre-processed nutritionSummaryData from parent"
+      },
+      {
+        "name": "HydrationCard",
+        "path": "client/src/components/health/HydrationCard.tsx",
+        "purpose": "Shows hydration intake vs goal",
+        "dataProcessing": "Receives pre-processed hydrationChartData from parent"
+      }
+    ]
+  },
+  "apiIntegration": {
+    "primaryEndpoint": {
+      "method": "GET",
+      "path": "/api/health-data",
+      "queryParams": {
+        "range": "24hours | 7days | 30days | 90days",
+        "t": "optional timestamp for cache busting"
+      },
+      "handler": "health-routes.ts",
+      "cacheStrategy": "React Query with staleTime: 0 for immediate updates"
+    },
+    "dataFlow": {
+      "hook": "useHealthDataApi",
+      "queryKey": "['allHealthData', timeRange]",
+      "fetchFunction": "fetch(`/api/health-data?range=${timeRange}&t=${timestamp}`)",
+      "clientSideCategorization": "useMemo to categorize data by health category"
+    },
+    "cacheDependencies": {
+      "invalidates": ["query:allHealthData"],
+      "refreshesComponents": [
+        "HealthDataSection",
+        "KeyMetricsOverview",
+        "HealthMetricsCard",
+        "ActivityTrendChart",
+        "SleepQualityChart",
+        "NutritionSummary",
+        "HydrationCard"
+      ],
+      "triggerEvents": ["timeRange-changed"]
+    }
+  },
+  "dataAggregation": {
+    "cumulativeMetrics": {
+      "description": "Metrics that should be summed over the time period",
+      "examples": ["steps", "calories_burned", "water_intake", "exercise_duration"],
+      "aggregation": "SUM(value) for all records in timeRange"
+    },
+    "continuousMetrics": {
+      "description": "Metrics that should be averaged over the time period",
+      "examples": ["weight", "heart_rate", "blood_pressure", "bmi"],
+      "aggregation": "AVG(value) for all records in timeRange"
+    },
+    "occasionalMetrics": {
+      "description": "Metrics that should show latest value regardless of timeframe",
+      "examples": ["blood_oxygen", "ecg", "cholesterol_total"],
+      "aggregation": "Latest value by timestamp"
+    }
+  },
+  "database": {
+    "query": {
+      "table": "health_data",
+      "filter": "WHERE userId = ? AND timestamp >= NOW() - INTERVAL timeRange",
+      "ordering": "ORDER BY timestamp DESC",
+      "volume": "Typically 100-5000 records depending on timeRange"
+    }
+  },
+  "componentDetails": {
+    "HealthMetricsCard": {
+      "path": "client/src/components/HealthMetricsCard.tsx",
+      "keyFunctions": {
+        "aggregateMetrics": "Aggregates health metrics based on data type (sum/average/latest)",
+        "filteredMetrics": "Filters metrics based on visibility settings",
+        "handleMetricSelection": "Handles checkbox selection in removal mode"
+      },
+      "dataProcessing": "Groups metrics by dataType and applies type-specific aggregation"
+    },
+    "KeyMetricsOverview": {
+      "path": "client/src/components/health/KeyMetricsOverview.tsx",
+      "keyFunctions": {
+        "getAggregatedMetricValue": "Aggregates metric values based on metric type",
+        "calculateChange": "Calculates percentage change between recent values",
+        "calculateProgress": "Calculates progress towards metric goals",
+        "metricValues": "React.useMemo that recalculates all visible metric values"
+      },
+      "visibilityIntegration": "Uses React Query to fetch visibility settings from /api/health-consent/visibility"
+    },
+    "useHealthDataApi": {
+      "path": "client/src/hooks/useHealthDataApi.ts",
+      "keyFunctions": {
+        "useQuery": "Fetches health data with timeRange parameter",
+        "categorizedData": "React.useMemo that categorizes data client-side by health category"
+      },
+      "queryConfiguration": {
+        "queryKey": "['allHealthData', timeRange]",
+        "staleTime": 0,
+        "cacheControl": "Timestamp parameter for cache busting"
+      }
+    }
+  },
+  "performanceConsiderations": {
+    "memoization": "All chart data calculations use React.useMemo",
+    "componentOptimization": "KeyMetricsOverview uses React.memo",
+    "queryOptimization": "Client-side categorization eliminates redundant API call"
+  },
+  "integrationStatus": {
+    "status": "active",
+    "lastVerified": "2025-01-06",
+    "completeness": "Fully integrated with proper aggregation logic"
+  }
+}

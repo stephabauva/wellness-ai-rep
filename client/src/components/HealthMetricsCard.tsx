@@ -77,6 +77,64 @@ const formatMetricName = (dataType: string): string => {
     .join(' ');
 };
 
+// Helper function to aggregate metrics based on their type
+const aggregateMetrics = (metrics: HealthMetric[], dataType: string): { value: string; unit: string | null; timestamp: string } => {
+  const typeMetrics = metrics.filter(m => m.dataType === dataType);
+  if (typeMetrics.length === 0) return { value: "0", unit: null, timestamp: new Date().toISOString() };
+  
+  // Determine aggregation method based on data type
+  const shouldSum = [
+    'steps', 'calories_burned', 'calories_intake', 'hydration', 'water_intake',
+    'exercise_duration', 'sleep_duration', 'active_minutes', 'calories', 'distance'
+  ].includes(dataType);
+  
+  const shouldAverage = [
+    'weight', 'body_weight', 'bmi', 'body_fat_percentage', 'heart_rate', 'resting_heart_rate',
+    'blood_pressure_systolic', 'blood_pressure_diastolic', 'hrv', 'blood_glucose_fasting',
+    'blood_glucose_postprandial', 'body_temperature', 'vo2_max', 'stress_level', 'mood'
+  ].includes(dataType);
+  
+  const shouldUseLatest = [
+    'blood_oxygen', 'oxygen_saturation', 'ecg', 'ketone_levels', 'hba1c',
+    'cholesterol_total', 'cholesterol_ldl', 'cholesterol_hdl', 'cholesterol_triglycerides'
+  ].includes(dataType);
+  
+  let value: number;
+  let unit = typeMetrics[0].unit;
+  let timestamp: string;
+  
+  if (shouldSum) {
+    // Sum values for cumulative metrics
+    value = typeMetrics.reduce((sum, metric) => {
+      const val = parseFloat(metric.value);
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+    timestamp = typeMetrics[typeMetrics.length - 1].timestamp; // Use latest timestamp
+  } else if (shouldAverage) {
+    // Average values for continuous metrics
+    const total = typeMetrics.reduce((sum, metric) => {
+      const val = parseFloat(metric.value);
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+    value = typeMetrics.length > 0 ? total / typeMetrics.length : 0;
+    timestamp = typeMetrics[typeMetrics.length - 1].timestamp; // Use latest timestamp
+  } else {
+    // Use latest value for occasional measurements (shouldUseLatest or default)
+    const sorted = [...typeMetrics].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    const latest = sorted[0];
+    value = parseFloat(latest.value);
+    unit = latest.unit;
+    timestamp = latest.timestamp;
+  }
+  
+  // Format value based on metric type
+  const formattedValue = shouldSum ? value.toFixed(0) : value.toFixed(1);
+  
+  return { value: formattedValue, unit, timestamp };
+};
+
 const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({ 
   title, 
   category, 
@@ -90,18 +148,26 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
 }) => {
   if (!metrics.length) return null;
 
-  // Get the most recent value for each metric type
-  const latestMetrics = metrics.reduce((acc, metric) => {
-    if (!acc[metric.dataType] || new Date(metric.timestamp) > new Date(acc[metric.dataType].timestamp)) {
-      acc[metric.dataType] = metric;
-    }
+  // Get unique data types and aggregate their values
+  const uniqueDataTypes = [...new Set(metrics.map(m => m.dataType))];
+  const aggregatedMetrics = uniqueDataTypes.reduce((acc, dataType) => {
+    const aggregated = aggregateMetrics(metrics, dataType);
+    acc[dataType] = {
+      id: metrics.find(m => m.dataType === dataType)!.id,
+      dataType,
+      value: aggregated.value,
+      unit: aggregated.unit,
+      timestamp: aggregated.timestamp,
+      source: metrics.find(m => m.dataType === dataType)?.source || null,
+      category: metrics.find(m => m.dataType === dataType)?.category || null
+    };
     return acc;
   }, {} as Record<string, HealthMetric>);
 
   // Filter metrics based on visibility settings
   const filteredMetrics = visibilitySettings ? 
     Object.fromEntries(
-      Object.entries(latestMetrics).filter(([dataType]) => {
+      Object.entries(aggregatedMetrics).filter(([dataType]) => {
         const visibleMetrics = visibilitySettings.dashboard_preferences.visible_metrics;
         const hiddenMetrics = visibilitySettings.dashboard_preferences.hidden_metrics;
         
@@ -179,7 +245,7 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
                   {metric.unit && <span className="text-sm text-muted-foreground ml-1">{metric.unit}</span>}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(metric.timestamp).toLocaleDateString()}
+                  {metrics.filter(m => m.dataType === metric.dataType).length} records
                 </p>
               </div>
             </div>

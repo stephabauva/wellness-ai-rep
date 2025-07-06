@@ -5,7 +5,7 @@
 - Keep Go acceleration service intact for file manager
 - Add sample data generation with time range options
 - Technical context: Health dashboard should only receive data from smartphone apps, not file uploads
-- The current implementation of the file upload can be read at .system-maps/json-system-maps/health/health-data-import.feature.json
+- The current implementation of features of the health dashboad can be read at .system-maps/json-system-maps/health
 
 ## Risk Assessment
 - **Dependencies affected**: 
@@ -19,20 +19,20 @@
 
 ## Tasks
 ### Phase 1: Remove Upload Functionality
-- [ ] Remove HealthDataImport component usage from HealthDataSection
-- [ ] Delete HealthDataImport.tsx component file
-- [ ] Remove parse and import endpoints from health-routes.ts
-- [ ] Ensure Go acceleration auto-start logic remains in shared-utils.ts
+- [x] Remove HealthDataImport component usage from HealthDataSection
+- [x] Delete HealthDataImport.tsx component file
+- [x] Remove parse and import endpoints from health-routes.ts
+- [x] Ensure Go acceleration auto-start logic remains in shared-utils.ts
 
 ### Phase 2: Create Sample Data Generation
-- [ ] Create health data sample generator utility
+- [x] Create health data sample generator utility
   - Generate realistic health metrics (steps, heart rate, sleep, nutrition, etc.)
   - Support 7, 30, and 90 day time ranges
   - Include proper timestamps and categories
-- [ ] Add "Load Sample Data" button to HealthDataSection
+- [x] Add "Load Sample Data" button to HealthDataSection
   - Include dropdown for time range selection
   - Show loading state during generation
-- [ ] Create API endpoint for sample data generation
+- [x] Create API endpoint for sample data generation
   - POST /api/health-data/generate-sample
   - Clear existing data before inserting samples
   - Use batch insert for performance

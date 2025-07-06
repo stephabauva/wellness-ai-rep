@@ -256,7 +256,18 @@ Integration status cannot be marked as "active" without validation evidence:
   },
   "components": { "...": "..." },
   "apiEndpoints": { "...": "..." }, 
-  "database": { "...": "..." }
+  "database": { "...": "..." },
+  "componentDetails": {
+    "[ComponentName]": {
+      "path": "String (file path)",
+      "keyFunctions": {
+        "[functionName]": "String (brief description of what it does)"
+      },
+      "hooks": ["List of custom hooks used"],
+      "stateManagement": "Description of key state variables",
+      "dataProcessing": "How component processes/transforms data"
+    }
+  }
 }
 ```
 
@@ -282,9 +293,55 @@ Integration status cannot be marked as "active" without validation evidence:
   // Optional infrastructure references (only if used)
   "logging": {
     "$ref": "/.system-maps/infrastructure/logging.map.json#/health-logging"
+  },
+  "componentDetails": {
+    "[ComponentName]": {
+      "path": "String (file path)",
+      "keyFunctions": {
+        "[functionName]": "String (brief description)"
+      }
+    }
   }
 }
 ```
+
+### 5.4. Component Detail Requirements (CRITICAL)
+
+**Purpose**: Document all "furthest leaves" - the actual implementation details that make features work.
+
+**What to Include**:
+- **Key Functions**: Every significant function in a component (e.g., `aggregateMetrics`, `calculateChange`)
+- **Hooks**: Custom hooks and their purpose (e.g., `useHealthDataApi`)
+- **State Variables**: Critical state that controls behavior (e.g., `timeRange`, `isLoading`)
+- **Data Transformations**: How data is processed (e.g., "groups by dataType then aggregates")
+- **Utility Functions**: Helper functions that perform core logic
+
+**Example**:
+```json
+"componentDetails": {
+  "HealthMetricsCard": {
+    "path": "client/src/components/HealthMetricsCard.tsx",
+    "keyFunctions": {
+      "aggregateMetrics": "Aggregates metrics by type (sum/average/latest)",
+      "filteredMetrics": "Filters based on visibility settings",
+      "formatMetricName": "Converts snake_case to Title Case"
+    },
+    "stateManagement": "Receives metrics array prop, no internal state",
+    "dataProcessing": "Groups metrics by dataType, applies aggregation"
+  }
+}
+```
+
+**Why This Matters**: When debugging, developers need to know which functions handle what logic. The system map should be detailed enough that someone can navigate directly to the relevant code.
+
+**What NOT to Include**:
+- Debugging hints or "how to fix" instructions
+- Historical bugs or previous implementations
+- Code snippets or implementation details
+- Testing steps or debugging procedures
+- Personal observations about code quality
+
+**Keep It Neutral**: System maps document architecture, not opinions or history.
 
 ## 6. Architecture: Hybrid Federated Maps
 

@@ -22,17 +22,83 @@ interface MetricsVisibilitySettings {
   };
 }
 
-// Helper function to get the latest value for a specific metric type
-const getLatestMetricValue = (
+// Helper function to get aggregated value for a specific metric type based on its nature
+const getAggregatedMetricValue = (
   metrics: HealthMetric[] | undefined | null,
   dataType: string,
   defaultValue: string = "0"
 ): string => {
-  if (!metrics) return defaultValue;
-  const metric = metrics
-    .filter(m => m.dataType === dataType)
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-  return metric?.value || defaultValue;
+  if (!metrics || metrics.length === 0) {
+    console.log(`[Aggregation] No metrics data available for ${dataType}`);
+    return defaultValue;
+  }
+  
+  const filteredMetrics = metrics.filter(m => m.dataType === dataType);
+  if (filteredMetrics.length === 0) {
+    console.log(`[Aggregation] No ${dataType} metrics found in ${metrics.length} total records`);
+    return defaultValue;
+  }
+  
+  // Extra debug for steps
+  if (dataType === 'steps') {
+    console.log(`[Aggregation Debug] Steps data (${filteredMetrics.length} records):`, filteredMetrics.slice(0, 3).map(m => ({
+      value: m.value,
+      timestamp: new Date(m.timestamp).toLocaleDateString()
+    })));
+  }
+  
+  // Determine aggregation method based on data type
+  const shouldAverage = [
+    'weight', 'body_weight', 'bmi', 'body_fat_percentage', 'heart_rate', 'resting_heart_rate',
+    'blood_pressure_systolic', 'blood_pressure_diastolic', 'hrv', 'blood_glucose_fasting',
+    'blood_glucose_postprandial', 'body_temperature', 'vo2_max', 'stress_level', 'mood'
+  ].includes(dataType);
+  
+  const shouldSum = [
+    'steps', 'calories_burned', 'calories_intake', 'hydration', 'water_intake',
+    'exercise_duration', 'sleep_duration', 'active_minutes', 'calories', 'distance'
+  ].includes(dataType);
+  
+  const shouldUseLatest = [
+    'blood_oxygen', 'oxygen_saturation', 'ecg', 'ketone_levels', 'hba1c',
+    'cholesterol_total', 'cholesterol_ldl', 'cholesterol_hdl', 'cholesterol_triglycerides'
+  ].includes(dataType);
+  
+  if (shouldSum) {
+    // Sum values for cumulative metrics
+    const total = filteredMetrics.reduce((sum, metric) => {
+      const val = parseFloat(metric.value);
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+    console.log(`[Aggregation] Summing ${dataType}: ${filteredMetrics.length} records = ${total}`);
+    return total.toFixed(0); // No decimals for steps
+  } else if (shouldAverage) {
+    // Average values for continuous metrics
+    const total = filteredMetrics.reduce((sum, metric) => {
+      const val = parseFloat(metric.value);
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+    const average = filteredMetrics.length > 0 ? total / filteredMetrics.length : 0;
+    console.log(`[Aggregation] Averaging ${dataType}: ${filteredMetrics.length} records = ${average}`);
+    return average.toFixed(1);
+  } else if (shouldUseLatest) {
+    // Use latest value for occasional measurements
+    const sorted = [...filteredMetrics].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    const latest = sorted[0];
+    console.log(`[Aggregation] Latest ${dataType}: ${latest.value} from ${filteredMetrics.length} records`);
+    return latest.value;
+  } else {
+    // Default to average for unknown metrics
+    const total = filteredMetrics.reduce((sum, metric) => {
+      const val = parseFloat(metric.value);
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+    const average = filteredMetrics.length > 0 ? total / filteredMetrics.length : 0;
+    console.log(`[Aggregation] Default avg ${dataType}: ${filteredMetrics.length} records = ${average}`);
+    return average.toFixed(1);
+  }
 };
 
 const getLatestMetricUnit = (
@@ -47,12 +113,21 @@ const getLatestMetricUnit = (
   return metric?.unit || defaultUnit;
 }
 
-export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({ 
+export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = React.memo(({ 
   healthData, 
   isRemovalMode = false,
   selectedMetricsForRemoval = [],
   onMetricSelectionChange = () => {}
 }) => {
+  // Debug: Log when healthData changes
+  React.useEffect(() => {
+    if (healthData) {
+      console.log(`[KeyMetricsOverview] Health data updated - records: ${healthData.length}`);
+      // Log sample of steps data to see what we're aggregating
+      const stepsData = healthData.filter(m => m.dataType === 'steps');
+      console.log(`[KeyMetricsOverview] Steps data: ${stepsData.length} records`, stepsData.slice(0, 3));
+    }
+  }, [healthData]);
   // Handle metric selection for removal
   const handleMetricSelection = (metricId: string, isSelected: boolean) => {
     if (isSelected) {
@@ -70,6 +145,7 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({
       if (!response.ok) throw new Error('Failed to fetch visibility settings');
       return response.json();
     },
+    staleTime: 5 * 60 * 1000, // Keep visibility settings cached for 5 minutes
   });
 
   // Default settings for new users
@@ -104,7 +180,7 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({
   // Helper function to calculate progress towards goal
   const calculateProgress = (dataType: string, goal: number): number | undefined => {
     if (!healthData) return undefined;
-    const value = parseFloat(getLatestMetricValue(healthData, dataType, "0"));
+    const value = parseFloat(getAggregatedMetricValue(healthData, dataType, "0"));
     if (value === 0) return undefined;
     return Math.min((value / goal) * 100, 100);
   };
@@ -228,6 +304,16 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({
 
   // Get visible metrics from settings
   const visibleMetrics = currentSettings.dashboard_preferences.visible_metrics || [];
+  
+  // Memoize the metric values to ensure they update when health data changes
+  const metricValues = React.useMemo(() => {
+    const values: Record<string, string> = {};
+    visibleMetrics.forEach(metricId => {
+      values[metricId] = getAggregatedMetricValue(healthData, metricId, "N/A");
+    });
+    console.log(`[KeyMetricsOverview] Recalculated metric values:`, values);
+    return values;
+  }, [healthData, visibleMetrics]);
 
   // If no metrics are visible, show a message
   if (visibleMetrics.length === 0) {
@@ -259,7 +345,7 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({
               )}
               <StatCard
                 title={metricId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                value={getLatestMetricValue(healthData, metricId, "N/A")}
+                value={metricValues[metricId] || "N/A"}
                 unit={getLatestMetricUnit(healthData, metricId, "")}
                 change={calculateChange(metricId)}
                 icon={<Eye className="h-4 w-4" />}
@@ -268,9 +354,14 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({
           );
         }
 
-        const value = getLatestMetricValue(healthData, metricId, "N/A");
+        const value = metricValues[metricId] || "N/A";
         const unit = getLatestMetricUnit(healthData, metricId, config.unit);
         const change = calculateChange(metricId);
+        
+        // Debug log for specific metrics
+        if (metricId === 'steps' && value !== "N/A") {
+          console.log(`[KeyMetricsOverview] Steps aggregated value: ${value} from ${healthData?.filter(m => m.dataType === 'steps').length || 0} records`);
+        }
         
         let additionalProps = {};
         
@@ -319,4 +410,4 @@ export const KeyMetricsOverview: React.FC<KeyMetricsOverviewProps> = ({
       })}
     </div>
   );
-};
+});

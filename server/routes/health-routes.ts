@@ -13,12 +13,31 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
     try {
       const range = req.query.range || "7days";
       const category = req.query.category as string;
-      const healthData = await storage.getHealthData(1, String(range));
+      const skipCache = req.query.skipCache === 'true' || req.query.t !== undefined; // Skip cache if timestamp parameter is present
+      
+      // Add debug logging
+      console.log(`[Health Routes] Fetching health data - range: ${range}, category: ${category || 'all'}, skipCache: ${skipCache}`);
+      
+      let healthData;
+      if (skipCache) {
+        // Bypass cache for debugging - method now exists
+        healthData = await storage.getHealthDataNoCache(1, String(range));
+      } else {
+        healthData = await storage.getHealthData(1, String(range));
+      }
 
       const filteredData = category 
         ? healthData.filter(item => item.category === category)
         : healthData;
 
+      // Add cache control headers to prevent browser caching
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
+      console.log(`[Health Routes] Returning ${filteredData.length} health data records`);
       res.json(filteredData);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch health data" });
@@ -29,7 +48,14 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
   app.get("/api/health-data/categories", async (req, res) => {
     try {
       const range = req.query.range || "7days";
-      const healthData = await storage.getHealthData(1, String(range));
+      const skipCache = req.query.t !== undefined; // Skip cache if timestamp parameter is present
+      
+      // Add debug logging
+      console.log(`[Health Routes] Fetching categorized health data - range: ${range}, skipCache: ${skipCache}`);
+      
+      const healthData = skipCache 
+        ? await storage.getHealthDataNoCache(1, String(range))
+        : await storage.getHealthData(1, String(range));
 
       const categorizedData = healthData.reduce((acc, item) => {
         if (!item.category) return acc;
@@ -38,6 +64,15 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
         return acc;
       }, {} as Record<string, typeof healthData>);
 
+      // Add cache control headers to prevent browser caching
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
+      const totalRecords = Object.values(categorizedData).reduce((sum, arr) => sum + arr.length, 0);
+      console.log(`[Health Routes] Returning ${totalRecords} categorized health data records`);
       res.json(categorizedData);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch categorized health data" });
@@ -73,6 +108,22 @@ export async function registerHealthRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error('Error deleting health data by type:', error);
       res.status(500).json({ message: "Failed to delete health data" });
+    }
+  });
+
+  // Load sample health data
+  app.post("/api/health-data/load-sample", async (req, res) => {
+    try {
+      // Load sample data from the sample table
+      const result = await storage.loadSampleHealthData(1);
+      
+      res.json({ 
+        message: `Successfully loaded ${result.recordsLoaded} sample health data points`,
+        recordsLoaded: result.recordsLoaded
+      });
+    } catch (error) {
+      console.error('Error loading sample health data:', error);
+      res.status(500).json({ message: "Failed to load sample health data" });
     }
   });
 

@@ -1,0 +1,157 @@
+{
+  "_metadata": {
+    "featureName": "load-sample-data",
+    "featureGroup": "data-operations",
+    "parentFile": "./data-operations.map.json",
+    "domain": "health",
+    "lastUpdated": "2025-01-06T16:35:00Z"
+  },
+  "description": "Load pre-populated sample health data from a dedicated database table for demo and testing purposes",
+  "userFlow": [
+    "User clicks 'Load Sample Data' button in HealthDataSection",
+    "System loads pre-populated sample data from sample_health_data table",
+    "Loading indicator shows while data is being transferred",
+    "Success toast notification shows number of records loaded",
+    "All health metrics and charts update with the sample data"
+  ],
+  "systemFlow": [
+    "Button click triggers loadSampleDataMutation.mutate()",
+    "POST request sent to /api/health-data/load-sample",
+    "Server calls storage.loadSampleHealthData(userId)",
+    "Database storage implementation clears existing user health data",
+    "Copies all records from sample_health_data table to health_data table with user's ID",
+    "Returns count of records loaded",
+    "Frontend receives response and shows success toast",
+    "Triggers refetchHealthData() to update all components",
+    "All dashboard components re-render with new sample data"
+  ],
+  "components": {
+    "primary": [
+      {
+        "name": "HealthDataSection",
+        "path": "client/src/components/HealthDataSection.tsx",
+        "purpose": "Contains the Load Sample Data button and mutation logic",
+        "mutations": {
+          "loadSampleDataMutation": {
+            "endpoint": "POST /api/health-data/load-sample",
+            "onSuccess": "refetchHealthData() + success toast"
+          }
+        }
+      }
+    ],
+    "supporting": [
+      {
+        "name": "Button",
+        "path": "@/components/ui/button",
+        "purpose": "UI component for the load sample data action",
+        "props": {
+          "onClick": "loadSampleDataMutation.mutate",
+          "disabled": "isLoadingSampleData || isLoadingHealthData"
+        }
+      }
+    ]
+  },
+  "apiIntegration": {
+    "endpoint": {
+      "method": "POST",
+      "path": "/api/health-data/load-sample",
+      "handler": "health-routes.ts line 115",
+      "requestBody": "empty",
+      "response": {
+        "message": "Success message with record count",
+        "recordsLoaded": "number"
+      }
+    },
+    "implementation": {
+      "route": "app.post('/api/health-data/load-sample', ...)",
+      "storageMethod": "storage.loadSampleHealthData(userId)",
+      "errorHandling": "Try-catch with 500 error response"
+    },
+    "cacheDependencies": {
+      "invalidates": ["query:allHealthData", "query:healthData"],
+      "refreshesComponents": [
+        "HealthDataSection",
+        "KeyMetricsOverview",
+        "HealthMetricsCard",
+        "All health charts and visualizations"
+      ],
+      "triggerEvents": ["sample-data-loaded"]
+    }
+  },
+  "storageImplementation": {
+    "interface": {
+      "method": "loadSampleHealthData(userId: number)",
+      "returns": "Promise<{ recordsLoaded: number }>",
+      "location": "server/storage.ts"
+    },
+    "memoryStorage": {
+      "behavior": "Throws error - feature only available with database storage",
+      "errorMessage": "Sample data loading is only available with database storage"
+    },
+    "databaseStorage": {
+      "steps": [
+        "clearAllHealthData(userId) - removes existing user data",
+        "SELECT * FROM sample_health_data - fetch all sample records",
+        "Map sample records adding userId field",
+        "createHealthDataBatch(insertData) - bulk insert into health_data",
+        "Return count of inserted records"
+      ]
+    }
+  },
+  "database": {
+    "sampleTable": {
+      "name": "sample_health_data",
+      "schema": "Replica of health_data table without userId field",
+      "columns": [
+        "id", "dataType", "value", "unit", "timestamp",
+        "source", "category", "metadata"
+      ],
+      "population": "Populated by scripts/populate-sample-data.ts",
+      "dataRange": "Contains 90 days of realistic health metrics"
+    },
+    "operations": [
+      {
+        "type": "DELETE",
+        "table": "health_data",
+        "condition": "WHERE userId = ?",
+        "purpose": "Clear existing user data before loading samples"
+      },
+      {
+        "type": "SELECT",
+        "table": "sample_health_data",
+        "purpose": "Fetch all pre-populated sample records"
+      },
+      {
+        "type": "INSERT",
+        "table": "health_data",
+        "bulk": true,
+        "purpose": "Insert sample data with user's ID"
+      }
+    ]
+  },
+  "sampleDataGeneration": {
+    "generator": "SampleHealthDataGenerator",
+    "location": "shared/sampleHealthDataGenerator.ts",
+    "features": [
+      "Generates realistic health data patterns",
+      "Covers all health metric categories",
+      "Creates time-distributed data (1-90 days)",
+      "More frequent data for recent days",
+      "Realistic value ranges and variations"
+    ],
+    "populationScript": {
+      "path": "scripts/populate-sample-data.ts",
+      "command": "npm run populate-sample-data",
+      "frequency": "Run once during setup or when updating sample data"
+    }
+  },
+  "integrationStatus": {
+    "status": "active",
+    "lastVerified": "2025-01-06",
+    "completeness": "Fully integrated end-to-end"
+  },
+  "relatedFeatures": [
+    "reset-health-data: Clears all health data",
+    "timeframe-dropdown: Controls data visualization period"
+  ]
+}

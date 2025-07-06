@@ -107,6 +107,28 @@ export const insertHealthDataSchema = createInsertSchema(healthData).pick({
   metadata: true,
 });
 
+// Sample health data schema - replica of health_data with dummy values
+export const sampleHealthData = pgTable("sample_health_data", {
+  id: serial("id").primaryKey(),
+  dataType: text("data_type").notNull(), // e.g., steps, sleep, weight, etc.
+  value: text("value").notNull(),
+  unit: text("unit"),
+  timestamp: timestamp("timestamp").notNull(),
+  source: text("source"), // device/manual input
+  category: text("category"), // body_composition, cardiovascular, lifestyle, medical, advanced
+  metadata: jsonb("metadata"), // Additional context like time of day, meal relation, etc.
+});
+
+export const insertSampleHealthDataSchema = createInsertSchema(sampleHealthData).pick({
+  dataType: true,
+  value: true,
+  unit: true,
+  timestamp: true,
+  source: true,
+  category: true,
+  metadata: true,
+});
+
 // Connected devices schema
 export const connectedDevices = pgTable("connected_devices", {
   id: serial("id").primaryKey(),
@@ -137,6 +159,9 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 export type HealthData = typeof healthData.$inferSelect;
 export type InsertHealthData = z.infer<typeof insertHealthDataSchema>;
+
+export type SampleHealthData = typeof sampleHealthData.$inferSelect;
+export type InsertSampleHealthData = z.infer<typeof insertSampleHealthDataSchema>;
 
 export type ConnectedDevice = typeof connectedDevices.$inferSelect;
 export type InsertConnectedDevice = z.infer<typeof insertConnectedDeviceSchema>;

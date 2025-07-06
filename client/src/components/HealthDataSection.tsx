@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Download, Activity, Heart, Brain, Stethoscope, Zap, Trash2 } from "lucide-react";
+import { Download, Activity, Heart, Brain, Stethoscope, Zap, Trash2, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,6 +42,18 @@ const HealthDataSection: React.FC = () => {
   const [selectedMetricsForRemoval, setSelectedMetricsForRemoval] = useState<string[]>([]);
   
   const { categorizedData, allHealthData, isLoading, refetchHealthData } = useHealthDataApi(timeRange);
+  
+  // Debug: Log when data changes
+  React.useEffect(() => {
+    if (allHealthData) {
+      console.log(`[HealthDataSection] Data updated - timeRange: ${timeRange}, records: ${allHealthData.length}`);
+      if (allHealthData.length > 0) {
+        const dates = allHealthData.map(d => new Date(d.timestamp).toLocaleDateString());
+        const uniqueDates = [...new Set(dates)];
+        console.log(`[HealthDataSection] Date range in data: ${uniqueDates.length} unique days`);
+      }
+    }
+  }, [allHealthData, timeRange]);
   const { downloadHealthReport, isDownloadingReport } = useHealthReport();
   const { toast } = useToast();
   const { settings: visibilitySettings } = useHealthVisibilitySettings();
@@ -104,11 +116,45 @@ const HealthDataSection: React.FC = () => {
     },
   });
 
+  // Mutation for loading sample health data
+  const loadSampleDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/health-data/load-sample', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load sample data');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      refetchHealthData();
+      toast({
+        title: "Sample Data Loaded",
+        description: `Successfully loaded ${data.recordsLoaded} sample health data points.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Load Sample Data",
+        description: "Unable to load sample health data. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleRemoveSelectedMetrics = () => {
     if (selectedMetricsForRemoval.length > 0) {
       console.log("Removing selected metrics:", selectedMetricsForRemoval);
       removeMetricsMutation.mutate(selectedMetricsForRemoval);
     }
+  };
+
+  const handleLoadSampleData = () => {
+    loadSampleDataMutation.mutate();
   };
 
   // Memoize processed data for charts to prevent re-computation on every render
@@ -131,7 +177,7 @@ const HealthDataSection: React.FC = () => {
       return [];
     }
     
-    // Group by day and aggregate
+    // Group by day and aggregate (sum values for same day)
     const dayMap = new Map<string, { steps?: number; active?: number; calories?: number }>();
     
     activityData.forEach(item => {
@@ -143,11 +189,15 @@ const HealthDataSection: React.FC = () => {
       }
       
       const dayData = dayMap.get(day)!;
-      if (item.dataType === 'steps') dayData.steps = value;
-      // Don't map daily_activity to steps since they are different metrics
-      if (item.dataType === 'active_minutes') dayData.active = value;
-      if (item.dataType === 'physical_effort') dayData.active = value; // Map physical_effort to active minutes
-      if (item.dataType === 'calories_burned') dayData.calories = value;
+      if (item.dataType === 'steps') {
+        dayData.steps = (dayData.steps || 0) + value;
+      }
+      if (item.dataType === 'active_minutes' || item.dataType === 'physical_effort') {
+        dayData.active = (dayData.active || 0) + value;
+      }
+      if (item.dataType === 'calories_burned') {
+        dayData.calories = (dayData.calories || 0) + value;
+      }
     });
     
     return Array.from(dayMap.entries()).map(([day, data]) => ({ day, ...data }));
@@ -163,14 +213,15 @@ const HealthDataSection: React.FC = () => {
       item.dataType === 'sleep_deep' || 
       item.dataType === 'sleep_light' || 
       item.dataType === 'sleep_rem' ||
-      item.dataType === 'sleep_total'
+      item.dataType === 'sleep_total' ||
+      item.dataType === 'sleep_duration'
     );
     
     if (sleepData.length === 0) {
       return [];
     }
     
-    // Group by day and aggregate
+    // Group by day and average sleep values
     const dayMap = new Map<string, { deep?: number; light?: number; rem?: number; total?: number }>();
     
     sleepData.forEach(item => {
@@ -185,7 +236,7 @@ const HealthDataSection: React.FC = () => {
       if (item.dataType === 'sleep_deep') dayData.deep = value;
       if (item.dataType === 'sleep_light') dayData.light = value;
       if (item.dataType === 'sleep_rem') dayData.rem = value;
-      if (item.dataType === 'sleep_total') dayData.total = value;
+      if (item.dataType === 'sleep_total' || item.dataType === 'sleep_duration') dayData.total = value;
     });
     
     return Array.from(dayMap.entries()).map(([day, data]) => ({ day, ...data }));
@@ -213,18 +264,29 @@ const HealthDataSection: React.FC = () => {
       return [];
     }
     
-    // Aggregate nutrition data by type (sum for the time period)
-    const nutritionMap = new Map<string, { value: number; unit: string }>();
+    // Aggregate nutrition data by type (sum for cumulative metrics, average for others)
+    const nutritionMap = new Map<string, { values: number[]; unit: string }>();
     
     nutritionData.forEach(item => {
       const value = parseFloat(item.value);
       const unit = item.unit || '';
       
       if (nutritionMap.has(item.dataType)) {
-        nutritionMap.get(item.dataType)!.value += value;
+        nutritionMap.get(item.dataType)!.values.push(value);
       } else {
-        nutritionMap.set(item.dataType, { value, unit });
+        nutritionMap.set(item.dataType, { values: [value], unit });
       }
+    });
+    
+    // Calculate final values based on metric type
+    const finalNutritionMap = new Map<string, { value: number; unit: string }>();
+    nutritionMap.forEach((data, dataType) => {
+      const shouldSum = ['calories_intake', 'calories_burned'].includes(dataType);
+      const finalValue = shouldSum 
+        ? data.values.reduce((sum, val) => sum + val, 0)
+        : data.values.reduce((sum, val) => sum + val, 0) / data.values.length;
+      
+      finalNutritionMap.set(dataType, { value: finalValue, unit: data.unit });
     });
     
     // Convert to nutrition items with goals (these would ideally come from user settings)
@@ -237,7 +299,7 @@ const HealthDataSection: React.FC = () => {
       sugar: 50
     };
     
-    return Array.from(nutritionMap.entries()).map(([type, data]) => ({
+    return Array.from(finalNutritionMap.entries()).map(([type, data]) => ({
       name: type.charAt(0).toUpperCase() + type.slice(1),
       value: Math.round(data.value),
       goal: nutritionGoals[type as keyof typeof nutritionGoals] || 100,
@@ -248,6 +310,7 @@ const HealthDataSection: React.FC = () => {
 
   const hydrationChartData: HydrationChartData = useMemo(() => {
     if (!allHealthData || allHealthData.length === 0) {
+      console.log('[HydrationCard] No health data available');
       return { consumed: 0, goal: 8, unit: 'glasses' };
     }
     
@@ -257,11 +320,13 @@ const HealthDataSection: React.FC = () => {
       item.dataType === 'hydration'
     );
     
+    console.log(`[HydrationCard] Found ${hydrationData.length} hydration records for time range: ${timeRange}`);
+    
     if (hydrationData.length === 0) {
       return { consumed: 0, goal: 8, unit: 'glasses' };
     }
     
-    // Sum up hydration for the time period
+    // Sum up hydration for the time period (total consumed over time range)
     const totalConsumed = hydrationData.reduce((sum, item) => {
       return sum + parseFloat(item.value);
     }, 0);
@@ -269,12 +334,14 @@ const HealthDataSection: React.FC = () => {
     const unit = hydrationData[0]?.unit || 'glasses';
     const goal = unit === 'L' ? 2 : 8; // Default goals based on unit
     
+    console.log(`[HydrationCard] Total consumed: ${totalConsumed} ${unit} over ${timeRange}`);
+    
     return { 
       consumed: Math.round(totalConsumed * 10) / 10, // Round to 1 decimal
       goal, 
       unit 
     };
-  }, [allHealthData]);
+  }, [allHealthData, timeRange]);
 
   // Reset health data function
   const handleResetHealthData = async () => {
@@ -361,11 +428,23 @@ const HealthDataSection: React.FC = () => {
                   {removeMetricsMutation.isPending ? "Removing..." : `Remove Selected (${selectedMetricsForRemoval.length})`}
                 </Button>
               )}
-              <Select value={timeRange} onValueChange={setTimeRange}>
+              <Button 
+                variant="outline" 
+                onClick={handleLoadSampleData}
+                disabled={loadSampleDataMutation.isPending}
+              >
+                <Database className="h-4 w-4 mr-2" />
+                {loadSampleDataMutation.isPending ? "Loading..." : "Load Sample Data"}
+              </Button>
+              <Select value={timeRange} onValueChange={(value) => {
+                console.log(`[HealthDataSection] Time range changed from ${timeRange} to ${value}`);
+                setTimeRange(value);
+              }}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select time range" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="1day">Last 1 day</SelectItem>
                   <SelectItem value="7days">Last 7 days</SelectItem>
                   <SelectItem value="30days">Last 30 days</SelectItem>
                   <SelectItem value="90days">Last 90 days</SelectItem>

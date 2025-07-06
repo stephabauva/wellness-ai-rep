@@ -8,6 +8,9 @@ import {
   healthData,
   type HealthData,
   type InsertHealthData,
+  sampleHealthData,
+  type SampleHealthData,
+  type InsertSampleHealthData,
   connectedDevices,
   type ConnectedDevice,
   type InsertConnectedDevice,
@@ -39,10 +42,14 @@ export interface IStorage {
   
   // Health data methods
   getHealthData(userId: number, timeRange: string): Promise<HealthData[]>;
+  getHealthDataNoCache(userId: number, timeRange: string): Promise<HealthData[]>;
   createHealthData(data: InsertHealthData): Promise<HealthData>;
   createHealthDataBatch(data: InsertHealthData[]): Promise<HealthData[]>;
   clearAllHealthData(userId: number): Promise<void>;
   deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }>;
+  
+  // Sample health data methods
+  loadSampleHealthData(userId: number): Promise<{ recordsLoaded: number }>;
   
   // Device methods
   getDevices(userId: number): Promise<ConnectedDevice[]>;
@@ -408,6 +415,9 @@ export class MemStorage implements IStorage {
     let startDate: Date;
     
     switch (timeRange) {
+      case "1day":
+        startDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        break;
       case "7days":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
@@ -421,7 +431,20 @@ export class MemStorage implements IStorage {
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
     
-    return allData.filter(data => data.timestamp != null && data.timestamp >= startDate);
+    // Set time to start of day to include full day range
+    startDate.setHours(0, 0, 0, 0);
+    
+    console.log(`[MemStorage] Filtering health data for user ${userId}, range: ${timeRange}, startDate: ${startDate.toISOString()}`);
+    const filteredData = allData.filter(data => data.timestamp != null && data.timestamp >= startDate);
+    console.log(`[MemStorage] Found ${filteredData.length} of ${allData.length} total records for range ${timeRange}`);
+    
+    return filteredData;
+  }
+
+  // Method to get health data without cache (same as getHealthData for MemStorage)
+  async getHealthDataNoCache(userId: number, timeRange: string): Promise<HealthData[]> {
+    // MemStorage doesn't use cache, so this is the same as getHealthData
+    return this.getHealthData(userId, timeRange);
   }
   
   async createHealthData(data: InsertHealthData): Promise<HealthData> {
@@ -484,6 +507,12 @@ export class MemStorage implements IStorage {
     this.healthData.set(userId, filteredData);
     
     return { deletedCount };
+  }
+
+  async loadSampleHealthData(userId: number): Promise<{ recordsLoaded: number }> {
+    // Memory storage doesn't support sample data loading - this is for demo/testing only
+    // Sample data should only be loaded when using database storage
+    throw new Error("Sample data loading is only available with database storage. This feature is for demo/testing purposes only.");
   }
   
   // Device methods
@@ -660,9 +689,10 @@ export class DatabaseStorage implements IStorage {
   
   // Health data methods with caching
   async getHealthData(userId: number, timeRange: string): Promise<HealthData[]> {
-    // Check cache first
+    // Check cache first (skip cache if timestamp parameter is present)
     const cached = await cacheService.getHealthData(userId, timeRange);
     if (cached) {
+      console.log(`[DatabaseStorage] Returning cached health data for user ${userId}, range: ${timeRange}, count: ${cached.length}`);
       return cached;
     }
 
@@ -670,6 +700,9 @@ export class DatabaseStorage implements IStorage {
     let startDate: Date;
     
     switch (timeRange) {
+      case "1day":
+        startDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        break;
       case "7days":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
@@ -683,6 +716,11 @@ export class DatabaseStorage implements IStorage {
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
     
+    // Set time to start of day to include full day range
+    startDate.setHours(0, 0, 0, 0);
+    
+    console.log(`[DatabaseStorage] Fetching health data for user ${userId}, range: ${timeRange}, startDate: ${startDate.toISOString()}`);
+    
     const data = await db
       .select()
       .from(healthData)
@@ -694,12 +732,56 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(healthData.timestamp));
     
+    console.log(`[DatabaseStorage] Found ${data.length} health records for range ${timeRange}`);
+    
     // Cache the results for future requests
     cacheService.setHealthData(userId, timeRange, data);
     
     return data;
   }
   
+  // Method to get health data without cache (for debugging)
+  async getHealthDataNoCache(userId: number, timeRange: string): Promise<HealthData[]> {
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (timeRange) {
+      case "1day":
+        startDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        break;
+      case "7days":
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "30days":
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case "90days":
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+    
+    // Set time to start of day to include full day range
+    startDate.setHours(0, 0, 0, 0);
+    
+    console.log(`[DatabaseStorage] Fetching health data WITHOUT CACHE for user ${userId}, range: ${timeRange}, startDate: ${startDate.toISOString()}`);
+    
+    const data = await db
+      .select()
+      .from(healthData)
+      .where(
+        and(
+          eq(healthData.userId, userId),
+          gte(healthData.timestamp, startDate)
+        )
+      )
+      .orderBy(desc(healthData.timestamp));
+    
+    console.log(`[DatabaseStorage] Found ${data.length} health records for range ${timeRange} (no cache)`);
+    return data;
+  }
+
   async createHealthData(data: InsertHealthData): Promise<HealthData> {
     const [newData] = await db
       .insert(healthData)
@@ -770,6 +852,31 @@ export class DatabaseStorage implements IStorage {
     cacheService.invalidateUserData(userId);
     
     return { deletedCount: result.rowCount || 0 };
+  }
+
+  async loadSampleHealthData(userId: number): Promise<{ recordsLoaded: number }> {
+    // Clear existing health data for the user
+    await this.clearAllHealthData(userId);
+    
+    // Get all sample data from the sample table
+    const sampleData = await db.select().from(sampleHealthData);
+    
+    // Convert sample data to health data format with userId
+    const insertData = sampleData.map(sample => ({
+      userId,
+      dataType: sample.dataType,
+      value: sample.value,
+      unit: sample.unit,
+      timestamp: sample.timestamp,
+      source: sample.source,
+      category: sample.category,
+      metadata: sample.metadata
+    }));
+    
+    // Insert the data in batches
+    const createdData = await this.createHealthDataBatch(insertData);
+    
+    return { recordsLoaded: createdData.length };
   }
   
   // Device methods

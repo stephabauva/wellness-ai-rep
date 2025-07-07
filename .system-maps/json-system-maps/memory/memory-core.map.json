@@ -5,7 +5,7 @@
     "storage": ["memory-creation", "categorization", "deduplication"],
     "retrieval": ["context-aware-retrieval", "semantic-search"]
   },
-  "lastUpdated": "2025-01-27T10:00:00Z", 
+  "lastUpdated": "2025-01-27T14:30:00Z", 
   "dependencies": ["chat"],
   "featureGroups": {
     "detection": {
@@ -57,14 +57,15 @@
           "components": ["memory-service"]
         },
         "deduplication": {
-          "description": "ChatGPT-style memory deduplication and consolidation",
+          "description": "ChatGPT-style memory deduplication and consolidation using singleton pattern",
           "userFlow": [
             "New memory compared with existing memories",
             "Duplicate or conflicting memories identified",
             "Smart consolidation or replacement performed",
             "Memory graph relationships updated"
           ],
-          "components": ["chatgpt-memory-enhancement", "memory-graph-service"]
+          "components": ["chatgpt-memory-enhancement", "memory-graph-service"],
+          "architectureNotes": "Uses singleton pattern to prevent duplicate instances and logging"
         }
       }
     },
@@ -106,10 +107,11 @@
     "chatgpt-memory-enhancement": {
       "path": "server/services/chatgpt-memory-enhancement.ts", 
       "type": "Service Class",
-      "description": "ChatGPT-style memory deduplication and processing",
+      "description": "ChatGPT-style memory deduplication and processing (singleton pattern)",
       "calls": [],
       "uses": ["memory-service", "ai-service"],
-      "invalidates": ["query:memories"]
+      "invalidates": ["query:memories"],
+      "architectureNotes": "Exported as singleton instance to prevent duplicate logging and processing"
     },
     "enhanced-memory-service": {
       "path": "server/services/enhanced-memory-service.ts",

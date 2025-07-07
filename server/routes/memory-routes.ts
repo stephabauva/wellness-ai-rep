@@ -2,20 +2,13 @@
 // Memory Routes Module - Memory management, ChatGPT enhancement, relationships
 import { Express } from "./shared-dependencies.js";
 import { 
-  storage,
   memoryService,
   memoryEnhancedAIService,
   enhancedMemoryService,
   performanceMemoryCore,
-  ChatGPTMemoryEnhancement,
-  db,
-  memoryEntries,
-  eq,
-  desc,
-  z
+  chatGPTMemoryEnhancement
 } from "./shared-dependencies.js";
 
-const chatGPTMemoryEnhancement = new ChatGPTMemoryEnhancement();
 
 export async function registerMemoryRoutes(app: Express): Promise<void> {
   // Memory overview endpoint

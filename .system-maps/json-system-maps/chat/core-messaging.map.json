@@ -23,7 +23,7 @@
       "knownIssues": []
     }
   },
-  "lastUpdated": "2025-01-27T10:00:00Z",
+  "lastUpdated": "2025-01-27T14:30:00Z",
   "dependencies": ["memory", "file-manager", "attachments"],
   "featureGroups": {
     "core-messaging": {
@@ -42,6 +42,7 @@
             "Validate message content and attachments",
             "Store message in database with conversation context",
             "Send request to AI service with conversation history",
+            "Memory processing uses singleton ChatGPTMemoryEnhancement instance",
             "Stream AI response back to client",
             "Update message status and store complete response"
           ],

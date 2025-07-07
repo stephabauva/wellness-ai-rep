@@ -19,7 +19,7 @@ import { HealthDataDeduplicationService } from "../services/health-data-deduplic
 import { enhancedBackgroundProcessor } from "../services/enhanced-background-processor";
 import { memoryFeatureFlags } from "../services/memory-feature-flags";
 import { memoryPerformanceMonitor } from "../services/memory-performance-monitor";
-import { ChatGPTMemoryEnhancement } from "../services/chatgpt-memory-enhancement";
+import { chatGPTMemoryEnhancement } from "../services/chatgpt-memory-enhancement";
 import { healthConsentService } from "../services/health-consent-service";
 import { db } from "../db";
 import { eq, desc, and, or } from "drizzle-orm";
@@ -42,7 +42,7 @@ export {
   advancedMemoryAIService, memoryRelationshipEngine, performanceMemoryCore, generatePDFReport,
   transcriptionService, cacheService, categoryService, attachmentRetentionService, goFileService,
   HealthDataParser, HealthDataDeduplicationService, enhancedBackgroundProcessor, memoryFeatureFlags,
-  memoryPerformanceMonitor, ChatGPTMemoryEnhancement, healthConsentService, db, eq, desc, and, or,
+  memoryPerformanceMonitor, chatGPTMemoryEnhancement, healthConsentService, db, eq, desc, and, or,
   conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories,
   insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics,
   userHealthConsent, healthDataAccessLog, users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema,

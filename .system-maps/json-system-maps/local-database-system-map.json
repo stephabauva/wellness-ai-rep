@@ -28,7 +28,8 @@
       "knownIssues": [
         "Fixed: PostgreSQL import issue causing SyntaxError in Replit environment by adding pg package and implementing conditional imports",
         "Enhanced: Environment detection with Replit-specific checks (REPLIT_DB_URL, REPL_ID)",
-        "Corrected: No fallback from local PostgreSQL to Neon - environments are strictly separated for proper local development"
+        "Corrected: No fallback from local PostgreSQL to Neon - environments are strictly separated for proper local development",
+        "Fixed: populate-sample-data.ts script updated to call initializeDatabase() for proper local PostgreSQL connection"
       ]
     },
     "setup-verification": {
@@ -69,7 +70,8 @@
           "tests": ["test-local-setup.js"],
           "filesModified": [
             "setup-local-db.sh",
-            ".env.local"
+            ".env.local",
+            "scripts/populate-sample-data.ts"
           ]
         },
         "schema-sync": {

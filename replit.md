@@ -544,6 +544,7 @@ Changelog:
   - **Production Ready**: Complete health dashboard functionality restored in Replit environment matching local development capabilities
   - **Local Database Connection Fix**: Enhanced server startup to properly handle async database initialization for local PostgreSQL environments
   - **Frontend Bug Fix**: Resolved ReferenceError for undefined "latestMetrics" variable in HealthMetricsCard component causing React crashes
+  - **Local Sample Data Fix**: Modified database initialization to prevent double-initialization conflicts that were interfering with local sample data population via scripts/populate-sample-data.ts
 
 # User Preferences
 

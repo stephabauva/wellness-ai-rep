@@ -61,15 +61,16 @@ app.use((req, res, next) => {
       // Initialize local database connection before proceeding
       const { initializeDatabase: initDb } = await import('./db.js');
       await initDb();
-    }
-
-    // Initialize PostgreSQL database with indexes and sample data
-    if (storage instanceof DatabaseStorage) {
-      logger.system('Starting database initialization process...');
-      const dbInitStartTime = Date.now();
-      await initializeDatabase();
-      const dbInitEndTime = Date.now();
-      logger.system(`Database initialization process completed in ${dbInitEndTime - dbInitStartTime}ms`);
+      logger.system('Local database connection initialized');
+    } else {
+      // Initialize PostgreSQL database with indexes and optimizations for Replit/production
+      if (storage instanceof DatabaseStorage) {
+        logger.system('Starting database initialization process...');
+        const dbInitStartTime = Date.now();
+        await initializeDatabase();
+        const dbInitEndTime = Date.now();
+        logger.system(`Database initialization process completed in ${dbInitEndTime - dbInitStartTime}ms`);
+      }
     }
 
     const server = await registerRoutes(app);

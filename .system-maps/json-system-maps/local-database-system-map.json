@@ -25,7 +25,11 @@
     "connection-switching": {
       "status": "active",
       "lastVerified": "2025-07-07",
-      "knownIssues": []
+      "knownIssues": [
+        "Fixed: PostgreSQL import issue causing SyntaxError in Replit environment by adding pg package and implementing conditional imports",
+        "Enhanced: Environment detection with Replit-specific checks (REPLIT_DB_URL, REPL_ID)",
+        "Improved: Graceful fallback from local PostgreSQL to Neon when pg module unavailable"
+      ]
     },
     "setup-verification": {
       "status": "active",
@@ -100,14 +104,16 @@
           ]
         },
         "connection-switching": {
-          "description": "Enables the application to dynamically switch between Neon serverless and local PostgreSQL connections based on environment variables.",
+          "description": "Enables the application to dynamically switch between Neon serverless and local PostgreSQL connections based on environment variables with conditional imports to prevent loading pg in Replit.",
           "userFlow": [
             "User runs 'npm run dev:local' (uses local DB)",
             "User runs 'npm run dev' (uses Neon DB)"
           ],
           "systemFlow": [
-            "Reads USE_LOCAL_DB and NODE_ENV from environment",
-            "Initializes 'pg' Pool for local or '@neondatabase/serverless' Pool for Neon",
+            "Reads USE_LOCAL_DB, NODE_ENV, and REPLIT environment variables",
+            "Detects if running in Replit environment using REPLIT_DB_URL or REPL_ID",
+            "Uses conditional/dynamic imports to load 'pg' only when in local development",
+            "Falls back to Neon serverless when pg fails or in Replit",
             "Exports 'db' and 'pool' instances for application use"
           ],
           "components": [],
@@ -124,8 +130,6 @@
           "tests": ["test-local-setup.js"],
           "filesModified": [
             "server/db.ts",
-            "server/db-local.ts",
-            ".env.local",
             "package.json"
           ]
         }

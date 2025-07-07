@@ -271,8 +271,7 @@ class AiService {
       });
 
       // Import and use ChatGPT deduplication system
-      const { ChatGPTMemoryEnhancement } = await import('./chatgpt-memory-enhancement.js');
-      const chatGPTMemoryEnhancement = new ChatGPTMemoryEnhancement();
+      const { chatGPTMemoryEnhancement } = await import('./chatgpt-memory-enhancement.js');
       
       // Process with deduplication
       await chatGPTMemoryEnhancement.processWithDeduplication(

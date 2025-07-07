@@ -4,7 +4,7 @@
     "infrastructure": ["shared-dependencies", "shared-utils", "index"],
     "validation": ["line-count-enforcement", "emergency-fallback", "typescript-compilation"]
   },
-  "lastUpdated": "2025-06-27T10:45:00Z",
+  "lastUpdated": "2025-01-27T14:30:00Z",
   "dependencies": ["database", "ai-services", "file-system"],
   "featureGroups": {
     "routeModules": {
@@ -207,7 +207,8 @@
             "max": 50,
             "current": 50,
             "status": "complete"
-          }
+          },
+          "architectureNotes": "Exports singleton instances (e.g., chatGPTMemoryEnhancement) to prevent duplicate instantiation and logging"
         },
         "shared-utils": {
           "description": "Common utilities and Go service management functions",
@@ -440,6 +441,17 @@
         "issue": "Multiple TypeScript errors preventing server startup",
         "solution": "Cleaned up deleted function references and fixed type mismatches",
         "status": "resolved"
+      },
+      "duplicateMemoryLogging": {
+        "issue": "Duplicate memory service logs due to multiple ChatGPTMemoryEnhancement instances",
+        "solution": "Fixed singleton pattern violations by updating shared-dependencies to export singleton instance and removing duplicate instantiations",
+        "status": "resolved",
+        "filesModified": [
+          "server/routes/shared-dependencies.ts",
+          "server/routes/memory-routes.ts",
+          "server/services/ai-service.ts",
+          "server/services/memory-service.ts"
+        ]
       }
     }
   },

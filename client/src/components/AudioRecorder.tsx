@@ -32,17 +32,14 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
     };
   }, []);
 
-  useEffect(() => {
-    // Check microphone permission on mount
-    checkMicrophonePermission();
-  }, []);
-
   const checkMicrophonePermission = async () => {
     try {
       const permission = await audioService.requestMicrophonePermission();
       setHasPermission(permission);
+      return permission;
     } catch (error) {
       setHasPermission(false);
+      return false;
     }
   };
 
@@ -133,7 +130,20 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
     }
   };
 
-  const handleRecording = () => {
+  const handleRecording = async () => {
+    // Check permission on first use or if previously denied
+    if (hasPermission === null || hasPermission === false) {
+      const permission = await checkMicrophonePermission();
+      if (!permission) {
+        toast({
+          title: "Microphone access denied",
+          description: "Please grant microphone permission to use this feature",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     if (provider === 'webspeech') {
       handleWebSpeechRecording();
     } else {
@@ -168,7 +178,6 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
   const requiresInternet = providerStatus.requiresInternet;
 
   const isDisabled = disabled || 
-    !hasPermission || 
     !isProviderAvailable || 
     (requiresInternet && !isOnline);
 
@@ -195,7 +204,7 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
         </div>
       )}
       
-      {!hasPermission && (
+      {hasPermission === false && (
         <Button
           variant="ghost"
           size="sm"

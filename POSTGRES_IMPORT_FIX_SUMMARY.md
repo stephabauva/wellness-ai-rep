@@ -20,13 +20,13 @@ const isReplitEnvironment = !!(process.env.REPLIT_DB_URL || process.env.REPL_ID)
 
 ### 3. Smart Connection Logic
 - **Replit Environment**: Always uses Neon serverless (safe and tested)
-- **Local Environment**: Attempts local PostgreSQL with graceful fallback to Neon
+- **Local Environment**: Uses local PostgreSQL exclusively with clear error guidance
 - **Dynamic Imports**: Loads `pg` module only when needed for local development
 
-### 4. Fallback Mechanisms
-- Graceful error handling when local PostgreSQL unavailable
-- Automatic fallback to Neon serverless database
-- Clear logging for connection status and fallbacks
+### 4. Environment-Specific Behavior
+- **Replit Environment**: Uses Neon serverless database exclusively
+- **Local Development**: Uses local PostgreSQL database exclusively with helpful error messages
+- Clear logging for connection status and environment detection
 
 ## Files Modified
 - `server/db.ts` - Enhanced with conditional imports and environment detection
@@ -41,9 +41,9 @@ const isReplitEnvironment = !!(process.env.REPLIT_DB_URL || process.env.REPL_ID)
 
 ## Benefits Achieved
 1. **Zero Breaking Changes**: Existing Replit setup works unchanged
-2. **Local Development Ready**: System prepared for local PostgreSQL when available
-3. **Robust Error Handling**: Graceful fallbacks prevent application crashes
-4. **Clear Environment Detection**: Automatic switching between database types
+2. **Local Development Ready**: System configured for local PostgreSQL exclusively
+3. **Clear Error Handling**: Helpful error messages guide local setup
+4. **Environment Separation**: Clean separation between local and Replit environments
 5. **Future-Proof**: Dynamic imports allow adding local development without Replit impact
 
 ## Success Criteria Met
@@ -58,7 +58,7 @@ const isReplitEnvironment = !!(process.env.REPLIT_DB_URL || process.env.REPL_ID)
 When developing locally:
 1. Run `npm run db:setup-local` to initialize local PostgreSQL
 2. Use `npm run dev:local` to start with local database
-3. System will automatically use local PostgreSQL when available
-4. Fallback to Neon remains available as backup
+3. System will use local PostgreSQL exclusively in local environment
+4. Ensure PostgreSQL service is running before starting development
 
-The dual-environment database setup is now fully operational and ready for both Replit and local development use cases.
+The dual-environment database setup maintains strict separation: Replit uses Neon, local development uses PostgreSQL.

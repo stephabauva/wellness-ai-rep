@@ -28,7 +28,7 @@
       "knownIssues": [
         "Fixed: PostgreSQL import issue causing SyntaxError in Replit environment by adding pg package and implementing conditional imports",
         "Enhanced: Environment detection with Replit-specific checks (REPLIT_DB_URL, REPL_ID)",
-        "Improved: Graceful fallback from local PostgreSQL to Neon when pg module unavailable"
+        "Corrected: No fallback from local PostgreSQL to Neon - environments are strictly separated for proper local development"
       ]
     },
     "setup-verification": {
@@ -113,7 +113,8 @@
             "Reads USE_LOCAL_DB, NODE_ENV, and REPLIT environment variables",
             "Detects if running in Replit environment using REPLIT_DB_URL or REPL_ID",
             "Uses conditional/dynamic imports to load 'pg' only when in local development",
-            "Falls back to Neon serverless when pg fails or in Replit",
+            "Uses Neon serverless exclusively in Replit, local PostgreSQL exclusively locally",
+            "Provides helpful error messages for local PostgreSQL setup issues",
             "Exports 'db' and 'pool' instances for application use"
           ],
           "components": [],

@@ -526,9 +526,9 @@ Changelog:
   - **Critical Import Error Resolution**: Fixed SyntaxError "The requested module 'pg' does not provide an export named 'Pool'" preventing app startup in Replit
   - **Package Dependencies Added**: Installed pg and @types/pg packages to resolve missing module errors in Replit environment
   - **Enhanced Environment Detection**: Implemented robust detection using REPLIT_DB_URL and REPL_ID to distinguish between Replit and local environments
-  - **Smart Connection Logic**: Uses Neon serverless in Replit, attempts local PostgreSQL with graceful fallback when in local development
+  - **Smart Connection Logic**: Uses Neon serverless exclusively in Replit, uses local PostgreSQL exclusively in local development
   - **Conditional Module Loading**: Dynamic imports for pg module only when needed, preventing unnecessary loading in Replit
-  - **Graceful Fallback System**: Automatic fallback from local PostgreSQL to Neon when pg module unavailable or connection fails
+  - **Environment Separation**: Strict separation between local (PostgreSQL) and Replit (Neon) environments with helpful error guidance
   - **Zero Breaking Changes**: All existing Replit functionality preserved while enabling local development infrastructure
   - **Production Validation**: Confirmed app starts successfully, API endpoints responding correctly, database operations functional
   - **System Map Updates**: Updated local-database-system-map.json to reflect enhanced connection switching with conditional imports

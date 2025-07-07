@@ -53,9 +53,9 @@ async function initializeDatabase() {
       console.log('✅ Local PostgreSQL connection established');
     } catch (error) {
       console.error('❌ Failed to connect to local PostgreSQL:', error);
-      console.log('🔄 Falling back to Neon serverless...');
-      // Fallback to Neon if local connection fails
-      setupNeonConnection();
+      console.error('💡 Make sure PostgreSQL is running: brew services start postgresql@14');
+      console.error('💡 Or run database setup: npm run db:setup-local');
+      throw error; // Don't fallback to Neon in local environment
     }
   } else {
     // Neon serverless connection (default for Replit)
@@ -84,11 +84,12 @@ const isReplitEnvironment = !!(process.env.REPLIT_DB_URL || process.env.REPL_ID)
 
 if (isLocalDatabase && !isReplitEnvironment) {
   console.log('🔧 Local development mode detected');
-  // Try to initialize local database asynchronously
+  // Initialize local database - no fallback to Neon in local environment
   initializeDatabase().catch((error) => {
     console.error('❌ Failed to initialize local database:', error);
-    console.log('🔄 Falling back to Neon serverless...');
-    setupNeonConnection();
+    console.error('💡 Make sure PostgreSQL is running locally: brew services start postgresql@14');
+    console.error('💡 Or run: npm run db:setup-local');
+    process.exit(1);
   });
 } else {
   // Neon serverless connection (default for Replit and production)

@@ -12,10 +12,11 @@ The `pg` package was not installed in the Replit environment, causing ES module 
 - Added `pg` and `@types/pg` packages to dependencies
 - Ensures both environments (Replit and local) have required packages
 
-### 2. Enhanced Environment Detection
+### 2. Simplified Environment Detection
 ```typescript
-const isLocalDatabase = useLocalDb && databaseUrl.includes('localhost');
-const isReplitEnvironment = !!(process.env.REPLIT_DB_URL || process.env.REPL_ID);
+const isLocalDatabase = databaseUrl.includes('localhost');
+const hasLocalEnvFile = existsSync('.env.local');
+// Local development detected by presence of .env.local + localhost DATABASE_URL
 ```
 
 ### 3. Smart Connection Logic

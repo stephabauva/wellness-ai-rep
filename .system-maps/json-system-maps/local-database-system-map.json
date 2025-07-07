@@ -110,8 +110,7 @@
             "User runs 'npm run dev' (uses Neon DB)"
           ],
           "systemFlow": [
-            "Reads USE_LOCAL_DB, NODE_ENV, and REPLIT environment variables",
-            "Detects if running in Replit environment using REPLIT_DB_URL or REPL_ID",
+            "Detects local development by checking if .env.local file exists and DATABASE_URL contains localhost",
             "Uses conditional/dynamic imports to load 'pg' only when in local development",
             "Uses Neon serverless exclusively in Replit, local PostgreSQL exclusively locally",
             "Provides helpful error messages for local PostgreSQL setup issues",

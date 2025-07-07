@@ -34,9 +34,8 @@ DATABASE_URL=postgresql://wellness_user:wellness_local_pass@localhost:5432/welln
 OPENAI_API_KEY=your_openai_key_here
 GOOGLE_AI_API_KEY=your_google_key_here
 
-# Local development flags
+# Optional: Set development environment
 NODE_ENV=development
-USE_LOCAL_DB=true
 ```
 
 ### 3. Start Development Server
@@ -60,8 +59,8 @@ npm run dev:local
 
 The application automatically detects which database to use:
 
-- **Local Development**: Uses PostgreSQL@14 when `USE_LOCAL_DB=true` or `DATABASE_URL_LOCAL` is set
-- **Replit**: Uses Neon database with existing configuration
+- **Local Development**: Uses PostgreSQL@14 when `.env.local` exists and `DATABASE_URL` contains localhost
+- **Replit**: Uses Neon database with existing configuration (no `.env.local` file)
 - **Production**: Uses Neon database (unchanged)
 
 ### File Structure

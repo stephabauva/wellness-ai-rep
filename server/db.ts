@@ -13,9 +13,7 @@ import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-// Environment detection
-const useLocalDb = process.env.USE_LOCAL_DB === 'true';
-const nodeEnv = process.env.NODE_ENV;
+// Environment detection - simplified logic
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
@@ -30,7 +28,7 @@ let db: ReturnType<typeof drizzleNeon> | any;
 
 // Initialize database connection
 async function initializeDatabase() {
-  const isLocalDatabase = useLocalDb && databaseUrl.includes('localhost');
+  const isLocalDatabase = databaseUrl.includes('localhost');
 
   if (isLocalDatabase) {
     // Local PostgreSQL connection - only import pg when needed
@@ -78,12 +76,12 @@ function setupNeonConnection() {
   console.log('✅ Neon serverless connection established');
 }
 
-// Initialize database with proper environment detection
-const isLocalDatabase = useLocalDb && databaseUrl.includes('localhost');
-const isReplitEnvironment = !!(process.env.REPLIT_DB_URL || process.env.REPL_ID);
+// Initialize database with simplified environment detection
+const isLocalDatabase = databaseUrl.includes('localhost');
+const hasLocalEnvFile = existsSync('.env.local');
 
-if (isLocalDatabase && !isReplitEnvironment) {
-  console.log('🔧 Local development mode detected');
+if (isLocalDatabase && hasLocalEnvFile) {
+  console.log('🔧 Local development mode detected (using .env.local)');
   // Initialize local database - no fallback to Neon in local environment
   initializeDatabase().catch((error) => {
     console.error('❌ Failed to initialize local database:', error);

@@ -65,10 +65,6 @@ Two major events have happened that seem to have broken the application : fixes 
 
 [ ] Regardless on the tab selected the weekly activity trend, sleep quality, nutrition, summary, hydration and coaching insights are always displayed
 
-[ ] When uploading a health data file, supported file formats are not specified
-
-[ ] when upload a health data file, the user can choose the 'duplicate detection time window', the user does not need to care about that, this should be a config in the background
-
 [ ] the settings need to be simplified, especially i question the relevance of the Data Export & Portability section.
 
 # Memory page :

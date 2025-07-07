@@ -7,6 +7,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { storage, DatabaseStorage } from "./storage";
 import { databaseMigrationService } from "./services/database-migration-service";
 import { logger } from "./services/logger-service";
+import { existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,17 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Handle local database initialization if needed
+    const databaseUrl = process.env.DATABASE_URL;
+    const isLocalDatabase = databaseUrl?.includes('localhost');
+    const hasLocalEnvFile = existsSync('.env.local');
+    
+    if (isLocalDatabase && hasLocalEnvFile) {
+      // Initialize local database connection before proceeding
+      const { initializeDatabase: initDb } = await import('./db.js');
+      await initDb();
+    }
+
     // Initialize PostgreSQL database with indexes and sample data
     if (storage instanceof DatabaseStorage) {
       logger.system('Starting database initialization process...');

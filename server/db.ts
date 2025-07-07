@@ -22,7 +22,7 @@ if (!databaseUrl) {
   );
 }
 
-// Database connection setup with async initialization
+// Database connection setup
 let pool: NeonPool | any;
 let db: ReturnType<typeof drizzleNeon> | any;
 
@@ -76,26 +76,21 @@ function setupNeonConnection() {
   console.log('✅ Neon serverless connection established');
 }
 
-// Initialize database with simplified environment detection
+// Initialize database with environment detection
 const isLocalDatabase = databaseUrl.includes('localhost');
 const hasLocalEnvFile = existsSync('.env.local');
 
 if (isLocalDatabase && hasLocalEnvFile) {
   console.log('🔧 Local development mode detected (using .env.local)');
-  // Initialize local database - no fallback to Neon in local environment
-  initializeDatabase().catch((error) => {
-    console.error('❌ Failed to initialize local database:', error);
-    console.error('💡 Make sure PostgreSQL is running locally: brew services start postgresql@14');
-    console.error('💡 Or run: npm run db:setup-local');
-    process.exit(1);
-  });
+  // For local database, we need to wait for async initialization
+  // This will be handled by the server startup process
 } else {
   // Neon serverless connection (default for Replit and production)
   setupNeonConnection();
 }
 
 // Export the database instance and pool
-export { db, pool };
+export { db, pool, initializeDatabase };
 
 // Graceful shutdown handler
 process.on('SIGINT', async () => {

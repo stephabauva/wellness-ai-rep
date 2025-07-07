@@ -1,0 +1,33 @@
+7:17:42 PM [DEBUG] [database] Finished: Create performance indexes. Duration: 1ms
+7:17:42 PM [DEBUG] [database] Starting: Optimize PostgreSQL database...
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE users - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE chat_messages - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE health_data - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE connected_devices - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE conversations - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE conversation_messages - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE memory_entries - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: ANALYZE files - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: VACUUM ANALYZE users - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: VACUUM ANALYZE chat_messages - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [WARN ] [database] Optimization failed: VACUUM ANALYZE health_data - Cannot read properties of undefined (reading 'execute')
+7:17:42 PM [DEBUG] [database] Database optimization: 0 completed, 11 failed
+7:17:42 PM [DEBUG] [database] Finished: Optimize PostgreSQL database. Duration: 0ms
+7:17:42 PM [DEBUG] [database] Database initialization completed successfully.
+7:17:42 PM [DEBUG] [database] Finished: Full database initialization method. Duration: 1ms
+7:17:42 PM [DEBUG] [database] Starting: Check database health...
+7:17:42 PM [ERROR] [database] Database health check failed
+TypeError: Cannot read properties of undefined (reading 'execute')
+    at DatabaseMigrationService.checkDatabaseHealth (/Users/urdoom/wellness-ai-rep/server/services/database-migration-service.ts:138:16)
+    at initializeDatabase (/Users/urdoom/wellness-ai-rep/server/index.ts:27:51)
+    at async <anonymous> (/Users/urdoom/wellness-ai-rep/server/index.ts:58:7)
+7:17:42 PM [DEBUG] [database] Finished: Check database health. Duration: 1ms
+7:17:42 PM [WARN ] Database health: error, 0 public schema tables, 0 performance indexes, performance: critical
+7:17:42 PM [INFO ] [system] Database initialization process completed in 3ms
+Health routes registered successfully
+Memory routes registered successfully
+File routes registered successfully
+Settings routes registered successfully
+Monitoring routes registered successfully
+7:17:42 PM [INFO ] [system] Server running on port 5000
+✅ Local PostgreSQL connection established

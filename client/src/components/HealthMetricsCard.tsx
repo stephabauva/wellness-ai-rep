@@ -183,7 +183,7 @@ const HealthMetricsCard: React.FC<HealthMetricsCardProps> = ({
         
         return true;
       })
-    ) : latestMetrics;
+    ) : aggregatedMetrics;
 
   // If no visible metrics after filtering, don't render the card
   if (Object.keys(filteredMetrics).length === 0) return null;

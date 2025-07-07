@@ -30,6 +30,8 @@ describe('ChatInputArea', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock console.error to suppress camera error logs
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     mockSetInputMessage = vi.fn();
     mockChatActions = {
       handleSendMessage: vi.fn(),

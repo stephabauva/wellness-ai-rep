@@ -220,11 +220,10 @@
   },
   "tableOfContents": {
     "file-attachments": {
-      "features": ["file-attachment", "attachment-preview"],
+      "features": ["file-attachment", "attachment-preview", "camera-capture"],
       "components": ["AttachmentPreview", "ChatInputArea"],
       "endpoints": ["POST /api/chat/attachments", "GET /api/chat/attachments/:id"]
-    },
-    
+    }
   },
   "integrationStatus": {
     "file-attachment": {
@@ -241,7 +240,11 @@
       "lastVerified": "2025-01-27",
       "knownIssues": []
     },
-    
+    "camera-capture": {
+      "status": "active",
+      "lastVerified": "2025-01-27",
+      "knownIssues": []
+    }
   },
   "dependencies": {
     "internal": ["file-manager", "core-messaging", "memory-integration"],
@@ -341,10 +344,60 @@
             "$ref": "../infrastructure/logging.map.json#/attachment-preview-logging"
           },
           "tests": ["client/src/tests/chat/AttachmentDisplay.test.tsx"]
+        },
+        "camera-capture": {
+          "description": "Capture photos directly from device camera for chat attachments",
+          "userFlow": [
+            "User clicks camera icon in chat input area",
+            "Camera modal opens with live video preview",
+            "User sees environment (back) camera feed by default",
+            "User clicks 'Capture Photo' button",
+            "Photo is captured and added as attachment",
+            "Camera modal closes automatically",
+            "If camera access fails, fallback to file input with camera capture"
+          ],
+          "systemFlow": [
+            "Request camera permissions via getUserMedia API",
+            "Stream video from environment camera to video element",
+            "Capture frame from video to canvas on button click",
+            "Convert canvas to PNG blob",
+            "Create File object from blob with timestamp filename",
+            "Pass file through handleCameraCapture for upload",
+            "Cleanup: stop all media tracks when modal closes"
+          ],
+          "components": ["ChatInputArea"],
+          "dataFlowTrace": {
+            "requestPath": ["ChatInputArea.openCamera()", "navigator.mediaDevices.getUserMedia()", "video stream", "canvas capture", "handleCameraCapture()"],
+            "fallbackPath": ["getUserMedia fails", "console.error()", "cameraInputRef.click()", "native file picker with camera"],
+            "errorHandling": "Graceful fallback to file input on permission denial"
+          },
+          "apiIntegration": {
+            "browserApis": ["MediaDevices.getUserMedia", "HTMLCanvasElement.toBlob", "HTMLVideoElement"],
+            "permissions": ["camera"],
+            "constraints": {
+              "video": {
+                "facingMode": "environment",
+                "width": { "ideal": 1920 },
+                "height": { "ideal": 1080 }
+              }
+            },
+            "fallbackBehavior": "Native file input with capture='environment' attribute"
+          },
+          "componentDetails": {
+            "ChatInputArea": {
+              "keyFunctions": {
+                "openCamera": "Requests camera access and opens modal",
+                "closeCamera": "Stops media tracks and closes modal",
+                "capturePhoto": "Captures frame from video stream to file"
+              },
+              "stateManagement": "isCameraOpen, cameraStream refs for cleanup",
+              "errorHandling": "Try camera API, fallback to file input on failure"
+            }
+          },
+          "tests": ["client/src/components/ChatInputArea.test.tsx"]
         }
       }
-    },
-    
+    }
   },
   "components": {
     "AttachmentPreview": {
@@ -358,9 +411,15 @@
     "ChatInputArea": {
       "name": "ChatInputArea",
       "path": "client/src/components/ChatInputArea.tsx",
-      "description": "Text input area with attachment support",
-      "uses": ["useFileUpload", "AttachmentPreview", "AudioRecorder"],
-      "verified": true
+      "description": "Text input area with attachment support and camera capture",
+      "uses": ["useFileUpload", "AttachmentPreview", "AudioRecorder", "MediaDevices API"],
+      "verified": true,
+      "keyFunctions": {
+        "openCamera": "Requests camera access and opens modal with video preview",
+        "closeCamera": "Stops media tracks and closes camera modal",
+        "capturePhoto": "Captures frame from video stream and converts to file",
+        "handleKeyPress": "Handles Enter key to send message (not Shift+Enter)"
+      }
     }
   },
   "apiEndpoints": {
@@ -377,8 +436,7 @@
       "description": "Retrieve specific attachment file",
       "implemented": false,
       "actualEndpoint": "GET /api/files/:id"
-    },
-    
+    }
   },
   "database": {
     "tables": {
@@ -387,8 +445,7 @@
         "columns": ["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
         "implemented": false,
         "note": "Table schema defined but not actively used"
-      },
-      
+      }
     }
   }
 }

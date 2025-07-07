@@ -20,7 +20,7 @@
   "integrationStatus": {
     "microphone-permission": {
       "status": "active",
-      "lastVerified": "2025-01-15",
+      "lastVerified": "2025-01-17",
       "knownIssues": []
     },
     "transcription-state-management": {
@@ -58,7 +58,7 @@
       "knownIssues": ["Transcription of audio to text is not persistent in input field if the user does other audio transcriptions before sending"]
     }
   },
-  "lastUpdated": "2025-01-15T00:00:00Z",
+  "lastUpdated": "2025-01-17T12:00:00Z",
   "dependencies": ["settings"],
   "featureGroups": {
     "audioRecording": {
@@ -67,16 +67,20 @@
         "microphone-permission": {
           "description": "Request and manage microphone permissions from the browser",
           "userFlow": [
-            "User clicks microphone button for first time",
+            "User clicks microphone button for first time or after denial",
             "Browser permission dialog appears",
             "User grants or denies permission",
-            "Permission state is stored and checked"
+            "If granted, recording starts immediately; if denied, error message shows",
+            "Permission state is stored and user can retry by clicking again"
           ],
           "systemFlow": [
-            "AudioRecorder component mounts",
+            "AudioRecorder component mounts with hasPermission=null",
+            "User clicks microphone button",
+            "handleRecording() checks if hasPermission is null or false",
             "checkMicrophonePermission() calls audioService.requestMicrophonePermission()",
-            "Browser API navigator.mediaDevices.getUserMedia() called",
-            "Permission result stored in hasPermission state"
+            "Browser API navigator.mediaDevices.getUserMedia() called on first click or after denial",
+            "Permission result returned and stored in hasPermission state",
+            "If granted, recording starts immediately; if denied, shows error toast"
           ],
           "components": ["AudioRecorder"],
           "apiIntegration": {
@@ -360,7 +364,7 @@
         "isProcessing: boolean", 
         "isListening: boolean",
         "isOnline: boolean",
-        "hasPermission: boolean | null"
+        "hasPermission: boolean | null (null means not yet requested, false means denied but retryable)"
       ],
       "dependencies": ["audioService", "useToast", "TranscriptionProvider"]
     }

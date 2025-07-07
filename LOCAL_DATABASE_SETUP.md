@@ -99,8 +99,12 @@ cp .env.local ../feature-branch/
 # Setup in the new worktree
 cd ../feature-branch
 npm install
+# Ensure PostgreSQL service is running: brew services start postgresql
+# If you made schema changes in this worktree, push them: npm run db:push-local
 npm run dev:local
 ```
+
+**Note:** The full `npm run db:setup-local` is a one-time setup per machine. For new worktrees, you primarily need `npm install` and to ensure the PostgreSQL service is active.
 
 ## Database Schema
 

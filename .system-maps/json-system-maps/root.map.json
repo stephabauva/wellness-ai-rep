@@ -37,6 +37,11 @@
       "description": "Cross-cutting concerns: logging, performance monitoring, and testing utilities",
       "path": "infrastructure/",
       "dependencies": []
+    },
+    "local-database": {
+      "description": "Manages local PostgreSQL database setup, schema synchronization, and connection switching for development.",
+      "path": ".system-maps/json-system-maps/local-database-system-map.json",
+      "dependencies": ["infrastructure"]
     }
   }
 }

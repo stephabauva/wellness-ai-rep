@@ -7,4 +7,5 @@ vite.config.ts.*
 uploads/
 
 .env
+.env.local
 .neon

@@ -20,9 +20,9 @@ CREATE INDEX IF NOT EXISTS idx_memory_entries_created_at ON memory_entries(creat
 CREATE INDEX IF NOT EXISTS idx_memory_entries_importance ON memory_entries(importance_score DESC);
 
 -- Memory access log indexes
-CREATE INDEX IF NOT EXISTS idx_memory_access_log_memory_id ON memory_access_log(memory_id);
+CREATE INDEX IF NOT EXISTS idx_memory_access_log_memory_entry_id ON memory_access_log(memory_entry_id);
 CREATE INDEX IF NOT EXISTS idx_memory_access_log_conversation_id ON memory_access_log(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_memory_access_log_accessed_at ON memory_access_log(accessed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_memory_access_log_created_at ON memory_access_log(created_at DESC);
 
 -- Health data indexes
 CREATE INDEX IF NOT EXISTS idx_health_data_user_id ON health_data(user_id);

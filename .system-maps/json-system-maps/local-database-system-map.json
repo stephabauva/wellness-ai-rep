@@ -1,0 +1,247 @@
+{
+  "tableOfContents": {
+    "database-setup-configuration": {
+      "features": ["setup-script", "schema-sync", "connection-switching"],
+      "components": [],
+      "endpoints": []
+    },
+    "testing-verification": {
+      "features": ["setup-verification"],
+      "components": [],
+      "endpoints": []
+    }
+  },
+  "integrationStatus": {
+    "setup-script": {
+      "status": "active",
+      "lastVerified": "2025-07-07",
+      "knownIssues": []
+    },
+    "schema-sync": {
+      "status": "active",
+      "lastVerified": "2025-07-07",
+      "knownIssues": []
+    },
+    "connection-switching": {
+      "status": "active",
+      "lastVerified": "2025-07-07",
+      "knownIssues": []
+    },
+    "setup-verification": {
+      "status": "active",
+      "lastVerified": "2025-07-07",
+      "knownIssues": []
+    }
+  },
+  "lastUpdated": "2025-07-07T12:00:00Z",
+  "dependencies": ["infrastructure"],
+  "featureGroups": {
+    "database-setup-configuration": {
+      "description": "Features related to setting up and configuring the local PostgreSQL database.",
+      "features": {
+        "setup-script": {
+          "description": "Automates the creation of PostgreSQL user, database, and the .env.local configuration file.",
+          "userFlow": [
+            "User runs 'npm run db:setup-local'",
+            "Script executes 'setup-local-db.sh'"
+          ],
+          "systemFlow": [
+            "Checks if PostgreSQL is running",
+            "Creates 'wellness_user' and 'wellness_ai_local' database",
+            "Grants privileges",
+            "Creates or updates '.env.local' with local database connection string"
+          ],
+          "components": [],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {},
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "tests": ["test-local-setup.js"],
+          "filesModified": [
+            "setup-local-db.sh",
+            ".env.local"
+          ]
+        },
+        "schema-sync": {
+          "description": "Synchronizes the database schema for the local PostgreSQL instance using Drizzle Kit.",
+          "userFlow": [
+            "User runs 'npm run db:setup-local'",
+            "Script executes 'tsx scripts/setup-local-schema.ts'"
+          ],
+          "systemFlow": [
+            "Loads .env.local configuration",
+            "Connects to local PostgreSQL via 'pg' Pool",
+            "Executes 'drizzle-kit push --config=drizzle.config.local.ts'",
+            "Applies performance indexes from 'migrations/create_indexes.sql'"
+          ],
+          "components": [],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {},
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "tests": ["test-local-setup.js"],
+          "filesModified": [
+            "scripts/setup-local-schema.ts",
+            "drizzle.config.local.ts",
+            "migrations/create_indexes.sql",
+            "package.json"
+          ]
+        },
+        "connection-switching": {
+          "description": "Enables the application to dynamically switch between Neon serverless and local PostgreSQL connections based on environment variables.",
+          "userFlow": [
+            "User runs 'npm run dev:local' (uses local DB)",
+            "User runs 'npm run dev' (uses Neon DB)"
+          ],
+          "systemFlow": [
+            "Reads USE_LOCAL_DB and NODE_ENV from environment",
+            "Initializes 'pg' Pool for local or '@neondatabase/serverless' Pool for Neon",
+            "Exports 'db' and 'pool' instances for application use"
+          ],
+          "components": [],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {},
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "tests": ["test-local-setup.js"],
+          "filesModified": [
+            "server/db.ts",
+            "server/db-local.ts",
+            ".env.local",
+            "package.json"
+          ]
+        }
+      }
+    },
+    "testing-verification": {
+      "description": "Scripts and configurations for verifying the local database setup.",
+      "features": {
+        "setup-verification": {
+          "description": "A script to test the local database connection and schema setup.",
+          "userFlow": [
+            "User runs 'npm run test:local-db'"
+          ],
+          "systemFlow": [
+            "Connects to the local database",
+            "Queries for table existence and counts",
+            "Reports verification results"
+          ],
+          "components": [],
+          "apiIntegration": {
+            "expectedEndpoints": [],
+            "actualEndpoints": [],
+            "integrationGaps": [],
+            "cacheDependencies": {},
+            "uiConsistencyValidation": {
+              "tested": true,
+              "knownIssues": []
+            }
+          },
+          "tests": ["test-local-setup.js"],
+          "filesModified": [
+            "test-local-setup.js",
+            "package.json"
+          ]
+        }
+      }
+    }
+  },
+  "componentDetails": {},
+  "apiEndpoints": {},
+  "database": {
+    "tablesCreated": [
+      "atomic_facts",
+      "chat_messages",
+      "connected_devices",
+      "conversation_messages",
+      "conversations",
+      "file_access_log",
+      "file_categories",
+      "file_retention_settings",
+      "files",
+      "health_data",
+      "health_data_access_log",
+      "memory_access_log",
+      "memory_consolidation_log",
+      "memory_entries",
+      "memory_graph_metrics",
+      "memory_relationships",
+      "memory_triggers",
+      "sample_health_data",
+      "user_health_consent",
+      "users"
+    ],
+    "indexesApplied": [
+      "idx_files_category_id",
+      "idx_files_conversation_id",
+      "idx_files_created_at",
+      "idx_files_file_type",
+      "idx_files_is_deleted",
+      "idx_files_metadata_gin",
+      "idx_files_not_deleted",
+      "idx_files_retention_policy",
+      "idx_files_scheduled_deletion",
+      "idx_files_user_category_created",
+      "idx_files_user_id",
+      "idx_chat_messages_content_gin",
+      "idx_chat_messages_timestamp",
+      "idx_chat_messages_user_id",
+      "idx_chat_messages_user_timestamp",
+      "idx_connected_devices_active",
+      "idx_connected_devices_device_type",
+      "idx_connected_devices_is_active",
+      "idx_connected_devices_last_sync",
+      "idx_connected_devices_metadata_gin",
+      "idx_connected_devices_user_id",
+      "idx_conversations_created_at",
+      "idx_conversations_updated_at",
+      "idx_conversations_user_id",
+      "idx_conversation_messages_content_gin",
+      "idx_conversation_messages_conv_timestamp",
+      "idx_conversation_messages_conversation_id",
+      "idx_conversation_messages_role",
+      "idx_conversation_messages_timestamp",
+      "idx_health_data_category",
+      "idx_health_data_data_type",
+      "idx_health_data_metadata_gin",
+      "idx_health_data_timestamp",
+      "idx_health_data_user_category_timestamp",
+      "idx_health_data_user_id",
+      "idx_health_data_user_timestamp",
+      "idx_health_data_user_type_timestamp",
+      "idx_memory_access_log_conversation_id",
+      "idx_memory_access_log_created_at",
+      "idx_memory_access_log_memory_entry_id",
+      "idx_memory_entries_category",
+      "idx_memory_entries_content_gin",
+      "idx_memory_entries_created_at",
+      "idx_memory_entries_importance",
+      "idx_memory_entries_user_category",
+      "idx_memory_entries_user_id",
+      "idx_memory_entries_user_importance",
+      "idx_file_access_log_access_type",
+      "idx_file_access_log_created_at",
+      "idx_file_access_log_file_id",
+      "idx_file_access_log_user_id",
+      "idx_users_preferences_gin"
+    ]
+  }
+}

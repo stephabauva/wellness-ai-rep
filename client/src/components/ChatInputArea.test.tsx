@@ -173,10 +173,17 @@ describe('ChatInputArea', () => {
   });
 
   it('AudioRecorder should call setInputMessage onTranscriptionComplete', () => {
-    renderComponent();
+    const initialText = 'Initial text. ';
+    renderComponent({ inputMessage: initialText });
     const recorderButton = screen.getByTestId('mock-audio-recorder');
     fireEvent.click(recorderButton);
-    expect(mockSetInputMessage).toHaveBeenCalledWith('transcribed audio text');
+
+    // The mock for setInputMessage is called with a function.
+    // We need to capture that function and call it to get the new value.
+    const call = mockSetInputMessage.mock.calls[0][0];
+    const newValue = call(initialText);
+
+    expect(newValue).toBe('Initial text.  transcribed audio text');
   });
 
   it('should open camera modal when camera button is clicked', async () => {

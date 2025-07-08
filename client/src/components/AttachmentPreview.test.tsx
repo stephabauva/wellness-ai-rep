@@ -5,7 +5,7 @@ import { AttachedFile } from '@/hooks/useFileManagement'; // Assuming type path
 import { getFileIcon } from '@/utils/chatUtils'; // Actual util for realistic icon rendering
 
 // Mock getFileIcon to simplify testing if complex, or use actual if simple
-vi.mock('@/utils/chatUtils', () => ({
+vi.mock('@/utils/chatUtils.tsx', () => ({
   getFileIcon: vi.fn((fileType: string) => <div data-testid={`file-icon-${fileType}`}>Icon</div>),
 }));
 

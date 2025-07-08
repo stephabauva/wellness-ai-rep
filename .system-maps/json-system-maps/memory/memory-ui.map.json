@@ -1,141 +1,204 @@
-
 {
-  "tableOfContents": {
-    "user-interface": ["memory-overview", "manual-memory-entry", "memory-browsing", "category-navigation"],
-    "memory-management": ["memory-display", "memory-deletion", "bulk-operations"]
+  "_meta": {
+    "feature": "memory-ui",
+    "domain": "memory",
+    "lastUpdated": "2025-01-08T10:00:00Z",
+    "status": "active"
   },
-  "lastUpdated": "2025-01-27T10:00:00Z",
-  "dependencies": ["memory-core"],
+  "trigger": "User navigates to memory section or performs memory management actions",
+  "dataFlow": {
+    "request": "MemorySection → useQuery → GET /api/memories/* → memory-service → database",
+    "response": "Database → memory-service → API → React Query → MemorySection UI updates",
+    "sideEffects": ["Cache invalidation", "UI state synchronization", "Memory counts update"]
+  },
+  "files": {
+    "ui": ["client/src/components/MemorySection.tsx"],
+    "api": ["server/routes/memory-routes.ts"],
+    "data": ["memory_entries", "memory_triggers", "memory_access_log", "query:memories", "query:memories-overview"],
+    "types": ["shared/schema.ts"]
+  },
+  "cacheFlow": {
+    "invalidates": ["query:memories", "query:memories-overview"],
+    "refreshes": ["MemorySection", "CategoryTabs", "MemoryCards"],
+    "triggers": ["memory-count-updates", "category-filter-updates"]
+  },
+  "errorPaths": {
+    "network": "Show error message, retry button available",
+    "validation": "Form validation errors displayed inline",
+    "business": "Toast notifications for operation failures"
+  },
+  "dependencies": {
+    "internal": ["memory-core", "chat-system"],
+    "external": ["React Query", "Tailwind CSS"],
+    "shared": ["LoadingSpinner", "ErrorBoundary", "ToastNotifications"]
+  },
   "featureGroups": {
-    "user-interface": {
-      "description": "User-facing memory interface components and interactions",
-      "features": {
-        "memory-overview": {
-          "description": "Dashboard showing memory statistics and category counts without loading full memory content",
-          "userFlow": [
-            "User navigates to memory section",
-            "System loads lightweight overview with counts by category",
-            "User sees total memories and category breakdown",
-            "Overview updates after memory operations"
-          ],
-          "components": ["MemorySection", "memory-service"]
-        },
-        "manual-memory-entry": {
-          "description": "User interface for manually adding memories with category and importance selection",
-          "userFlow": [
-            "User clicks 'Add Memory' button",
-            "Modal opens with memory entry form",
-            "User enters content, selects category and importance",
-            "System validates and saves memory",
-            "UI updates with new memory count"
-          ],
-          "components": ["MemorySection", "memory-service"]
-        },
-        "memory-browsing": {
-          "description": "Interface for viewing and managing stored memories with manual loading",
-          "userFlow": [
-            "User clicks 'Show My Stored Memories' button",
-            "System loads memories from database",
-            "Memories displayed in cards with metadata",
-            "User can view, select, and manage memories"
-          ],
-          "components": ["MemorySection", "memory-service"]
-        },
-        "category-navigation": {
-          "description": "Tab-based navigation between memory categories with explanatory cards",
-          "userFlow": [
-            "User sees category tabs (All, Preferences, Personal, Context, Instructions)",
-            "User clicks on category tab",
-            "System filters memories by category",
-            "Explanatory card shows category description and details"
-          ],
-          "components": ["MemorySection"]
-        }
-      }
+    "memory-overview": {
+      "trigger": "User navigates to memory section",
+      "dataFlow": {
+        "request": "MemorySection → useQuery → GET /api/memories/overview",
+        "response": "Database counts → API → React Query → Overview UI update"
+      },
+      "files": {
+        "ui": ["MemorySection.tsx"],
+        "api": ["memory-routes.ts"],
+        "data": ["memory_entries"]
+      },
+      "userFlow": [
+        "User navigates to memory section",
+        "System loads lightweight overview with counts by category",
+        "User sees total memories and category breakdown without loading full content",
+        "Category tabs show counts (All, Preferences, Personal, Context, Instructions)",
+        "Overview updates automatically after memory operations"
+      ]
     },
-    "memory-management": {
-      "description": "Memory management operations and bulk actions",
-      "features": {
-        "memory-display": {
-          "description": "Display individual memories with category badges, importance levels, and metadata",
-          "userFlow": [
-            "System loads memories for selected category",
-            "Each memory shows content, category badge, importance level",
-            "Keywords and creation date displayed",
-            "Access count and relevance indicators shown"
-          ],
-          "components": ["MemorySection"]
-        },
-        "memory-deletion": {
-          "description": "Individual and bulk memory deletion with confirmation",
-          "userFlow": [
-            "User selects memories for deletion",
-            "System shows confirmation dialog",
-            "User confirms deletion",
-            "Memories marked as inactive",
-            "UI updates memory counts and list"
-          ],
-          "components": ["MemorySection", "memory-service"]
-        },
-        "bulk-operations": {
-          "description": "Bulk selection and operations on multiple memories",
-          "userFlow": [
-            "User can select multiple memories with checkboxes",
-            "Select all/clear selection options available",
-            "Bulk delete operation with confirmation",
-            "Real-time selection count display"
-          ],
-          "components": ["MemorySection", "memory-service"]
-        }
-      }
-    }
-  },
-  "components": {
-    "MemorySection": {
-      "path": "client/src/components/MemorySection.tsx",
-      "type": "React Component",
-      "description": "Main UI component for memory management with manual loading and category navigation",
-      "calls": [
-        "GET /api/memories/overview",
-        "GET /api/memories", 
-        "POST /api/memories/manual",
-        "DELETE /api/memories/:id",
-        "DELETE /api/memories/bulk"
-      ],
-      "uses": [],
-      "invalidates": ["query:memories", "query:memories-overview"]
+    "manual-memory-entry": {
+      "trigger": "User clicks 'Add Memory' button",
+      "dataFlow": {
+        "request": "AddMemoryForm → useState → POST /api/memories/manual",
+        "response": "Memory creation → API response → Query invalidation → UI refresh"
+      },
+      "files": {
+        "ui": ["MemorySection.tsx"],
+        "api": ["memory-routes.ts"],
+        "data": ["memory_entries", "memory_embeddings"]
+      },
+      "userFlow": [
+        "User clicks 'Add Memory' button",
+        "Modal opens with memory entry form",
+        "User enters content, selects category (preference/personal_info/context/instruction) and importance (1-10)",
+        "System validates form inputs",
+        "Memory created with embeddings and metadata",
+        "Query cache invalidated",
+        "UI updates with new memory in appropriate category",
+        "Success toast notification shown"
+      ]
+    },
+    "memory-browsing": {
+      "trigger": "User clicks 'Show My Stored Memories' button",
+      "dataFlow": {
+        "request": "ShowMemoriesButton → useQuery → GET /api/memories",
+        "response": "Database → API → React Query → Memory cards display"
+      },
+      "files": {
+        "ui": ["MemorySection.tsx"],
+        "api": ["memory-routes.ts"],
+        "data": ["memory_entries", "memory_access_log"]
+      },
+      "userFlow": [
+        "User clicks 'Show My Stored Memories' button (manual loading for performance)",
+        "System loads all memories from database",
+        "Memories displayed in cards with category badges and importance levels",
+        "Each memory shows content, keywords, creation date, and access count",
+        "Category filtering applied client-side",
+        "Individual memory management options available"
+      ]
+    },
+    "category-navigation": {
+      "trigger": "User clicks category tab (All, Preferences, Personal, Context, Instructions)",
+      "dataFlow": {
+        "request": "CategoryTab → useState → Client-side filtering",
+        "response": "Filtered memories → UI update with category-specific content"
+      },
+      "files": {
+        "ui": ["MemorySection.tsx"],
+        "api": [],
+        "data": ["client-side-filter-state"]
+      },
+      "userFlow": [
+        "User sees category tabs with counts (All, Preferences, Personal, Context, Instructions)",
+        "User clicks on category tab",
+        "System filters memories client-side by category",
+        "Explanatory card shows category description and purpose",
+        "Only memories matching selected category displayed",
+        "Category-specific operations available"
+      ]
+    },
+    "bulk-operations": {
+      "trigger": "User selects multiple memories via checkboxes",
+      "dataFlow": {
+        "request": "BulkSelect → useState → DELETE /api/memories/bulk",
+        "response": "Bulk deletion → API response → Query invalidation → UI refresh"
+      },
+      "files": {
+        "ui": ["MemorySection.tsx"],
+        "api": ["memory-routes.ts"],
+        "data": ["memory_entries"]
+      },
+      "userFlow": [
+        "User can select multiple memories with checkboxes",
+        "Select all/clear selection options available",
+        "Selected count displayed in real-time",
+        "Bulk delete button enabled when memories selected",
+        "Confirmation dialog shown before bulk deletion",
+        "Bulk operation executed with progress feedback",
+        "Query cache invalidated",
+        "UI updates with removed memories and updated counts"
+      ]
+    },
+    "memory-deletion": {
+      "trigger": "User clicks delete button on individual memory",
+      "dataFlow": {
+        "request": "DeleteButton → confirmation → DELETE /api/memories/:id",
+        "response": "Memory deactivation → API response → Query invalidation → UI refresh"
+      },
+      "files": {
+        "ui": ["MemorySection.tsx"],
+        "api": ["memory-routes.ts"],
+        "data": ["memory_entries"]
+      },
+      "userFlow": [
+        "User clicks delete button on individual memory",
+        "Confirmation dialog shown",
+        "User confirms deletion",
+        "Memory marked as inactive (soft delete)",
+        "Query cache invalidated",
+        "UI updates memory counts and removes from list",
+        "Success notification shown"
+      ]
     }
   },
   "apiEndpoints": {
     "GET /api/memories/overview": {
       "description": "Returns lightweight memory statistics and category counts",
-      "handlerFile": "server/routes.ts",
       "requestBody": "",
       "response": "{ total: number, categories: { preference: number, personal_info: number, context: number, instruction: number } }",
-      "readsFrom": ["memories"],
+      "readsFrom": ["memory_entries"],
       "modifies": []
+    },
+    "GET /api/memories": {
+      "description": "Fetches all user memories with category filtering",
+      "requestBody": "",
+      "response": "[{ id: string, content: string, category: string, importance: number, keywords: string[], createdAt: string, accessCount: number }]",
+      "readsFrom": ["memory_entries", "memory_access_log"],
+      "modifies": ["memory_access_log"]
     },
     "POST /api/memories/manual": {
       "description": "Creates a new memory entry from manual user input",
-      "handlerFile": "server/routes.ts",
       "requestBody": "{ content: string, category: string, importance: number }",
       "response": "{ id: string, content: string, category: string, confidence: number }",
       "readsFrom": ["users.id"],
-      "modifies": ["memories", "memory_embeddings"]
+      "modifies": ["memory_entries", "memory_embeddings"]
+    },
+    "DELETE /api/memories/:id": {
+      "description": "Soft delete individual memory (marks as inactive)",
+      "requestBody": "",
+      "response": "{ success: boolean }",
+      "readsFrom": ["memory_entries"],
+      "modifies": ["memory_entries"]
     },
     "DELETE /api/memories/bulk": {
       "description": "Bulk delete multiple memories",
-      "handlerFile": "server/routes.ts",
       "requestBody": "{ memoryIds: string[] }",
       "response": "{ successCount: number, totalRequested: number }",
-      "readsFrom": ["memories"],
-      "modifies": ["memories"]
+      "readsFrom": ["memory_entries"],
+      "modifies": ["memory_entries"]
     }
   },
   "database": {
     "schemaFile": "shared/schema.ts",
     "tables": {
-      "memories": {
+      "memory_entries": {
         "columns": {
           "id": { "type": "uuid", "primaryKey": true },
           "userId": { "type": "integer", "foreignKey": "users.id" },
@@ -147,17 +210,25 @@
           "accessCount": { "type": "integer" },
           "isActive": { "type": "boolean" }
         }
+      },
+      "memory_triggers": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "trigger": { "type": "text" },
+          "createdAt": { "type": "timestamp" }
+        }
       }
     }
   },
   "dataStores": {
     "query:memories": {
-      "type": "React Query Key", 
-      "description": "Caches user memory data with manual loading"
+      "type": "React Query Key",
+      "description": "Caches user memory data with manual loading trigger"
     },
     "query:memories-overview": {
       "type": "React Query Key",
-      "description": "Caches lightweight memory statistics"
+      "description": "Caches lightweight memory statistics and category counts"
     }
   }
 }

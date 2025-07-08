@@ -1,143 +1,380 @@
-
 {
-  "tableOfContents": {
-    "detection": ["memory-detection", "background-processing"],
-    "storage": ["memory-creation", "categorization", "deduplication"],
-    "retrieval": ["context-aware-retrieval", "semantic-search"]
+  "_meta": {
+    "feature": "memory-core",
+    "domain": "memory",
+    "lastUpdated": "2025-01-08T10:00:00Z",
+    "status": "active"
   },
-  "lastUpdated": "2025-01-27T14:30:00Z", 
-  "dependencies": ["chat"],
+  "trigger": "Chat messages processed or memory operations requested",
+  "dataFlow": {
+    "request": "Chat message → memory-service → AI analysis → embedding generation → database storage",
+    "response": "Context retrieval → semantic search → relevant memories → AI prompt enhancement",
+    "sideEffects": ["Background processing", "Memory deduplication", "Cache invalidation", "Performance monitoring"]
+  },
+  "files": {
+    "ui": [],
+    "api": ["server/routes/memory-routes.ts", "server/routes.ts"],
+    "services": [
+      "server/services/memory-service.ts",
+      "server/services/chatgpt-memory-enhancement.ts",
+      "server/services/enhanced-memory-service.ts",
+      "server/services/memory-enhanced-ai-service.ts",
+      "server/services/advanced-memory-ai-service.ts",
+      "server/services/performance-memory-core.ts",
+      "server/services/memory-performance-monitor.ts",
+      "server/services/go-memory-service.ts",
+      "server/services/cache-service.ts",
+      "server/services/memory-graph-service.ts",
+      "server/services/memory-relationship-engine.ts",
+      "server/services/fast-relationship-engine.ts",
+      "server/services/nutrition-memory-service.ts",
+      "server/services/intelligent-memory-retrieval.ts",
+      "server/services/simple-memory-detection.ts"
+    ],
+    "data": [
+      "memory_entries", "memory_triggers", "memory_access_log", "conversations", "conversation_messages",
+      "atomic_facts", "memory_relationships", "memory_consolidation_log", "memory_graph_metrics"
+    ],
+    "types": ["shared/schema.ts"]
+  },
+  "cacheFlow": {
+    "invalidates": ["query:memories", "query:memories-overview", "memory-embeddings-cache", "similarity-cache"],
+    "refreshes": ["MemorySection", "ChatInterface", "AIResponses"],
+    "triggers": ["memory-background-processing", "relationship-updates", "consolidation-jobs"]
+  },
+  "errorPaths": {
+    "network": "Retry with exponential backoff, fallback to cached results",
+    "validation": "Skip invalid memories, log errors for debugging",
+    "business": "Graceful degradation, continue without memory enhancement"
+  },
+  "dependencies": {
+    "internal": ["ai-service", "chat-system", "health-data"],
+    "external": ["OpenAI API", "Google AI", "PostgreSQL", "Go Services"],
+    "shared": ["cache-service", "performance-monitor", "error-handling"]
+  },
   "featureGroups": {
-    "detection": {
-      "description": "Automatic memory detection and background processing from chat interactions",
-      "features": {
-        "memory-detection": {
-          "description": "AI-powered detection of memory-worthy content from user messages",
-          "userFlow": [
-            "User sends message in chat",
-            "Background analysis detects memorable information",
-            "System extracts facts and creates memory entries",
-            "Memory stored with confidence scoring"
-          ],
-          "components": ["memory-service", "chatgpt-memory-enhancement"]
-        },
-        "background-processing": {
-          "description": "Non-blocking memory processing with priority queues",
-          "userFlow": [
-            "Memory detection tasks queued in background",
-            "Processing occurs without blocking chat responses", 
-            "Results cached and made available to retrieval",
-            "Cache invalidation triggers UI updates"
-          ],
-          "components": ["memory-service", "enhanced-memory-service"]
-        }
-      }
+    "memory-detection": {
+      "trigger": "User sends message in chat",
+      "dataFlow": {
+        "request": "Chat message → memory-service.detectMemoryWorthyContent → AI analysis",
+        "response": "Memory candidates → validation → storage with embeddings"
+      },
+      "files": {
+        "services": ["memory-service.ts", "simple-memory-detection.ts", "chatgpt-memory-enhancement.ts"],
+        "data": ["memory_entries", "memory_triggers"]
+      },
+      "userFlow": [
+        "User sends message in chat",
+        "Background analysis detects memory-worthy content (preferences, goals, constraints)",
+        "AI extracts facts and categorizes by type (preference/personal_info/context/instruction)",
+        "Memory stored with confidence scoring and embeddings",
+        "Memory triggers logged for user transparency",
+        "Background processing queued for deduplication"
+      ]
     },
-    "storage": {
-      "description": "Memory storage, categorization and deduplication systems",
-      "features": {
-        "memory-creation": {
-          "description": "Storage of memory entries with embeddings and metadata",
-          "userFlow": [
-            "Memory content processed and validated",
-            "Embedding generated for semantic search", 
-            "Memory stored with category and importance",
-            "Database indexes updated for performance"
-          ],
-          "components": ["memory-service", "enhanced-memory-service"]
-        },
-        "categorization": {
-          "description": "Automatic categorization of memories into preference, personal_info, context, instruction",
-          "userFlow": [
-            "AI analyzes memory content",
-            "Category assigned based on content type",
-            "Confidence score calculated",
-            "Manual override available through UI"
-          ],
-          "components": ["memory-service"]
-        },
-        "deduplication": {
-          "description": "ChatGPT-style memory deduplication and consolidation using singleton pattern",
-          "userFlow": [
-            "New memory compared with existing memories",
-            "Duplicate or conflicting memories identified",
-            "Smart consolidation or replacement performed",
-            "Memory graph relationships updated"
-          ],
-          "components": ["chatgpt-memory-enhancement", "memory-graph-service"],
-          "architectureNotes": "Uses singleton pattern to prevent duplicate instances and logging"
-        }
-      }
+    "background-processing": {
+      "trigger": "Memory detection tasks queued",
+      "dataFlow": {
+        "request": "Queue → enhanced-memory-service → background processor",
+        "response": "Non-blocking processing → cache updates → UI refresh triggers"
+      },
+      "files": {
+        "services": ["enhanced-memory-service.ts", "performance-memory-core.ts", "memory-performance-monitor.ts"],
+        "data": ["memory_entries", "memory_graph_metrics"]
+      },
+      "userFlow": [
+        "Memory detection tasks queued in background",
+        "Processing occurs without blocking chat responses (<50ms target)",
+        "Results cached and made available to retrieval system",
+        "Performance metrics tracked and monitored",
+        "Cache invalidation triggers UI updates",
+        "Circuit breakers prevent system overload"
+      ]
     },
-    "retrieval": {
-      "description": "Context-aware memory retrieval for AI responses",
-      "features": {
-        "context-aware-retrieval": {
-          "description": "Retrieval of relevant memories based on conversation context",
-          "userFlow": [
-            "User sends new message",
-            "System builds context from conversation",
-            "Semantic search finds relevant memories",
-            "Top memories included in AI prompt"
-          ],
-          "components": ["memory-service", "intelligent-memory-retrieval"]
-        },
-        "semantic-search": {
-          "description": "Vector-based similarity search with caching",
-          "userFlow": [
-            "Query embedding generated",
-            "Cosine similarity calculated with stored memories",
-            "Results ranked by relevance and importance",
-            "Cache updated with search results"
-          ],
-          "components": ["memory-service", "go-memory-service"]
-        }
-      }
-    }
-  },
-  "components": {
-    "memory-service": {
-      "path": "server/services/memory-service.ts",
-      "type": "Service Class",
-      "description": "Core memory management with detection, storage, and retrieval",
-      "calls": ["POST /api/memory/create", "GET /api/memory/contextual"],
-      "uses": ["cache-service", "ai-service"],
-      "invalidates": ["query:memories"]
+    "memory-creation": {
+      "trigger": "Memory content validated and ready for storage",
+      "dataFlow": {
+        "request": "Memory data → embedding generation → database storage",
+        "response": "Stored memory → indexing → availability for retrieval"
+      },
+      "files": {
+        "services": ["memory-service.ts", "enhanced-memory-service.ts"],
+        "data": ["memory_entries", "memory_embeddings", "memory_access_log"]
+      },
+      "userFlow": [
+        "Memory content processed and validated",
+        "Semantic embedding generated for similarity search",
+        "Memory stored with category, importance, and keywords",
+        "Database indexes updated for performance",
+        "Memory made available for contextual retrieval",
+        "Access logging enabled for analytics"
+      ]
     },
-    "chatgpt-memory-enhancement": {
-      "path": "server/services/chatgpt-memory-enhancement.ts", 
-      "type": "Service Class",
-      "description": "ChatGPT-style memory deduplication and processing (singleton pattern)",
-      "calls": [],
-      "uses": ["memory-service", "ai-service"],
-      "invalidates": ["query:memories"],
-      "architectureNotes": "Exported as singleton instance to prevent duplicate logging and processing"
+    "categorization": {
+      "trigger": "New memory requires category assignment",
+      "dataFlow": {
+        "request": "Memory content → AI analysis → category classification",
+        "response": "Category assignment → confidence scoring → storage"
+      },
+      "files": {
+        "services": ["memory-service.ts", "nutrition-memory-service.ts"],
+        "data": ["memory_entries"]
+      },
+      "userFlow": [
+        "AI analyzes memory content for type classification",
+        "Category assigned: preference/personal_info/context/instruction/food_preferences/dietary_restrictions/meal_patterns/nutrition_goals",
+        "Confidence score calculated for category assignment",
+        "Manual override available through UI",
+        "Specialized nutrition categories handled by nutrition-memory-service"
+      ]
     },
-    "enhanced-memory-service": {
-      "path": "server/services/enhanced-memory-service.ts",
-      "type": "Service Class", 
-      "description": "Enhanced memory operations with background processing",
-      "calls": [],
-      "uses": ["memory-service", "enhanced-background-processor"],
-      "invalidates": ["query:memories"]
+    "deduplication": {
+      "trigger": "New memory compared with existing memories",
+      "dataFlow": {
+        "request": "New memory → chatgpt-memory-enhancement → semantic comparison",
+        "response": "Duplicate detection → consolidation → memory graph update"
+      },
+      "files": {
+        "services": ["chatgpt-memory-enhancement.ts", "memory-graph-service.ts", "memory-relationship-engine.ts"],
+        "data": ["memory_entries", "memory_relationships", "memory_consolidation_log"]
+      },
+      "userFlow": [
+        "New memory compared with existing memories using semantic similarity",
+        "Duplicate or conflicting memories identified",
+        "Smart consolidation or replacement performed (ChatGPT-style)",
+        "Memory graph relationships updated",
+        "Consolidation actions logged for transparency",
+        "Singleton pattern prevents duplicate processing instances"
+      ],
+      "architectureNotes": "Uses singleton pattern to prevent duplicate instances and ensure consistent logging"
+    },
+    "context-aware-retrieval": {
+      "trigger": "User sends new message requiring memory context",
+      "dataFlow": {
+        "request": "Chat context → intelligent-memory-retrieval → semantic search",
+        "response": "Relevant memories → AI prompt enhancement → contextual response"
+      },
+      "files": {
+        "services": ["intelligent-memory-retrieval.ts", "memory-service.ts", "go-memory-service.ts"],
+        "data": ["memory_entries", "memory_embeddings", "memory_access_log"]
+      },
+      "userFlow": [
+        "User sends new message",
+        "System builds context from conversation history",
+        "Semantic search finds relevant memories using cosine similarity",
+        "Top memories ranked by relevance and importance",
+        "Memory access logged for analytics",
+        "Memories included in AI prompt for personalized response"
+      ]
+    },
+    "semantic-search": {
+      "trigger": "Memory retrieval query with embedding",
+      "dataFlow": {
+        "request": "Query embedding → vector similarity → ranked results",
+        "response": "Similarity scores → importance weighting → cache update"
+      },
+      "files": {
+        "services": ["memory-service.ts", "go-memory-service.ts", "cache-service.ts"],
+        "data": ["memory_entries", "memory_embeddings", "similarity-cache"]
+      },
+      "userFlow": [
+        "Query embedding generated from user message",
+        "Cosine similarity calculated with stored memory embeddings",
+        "Results ranked by relevance score and importance level",
+        "Multi-level caching system updates search results",
+        "Go service handles performance-critical operations",
+        "Results filtered by user context and preferences"
+      ]
+    },
+    "memory-relationships": {
+      "trigger": "Memory graph analysis for relationship detection",
+      "dataFlow": {
+        "request": "Memory entries → relationship-engine → graph analysis",
+        "response": "Relationship mapping → graph updates → enhanced retrieval"
+      },
+      "files": {
+        "services": ["memory-relationship-engine.ts", "fast-relationship-engine.ts", "memory-graph-service.ts"],
+        "data": ["memory_relationships", "atomic_facts", "memory_graph_metrics"]
+      },
+      "userFlow": [
+        "Memory entries analyzed for semantic relationships",
+        "Atomic facts extracted and connected in knowledge graph",
+        "Relationship strength calculated and stored",
+        "Graph metrics updated for performance monitoring",
+        "Enhanced retrieval uses relationship context",
+        "Fast relationship engine optimizes performance"
+      ]
+    },
+    "performance-monitoring": {
+      "trigger": "Memory operations require performance tracking",
+      "dataFlow": {
+        "request": "Memory operations → performance-monitor → metrics collection",
+        "response": "Performance data → optimization triggers → system adjustments"
+      },
+      "files": {
+        "services": ["memory-performance-monitor.ts", "performance-memory-core.ts"],
+        "data": ["memory_graph_metrics", "memory_access_log"]
+      },
+      "userFlow": [
+        "All memory operations tracked for performance metrics",
+        "Response times, cache hit rates, and error rates monitored",
+        "Performance thresholds trigger optimization routines",
+        "System automatically adjusts based on usage patterns",
+        "Bottlenecks identified and resolved proactively",
+        "Performance data available for system optimization"
+      ]
     }
   },
   "apiEndpoints": {
     "POST /api/memory/create": {
-      "description": "Creates memory entry with confidence scoring",
-      "handlerFile": "server/routes.ts",
+      "description": "Creates memory entry with confidence scoring and embeddings",
       "requestBody": "{ content: string, userId: number, category?: string, importance?: number }",
       "response": "{ id: string, content: string, category: string, confidence: number }",
       "readsFrom": ["users.id"],
-      "modifies": ["memories", "memory_embeddings"]
+      "modifies": ["memory_entries", "memory_embeddings"]
     },
     "GET /api/memory/contextual": {
       "description": "Retrieves memories relevant to conversation context",
-      "handlerFile": "server/routes.ts", 
       "requestBody": "",
       "response": "[{ id: string, content: string, relevanceScore: number, retrievalReason: string }]",
-      "readsFrom": ["memories", "memory_embeddings"],
-      "modifies": ["memory_access_logs"]
+      "readsFrom": ["memory_entries", "memory_embeddings"],
+      "modifies": ["memory_access_log"]
+    },
+    "POST /api/memory/enhanced-detect": {
+      "description": "Enhanced memory detection with background processing",
+      "requestBody": "{ message: string, userId: number, conversationId?: string }",
+      "response": "{ detected: boolean, queuedForProcessing: boolean }",
+      "readsFrom": ["memory_entries", "conversations"],
+      "modifies": ["memory_entries", "memory_triggers"]
+    },
+    "POST /api/memory/enhanced-retrieve": {
+      "description": "Enhanced memory retrieval with relationship context",
+      "requestBody": "{ query: string, userId: number, limit?: number }",
+      "response": "[{ id: string, content: string, relevanceScore: number, relationships: object[] }]",
+      "readsFrom": ["memory_entries", "memory_relationships", "atomic_facts"],
+      "modifies": ["memory_access_log"]
+    },
+    "POST /api/memory/chatgpt-enhancement-test": {
+      "description": "Test ChatGPT-style memory enhancement and deduplication",
+      "requestBody": "{ content: string, userId: number }",
+      "response": "{ enhanced: boolean, deduplicated: boolean, consolidatedWith?: string }",
+      "readsFrom": ["memory_entries"],
+      "modifies": ["memory_entries", "memory_consolidation_log"]
     }
+  },
+  "database": {
+    "schemaFile": "shared/schema.ts",
+    "tables": {
+      "memory_entries": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "content": { "type": "text" },
+          "category": { "type": "text" },
+          "importance": { "type": "real" },
+          "keywords": { "type": "text[]" },
+          "createdAt": { "type": "timestamp" },
+          "accessCount": { "type": "integer" },
+          "isActive": { "type": "boolean" },
+          "embedding": { "type": "vector" },
+          "confidence": { "type": "real" },
+          "semanticHash": { "type": "text" }
+        }
+      },
+      "memory_triggers": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "trigger": { "type": "text" },
+          "createdAt": { "type": "timestamp" }
+        }
+      },
+      "memory_access_log": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "memoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "accessType": { "type": "text" },
+          "relevanceScore": { "type": "real" },
+          "accessedAt": { "type": "timestamp" }
+        }
+      },
+      "atomic_facts": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "memoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
+          "subject": { "type": "text" },
+          "predicate": { "type": "text" },
+          "object": { "type": "text" },
+          "confidence": { "type": "real" },
+          "createdAt": { "type": "timestamp" }
+        }
+      },
+      "memory_relationships": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "sourceMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
+          "targetMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
+          "relationshipType": { "type": "text" },
+          "strength": { "type": "real" },
+          "createdAt": { "type": "timestamp" }
+        }
+      },
+      "memory_consolidation_log": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "sourceMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
+          "targetMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
+          "consolidationType": { "type": "text" },
+          "reason": { "type": "text" },
+          "createdAt": { "type": "timestamp" }
+        }
+      },
+      "memory_graph_metrics": {
+        "columns": {
+          "id": { "type": "uuid", "primaryKey": true },
+          "userId": { "type": "integer", "foreignKey": "users.id" },
+          "metricType": { "type": "text" },
+          "value": { "type": "real" },
+          "metadata": { "type": "jsonb" },
+          "createdAt": { "type": "timestamp" }
+        }
+      }
+    }
+  },
+  "dataStores": {
+    "memory-embeddings-cache": {
+      "type": "Multi-level Cache",
+      "description": "Caches embedding vectors for semantic search performance"
+    },
+    "similarity-cache": {
+      "type": "LRU Cache",
+      "description": "Caches similarity search results with TTL"
+    },
+    "memory-background-queue": {
+      "type": "Processing Queue",
+      "description": "Background job queue for memory processing tasks"
+    },
+    "relationship-graph-cache": {
+      "type": "Graph Cache",
+      "description": "Caches memory relationship graph for fast traversal"
+    }
+  },
+  "performanceTargets": {
+    "memory-detection": "<50ms background processing",
+    "semantic-search": "<100ms for similarity queries",
+    "memory-retrieval": "<200ms for contextual memories",
+    "deduplication": "<150ms for duplicate detection",
+    "background-processing": "Non-blocking with circuit breakers"
+  },
+  "architectureNotes": {
+    "singleton-pattern": "chatgpt-memory-enhancement exported as singleton to prevent duplicate processing",
+    "multi-service-architecture": "Modular services for specific memory operations",
+    "performance-optimization": "Go services for performance-critical operations",
+    "caching-strategy": "Multi-level caching with TTL and invalidation",
+    "background-processing": "Non-blocking queues with priority and circuit breakers"
   }
 }

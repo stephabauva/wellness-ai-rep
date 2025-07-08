@@ -59,7 +59,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       
       console.log('[CONVERSATIONS_FETCH_DEBUG] Retrieved conversations:', {
         count: userConversations.length,
-        conversations: userConversations.map(c => ({
+        conversations: userConversations.map((c: any) => ({
           id: c.id,
           title: c.title?.substring(0, 30) + '...',
           updatedAt: c.updatedAt,
@@ -151,13 +151,13 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       let fullAiResponse = '';
 
       const result = await aiService.getChatResponseStream(
-        content, FIXED_USER_ID, currentConversationId || null, 0, coachingMode || 'weight-loss', [],
+        content, FIXED_USER_ID, currentConversationId!, 0, coachingMode || 'weight-loss', [],
         { provider: userAiProvider, model: userAiModel }, attachments || [], userAutoSelection,
         (chunk: string) => {
           fullAiResponse += chunk;
           // Send chunk immediately and flush the response
           res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-          if (res.flush) res.flush();
+          if ((res as any).flush) (res as any).flush();
         },
         (complete: string) => {
           fullAiResponse = complete; // Use complete response if provided
@@ -181,7 +181,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       try {
         const updateResult = await db.update(conversations)
           .set({ updatedAt: new Date() })
-          .where(eq(conversations.id, currentConversationId))
+          .where(eq(conversations.id, currentConversationId!))
           .returning();
         
         console.log('[CONVERSATION_UPDATE_DEBUG] STREAMING: Conversation timestamp updated:', {
@@ -193,7 +193,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         // Verify the update actually happened
         const verifyUpdate = await db.select()
           .from(conversations)
-          .where(eq(conversations.id, currentConversationId))
+          .where(eq(conversations.id, currentConversationId!))
           .limit(1);
         
         console.log('[CONVERSATION_UPDATE_VERIFY] STREAMING: Updated conversation in DB:', {
@@ -237,12 +237,12 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
 
       const processOperations = async () => {
         if (currentConversationId) {
-          const existingConv = await db.select().from(conversations).where(eq(conversations.id, currentConversationId)).limit(1);
+          const existingConv = await db.select().from(conversations).where(eq(conversations.id, currentConversationId!)).limit(1);
           if (existingConv.length === 0) {
             currentConversationId = null;
           } else {
             conversationHistory = await db.select().from(conversationMessages)
-              .where(eq(conversationMessages.conversationId, currentConversationId))
+              .where(eq(conversationMessages.conversationId, currentConversationId!))
               .orderBy(conversationMessages.createdAt).limit(20);
           }
         }
@@ -262,7 +262,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         }
 
         const [savedUserMessage] = await db.insert(conversationMessages).values({
-          conversationId: currentConversationId, role: 'user', content,
+          conversationId: currentConversationId!, role: 'user', content,
           metadata: attachments?.length ? { attachments } : undefined
         }).returning();
 
@@ -305,21 +305,21 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         }
 
         const [aiResult] = await Promise.all([
-          aiService.getChatResponse(content, FIXED_USER_ID, currentConversationId, legacyUserMessage.id,
+          aiService.getChatResponse(content, FIXED_USER_ID, currentConversationId!, legacyUserMessage.id,
             coachingMode, conversationHistory, { provider: aiProvider, model: aiModel },
             attachments || [], automaticModelSelection || false),
           attachmentProcessing
         ]);
 
         const [savedAiMessage] = await db.insert(conversationMessages).values({
-          conversationId: currentConversationId, role: 'assistant', content: aiResult.response
+          conversationId: currentConversationId!, role: 'assistant', content: aiResult.response
         }).returning();
 
         // Update conversation timestamp so it appears at top of history
         try {
           const updateResult = await db.update(conversations)
             .set({ updatedAt: new Date() })
-            .where(eq(conversations.id, currentConversationId))
+            .where(eq(conversations.id, currentConversationId!))
             .returning();
           
           console.log('[CONVERSATION_UPDATE_DEBUG] Conversation timestamp updated:', {
@@ -331,7 +331,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
           // Verify the update actually happened
           const verifyUpdate = await db.select()
             .from(conversations)
-            .where(eq(conversations.id, currentConversationId))
+            .where(eq(conversations.id, currentConversationId!))
             .limit(1);
           
           console.log('[CONVERSATION_UPDATE_VERIFY] Updated conversation in DB:', {

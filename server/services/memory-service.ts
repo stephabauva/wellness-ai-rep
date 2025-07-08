@@ -837,11 +837,11 @@ Use this remembered information to personalize your responses naturally. Don't e
       // Apply category filter if specified
       let filteredMemories = allMemories;
       if (category) {
-        filteredMemories = allMemories.filter(memory => memory.category === category);
+        filteredMemories = allMemories.filter((memory: any) => memory.category === category);
       }
 
       // Map database fields to frontend expected format
-      const mappedMemories = filteredMemories.map(memory => ({
+      const mappedMemories = filteredMemories.map((memory: any) => ({
         ...memory,
         importanceScore: memory.importanceScore,
         accessCount: memory.accessCount || 0,
@@ -851,7 +851,7 @@ Use this remembered information to personalize your responses naturally. Don't e
       }));
 
       // Sort by importance and creation date
-      const sortedMemories = mappedMemories.sort((a, b) => {
+      const sortedMemories = mappedMemories.sort((a: any, b: any) => {
         if (a.importanceScore !== b.importanceScore) {
           return b.importanceScore - a.importanceScore;
         }

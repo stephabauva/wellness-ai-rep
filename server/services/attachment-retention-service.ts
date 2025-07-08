@@ -79,7 +79,7 @@ export class AttachmentRetentionService {
       .from(fileCategories)
       .where(isNull(fileCategories.userId));
     
-    const getCategory = (name: string) => systemCategories.find(cat => cat.name === name);
+    const getCategory = (name: string) => systemCategories.find((cat: any) => cat.name === name);
     
     // Medical/health indicators (high value)
     if (

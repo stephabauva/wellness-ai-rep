@@ -28,7 +28,7 @@ let db: ReturnType<typeof drizzleNeon> | any;
 
 // Initialize database connection
 async function initializeDatabase() {
-  const isLocalDatabase = databaseUrl.includes('localhost');
+  const isLocalDatabase = databaseUrl!.includes('localhost');
 
   if (isLocalDatabase) {
     // Local PostgreSQL connection - only import pg when needed

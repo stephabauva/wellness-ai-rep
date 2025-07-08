@@ -119,7 +119,7 @@ export class HealthConsentService {
           )
         );
 
-      const allowedCategories = consents.map(c => c.category);
+      const allowedCategories = consents.map((c: any) => c.category);
       
       // If no explicit consent records exist, allow all categories (existing user behavior)
       if (allowedCategories.length === 0) {

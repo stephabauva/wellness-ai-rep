@@ -150,8 +150,8 @@ export async function registerFileRoutes(app: Express): Promise<void> {
         .where(eq(files.userId, userId));
 
       const fileList = userFiles
-        .filter(file => !file.isDeleted)
-        .map(file => {
+        .filter((file: any) => !file.isDeleted)
+        .map((file: any) => {
           if (!existsSync(file.filePath)) {
             console.log(`Skipping non-existent file in listing: ${file.fileName}`);
             return null;
@@ -179,7 +179,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
           };
         })
         .filter(Boolean)
-        .sort((a, b) => {
+        .sort((a: any, b: any) => {
           if (!a || !b) return 0;
           return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
         });

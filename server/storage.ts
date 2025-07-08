@@ -862,7 +862,7 @@ export class DatabaseStorage implements IStorage {
     const sampleData = await db.select().from(sampleHealthData);
     
     // Convert sample data to health data format with userId
-    const insertData = sampleData.map(sample => ({
+    const insertData = sampleData.map((sample: any) => ({
       userId,
       dataType: sample.dataType,
       value: sample.value,

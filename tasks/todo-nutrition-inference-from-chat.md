@@ -65,7 +65,7 @@
   - Remember typical meals and portions
   - Use memories to improve inference accuracy
 
-### [ ] Task 7: Create Aggregation Logic
+### [X] Task 7: Create Aggregation Logic
 - **Problem**: Multiple food entries per day need aggregation
 - **Solution**: Add daily nutrition summaries
   - Sum nutrition values by date
@@ -143,4 +143,48 @@ When users discuss food or meals:
 7. Dashboard reflects updated nutrition metrics
 
 ## Review
-[To be filled after completion]
+**Task 7 Implementation Complete ✅**
+
+### What was implemented:
+1. **NutritionAggregationService** - New service for daily nutrition aggregation
+   - Daily nutrition summaries with meal-level granularity
+   - Support for updating existing entries
+   - Weekly averages calculation
+   - Comprehensive caching with TTL
+
+2. **Storage Integration** - Added aggregation methods to storage interface
+   - `getDailyNutritionSummary` - Get daily totals with meal breakdown
+   - `getNutritionSummariesByRange` - Get summaries for date ranges
+   - `updateNutritionEntry` - Update existing nutrition entries
+   - `getMealNutritionBreakdown` - Get meal-level breakdown
+   - `getWeeklyNutritionAverages` - Weekly average calculations
+
+3. **Cache Enhancement** - Added generic cache methods to cache service
+   - `get<T>`, `set<T>`, `del`, `delPattern` methods
+   - Automatic cache invalidation on data updates
+
+4. **Comprehensive Testing** - Full test suite for aggregation logic
+   - 10 test cases covering all aggregation scenarios
+   - Mock integration testing
+   - Edge case handling
+
+### Key Features:
+- **Meal-level granularity**: Tracks breakfast, lunch, dinner, snack separately
+- **Daily totals**: Sums all nutrition components by date
+- **Update support**: Can modify existing entries for specific dates/meals
+- **Weekly averages**: Calculates averages excluding days with no data
+- **Performance**: 1-hour cache TTL with smart invalidation
+- **Type safety**: Full TypeScript integration with proper interfaces
+
+### Files created/modified:
+- ✅ `server/services/nutrition-aggregation-service.ts` - Main aggregation service
+- ✅ `server/services/nutrition-aggregation-service.test.ts` - Comprehensive test suite
+- ✅ `server/storage.ts` - Added aggregation methods to storage interface
+- ✅ `server/services/cache-service.ts` - Added generic cache methods
+- ✅ `.system-maps/json-system-maps/chat/nutrition-inference-service.map.json` - Updated system documentation
+
+### Integration:
+- Automatically invalidates cache when new nutrition data is created
+- Seamlessly integrates with existing health data infrastructure
+- Maintains backward compatibility with existing nutrition tracking
+- Ready for frontend integration with health dashboard components

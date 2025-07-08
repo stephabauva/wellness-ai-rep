@@ -27,6 +27,7 @@ import { nanoid } from "nanoid";
 import { eq, and, gte, desc } from "drizzle-orm";
 import { db } from "./db";
 import { cacheService } from "./services/cache-service";
+import { nutritionAggregationService, type DailyNutritionSummary, type NutritionUpdateRequest, type NutritionMealSummary } from "./services/nutrition-aggregation-service.js";
 
 // Interface for storage methods
 export interface IStorage {
@@ -61,6 +62,22 @@ export interface IStorage {
   ): Promise<HealthData[]>;
   clearAllHealthData(userId: number): Promise<void>;
   deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }>;
+  
+  // Nutrition aggregation methods
+  getDailyNutritionSummary(userId: number, date: Date): Promise<import('./services/nutrition-aggregation-service.js').DailyNutritionSummary>;
+  getNutritionSummariesByRange(userId: number, startDate: Date, endDate: Date): Promise<import('./services/nutrition-aggregation-service.js').DailyNutritionSummary[]>;
+  updateNutritionEntry(request: import('./services/nutrition-aggregation-service.js').NutritionUpdateRequest): Promise<void>;
+  getMealNutritionBreakdown(userId: number, date: Date): Promise<{ [mealType: string]: import('./services/nutrition-aggregation-service.js').NutritionMealSummary }>;
+  getWeeklyNutritionAverages(userId: number, startDate: Date): Promise<{
+    averageCalories: number;
+    averageProtein: number;
+    averageCarbs: number;
+    averageFat: number;
+    averageFiber: number;
+    averageSugar: number;
+    averageSodium: number;
+    daysWithData: number;
+  }>;
   
   // Sample health data methods
   loadSampleHealthData(userId: number): Promise<{ recordsLoaded: number }>;
@@ -586,6 +603,10 @@ export class MemStorage implements IStorage {
     }
 
     console.log(`[MemStorage] Stored ${nutritionEntries.length} nutrition data entries for user ${userId}`);
+    
+    // Invalidate nutrition aggregation cache for the specific date
+    await nutritionAggregationService.invalidateCache(userId, timestamp);
+    
     return nutritionEntries;
   }
 
@@ -645,6 +666,36 @@ export class MemStorage implements IStorage {
     }
     
     this.devices.delete(id);
+  }
+
+  // Nutrition aggregation methods
+  async getDailyNutritionSummary(userId: number, date: Date): Promise<DailyNutritionSummary> {
+    return await nutritionAggregationService.getDailyNutritionSummary(userId, date);
+  }
+
+  async getNutritionSummariesByRange(userId: number, startDate: Date, endDate: Date): Promise<DailyNutritionSummary[]> {
+    return await nutritionAggregationService.getNutritionSummariesByRange(userId, startDate, endDate);
+  }
+
+  async updateNutritionEntry(request: NutritionUpdateRequest): Promise<void> {
+    await nutritionAggregationService.updateNutritionEntry(request);
+  }
+
+  async getMealNutritionBreakdown(userId: number, date: Date): Promise<{ [mealType: string]: NutritionMealSummary }> {
+    return await nutritionAggregationService.getMealNutritionBreakdown(userId, date);
+  }
+
+  async getWeeklyNutritionAverages(userId: number, startDate: Date): Promise<{
+    averageCalories: number;
+    averageProtein: number;
+    averageCarbs: number;
+    averageFat: number;
+    averageFiber: number;
+    averageSugar: number;
+    averageSodium: number;
+    daysWithData: number;
+  }> {
+    return await nutritionAggregationService.getWeeklyNutritionAverages(userId, startDate);
   }
 }
 
@@ -966,6 +1017,9 @@ export class DatabaseStorage implements IStorage {
     console.log(`[DatabaseStorage] Storing ${nutritionEntries.length} nutrition data entries for user ${userId}`);
     const results = await this.createHealthDataBatch(nutritionEntries);
     
+    // Invalidate nutrition aggregation cache for the specific date
+    await nutritionAggregationService.invalidateCache(userId, timestamp);
+    
     return results;
   }
 
@@ -1095,6 +1149,36 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(connectedDevices)
       .where(eq(connectedDevices.id, id));
+  }
+
+  // Nutrition aggregation methods
+  async getDailyNutritionSummary(userId: number, date: Date): Promise<DailyNutritionSummary> {
+    return await nutritionAggregationService.getDailyNutritionSummary(userId, date);
+  }
+
+  async getNutritionSummariesByRange(userId: number, startDate: Date, endDate: Date): Promise<DailyNutritionSummary[]> {
+    return await nutritionAggregationService.getNutritionSummariesByRange(userId, startDate, endDate);
+  }
+
+  async updateNutritionEntry(request: NutritionUpdateRequest): Promise<void> {
+    await nutritionAggregationService.updateNutritionEntry(request);
+  }
+
+  async getMealNutritionBreakdown(userId: number, date: Date): Promise<{ [mealType: string]: NutritionMealSummary }> {
+    return await nutritionAggregationService.getMealNutritionBreakdown(userId, date);
+  }
+
+  async getWeeklyNutritionAverages(userId: number, startDate: Date): Promise<{
+    averageCalories: number;
+    averageProtein: number;
+    averageCarbs: number;
+    averageFat: number;
+    averageFiber: number;
+    averageSugar: number;
+    averageSodium: number;
+    daysWithData: number;
+  }> {
+    return await nutritionAggregationService.getWeeklyNutritionAverages(userId, startDate);
   }
   
 

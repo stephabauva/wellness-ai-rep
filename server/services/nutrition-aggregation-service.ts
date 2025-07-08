@@ -161,7 +161,7 @@ export class NutritionAggregationService {
 
     // Filter by meal type if specified
     const filteredEntries = mealType 
-      ? existingEntries.filter(entry => 
+      ? existingEntries.filter((entry: any) => 
           entry.metadata && 
           typeof entry.metadata === 'object' && 
           'mealType' in entry.metadata && 
@@ -183,7 +183,7 @@ export class NutritionAggregationService {
 
     for (const component of nutritionComponents) {
       if (component.value !== undefined) {
-        const existingEntry = filteredEntries.find(entry => entry.dataType === component.key);
+        const existingEntry = filteredEntries.find((entry: any) => entry.dataType === component.key);
         if (existingEntry) {
           updates.push(
             db.update(healthData)
@@ -362,7 +362,7 @@ export class NutritionAggregationService {
   private extractMealType(entry: HealthData): 'breakfast' | 'lunch' | 'dinner' | 'snack' {
     if (entry.metadata && typeof entry.metadata === 'object' && 'mealType' in entry.metadata) {
       const mealType = entry.metadata.mealType;
-      if (['breakfast', 'lunch', 'dinner', 'snack'].includes(mealType)) {
+      if (typeof mealType === 'string' && ['breakfast', 'lunch', 'dinner', 'snack'].includes(mealType)) {
         return mealType as 'breakfast' | 'lunch' | 'dinner' | 'snack';
       }
     }

@@ -14,11 +14,11 @@
   "files": {
     "ui": [],
     "api": ["chat-routes.ts (processNutritionData function)"],
-    "services": ["nutrition-inference-service.ts", "nutrition-memory-service.ts", "storage.ts (createHealthDataBatch)", "memory-service.ts"],
+    "services": ["nutrition-inference-service.ts", "nutrition-memory-service.ts", "nutrition-aggregation-service.ts", "storage.ts (createHealthDataBatch)", "memory-service.ts", "cache-service.ts (generic cache methods)"],
     "utils": ["date-context-parser.ts"],
     "data": ["health_data table (nutrition category)", "memory_entries table (food_preferences, dietary_restrictions, meal_patterns, nutrition_goals)"],
-    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData", "DateContext interface", "FoodMemoryPattern interface", "DietaryInfo interface"],
-    "tests": ["date-context-parser.test.ts"]
+    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData", "DateContext interface", "FoodMemoryPattern interface", "DietaryInfo interface", "DailyNutritionSummary interface", "NutritionMealSummary interface", "NutritionUpdateRequest interface"],
+    "tests": ["date-context-parser.test.ts", "nutrition-aggregation-service.test.ts"]
   },
   "cacheFlow": {
     "invalidates": ["query:health-data", "query:nutrition-metrics"],
@@ -31,7 +31,7 @@
     "extraction": "Graceful fallback to empty nutrition data"
   },
   "dependencies": {
-    "internal": ["health-data-storage", "ai-service", "memory-service", "nutrition-memory-service"],
+    "internal": ["health-data-storage", "ai-service", "memory-service", "nutrition-memory-service", "nutrition-aggregation-service", "cache-service"],
     "external": ["zod validation"],
     "shared": ["logger-service"]
   },
@@ -112,8 +112,51 @@
         "Assigns nutrition category to all entries",
         "Includes conversation linking metadata",
         "Uses batch insert for efficiency",
-        "Invalidates health data cache"
+        "Invalidates health data cache",
+        "Invalidates nutrition aggregation cache for specific date"
       ]
+    }
+  },
+  "nutritionAggregationService": {
+    "description": "Task 7 implementation: Daily nutrition aggregation with meal-level granularity",
+    "getDailyNutritionSummary": {
+      "description": "Aggregates nutrition data by date with meal breakdown",
+      "parameters": ["userId", "date"],
+      "returns": "DailyNutritionSummary with totals and meal-level breakdown",
+      "caching": "1-hour TTL with cache invalidation on data updates",
+      "functionality": [
+        "Sums nutrition values by date",
+        "Provides meal-level granularity (breakfast, lunch, dinner, snack)",
+        "Calculates daily totals for all nutrition components",
+        "Includes entry counts for data quality assessment"
+      ]
+    },
+    "getNutritionSummariesByRange": {
+      "description": "Gets nutrition summaries for a date range",
+      "parameters": ["userId", "startDate", "endDate"],
+      "returns": "Array of DailyNutritionSummary objects",
+      "usage": "Weekly/monthly nutrition tracking and analysis"
+    },
+    "updateNutritionEntry": {
+      "description": "Updates existing nutrition entries for specific date/meal",
+      "parameters": ["NutritionUpdateRequest with userId, date, mealType, nutrition values"],
+      "functionality": [
+        "Finds existing entries by date and meal type",
+        "Updates individual nutrition components",
+        "Maintains audit trail with updated timestamps",
+        "Invalidates relevant cache entries"
+      ]
+    },
+    "getMealNutritionBreakdown": {
+      "description": "Gets meal-level nutrition breakdown for a specific date",
+      "parameters": ["userId", "date"],
+      "returns": "Object with meal types as keys and NutritionMealSummary as values"
+    },
+    "getWeeklyNutritionAverages": {
+      "description": "Calculates weekly nutrition averages",
+      "parameters": ["userId", "startDate (7 days from this date)"],
+      "returns": "Weekly averages for all nutrition components",
+      "excludes": "Days with no nutrition data from average calculation"
     }
   },
   "nutritionDataSchema": {

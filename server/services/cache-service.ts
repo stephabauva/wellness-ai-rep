@@ -494,6 +494,48 @@ export class IntelligentCacheService {
     this.hitCounts.set(category, 0);
     this.missCounts.set(category, 0);
   }
+
+  // Generic cache methods for external services
+  async get<T>(key: string): Promise<T | null> {
+    // Use a default cache category for generic operations
+    const cache = this.getCache('userSettings');
+    const cached = cache.get(key);
+    
+    if (cached) {
+      this.recordHit('userSettings');
+      return cached;
+    }
+    
+    this.recordMiss('userSettings');
+    return null;
+  }
+
+  async set<T>(key: string, value: T, ttl?: number): Promise<void> {
+    // Use a default cache category for generic operations
+    const cache = this.getCache('userSettings');
+    cache.set(key, value, { ttl });
+  }
+
+  async del(key: string): Promise<void> {
+    // Try to delete from all cache categories
+    this.caches.forEach(cache => {
+      if (cache.has(key)) {
+        cache.delete(key);
+      }
+    });
+  }
+
+  async delPattern(pattern: string): Promise<void> {
+    // Delete all keys matching the pattern from all cache categories
+    this.caches.forEach(cache => {
+      const keys = Array.from(cache.keys());
+      keys.forEach((key: string) => {
+        if (key.includes(pattern.replace('*', ''))) {
+          cache.delete(key);
+        }
+      });
+    });
+  }
 }
 
 export const cacheService = IntelligentCacheService.getInstance();

@@ -95,12 +95,16 @@ export { db, pool, initializeDatabase };
 // Graceful shutdown handler
 process.on('SIGINT', async () => {
   console.log('Closing database pool...');
-  await pool.end();
+  if (pool && typeof pool.end === 'function') {
+    await pool.end();
+  }
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('Closing database pool...');
-  await pool.end();
+  if (pool && typeof pool.end === 'function') {
+    await pool.end();
+  }
   process.exit(0);
 });

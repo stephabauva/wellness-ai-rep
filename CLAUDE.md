@@ -7,6 +7,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Tech Stack**: React + TypeScript + Vite + Node.js + Express + PostgreSQL + Drizzle ORM
 **Architecture**: Modular routes, Go microservices, multi-AI provider system
 **Core Features**: AI chat with memory, health data processing, file management
+**Databases setup** : Replit's neon database for cloud developmemt (npm run dev) and postgresql with pg for local development (npm run dev: local with .env.local)
+**System maps** : maps the architecture of each feature in .system-maps/json-system-maps
 
 ### Key Commands
 - `npm run dev` - Start development server
@@ -18,7 +20,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 ## Planning Rules
 
 ### Required Planning Process
-1. **Create plan first**: Write to `tasks/todo-[title].md` before coding
+1. Think, navigate the code, ultra think about all possibilities, **create plan first**: Write to `tasks/todo-[title].md` before coding
 2. **Wait for approval**: Check with user before executing plan
 3. **Plan must include**:
    - Feature scope and technical context
@@ -43,8 +45,9 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 
 ## Tasks
 - [ ] Task 1
+   - Detailed explanation of problem and solution
 - [ ] Task 2
-- [ ] Task 3
+   - ...
 
 ## Safety Checks
 - [ ] HMR/WebSocket stability preserved
@@ -105,7 +108,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 4. **High-level updates** only during execution
 5. **Review section** added to todo.md when complete
 6. **Cleanup** temporary files at end
-7. **update the system maps** of the features you modified using .system-maps/json-system-maps/system-mapping-guide.md
+7. **update the system maps** of the features you modified using .system-maps/optimized-complete-map-blue-original.md and the .system-maps/json-system-maps/root.map.json
 
 ### Testing Requirements
 - Use Vitest for all tests

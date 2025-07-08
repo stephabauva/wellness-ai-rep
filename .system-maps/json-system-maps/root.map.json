@@ -145,13 +145,17 @@
       }
     },
     "infrastructure": {
-      "description": "Cross-cutting concerns: logging, performance monitoring, and testing utilities",
+      "description": "Cross-cutting concerns: logging, performance monitoring, database infrastructure, and testing utilities",
       "path": ".system-maps/json-system-maps/infrastructure/",
       "dependencies": [],
       "subdomains": {
         "logging": {
           "description": "Application logging and monitoring",
           "path": ".system-maps/json-system-maps/infrastructure/logging.map.json"
+        },
+        "neon-database": {
+          "description": "Neon serverless PostgreSQL database infrastructure for production Replit environment",
+          "path": ".system-maps/json-system-maps/infrastructure/neon-database.map.json"
         },
         "performance": {
           "description": "Performance monitoring and optimization",
@@ -160,13 +164,12 @@
         "testing": {
           "description": "Testing infrastructure and utilities",
           "path": ".system-maps/json-system-maps/infrastructure/testing.map.json"
+        },
+        "local-database": {
+          "description": "Manages local PostgreSQL database setup, schema synchronization, and connection switching for development",
+          "path": ".system-maps/json-system-maps/infrastructure/local-database-system-map.json"
         }
       }
-    },
-    "local-database": {
-      "description": "Manages local PostgreSQL database setup, schema synchronization, and connection switching for development.",
-      "path": ".system-maps/json-system-maps/local-database-system-map.json",
-      "dependencies": ["infrastructure"]
     }
   },
   "testMaps": {

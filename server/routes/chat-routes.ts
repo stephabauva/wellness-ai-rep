@@ -49,11 +49,13 @@ async function processNutritionData(
   try {
     console.log('[NUTRITION_PROCESSING] Starting nutrition data extraction');
     
-    // Extract nutrition data from AI response
-    const nutritionData = nutritionInferenceService.extractNutritionFromText(
+    // Extract nutrition data from AI response with memory enhancement
+    const nutritionData = await nutritionInferenceService.extractNutritionFromText(
       aiResponse,
       originalMessage,
-      hasImages
+      hasImages,
+      undefined, // timezone - could be added later
+      userId
     );
 
     if (nutritionData) {
@@ -194,6 +196,10 @@ async function processNutritionData(
       if (healthDataEntries.length > 0) {
         await storage.createHealthDataBatch(healthDataEntries);
         console.log('[NUTRITION_PROCESSING] Successfully stored', healthDataEntries.length, 'nutrition entries');
+        
+        // Update food memories after successful storage
+        await nutritionInferenceService.updateFoodMemories(userId, nutritionData, conversationId);
+        console.log('[NUTRITION_PROCESSING] Updated food memories for user', userId);
       }
     } else {
       console.log('[NUTRITION_PROCESSING] No nutrition data found in AI response');

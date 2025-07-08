@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DateContextParser, type DateContext } from '../utils/date-context-parser.js';
+import { nutritionMemoryService } from './nutrition-memory-service.js';
 
 // Helper function to log with service context
 const log = (level: 'info' | 'error' | 'warn', message: string, data?: any) => {
@@ -38,14 +39,15 @@ export class NutritionInferenceService {
   /**
    * Extract nutrition information from AI response text
    * Handles both explicit values and inferred estimates
-   * Now includes date context parsing
+   * Now includes date context parsing and memory-enhanced estimation
    */
-  public extractNutritionFromText(
+  public async extractNutritionFromText(
     responseText: string,
     originalMessage?: string,
     hasImages?: boolean,
-    timezone?: string
-  ): NutritionData | null {
+    timezone?: string,
+    userId?: number
+  ): Promise<NutritionData | null> {
     try {
       log('info', 'Extracting nutrition data from AI response');
       
@@ -72,6 +74,25 @@ export class NutritionInferenceService {
 
       // Parse date context from the conversation
       const dateContext = this.parseDateContext(responseText, originalMessage, timezone);
+
+      // Enhance with memory-based inference if user ID provided
+      let memoryEnhancement: any = null;
+      if (userId && foodItems.length > 0) {
+        memoryEnhancement = await nutritionMemoryService.enhanceNutritionInference(
+          userId,
+          foodItems,
+          mealType
+        );
+        
+        // Use memory-based calorie estimation if no explicit calories found
+        if (!nutritionValues.calories && memoryEnhancement.estimatedCalories) {
+          nutritionValues.calories = memoryEnhancement.estimatedCalories;
+          log('info', 'Enhanced nutrition data with memory-based estimation', {
+            estimatedCalories: memoryEnhancement.estimatedCalories,
+            reasoning: memoryEnhancement.reasoning
+          });
+        }
+      }
 
       // Build nutrition data object
       const nutritionData: NutritionData = {
@@ -331,6 +352,38 @@ export class NutritionInferenceService {
     } catch (error) {
       log('warn', 'Nutrition data validation failed:', error);
       return false;
+    }
+  }
+
+  /**
+   * Update food memories based on extracted nutrition data
+   */
+  public async updateFoodMemories(
+    userId: number,
+    nutritionData: NutritionData,
+    conversationId: string
+  ): Promise<void> {
+    try {
+      await nutritionMemoryService.updateFoodMemories(userId, nutritionData, conversationId);
+      log('info', 'Successfully updated food memories', {
+        userId,
+        foodItems: nutritionData.foodItems?.length || 0,
+        mealType: nutritionData.mealType
+      });
+    } catch (error) {
+      log('error', 'Failed to update food memories:', error);
+    }
+  }
+
+  /**
+   * Get user's dietary information for safety checks
+   */
+  public async getUserDietaryInfo(userId: number) {
+    try {
+      return await nutritionMemoryService.getDietaryInfo(userId);
+    } catch (error) {
+      log('error', 'Failed to get dietary info:', error);
+      return { restrictions: [], allergies: [], preferences: [], goals: [] };
     }
   }
 

@@ -7,17 +7,17 @@
   },
   "trigger": "User sends food-related message → AI responds → Post-processing extracts nutrition",
   "dataFlow": {
-    "request": "Chat Routes → processNutritionData → nutritionInferenceService.extractNutritionFromText → DateContextParser.parseDateContext → NutritionData validation",
-    "response": "Validated NutritionData → formatForStorage → storage.createNutritionDataFromInference → Health database",
-    "sideEffects": ["Health data creation", "Nutrition metrics aggregation", "Cache invalidation for health queries"]
+    "request": "Chat Routes → processNutritionData → nutritionInferenceService.extractNutritionFromText → nutritionMemoryService.enhanceNutritionInference → DateContextParser.parseDateContext → NutritionData validation",
+    "response": "Validated NutritionData → formatForStorage → storage.createHealthDataBatch → nutritionInferenceService.updateFoodMemories → Memory system updates",
+    "sideEffects": ["Health data creation", "Nutrition metrics aggregation", "Cache invalidation for health queries", "Food memory pattern updates", "Dietary preference tracking"]
   },
   "files": {
     "ui": [],
     "api": ["chat-routes.ts (processNutritionData function)"],
-    "services": ["nutrition-inference-service.ts", "storage.ts (createHealthDataBatch, createNutritionDataFromInference)"],
+    "services": ["nutrition-inference-service.ts", "nutrition-memory-service.ts", "storage.ts (createHealthDataBatch)", "memory-service.ts"],
     "utils": ["date-context-parser.ts"],
-    "data": ["health_data table (nutrition category)"],
-    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData", "DateContext interface"],
+    "data": ["health_data table (nutrition category)", "memory_entries table (food_preferences, dietary_restrictions, meal_patterns, nutrition_goals)"],
+    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData", "DateContext interface", "FoodMemoryPattern interface", "DietaryInfo interface"],
     "tests": ["date-context-parser.test.ts"]
   },
   "cacheFlow": {
@@ -31,17 +31,26 @@
     "extraction": "Graceful fallback to empty nutrition data"
   },
   "dependencies": {
-    "internal": ["health-data-storage", "ai-service"],
+    "internal": ["health-data-storage", "ai-service", "memory-service", "nutrition-memory-service"],
     "external": ["zod validation"],
     "shared": ["logger-service"]
   },
   "implementation": {
     "extractNutritionFromText": {
-      "description": "Main entry point for nutrition extraction from AI responses with date context parsing",
-      "parameters": ["responseText", "originalMessage", "hasImages", "timezone"],
-      "returns": "NutritionData | null",
+      "description": "Main entry point for nutrition extraction from AI responses with memory-enhanced inference",
+      "parameters": ["responseText", "originalMessage", "hasImages", "timezone", "userId"],
+      "returns": "Promise<NutritionData | null>",
       "validation": "Uses zod schema for data validation",
-      "enhancement": "Now includes automatic date context parsing for temporal food references"
+      "enhancement": "Memory-enhanced inference uses user's food patterns for improved calorie estimation"
+    },
+    "updateFoodMemories": {
+      "description": "Updates user's food memories after successful nutrition data extraction",
+      "parameters": ["userId", "nutritionData", "conversationId"],
+      "functionality": [
+        "Updates meal patterns based on food items and meal type",
+        "Tracks food preferences from identified food items",
+        "Infers nutrition goals from calorie and macro intake patterns"
+      ]
     },
     "parseNutritionValues": {
       "description": "Uses regex patterns to extract nutrition values from text",
@@ -131,9 +140,42 @@
   },
   "integrationPoints": {
     "aiService": "Enhanced system prompts in chat-context-service.ts provide nutrition analysis capabilities",
-    "healthDataStorage": "Stores extracted nutrition data in health_data table using storage.createNutritionDataFromInference",
+    "healthDataStorage": "Stores extracted nutrition data in health_data table using storage.createHealthDataBatch",
     "chatPostProcessing": "Integrated into chat-routes.ts streaming and non-streaming endpoints",
-    "memorySystem": "Nutrition patterns stored in memory for better inference"
+    "memorySystem": "Two-way integration: reads meal patterns for enhanced inference, writes food memories for learning"
+  },
+  "memoryIntegration": {
+    "description": "Task 6 implementation: Memory system integration for nutrition inference",
+    "categories": {
+      "food_preferences": "Tracks foods user enjoys eating",
+      "dietary_restrictions": "Critical safety information about allergies and restrictions",
+      "meal_patterns": "Typical meals and portion patterns for each meal type",
+      "nutrition_goals": "Inferred nutrition goals from intake patterns"
+    },
+    "enhancementFlow": {
+      "description": "Memory-enhanced nutrition inference",
+      "process": [
+        "Extract food items and meal type from AI response",
+        "Query user's meal patterns for matching foods and meal types",
+        "Estimate calories based on historical patterns",
+        "Apply confidence scoring based on pattern match quality",
+        "Use fallback to AI inference if no patterns match"
+      ]
+    },
+    "memoryUpdates": {
+      "description": "Learning from nutrition data to improve future inference",
+      "triggers": [
+        "After successful nutrition data storage",
+        "Updates meal patterns with food items and calorie information",
+        "Tracks food preferences for frequently mentioned foods",
+        "Infers nutrition goals from calorie and macro patterns"
+      ]
+    },
+    "safety": {
+      "description": "Dietary restriction and allergy tracking",
+      "importance": "Critical safety feature for users with food allergies",
+      "storage": "High importance score (0.9-0.95) for dietary restrictions and allergies"
+    }
   },
   "postProcessingPipeline": {
     "description": "Automatic nutrition data extraction from AI chat responses",

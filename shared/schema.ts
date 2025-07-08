@@ -382,7 +382,16 @@ export type ConversationMessage = typeof conversationMessages.$inferSelect;
 export type InsertConversationMessage = z.infer<typeof insertConversationMessageSchema>;
 
 // Memory categories
-export const memoryCategories = ['preference', 'personal_info', 'context', 'instruction'] as const;
+export const memoryCategories = [
+  'preference', 
+  'personal_info', 
+  'context', 
+  'instruction',
+  'food_preferences',
+  'dietary_restrictions',
+  'meal_patterns',
+  'nutrition_goals'
+] as const;
 export type MemoryCategory = typeof memoryCategories[number];
 
 // Coaching types

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DateContextParser, type DateContext } from '../utils/date-context-parser.js';
 
 // Helper function to log with service context
 const log = (level: 'info' | 'error' | 'warn', message: string, data?: any) => {
@@ -20,6 +21,11 @@ export const nutritionDataSchema = z.object({
   mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).optional(),
   foodItems: z.array(z.string()).optional(), // List of identified food items
   originalText: z.string().optional(), // Original message text for reference
+  dateContext: z.object({
+    confidence: z.enum(['high', 'medium', 'low']),
+    source: z.enum(['explicit', 'relative', 'inferred', 'default']),
+    originalText: z.string().optional(),
+  }).optional(), // Date parsing context information
 });
 
 export type NutritionData = z.infer<typeof nutritionDataSchema>;
@@ -32,11 +38,13 @@ export class NutritionInferenceService {
   /**
    * Extract nutrition information from AI response text
    * Handles both explicit values and inferred estimates
+   * Now includes date context parsing
    */
   public extractNutritionFromText(
     responseText: string,
     originalMessage?: string,
-    hasImages?: boolean
+    hasImages?: boolean,
+    timezone?: string
   ): NutritionData | null {
     try {
       log('info', 'Extracting nutrition data from AI response');
@@ -62,15 +70,23 @@ export class NutritionInferenceService {
       // Extract food items mentioned
       const foodItems = this.extractFoodItems(responseText, originalMessage);
 
+      // Parse date context from the conversation
+      const dateContext = this.parseDateContext(responseText, originalMessage, timezone);
+
       // Build nutrition data object
       const nutritionData: NutritionData = {
         ...nutritionValues,
-        timestamp: new Date(),
+        timestamp: dateContext.date,
         confidence,
         source,
         mealType,
         foodItems,
         originalText: originalMessage,
+        dateContext: {
+          confidence: dateContext.confidence,
+          source: dateContext.source,
+          originalText: dateContext.originalText,
+        },
       };
 
       // Validate the extracted data
@@ -268,6 +284,44 @@ export class NutritionInferenceService {
   }
 
   /**
+   * Parse date context from conversation text
+   */
+  private parseDateContext(
+    responseText: string,
+    originalMessage?: string,
+    timezone?: string
+  ): DateContext {
+    // Combine both the original message and AI response for better context
+    const combinedText = `${originalMessage || ''} ${responseText}`;
+    
+    // Parse date context using the date parser utility
+    const dateContext = DateContextParser.parseDateContext(combinedText, new Date(), timezone);
+    
+    // Validate the parsed date to ensure it's reasonable
+    if (!DateContextParser.validateDateRange(dateContext.date)) {
+      log('warn', 'Parsed date is outside reasonable range, using current date', {
+        parsedDate: dateContext.date.toISOString(),
+        currentDate: new Date().toISOString()
+      });
+      
+      return {
+        date: new Date(),
+        confidence: 'low',
+        source: 'default',
+        originalText: combinedText
+      };
+    }
+    
+    log('info', 'Successfully parsed date context', {
+      date: dateContext.date.toISOString(),
+      confidence: dateContext.confidence,
+      source: dateContext.source
+    });
+    
+    return dateContext;
+  }
+
+  /**
    * Validate nutrition data ranges
    */
   public validateNutritionData(data: NutritionData): boolean {
@@ -298,6 +352,11 @@ export class NutritionInferenceService {
       foodItems?: string[];
       originalText?: string;
       timestamp: string;
+      dateContext?: {
+        confidence: string;
+        source: string;
+        originalText?: string;
+      };
     };
   } {
     return {
@@ -315,6 +374,7 @@ export class NutritionInferenceService {
         foodItems: data.foodItems,
         originalText: data.originalText,
         timestamp: data.timestamp.toISOString(),
+        dateContext: data.dateContext,
       },
     };
   }

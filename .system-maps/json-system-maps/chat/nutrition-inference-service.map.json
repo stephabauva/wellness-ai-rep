@@ -7,7 +7,7 @@
   },
   "trigger": "User sends food-related message → AI responds → Post-processing extracts nutrition",
   "dataFlow": {
-    "request": "Chat Routes → processNutritionData → nutritionInferenceService.extractNutritionFromText → NutritionData validation",
+    "request": "Chat Routes → processNutritionData → nutritionInferenceService.extractNutritionFromText → DateContextParser.parseDateContext → NutritionData validation",
     "response": "Validated NutritionData → formatForStorage → storage.createHealthDataBatch → Health database",
     "sideEffects": ["Health data creation", "Nutrition metrics aggregation", "Cache invalidation for health queries"]
   },
@@ -15,8 +15,10 @@
     "ui": [],
     "api": ["chat-routes.ts (processNutritionData function)"],
     "services": ["nutrition-inference-service.ts", "storage.ts (createHealthDataBatch)"],
+    "utils": ["date-context-parser.ts"],
     "data": ["health_data table (nutrition category)"],
-    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData"]
+    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData", "DateContext interface"],
+    "tests": ["date-context-parser.test.ts"]
   },
   "cacheFlow": {
     "invalidates": ["query:health-data", "query:nutrition-metrics"],
@@ -35,10 +37,11 @@
   },
   "implementation": {
     "extractNutritionFromText": {
-      "description": "Main entry point for nutrition extraction from AI responses",
-      "parameters": ["responseText", "originalMessage", "hasImages"],
+      "description": "Main entry point for nutrition extraction from AI responses with date context parsing",
+      "parameters": ["responseText", "originalMessage", "hasImages", "timezone"],
       "returns": "NutritionData | null",
-      "validation": "Uses zod schema for data validation"
+      "validation": "Uses zod schema for data validation",
+      "enhancement": "Now includes automatic date context parsing for temporal food references"
     },
     "parseNutritionValues": {
       "description": "Uses regex patterns to extract nutrition values from text",
@@ -77,11 +80,18 @@
       "description": "Identifies specific food items mentioned",
       "method": "Pattern matching against common food database"
     },
+    "parseDateContext": {
+      "description": "Parses date context from conversation text using DateContextParser",
+      "parameters": ["responseText", "originalMessage", "timezone"],
+      "returns": "DateContext object with parsed date and confidence",
+      "patterns": ["today", "yesterday", "last Monday", "3 days ago", "explicit dates (MM/DD)"],
+      "validation": "Validates parsed dates are within reasonable range (30 days past, 7 days future)"
+    },
     "formatForStorage": {
       "description": "Formats nutrition data for health_data table storage",
       "output": {
         "nutrition_values": "Direct column values",
-        "metadata": "JSON metadata with confidence, source, meal type, etc."
+        "metadata": "JSON metadata with confidence, source, meal type, date context, etc."
       }
     }
   },
@@ -93,12 +103,13 @@
     "fiber": "number (0-200) grams",
     "sugar": "number (0-500) grams",
     "sodium": "number (0-10000) mg",
-    "timestamp": "Date",
+    "timestamp": "Date (parsed from conversation context)",
     "confidence": "enum: high|medium|low",
     "source": "enum: user_provided|ai_inferred|photo_analysis",
     "mealType": "enum: breakfast|lunch|dinner|snack (optional)",
     "foodItems": "string[] (optional)",
-    "originalText": "string (optional)"
+    "originalText": "string (optional)",
+    "dateContext": "object (optional) - confidence, source, originalText of date parsing"
   },
   "validationRules": {
     "nutritionValues": "All nutrition values must be positive numbers within realistic ranges",
@@ -158,12 +169,45 @@
       "extractNutritionFromText with various input formats",
       "parseNutritionValues regex pattern matching",
       "determineConfidence logic validation",
-      "nutritionDataSchema validation"
+      "nutritionDataSchema validation",
+      "DateContextParser.parseDateContext with relative dates",
+      "DateContextParser.validateDateRange edge cases",
+      "Date parsing from explicit formats (MM/DD, MM/DD/YYYY)",
+      "Timezone handling and conversion"
     ],
     "integrationTests": [
       "End-to-end nutrition extraction from AI responses",
       "Health data storage integration",
-      "Error handling and edge cases"
+      "Error handling and edge cases",
+      "Date context integration with nutrition inference",
+      "Temporal nutrition data tracking accuracy"
     ]
+  },
+  "dateContextParser": {
+    "description": "Standalone utility for parsing date context from natural language",
+    "location": "server/utils/date-context-parser.ts",
+    "capabilities": [
+      "Relative date parsing (today, yesterday, X days ago)",
+      "Day of week parsing (last Monday, this Friday)",
+      "Explicit date parsing (MM/DD, MM/DD/YYYY)",
+      "Meal time inference (breakfast, lunch, dinner)",
+      "Time of day parsing (morning, afternoon, evening)",
+      "Timezone handling and conversion",
+      "Date validation within reasonable ranges"
+    ],
+    "patterns": {
+      "today": "today|this morning|this afternoon|this evening|currently",
+      "yesterday": "yesterday|last night",
+      "daysAgo": "\\d+ days? ago",
+      "dayOfWeek": "last|this + day name",
+      "explicitDate": "MM/DD or MM/DD/YYYY format",
+      "mealTime": "breakfast|lunch|dinner|brunch",
+      "timeOfDay": "morning|afternoon|evening|night"
+    },
+    "validation": {
+      "pastRange": "30 days maximum",
+      "futureRange": "7 days maximum",
+      "fallback": "Current date if parsing fails or out of range"
+    }
   }
 }

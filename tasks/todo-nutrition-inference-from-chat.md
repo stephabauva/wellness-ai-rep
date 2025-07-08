@@ -33,7 +33,7 @@
   - Specify output format for easy parsing
   - Handle temporal context (today, yesterday, specific dates)
 
-### [ ] Task 3: Create Message Post-Processing Pipeline
+### [X] Task 3: Create Message Post-Processing Pipeline
 - **Problem**: Need to automatically process chat messages for nutrition data
 - **Solution**: Add post-processing to chat routes
   - After AI response, analyze for nutrition content
@@ -41,7 +41,7 @@
   - Call nutrition inference service
   - Store data in health database
 
-### [ ] Task 4: Implement Date Context Parser
+### [x] Task 4: Implement Date Context Parser
 - **Problem**: Users mention food at different times ("yesterday", "last Monday", "today")
 - **Solution**: Create date parsing utility
   - Parse relative dates from conversation context

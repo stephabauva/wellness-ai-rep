@@ -1,3 +1,4 @@
+
 {
   "appName": "Wellness Coaching Application",
   "version": "1.0.0",
@@ -5,43 +6,181 @@
   "domains": {
     "chat": {
       "description": "Core chat messaging functionality with AI streaming responses and conversation history",
-      "path": ".system-maps/chat/",
-      "dependencies": ["memory", "file-manager"]
+      "path": ".system-maps/json-system-maps/chat/",
+      "dependencies": ["memory", "file-manager"],
+      "subdomains": {
+        "attachments": {
+          "description": "File and media attachment handling in chat",
+          "path": ".system-maps/json-system-maps/chat/attachments.map.json"
+        },
+        "audio-transcription": {
+          "description": "Audio recording and transcription features",
+          "path": ".system-maps/json-system-maps/chat/audio-transcription.map.json"
+        },
+        "conversation-history": {
+          "description": "Chat history management and persistence",
+          "path": ".system-maps/json-system-maps/chat/conversation-history.map.json"
+        },
+        "core-messaging": {
+          "description": "Core chat messaging and streaming functionality",
+          "path": ".system-maps/json-system-maps/chat/core-messaging.map.json"
+        }
+      }
     },
     "memory": {
       "description": "AI memory system for context persistence and intelligent memory management",
-      "path": "memory/",
-      "dependencies": []
+      "path": ".system-maps/json-system-maps/memory/",
+      "dependencies": [],
+      "subdomains": {
+        "memory-core": {
+          "description": "Core memory operations and storage",
+          "path": ".system-maps/json-system-maps/memory/memory-core.map.json"
+        },
+        "memory-ui": {
+          "description": "Memory management user interface",
+          "path": ".system-maps/json-system-maps/memory/memory-ui.map.json"
+        }
+      }
     },
     "health": {
       "description": "Health data management, metrics tracking, and native platform integration",
-      "path": "health/",
-      "dependencies": []
+      "path": ".system-maps/json-system-maps/health/",
+      "dependencies": [],
+      "subdomains": {
+        "dashboard": {
+          "description": "Health dashboard display and visualization",
+          "path": ".system-maps/json-system-maps/health/dashboard.map.json"
+        },
+        "data-operations": {
+          "description": "Health data import, parsing, and processing",
+          "path": ".system-maps/json-system-maps/health/data-operations.map.json"
+        },
+        "metrics-management": {
+          "description": "Health metrics management and visibility controls",
+          "path": ".system-maps/json-system-maps/health/metrics-management.map.json"
+        }
+      },
+      "features": {
+        "load-sample-data": {
+          "description": "Load sample health data for testing",
+          "path": ".system-maps/json-system-maps/health/load-sample-data.feature.json"
+        },
+        "native-health-sync": {
+          "description": "Native health platform synchronization",
+          "path": ".system-maps/json-system-maps/health/native-health-sync.feature.json"
+        },
+        "timeframe-dropdown": {
+          "description": "Health data timeframe selection",
+          "path": ".system-maps/json-system-maps/health/timeframe-dropdown.feature.json"
+        }
+      }
     },
     "file-manager": {
       "description": "File upload, categorization, retention management, and sharing capabilities",
-      "path": "file-manager/",
-      "dependencies": []
+      "path": ".system-maps/json-system-maps/file-manager/",
+      "dependencies": [],
+      "subdomains": {
+        "advanced-processing": {
+          "description": "Advanced file processing and optimization",
+          "path": ".system-maps/json-system-maps/file-manager/advanced-processing.map.json"
+        },
+        "categories": {
+          "description": "File categorization and organization",
+          "path": ".system-maps/json-system-maps/file-manager/categories.map.json"
+        },
+        "core-operations": {
+          "description": "Core file operations (upload, download, delete)",
+          "path": ".system-maps/json-system-maps/file-manager/core-operations.map.json"
+        }
+      }
     },
     "settings": {
       "description": "Application configuration, user preferences, and system settings management",
-      "path": "settings/",
-      "dependencies": []
+      "path": ".system-maps/json-system-maps/settings/",
+      "dependencies": [],
+      "subdomains": {
+        "account-management": {
+          "description": "User account and profile management",
+          "path": ".system-maps/json-system-maps/settings/account-management.map.json"
+        },
+        "ai-configuration": {
+          "description": "AI model and behavior configuration",
+          "path": ".system-maps/json-system-maps/settings/ai-configuration.map.json"
+        },
+        "app-preferences": {
+          "description": "Application preferences and UI settings",
+          "path": ".system-maps/json-system-maps/settings/app-preferences.map.json"
+        },
+        "coaching-preferences": {
+          "description": "Coaching behavior and interaction preferences",
+          "path": ".system-maps/json-system-maps/settings/coaching-preferences.map.json"
+        },
+        "file-management": {
+          "description": "File management settings and preferences",
+          "path": ".system-maps/json-system-maps/settings/file-management.map.json"
+        },
+        "health-data-consent": {
+          "description": "Health data privacy and consent management",
+          "path": ".system-maps/json-system-maps/settings/health-data-consent.map.json"
+        },
+        "performance-settings": {
+          "description": "Application performance and optimization settings",
+          "path": ".system-maps/json-system-maps/settings/performance-settings.map.json"
+        },
+        "root": {
+          "description": "Root settings navigation and organization",
+          "path": ".system-maps/json-system-maps/settings/root.map.json"
+        }
+      }
     },
     "routes": {
       "description": "Server-side API routing and middleware configuration",
-      "path": "routes/",
-      "dependencies": []
+      "path": ".system-maps/json-system-maps/routes/",
+      "dependencies": [],
+      "subdomains": {
+        "routes-core": {
+          "description": "Core API routing and middleware",
+          "path": ".system-maps/json-system-maps/routes/routes-core.map.json"
+        }
+      }
     },
     "infrastructure": {
       "description": "Cross-cutting concerns: logging, performance monitoring, and testing utilities",
-      "path": "infrastructure/",
-      "dependencies": []
+      "path": ".system-maps/json-system-maps/infrastructure/",
+      "dependencies": [],
+      "subdomains": {
+        "logging": {
+          "description": "Application logging and monitoring",
+          "path": ".system-maps/json-system-maps/infrastructure/logging.map.json"
+        },
+        "performance": {
+          "description": "Performance monitoring and optimization",
+          "path": ".system-maps/json-system-maps/infrastructure/performance.map.json"
+        },
+        "testing": {
+          "description": "Testing infrastructure and utilities",
+          "path": ".system-maps/json-system-maps/infrastructure/testing.map.json"
+        }
+      }
     },
     "local-database": {
       "description": "Manages local PostgreSQL database setup, schema synchronization, and connection switching for development.",
       "path": ".system-maps/json-system-maps/local-database-system-map.json",
       "dependencies": ["infrastructure"]
+    }
+  },
+  "testMaps": {
+    "test-chat": {
+      "description": "Test system map for chat functionality validation",
+      "path": ".system-maps/json-system-maps/test-chat.map.json"
+    },
+    "test-circular-deps": {
+      "description": "Test system map for circular dependency detection",
+      "path": ".system-maps/json-system-maps/test-circular-deps.map.json"
+    },
+    "test-memory": {
+      "description": "Test feature map for memory functionality validation",
+      "path": ".system-maps/json-system-maps/test-memory.feature.json"
     }
   }
 }

@@ -57,13 +57,40 @@
   - Add metadata for source (chat inference)
   - Link to conversation ID for traceability
 
-### [ ] Task 6: Add Memory Integration
+### [X] Task 6: Add Memory Integration
 - **Problem**: Should remember user's eating patterns and preferences
 - **Solution**: Enhance memory system
   - Create food-specific memory categories
   - Track dietary restrictions, allergies
   - Remember typical meals and portions
   - Use memories to improve inference accuracy
+
+### [x] Task 6.2: Update Memory UI to Display New Food Categories
+- **Problem**: New food-related memory categories (food_preferences, dietary_restrictions, meal_patterns, nutrition_goals) are not visible in the memory UI
+- **Solution**: Update MemorySection component
+  - Add new category tabs for food-related memories
+  - Update overview to include counts for new categories
+  - Add appropriate category badges and descriptions
+  - Ensure category filtering works for new categories
+  - Add icons or visual indicators for food-related categories
+
+### [ ] Task 6.3: Harmonize Memory Overview with Category Tabs
+- **Problem**: Inconsistency between overview display (total memories, preferences, instruction, personal info) and category tabs (all, preferences, personal, context, instructions)
+- **Solution**: Standardize memory categories across UI
+  - Update overview to show all category types consistently
+  - Include 'context' category in overview counts
+  - Add new food-related categories to both overview and tabs
+  - Ensure consistent naming (e.g., "instruction" vs "instructions")
+  - Update API endpoint to return all category counts
+
+### [ ] Task 6.4: Fix Real-time Memory Count Updates
+- **Problem**: Memory counts in overview don't update in real-time after adding/deleting memories, requiring page refresh
+- **Solution**: Implement proper cache invalidation
+  - Ensure query:memories-overview is invalidated after memory operations
+  - Update mutation callbacks to trigger overview refetch
+  - Add optimistic updates for immediate UI feedback
+  - Test count updates for all CRUD operations
+  - Verify counts update for both individual and bulk operations
 
 ### [X] Task 7: Create Aggregation Logic
 - **Problem**: Multiple food entries per day need aggregation

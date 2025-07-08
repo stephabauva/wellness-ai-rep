@@ -17,12 +17,16 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
       const memories = await memoryService.getUserMemories(1);
       
       const overview = {
-        totalMemories: memories.length,
+        total: memories.length,
         categories: {
           preference: memories.filter(m => m.category === 'preference').length,
           personal_info: memories.filter(m => m.category === 'personal_info').length,
           context: memories.filter(m => m.category === 'context').length,
-          instruction: memories.filter(m => m.category === 'instruction').length
+          instruction: memories.filter(m => m.category === 'instruction').length,
+          food_preferences: memories.filter(m => m.category === 'food_preferences').length,
+          dietary_restrictions: memories.filter(m => m.category === 'dietary_restrictions').length,
+          meal_patterns: memories.filter(m => m.category === 'meal_patterns').length,
+          nutrition_goals: memories.filter(m => m.category === 'nutrition_goals').length
         },
         recentMemories: memories.slice(0, 3).map(m => ({
           id: m.id, content: m.content.substring(0, 100) + (m.content.length > 100 ? '...' : ''),
@@ -110,7 +114,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Memory content must be at least 10 characters" });
       }
 
-      if (!["preference", "personal_info", "context", "instruction"].includes(category)) {
+      if (!["preference", "personal_info", "context", "instruction", "food_preferences", "dietary_restrictions", "meal_patterns", "nutrition_goals"].includes(category)) {
         return res.status(400).json({ message: "Invalid category" });
       }
 

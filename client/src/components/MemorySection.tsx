@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, ShieldAlert, Calendar, Target } from "lucide-react";
 import { Eye, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,7 @@ import { z } from "zod";
 // Manual memory entry schema
 const manualMemorySchema = z.object({
   content: z.string().min(10, "Memory content must be at least 10 characters").max(500, "Memory content must be less than 500 characters"),
-  category: z.enum(["preference", "personal_info", "context", "instruction"], {
+  category: z.enum(["preference", "personal_info", "context", "instruction", "food_preferences", "dietary_restrictions", "meal_patterns", "nutrition_goals"], {
     required_error: "Please select a memory category",
   }),
   importance: z.enum(["low", "medium", "high"], {
@@ -46,21 +46,33 @@ const categoryIcons = {
   preference: <User className="h-4 w-4" />,
   personal_info: <User className="h-4 w-4" />,
   context: <Lightbulb className="h-4 w-4" />,
-  instruction: <Settings className="h-4 w-4" />
+  instruction: <Settings className="h-4 w-4" />,
+  food_preferences: <Apple className="h-4 w-4" />,
+  dietary_restrictions: <ShieldAlert className="h-4 w-4" />,
+  meal_patterns: <Calendar className="h-4 w-4" />,
+  nutrition_goals: <Target className="h-4 w-4" />
 };
 
 const categoryLabels = {
   preference: "Preferences",
   personal_info: "Personal Info",
   context: "Context",
-  instruction: "Instructions"
+  instruction: "Instructions",
+  food_preferences: "Food Preferences",
+  dietary_restrictions: "Dietary Restrictions",
+  meal_patterns: "Meal Patterns",
+  nutrition_goals: "Nutrition Goals"
 };
 
 const categoryColors = {
   preference: "bg-blue-100 text-blue-800",
   personal_info: "bg-green-100 text-green-800",
   context: "bg-yellow-100 text-yellow-800",
-  instruction: "bg-purple-100 text-purple-800"
+  instruction: "bg-purple-100 text-purple-800",
+  food_preferences: "bg-orange-100 text-orange-800",
+  dietary_restrictions: "bg-red-100 text-red-800",
+  meal_patterns: "bg-indigo-100 text-indigo-800",
+  nutrition_goals: "bg-teal-100 text-teal-800"
 };
 
 const explanationCards = {
@@ -112,6 +124,46 @@ const explanationCards = {
       "Protocols for reminders and check-ins",
       "Permission requirements for suggestions",
       "Goal-setting and progress tracking preferences"
+    ]
+  },
+  food_preferences: {
+    title: "Food Preferences",
+    description: "Foods you enjoy eating and dietary choices",
+    details: [
+      "Favorite foods and ingredients",
+      "Preferred cooking methods and flavors",
+      "Foods you regularly consume",
+      "Meal timing and eating patterns"
+    ]
+  },
+  dietary_restrictions: {
+    title: "Dietary Restrictions",
+    description: "Important food allergies, intolerances, and dietary limitations",
+    details: [
+      "Food allergies and intolerances",
+      "Medical dietary restrictions",
+      "Religious or ethical food choices",
+      "Foods to avoid for health reasons"
+    ]
+  },
+  meal_patterns: {
+    title: "Meal Patterns",
+    description: "Your typical eating habits and meal routines",
+    details: [
+      "Usual breakfast, lunch, and dinner foods",
+      "Typical portion sizes and calories",
+      "Meal timing and frequency",
+      "Snacking patterns and preferences"
+    ]
+  },
+  nutrition_goals: {
+    title: "Nutrition Goals",
+    description: "Your nutritional objectives and dietary targets",
+    details: [
+      "Calorie intake goals and targets",
+      "Macronutrient preferences (protein, carbs, fat)",
+      "Weight management objectives",
+      "Health-focused nutrition goals"
     ]
   }
 };
@@ -404,6 +456,10 @@ export default function MemorySection() {
                                   <SelectItem value="personal_info">Personal Info</SelectItem>
                                   <SelectItem value="context">Context</SelectItem>
                                   <SelectItem value="instruction">Instructions</SelectItem>
+                                  <SelectItem value="food_preferences">Food Preferences</SelectItem>
+                                  <SelectItem value="dietary_restrictions">Dietary Restrictions</SelectItem>
+                                  <SelectItem value="meal_patterns">Meal Patterns</SelectItem>
+                                  <SelectItem value="nutrition_goals">Nutrition Goals</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormDescription>
@@ -466,7 +522,7 @@ export default function MemorySection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{memoryOverview.total}</div>
                   <div className="text-sm text-gray-600">Total Memories</div>
@@ -489,18 +545,52 @@ export default function MemorySection() {
                   </div>
                   <div className="text-sm text-gray-600">Personal Info</div>
                 </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {memoryOverview.categories.context || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Context</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {memoryOverview.categories.food_preferences || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Food</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-pink-600">
+                    {memoryOverview.categories.dietary_restrictions || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Dietary</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-indigo-600">
+                    {memoryOverview.categories.meal_patterns || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Meals</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-teal-600">
+                    {memoryOverview.categories.nutrition_goals || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Nutrition</div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
             <div className="w-full overflow-x-auto">
-              <TabsList className="flex md:grid w-full md:grid-cols-5 gap-1 min-w-max md:min-w-0">
+              <TabsList className="flex md:grid w-full md:grid-cols-9 gap-1 min-w-max md:min-w-0">
                 <TabsTrigger value="all" className="text-xs md:text-sm flex-shrink-0">All</TabsTrigger>
                 <TabsTrigger value="preference" className="text-xs md:text-sm flex-shrink-0">Preferences</TabsTrigger>
                 <TabsTrigger value="personal_info" className="text-xs md:text-sm flex-shrink-0">Personal</TabsTrigger>
                 <TabsTrigger value="context" className="text-xs md:text-sm flex-shrink-0">Context</TabsTrigger>
                 <TabsTrigger value="instruction" className="text-xs md:text-sm flex-shrink-0">Instructions</TabsTrigger>
+                <TabsTrigger value="food_preferences" className="text-xs md:text-sm flex-shrink-0">Food</TabsTrigger>
+                <TabsTrigger value="dietary_restrictions" className="text-xs md:text-sm flex-shrink-0">Dietary</TabsTrigger>
+                <TabsTrigger value="meal_patterns" className="text-xs md:text-sm flex-shrink-0">Meals</TabsTrigger>
+                <TabsTrigger value="nutrition_goals" className="text-xs md:text-sm flex-shrink-0">Nutrition</TabsTrigger>
               </TabsList>
             </div>
 

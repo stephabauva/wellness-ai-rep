@@ -48,7 +48,7 @@
         "User navigates to memory section",
         "System loads lightweight overview with counts by category",
         "User sees total memories and category breakdown without loading full content",
-        "Category tabs show counts (All, Preferences, Personal, Context, Instructions)",
+        "Category tabs show counts (All, Preferences, Personal, Context, Instructions, Food, Dietary, Meals, Nutrition)",
         "Overview updates automatically after memory operations"
       ]
     },
@@ -106,7 +106,7 @@
         "data": ["client-side-filter-state"]
       },
       "userFlow": [
-        "User sees category tabs with counts (All, Preferences, Personal, Context, Instructions)",
+        "User sees category tabs with counts (All, Preferences, Personal, Context, Instructions, Food, Dietary, Meals, Nutrition)",
         "User clicks on category tab",
         "System filters memories client-side by category",
         "Explanatory card shows category description and purpose",
@@ -162,7 +162,7 @@
     "GET /api/memories/overview": {
       "description": "Returns lightweight memory statistics and category counts",
       "requestBody": "",
-      "response": "{ total: number, categories: { preference: number, personal_info: number, context: number, instruction: number } }",
+      "response": "{ total: number, categories: { preference: number, personal_info: number, context: number, instruction: number, food_preferences: number, dietary_restrictions: number, meal_patterns: number, nutrition_goals: number } }",
       "readsFrom": ["memory_entries"],
       "modifies": []
     },

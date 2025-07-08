@@ -1,6 +1,11 @@
 {
+  "_meta": {
+    "domain": "infrastructure",
+    "lastUpdated": "2025-01-07",
+    "status": "active"
+  },
   "tableOfContents": {
-    "database-setup-configuration": {
+    "database-setup": {
       "features": ["setup-script", "schema-sync", "connection-switching"],
       "components": [],
       "endpoints": []
@@ -11,243 +16,186 @@
       "endpoints": []
     }
   },
-  "integrationStatus": {
-    "setup-script": {
-      "status": "active",
-      "lastVerified": "2025-07-07",
-      "knownIssues": []
-    },
-    "schema-sync": {
-      "status": "active",
-      "lastVerified": "2025-07-07",
-      "knownIssues": []
-    },
-    "connection-switching": {
-      "status": "active",
-      "lastVerified": "2025-07-07",
-      "knownIssues": [
-        "Fixed: PostgreSQL import issue causing SyntaxError in Replit environment by adding pg package and implementing conditional imports",
-        "Enhanced: Environment detection with Replit-specific checks (REPLIT_DB_URL, REPL_ID)",
-        "Corrected: No fallback from local PostgreSQL to Neon - environments are strictly separated for proper local development",
-        "Fixed: populate-sample-data.ts script updated to call initializeDatabase() for proper local PostgreSQL connection"
-      ]
-    },
-    "setup-verification": {
-      "status": "active",
-      "lastVerified": "2025-07-07",
-      "knownIssues": []
-    }
-  },
-  "lastUpdated": "2025-07-07T12:00:00Z",
-  "dependencies": ["infrastructure"],
   "featureGroups": {
-    "database-setup-configuration": {
-      "description": "Features related to setting up and configuring the local PostgreSQL database.",
+    "database-setup": {
+      "description": "Local PostgreSQL database setup and configuration",
       "features": {
         "setup-script": {
-          "description": "Automates the creation of PostgreSQL user, database, and the .env.local configuration file.",
-          "userFlow": [
-            "User runs 'npm run db:setup-local'",
-            "Script executes 'setup-local-db.sh'"
-          ],
-          "systemFlow": [
-            "Checks if PostgreSQL is running",
-            "Creates 'wellness_user' and 'wellness_ai_local' database",
-            "Grants privileges",
-            "Creates or updates '.env.local' with local database connection string"
-          ],
-          "components": [],
-          "apiIntegration": {
-            "expectedEndpoints": [],
-            "actualEndpoints": [],
-            "integrationGaps": [],
-            "cacheDependencies": {},
-            "uiConsistencyValidation": {
-              "tested": true,
-              "knownIssues": []
-            }
+          "_meta": {
+            "feature": "setup-script",
+            "domain": "database-setup",
+            "status": "active"
           },
-          "tests": ["test-local-setup.js"],
-          "filesModified": [
-            "setup-local-db.sh",
-            ".env.local",
-            "scripts/populate-sample-data.ts"
-          ]
+          "trigger": "Developer runs 'npm run db:setup-local'",
+          "dataFlow": {
+            "request": "CLI → setup-local-db.sh → PostgreSQL commands",
+            "response": "Database created → .env.local generated → Connection verified",
+            "sideEffects": ["PostgreSQL user creation", "Database privilege grants"]
+          },
+          "files": {
+            "scripts": ["setup-local-db.sh"],
+            "config": [".env.local"],
+            "data": ["wellness_ai_local", "wellness_user"]
+          },
+          "cacheFlow": {
+            "invalidates": [],
+            "refreshes": [],
+            "triggers": ["schema-sync"]
+          },
+          "errorPaths": {
+            "postgresql": "Check PostgreSQL service status and permissions",
+            "permissions": "Verify user has database creation privileges"
+          },
+          "dependencies": {
+            "external": ["PostgreSQL@14"],
+            "internal": ["schema-sync"]
+          }
         },
         "schema-sync": {
-          "description": "Synchronizes the database schema for the local PostgreSQL instance using Drizzle Kit.",
-          "userFlow": [
-            "User runs 'npm run db:setup-local'",
-            "Script executes 'tsx scripts/setup-local-schema.ts'"
-          ],
-          "systemFlow": [
-            "Loads .env.local configuration",
-            "Connects to local PostgreSQL via 'pg' Pool",
-            "Executes 'drizzle-kit push --config=drizzle.config.local.ts'",
-            "Applies performance indexes from 'migrations/create_indexes.sql'"
-          ],
-          "components": [],
-          "apiIntegration": {
-            "expectedEndpoints": [],
-            "actualEndpoints": [],
-            "integrationGaps": [],
-            "cacheDependencies": {},
-            "uiConsistencyValidation": {
-              "tested": true,
-              "knownIssues": []
-            }
+          "_meta": {
+            "feature": "schema-sync",
+            "domain": "database-setup",
+            "status": "active"
           },
-          "tests": ["test-local-setup.js"],
-          "filesModified": [
-            "scripts/setup-local-schema.ts",
-            "drizzle.config.local.ts",
-            "migrations/create_indexes.sql",
-            "package.json"
-          ]
+          "trigger": "Automatic after setup-script or manual 'tsx scripts/setup-local-schema.ts'",
+          "dataFlow": {
+            "request": "Script → .env.local → PostgreSQL connection → Drizzle schema push",
+            "response": "Schema applied → Indexes created → Tables verified",
+            "sideEffects": ["Performance index creation", "Table structure updates"]
+          },
+          "files": {
+            "scripts": ["scripts/setup-local-schema.ts"],
+            "config": ["drizzle.config.local.ts"],
+            "migrations": ["migrations/create_indexes.sql"],
+            "data": ["all schema tables"]
+          },
+          "cacheFlow": {
+            "invalidates": [],
+            "refreshes": [],
+            "triggers": ["connection-switching"]
+          },
+          "errorPaths": {
+            "connection": "Verify .env.local DATABASE_URL configuration",
+            "schema": "Check Drizzle config and schema definitions"
+          },
+          "dependencies": {
+            "external": ["drizzle-kit", "pg"],
+            "internal": ["setup-script"],
+            "shared": ["shared/schema.ts"]
+          }
         },
         "connection-switching": {
-          "description": "Enables the application to dynamically switch between Neon serverless and local PostgreSQL connections based on environment variables with conditional imports to prevent loading pg in Replit.",
-          "userFlow": [
-            "User runs 'npm run dev:local' (uses local DB)",
-            "User runs 'npm run dev' (uses Neon DB)"
-          ],
-          "systemFlow": [
-            "Detects local development by checking if .env.local file exists and DATABASE_URL contains localhost",
-            "Uses conditional/dynamic imports to load 'pg' only when in local development",
-            "Uses Neon serverless exclusively in Replit, local PostgreSQL exclusively locally",
-            "Provides helpful error messages for local PostgreSQL setup issues",
-            "Exports 'db' and 'pool' instances for application use"
-          ],
-          "components": [],
-          "apiIntegration": {
-            "expectedEndpoints": [],
-            "actualEndpoints": [],
-            "integrationGaps": [],
-            "cacheDependencies": {},
-            "uiConsistencyValidation": {
-              "tested": true,
-              "knownIssues": []
-            }
+          "_meta": {
+            "feature": "connection-switching",
+            "domain": "database-setup",
+            "status": "active"
           },
-          "tests": ["test-local-setup.js"],
-          "filesModified": [
-            "server/db.ts",
-            "package.json"
-          ]
+          "trigger": "App startup with environment detection",
+          "dataFlow": {
+            "request": "App start → Environment detection → Database connection selection",
+            "response": "Local PostgreSQL (dev) or Neon (Replit) → db/pool export",
+            "sideEffects": ["Conditional pg module loading", "Connection pool creation"]
+          },
+          "files": {
+            "core": ["server/db.ts"],
+            "config": [".env.local", ".env"],
+            "types": ["shared/schema.ts"]
+          },
+          "cacheFlow": {
+            "invalidates": [],
+            "refreshes": [],
+            "triggers": ["All database operations"]
+          },
+          "errorPaths": {
+            "replit": "Uses Neon fallback with helpful error messages",
+            "local": "Provides PostgreSQL setup guidance"
+          },
+          "dependencies": {
+            "external": ["pg", "@neondatabase/serverless"],
+            "internal": ["schema-sync"],
+            "conditional": ["pg module only in local development"]
+          }
         }
       }
     },
     "testing-verification": {
-      "description": "Scripts and configurations for verifying the local database setup.",
+      "description": "Database setup verification and testing",
       "features": {
         "setup-verification": {
-          "description": "A script to test the local database connection and schema setup.",
-          "userFlow": [
-            "User runs 'npm run test:local-db'"
-          ],
-          "systemFlow": [
-            "Connects to the local database",
-            "Queries for table existence and counts",
-            "Reports verification results"
-          ],
-          "components": [],
-          "apiIntegration": {
-            "expectedEndpoints": [],
-            "actualEndpoints": [],
-            "integrationGaps": [],
-            "cacheDependencies": {},
-            "uiConsistencyValidation": {
-              "tested": true,
-              "knownIssues": []
-            }
+          "_meta": {
+            "feature": "setup-verification",
+            "domain": "testing-verification",
+            "status": "active"
           },
-          "tests": ["test-local-setup.js"],
-          "filesModified": [
-            "test-local-setup.js",
-            "package.json"
-          ]
+          "trigger": "Developer runs 'npm run test:local-db'",
+          "dataFlow": {
+            "request": "Test script → Local database connection → Table queries",
+            "response": "Connection verified → Table counts → Success report",
+            "sideEffects": ["Connection validation", "Schema verification"]
+          },
+          "files": {
+            "tests": ["test-local-setup.js"],
+            "config": ["package.json"]
+          },
+          "cacheFlow": {
+            "invalidates": [],
+            "refreshes": [],
+            "triggers": []
+          },
+          "errorPaths": {
+            "connection": "Database connection troubleshooting steps",
+            "schema": "Schema setup verification guidance"
+          },
+          "dependencies": {
+            "internal": ["connection-switching"],
+            "external": ["pg"]
+          }
         }
       }
     }
   },
-  "componentDetails": {},
-  "apiEndpoints": {},
+  "integrationStatus": {
+    "setup-script": {
+      "status": "active",
+      "lastVerified": "2025-01-07",
+      "evidence": "Successfully creates PostgreSQL database and user",
+      "knownIssues": []
+    },
+    "schema-sync": {
+      "status": "active",
+      "lastVerified": "2025-01-07",
+      "evidence": "Drizzle schema push completes successfully with all indexes",
+      "knownIssues": []
+    },
+    "connection-switching": {
+      "status": "active",
+      "lastVerified": "2025-01-07",
+      "evidence": "App starts successfully in both Replit and local environments",
+      "knownIssues": [
+        "Fixed: PostgreSQL import issue with conditional loading",
+        "Enhanced: Environment detection with REPLIT_DB_URL checks"
+      ]
+    },
+    "setup-verification": {
+      "status": "active",
+      "lastVerified": "2025-01-07",
+      "evidence": "Test script successfully connects and validates schema",
+      "knownIssues": []
+    }
+  },
   "database": {
     "tablesCreated": [
-      "atomic_facts",
-      "chat_messages",
-      "connected_devices",
-      "conversation_messages",
-      "conversations",
-      "file_access_log",
-      "file_categories",
-      "file_retention_settings",
-      "files",
-      "health_data",
-      "health_data_access_log",
-      "memory_access_log",
-      "memory_consolidation_log",
-      "memory_entries",
-      "memory_graph_metrics",
-      "memory_relationships",
-      "memory_triggers",
-      "sample_health_data",
-      "user_health_consent",
-      "users"
+      "atomic_facts", "chat_messages", "connected_devices", "conversation_messages",
+      "conversations", "file_access_log", "file_categories", "file_retention_settings",
+      "files", "health_data", "health_data_access_log", "memory_access_log",
+      "memory_consolidation_log", "memory_entries", "memory_graph_metrics",
+      "memory_relationships", "memory_triggers", "sample_health_data",
+      "user_health_consent", "users"
     ],
     "indexesApplied": [
-      "idx_files_category_id",
-      "idx_files_conversation_id",
-      "idx_files_created_at",
-      "idx_files_file_type",
-      "idx_files_is_deleted",
-      "idx_files_metadata_gin",
-      "idx_files_not_deleted",
-      "idx_files_retention_policy",
-      "idx_files_scheduled_deletion",
-      "idx_files_user_category_created",
-      "idx_files_user_id",
-      "idx_chat_messages_content_gin",
-      "idx_chat_messages_timestamp",
-      "idx_chat_messages_user_id",
-      "idx_chat_messages_user_timestamp",
-      "idx_connected_devices_active",
-      "idx_connected_devices_device_type",
-      "idx_connected_devices_is_active",
-      "idx_connected_devices_last_sync",
-      "idx_connected_devices_metadata_gin",
-      "idx_connected_devices_user_id",
-      "idx_conversations_created_at",
-      "idx_conversations_updated_at",
-      "idx_conversations_user_id",
-      "idx_conversation_messages_content_gin",
-      "idx_conversation_messages_conv_timestamp",
-      "idx_conversation_messages_conversation_id",
-      "idx_conversation_messages_role",
-      "idx_conversation_messages_timestamp",
-      "idx_health_data_category",
-      "idx_health_data_data_type",
-      "idx_health_data_metadata_gin",
-      "idx_health_data_timestamp",
-      "idx_health_data_user_category_timestamp",
-      "idx_health_data_user_id",
-      "idx_health_data_user_timestamp",
-      "idx_health_data_user_type_timestamp",
-      "idx_memory_access_log_conversation_id",
-      "idx_memory_access_log_created_at",
-      "idx_memory_access_log_memory_entry_id",
-      "idx_memory_entries_category",
-      "idx_memory_entries_content_gin",
-      "idx_memory_entries_created_at",
-      "idx_memory_entries_importance",
-      "idx_memory_entries_user_category",
-      "idx_memory_entries_user_id",
-      "idx_memory_entries_user_importance",
-      "idx_file_access_log_access_type",
-      "idx_file_access_log_created_at",
-      "idx_file_access_log_file_id",
-      "idx_file_access_log_user_id",
-      "idx_users_preferences_gin"
+      "Performance indexes for files, chat_messages, health_data, memory_entries",
+      "GIN indexes for metadata and content search",
+      "Composite indexes for user-scoped queries"
     ]
   }
 }

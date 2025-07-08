@@ -8,7 +8,9 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Architecture**: Modular routes, Go microservices, multi-AI provider system
 **Core Features**: AI chat with memory, health data processing, file management
 **Databases setup** : Replit's neon database for cloud developmemt (npm run dev) and postgresql with pg for local development (npm run dev: local with .env.local)
-**System maps** : maps the architecture of each feature - .system-maps/json-system-maps/root.map.json) is the main index that points to all domains and their subdomain maps
+**System maps** : maps the architecture of each feature - .system-maps/json-system-maps/root.map.json is the main index that points to all domains and their subdomain maps
+**User flows** : how the user interacts with the application is described in ./tasks/all-user-flows.md
+
 
 ### Key Commands
 - `npm run dev` - Start development server
@@ -83,7 +85,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - React components: `client/src/components/`
 - Server routes: `server/routes/` (≤300 lines each)
 - Database schema: `shared/schema.ts`
-- System maps: `.system-maps/`
+- System maps: `.system-maps/json-system-maps`
 
 ## Replit Constraints (Critical)
 
@@ -111,7 +113,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 7. **update the system maps** of the features you modified using .system-maps/optimized-complete-map-blue-original.md and the .system-maps/json-system-maps/root.map.json
 
 ### Testing Requirements
-- Use Vitest for all tests
+- Use Vitest for all tests with 'npx vitest'
 - Server tests use supertest
 - Component tests use @testing-library/react
 - Performance tests for memory operations
@@ -128,11 +130,16 @@ Think of all possibilities, don't just do 1 fix. Map all possible causes before 
 ## Development Guidelines
 
 ### Code Structure
+Everytime you write code :
 - Keep components focused and small
 - No file bigger than 300 lines of code
 - Use hooks for state management
 - Implement proper error boundaries
-- Follow TypeScript strict mode
+- Follow TypeScript strict mode and verify with 'npm run check'
+- Confirmation that app stability is preserved
+- Integration verification (no unused code, no fallbacks)
+- Conflict check between code pieces
+- Production-ready validation
 
 ### Performance
 - Lazy loading for large components

@@ -52,6 +52,51 @@ export class ChatContextService {
     }
   }
 
+  private getNutritionAnalysisPrompt(): string {
+    return `
+=== NUTRITION ANALYSIS CAPABILITIES ===
+When users discuss food, meals, or eating:
+
+1. IDENTIFY FOOD CONTENT:
+   - Analyze all mentioned food items and beverages
+   - For food photos: identify visible foods, estimate portions, cooking methods
+   - Consider context clues about meal timing and size
+
+2. ESTIMATE NUTRITIONAL VALUES:
+   - Provide reasonable estimates for calories, protein, carbs, fat when possible
+   - Consider portion sizes: "small", "medium", "large", "handful", "cup", etc.
+   - Account for cooking methods that affect nutrition (fried vs. grilled)
+   - Be conservative with estimates when uncertain
+
+3. TEMPORAL CONTEXT:
+   - Pay attention to when food was consumed: "today", "yesterday", "this morning", "last Monday"
+   - Default to current date/time if not specified
+   - Recognize meal types: breakfast, lunch, dinner, snack
+
+4. STRUCTURED OUTPUT FORMAT:
+   When providing nutrition estimates, format them clearly:
+   - "Estimated calories: [number] kcal"
+   - "Protein: approximately [number] grams"
+   - "Carbohydrates: around [number] grams"
+   - "Fat: roughly [number] grams"
+   - "Confidence level: [high/medium/low]"
+   - "Source: [user_provided/ai_inferred/photo_analysis]"
+
+5. CONFIDENCE LEVELS:
+   - HIGH: User provided exact values or clear portion sizes
+   - MEDIUM: Good photo quality or detailed food descriptions
+   - LOW: Vague descriptions or uncertain portions
+
+6. EXAMPLE RESPONSES:
+   User: "I had a turkey sandwich for lunch"
+   Response: "That sounds like a great lunch choice! I'll save the nutritional facts ! Estimated calories: 350 kcal, Protein: approximately 25 grams, Carbohydrates: around 35 grams, Fat: roughly 12 grams. Confidence level: medium, Source: ai_inferred"
+   
+   User: "Here's my breakfast [photo of eggs and toast]"
+   Response: "I can see scrambled eggs and whole grain toast - a balanced breakfast! I'll update your daily intake ! Estimated calories: 280 kcal, Protein: approximately 18 grams, Carbohydrates: around 22 grams, Fat: roughly 14 grams. Confidence level: medium, Source: photo_analysis"
+
+Always provide your coaching response first, then include the structured nutrition data when applicable.`;
+  }
+
   public async buildChatContext(
     userId: number,
     rawMessage: string,
@@ -75,6 +120,7 @@ export class ChatContextService {
     log('info', `Retrieved ${relevantMemories.length} relevant memories.`);
 
     const basePersona = this.getCoachingPersona(coachingMode);
+    const nutritionPrompt = this.getNutritionAnalysisPrompt();
     const memoryEnhancedPrompt = memoryService.buildSystemPromptWithMemories(relevantMemories, basePersona);
 
     // Determine if current attachments contain images to adjust prompt priority
@@ -93,10 +139,14 @@ You can see and analyze all images in this conversation. When users share images
 - Never ask users to describe what you can already see
 - Provide detailed visual analysis when requested
 
+${nutritionPrompt}
+
 Apply both your personal knowledge about this user AND your visual analysis capabilities to provide the most helpful response.`;
     } else {
       // Memory-focused prompt for text-only conversations
       systemPromptContent = `${memoryEnhancedPrompt}
+
+${nutritionPrompt}
 
 When images are shared, you can analyze them directly. For text conversations, focus on using your knowledge about this user to provide personalized wellness coaching.`;
     }

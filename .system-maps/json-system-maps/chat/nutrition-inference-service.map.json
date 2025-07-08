@@ -3,7 +3,7 @@
     "feature": "nutrition-inference-service",
     "domain": "health",
     "lastUpdated": "2025-01-08",
-    "status": "active"
+    "status": "partial"
   },
   "trigger": "AI service processes user message about food and nutrition",
   "dataFlow": {
@@ -14,7 +14,7 @@
   "files": {
     "ui": [],
     "api": [],
-    "services": ["nutrition-inference-service.ts"],
+    "services": ["nutrition-inference-service.ts", "chat-context-service.ts"],
     "data": ["health_data table (nutrition category)"],
     "types": ["NutritionData interface", "nutritionDataSchema"]
   },
@@ -107,10 +107,27 @@
     "timestamp": "Must be valid Date object"
   },
   "integrationPoints": {
-    "aiService": "Called after AI generates response to user food messages",
+    "aiService": "Enhanced system prompts in chat-context-service.ts provide nutrition analysis capabilities",
     "healthDataStorage": "Stores extracted nutrition data in health_data table",
     "chatPostProcessing": "Part of message post-processing pipeline",
     "memorySystem": "Nutrition patterns stored in memory for better inference"
+  },
+  "aiPromptEnhancements": {
+    "description": "Enhanced AI system prompts with nutrition analysis capabilities",
+    "location": "chat-context-service.ts:getNutritionAnalysisPrompt()",
+    "features": [
+      "Food identification from text and images",
+      "Nutritional value estimation with confidence levels",
+      "Temporal context recognition (today, yesterday, etc.)",
+      "Structured output format for easy parsing",
+      "Photo analysis guidance for food images",
+      "Example responses for different food scenarios"
+    ],
+    "outputFormat": {
+      "structure": "Estimated calories: X kcal, Protein: X grams, etc.",
+      "confidence": "high|medium|low based on information quality",
+      "source": "user_provided|ai_inferred|photo_analysis"
+    }
   },
   "performanceConsiderations": {
     "regexOptimization": "Optimized regex patterns for fast nutrition value extraction",

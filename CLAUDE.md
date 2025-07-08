@@ -8,7 +8,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Architecture**: Modular routes, Go microservices, multi-AI provider system
 **Core Features**: AI chat with memory, health data processing, file management
 **Databases setup** : Replit's neon database for cloud developmemt (npm run dev) and postgresql with pg for local development (npm run dev: local with .env.local)
-**System maps** : maps the architecture of each feature in .system-maps/json-system-maps
+**System maps** : maps the architecture of each feature - .system-maps/json-system-maps/root.map.json) is the main index that points to all domains and their subdomain maps
 
 ### Key Commands
 - `npm run dev` - Start development server

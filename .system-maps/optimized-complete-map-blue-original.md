@@ -3,7 +3,18 @@
 
 ## Core Philosophy: Complete Trace Coverage
 
-Every feature mapping must capture the **complete data journey** from user action to database and back, including every file, component, API, cache invalidation, and side effect.
+## Core Philosophy: Tree-Based Architecture Mapping
+
+Each feature is a **tree** where:
+- **Root**: The feature/functionality itself
+- **Trunk**: Core user workflow and primary components
+- **Branches**: All architectural layers (frontend, backend, database, services)
+- **Leaves**: Every element that touches the feature (files, APIs, database tables, external services, browser APIs, etc.)
+
+Hence, every feature mapping must capture the **complete data journey** from user action to database and back, including every file, component, API, cache invalidation, and side effect.
+
+## User flows
+How the user interacts with the application is described in ./tasks/all-user-flows.
 
 ## 1. Ultra-Compact Feature Schema
 

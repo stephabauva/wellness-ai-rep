@@ -1,12 +1,12 @@
 {
   "_meta": {
     "domain": "infrastructure",
-    "lastUpdated": "2025-01-07",
+    "lastUpdated": "2025-01-08",
     "status": "active"
   },
   "tableOfContents": {
     "database-setup": {
-      "features": ["setup-script", "schema-sync", "connection-switching"],
+      "features": ["setup-script", "schema-sync", "user-seeding", "connection-switching"],
       "components": [],
       "endpoints": []
     },
@@ -28,9 +28,9 @@
           },
           "trigger": "Developer runs 'npm run db:setup-local'",
           "dataFlow": {
-            "request": "CLI → setup-local-db.sh → PostgreSQL commands",
-            "response": "Database created → .env.local generated → Connection verified",
-            "sideEffects": ["PostgreSQL user creation", "Database privilege grants"]
+            "request": "CLI → setup-local-db.sh → PostgreSQL commands → setup-local-schema.ts → seed-default-user.ts",
+            "response": "Database created → .env.local generated → Schema applied → Default user created → Connection verified",
+            "sideEffects": ["PostgreSQL user creation", "Database privilege grants", "Default application user creation"]
           },
           "files": {
             "scripts": ["setup-local-db.sh"],
@@ -40,7 +40,7 @@
           "cacheFlow": {
             "invalidates": [],
             "refreshes": [],
-            "triggers": ["schema-sync"]
+            "triggers": ["schema-sync", "user-seeding"]
           },
           "errorPaths": {
             "postgresql": "Check PostgreSQL service status and permissions",
@@ -72,7 +72,7 @@
           "cacheFlow": {
             "invalidates": [],
             "refreshes": [],
-            "triggers": ["connection-switching"]
+            "triggers": ["user-seeding", "connection-switching"]
           },
           "errorPaths": {
             "connection": "Verify .env.local DATABASE_URL configuration",
@@ -81,6 +81,38 @@
           "dependencies": {
             "external": ["drizzle-kit", "pg"],
             "internal": ["setup-script"],
+            "shared": ["shared/schema.ts"]
+          }
+        },
+        "user-seeding": {
+          "_meta": {
+            "feature": "user-seeding",
+            "domain": "database-setup",
+            "status": "active"
+          },
+          "trigger": "Automatic after schema-sync or manual 'npm run db:seed-user'",
+          "dataFlow": {
+            "request": "Script → Database connection → Check existing user → Insert if missing",
+            "response": "User created with ID=1 → Sequence updated → Success confirmation",
+            "sideEffects": ["Default user creation", "Sequence adjustment for next users"]
+          },
+          "files": {
+            "scripts": ["scripts/seed-default-user.ts"],
+            "config": ["package.json"],
+            "data": ["users table (ID=1)"]
+          },
+          "cacheFlow": {
+            "invalidates": [],
+            "refreshes": [],
+            "triggers": ["Enables file upload operations"]
+          },
+          "errorPaths": {
+            "duplicate": "Safely skips if user already exists",
+            "connection": "Database connection error handling"
+          },
+          "dependencies": {
+            "external": ["pg", "drizzle-orm"],
+            "internal": ["schema-sync"],
             "shared": ["shared/schema.ts"]
           }
         },
@@ -167,6 +199,12 @@
       "evidence": "Drizzle schema push completes successfully with all indexes",
       "knownIssues": []
     },
+    "user-seeding": {
+      "status": "active",
+      "lastVerified": "2025-01-08",
+      "evidence": "Default user with ID=1 created successfully, fixes file upload foreign key constraint",
+      "knownIssues": ["Fixed: File uploads failing due to missing user ID=1"]
+    },
     "connection-switching": {
       "status": "active",
       "lastVerified": "2025-01-07",
@@ -196,6 +234,9 @@
       "Performance indexes for files, chat_messages, health_data, memory_entries",
       "GIN indexes for metadata and content search",
       "Composite indexes for user-scoped queries"
+    ],
+    "defaultData": [
+      "users table: Default user with ID=1 (username: default_user) for file operations and FIXED_USER_ID references"
     ]
   }
 }

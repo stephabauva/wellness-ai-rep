@@ -1,0 +1,128 @@
+
+{
+  "_meta": {
+    "feature": "neon-database-infrastructure",
+    "domain": "infrastructure",
+    "lastUpdated": "2025-01-07",
+    "status": "active",
+    "description": "Neon serverless PostgreSQL database infrastructure for production Replit environment"
+  },
+  "trigger": "Application startup and database operations in Replit environment",
+  "dataFlow": {
+    "initialization": "App startup → Environment detection → Neon connection setup → Pool creation → Schema validation",
+    "operations": "API request → Route handler → Service layer → Database query → Neon serverless → Response",
+    "connectionManagement": "Connection pooling → Idle timeout → Connection reuse → Graceful shutdown",
+    "sideEffects": ["Connection pool management", "Query performance monitoring", "Automatic scaling"]
+  },
+  "files": {
+    "core": [
+      "server/db.ts",
+      "drizzle.config.ts",
+      "shared/schema.ts"
+    ],
+    "configuration": [
+      ".env",
+      ".replit"
+    ],
+    "migrations": [
+      "migrations/create_indexes.sql"
+    ],
+    "services": [
+      "server/services/prepared-statements-service.ts",
+      "server/services/database-migration-service.ts"
+    ]
+  },
+  "environmentDetection": {
+    "trigger": "process.env.DATABASE_URL analysis",
+    "logic": "!databaseUrl.includes('localhost') → Use Neon",
+    "fallback": "Always Neon in Replit environment",
+    "validation": "REPL_ID and REPLIT_DB_URL presence check"
+  },
+  "connectionConfiguration": {
+    "provider": "@neondatabase/serverless",
+    "poolSettings": {
+      "max": 5,
+      "idleTimeoutMillis": 30000,
+      "connectionTimeoutMillis": 5000,
+      "maxUses": 7500,
+      "allowExitOnIdle": true
+    },
+    "websocketConstructor": "ws library for serverless compatibility"
+  },
+  "databaseOperations": {
+    "orm": "Drizzle ORM with Neon serverless adapter",
+    "schema": "Complete application schema with indexes",
+    "tables": [
+      "users",
+      "chat_messages", 
+      "conversations",
+      "memories",
+      "health_data",
+      "user_files",
+      "user_settings",
+      "health_visibility_settings"
+    ],
+    "indexes": "Performance-optimized indexes for queries"
+  },
+  "performanceOptimizations": {
+    "connectionPooling": "Reuses existing connections to reduce overhead",
+    "preparedStatements": "Cached query plans for frequent operations", 
+    "indexStrategy": "Optimized indexes for chat, memory, and health queries",
+    "computeLifecycle": "Handles 5-minute sleep cycle gracefully"
+  },
+  "cacheFlow": {
+    "invalidates": ["connection-pool-on-error"],
+    "refreshes": ["database-connection-health"],
+    "triggers": ["automatic-reconnection-on-wake"]
+  },
+  "errorHandling": {
+    "connectionFailure": "Automatic retry with exponential backoff",
+    "timeoutHandling": "Connection timeout recovery",
+    "computeSleep": "Graceful handling of Neon compute lifecycle",
+    "poolExhaustion": "Connection pool management and cleanup"
+  },
+  "monitoring": {
+    "connectionHealth": "Pool status and active connections",
+    "queryPerformance": "Execution time tracking",
+    "errorTracking": "Database operation failures",
+    "resourceUsage": "Connection utilization metrics"
+  },
+  "security": {
+    "connectionString": "Secure DATABASE_URL from environment",
+    "ssl": "Enforced SSL connections to Neon",
+    "credentials": "Managed through Replit secrets",
+    "access": "Application-level database access only"
+  },
+  "scalability": {
+    "serverless": "Automatic scaling based on demand",
+    "connectionPooling": "Efficient resource utilization",
+    "queryOptimization": "Indexed queries for performance",
+    "caching": "Application-level caching strategies"
+  },
+  "dependencies": {
+    "external": [
+      "@neondatabase/serverless",
+      "drizzle-orm/neon-serverless",
+      "ws"
+    ],
+    "internal": [
+      "shared/schema",
+      "server/services/*"
+    ],
+    "environment": [
+      "DATABASE_URL",
+      "REPL_ID",
+      "REPLIT_DB_URL"
+    ]
+  },
+  "gracefulShutdown": {
+    "signals": ["SIGINT", "SIGTERM"],
+    "cleanup": "pool.end() → close all connections",
+    "timeout": "Graceful connection closure before exit"
+  },
+  "developmentSupport": {
+    "localFallback": "Conditional pg import for local development",
+    "environmentSeparation": "Strict Replit vs local detection",
+    "migrationSupport": "Drizzle migrations for schema updates"
+  }
+}

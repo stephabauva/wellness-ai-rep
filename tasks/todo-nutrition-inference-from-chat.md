@@ -100,6 +100,19 @@
   - Support updating existing entries
   - Provide daily totals in health data
 
+### [ ] Task 6.2.2: Simplify and Improve Memory UI Categories
+- **Problem**: Current memory UI has 8 categories that are confusing and redundant (e.g., "personal info" vs "context", unclear "food" category naming)
+- **Solution**: Redesign memory categories for better user experience
+  - Consolidate redundant categories (merge "personal info" and "context" into one)
+  - Create clearer category names and descriptions
+  - Consider reducing from 8 to 5-6 intuitive categories
+  - Group food-related categories under a single "Nutrition & Diet" category with subcategories
+  - Add better visual hierarchy and explanations
+  - Improve category icons and color coding
+  - Add tooltips or help text for each category
+  - Ensure categories are mutually exclusive and comprehensive
+  - Consider user mental models for information organization
+
 ### [ ] Task 8: Add Validation and Error Handling
 - **Problem**: AI inference might be inaccurate or fail
 - **Solution**: Implement safeguards

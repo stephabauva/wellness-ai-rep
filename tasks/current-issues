@@ -4,7 +4,7 @@ Two major events have happened that seem to have broken the application : fixes 
 [ ] Need a central config file manage logging and some parts of settings that should not be handled by the user such as Performance Optimizations
 
 # Chat :
-[ ] npx vitest run --reporter=verbose)
+[X] npx vitest run --reporter=verbose)
   ⎿  Error: stderr | client/src/components/ChatInputArea.test.tsx > ChatInputArea > 
      should trigger camera input on Camera button click (when getUserMedia fails)
      Error accessing camera: Error: Simulated camera access failure
@@ -15,24 +15,11 @@ Two major events have happened that seem to have broken the application : fixes 
 
 [X] Need to confirm if uploaded file and photo persists in the conversations of the chat history
 
-[ ] console log shows many duplicate logs, for example :
-"[MemoryService] getContextualMemories called for user 1, message: "hello coach"
-[MemoryService] Context built: "hello coach"
-[MemoryService] getContextualMemories called for user 1, message: "hello coach"
-[MemoryService] Context built: "hello coach"
-/
-[DEBUG] [memory] [MemoryService] Contextual memories cache miss for user 1
-[DEBUG] [memory] [MemoryService] Contextual memories cache miss for user 1"
-/
-[MemoryService] Processing background task: similarity_calculation
-[MemoryService] Processing background task: similarity_calculation
-[MemoryService] Processing background task: similarity_calculation
-[MemoryService] Processing background task: similarity_calculation
-/
+[X] console log shows many duplicate logs
 
 [?] (!might be fixed) in console log i see "[WARN ] [memory] Background queue growing large: 14 tasks", this needs to be simplified and optimized
 
-[ ] Transcription of audio to text is not persistant in input field if the user do other audio transcriptions before sending
+[?] (seems to work now) Transcription of audio to text is not persistant in input field if the user do other audio transcriptions before sending
 
 [ ] Error Handling: What happens if a message fails to send (e.g., network error)? Is there visual feedback?
 
@@ -40,7 +27,7 @@ Two major events have happened that seem to have broken the application : fixes 
 
 [ ] Upload Progress: For larger files, a progress indicator would be beneficial.
 
-[ ] the permission to access the microphone is triggered and displayed as soon as the user enters the chat page, it should triggered only for the first time the user press the mic button or be set by default in the settings.
+[X] the permission to access the microphone is triggered and displayed as soon as the user enters the chat page, it should triggered only for the first time the user press the mic button or be set by default in the settings.
 
 [ ] missing visual indication in the chat that a message was saved as a memory
 

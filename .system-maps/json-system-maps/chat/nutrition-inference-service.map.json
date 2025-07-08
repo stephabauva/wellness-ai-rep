@@ -1,0 +1,138 @@
+{
+  "_meta": {
+    "feature": "nutrition-inference-service",
+    "domain": "health",
+    "lastUpdated": "2025-01-08",
+    "status": "active"
+  },
+  "trigger": "AI service processes user message about food and nutrition",
+  "dataFlow": {
+    "request": "AI Response → nutritionInferenceService.extractNutritionFromText → NutritionData validation",
+    "response": "Validated NutritionData → formatForStorage → Health data storage",
+    "sideEffects": ["Health data creation", "Nutrition metrics aggregation"]
+  },
+  "files": {
+    "ui": [],
+    "api": [],
+    "services": ["nutrition-inference-service.ts"],
+    "data": ["health_data table (nutrition category)"],
+    "types": ["NutritionData interface", "nutritionDataSchema"]
+  },
+  "cacheFlow": {
+    "invalidates": ["query:health-data", "query:nutrition-metrics"],
+    "refreshes": ["HealthDashboard", "NutritionCharts"],
+    "triggers": ["health-data-aggregation"]
+  },
+  "errorPaths": {
+    "parsing": "Returns null for invalid nutrition content",
+    "validation": "Zod schema validation with detailed error messages",
+    "extraction": "Graceful fallback to empty nutrition data"
+  },
+  "dependencies": {
+    "internal": ["health-data-storage", "ai-service"],
+    "external": ["zod validation"],
+    "shared": ["logger-service"]
+  },
+  "implementation": {
+    "extractNutritionFromText": {
+      "description": "Main entry point for nutrition extraction from AI responses",
+      "parameters": ["responseText", "originalMessage", "hasImages"],
+      "returns": "NutritionData | null",
+      "validation": "Uses zod schema for data validation"
+    },
+    "parseNutritionValues": {
+      "description": "Uses regex patterns to extract nutrition values from text",
+      "patterns": [
+        "calories: (\\d+(?:\\.\\d+)?)\\s*(?:calories|kcal|cal)",
+        "protein: (\\d+(?:\\.\\d+)?)\\s*(?:grams?|g)\\s*(?:of\\s+)?protein",
+        "carbs: (\\d+(?:\\.\\d+)?)\\s*(?:grams?|g)\\s*(?:of\\s+)?(?:carbs|carbohydrates)",
+        "fat: (\\d+(?:\\.\\d+)?)\\s*(?:grams?|g)\\s*(?:of\\s+)?fat",
+        "fiber: (\\d+(?:\\.\\d+)?)\\s*(?:grams?|g)\\s*(?:of\\s+)?fiber",
+        "sugar: (\\d+(?:\\.\\d+)?)\\s*(?:grams?|g)\\s*(?:of\\s+)?sugar",
+        "sodium: (\\d+(?:\\.\\d+)?)\\s*(?:mg|milligrams?)\\s*(?:of\\s+)?sodium"
+      ]
+    },
+    "determineConfidence": {
+      "description": "Calculates confidence level based on various factors",
+      "factors": ["user_provided_values", "image_analysis", "ai_estimates"],
+      "levels": {
+        "high": "User provided explicit values",
+        "medium": "AI estimates with approximations or image analysis",
+        "low": "General food mentions without specific values"
+      }
+    },
+    "determineSource": {
+      "description": "Identifies the source of nutrition information",
+      "sources": {
+        "user_provided": "User explicitly mentioned nutrition values",
+        "photo_analysis": "AI analyzed food images",
+        "ai_inferred": "AI inferred from text descriptions"
+      }
+    },
+    "extractMealType": {
+      "description": "Identifies meal type from context",
+      "types": ["breakfast", "lunch", "dinner", "snack"]
+    },
+    "extractFoodItems": {
+      "description": "Identifies specific food items mentioned",
+      "method": "Pattern matching against common food database"
+    },
+    "formatForStorage": {
+      "description": "Formats nutrition data for health_data table storage",
+      "output": {
+        "nutrition_values": "Direct column values",
+        "metadata": "JSON metadata with confidence, source, meal type, etc."
+      }
+    }
+  },
+  "nutritionDataSchema": {
+    "calories": "number (0-10000)",
+    "protein": "number (0-1000) grams",
+    "carbs": "number (0-1000) grams",
+    "fat": "number (0-1000) grams",
+    "fiber": "number (0-200) grams",
+    "sugar": "number (0-500) grams",
+    "sodium": "number (0-10000) mg",
+    "timestamp": "Date",
+    "confidence": "enum: high|medium|low",
+    "source": "enum: user_provided|ai_inferred|photo_analysis",
+    "mealType": "enum: breakfast|lunch|dinner|snack (optional)",
+    "foodItems": "string[] (optional)",
+    "originalText": "string (optional)"
+  },
+  "validationRules": {
+    "nutritionValues": "All nutrition values must be positive numbers within realistic ranges",
+    "confidence": "Must be one of: high, medium, low",
+    "source": "Must be one of: user_provided, ai_inferred, photo_analysis",
+    "timestamp": "Must be valid Date object"
+  },
+  "integrationPoints": {
+    "aiService": "Called after AI generates response to user food messages",
+    "healthDataStorage": "Stores extracted nutrition data in health_data table",
+    "chatPostProcessing": "Part of message post-processing pipeline",
+    "memorySystem": "Nutrition patterns stored in memory for better inference"
+  },
+  "performanceConsiderations": {
+    "regexOptimization": "Optimized regex patterns for fast nutrition value extraction",
+    "validationCaching": "Zod schema validation with minimal overhead",
+    "memoryUsage": "Lightweight service with minimal memory footprint"
+  },
+  "securityConsiderations": {
+    "inputValidation": "All extracted values validated against realistic ranges",
+    "sanitization": "Text input sanitized before processing",
+    "dataIntegrity": "Zod schema ensures data structure integrity"
+  },
+  "testingStrategy": {
+    "unitTests": [
+      "extractNutritionFromText with various input formats",
+      "parseNutritionValues regex pattern matching",
+      "determineConfidence logic validation",
+      "nutritionDataSchema validation"
+    ],
+    "integrationTests": [
+      "End-to-end nutrition extraction from AI responses",
+      "Health data storage integration",
+      "Error handling and edge cases"
+    ]
+  }
+}

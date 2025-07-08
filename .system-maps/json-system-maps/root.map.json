@@ -72,6 +72,10 @@
         "timeframe-dropdown": {
           "description": "Health data timeframe selection",
           "path": ".system-maps/json-system-maps/health/timeframe-dropdown.feature.json"
+        },
+        "nutrition-inference": {
+          "description": "AI-powered nutrition inference from chat messages",
+          "path": ".system-maps/json-system-maps/chat/nutrition-inference-service.map.json"
         }
       }
     },

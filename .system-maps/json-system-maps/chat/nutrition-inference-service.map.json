@@ -3,20 +3,20 @@
     "feature": "nutrition-inference-service",
     "domain": "health",
     "lastUpdated": "2025-01-08",
-    "status": "partial"
+    "status": "active"
   },
-  "trigger": "AI service processes user message about food and nutrition",
+  "trigger": "User sends food-related message → AI responds → Post-processing extracts nutrition",
   "dataFlow": {
-    "request": "AI Response → nutritionInferenceService.extractNutritionFromText → NutritionData validation",
-    "response": "Validated NutritionData → formatForStorage → Health data storage",
-    "sideEffects": ["Health data creation", "Nutrition metrics aggregation"]
+    "request": "Chat Routes → processNutritionData → nutritionInferenceService.extractNutritionFromText → NutritionData validation",
+    "response": "Validated NutritionData → formatForStorage → storage.createHealthDataBatch → Health database",
+    "sideEffects": ["Health data creation", "Nutrition metrics aggregation", "Cache invalidation for health queries"]
   },
   "files": {
     "ui": [],
-    "api": [],
-    "services": ["nutrition-inference-service.ts", "chat-context-service.ts"],
+    "api": ["chat-routes.ts (processNutritionData function)"],
+    "services": ["nutrition-inference-service.ts", "storage.ts (createHealthDataBatch)"],
     "data": ["health_data table (nutrition category)"],
-    "types": ["NutritionData interface", "nutritionDataSchema"]
+    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData"]
   },
   "cacheFlow": {
     "invalidates": ["query:health-data", "query:nutrition-metrics"],
@@ -108,9 +108,23 @@
   },
   "integrationPoints": {
     "aiService": "Enhanced system prompts in chat-context-service.ts provide nutrition analysis capabilities",
-    "healthDataStorage": "Stores extracted nutrition data in health_data table",
-    "chatPostProcessing": "Part of message post-processing pipeline",
+    "healthDataStorage": "Stores extracted nutrition data in health_data table using storage.createHealthDataBatch",
+    "chatPostProcessing": "Integrated into chat-routes.ts streaming and non-streaming endpoints",
     "memorySystem": "Nutrition patterns stored in memory for better inference"
+  },
+  "postProcessingPipeline": {
+    "description": "Automatic nutrition data extraction from AI chat responses",
+    "location": "chat-routes.ts:processNutritionData()",
+    "integration": "Called after AI response is saved in both streaming and non-streaming endpoints",
+    "dataTypes": ["calories", "protein", "carbohydrates", "fat", "fiber", "sugar", "sodium"],
+    "storage": "Each nutrition component stored as separate health_data record with nutrition category",
+    "errorHandling": "Non-blocking background processing with error logging",
+    "metadata": {
+      "conversationId": "Links nutrition data to chat conversation",
+      "extractedFrom": "ai_chat",
+      "confidence": "high|medium|low based on information quality",
+      "source": "chat_inference"
+    }
   },
   "aiPromptEnhancements": {
     "description": "Enhanced AI system prompts with nutrition analysis capabilities",

@@ -25,7 +25,7 @@
   - Support various formats: "I ate 500 calories", "had a burger", "here's my lunch [photo]"
   - Return structured nutrition data object
 
-### [ ] Task 2: Enhance AI Prompts for Nutrition Analysis
+### [X] Task 2: Enhance AI Prompts for Nutrition Analysis
 - **Problem**: AI needs specific instructions to analyze food and provide nutritional estimates
 - **Solution**: Update `server/services/chat-context-service.ts`
   - Add nutrition analysis instructions to system prompts

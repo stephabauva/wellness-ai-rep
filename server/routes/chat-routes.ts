@@ -7,6 +7,7 @@ import {
   conversations, conversationMessages, files, attachmentRetentionService,
   multer, join, existsSync
 } from "./shared-dependencies.js";
+import { nutritionInferenceService } from "../services/nutrition-inference-service.js";
 
 const attachmentSchema = z.object({
   id: z.string(), fileName: z.string(), displayName: z.string().optional(),
@@ -36,6 +37,172 @@ const audioUpload = multer({
     }
   }
 });
+
+// Helper function to process nutrition data from AI response
+async function processNutritionData(
+  aiResponse: string,
+  originalMessage: string,
+  userId: number,
+  conversationId: string,
+  hasImages: boolean = false
+): Promise<void> {
+  try {
+    console.log('[NUTRITION_PROCESSING] Starting nutrition data extraction');
+    
+    // Extract nutrition data from AI response
+    const nutritionData = nutritionInferenceService.extractNutritionFromText(
+      aiResponse,
+      originalMessage,
+      hasImages
+    );
+
+    if (nutritionData) {
+      console.log('[NUTRITION_PROCESSING] Nutrition data extracted:', {
+        calories: nutritionData.calories,
+        confidence: nutritionData.confidence,
+        source: nutritionData.source,
+        foodItems: nutritionData.foodItems?.length || 0
+      });
+
+      // Format for storage
+      const formattedData = nutritionInferenceService.formatForStorage(nutritionData);
+
+      // Store nutrition data as health records
+      const healthDataEntries = [];
+
+      // Create individual entries for each nutrition component
+      if (formattedData.calories !== undefined) {
+        healthDataEntries.push({
+          userId: userId,
+          dataType: 'calories',
+          value: formattedData.calories.toString(),
+          unit: 'kcal',
+          timestamp: nutritionData.timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...formattedData.metadata,
+            conversationId: conversationId,
+            extractedFrom: 'ai_chat'
+          }
+        });
+      }
+
+      if (formattedData.protein !== undefined) {
+        healthDataEntries.push({
+          userId: userId,
+          dataType: 'protein',
+          value: formattedData.protein.toString(),
+          unit: 'g',
+          timestamp: nutritionData.timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...formattedData.metadata,
+            conversationId: conversationId,
+            extractedFrom: 'ai_chat'
+          }
+        });
+      }
+
+      if (formattedData.carbs !== undefined) {
+        healthDataEntries.push({
+          userId: userId,
+          dataType: 'carbohydrates',
+          value: formattedData.carbs.toString(),
+          unit: 'g',
+          timestamp: nutritionData.timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...formattedData.metadata,
+            conversationId: conversationId,
+            extractedFrom: 'ai_chat'
+          }
+        });
+      }
+
+      if (formattedData.fat !== undefined) {
+        healthDataEntries.push({
+          userId: userId,
+          dataType: 'fat',
+          value: formattedData.fat.toString(),
+          unit: 'g',
+          timestamp: nutritionData.timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...formattedData.metadata,
+            conversationId: conversationId,
+            extractedFrom: 'ai_chat'
+          }
+        });
+      }
+
+      if (formattedData.fiber !== undefined) {
+        healthDataEntries.push({
+          userId: userId,
+          dataType: 'fiber',
+          value: formattedData.fiber.toString(),
+          unit: 'g',
+          timestamp: nutritionData.timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...formattedData.metadata,
+            conversationId: conversationId,
+            extractedFrom: 'ai_chat'
+          }
+        });
+      }
+
+      if (formattedData.sugar !== undefined) {
+        healthDataEntries.push({
+          userId: userId,
+          dataType: 'sugar',
+          value: formattedData.sugar.toString(),
+          unit: 'g',
+          timestamp: nutritionData.timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...formattedData.metadata,
+            conversationId: conversationId,
+            extractedFrom: 'ai_chat'
+          }
+        });
+      }
+
+      if (formattedData.sodium !== undefined) {
+        healthDataEntries.push({
+          userId: userId,
+          dataType: 'sodium',
+          value: formattedData.sodium.toString(),
+          unit: 'mg',
+          timestamp: nutritionData.timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...formattedData.metadata,
+            conversationId: conversationId,
+            extractedFrom: 'ai_chat'
+          }
+        });
+      }
+
+      // Store all nutrition data as batch
+      if (healthDataEntries.length > 0) {
+        await storage.createHealthDataBatch(healthDataEntries);
+        console.log('[NUTRITION_PROCESSING] Successfully stored', healthDataEntries.length, 'nutrition entries');
+      }
+    } else {
+      console.log('[NUTRITION_PROCESSING] No nutrition data found in AI response');
+    }
+  } catch (error) {
+    console.error('[NUTRITION_PROCESSING] Error processing nutrition data:', error);
+    // Don't throw - nutrition processing is supplementary and shouldn't break chat
+  }
+}
 
 export async function registerChatRoutes(app: Express): Promise<Server> {
   
@@ -177,6 +344,19 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         responseLength: fullAiResponse.length
       });
 
+      // Process nutrition data in background (non-blocking)
+      if (currentConversationId) {
+        processNutritionData(
+          fullAiResponse,
+          content,
+          FIXED_USER_ID,
+          currentConversationId,
+          (attachments?.length || 0) > 0
+        ).catch(error => {
+          console.error('[STREAMING_ERROR] Background nutrition processing failed:', error);
+        });
+      }
+
       // Update conversation timestamp so it appears at top of history
       try {
         const updateResult = await db.update(conversations)
@@ -314,6 +494,17 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         const [savedAiMessage] = await db.insert(conversationMessages).values({
           conversationId: currentConversationId!, role: 'assistant', content: aiResult.response
         }).returning();
+
+        // Process nutrition data in background (non-blocking)
+        processNutritionData(
+          aiResult.response,
+          content,
+          FIXED_USER_ID,
+          currentConversationId!,
+          (attachments?.length || 0) > 0
+        ).catch(error => {
+          console.error('[NON_STREAMING_ERROR] Background nutrition processing failed:', error);
+        });
 
         // Update conversation timestamp so it appears at top of history
         try {

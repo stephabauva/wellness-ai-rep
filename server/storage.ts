@@ -45,6 +45,20 @@ export interface IStorage {
   getHealthDataNoCache(userId: number, timeRange: string): Promise<HealthData[]>;
   createHealthData(data: InsertHealthData): Promise<HealthData>;
   createHealthDataBatch(data: InsertHealthData[]): Promise<HealthData[]>;
+  createNutritionDataFromInference(
+    userId: number,
+    nutritionData: {
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+      fiber?: number;
+      sugar?: number;
+      sodium?: number;
+      metadata: any;
+    },
+    conversationId?: string
+  ): Promise<HealthData[]>;
   clearAllHealthData(userId: number): Promise<void>;
   deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }>;
   
@@ -509,6 +523,72 @@ export class MemStorage implements IStorage {
     return { deletedCount };
   }
 
+  async createNutritionDataFromInference(
+    userId: number,
+    nutritionData: {
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+      fiber?: number;
+      sugar?: number;
+      sodium?: number;
+      metadata: any;
+    },
+    conversationId?: string
+  ): Promise<HealthData[]> {
+    const nutritionEntries: HealthData[] = [];
+    const timestamp = new Date(nutritionData.metadata.timestamp);
+    
+    // Create individual health data entries for each nutrition component
+    const nutritionComponents = [
+      { key: 'calories', unit: 'kcal' },
+      { key: 'protein', unit: 'g' },
+      { key: 'carbs', unit: 'g' },
+      { key: 'fat', unit: 'g' },
+      { key: 'fiber', unit: 'g' },
+      { key: 'sugar', unit: 'g' },
+      { key: 'sodium', unit: 'mg' }
+    ];
+
+    for (const component of nutritionComponents) {
+      const value = nutritionData[component.key as keyof typeof nutritionData];
+      if (value !== undefined && typeof value === 'number') {
+        const id = this.healthDataId++;
+        const userHealthData = this.healthData.get(userId) || [];
+        
+        const newHealthData: HealthData = {
+          id,
+          userId,
+          dataType: component.key,
+          value: value.toString(),
+          unit: component.unit,
+          timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...nutritionData.metadata,
+            conversationId,
+            extractedFrom: 'ai_chat',
+            component: component.key
+          }
+        };
+        
+        userHealthData.push(newHealthData);
+        this.healthData.set(userId, userHealthData);
+        nutritionEntries.push(newHealthData);
+      }
+    }
+
+    if (nutritionEntries.length === 0) {
+      console.log('[MemStorage] No nutrition data to store');
+      return [];
+    }
+
+    console.log(`[MemStorage] Stored ${nutritionEntries.length} nutrition data entries for user ${userId}`);
+    return nutritionEntries;
+  }
+
   async loadSampleHealthData(userId: number): Promise<{ recordsLoaded: number }> {
     // Memory storage doesn't support sample data loading - this is for demo/testing only
     // Sample data should only be loaded when using database storage
@@ -825,6 +905,66 @@ export class DatabaseStorage implements IStorage {
     // Invalidate health data cache for all affected users
     const userIds = Array.from(new Set(dataArray.map(d => d.userId)));
     userIds.forEach(userId => cacheService.invalidateUserData(userId));
+    
+    return results;
+  }
+
+  async createNutritionDataFromInference(
+    userId: number,
+    nutritionData: {
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+      fiber?: number;
+      sugar?: number;
+      sodium?: number;
+      metadata: any;
+    },
+    conversationId?: string
+  ): Promise<HealthData[]> {
+    const nutritionEntries: InsertHealthData[] = [];
+    const timestamp = new Date(nutritionData.metadata.timestamp);
+    
+    // Create individual health data entries for each nutrition component
+    const nutritionComponents = [
+      { key: 'calories', unit: 'kcal' },
+      { key: 'protein', unit: 'g' },
+      { key: 'carbs', unit: 'g' },
+      { key: 'fat', unit: 'g' },
+      { key: 'fiber', unit: 'g' },
+      { key: 'sugar', unit: 'g' },
+      { key: 'sodium', unit: 'mg' }
+    ];
+
+    for (const component of nutritionComponents) {
+      const value = nutritionData[component.key as keyof typeof nutritionData];
+      if (value !== undefined && typeof value === 'number') {
+        nutritionEntries.push({
+          userId,
+          dataType: component.key,
+          value: value.toString(),
+          unit: component.unit,
+          timestamp,
+          source: 'chat_inference',
+          category: 'nutrition',
+          metadata: {
+            ...nutritionData.metadata,
+            conversationId,
+            extractedFrom: 'ai_chat',
+            component: component.key
+          }
+        });
+      }
+    }
+
+    if (nutritionEntries.length === 0) {
+      console.log('[DatabaseStorage] No nutrition data to store');
+      return [];
+    }
+
+    console.log(`[DatabaseStorage] Storing ${nutritionEntries.length} nutrition data entries for user ${userId}`);
+    const results = await this.createHealthDataBatch(nutritionEntries);
     
     return results;
   }

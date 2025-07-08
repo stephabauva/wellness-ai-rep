@@ -8,13 +8,13 @@
   "trigger": "User sends food-related message → AI responds → Post-processing extracts nutrition",
   "dataFlow": {
     "request": "Chat Routes → processNutritionData → nutritionInferenceService.extractNutritionFromText → DateContextParser.parseDateContext → NutritionData validation",
-    "response": "Validated NutritionData → formatForStorage → storage.createHealthDataBatch → Health database",
+    "response": "Validated NutritionData → formatForStorage → storage.createNutritionDataFromInference → Health database",
     "sideEffects": ["Health data creation", "Nutrition metrics aggregation", "Cache invalidation for health queries"]
   },
   "files": {
     "ui": [],
     "api": ["chat-routes.ts (processNutritionData function)"],
-    "services": ["nutrition-inference-service.ts", "storage.ts (createHealthDataBatch)"],
+    "services": ["nutrition-inference-service.ts", "storage.ts (createHealthDataBatch, createNutritionDataFromInference)"],
     "utils": ["date-context-parser.ts"],
     "data": ["health_data table (nutrition category)"],
     "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData", "DateContext interface"],
@@ -93,6 +93,18 @@
         "nutrition_values": "Direct column values",
         "metadata": "JSON metadata with confidence, source, meal type, date context, etc."
       }
+    },
+    "createNutritionDataFromInference": {
+      "description": "Stores inferred nutrition data as individual health data entries",
+      "parameters": ["userId", "nutritionData (formatForStorage output)", "conversationId"],
+      "returns": "HealthData[] array of created nutrition entries",
+      "functionality": [
+        "Creates individual health_data records for each nutrition component (calories, protein, carbs, fat, fiber, sugar, sodium)",
+        "Assigns nutrition category to all entries",
+        "Includes conversation linking metadata",
+        "Uses batch insert for efficiency",
+        "Invalidates health data cache"
+      ]
     }
   },
   "nutritionDataSchema": {
@@ -119,7 +131,7 @@
   },
   "integrationPoints": {
     "aiService": "Enhanced system prompts in chat-context-service.ts provide nutrition analysis capabilities",
-    "healthDataStorage": "Stores extracted nutrition data in health_data table using storage.createHealthDataBatch",
+    "healthDataStorage": "Stores extracted nutrition data in health_data table using storage.createNutritionDataFromInference",
     "chatPostProcessing": "Integrated into chat-routes.ts streaming and non-streaming endpoints",
     "memorySystem": "Nutrition patterns stored in memory for better inference"
   },

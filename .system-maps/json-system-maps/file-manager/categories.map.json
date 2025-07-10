@@ -29,7 +29,7 @@
     },
     "files": {
       "ui": ["CategorySelector.tsx", "useFileApi.ts"],
-      "api": ["server/routes.ts"],
+      "api": ["server/routes/file-routes.ts"],
       "data": ["fileCategories"],
       "types": ["shared/schema.ts"]
     },
@@ -64,7 +64,7 @@
     },
     "files": {
       "ui": ["CategorySelector.tsx", "useFileApi.ts"],
-      "api": ["server/routes.ts"],
+      "api": ["server/routes/file-routes.ts"],
       "data": ["fileCategories"],
       "types": ["shared/schema.ts"]
     },
@@ -99,7 +99,7 @@
     },
     "files": {
       "ui": ["CategorySelector.tsx", "useFileApi.ts"],
-      "api": ["server/routes.ts"],
+      "api": ["server/routes/file-routes.ts"],
       "data": ["fileCategories", "files"],
       "types": ["shared/schema.ts"]
     },
@@ -169,7 +169,7 @@
     },
     "files": {
       "ui": ["CategorySelector.tsx", "FileActionsToolbar.tsx", "useFileApi.ts"],
-      "api": ["server/routes.ts"],
+      "api": ["server/routes/file-routes.ts"],
       "data": ["files"],
       "types": ["shared/schema.ts"]
     },
@@ -204,7 +204,7 @@
     },
     "files": {
       "ui": ["CategoryDropdown.tsx", "useFileApi.ts"],
-      "api": ["server/routes.ts"],
+      "api": ["server/routes/file-routes.ts"],
       "data": ["fileCategories"],
       "types": ["shared/schema.ts"]
     },

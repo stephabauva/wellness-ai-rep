@@ -74,30 +74,85 @@
   - Ensure category filtering works for new categories
   - Add icons or visual indicators for food-related categories
 
-### [ ] Task 6.2.2: Simplify and Improve Memory UI Categories
-- **Problem**: Current memory UI has 8 categories that are confusing and redundant (e.g., "personal info" vs "context", unclear "food" category naming)
-- **Solution**: Redesign memory categories for better user experience
-  - Consolidate redundant categories (merge "personal info" and "context" into one)
-  - Create clearer category names and descriptions
-  - Consider reducing from 8 to 5-6 intuitive categories
-  - Group food-related categories under a single "Nutrition & Diet" category with subcategories
-  - Add better visual hierarchy and explanations
-  - Improve category icons and color coding
-  - Add tooltips or help text for each category
-  - Ensure categories are mutually exclusive and comprehensive
-  - Consider user mental models for information organization
-  
-### [ ] Task 6.3: Harmonize Memory Overview with Category Tabs
-- **Problem**: Inconsistency between overview display (total memories, preferences, instruction, personal info) and category tabs (all, preferences, personal, context, instructions)
-- **Solution**: Standardize memory categories across UI
-  - Update overview to show all category types consistently
-  - Include 'context' category in overview counts
-  - Add new food-related categories to both overview and tabs
-  - Ensure consistent naming (e.g., "instruction" vs "instructions")
-  - Update API endpoint to return all category counts
+### [ ] Task 6.2.2: Simplify Memory Categories and Add Label-Based Filtering (Merged with 6.3)
+- **Problem**: Three issues to address:
+  1. Current memory UI has 8 categories that are confusing and redundant
+  2. Inconsistency between overview display and category tabs
+  3. Need better organization within categories (especially Food & Diet)
+- **Solution**: Category redesign with label-based filtering system
+  - **Category Consolidation**:
+    - Reduce to 5 core categories: Preferences, Personal Context, Instructions, Food & Diet, Goals
+    - Merge "personal_info" and "context" → "Personal Context"
+    - Group all food categories → "Food & Diet"
+    - Keep "Goals" separate (can include fitness, nutrition, wellness goals)
+  - **Label System Implementation**:
+    - Add labels field to memories (e.g., within Food & Diet: "allergy", "preference", "restriction", "meal-timing", "macro-goal")
+    - Display available labels below each category tab
+    - Enable multi-select filtering: users can select/deselect labels to filter memories
+    - Show label counts next to each label
+    - "Select all" / "Deselect all" options for labels
+    - Example flow: User clicks "Food & Diet" → sees labels ["allergies (3)", "preferences (12)", "restrictions (2)"] → selects "allergies" → sees only 3 allergy-related memories
+  - **UI Consistency**:
+    - Update overview to show all 5 category types with counts
+    - Ensure tab names match overview exactly
+    - Fix "instruction" vs "instructions" inconsistency
+    - Show total count and label breakdown for each category
+  - **Visual Improvements**:
+    - Category icons (food icon for Food & Diet, etc.)
+    - Label chips with distinct colors within each category
+    - Consistent color coding across overview and tabs
+    - Add tooltips explaining categories and labels
+  - **Technical Implementation**:
+    - Add `labels: string[]` field to memory_entries table
+    - Update MemorySection.tsx for label filtering UI
+    - Modify API to return label counts per category
+    - Ensure backwards compatibility (existing memories get auto-labeled based on old category)
+    - Migration script to convert old categories to new category + label structure
 
-### [ ] Task 6.4: Fix Real-time Memory Count Updates
-- **Problem**: Memory counts in overview don't update in real-time after adding/deleting memories, requiring page refresh
+### [ ] Task 6.4: Database Schema Update for Label System
+- **Problem**: Need to update database schema to support new category + label organization
+- **Solution**: Schema updates and migration
+  - **Schema Changes**:
+    - Add `labels` column to memory_entries table (text array)
+    - Update memoryCategories enum to new 5 categories
+    - Add memoryCategoryLabels mapping for allowed labels per category
+  - **Migration Script**:
+    - Map old categories to new category + label combinations:
+      - `food_preferences` → category: "Food & Diet", labels: ["preference"]
+      - `dietary_restrictions` → category: "Food & Diet", labels: ["allergy", "restriction"]
+      - `meal_patterns` → category: "Food & Diet", labels: ["meal-timing"]
+      - `nutrition_goals` → category: "Goals", labels: ["nutrition", "macro"]
+      - `personal_info` + `context` → category: "Personal Context", labels: ["background", "health-history", "lifestyle"]
+    - Ensure no data loss during migration
+    - Add database indexes for label queries
+  - **Validation**:
+    - Test migration on sample data
+    - Verify label queries are performant
+    - Ensure backwards compatibility
+
+### [ ] Task 6.5: AI Category and Label Assignment Validation
+- **Problem**: AI needs to assign both categories and labels correctly during memory detection
+- **Solution**: Update and test AI memory detection
+  - **Update nutrition-memory-service.ts**:
+    - Assign category: "Food & Diet" with appropriate labels:
+      - Food mentions → labels: ["preference"]
+      - "I'm allergic to..." → labels: ["allergy"]
+      - "I don't eat..." → labels: ["restriction"]
+      - "I usually have breakfast at..." → labels: ["meal-timing"]
+      - Calorie/macro goals → category: "Goals", labels: ["nutrition", "macro"]
+  - **Test Cases**:
+    - "I'm lactose intolerant" → Food & Diet + ["restriction", "allergy"]
+    - "I love sushi" → Food & Diet + ["preference"]
+    - "I eat 2000 calories daily" → Goals + ["nutrition", "calorie"]
+    - "I'm allergic to peanuts" → Food & Diet + ["allergy"]
+    - "I have lunch at noon" → Food & Diet + ["meal-timing"]
+  - **Validation**:
+    - Memory deduplication works within label groups
+    - Non-food memories get appropriate labels
+    - Multiple labels can be assigned when relevant
+
+### [ ] Task 6.6: Fix Real-time Memory Count Updates
+- **Problem**: Memory counts in overview don't update in real-time after adding/deleting memories
 - **Solution**: Implement proper cache invalidation
   - Ensure query:memories-overview is invalidated after memory operations
   - Update mutation callbacks to trigger overview refetch
@@ -113,18 +168,6 @@
   - Support updating existing entries
   - Provide daily totals in health data
 
-### [ ] Task 6.2.2: Simplify and Improve Memory UI Categories
-- **Problem**: Current memory UI has 8 categories that are confusing and redundant (e.g., "personal info" vs "context", unclear "food" category naming)
-- **Solution**: Redesign memory categories for better user experience
-  - Consolidate redundant categories (merge "personal info" and "context" into one)
-  - Create clearer category names and descriptions
-  - Consider reducing from 8 to 5-6 intuitive categories
-  - Group food-related categories under a single "Nutrition & Diet" category with subcategories
-  - Add better visual hierarchy and explanations
-  - Improve category icons and color coding
-  - Add tooltips or help text for each category
-  - Ensure categories are mutually exclusive and comprehensive
-  - Consider user mental models for information organization
 
 ### [ ] Task 8: Add Validation and Error Handling
 - **Problem**: AI inference might be inaccurate or fail
@@ -241,3 +284,30 @@ When users discuss food or meals:
 - Seamlessly integrates with existing health data infrastructure
 - Maintains backward compatibility with existing nutrition tracking
 - Ready for frontend integration with health dashboard components
+
+## Summary of Remaining Memory System Tasks
+
+### Memory UI Redesign (Tasks 6.2.2, 6.4, 6.5)
+The memory system needs a comprehensive redesign to improve usability:
+
+1. **Simplify Categories** (from 8 to 5):
+   - Preferences (general likes/dislikes)
+   - Personal Context (background, health history)
+   - Instructions (how AI should behave)
+   - Food & Diet (all nutrition-related)
+   - Goals (fitness, nutrition, wellness targets)
+
+2. **Add Label System**:
+   - Each memory gets labels for subcategorization
+   - Users can filter by selecting/deselecting labels
+   - Example: Food & Diet category has labels like "allergy", "preference", "restriction", "meal-timing"
+
+3. **Database Changes**:
+   - Add `labels` column to memory_entries
+   - Migration script to convert old categories
+   - Update AI to assign both category and labels
+
+4. **UI Improvements**:
+   - Fix overview/tabs consistency
+   - Add label filtering UI
+   - Real-time count updates (Task 6.6)

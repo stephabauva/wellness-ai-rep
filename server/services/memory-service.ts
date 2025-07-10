@@ -415,7 +415,7 @@ Respond with JSON:
       console.error('Timeout or error in memory detection:', error);
       return {
         shouldRemember: false,
-        category: 'context',
+        category: 'personal_context',
         importance: 0.0,
         extractedInfo: '',
         keywords: [],
@@ -483,6 +483,7 @@ Respond with JSON:
     content: string, 
     options: {
       category: MemoryCategory;
+      labels?: string[];
       importance_score: number;
       sourceConversationId?: string;
       sourceMessageId?: number;
@@ -496,6 +497,7 @@ Respond with JSON:
         userId,
         content,
         category: options.category,
+        labels: options.labels || [],
         importanceScore: options.importance_score,
         keywords: options.keywords || [],
         embedding: JSON.stringify(embedding),
@@ -730,7 +732,7 @@ Respond with JSON:
 
         // Save the memory immediately for explicit requests
         const memory = await this.saveMemoryEntry(userId, explicitTrigger.content, {
-          category: 'instruction',
+          category: 'instructions',
           importance_score: 0.9,
           sourceConversationId: conversationId,
           sourceMessageId: messageId,

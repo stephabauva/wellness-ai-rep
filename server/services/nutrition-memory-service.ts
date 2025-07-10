@@ -62,7 +62,8 @@ export class NutritionMemoryService {
       const fullPattern = mealPattern + calorieInfo;
       
       await memoryService.saveMemoryEntry(userId, fullPattern, {
-        category: 'meal_patterns' as MemoryCategory,
+        category: 'food_diet' as MemoryCategory,
+        labels: ['meal-timing', 'pattern'],
         importance_score: 0.7,
         sourceConversationId: conversationId,
         keywords: [...(nutritionData.foodItems || []), nutritionData.mealType || ''].filter(Boolean)
@@ -82,7 +83,8 @@ export class NutritionMemoryService {
       const preference = `Enjoys eating ${foodItem}`;
       
       await memoryService.saveMemoryEntry(userId, preference, {
-        category: 'food_preferences' as MemoryCategory,
+        category: 'food_diet' as MemoryCategory,
+        labels: ['preference'],
         importance_score: 0.6,
         sourceConversationId: conversationId,
         keywords: [foodItem, 'food', 'preference']
@@ -112,7 +114,8 @@ export class NutritionMemoryService {
 
     for (const goal of goals) {
       await memoryService.saveMemoryEntry(userId, goal, {
-        category: 'nutrition_goals' as MemoryCategory,
+        category: 'goals' as MemoryCategory,
+        labels: ['nutrition', 'macro'],
         importance_score: 0.8,
         sourceConversationId: conversationId,
         keywords: ['nutrition', 'goals', 'calories', 'protein']
@@ -131,7 +134,8 @@ export class NutritionMemoryService {
   ): Promise<void> {
     for (const restriction of restrictions) {
       await memoryService.saveMemoryEntry(userId, `Dietary restriction: ${restriction}`, {
-        category: 'dietary_restrictions' as MemoryCategory,
+        category: 'food_diet' as MemoryCategory,
+        labels: ['restriction'],
         importance_score: 0.9, // High importance for safety
         sourceConversationId: conversationId,
         keywords: ['dietary', 'restriction', restriction.toLowerCase()]
@@ -140,7 +144,8 @@ export class NutritionMemoryService {
 
     for (const allergy of allergies) {
       await memoryService.saveMemoryEntry(userId, `Food allergy: ${allergy}`, {
-        category: 'dietary_restrictions' as MemoryCategory,
+        category: 'food_diet' as MemoryCategory,
+        labels: ['allergy', 'restriction'],
         importance_score: 0.95, // Critical importance for safety
         sourceConversationId: conversationId,
         keywords: ['allergy', 'food', allergy.toLowerCase()]
@@ -152,9 +157,12 @@ export class NutritionMemoryService {
    * Get user's dietary information from memories
    */
   async getDietaryInfo(userId: number): Promise<DietaryInfo> {
-    const dietaryMemories = await memoryService.getUserMemories(userId, 'dietary_restrictions' as MemoryCategory);
-    const preferenceMemories = await memoryService.getUserMemories(userId, 'food_preferences' as MemoryCategory);
-    const goalMemories = await memoryService.getUserMemories(userId, 'nutrition_goals' as MemoryCategory);
+    const foodDietMemories = await memoryService.getUserMemories(userId, 'food_diet' as MemoryCategory);
+    const goalMemories = await memoryService.getUserMemories(userId, 'goals' as MemoryCategory);
+    
+    // Filter by labels
+    const dietaryMemories = foodDietMemories.filter(m => m.labels?.includes('restriction') || m.labels?.includes('allergy'));
+    const preferenceMemories = foodDietMemories.filter(m => m.labels?.includes('preference'));
 
     const restrictions: string[] = [];
     const allergies: string[] = [];
@@ -189,7 +197,8 @@ export class NutritionMemoryService {
    * Get meal patterns for a user
    */
   async getMealPatterns(userId: number): Promise<FoodMemoryPattern[]> {
-    const mealMemories = await memoryService.getUserMemories(userId, 'meal_patterns' as MemoryCategory);
+    const foodDietMemories = await memoryService.getUserMemories(userId, 'food_diet' as MemoryCategory);
+    const mealMemories = foodDietMemories.filter(m => m.labels?.includes('meal-timing') || m.labels?.includes('pattern'));
     const patterns: FoodMemoryPattern[] = [];
 
     for (const memory of mealMemories) {

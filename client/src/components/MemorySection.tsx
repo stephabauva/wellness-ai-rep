@@ -21,7 +21,7 @@ import { z } from "zod";
 // Manual memory entry schema
 const manualMemorySchema = z.object({
   content: z.string().min(10, "Memory content must be at least 10 characters").max(500, "Memory content must be less than 500 characters"),
-  category: z.enum(["preference", "personal_info", "context", "instruction", "food_preferences", "dietary_restrictions", "meal_patterns", "nutrition_goals"], {
+  category: z.enum(["preferences", "personal_context", "instructions", "food_diet", "goals"], {
     required_error: "Please select a memory category",
   }),
   importance: z.enum(["low", "medium", "high"], {
@@ -35,6 +35,7 @@ interface MemoryEntry {
   id: string;
   content: string;
   category: string;
+  labels: string[];
   importanceScore: number;
   keywords: string[];
   createdAt: string;
@@ -43,36 +44,27 @@ interface MemoryEntry {
 }
 
 const categoryIcons = {
-  preference: <User className="h-4 w-4" />,
-  personal_info: <User className="h-4 w-4" />,
-  context: <Lightbulb className="h-4 w-4" />,
-  instruction: <Settings className="h-4 w-4" />,
-  food_preferences: <Apple className="h-4 w-4" />,
-  dietary_restrictions: <ShieldAlert className="h-4 w-4" />,
-  meal_patterns: <Calendar className="h-4 w-4" />,
-  nutrition_goals: <Target className="h-4 w-4" />
+  preferences: <User className="h-4 w-4" />,
+  personal_context: <Lightbulb className="h-4 w-4" />,
+  instructions: <Settings className="h-4 w-4" />,
+  food_diet: <Apple className="h-4 w-4" />,
+  goals: <Target className="h-4 w-4" />
 };
 
 const categoryLabels = {
-  preference: "Preferences",
-  personal_info: "Personal Info",
-  context: "Context",
-  instruction: "Instructions",
-  food_preferences: "Food Preferences",
-  dietary_restrictions: "Dietary Restrictions",
-  meal_patterns: "Meal Patterns",
-  nutrition_goals: "Nutrition Goals"
+  preferences: "Preferences",
+  personal_context: "Personal Context",
+  instructions: "Instructions",
+  food_diet: "Food & Diet",
+  goals: "Goals"
 };
 
 const categoryColors = {
-  preference: "bg-blue-100 text-blue-800",
-  personal_info: "bg-green-100 text-green-800",
-  context: "bg-yellow-100 text-yellow-800",
-  instruction: "bg-purple-100 text-purple-800",
-  food_preferences: "bg-orange-100 text-orange-800",
-  dietary_restrictions: "bg-red-100 text-red-800",
-  meal_patterns: "bg-indigo-100 text-indigo-800",
-  nutrition_goals: "bg-teal-100 text-teal-800"
+  preferences: "bg-blue-100 text-blue-800",
+  personal_context: "bg-green-100 text-green-800",
+  instructions: "bg-purple-100 text-purple-800",
+  food_diet: "bg-orange-100 text-orange-800",
+  goals: "bg-teal-100 text-teal-800"
 };
 
 const explanationCards = {
@@ -86,7 +78,7 @@ const explanationCards = {
       "Use this to get an overview of everything stored"
     ]
   },
-  preference: {
+  preferences: {
     title: "Preferences",
     description: "Your likes, dislikes, and personal choices for workouts and wellness",
     details: [
@@ -96,27 +88,17 @@ const explanationCards = {
       "Communication style and feedback preferences"
     ]
   },
-  personal_info: {
-    title: "Personal Information", 
-    description: "Important health details and personal circumstances",
+  personal_context: {
+    title: "Personal Context", 
+    description: "Important background information and circumstances that affect your wellness journey",
     details: [
       "Health conditions, allergies, and medical information",
       "Physical limitations or injury considerations",
-      "Dietary restrictions and nutritional needs",
-      "Goals, lifestyle factors, and demographics"
-    ]
-  },
-  context: {
-    title: "Context",
-    description: "Situational information that affects your wellness journey",
-    details: [
       "Current fitness level and training phase",
-      "Life circumstances (travel, busy periods, stress)",
-      "Environmental factors (gym access, equipment)",
-      "Progress milestones and temporary situations"
+      "Life circumstances and lifestyle factors"
     ]
   },
-  instruction: {
+  instructions: {
     title: "Instructions",
     description: "Specific coaching rules and guidance preferences",
     details: [
@@ -126,50 +108,31 @@ const explanationCards = {
       "Goal-setting and progress tracking preferences"
     ]
   },
-  food_preferences: {
-    title: "Food Preferences",
-    description: "Foods you enjoy eating and dietary choices",
+  food_diet: {
+    title: "Food & Diet",
+    description: "All nutrition-related information including preferences, restrictions, and patterns",
     details: [
-      "Favorite foods and ingredients",
-      "Preferred cooking methods and flavors",
-      "Foods you regularly consume",
-      "Meal timing and eating patterns"
+      "Food preferences and favorites",
+      "Allergies, intolerances, and dietary restrictions",
+      "Meal patterns and eating habits",
+      "Nutritional needs and dietary choices"
     ]
   },
-  dietary_restrictions: {
-    title: "Dietary Restrictions",
-    description: "Important food allergies, intolerances, and dietary limitations",
+  goals: {
+    title: "Goals",
+    description: "Your objectives and targets for fitness, nutrition, and overall wellness",
     details: [
-      "Food allergies and intolerances",
-      "Medical dietary restrictions",
-      "Religious or ethical food choices",
-      "Foods to avoid for health reasons"
-    ]
-  },
-  meal_patterns: {
-    title: "Meal Patterns",
-    description: "Your typical eating habits and meal routines",
-    details: [
-      "Usual breakfast, lunch, and dinner foods",
-      "Typical portion sizes and calories",
-      "Meal timing and frequency",
-      "Snacking patterns and preferences"
-    ]
-  },
-  nutrition_goals: {
-    title: "Nutrition Goals",
-    description: "Your nutritional objectives and dietary targets",
-    details: [
-      "Calorie intake goals and targets",
-      "Macronutrient preferences (protein, carbs, fat)",
-      "Weight management objectives",
-      "Health-focused nutrition goals"
+      "Fitness and exercise goals",
+      "Nutrition and dietary objectives",
+      "Weight management targets",
+      "Health and wellness milestones"
     ]
   }
 };
 
 export default function MemorySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
   const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
@@ -182,7 +145,7 @@ export default function MemorySection() {
     resolver: zodResolver(manualMemorySchema),
     defaultValues: {
       content: "",
-      category: "preference",
+      category: "preferences",
       importance: "medium",
     },
   });
@@ -223,13 +186,59 @@ export default function MemorySection() {
     setMemoriesLoaded(true);
   };
 
-  // Client-side filtering of memories based on selected category
+  // Client-side filtering of memories based on selected category and labels
   const memories = memoriesLoaded ? 
     (selectedCategory === "all" ? 
       allMemories : 
-      allMemories.filter((memory: MemoryEntry) => memory.category === selectedCategory)
+      allMemories.filter((memory: MemoryEntry) => {
+        const categoryMatch = memory.category === selectedCategory;
+        const labelMatch = selectedLabels.size === 0 || 
+          (memory.labels && memory.labels.some(label => selectedLabels.has(label)));
+        return categoryMatch && labelMatch;
+      })
     ) : [];
   const isLoading = overviewLoading || (memoriesLoaded && allMemoriesLoading);
+
+  // Get available labels for the current category
+  const getAvailableLabels = () => {
+    if (selectedCategory === "all" || !memoriesLoaded) return [];
+    
+    const categoryMemories = allMemories.filter((memory: MemoryEntry) => memory.category === selectedCategory);
+    const allLabels = categoryMemories.flatMap((memory: MemoryEntry) => memory.labels || []);
+    const labelCounts = allLabels.reduce((acc, label) => {
+      acc[label] = (acc[label] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(labelCounts).map(([label, count]) => ({ label, count }));
+  };
+  
+  const availableLabels = getAvailableLabels();
+  
+  // Handle label selection
+  const handleLabelToggle = (label: string) => {
+    const newLabels = new Set(selectedLabels);
+    if (newLabels.has(label)) {
+      newLabels.delete(label);
+    } else {
+      newLabels.add(label);
+    }
+    setSelectedLabels(newLabels);
+  };
+  
+  const handleSelectAllLabels = () => {
+    if (selectedLabels.size === availableLabels.length) {
+      setSelectedLabels(new Set());
+    } else {
+      setSelectedLabels(new Set(availableLabels.map(l => l.label)));
+    }
+  };
+  
+  // Reset labels when category changes
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedLabels(new Set());
+  };
 
   // Manual memory creation mutation
   const createManualMemoryMutation = useMutation({
@@ -417,7 +426,7 @@ export default function MemorySection() {
                       </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(data => createManualMemoryMutation.mutate(data))} className="space-y-4">
+                      <form onSubmit={form.handleSubmit((data: ManualMemoryFormData) => createManualMemoryMutation.mutate(data))} className="space-y-4">
                         <FormField
                           control={form.control}
                           name="content"
@@ -452,14 +461,11 @@ export default function MemorySection() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="preference">Preferences</SelectItem>
-                                  <SelectItem value="personal_info">Personal Info</SelectItem>
-                                  <SelectItem value="context">Context</SelectItem>
-                                  <SelectItem value="instruction">Instructions</SelectItem>
-                                  <SelectItem value="food_preferences">Food Preferences</SelectItem>
-                                  <SelectItem value="dietary_restrictions">Dietary Restrictions</SelectItem>
-                                  <SelectItem value="meal_patterns">Meal Patterns</SelectItem>
-                                  <SelectItem value="nutrition_goals">Nutrition Goals</SelectItem>
+                                  <SelectItem value="preferences">Preferences</SelectItem>
+                                  <SelectItem value="personal_context">Personal Context</SelectItem>
+                                  <SelectItem value="instructions">Instructions</SelectItem>
+                                  <SelectItem value="food_diet">Food & Diet</SelectItem>
+                                  <SelectItem value="goals">Goals</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormDescription>
@@ -522,75 +528,54 @@ export default function MemorySection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{memoryOverview.total}</div>
                   <div className="text-sm text-gray-600">Total Memories</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {memoryOverview.categories.preference || 0}
+                  <div className="text-2xl font-bold text-blue-600">
+                    {memoryOverview.categories.preferences || 0}
                   </div>
                   <div className="text-sm text-gray-600">Preferences</div>
                 </div>
                 <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {memoryOverview.categories.personal_context || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Personal Context</div>
+                </div>
+                <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {memoryOverview.categories.instruction || 0}
+                    {memoryOverview.categories.instructions || 0}
                   </div>
                   <div className="text-sm text-gray-600">Instructions</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {memoryOverview.categories.personal_info || 0}
+                    {memoryOverview.categories.food_diet || 0}
                   </div>
-                  <div className="text-sm text-gray-600">Personal Info</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {memoryOverview.categories.context || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Context</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">
-                    {memoryOverview.categories.food_preferences || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Food</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-pink-600">
-                    {memoryOverview.categories.dietary_restrictions || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Dietary</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-indigo-600">
-                    {memoryOverview.categories.meal_patterns || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Meals</div>
+                  <div className="text-sm text-gray-600">Food & Diet</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-teal-600">
-                    {memoryOverview.categories.nutrition_goals || 0}
+                    {memoryOverview.categories.goals || 0}
                   </div>
-                  <div className="text-sm text-gray-600">Nutrition</div>
+                  <div className="text-sm text-gray-600">Goals</div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
             <div className="w-full overflow-x-auto">
-              <TabsList className="flex md:grid w-full md:grid-cols-9 gap-1 min-w-max md:min-w-0">
+              <TabsList className="flex md:grid w-full md:grid-cols-6 gap-1 min-w-max md:min-w-0">
                 <TabsTrigger value="all" className="text-xs md:text-sm flex-shrink-0">All</TabsTrigger>
-                <TabsTrigger value="preference" className="text-xs md:text-sm flex-shrink-0">Preferences</TabsTrigger>
-                <TabsTrigger value="personal_info" className="text-xs md:text-sm flex-shrink-0">Personal</TabsTrigger>
-                <TabsTrigger value="context" className="text-xs md:text-sm flex-shrink-0">Context</TabsTrigger>
-                <TabsTrigger value="instruction" className="text-xs md:text-sm flex-shrink-0">Instructions</TabsTrigger>
-                <TabsTrigger value="food_preferences" className="text-xs md:text-sm flex-shrink-0">Food</TabsTrigger>
-                <TabsTrigger value="dietary_restrictions" className="text-xs md:text-sm flex-shrink-0">Dietary</TabsTrigger>
-                <TabsTrigger value="meal_patterns" className="text-xs md:text-sm flex-shrink-0">Meals</TabsTrigger>
-                <TabsTrigger value="nutrition_goals" className="text-xs md:text-sm flex-shrink-0">Nutrition</TabsTrigger>
+                <TabsTrigger value="preferences" className="text-xs md:text-sm flex-shrink-0">Preferences</TabsTrigger>
+                <TabsTrigger value="personal_context" className="text-xs md:text-sm flex-shrink-0">Personal Context</TabsTrigger>
+                <TabsTrigger value="instructions" className="text-xs md:text-sm flex-shrink-0">Instructions</TabsTrigger>
+                <TabsTrigger value="food_diet" className="text-xs md:text-sm flex-shrink-0">Food & Diet</TabsTrigger>
+                <TabsTrigger value="goals" className="text-xs md:text-sm flex-shrink-0">Goals</TabsTrigger>
               </TabsList>
             </div>
 
@@ -632,6 +617,47 @@ export default function MemorySection() {
                   </CollapsibleContent>
                 </Card>
               </Collapsible>
+              
+              {/* Label Filtering Section */}
+              {selectedCategory !== "all" && availableLabels.length > 0 && (
+                <Card className="border-gray-200 bg-gray-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Filter by Labels
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSelectAllLabels}
+                          className="text-xs"
+                        >
+                          {selectedLabels.size === availableLabels.length ? "Deselect All" : "Select All"}
+                        </Button>
+                        <span className="text-xs text-gray-600">
+                          {selectedLabels.size} of {availableLabels.length} labels selected
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {availableLabels.map(({ label, count }) => (
+                          <Badge
+                            key={label}
+                            variant={selectedLabels.has(label) ? "default" : "outline"}
+                            className="cursor-pointer hover:bg-gray-100 text-xs"
+                            onClick={() => handleLabelToggle(label)}
+                          >
+                            {label} ({count})
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {showLoadButton ? (
                 <Card>
@@ -750,6 +776,16 @@ export default function MemorySection() {
                         </CardHeader>
                         <CardContent>
                           <p className="text-gray-700 mb-3">{memory.content}</p>
+                          
+                          {memory.labels && memory.labels.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {memory.labels.map((label: string, index: number) => (
+                                <Badge key={index} variant="secondary" className="text-xs bg-gray-100 text-gray-700">
+                                  {label}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                           
                           {memory.keywords && memory.keywords.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-3">

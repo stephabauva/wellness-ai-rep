@@ -13,12 +13,12 @@
       "performance-monitoring"
     ],
     "totalFeatures": 9,
-    "lastUpdated": "2025-01-10"
+    "lastUpdated": "2025-01-10T15:30:00Z"
   },
   "_meta": {
     "feature": "memory-core",
     "domain": "memory",
-    "lastUpdated": "2025-01-10",
+    "lastUpdated": "2025-01-10T15:30:00Z",
     "status": "active"
   },
   "trigger": "Chat messages processed or memory operations requested",
@@ -181,7 +181,8 @@
           "id": { "type": "uuid", "primaryKey": true },
           "userId": { "type": "integer", "foreignKey": "users.id" },
           "content": { "type": "text" },
-          "category": { "type": "text" },
+          "category": { "type": "text", "enum": ["preferences", "personal_context", "instructions", "food_diet", "goals"] },
+          "labels": { "type": "text[]" },
           "importance": { "type": "real" },
           "keywords": { "type": "text[]" },
           "createdAt": { "type": "timestamp" },

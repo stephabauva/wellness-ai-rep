@@ -376,7 +376,7 @@ Return JSON with:
   private getDefaultMemoryDetection(): EnhancedMemoryDetection {
     return {
       shouldRemember: false,
-      category: 'context',
+      category: 'personal_context',
       importance: 0.0,
       extractedInfo: '',
       keywords: [],

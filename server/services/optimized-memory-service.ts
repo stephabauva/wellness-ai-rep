@@ -154,7 +154,7 @@ Use this information naturally in your responses without explicitly mentioning y
       health: ['weight', 'exercise', 'workout', 'diet', 'calories', 'steps']
     };
 
-    let category: MemoryCategory = 'context';
+    let category: MemoryCategory = 'personal_context';
     let importance = 0.3;
     let shouldRemember = false;
     

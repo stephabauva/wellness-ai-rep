@@ -202,7 +202,8 @@ export const memoryEntries = pgTable("memory_entries", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: integer("user_id").notNull(),
   content: text("content").notNull(),
-  category: text("category").notNull(), // preference, personal_info, context, instruction
+  category: text("category").notNull(), // preferences, personal_context, instructions, food_diet, goals
+  labels: text("labels").array(), // Array of labels for filtering within categories
   importanceScore: real("importance_score").notNull().default(0.5),
   keywords: text("keywords").array(),
   embedding: jsonb("embedding"), // Vector array as JSON
@@ -383,14 +384,11 @@ export type InsertConversationMessage = z.infer<typeof insertConversationMessage
 
 // Memory categories
 export const memoryCategories = [
-  'preference', 
-  'personal_info', 
-  'context', 
-  'instruction',
-  'food_preferences',
-  'dietary_restrictions',
-  'meal_patterns',
-  'nutrition_goals'
+  'preferences', 
+  'personal_context', 
+  'instructions', 
+  'food_diet',
+  'goals'
 ] as const;
 export type MemoryCategory = typeof memoryCategories[number];
 

@@ -6,16 +6,17 @@
       "manual-memory-entry",
       "memory-browsing",
       "category-navigation",
+      "label-filtering",
       "bulk-operations",
       "memory-deletion"
     ],
-    "totalFeatures": 6,
-    "lastUpdated": "2025-01-10"
+    "totalFeatures": 7,
+    "lastUpdated": "2025-01-10T15:30:00Z"
   },
   "_meta": {
     "feature": "memory-ui",
     "domain": "memory",
-    "lastUpdated": "2025-01-10",
+    "lastUpdated": "2025-01-10T15:30:00Z",
     "status": "active"
   },
   "trigger": "User navigates to memory section or performs memory management actions",
@@ -61,7 +62,7 @@
         "User navigates to memory section",
         "System loads lightweight overview with counts by category",
         "User sees total memories and category breakdown without loading full content",
-        "Category tabs show counts (All, Preferences, Personal, Context, Instructions, Food, Dietary, Meals, Nutrition)",
+        "Category tabs show counts (All, Preferences, Personal Context, Instructions, Food & Diet, Goals)",
         "Overview updates automatically after memory operations"
       ]
     },
@@ -79,7 +80,7 @@
       "userFlow": [
         "User clicks 'Add Memory' button",
         "Modal opens with memory entry form",
-        "User enters content, selects category (preference/personal_info/context/instruction) and importance (1-10)",
+        "User enters content, selects category (preferences/personal_context/instructions/food_diet/goals) and importance (low/medium/high)",
         "System validates form inputs",
         "Memory created with embeddings and metadata",
         "Query cache invalidated",
@@ -119,12 +120,35 @@
         "data": ["client-side-filter-state"]
       },
       "userFlow": [
-        "User sees category tabs with counts (All, Preferences, Personal, Context, Instructions, Food, Dietary, Meals, Nutrition)",
+        "User sees category tabs with counts (All, Preferences, Personal Context, Instructions, Food & Diet, Goals)",
         "User clicks on category tab",
         "System filters memories client-side by category",
+        "Label filtering options appear for selected category",
+        "User can select/deselect labels to further filter memories",
         "Explanatory card shows category description and purpose",
-        "Only memories matching selected category displayed",
+        "Only memories matching selected category and labels displayed",
         "Category-specific operations available"
+      ]
+    },
+    "label-filtering": {
+      "trigger": "User selects category with available labels",
+      "dataFlow": {
+        "request": "CategorySelection → Client-side label extraction → Label filter UI",
+        "response": "Label selection → Client-side filtering → Filtered memory display"
+      },
+      "files": {
+        "ui": ["MemorySection.tsx"],
+        "api": [],
+        "data": ["client-side-filter-state"]
+      },
+      "userFlow": [
+        "User selects a category (not 'All')",
+        "System extracts unique labels from memories in that category",
+        "Label filtering UI appears with available labels and counts",
+        "User can select/deselect individual labels or select all",
+        "Memories are filtered client-side by selected labels",
+        "Label selection state is maintained per category",
+        "Label counts update based on visible memories"
       ]
     },
     "bulk-operations": {
@@ -175,7 +199,7 @@
     "GET /api/memories/overview": {
       "description": "Returns lightweight memory statistics and category counts",
       "requestBody": "",
-      "response": "{ total: number, categories: { preference: number, personal_info: number, context: number, instruction: number, food_preferences: number, dietary_restrictions: number, meal_patterns: number, nutrition_goals: number } }",
+      "response": "{ total: number, categories: { preferences: number, personal_context: number, instructions: number, food_diet: number, goals: number } }",
       "readsFrom": ["memory_entries"],
       "modifies": []
     },
@@ -216,7 +240,8 @@
           "id": { "type": "uuid", "primaryKey": true },
           "userId": { "type": "integer", "foreignKey": "users.id" },
           "content": { "type": "text" },
-          "category": { "type": "text" },
+          "category": { "type": "text", "enum": ["preferences", "personal_context", "instructions", "food_diet", "goals"] },
+          "labels": { "type": "text[]" },
           "importance": { "type": "real" },
           "keywords": { "type": "text[]" },
           "createdAt": { "type": "timestamp" },

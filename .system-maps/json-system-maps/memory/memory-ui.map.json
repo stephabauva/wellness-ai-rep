@@ -11,12 +11,12 @@
       "memory-deletion"
     ],
     "totalFeatures": 7,
-    "lastUpdated": "2025-07-10T21:00:00Z"
+    "lastUpdated": "2025-07-10T22:30:00Z"
   },
   "_meta": {
     "feature": "memory-ui",
     "domain": "memory", 
-    "lastUpdated": "2025-07-10T21:00:00Z",
+    "lastUpdated": "2025-07-10T22:30:00Z",
     "status": "active"
   },
   "trigger": "User navigates to memory section or performs memory management actions",
@@ -39,7 +39,8 @@
   "errorPaths": {
     "network": "Show error message, retry button available",
     "validation": "Form validation errors displayed inline",
-    "business": "Toast notifications for operation failures"
+    "business": "Toast notifications for operation failures",
+    "cacheRaceCondition": "Potential race condition between cache invalidation and refetch operations in bulk operations"
   },
   "dependencies": {
     "internal": ["memory-core", "chat-system"],
@@ -258,14 +259,14 @@
     "GET /api/memories": {
       "description": "Fetches all user memories with category filtering",
       "requestBody": "",
-      "response": "[{ id: string, content: string, category: string, importance: number, keywords: string[], createdAt: string, accessCount: number }]",
+      "response": "[{ id: string, content: string, category: string, importanceScore: number, keywords: string[], createdAt: string, accessCount: number, labels: string[], lastAccessed: string }]",
       "readsFrom": ["memory_entries", "memory_access_log"],
       "modifies": ["memory_access_log"]
     },
     "POST /api/memories/manual": {
       "description": "Creates a new memory entry from manual user input",
       "requestBody": "{ content: string, category: string, importance: number }",
-      "response": "{ id: string, content: string, category: string, confidence: number }",
+      "response": "{ success: boolean, memory?: { id: string, content: string, category: string, importance: number, createdAt: string }, message: string }",
       "readsFrom": ["users.id"],
       "modifies": ["memory_entries", "memory_embeddings"]
     },
@@ -279,7 +280,7 @@
     "DELETE /api/memories/bulk": {
       "description": "Bulk delete multiple memories",
       "requestBody": "{ memoryIds: string[] }",
-      "response": "{ successCount: number, totalRequested: number }",
+      "response": "{ deletedCount: number, message: string }",
       "readsFrom": ["memory_entries"],
       "modifies": ["memory_entries"]
     }
@@ -294,7 +295,7 @@
           "content": { "type": "text" },
           "category": { "type": "text", "enum": ["preferences", "personal_context", "instructions", "food_diet", "goals"] },
           "labels": { "type": "text[]", "description": "Labels for subcategorization within each category" },
-          "importance": { "type": "real" },
+          "importanceScore": { "type": "real" },
           "keywords": { "type": "text[]", "description": "Auto-extracted keywords for search and filtering" },
           "createdAt": { "type": "timestamp" },
           "accessCount": { "type": "integer" },

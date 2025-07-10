@@ -113,43 +113,80 @@ For each feature, verify these traces are documented:
 - [ ] **Memory Updates**: AI memory changes
 - [ ] **Notifications**: User notifications sent
 
-## 3. Implementation Workflow
+## 3. System Map Update Workflow
 
-### Step 1: Trace Discovery (5 minutes)
-1. Identify the primary user trigger
-2. Follow the complete request path in code
-3. Map the complete response path back to UI
-4. Document all side effects and dependencies
+### CRITICAL: System Map Update Process
+When asked to "update a system map using this guide", follow this **explicit 3-phase process**:
 
-### Step 2: File Enumeration (3 minutes)
-1. List every file that participates in the feature
-2. Categorize by layer (UI, API, Data, Types)
-3. Include shared components and utilities
-4. Document external dependencies
+**IMPORTANT**: You MUST always complete ALL THREE PHASES. Do not skip Phase 2 (Implementation Verification) - it is essential to verify the system map against actual code before making updates.
 
-### Step 3: Cache Flow Mapping (2 minutes)
-1. Identify all cache keys that need invalidation
-2. List all components that need to refresh
-3. Map dependent features that need updates
-4. Document cache consistency requirements
+### Phase 1: Analysis & Issue Discovery (5-10 minutes)
+1. **Examine Current System Map**: Read the existing system map thoroughly
+2. **Identify Potential Issues**: Look for inconsistencies, outdated information, missing details
+3. **Document Suspected Problems**: List all potential issues found in the system map
 
-### Step 4: Error Boundary Documentation (2 minutes)
-1. Map network failure handling
-2. Document validation error flows
-3. Identify business logic error recovery
-4. Test error path completeness
+### Phase 2: Implementation Verification (10-15 minutes)
+1. **Read Actual Implementation Files**: Examine the real code files mentioned in the system map
+2. **Verify System Map Accuracy**: Compare system map claims against actual implementation
+3. **Confirm Real Issues**: Distinguish between actual bugs and documentation gaps
+4. **Document Confirmed Issues**: List verified problems with evidence from code
 
-### Step 5: Integration Verification (3 minutes)
+### Phase 3: System Map Update (5-10 minutes)
+1. **Fix Documented Inconsistencies**: Update system map to match actual implementation
+2. **Add Missing Information**: Include details not captured in original map
+3. **Update Metadata**: Change lastUpdated timestamp and status if needed
+4. **Validate Completeness**: Ensure updated map covers all implementation aspects
+
+### Essential Update Steps
+
+#### Step 1: Issue Analysis (5 minutes)
+1. Read existing system map completely
+2. Check for logical inconsistencies
+3. Identify missing implementation details
+4. Note outdated or incorrect information
+
+#### Step 2: Code Verification (5 minutes)
+1. Read all files listed in the system map
+2. Follow actual data flow in the code
+3. Verify API endpoints and responses match
+4. Check database schema alignment
+5. Validate component behavior
+
+#### Step 3: Implementation Validation (3 minutes)
 1. Verify actual API calls match expected endpoints
 2. Test cache invalidation triggers UI refresh
 3. Validate error handling works end-to-end
 4. Confirm all dependencies are functional
 
-### Step 6: Root Map Update (2 minutes)
+#### Step 4: Map Correction (5 minutes)
+1. Update incorrect API endpoints/responses
+2. Fix database schema mismatches
+3. Correct component behavior descriptions
+4. Add missing error paths or dependencies
+
+#### Step 5: Documentation Sync (2 minutes)
+1. Ensure file paths are accurate
+2. Update data flow descriptions to match code
+3. Correct cache invalidation patterns
+4. Fix any cross-domain interaction details
+
+#### Step 6: Root Map Update (2 minutes)
 1. **REQUIRED**: Update `.system-maps/json-system-maps/root.map.json` after creating or modifying any system map
 2. Add new domains, subdomains, or features to the central index
 3. Update lastUpdated timestamp in root.map.json
 4. Verify all paths are correct and accessible
+
+### System Map Update Expectations
+
+When you receive a request like "update the memory UI system map using this guide", you should:
+
+1. **ALWAYS follow the 3-phase process above**
+2. **Phase 1**: Examine the current memory UI system map for inconsistencies
+3. **Phase 2**: Read and verify actual implementation files (MemorySection.tsx, memory-routes.ts, schema.ts, etc.)
+4. **Phase 3**: Update the system map with correct information based on actual code
+5. **Document your findings**: Clearly explain what issues you found and what you corrected
+
+**DO NOT**: Simply read the guide and explain what you would do. **DO**: Actually perform the analysis, verification, and update process.
 
 ## 4. Token-Optimized Templates
 

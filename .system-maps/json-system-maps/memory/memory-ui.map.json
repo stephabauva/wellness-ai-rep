@@ -3,7 +3,7 @@
     "domain": "memory",
     "features": [
       "memory-overview",
-      "manual-memory-entry",
+      "manual-memory-entry", 
       "memory-browsing",
       "category-navigation",
       "label-filtering",
@@ -15,7 +15,7 @@
   },
   "_meta": {
     "feature": "memory-ui",
-    "domain": "memory",
+    "domain": "memory", 
     "lastUpdated": "2025-07-10T21:00:00Z",
     "status": "active"
   },
@@ -45,6 +45,35 @@
     "internal": ["memory-core", "chat-system"],
     "external": ["React Query", "Tailwind CSS"],
     "shared": ["LoadingSpinner", "ErrorBoundary", "ToastNotifications"]
+  },
+  "crossDomainInteractions": {
+    "sharedComponents": [
+      {
+        "component": "MemorySection.tsx",
+        "domains": ["memory", "chat"],
+        "behaviorDifferences": {
+          "memory": "Manual memory creation with full form validation and category selection",
+          "chat": "Automatic memory creation from chat context with AI-determined categories"
+        }
+      }
+    ],
+    "sharedEndpoints": [
+      {
+        "endpoint": "/api/memories",
+        "usedBy": ["memory-ui.manual-entry", "chat.memory-creation"],
+        "processingDifferences": "Memory UI uses POST /api/memories/manual with user input, chat uses POST /api/memories with AI-extracted content"
+      }
+    ],
+    "impactAnalysis": {
+      "memoryCreation": "Both manual and automatic memory creation invalidate same cache keys",
+      "userExperience": "Manual entries show immediate feedback, chat-triggered memories appear in background",
+      "categoryMapping": "Manual selection vs AI-determined category assignment may create inconsistencies"
+    },
+    "cacheConsistency": {
+      "crossDomainInvalidation": ["query:memories", "query:memories-overview"],
+      "triggeringSystems": ["manual memory entry", "chat memory creation", "bulk operations"],
+      "refreshTargets": ["MemorySection", "ChatInterface memory indicators"]
+    }
   },
   "featureGroups": {
     "memory-overview": {

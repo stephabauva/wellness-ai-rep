@@ -230,7 +230,93 @@ Before marking a feature as "active", verify:
 6. **Dependency Mapping**: All internal and external dependencies are documented
 7. **Central Index Updated**: `.system-maps/json-system-maps/root.map.json` has been updated with new/modified system maps
 
-## 6. Benefits of This Approach
+## 6. Cross-Domain Consistency Requirements
+
+### Critical: Preventing Cross-Domain Issues
+
+When features across different domains interact (e.g., chat uploads vs file manager uploads affecting the same UI), system maps must explicitly document behavioral differences to prevent integration issues.
+
+#### Required Cross-Domain Documentation
+
+For any feature that shares components, endpoints, or affects the same UI across domains:
+
+```json
+{
+  "crossDomainInteractions": {
+    "sharedComponents": [
+      {
+        "component": "FileList.tsx", 
+        "domains": ["chat", "file-manager"],
+        "behaviorDifferences": {
+          "chat": "Uploads skip compression for immediate thumbnails",
+          "file-manager": "Applies smart compression (skip media files)"
+        }
+      }
+    ],
+    "sharedEndpoints": [
+      {
+        "endpoint": "/api/upload",
+        "usedBy": ["chat.attachments", "file-manager.upload"],
+        "processingDifferences": "Chat bypasses compression, file-manager applies smart compression"
+      }
+    ],
+    "impactAnalysis": {
+      "thumbnailDisplay": "Different compression paths affect thumbnail generation timing",
+      "userExperience": "Chat shows immediate thumbnails, file-manager may show icons initially"
+    }
+  }
+}
+```
+
+#### Cross-Domain Validation Checklist
+
+- [ ] **Shared Component Behavior**: Document any behavioral differences when same component is used across domains
+- [ ] **Endpoint Usage Patterns**: Map different processing flows for shared API endpoints
+- [ ] **UI Consistency**: Ensure similar operations produce consistent user experiences
+- [ ] **Compression/Processing Logic**: Document when/why different domains apply different processing
+- [ ] **Cache Dependencies**: Map cross-domain cache invalidation requirements
+- [ ] **Error Handling**: Ensure error handling is consistent across domains for shared operations
+
+#### Automated Validation
+
+Run the cross-domain validator after any system map changes:
+
+```bash
+node system-map-cross-domain-validator.js
+```
+
+This script automatically detects:
+- Shared components with inconsistent behaviors
+- Endpoint collisions with different processing
+- Undocumented cross-domain dependencies
+- Behavioral divergence in similar operations
+
+#### Common Cross-Domain Patterns to Document
+
+1. **File Upload Variations**: Different compression, processing, or validation logic
+2. **Shared UI Components**: Same component with different data sources or behaviors  
+3. **API Endpoint Reuse**: Same endpoint with different request/response processing
+4. **Cache Consistency**: Cross-domain cache invalidation requirements
+5. **Error Handling**: Consistent error messaging across similar operations
+
+### Root Map Cross-Domain Tracking
+
+Update `root.map.json` to include cross-domain dependency mappings:
+
+```json
+{
+  "crossDomainDependencies": {
+    "chat → file-manager": {
+      "reason": "Chat uploads affect file manager thumbnail display",
+      "sharedComponents": ["FileList.tsx", "AttachmentPreview.tsx"],
+      "behaviorDifferences": "compression handling",
+      "lastValidated": "2025-01-XX"
+    }
+  }
+}
+```
+
+## 7. Benefits of This Approach
 
 - **Token Efficient**: 15-50 lines vs 300+ lines for same coverage
 - **Complete Coverage**: Nothing is missed in the feature trace
@@ -238,5 +324,6 @@ Before marking a feature as "active", verify:
 - **Maintainable**: Developers can actually use and update these maps
 - **Queryable**: Easy to extract specific information
 - **Scalable**: Federated approach handles large codebases
+- **Cross-Domain Safe**: Prevents integration issues between domains
 
-This blueprint ensures **100% feature coverage** while being practical for both humans and LLMs to work with efficiently.
+This blueprint ensures **100% feature coverage** while being practical for both humans and LLMs to work with efficiently, with explicit cross-domain consistency validation.

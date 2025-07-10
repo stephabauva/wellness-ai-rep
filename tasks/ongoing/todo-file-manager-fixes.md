@@ -12,7 +12,7 @@
 
 ## Tasks
 
-### [ ] Task 1: Fix category visibility issue - Categories not showing when uploading files
+### [X] Task 1: Fix category visibility issue - Categories not showing when uploading files
 **Problem**: When users upload a file, they cannot select a category. The category dropdown/selector is either missing or not populated with available categories.
 
 **Root Cause Analysis**:
@@ -27,7 +27,7 @@
 3. Add proper loading states for category data
 4. Implement error handling if categories fail to load
 
-### [ ] Task 2: Debug category tabs - Only 'All' and 'Uncategorised' tabs visible
+### [X] Task 2: Debug category tabs - Only 'All' and 'Uncategorised' tabs visible
 **Problem**: CategoryTabs component only shows default tabs, not user-created categories.
 
 **Root Cause Analysis**:
@@ -43,7 +43,7 @@
 4. Ensure proper cache invalidation when categories change
 5. Add logging to track category fetch lifecycle
 
-### [ ] Task 3: Fix categorization dialog - No categories visible when clicking 'categorise' button
+### [X] Task 3: Fix categorization dialog - No categories visible when clicking 'categorise' button
 **Problem**: When users select files and click 'categorise', the category selection dialog shows no categories.
 
 **Root Cause Analysis**:
@@ -59,12 +59,12 @@
 4. Add error boundaries and loading states
 5. Implement fallback to show at least default categories
 
-### [ ] Task 4: Fix Go acceleration health check warnings at startup
+### [X] Task 4: Fix Go acceleration health check warnings at startup
 **Problem**: Server logs show '[WARN ] [express] GET /api/accelerate/health 503' warnings even though Go service should start on-demand.
 
 **Root Cause Analysis**:
 - Health check runs before Go service is needed
-- Go service is designed to start only for files >5MB
+- Go service is designed to start only for files >5MB that the user wants to upload
 - Health check creates unnecessary noise in logs
 
 **Solution**:

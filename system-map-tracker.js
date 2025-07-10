@@ -44,9 +44,15 @@ function findSystemMaps(dir) {
   return maps;
 }
 
-// Search for file mentions in system maps
+// Search for file mentions in system maps (excluding images and PDFs)
 function searchFileInMaps(filename, mapFiles) {
   const foundIn = [];
+  
+  // Skip images and PDFs
+  const skipExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.pdf'];
+  if (skipExtensions.some(ext => filename.toLowerCase().endsWith(ext))) {
+    return foundIn;
+  }
   
   for (const mapFile of mapFiles) {
     try {
@@ -122,7 +128,7 @@ function categorizeFile(filename, mapFiles) {
 
 // Main auditor function
 function auditFiles() {
-  console.log('🔍 File Auditor - Analyzing recently modified files\n');
+  console.log('Looking at the modified files...\n');
   
   const modifiedFiles = getModifiedFiles();
   
@@ -131,10 +137,6 @@ function auditFiles() {
     return;
   }
   
-  console.log(`Found ${modifiedFiles.length} recently modified file(s):`);
-  modifiedFiles.forEach(file => console.log(`  - ${file}`));
-  console.log();
-  
   const systemMapsDir = '.system-maps/json-system-maps';
   if (!fs.existsSync(systemMapsDir)) {
     console.error(`System maps directory not found: ${systemMapsDir}`);
@@ -142,57 +144,20 @@ function auditFiles() {
   }
   
   const mapFiles = findSystemMaps(systemMapsDir);
-  console.log(`Scanning ${mapFiles.length} system map files...\n`);
-  
-  const allCategories = {
-    'chat': [],
-    'health': [],
-    'memory': [],
-    'file-manager': [],
-    'settings': [],
-    'routes': [],
-    'infrastructure': [],
-    'uncategorized': []
-  };
+  console.log(`Scanning ${mapFiles.length} system maps...\n`);
   
   // Analyze each modified file
   for (const file of modifiedFiles) {
-    const categories = categorizeFile(file, mapFiles);
     const mentionedIn = searchFileInMaps(file, mapFiles);
+    const fileName = path.basename(file);
     
-    console.log(`📄 ${file}:`);
+    console.log(`${fileName}:`);
     if (mentionedIn.length > 0) {
-      console.log(`  Referenced in ${mentionedIn.length} system map(s):`);
-      mentionedIn.forEach(map => console.log(`    - ${map}`));
+      mentionedIn.forEach(map => console.log(`  - ${map}`));
     } else {
-      console.log(`  ❌ Not referenced in any system maps`);
+      console.log(`  (not mentioned in any system maps)`);
     }
-    
-    // Merge categories
-    Object.keys(categories).forEach(category => {
-      if (categories[category].length > 0) {
-        allCategories[category].push(...categories[category]);
-      }
-    });
-    
     console.log();
-  }
-  
-  // Summary by category
-  console.log('📊 Summary by Category:');
-  Object.keys(allCategories).forEach(category => {
-    if (allCategories[category].length > 0) {
-      console.log(`\n${category.toUpperCase()}:`);
-      // Remove duplicates
-      const uniqueFiles = [...new Set(allCategories[category])];
-      uniqueFiles.forEach(file => console.log(`  - ${file}`));
-    }
-  });
-  
-  // Warning for uncategorized files
-  if (allCategories.uncategorized.length > 0) {
-    console.log('\n⚠️  Files not found in system maps should be documented:');
-    allCategories.uncategorized.forEach(file => console.log(`  - ${file}`));
   }
 }
 

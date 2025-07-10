@@ -21,27 +21,27 @@
       "lastUpdated": "2025-01-10",
       "status": "active"
     },
-    "trigger": "Large data files (>5MB XML/JSON/CSV) detected during upload",
+    "trigger": "Large data files (>5MB XML/JSON/CSV) detected during upload or health check initialization",
     "dataFlow": {
-      "request": "UniversalFileService → FileAccelerationService → /api/accelerate/start → Go service spawn",
-      "response": "Go service → compressed file → upload completion",
-      "sideEffects": ["Go service startup", "90%+ compression ratios", "Graceful fallback to TypeScript"]
+      "request": "UniversalFileService → FileAccelerationService → /api/accelerate/health GET → Go service health check → /api/accelerate/start POST → Go service spawn",
+      "response": "Go service → compressed file → upload completion | Health check → service availability detection",
+      "sideEffects": ["Go service startup", "90%+ compression ratios", "Graceful fallback to TypeScript", "Health check logging suppression"]
     },
     "files": {
-      "ui": ["UniversalFileService.ts", "FileAccelerationService.ts", "useFileUpload.ts"],
-      "api": ["server/routes.ts"],
+      "ui": ["client/src/services/universal-file-service.ts", "client/src/services/file-acceleration-service.ts", "useFileUpload.ts"],
+      "api": ["server/routes/file-routes.ts", "server/routes/shared-utils.ts", "server/services/logger-service.ts"],
       "data": ["files"],
       "types": ["shared/schema.ts"]
     },
     "cacheFlow": {
       "invalidates": [],
-      "refreshes": [],
-      "triggers": ["go-service-startup", "compression-processing"]
+      "refreshes": ["AccelerationCapabilities"],
+      "triggers": ["go-service-startup", "compression-processing", "health-check-polling"]
     },
     "errorPaths": {
-      "network": "Fallback to TypeScript processing",
-      "validation": "File size/type validation",
-      "business": "Go service availability check"
+      "network": "Fallback to TypeScript processing with timeout handling",
+      "validation": "File size/type validation with graceful degradation",
+      "business": "Go service availability check with suppressed 503 warning logs"
     },
     "dependencies": {
       "internal": ["universal-file-service", "compression-optimization"],

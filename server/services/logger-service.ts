@@ -80,7 +80,10 @@ class Logger {
     // Only log slow requests (>500ms) or errors in production
     const shouldLogRequest = this.isDevelopment || duration > 500 || statusCode >= 400;
     
-    if (shouldLogRequest) {
+    // Skip logging expected health check failures for Go service
+    const isGoHealthCheck = path === '/api/accelerate/health' && statusCode === 503;
+    
+    if (shouldLogRequest && !isGoHealthCheck) {
       let message = `${method} ${path} ${statusCode}`;
       
       if (duration > 100) {

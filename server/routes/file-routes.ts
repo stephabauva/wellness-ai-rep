@@ -377,14 +377,23 @@ export async function registerFileRoutes(app: Express): Promise<void> {
   // Go acceleration service health check
   app.get('/api/accelerate/health', async (req, res) => {
     try {
-      const healthCheck = await fetch('http://localhost:5001/accelerate/health');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      
+      const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       if (healthCheck.ok) {
         const result = await healthCheck.json();
         res.json(result);
       } else {
+        // Don't log as error - this is expected when Go service is not running
         res.status(503).json({ status: 'Go service not available' });
       }
     } catch (error) {
+      // Don't log as error - this is expected when Go service is not running
       res.status(503).json({ status: 'Go service not available', error: 'Connection failed' });
     }
   });

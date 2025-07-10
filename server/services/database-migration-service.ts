@@ -32,6 +32,7 @@ export class DatabaseMigrationService {
       'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_memory_entries_category ON memory_entries(category)',
       'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_memory_entries_user_category ON memory_entries(user_id, category)',
       'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_memory_entries_importance ON memory_entries(importance_score DESC)',
+      'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_memory_entries_labels_gin ON memory_entries USING GIN (labels)',
       
       // Health data indexes
       'CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_health_data_user_id ON health_data(user_id)',

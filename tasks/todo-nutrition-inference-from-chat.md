@@ -74,7 +74,7 @@
   - Ensure category filtering works for new categories
   - Add icons or visual indicators for food-related categories
 
-### [ ] Task 6.2.2: Simplify Memory Categories and Add Label-Based Filtering (Merged with 6.3)
+### [X] Task 6.2.2: Simplify Memory Categories and Add Label-Based Filtering (Merged with 6.3)
 - **Problem**: Three issues to address:
   1. Current memory UI has 8 categories that are confusing and redundant
   2. Inconsistency between overview display and category tabs

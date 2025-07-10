@@ -18,6 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_memory_entries_category ON memory_entries(categor
 CREATE INDEX IF NOT EXISTS idx_memory_entries_user_category ON memory_entries(user_id, category);
 CREATE INDEX IF NOT EXISTS idx_memory_entries_created_at ON memory_entries(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_memory_entries_importance ON memory_entries(importance_score DESC);
+CREATE INDEX IF NOT EXISTS idx_memory_entries_labels_gin ON memory_entries USING GIN (labels);
 
 -- Memory access log indexes
 CREATE INDEX IF NOT EXISTS idx_memory_access_log_memory_entry_id ON memory_access_log(memory_entry_id);

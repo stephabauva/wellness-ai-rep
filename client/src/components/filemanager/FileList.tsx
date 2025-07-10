@@ -121,22 +121,34 @@ export const FileList: React.FC<FileListProps> = ({
                 </div>
 
                 <div className="flex flex-col items-center justify-center text-center space-y-1 pt-8 flex-grow w-full overflow-hidden">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center bg-muted rounded-lg overflow-hidden mb-2">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center bg-muted rounded-lg overflow-hidden mb-2 shadow-sm">
                     {file.fileType.startsWith('image/') ? (
                       <img
                         src={file.url || `/uploads/${file.fileName}`} // Use file.url if available
                         alt={file.displayName}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover rounded-lg"
+                        onLoad={() => {
+                          console.log(`✅ Image loaded successfully: ${file.fileName}`, { url: file.url, fallbackUrl: `/uploads/${file.fileName}` });
+                        }}
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
+                          const attemptedUrl = target.src;
+                          console.log(`❌ Image load failed: ${file.fileName}`, { 
+                            attemptedUrl, 
+                            fileUrl: file.url, 
+                            fallbackUrl: `/uploads/${file.fileName}`,
+                            fileType: file.fileType 
+                          });
                           target.style.display = 'none'; // Hide broken image
                           const fallbackIcon = target.nextElementSibling; // Assuming next sibling is the icon div
                           if (fallbackIcon) fallbackIcon.classList.remove('hidden');
                         }}
                       />
                     ) : null}
-                    <div className={cn("flex items-center justify-center w-full h-full text-muted-foreground", file.fileType.startsWith('image/') ? 'hidden' : '')}>
-                       {getFileIconUtil(file.fileType, file.fileName)}
+                    <div className={cn("flex items-center justify-center w-full h-full", file.fileType.startsWith('image/') ? 'hidden' : '')}>
+                      <div>
+                        {getFileIconUtil(file.fileType, file.fileName, "h-12 w-12 sm:h-14 sm:w-14")}
+                      </div>
                     </div>
                   </div>
 
@@ -214,22 +226,34 @@ export const FileList: React.FC<FileListProps> = ({
               aria-label={`Select file ${file.displayName}`}
             />
 
-            <div className="flex-shrink-0 w-10 h-10 bg-muted rounded overflow-hidden flex items-center justify-center">
+            <div className="flex-shrink-0 w-12 h-12 bg-muted rounded-lg overflow-hidden flex items-center justify-center shadow-sm">
               {file.fileType.startsWith('image/') ? (
                 <img
                   src={file.url || `/uploads/${file.fileName}`} // Use file.url if available
                   alt={file.displayName}
                   className="w-full h-full object-cover"
-                   onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallbackIcon = target.nextElementSibling;
-                      if (fallbackIcon) fallbackIcon.classList.remove('hidden');
-                    }}
+                  onLoad={() => {
+                    console.log(`✅ List view image loaded: ${file.fileName}`, { url: file.url, fallbackUrl: `/uploads/${file.fileName}` });
+                  }}
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    const attemptedUrl = target.src;
+                    console.log(`❌ List view image load failed: ${file.fileName}`, { 
+                      attemptedUrl, 
+                      fileUrl: file.url, 
+                      fallbackUrl: `/uploads/${file.fileName}`,
+                      fileType: file.fileType 
+                    });
+                    target.style.display = 'none';
+                    const fallbackIcon = target.nextElementSibling;
+                    if (fallbackIcon) fallbackIcon.classList.remove('hidden');
+                  }}
                 />
               ) : null}
-              <div className={cn("flex items-center justify-center w-full h-full text-muted-foreground", file.fileType.startsWith('image/') ? 'hidden' : '')}>
-                 {getFileIconUtil(file.fileType, file.fileName)}
+              <div className={cn("flex items-center justify-center w-full h-full", file.fileType.startsWith('image/') ? 'hidden' : '')}>
+                <div>
+                  {getFileIconUtil(file.fileType, file.fileName, "h-8 w-8")}
+                </div>
               </div>
             </div>
 

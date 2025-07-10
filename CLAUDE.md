@@ -111,8 +111,9 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 4. **High-level updates** only during execution
 5. **Review section** added to todo.md when complete
 6. **Cleanup** temporary files at end
-7. Execute the system map tracker system-map-tracker.js everytime files are edited.
-8. **update the corresponding system maps** of the features you modified using .system-maps/optimized-complete-map-blue-original.md and always keep the central index .system-maps/json-system-maps/root.map.json up-to-date
+7. **always** ask yourself if a database migration is necessary based on the changes made
+8. Execute the system map tracker system-map-tracker.js everytime files are edited.
+9. **update the corresponding system maps** of the features you modified using .system-maps/optimized-complete-map-blue-original.md and always keep the central index .system-maps/json-system-maps/root.map.json up-to-date
 
 ### Testing Requirements
 - Use Vitest for all tests with 'npx vitest'

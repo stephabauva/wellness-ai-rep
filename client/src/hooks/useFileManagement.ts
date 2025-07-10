@@ -34,6 +34,13 @@ export const useFileManagement = () => {
       return await response.json();
     },
     onSuccess: (data, file) => {
+      console.log('💬 Chat upload result:', {
+        originalFileName: file.name,
+        uploadedFileName: data.file.fileName,
+        uploadedUrl: data.file.url,
+        compressionApplied: false // Chat doesn't compress
+      });
+      
       const attachedFile: AttachedFile = {
         id: data.file.id,
         fileName: data.file.fileName,

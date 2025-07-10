@@ -69,17 +69,23 @@ export function useFileUpload(): UseFileUploadReturn {
       
       let fileToUpload = file;
       
-      // Apply compression for suitable files
+      // Apply compression for suitable files only
       try {
-        const compressionResult = await UniversalFileService.compressFile(file);
-        fileToUpload = compressionResult.compressedFile;
-        
-        console.log(`Compression completed for ${file.name}:`, {
-          originalSize: compressionResult.originalSize,
-          compressedSize: compressionResult.compressedSize,
-          ratio: compressionResult.compressionRatio,
-          algorithm: compressionResult.algorithm
-        });
+        // Check if file should be compressed (skip images and other non-compressible files)
+        if (file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/')) {
+          console.log(`Skipping compression for media file: ${file.name} (${file.type})`);
+          fileToUpload = file;
+        } else {
+          const compressionResult = await UniversalFileService.compressFile(file);
+          fileToUpload = compressionResult.compressedFile;
+          
+          console.log(`Compression completed for ${file.name}:`, {
+            originalSize: compressionResult.originalSize,
+            compressedSize: compressionResult.compressedSize,
+            ratio: compressionResult.compressionRatio,
+            algorithm: compressionResult.algorithm
+          });
+        }
       } catch (compressionError) {
         console.warn(`Compression failed for ${file.name}, uploading original:`, compressionError);
         // Continue with original file if compression fails
@@ -105,6 +111,13 @@ export function useFileUpload(): UseFileUploadReturn {
       }
 
       const result: UploadResponse = await response.json();
+      
+      console.log('📁 File manager upload result:', {
+        originalFileName: file.name,
+        uploadedFileName: result.file.fileName,
+        uploadedUrl: result.file.url,
+        compressionApplied: fileToUpload !== file
+      });
       
       // Invalidate file queries to ensure file management shows updated files
       queryClient.invalidateQueries({ queryKey: ['files', '/api/files'] });

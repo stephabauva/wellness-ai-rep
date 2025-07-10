@@ -10,42 +10,45 @@
       "grid-view",
       "file-selection",
       "web-share",
-      "qr-code-generation"
+      "qr-code-generation",
+      "thumbnail-display"
     ],
-    "totalFeatures": 8,
-    "lastUpdated": "2025-01-10"
+    "totalFeatures": 9,
+    "lastUpdated": "2025-07-10"
   },
   "upload-file": {
     "_meta": {
       "feature": "upload-file",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-10",
       "status": "active"
     },
     "trigger": "User clicks upload button and selects files",
     "dataFlow": {
-      "request": "FileUploadDialog → useFileUpload → UniversalFileService → /api/upload → files table",
-      "response": "Database → API → React Query → FileList refresh",
-      "sideEffects": ["Go acceleration for large files", "Category assignment", "Compression optimization"]
+      "request": "FileUploadDialog → useFileUpload → Smart compression (skip media files) → UniversalFileService → /api/upload → files table",
+      "response": "Database → API → React Query → FileList refresh with proper thumbnails",
+      "sideEffects": ["Go acceleration for large files", "Category assignment", "Smart compression (media files excluded)", "Debug logging for uploads"]
     },
     "files": {
       "ui": ["FileUploadDialog.tsx", "useFileUpload.ts", "FileActionsToolbar.tsx"],
       "api": ["server/routes.ts"],
       "data": ["files", "fileCategories"],
-      "types": ["shared/schema.ts"]
+      "types": ["shared/schema.ts"],
+      "services": ["universal-file-service.ts", "file-compression.ts"]
     },
     "cacheFlow": {
       "invalidates": ["query:files", "query:categories"],
       "refreshes": ["FileList", "FileActionsToolbar"],
-      "triggers": ["file-processing", "metadata-extraction"]
+      "triggers": ["file-processing", "metadata-extraction", "thumbnail-generation"]
     },
     "errorPaths": {
       "network": "Upload retry with exponential backoff",
       "validation": "File type/size validation errors",
-      "business": "Category assignment fallback to uncategorized"
+      "business": "Category assignment fallback to uncategorized",
+      "compression": "Fallback to original file if compression fails"
     },
     "dependencies": {
-      "internal": ["categories", "universal-file-service"],
+      "internal": ["categories", "universal-file-service", "thumbnail-display"],
       "external": ["Go acceleration service"],
       "shared": ["FileAccelerationService", "UniversalFileService"]
     }
@@ -130,14 +133,15 @@
     "trigger": "User selects list view mode",
     "dataFlow": {
       "request": "ViewToggle → useFileManagerState.setViewMode → FileList re-render",
-      "response": "State update → UI layout change",
-      "sideEffects": ["View preference saved"]
+      "response": "State update → UI layout change → Thumbnail display",
+      "sideEffects": ["View preference saved", "Thumbnail generation for visible files"]
     },
     "files": {
-      "ui": ["FileList.tsx", "useFileManagerState.ts"],
+      "ui": ["client/src/components/filemanager/FileList.tsx", "client/src/hooks/useFileManagerState.ts"],
       "api": [],
       "data": [],
-      "types": ["shared/schema.ts"]
+      "types": ["shared/schema.ts"],
+      "utils": ["client/src/utils/fileManagerUtils.ts"]
     },
     "cacheFlow": {
       "invalidates": [],
@@ -165,14 +169,15 @@
     "trigger": "User selects grid view mode",
     "dataFlow": {
       "request": "ViewToggle → useFileManagerState.setViewMode → FileList re-render",
-      "response": "State update → UI layout change",
-      "sideEffects": ["View preference saved"]
+      "response": "State update → UI layout change → Enhanced thumbnail display",
+      "sideEffects": ["View preference saved", "Larger thumbnail generation for grid layout"]
     },
     "files": {
-      "ui": ["FileList.tsx", "useFileManagerState.ts"],
+      "ui": ["client/src/components/filemanager/FileList.tsx", "client/src/hooks/useFileManagerState.ts"],
       "api": [],
       "data": [],
-      "types": ["shared/schema.ts"]
+      "types": ["shared/schema.ts"],
+      "utils": ["client/src/utils/fileManagerUtils.ts"]
     },
     "cacheFlow": {
       "invalidates": [],
@@ -293,6 +298,43 @@
       "internal": ["file-selection"],
       "external": ["QR code library"],
       "shared": ["useFileSharing", "QrCodeDialog"]
+    }
+  },
+  "thumbnail-display": {
+    "_meta": {
+      "feature": "thumbnail-display",
+      "domain": "file-manager",
+      "lastUpdated": "2025-07-10",
+      "status": "active"
+    },
+    "trigger": "Files are displayed in list or grid view",
+    "dataFlow": {
+      "request": "FileList renders → Image files display actual thumbnails, non-images show getFileIcon utility with size parameter",
+      "response": "Proper image thumbnails for uploaded files with fallback to sized icons",
+      "sideEffects": ["Improved user experience", "Visual file type identification", "Context-aware icon sizing", "Debug logging for thumbnail loading"]
+    },
+    "files": {
+      "ui": ["client/src/components/filemanager/FileList.tsx"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"],
+      "utils": ["client/src/utils/fileManagerUtils.ts"],
+      "hooks": ["client/src/hooks/useFileUpload.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["FileList"],
+      "triggers": ["thumbnail-generation", "icon-size-adjustment", "image-load-debugging"]
+    },
+    "errorPaths": {
+      "network": "Image loading fallback to icon with detailed console logging",
+      "validation": "Fallback to default file icon with correct size",
+      "business": "Graceful degradation to text representation with debug info"
+    },
+    "dependencies": {
+      "internal": ["list-view", "grid-view", "upload-file"],
+      "external": ["lucide-react icons"],
+      "shared": ["fileManagerUtils", "compression-skip-for-media"]
     }
   }
 }

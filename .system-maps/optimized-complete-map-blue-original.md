@@ -16,8 +16,27 @@ Hence, every feature mapping must capture the **complete data journey** from use
 ## User flows
 How the user interacts with the application is described in ./tasks/all-user-flows.
 
-## 1. Ultra-Compact Feature Schema
+## 1. System Map Structure
 
+### Required Table of Contents
+Every system map must start with a brief table of contents listing all mapped features:
+
+```json
+{
+  "_tableOfContents": {
+    "domain": "domain-name",
+    "features": [
+      "feature-1-name",
+      "feature-2-name", 
+      "feature-3-name"
+    ],
+    "totalFeatures": 3,
+    "lastUpdated": "2025-01-XX"
+  }
+}
+```
+
+### Ultra-Compact Feature Schema
 Use this minimal JSON structure to capture 100% of feature connections:
 
 ```json
@@ -126,6 +145,12 @@ For each feature, verify these traces are documented:
 3. Validate error handling works end-to-end
 4. Confirm all dependencies are functional
 
+### Step 6: Root Map Update (2 minutes)
+1. **REQUIRED**: Update `.system-maps/json-system-maps/root.map.json` after creating or modifying any system map
+2. Add new domains, subdomains, or features to the central index
+3. Update lastUpdated timestamp in root.map.json
+4. Verify all paths are correct and accessible
+
 ## 4. Token-Optimized Templates
 
 ### Micro Feature (< 20 lines)
@@ -203,6 +228,7 @@ Before marking a feature as "active", verify:
 4. **Error Handling**: All failure modes have documented recovery strategies
 5. **Integration Evidence**: Feature has been tested end-to-end
 6. **Dependency Mapping**: All internal and external dependencies are documented
+7. **Central Index Updated**: `.system-maps/json-system-maps/root.map.json` has been updated with new/modified system maps
 
 ## 6. Benefits of This Approach
 

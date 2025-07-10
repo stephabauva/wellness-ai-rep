@@ -1,8 +1,21 @@
 {
+  "_tableOfContents": {
+    "domain": "memory",
+    "features": [
+      "memory-overview",
+      "manual-memory-entry",
+      "memory-browsing",
+      "category-navigation",
+      "bulk-operations",
+      "memory-deletion"
+    ],
+    "totalFeatures": 6,
+    "lastUpdated": "2025-01-10"
+  },
   "_meta": {
     "feature": "memory-ui",
     "domain": "memory",
-    "lastUpdated": "2025-01-08T10:00:00Z",
+    "lastUpdated": "2025-01-10",
     "status": "active"
   },
   "trigger": "User navigates to memory section or performs memory management actions",

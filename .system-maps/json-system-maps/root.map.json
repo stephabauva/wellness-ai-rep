@@ -2,7 +2,7 @@
 {
   "appName": "Wellness Coaching Application",
   "version": "1.0.0",
-  "lastUpdated": "2025-01-27T10:00:00Z",
+  "lastUpdated": "2025-01-10T12:00:00Z",
   "domains": {
     "chat": {
       "description": "Core chat messaging functionality with AI streaming responses and conversation history",
@@ -31,7 +31,7 @@
       "description": "AI memory system for context persistence and intelligent memory management",
       "path": ".system-maps/json-system-maps/memory/",
       "dependencies": [],
-      "subdomains": {
+      "features": {
         "memory-core": {
           "description": "Core memory operations and storage",
           "path": ".system-maps/json-system-maps/memory/memory-core.map.json"
@@ -39,6 +39,18 @@
         "memory-ui": {
           "description": "Memory management user interface",
           "path": ".system-maps/json-system-maps/memory/memory-ui.map.json"
+        },
+        "memory-detection": {
+          "description": "Automatic memory detection from chat messages",
+          "path": ".system-maps/json-system-maps/memory/memory-detection.feature.json"
+        },
+        "memory-deduplication": {
+          "description": "ChatGPT-style memory deduplication and consolidation",
+          "path": ".system-maps/json-system-maps/memory/memory-deduplication.feature.json"
+        },
+        "memory-retrieval": {
+          "description": "Context-aware memory retrieval with semantic search",
+          "path": ".system-maps/json-system-maps/memory/memory-retrieval.feature.json"
         }
       }
     },

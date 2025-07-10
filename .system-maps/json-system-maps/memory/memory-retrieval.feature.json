@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "feature": "memory-retrieval",
+    "domain": "memory",
+    "lastUpdated": "2025-01-10",
+    "status": "active"
+  },
+  "trigger": "User sends new message requiring memory context",
+  "dataFlow": {
+    "request": "Chat context → intelligent-memory-retrieval → semantic search",
+    "response": "Relevant memories → AI prompt enhancement → contextual response"
+  },
+  "files": {
+    "ui": [],
+    "api": ["server/routes/memory-routes.ts"],
+    "services": ["server/services/intelligent-memory-retrieval.ts", "server/services/memory-service.ts", "server/services/go-memory-service.ts"],
+    "data": ["memory_entries", "memory_embeddings", "memory_access_log", "similarity-cache"],
+    "types": ["shared/schema.ts"]
+  },
+  "cacheFlow": {
+    "invalidates": ["similarity-cache"],
+    "refreshes": ["ChatInterface", "AIResponses"],
+    "triggers": ["memory-access-logging"]
+  },
+  "errorPaths": {
+    "network": "Fallback to cached results or continue without memory",
+    "validation": "Skip invalid memories, use available ones",
+    "business": "Graceful degradation with reduced context"
+  },
+  "dependencies": {
+    "internal": ["semantic-search", "memory-relationships"],
+    "external": ["Go Services", "PostgreSQL"],
+    "shared": ["cache-service", "performance-monitor"]
+  },
+  "userFlow": [
+    "User sends new message",
+    "System builds context from conversation history",
+    "Semantic search finds relevant memories using cosine similarity",
+    "Top memories ranked by relevance and importance",
+    "Memory access logged for analytics",
+    "Memories included in AI prompt for personalized response"
+  ],
+  "performanceTargets": {
+    "semantic-search": "<100ms for similarity queries",
+    "memory-retrieval": "<200ms for contextual memories"
+  }
+}

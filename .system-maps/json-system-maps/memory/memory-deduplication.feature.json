@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "feature": "memory-deduplication",
+    "domain": "memory",
+    "lastUpdated": "2025-01-10",
+    "status": "active"
+  },
+  "trigger": "New memory compared with existing memories",
+  "dataFlow": {
+    "request": "New memory → chatgpt-memory-enhancement → semantic comparison",
+    "response": "Duplicate detection → consolidation → memory graph update"
+  },
+  "files": {
+    "ui": [],
+    "api": ["server/routes/memory-routes.ts"],
+    "services": ["server/services/chatgpt-memory-enhancement.ts", "server/services/memory-graph-service.ts", "server/services/memory-relationship-engine.ts"],
+    "data": ["memory_entries", "memory_relationships", "memory_consolidation_log"],
+    "types": ["shared/schema.ts"]
+  },
+  "cacheFlow": {
+    "invalidates": ["query:memories", "memory-embeddings-cache"],
+    "refreshes": ["MemorySection"],
+    "triggers": ["relationship-updates"]
+  },
+  "errorPaths": {
+    "network": "Skip deduplication, store as new memory",
+    "validation": "Log conflicts, manual resolution required",
+    "business": "Fallback to simple storage without consolidation"
+  },
+  "dependencies": {
+    "internal": ["memory-creation", "memory-relationships"],
+    "external": ["OpenAI API"],
+    "shared": ["cache-service", "singleton-pattern"]
+  },
+  "userFlow": [
+    "New memory compared with existing memories using semantic similarity",
+    "Duplicate or conflicting memories identified",
+    "Smart consolidation or replacement performed (ChatGPT-style)",
+    "Memory graph relationships updated",
+    "Consolidation actions logged for transparency",
+    "Singleton pattern prevents duplicate processing instances"
+  ],
+  "architectureNotes": "Uses singleton pattern to prevent duplicate instances and ensure consistent logging"
+}

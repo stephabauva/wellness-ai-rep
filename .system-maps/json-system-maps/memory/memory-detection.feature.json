@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "feature": "memory-detection",
+    "domain": "memory",
+    "lastUpdated": "2025-01-10",
+    "status": "active"
+  },
+  "trigger": "User sends message in chat",
+  "dataFlow": {
+    "request": "Chat message → memory-service.detectMemoryWorthyContent → AI analysis",
+    "response": "Memory candidates → validation → storage with embeddings"
+  },
+  "files": {
+    "ui": [],
+    "api": ["server/routes/memory-routes.ts"],
+    "services": ["server/services/memory-service.ts", "server/services/simple-memory-detection.ts", "server/services/chatgpt-memory-enhancement.ts"],
+    "data": ["memory_entries", "memory_triggers"],
+    "types": ["shared/schema.ts"]
+  },
+  "cacheFlow": {
+    "invalidates": ["query:memories"],
+    "refreshes": ["MemorySection"],
+    "triggers": ["memory-background-processing"]
+  },
+  "errorPaths": {
+    "network": "Skip memory detection, continue with chat",
+    "validation": "Log invalid memories, continue processing",
+    "business": "Graceful degradation without memory enhancement"
+  },
+  "dependencies": {
+    "internal": ["ai-service", "chat-system"],
+    "external": ["OpenAI API", "Google AI"],
+    "shared": ["cache-service", "error-handling"]
+  },
+  "userFlow": [
+    "User sends message in chat",
+    "Background analysis detects memory-worthy content (preferences, goals, constraints)",
+    "AI extracts facts and categorizes by type (preference/personal_info/context/instruction)",
+    "Memory stored with confidence scoring and embeddings",
+    "Memory triggers logged for user transparency",
+    "Background processing queued for deduplication"
+  ]
+}

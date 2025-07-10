@@ -1,189 +1,298 @@
 
 {
-  "tableOfContents": {
-    "fileOperations": ["upload-file", "delete-files", "refresh-files"],
-    "fileDisplay": ["list-view", "grid-view", "file-selection"],
-    "fileSharing": ["web-share", "qr-code-generation"]
+  "_tableOfContents": {
+    "domain": "file-manager",
+    "features": [
+      "upload-file",
+      "delete-files", 
+      "refresh-files",
+      "list-view",
+      "grid-view",
+      "file-selection",
+      "web-share",
+      "qr-code-generation"
+    ],
+    "totalFeatures": 8,
+    "lastUpdated": "2025-01-10"
   },
-  "lastUpdated": "2025-06-26T19:52:00Z",
-  "dependencies": ["categories", "universal-file-service"],
-  "featureGroups": {
-    "fileOperations": {
-      "description": "Core file management operations including upload, delete, and refresh",
-      "features": {
-        "upload-file": {
-          "description": "Upload files with optional category assignment and Go acceleration for large files",
-          "userFlow": [
-            "User clicks upload button",
-            "FileUploadDialog opens",
-            "User selects file(s) and optional category",
-            "useFileUpload hook processes file",
-            "Universal file service applies compression if beneficial",
-            "Go acceleration service auto-starts for large data files (>5MB XML/JSON/CSV)",
-            "File uploaded via /api/upload endpoint",
-            "File queries refreshed via React Query"
-          ],
-          "components": [
-            "FileUploadDialog",
-            "useFileUpload",
-            "UniversalFileService",
-            "FileAccelerationService"
-          ]
-        },
-        "delete-files": {
-          "description": "Bulk deletion of selected files with confirmation",
-          "userFlow": [
-            "User selects files via checkboxes",
-            "User clicks delete button in FileActionsToolbar",
-            "Confirmation dialog appears",
-            "useFileApi.deleteFiles executes bulk deletion",
-            "Files removed from database and filesystem",
-            "UI updated via React Query cache invalidation"
-          ],
-          "components": [
-            "FileActionsToolbar",
-            "useFileApi",
-            "useFileManagerState"
-          ]
-        },
-        "refresh-files": {
-          "description": "Refresh file list to show latest state",
-          "userFlow": [
-            "User clicks refresh button",
-            "useFileApi.refetchFiles called",
-            "React Query refetches from /api/files",
-            "UI updates with fresh file list"
-          ],
-          "components": [
-            "FileActionsToolbar",
-            "useFileApi"
-          ]
-        }
-      }
+  "upload-file": {
+    "_meta": {
+      "feature": "upload-file",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
     },
-    "fileDisplay": {
-      "description": "File visualization and selection interfaces",
-      "features": {
-        "list-view": {
-          "description": "Display files in detailed list format with metadata",
-          "userFlow": [
-            "User selects list view mode",
-            "FileList component renders files in table format",
-            "Shows file name, size, date, category, selection checkbox"
-          ],
-          "components": [
-            "FileList",
-            "useFileManagerState"
-          ]
-        },
-        "grid-view": {
-          "description": "Display files in grid format with thumbnails",
-          "userFlow": [
-            "User selects grid view mode",
-            "FileList component renders files in grid layout",
-            "Shows file icons/thumbnails with basic info"
-          ],
-          "components": [
-            "FileList",
-            "useFileManagerState"
-          ]
-        },
-        "file-selection": {
-          "description": "Multi-select files using checkboxes for bulk operations",
-          "userFlow": [
-            "User clicks individual file checkboxes or select all",
-            "useFileManagerState tracks selected files",
-            "FileActionsToolbar enables bulk operations"
-          ],
-          "components": [
-            "FileList",
-            "FileActionsToolbar",
-            "useFileManagerState"
-          ]
-        }
-      }
+    "trigger": "User clicks upload button and selects files",
+    "dataFlow": {
+      "request": "FileUploadDialog → useFileUpload → UniversalFileService → /api/upload → files table",
+      "response": "Database → API → React Query → FileList refresh",
+      "sideEffects": ["Go acceleration for large files", "Category assignment", "Compression optimization"]
     },
-    "fileSharing": {
-      "description": "File sharing capabilities including web share and QR codes",
-      "features": {
-        "web-share": {
-          "description": "Share selected files using Web Share API",
-          "userFlow": [
-            "User selects files and clicks share button",
-            "useFileSharing.shareSelectedFiles called",
-            "Web Share API invoked with file URLs",
-            "Native share dialog appears"
-          ],
-          "components": [
-            "FileActionsToolbar",
-            "useFileSharing"
-          ]
-        },
-        "qr-code-generation": {
-          "description": "Generate QR codes for file sharing",
-          "userFlow": [
-            "User selects files and clicks QR code button",
-            "useFileSharing.generateAndShowQRCode called",
-            "QR code generated with file access URLs",
-            "QrCodeDialog displays the QR code"
-          ],
-          "components": [
-            "QrCodeDialog",
-            "useFileSharing",
-            "FileActionsToolbar"
-          ]
-        }
-      }
-    }
-  },
-  "components": {
-    "FileManagerSection": {
-      "path": "client/src/components/FileManagerSection.tsx",
-      "description": "Main file manager container component",
-      "dependencies": ["useFileApi", "useFileManagerState", "useFileSharing"]
-    },
-    "FileList": {
-      "path": "client/src/components/filemanager/FileList.tsx",
-      "description": "File display component supporting list and grid views"
-    },
-    "FileActionsToolbar": {
-      "path": "client/src/components/filemanager/FileActionsToolbar.tsx",
-      "description": "Toolbar with file operation buttons (upload, delete, share, QR, view toggle)"
-    },
-    "FileUploadDialog": {
-      "path": "client/src/components/filemanager/FileUploadDialog.tsx",
-      "description": "Modal dialog for file upload with category selection"
-    },
-    "QrCodeDialog": {
-      "path": "client/src/components/filemanager/QrCodeDialog.tsx",
-      "description": "Modal dialog displaying QR codes for file sharing"
-    }
-  },
-  "apiEndpoints": {
-    "/api/upload": {
-      "method": "POST",
-      "description": "Upload file with optional category assignment and Go acceleration",
-      "readsFrom": ["fileCategories"],
-      "modifies": ["files"],
-      "implementation": "server/routes.ts"
-    },
-    "/api/files": {
-      "method": "GET",
-      "description": "Retrieve user's files with category information",
-      "readsFrom": ["files", "fileCategories"],
-      "implementation": "server/routes.ts"
-    },
-    "/api/files/delete": {
-      "method": "POST",
-      "description": "Bulk delete selected files",
-      "modifies": ["files"],
-      "implementation": "server/routes.ts"
-    }
-  },
-  "database": {
     "files": {
-      "description": "Main files table storing file metadata",
-      "key_fields": ["id", "userId", "fileName", "filePath", "categoryId", "isDeleted"]
+      "ui": ["FileUploadDialog.tsx", "useFileUpload.ts", "FileActionsToolbar.tsx"],
+      "api": ["server/routes.ts"],
+      "data": ["files", "fileCategories"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": ["query:files", "query:categories"],
+      "refreshes": ["FileList", "FileActionsToolbar"],
+      "triggers": ["file-processing", "metadata-extraction"]
+    },
+    "errorPaths": {
+      "network": "Upload retry with exponential backoff",
+      "validation": "File type/size validation errors",
+      "business": "Category assignment fallback to uncategorized"
+    },
+    "dependencies": {
+      "internal": ["categories", "universal-file-service"],
+      "external": ["Go acceleration service"],
+      "shared": ["FileAccelerationService", "UniversalFileService"]
+    }
+  },
+  "delete-files": {
+    "_meta": {
+      "feature": "delete-files",
+      "domain": "file-manager", 
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User selects files and clicks delete button",
+    "dataFlow": {
+      "request": "FileActionsToolbar → useFileApi.deleteFiles → /api/files/delete → files table",
+      "response": "Database → API → React Query invalidation → UI refresh",
+      "sideEffects": ["File system cleanup", "Cache invalidation"]
+    },
+    "files": {
+      "ui": ["FileActionsToolbar.tsx", "useFileApi.ts", "useFileManagerState.ts"],
+      "api": ["server/routes.ts"],
+      "data": ["files"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": ["query:files"],
+      "refreshes": ["FileList", "FileActionsToolbar"],
+      "triggers": ["file-cleanup"]
+    },
+    "errorPaths": {
+      "network": "Retry deletion with confirmation",
+      "validation": "File permission errors",
+      "business": "Partial deletion success handling"
+    },
+    "dependencies": {
+      "internal": ["file-selection"],
+      "external": [],
+      "shared": ["useFileManagerState"]
+    }
+  },
+  "refresh-files": {
+    "_meta": {
+      "feature": "refresh-files",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User clicks refresh button",
+    "dataFlow": {
+      "request": "FileActionsToolbar → useFileApi.refetchFiles → /api/files → files table",
+      "response": "Database → API → React Query → FileList update",
+      "sideEffects": ["Cache refresh", "UI synchronization"]
+    },
+    "files": {
+      "ui": ["FileActionsToolbar.tsx", "useFileApi.ts"],
+      "api": ["server/routes.ts"],
+      "data": ["files", "fileCategories"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": ["query:files"],
+      "refreshes": ["FileList"],
+      "triggers": ["ui-sync"]
+    },
+    "errorPaths": {
+      "network": "Show stale data with error indicator",
+      "validation": "Display error message",
+      "business": "Fallback to cached data"
+    },
+    "dependencies": {
+      "internal": [],
+      "external": [],
+      "shared": ["useFileApi"]
+    }
+  },
+  "list-view": {
+    "_meta": {
+      "feature": "list-view",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User selects list view mode",
+    "dataFlow": {
+      "request": "ViewToggle → useFileManagerState.setViewMode → FileList re-render",
+      "response": "State update → UI layout change",
+      "sideEffects": ["View preference saved"]
+    },
+    "files": {
+      "ui": ["FileList.tsx", "useFileManagerState.ts"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["FileList"],
+      "triggers": ["view-mode-change"]
+    },
+    "errorPaths": {
+      "network": "N/A - local state only",
+      "validation": "Fallback to grid view",
+      "business": "Default view mode restoration"
+    },
+    "dependencies": {
+      "internal": ["file-selection"],
+      "external": [],
+      "shared": ["useFileManagerState"]
+    }
+  },
+  "grid-view": {
+    "_meta": {
+      "feature": "grid-view",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User selects grid view mode",
+    "dataFlow": {
+      "request": "ViewToggle → useFileManagerState.setViewMode → FileList re-render",
+      "response": "State update → UI layout change",
+      "sideEffects": ["View preference saved"]
+    },
+    "files": {
+      "ui": ["FileList.tsx", "useFileManagerState.ts"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["FileList"],
+      "triggers": ["view-mode-change"]
+    },
+    "errorPaths": {
+      "network": "N/A - local state only",
+      "validation": "Fallback to list view",
+      "business": "Default view mode restoration"
+    },
+    "dependencies": {
+      "internal": ["file-selection"],
+      "external": [],
+      "shared": ["useFileManagerState"]
+    }
+  },
+  "file-selection": {
+    "_meta": {
+      "feature": "file-selection",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User clicks file checkboxes or select all",
+    "dataFlow": {
+      "request": "FileList checkbox → useFileManagerState.toggleSelection → state update",
+      "response": "State update → FileActionsToolbar enable/disable",
+      "sideEffects": ["Bulk operation availability"]
+    },
+    "files": {
+      "ui": ["FileList.tsx", "useFileManagerState.ts", "FileActionsToolbar.tsx"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["FileActionsToolbar"],
+      "triggers": ["bulk-operations-toggle"]
+    },
+    "errorPaths": {
+      "network": "N/A - local state only",
+      "validation": "Selection state reset",
+      "business": "Clear selection on error"
+    },
+    "dependencies": {
+      "internal": [],
+      "external": [],
+      "shared": ["useFileManagerState"]
+    }
+  },
+  "web-share": {
+    "_meta": {
+      "feature": "web-share",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User selects files and clicks share button",
+    "dataFlow": {
+      "request": "FileActionsToolbar → useFileSharing.shareSelectedFiles → Web Share API",
+      "response": "Native share dialog → sharing completion",
+      "sideEffects": ["Platform-specific sharing"]
+    },
+    "files": {
+      "ui": ["FileActionsToolbar.tsx", "useFileSharing.ts"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": [],
+      "triggers": ["native-sharing"]
+    },
+    "errorPaths": {
+      "network": "Fallback to copy URL",
+      "validation": "Share availability check",
+      "business": "Platform compatibility fallback"
+    },
+    "dependencies": {
+      "internal": ["file-selection"],
+      "external": ["Web Share API"],
+      "shared": ["useFileSharing"]
+    }
+  },
+  "qr-code-generation": {
+    "_meta": {
+      "feature": "qr-code-generation",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User selects files and clicks QR code button",
+    "dataFlow": {
+      "request": "FileActionsToolbar → useFileSharing.generateAndShowQRCode → QrCodeDialog",
+      "response": "QR code generation → Modal display",
+      "sideEffects": ["QR code image generation"]
+    },
+    "files": {
+      "ui": ["FileActionsToolbar.tsx", "useFileSharing.ts", "QrCodeDialog.tsx"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": [],
+      "triggers": ["qr-modal-display"]
+    },
+    "errorPaths": {
+      "network": "QR generation failure message",
+      "validation": "File URL validation",
+      "business": "Fallback to text URLs"
+    },
+    "dependencies": {
+      "internal": ["file-selection"],
+      "external": ["QR code library"],
+      "shared": ["useFileSharing", "QrCodeDialog"]
     }
   }
 }

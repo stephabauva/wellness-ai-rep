@@ -1,176 +1,262 @@
 
 {
-  "tableOfContents": {
-    "categoryManagement": ["create-category", "update-category", "delete-category"],
-    "categoryFiltering": ["category-tabs", "category-selector"],
-    "categoryDisplay": ["category-dropdown", "category-visualization"]
+  "_tableOfContents": {
+    "domain": "file-manager",
+    "features": [
+      "create-category",
+      "update-category",
+      "delete-category",
+      "category-tabs",
+      "category-selector",
+      "category-dropdown",
+      "category-visualization"
+    ],
+    "totalFeatures": 7,
+    "lastUpdated": "2025-01-10"
   },
-  "lastUpdated": "2025-06-26T19:52:00Z",
-  "dependencies": ["core-operations"],
-  "featureGroups": {
-    "categoryManagement": {
-      "description": "Full CRUD operations for file categories",
-      "features": {
-        "create-category": {
-          "description": "Create new custom file categories",
-          "userFlow": [
-            "User accesses category management",
-            "User clicks create category",
-            "User enters category name, description, icon, color",
-            "useFileApi.createCategory called",
-            "Category created via /api/categories POST",
-            "Categories list refreshed"
-          ],
-          "components": [
-            "CategorySelector",
-            "useFileApi"
-          ]
-        },
-        "update-category": {
-          "description": "Edit existing custom categories",
-          "userFlow": [
-            "User selects category to edit",
-            "User modifies category properties",
-            "useFileApi.updateCategory called",
-            "Category updated via /api/categories/:id PUT",
-            "Categories list refreshed"
-          ],
-          "components": [
-            "CategorySelector",
-            "useFileApi"
-          ]
-        },
-        "delete-category": {
-          "description": "Remove custom categories",
-          "userFlow": [
-            "User selects category to delete",
-            "Confirmation dialog appears",
-            "useFileApi.deleteCategory called",
-            "Category deleted via /api/categories/:id DELETE",
-            "Files using category set to uncategorized",
-            "Categories list refreshed"
-          ],
-          "components": [
-            "CategorySelector",
-            "useFileApi"
-          ]
-        }
-      }
+  "create-category": {
+    "_meta": {
+      "feature": "create-category",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
     },
-    "categoryFiltering": {
-      "description": "Filter files by category using tabs and selectors",
-      "features": {
-        "category-tabs": {
-          "description": "Tab-based category filtering interface",
-          "userFlow": [
-            "CategoryTabs displays all categories plus 'All' and 'Uncategorized'",
-            "User clicks category tab",
-            "useFileManagerState.setActiveTab updates filter",
-            "FileList shows only files matching selected category"
-          ],
-          "components": [
-            "CategoryTabs",
-            "useFileManagerState"
-          ]
-        },
-        "category-selector": {
-          "description": "Bulk categorization of selected files",
-          "userFlow": [
-            "User selects multiple files",
-            "User opens CategorySelector from toolbar",
-            "User chooses target category",
-            "useFileApi.categorizeFiles called with fileIds and categoryId",
-            "Files updated via /api/files/categorize PATCH",
-            "File list refreshed with new categories"
-          ],
-          "components": [
-            "CategorySelector",
-            "FileActionsToolbar",
-            "useFileApi"
-          ]
-        }
-      }
+    "trigger": "User clicks create category button",
+    "dataFlow": {
+      "request": "CategorySelector → useFileApi.createCategory → /api/categories POST → fileCategories table",
+      "response": "Database → API → React Query → Categories list refresh",
+      "sideEffects": ["Category tabs update", "Category dropdown refresh"]
     },
-    "categoryDisplay": {
-      "description": "Category visualization and UI components",
-      "features": {
-        "category-dropdown": {
-          "description": "Dropdown component for category selection",
-          "userFlow": [
-            "CategoryDropdown renders available categories",
-            "Shows category name, icon, and color",
-            "Supports both system and custom categories"
-          ],
-          "components": [
-            "CategoryDropdown"
-          ]
-        },
-        "category-visualization": {
-          "description": "Visual representation of categories with icons and colors",
-          "userFlow": [
-            "Categories displayed with custom icons and colors",
-            "System categories have predefined styling",
-            "Custom categories use user-defined styling"
-          ],
-          "components": [
-            "CategoryTabs",
-            "CategoryDropdown",
-            "FileList"
-          ]
-        }
-      }
+    "files": {
+      "ui": ["CategorySelector.tsx", "useFileApi.ts"],
+      "api": ["server/routes.ts"],
+      "data": ["fileCategories"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": ["query:categories"],
+      "refreshes": ["CategoryTabs", "CategoryDropdown", "CategorySelector"],
+      "triggers": ["category-list-update"]
+    },
+    "errorPaths": {
+      "network": "Retry with exponential backoff",
+      "validation": "Name uniqueness validation",
+      "business": "Max categories limit check"
+    },
+    "dependencies": {
+      "internal": ["category-dropdown"],
+      "external": [],
+      "shared": ["useFileApi"]
     }
   },
-  "components": {
-    "CategoryTabs": {
-      "path": "client/src/components/filemanager/CategoryTabs.tsx",
-      "description": "Tab interface for category-based file filtering"
+  "update-category": {
+    "_meta": {
+      "feature": "update-category",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
     },
-    "CategorySelector": {
-      "path": "client/src/components/filemanager/CategorySelector.tsx",
-      "description": "Category selection component for bulk operations"
+    "trigger": "User selects category to edit and saves changes",
+    "dataFlow": {
+      "request": "CategorySelector → useFileApi.updateCategory → /api/categories/:id PUT → fileCategories table",
+      "response": "Database → API → React Query → Categories list refresh",
+      "sideEffects": ["File list refresh for affected files", "Category visualization update"]
     },
-    "CategoryDropdown": {
-      "path": "client/src/components/filemanager/CategoryDropdown.tsx",
-      "description": "Dropdown component for category selection"
+    "files": {
+      "ui": ["CategorySelector.tsx", "useFileApi.ts"],
+      "api": ["server/routes.ts"],
+      "data": ["fileCategories"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": ["query:categories", "query:files"],
+      "refreshes": ["CategoryTabs", "CategoryDropdown", "FileList"],
+      "triggers": ["category-update", "file-refresh"]
+    },
+    "errorPaths": {
+      "network": "Revert to previous state",
+      "validation": "Field validation errors",
+      "business": "System category protection"
+    },
+    "dependencies": {
+      "internal": ["category-visualization"],
+      "external": [],
+      "shared": ["useFileApi"]
     }
   },
-  "apiEndpoints": {
-    "/api/categories": {
-      "method": "GET",
-      "description": "Retrieve user's categories (system + custom)",
-      "readsFrom": ["fileCategories"],
-      "implementation": "server/routes.ts"
+  "delete-category": {
+    "_meta": {
+      "feature": "delete-category",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
     },
-    "/api/categories": {
-      "method": "POST", 
-      "description": "Create new custom category",
-      "modifies": ["fileCategories"],
-      "implementation": "server/routes.ts"
+    "trigger": "User selects category to delete and confirms",
+    "dataFlow": {
+      "request": "CategorySelector → useFileApi.deleteCategory → /api/categories/:id DELETE → fileCategories table",
+      "response": "Database → API → React Query → Categories and files refresh",
+      "sideEffects": ["Files moved to uncategorized", "Tab removal"]
     },
-    "/api/categories/:id": {
-      "method": "PUT",
-      "description": "Update existing custom category",
-      "modifies": ["fileCategories"],
-      "implementation": "server/routes.ts"
+    "files": {
+      "ui": ["CategorySelector.tsx", "useFileApi.ts"],
+      "api": ["server/routes.ts"],
+      "data": ["fileCategories", "files"],
+      "types": ["shared/schema.ts"]
     },
-    "/api/categories/:id": {
-      "method": "DELETE",
-      "description": "Delete custom category",
-      "modifies": ["fileCategories"],
-      "implementation": "server/routes.ts"
+    "cacheFlow": {
+      "invalidates": ["query:categories", "query:files"],
+      "refreshes": ["CategoryTabs", "CategoryDropdown", "FileList"],
+      "triggers": ["category-removal", "file-recategorization"]
     },
-    "/api/files/categorize": {
-      "method": "PATCH",
-      "description": "Bulk categorize selected files",
-      "modifies": ["files"],
-      "implementation": "server/routes.ts"
+    "errorPaths": {
+      "network": "Retry with confirmation",
+      "validation": "Category in use validation",
+      "business": "System category protection"
+    },
+    "dependencies": {
+      "internal": ["category-tabs"],
+      "external": [],
+      "shared": ["useFileApi"]
     }
   },
-  "database": {
-    "fileCategories": {
-      "description": "Categories table storing both system and custom categories",
-      "key_fields": ["id", "name", "userId", "isCustom", "icon", "color"]
+  "category-tabs": {
+    "_meta": {
+      "feature": "category-tabs",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User clicks category tab",
+    "dataFlow": {
+      "request": "CategoryTabs → useFileManagerState.setActiveTab → state update",
+      "response": "State update → FileList filter → UI refresh",
+      "sideEffects": ["File list filtering", "Active tab highlighting"]
+    },
+    "files": {
+      "ui": ["CategoryTabs.tsx", "useFileManagerState.ts"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["FileList"],
+      "triggers": ["file-filtering"]
+    },
+    "errorPaths": {
+      "network": "N/A - local state only",
+      "validation": "Fallback to 'All' tab",
+      "business": "Tab availability check"
+    },
+    "dependencies": {
+      "internal": ["category-visualization"],
+      "external": [],
+      "shared": ["useFileManagerState"]
+    }
+  },
+  "category-selector": {
+    "_meta": {
+      "feature": "category-selector",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User selects files and chooses category for bulk categorization",
+    "dataFlow": {
+      "request": "CategorySelector → useFileApi.categorizeFiles → /api/files/categorize PATCH → files table",
+      "response": "Database → API → React Query → File list refresh",
+      "sideEffects": ["File categorization update", "Category count update"]
+    },
+    "files": {
+      "ui": ["CategorySelector.tsx", "FileActionsToolbar.tsx", "useFileApi.ts"],
+      "api": ["server/routes.ts"],
+      "data": ["files"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": ["query:files"],
+      "refreshes": ["FileList", "CategoryTabs"],
+      "triggers": ["bulk-categorization"]
+    },
+    "errorPaths": {
+      "network": "Partial success handling",
+      "validation": "File permission validation",
+      "business": "Category availability check"
+    },
+    "dependencies": {
+      "internal": ["category-dropdown"],
+      "external": [],
+      "shared": ["useFileApi"]
+    }
+  },
+  "category-dropdown": {
+    "_meta": {
+      "feature": "category-dropdown",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "User opens category dropdown for selection",
+    "dataFlow": {
+      "request": "CategoryDropdown → useFileApi.getCategories → /api/categories GET → fileCategories table",
+      "response": "Database → API → React Query → Dropdown populate",
+      "sideEffects": ["Category list display"]
+    },
+    "files": {
+      "ui": ["CategoryDropdown.tsx", "useFileApi.ts"],
+      "api": ["server/routes.ts"],
+      "data": ["fileCategories"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["CategoryDropdown"],
+      "triggers": ["category-list-load"]
+    },
+    "errorPaths": {
+      "network": "Show cached categories",
+      "validation": "Empty state display",
+      "business": "System categories fallback"
+    },
+    "dependencies": {
+      "internal": ["category-visualization"],
+      "external": [],
+      "shared": ["useFileApi"]
+    }
+  },
+  "category-visualization": {
+    "_meta": {
+      "feature": "category-visualization",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "Categories displayed with visual styling",
+    "dataFlow": {
+      "request": "UI components → category data → visual rendering",
+      "response": "Icons, colors, and styling applied",
+      "sideEffects": ["Visual consistency across components"]
+    },
+    "files": {
+      "ui": ["CategoryTabs.tsx", "CategoryDropdown.tsx", "FileList.tsx"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["CategoryTabs", "CategoryDropdown", "FileList"],
+      "triggers": ["visual-update"]
+    },
+    "errorPaths": {
+      "network": "N/A - visual only",
+      "validation": "Default icon/color fallback",
+      "business": "System category styling"
+    },
+    "dependencies": {
+      "internal": [],
+      "external": [],
+      "shared": ["CategoryTabs", "CategoryDropdown"]
     }
   }
 }

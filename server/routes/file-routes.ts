@@ -28,26 +28,40 @@ const upload = multer({
   dest: 'uploads/',
   limits: { fileSize: 200 * 1024 * 1024 }, // 200MB
   fileFilter: (req, file, cb) => {
+    console.log('File filter called with:', { originalname: file.originalname, mimetype: file.mimetype });
     const allowedTypes = [
       'image/', 'video/', 'audio/', 'application/pdf', 'text/',
       'application/json', 'application/xml', 'text/xml', 'text/csv',
-      'application/msword', 'application/vnd.openxmlformats-officedocument'
+      'application/msword', 'application/vnd.openxmlformats-officedocument',
+      'application/gzip', 'application/x-gzip' // Support compressed files
     ];
     const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
+    console.log('File allowed:', isAllowed);
     cb(null, isAllowed);
   }
 });
 
 const categorySchema = z.object({
-  categoryId: z.string().optional()
+  categoryId: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val)
 });
 
 export async function registerFileRoutes(app: Express): Promise<void> {
   // File upload endpoint - CRITICAL: This was missing from routes modularization
   app.post('/api/upload', upload.single('file'), async (req, res) => {
     try {
+      console.log('Upload request received:', { 
+        body: req.body, 
+        file: req.file ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          path: req.file.path
+        } : 'undefined'
+      });
+      
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        console.error('No file in request. Multer might have rejected it.');
+        return res.status(400).json({ error: 'No file uploaded or file was rejected' });
       }
 
       const { categoryId } = categorySchema.parse(req.body);
@@ -116,7 +130,12 @@ export async function registerFileRoutes(app: Express): Promise<void> {
       });
     } catch (error) {
       console.error('File upload error:', error);
-      res.status(500).json({ error: 'Failed to upload file' });
+      if (error instanceof Error && error.message.includes('validation')) {
+        console.error('Validation error details:', { body: req.body, error: error.message });
+        res.status(400).json({ error: 'Invalid request data: ' + error.message });
+      } else {
+        res.status(500).json({ error: 'Failed to upload file' });
+      }
     }
   });
 

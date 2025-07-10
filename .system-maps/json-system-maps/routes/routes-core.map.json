@@ -102,10 +102,11 @@
           }
         },
         "file-routes": {
-          "description": "File upload/download, categorization, Go service acceleration, retention management",
+          "description": "File upload/download, categorization, Go service acceleration, retention management, compressed file support",
           "userFlow": [
             "User uploads file through file manager or chat",
-            "File validated and stored with metadata",
+            "File compressed automatically if beneficial",
+            "File validated (including gzip/compressed types) and stored with metadata",
             "Category assigned automatically or manually",
             "Go service processes large files for optimization"
           ],
@@ -415,6 +416,11 @@
       "fileUploadFailure": {
         "issue": "Missing /api/upload route after routes modularization",
         "solution": "Added POST /api/upload endpoint to file-routes.ts module",
+        "status": "resolved"
+      },
+      "compressedFileUploadRejection": {
+        "issue": "Multer file filter rejecting compressed files from frontend compression service",
+        "solution": "Added application/gzip and application/x-gzip to allowed mimetypes in file-routes.ts",
         "status": "resolved"
       },
       "conversationHistoryLoading": {

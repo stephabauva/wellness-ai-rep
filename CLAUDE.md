@@ -10,6 +10,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Databases setup** : Replit's neon database for cloud developmemt (npm run dev) and postgresql with pg for local development (npm run dev: local with .env.local)
 **System maps** : maps the architecture of each feature - .system-maps/json-system-maps/root.map.json is the main index that points to all domains and their subdomain maps
 **User flows** : how the user interacts with the application is described in ./tasks/all-user-flows.md
+**System map tracker** : system-map-tracker.js scans recently modified Git files and cross-references them with system maps located in .system-maps/json-system-maps/. It categorizes files by domain (e.g., chat, health, memory, file-manager) and flags any modified files not documented in the system maps—helping ensure architecture documentation stays up to date.
 
 
 ### Key Commands
@@ -110,7 +111,9 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 4. **High-level updates** only during execution
 5. **Review section** added to todo.md when complete
 6. **Cleanup** temporary files at end
-7. **update the system maps** of the features you modified using .system-maps/optimized-complete-map-blue-original.md and the .system-maps/json-system-maps/root.map.json
+7. **always** ask yourself if a database migration is necessary based on the changes made
+8. Execute the system map tracker system-map-tracker.js everytime files are edited.
+9. **update the corresponding system maps** of the features you modified using .system-maps/optimized-complete-map-blue-original.md and always keep the central index .system-maps/json-system-maps/root.map.json up-to-date
 
 ### Testing Requirements
 - Use Vitest for all tests with 'npx vitest'

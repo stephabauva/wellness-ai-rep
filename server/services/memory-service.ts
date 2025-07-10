@@ -23,6 +23,7 @@ interface MemoryDetectionResult {
   category: MemoryCategory;
   importance: number;
   extractedInfo: string;
+  labels: string[];
   keywords: string[];
   reasoning: string;
 }
@@ -222,6 +223,7 @@ class MemoryService {
           
           const savedMemory = await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
             category: autoDetection.category,
+            labels: autoDetection.labels,
             importance_score: autoDetection.importance,
             sourceConversationId: validConversationId,
             sourceMessageId: messageId,
@@ -349,29 +351,38 @@ class MemoryService {
     const prompt = `Analyze this wellness coaching conversation message and determine if it contains information worth remembering for future coaching sessions.
 
 Look for:
-1. Personal health preferences (workout types, dietary restrictions, preferred activities) - category: "preference"
-2. Important personal information (health conditions, goals, lifestyle) - category: "personal_info"
-3. Significant health context that might be referenced later - category: "context"
-4. User instructions or coaching preferences - category: "instruction"
-5. Corrections to previous information
-6. Progress milestones or achievements
+1. Personal health preferences (workout types, dietary restrictions, preferred activities) - category: "preferences"
+2. Important personal information (health conditions, goals, lifestyle) - category: "personal_context"
+3. Significant health context that might be referenced later - category: "personal_context"
+4. User instructions or coaching preferences - category: "instructions"
+5. Food and diet information - category: "food_diet"
+6. Goals and objectives - category: "goals"
 
 Message: "${message}"
 
 Previous context: ${conversationHistory.slice(-3).map(m => `${m.role}: ${m.content}`).join('\n')}
 
 IMPORTANT: Use these exact categories:
-- "preference" for likes, dislikes, workout preferences, food preferences
-- "personal_info" for health conditions, allergies, medical information
-- "context" for situational information, progress updates, life circumstances
-- "instruction" for specific coaching instructions and rules
+- "preferences" for likes, dislikes, workout preferences, general preferences
+- "personal_context" for health conditions, allergies, medical information, lifestyle, background
+- "instructions" for specific coaching instructions and rules
+- "food_diet" for nutrition, food preferences, allergies, dietary restrictions
+- "goals" for fitness goals, nutrition goals, targets
+
+For labels, use semantic categorization:
+- For food_diet: "allergy", "preference", "restriction", "dangerous", "mild", "meal-timing"
+- For personal_context: "background", "health-history", "lifestyle", "medical", "physical-limitation"
+- For goals: "weight-loss", "muscle-gain", "nutrition", "fitness", "target"
+- For preferences: "general", "workout", "environment"
+- For instructions: "behavior", "communication", "reminder"
 
 Respond with JSON:
 {
     "shouldRemember": boolean,
-    "category": "preference|personal_info|context|instruction",
+    "category": "preferences|personal_context|instructions|food_diet|goals",
     "importance": 0.0-1.0,
     "extractedInfo": "clean version of the information to remember",
+    "labels": ["semantic-label1", "semantic-label2", ...],
     "keywords": ["keyword1", "keyword2", ...],
     "reasoning": "why this should/shouldn't be remembered"
 }`;
@@ -405,9 +416,10 @@ Respond with JSON:
       const result = JSON.parse(content);
       return {
         shouldRemember: result.shouldRemember || false,
-        category: result.category || 'context',
+        category: result.category || 'personal_context',
         importance: result.importance || 0.5,
         extractedInfo: result.extractedInfo || '',
+        labels: result.labels || [],
         keywords: result.keywords || [],
         reasoning: result.reasoning || ''
       };
@@ -418,6 +430,7 @@ Respond with JSON:
         category: 'personal_context',
         importance: 0.0,
         extractedInfo: '',
+        labels: [],
         keywords: [],
         reasoning: 'Error in AI processing'
       };

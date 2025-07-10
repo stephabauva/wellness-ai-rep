@@ -11,12 +11,12 @@
       "memory-deletion"
     ],
     "totalFeatures": 7,
-    "lastUpdated": "2025-01-10T15:30:00Z"
+    "lastUpdated": "2025-07-10T21:00:00Z"
   },
   "_meta": {
     "feature": "memory-ui",
     "domain": "memory",
-    "lastUpdated": "2025-01-10T15:30:00Z",
+    "lastUpdated": "2025-07-10T21:00:00Z",
     "status": "active"
   },
   "trigger": "User navigates to memory section or performs memory management actions",
@@ -149,7 +149,30 @@
         "Memories are filtered client-side by selected labels",
         "Label selection state is maintained per category",
         "Label counts update based on visible memories"
-      ]
+      ],
+      "labelSystem": {
+        "categoryMapping": {
+          "personal_context": "Personal Context",
+          "preferences": "Preferences", 
+          "instructions": "Instructions",
+          "food_diet": "Food & Diet",
+          "goals": "Goals"
+        },
+        "semanticLabels": {
+          "personal_context": ["background", "health-history", "lifestyle", "medical", "physical-limitation"],
+          "food_diet": ["preference", "allergy", "restriction", "dangerous", "mild", "meal-timing"],
+          "goals": ["weight-loss", "muscle-gain", "nutrition", "fitness", "target"],
+          "preferences": ["general", "workout", "environment"],
+          "instructions": ["behavior", "communication", "reminder"]
+        },
+        "displayHierarchy": {
+          "primary": "Category Badge (colored)",
+          "secondary": "Semantic Labels (blue badges, prominent)",
+          "tertiary": "Keywords (outline badges, limited to 3 + more indicator)"
+        },
+        "labelingApproach": "AI-powered semantic categorization assigns meaningful labels like 'allergy', 'dangerous' instead of just keyword extraction",
+        "migrationStatus": "completed - enhanced semantic labeling system implemented"
+      }
     },
     "bulk-operations": {
       "trigger": "User selects multiple memories via checkboxes",
@@ -241,12 +264,18 @@
           "userId": { "type": "integer", "foreignKey": "users.id" },
           "content": { "type": "text" },
           "category": { "type": "text", "enum": ["preferences", "personal_context", "instructions", "food_diet", "goals"] },
-          "labels": { "type": "text[]" },
+          "labels": { "type": "text[]", "description": "Labels for subcategorization within each category" },
           "importance": { "type": "real" },
-          "keywords": { "type": "text[]" },
+          "keywords": { "type": "text[]", "description": "Auto-extracted keywords for search and filtering" },
           "createdAt": { "type": "timestamp" },
           "accessCount": { "type": "integer" },
           "isActive": { "type": "boolean" }
+        },
+        "migrationNotes": {
+          "categoryMigration": "Old categories like 'background' migrated to 'personal_context' category with 'background' as label",
+          "labelSystemImplemented": "Labels column added for enhanced filtering and categorization", 
+          "dataIntegrity": "All existing memories preserved with proper category/label mapping",
+          "uiDisplayOrder": "Category Badge → Labels (small badges) → Keywords (outline badges)"
         }
       },
       "memory_triggers": {

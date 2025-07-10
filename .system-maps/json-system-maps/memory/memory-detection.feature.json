@@ -2,7 +2,7 @@
   "_meta": {
     "feature": "memory-detection",
     "domain": "memory",
-    "lastUpdated": "2025-01-10",
+    "lastUpdated": "2025-07-10T21:15:00Z",
     "status": "active"
   },
   "trigger": "User sends message in chat",
@@ -35,9 +35,19 @@
   "userFlow": [
     "User sends message in chat",
     "Background analysis detects memory-worthy content (preferences, goals, constraints)",
-    "AI extracts facts and categorizes by type (preference/personal_info/context/instruction)",
-    "Memory stored with confidence scoring and embeddings",
+    "AI extracts facts and categorizes by type (preferences/personal_context/instructions/food_diet/goals)",
+    "Semantic labels assigned for enhanced categorization (e.g., 'allergy', 'dangerous', 'preference')",
+    "Memory stored with confidence scoring, semantic labels, and embeddings",
     "Memory triggers logged for user transparency",
     "Background processing queued for deduplication"
-  ]
+  ],
+  "semanticLabeling": {
+    "enhancement": "Added AI-powered semantic label extraction to replace keyword-only approach",
+    "labelTypes": {
+      "food_diet": ["allergy", "preference", "restriction", "dangerous", "mild", "meal-timing"],
+      "personal_context": ["background", "health-history", "lifestyle", "medical", "physical-limitation"],
+      "goals": ["weight-loss", "muscle-gain", "nutrition", "fitness", "target"]
+    },
+    "uiImpact": "Labels displayed as prominent blue badges, keywords de-emphasized"
+  }
 }

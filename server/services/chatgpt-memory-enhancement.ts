@@ -379,6 +379,7 @@ Use this information naturally in your responses to provide personalized guidanc
   ): Promise<void> {
     const memoryOptions = {
       category: detection.category,
+      labels: detection.labels || [],
       importance_score: detection.importance,
       sourceConversationId: conversationId,
       keywords: detection.keywords
@@ -400,6 +401,7 @@ Use this information naturally in your responses to provide personalized guidanc
         .set({
           content: detection.extractedInfo,
           importanceScore: Math.max(detection.importance, 0.1), // Ensure minimum importance
+          labels: detection.labels || [],
           keywords: detection.keywords,
           updateCount: sql`${memoryEntries.updateCount} + 1`,
           updatedAt: new Date()

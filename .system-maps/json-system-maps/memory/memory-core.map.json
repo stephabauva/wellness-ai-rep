@@ -6,19 +6,20 @@
       "background-processing", 
       "memory-creation",
       "categorization",
+      "semantic-labeling",
       "deduplication",
       "context-aware-retrieval",
       "semantic-search",
       "memory-relationships",
       "performance-monitoring"
     ],
-    "totalFeatures": 9,
-    "lastUpdated": "2025-01-10T15:30:00Z"
+    "totalFeatures": 10,
+    "lastUpdated": "2025-07-10T21:15:00Z"
   },
   "_meta": {
     "feature": "memory-core",
     "domain": "memory",
-    "lastUpdated": "2025-01-10T15:30:00Z",
+    "lastUpdated": "2025-07-10T21:15:00Z",
     "status": "active"
   },
   "trigger": "Chat messages processed or memory operations requested",
@@ -111,6 +112,30 @@
         "services": ["memory-service.ts", "nutrition-memory-service.ts"],
         "data": ["memory_entries"]
       }
+    },
+    "semantic-labeling": {
+      "trigger": "Memory content requires semantic label assignment",
+      "dataFlow": {
+        "request": "Memory content → AI analysis → semantic label extraction",
+        "response": "Semantic labels assigned → enhanced categorization → improved UI display"
+      },
+      "files": {
+        "services": ["memory-service.ts", "chatgpt-memory-enhancement.ts"],
+        "data": ["memory_entries"],
+        "ui": ["MemorySection.tsx"]
+      },
+      "labelTypes": {
+        "food_diet": ["allergy", "preference", "restriction", "dangerous", "mild", "meal-timing"],
+        "personal_context": ["background", "health-history", "lifestyle", "medical", "physical-limitation"],
+        "goals": ["weight-loss", "muscle-gain", "nutrition", "fitness", "target"],
+        "preferences": ["general", "workout", "environment"],
+        "instructions": ["behavior", "communication", "reminder"]
+      },
+      "improvements": [
+        "Replaced keyword extraction with semantic categorization",
+        "Enhanced UI hierarchy: Category → Semantic Labels → Keywords",
+        "AI-powered label assignment for meaningful memory classification"
+      ]
     },
     "semantic-search": {
       "trigger": "Memory retrieval query with embedding",

@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db, initializeDatabase } from '../db';
 import { memoryEntries } from '../../shared/schema';
 import { sql } from 'drizzle-orm';
 
@@ -18,6 +18,8 @@ const categoryMappings = {
   'dietary_restrictions': { newCategory: 'food_diet', labels: ['restriction', 'allergy'] },
   'meal_patterns': { newCategory: 'food_diet', labels: ['meal-timing'] },
   'nutrition_goals': { newCategory: 'goals', labels: ['nutrition', 'macro'] },
+  // Handle the specific case where "background" is incorrectly used as a category
+  'background': { newCategory: 'personal_context', labels: ['background'] },
 };
 
 /**
@@ -129,6 +131,9 @@ export async function runMemoryCategoriesMigration() {
   console.log('==========================================');
   
   try {
+    // Initialize database connection first
+    await initializeDatabase();
+    
     await addLabelsColumn();
     await migrateMemoryEntries();
     await validateMigration();

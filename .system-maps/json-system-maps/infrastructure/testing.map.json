@@ -5,12 +5,13 @@
       "test-mocking": "Mocking patterns and test utilities",
       "component-testing": "React component testing with testing-library",
       "server-testing": "Backend API and service testing",
-      "performance-testing": "Performance and optimization testing"
+      "performance-testing": "Performance and optimization testing",
+      "system-map-validation": "Cross-domain system map consistency validation"
     }
   },
   "domain": "testing",
   "description": "Comprehensive testing infrastructure using Vitest with consistent mocking patterns and proper test environment configuration",
-  "lastUpdated": "2025-06-27T21:10:00Z",
+  "lastUpdated": "2025-07-10T10:00:00Z",
   "featureGroups": {
     "vitest-configuration": {
       "description": "Test runner configuration and environment setup",
@@ -215,6 +216,69 @@
             "Large dataset handling",
             "Memory usage optimization",
             "Responsive container optimization"
+          ]
+        }
+      }
+    },
+    "system-map-validation": {
+      "description": "Cross-domain system map consistency validation and architecture integrity checking",
+      "features": {
+        "cross-domain-validator": {
+          "name": "Cross-Domain Validator Script",
+          "description": "Automated validation of system map consistency across domains to prevent integration issues",
+          "status": "production",
+          "files": [
+            "system-map-cross-domain-validator.js"
+          ],
+          "dependencies": {
+            "internal": ["system-map-tracker.js"],
+            "external": ["fs", "path"]
+          },
+          "keyFeatures": [
+            "Shared component behavior consistency checking",
+            "Endpoint collision detection across domains", 
+            "Behavioral divergence detection for similar operations",
+            "Undocumented cross-domain dependency detection",
+            "Automated reporting with severity levels"
+          ],
+          "validationChecks": [
+            "Shared components with inconsistent behaviors",
+            "Multiple upload paths with different compression logic",
+            "Cross-domain cache invalidation requirements",
+            "Endpoint reuse with different processing patterns"
+          ],
+          "usage": {
+            "command": "node system-map-cross-domain-validator.js",
+            "runFrequency": "After any system map changes",
+            "ciIntegration": "Should be added to CI/CD pipeline",
+            "exitCodes": {
+              "0": "No issues found",
+              "1": "High severity issues detected"
+            }
+          }
+        },
+        "system-map-documentation": {
+          "name": "System Map Documentation Guide",
+          "description": "Comprehensive guide for creating consistent, cross-domain-aware system maps",
+          "status": "production", 
+          "files": [
+            ".system-maps/optimized-complete-map-blue-original.md"
+          ],
+          "dependencies": {
+            "internal": ["cross-domain-validator"],
+            "external": []
+          },
+          "keyFeatures": [
+            "Cross-domain consistency requirements",
+            "Behavioral difference documentation standards",
+            "Shared component interaction patterns",
+            "Automated validation integration"
+          ],
+          "sections": [
+            "Complete Trace Coverage methodology",
+            "Cross-Domain Consistency Requirements (NEW)",
+            "Validation checklists and quality gates",
+            "Token-optimized templates for LLM efficiency"
           ]
         }
       }

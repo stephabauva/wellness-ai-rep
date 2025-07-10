@@ -188,6 +188,36 @@
       }
     }
   },
+  "crossDomainDependencies": {
+    "chat → file-manager": {
+      "reason": "Chat uploads affect file manager thumbnail display through shared API endpoint",
+      "sharedComponents": ["client/src/components/filemanager/FileList.tsx", "client/src/utils/fileManagerUtils.ts"],
+      "sharedEndpoints": ["/api/upload"],
+      "behaviorDifferences": {
+        "compression": "Chat uploads bypass compression for immediate thumbnails, file-manager applies smart compression (skips media files)",
+        "processing": "Chat uses useFileManagement.ts (direct upload), file-manager uses useFileUpload.ts (with compression logic)",
+        "thumbnailGeneration": "Both paths result in same thumbnail display but different processing timing"
+      },
+      "potentialIssues": [
+        "Compression interference with image thumbnails",
+        "Different upload paths affecting same UI component",
+        "Inconsistent file processing behaviors"
+      ],
+      "lastValidated": "2025-07-10",
+      "validationMethod": "Cross-domain validator script + manual testing"
+    }
+  },
+  "crossDomainValidation": {
+    "lastRun": "2025-07-10",
+    "validatorScript": "system-map-cross-domain-validator.js",
+    "status": "passing",
+    "issuesFound": 0,
+    "recommendations": [
+      "Continue documenting cross-domain interactions when new features are added",
+      "Run validator script before any major system map updates",
+      "Monitor shared components for behavioral consistency"
+    ]
+  },
   "testMaps": {
     "test-chat": {
       "description": "Test system map for chat functionality validation",

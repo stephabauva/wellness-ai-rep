@@ -1,0 +1,317 @@
+{
+  "timestamp": "2025-07-10T19:39:58.811Z",
+  "summary": {
+    "totalIssues": 27,
+    "highSeverity": 2,
+    "mediumSeverity": 25,
+    "systemMapComponents": 0,
+    "crossDomainDependencies": 25
+  },
+  "issues": [
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "useUserSettings",
+      "file": "client/src/hooks/useUserSettings.ts",
+      "actualDomain": "settings",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "memory-service",
+      "file": "server/services/memory-service.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared",
+        "chat"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "useFileManagement",
+      "file": "client/src/hooks/useFileManagement.ts",
+      "actualDomain": "file-manager",
+      "usedByDomains": [
+        "chat",
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "chatgpt-memory-enhancement",
+      "file": "server/services/chatgpt-memory-enhancement.ts",
+      "actualDomain": "chat",
+      "usedByDomains": [
+        "shared",
+        "memory"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "file-compression",
+      "file": "client/src/services/file-compression.ts",
+      "actualDomain": "file-manager",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "native-health-service",
+      "file": "client/src/services/native-health-service.ts",
+      "actualDomain": "health",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "chatUtils",
+      "file": "client/src/utils/chatUtils.tsx",
+      "actualDomain": "chat",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "enhanced-memory-service",
+      "file": "server/services/enhanced-memory-service.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "memory-relationship-engine",
+      "file": "server/services/memory-relationship-engine.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "ChatSection",
+      "file": "client/src/components/ChatSection.tsx",
+      "actualDomain": "chat",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "HealthDataSection",
+      "file": "client/src/components/HealthDataSection.tsx",
+      "actualDomain": "health",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "MemorySection",
+      "file": "client/src/components/MemorySection.tsx",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "FileManagerSection",
+      "file": "client/src/components/FileManagerSection.tsx",
+      "actualDomain": "file-manager",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "SettingsSection",
+      "file": "client/src/components/SettingsSection.tsx",
+      "actualDomain": "settings",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "simple-memory-detection",
+      "file": "server/services/simple-memory-detection.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "memory-enhanced-ai-service",
+      "file": "server/services/memory-enhanced-ai-service.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "advanced-memory-ai-service",
+      "file": "server/services/advanced-memory-ai-service.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "performance-memory-core",
+      "file": "server/services/performance-memory-core.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "go-file-service",
+      "file": "server/services/go-file-service.ts",
+      "actualDomain": "file-manager",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "health-data-parser",
+      "file": "server/services/health-data-parser.ts",
+      "actualDomain": "health",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "health-data-deduplication",
+      "file": "server/services/health-data-deduplication.ts",
+      "actualDomain": "health",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "memory-feature-flags",
+      "file": "server/services/memory-feature-flags.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "memory-performance-monitor",
+      "file": "server/services/memory-performance-monitor.ts",
+      "actualDomain": "memory",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "health-consent-service",
+      "file": "server/services/health-consent-service.ts",
+      "actualDomain": "health",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "chat-context-service",
+      "file": "server/services/chat-context-service.ts",
+      "actualDomain": "chat",
+      "usedByDomains": [
+        "shared"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "ARCHITECTURAL_VIOLATION",
+      "pattern": "FILE_MANAGER_IN_CHAT",
+      "severity": "high",
+      "details": "Chat domain directly uses file-manager hooks instead of abstraction layer",
+      "recommendation": "Create chat-specific file handling abstraction",
+      "affectedFiles": [
+        "useFileManagement",
+        "AttachmentPreview",
+        "ChatInputArea"
+      ]
+    },
+    {
+      "type": "MISSING_DOMAIN_ENDPOINT",
+      "endpoint": "/api/chat/attachments",
+      "severity": "high",
+      "details": "Chat uses generic /api/files endpoint instead of domain-specific endpoint",
+      "recommendation": "Implement /api/chat/attachments to handle chat-specific logic",
+      "impact": "Chat attachments bypass chat-specific processing and retention policies"
+    }
+  ],
+  "recommendations": [
+    "Update system maps to reflect actual dependencies",
+    "Implement domain-specific endpoints",
+    "Create abstraction layers for cross-domain usage",
+    "Add @used-by annotations",
+    "Move highly shared components to shared domain"
+  ]
+}

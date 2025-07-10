@@ -1,3 +1,11 @@
+/**
+ * @used-by file-manager/useFileUpload - Smart compression for uploads
+ * @used-by health/HealthDataSection - Health file compression
+ * @used-by shared/universal-file-service - General file operations
+ * @cross-domain true
+ * @critical-path true
+ * @performance-impact High CPU usage for large files
+ */
 import pako from 'pako';
 
 export interface CompressionResult {
@@ -11,6 +19,12 @@ export interface CompressionOptions {
   level?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9; // Compression level, 6 is default
 }
 
+/**
+ * @used-by file-manager/useFileUpload - Smart compression skips media files
+ * @used-by health/data-upload - Compresses large health data files
+ * @behavior-note File manager skips compression for media files
+ * @behavior-note Health data always compresses for storage efficiency
+ */
 export class FileCompressionService {
   private static readonly DEFAULT_OPTIONS: CompressionOptions = {
     level: 6

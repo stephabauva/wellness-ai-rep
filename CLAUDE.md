@@ -11,6 +11,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **System maps** : maps the architecture of each feature - .system-maps/json-system-maps/root.map.json is the main index that points to all domains and their subdomain maps
 **User flows** : how the user interacts with the application is described in ./tasks/all-user-flows.md
 **System map tracker** : system-map-tracker.js scans recently modified Git files and cross-references them with system maps located in .system-maps/json-system-maps/. It categorizes files by domain (e.g., chat, health, memory, file-manager) and flags any modified files not documented in the system maps—helping ensure architecture documentation stays up to date.
+**Dependency tracking** : dependency-tracker.js and system-map-cross-domain-validator-v2.js analyze actual code imports to identify cross-domain dependencies, architectural violations, and components missing from system maps. Use dependency-check-hook.js (setup via setup-dependency-hook.sh) for pre-commit validation.
+**@used-by annotations** : Add comments like @used-by domain/component to track dependencies and warn about cross-domain impacts when modifying shared code.
 
 
 ### Key Commands
@@ -19,6 +21,10 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `npx vitest` - Run tests
 - `npm run db:push` - Push database schema changes
 - `cd go-[service] && go run .` - Start Go microservices
+- `node system-map-tracker.js` - Check if modified files are documented in system maps
+- `node dependency-tracker.js` - Analyze cross-domain dependencies
+- `node system-map-cross-domain-validator-v2.js` - Validate system maps against actual code
+- `./setup-dependency-hook.sh` - Install pre-commit dependency check hook
 
 ## Planning Rules
 
@@ -81,6 +87,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - **No optional features**: Everything implemented must be integrated
 - **Production-ready**: All code must be fully functional
 - **Lean approach**: Propose Go code over TypeScript for performance
+- **Dependency annotations**: Add @used-by comments to shared components documenting usage across domains
+- **Cross-domain safety**: Check impact with dependency-tracker.js before modifying shared code
 
 ### File Organization
 - React components: `client/src/components/`
@@ -114,6 +122,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 7. **always** ask yourself if a database migration is necessary based on the changes made
 8. Execute the system map tracker system-map-tracker.js everytime files are edited.
 9. **update the corresponding system maps** of the features you modified using .system-maps/optimized-complete-map-blue-original.md and always keep the central index .system-maps/json-system-maps/root.map.json up-to-date
+10. **Cross-domain safety**: Before modifying shared components, run `node dependency-tracker.js` to understand impact and add @used-by annotations
+11. **Pre-commit validation**: Use dependency-check-hook.js to catch cross-domain issues before committing
 
 ### Testing Requirements
 - Use Vitest for all tests with 'npx vitest'

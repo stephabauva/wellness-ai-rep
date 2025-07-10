@@ -3,6 +3,14 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * @used-by chat/ChatInputArea - For file attachments in chat messages
+ * @used-by chat/MessageDisplayArea - For displaying attached files
+ * @used-by shared/App - Via ChatSection component
+ * @cross-domain true
+ * @critical-path true
+ * @recommendation Consider creating chat-specific file handling abstraction
+ */
 export type AttachedFile = {
   id: string;
   fileName: string;
@@ -17,6 +25,13 @@ export type AttachedFile = {
   };
 };
 
+/**
+ * @used-by chat/ChatSection - Main chat interface file management
+ * @used-by chat/ChatInputArea - File upload functionality
+ * @cross-domain true
+ * @critical-path true
+ * @impact Changing this hook affects chat file attachments
+ */
 export const useFileManagement = () => {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const { toast } = useToast();

@@ -1,4 +1,3 @@
-
 {
   "_tableOfContents": {
     "domain": "file-manager",
@@ -25,18 +24,38 @@
     "dataFlow": {
       "request": "CategorySelector → useFileApi.createCategory → /api/categories POST → fileCategories table",
       "response": "Database → API → React Query → Categories list refresh",
-      "sideEffects": ["Category tabs update", "Category dropdown refresh"]
+      "sideEffects": [
+        "Category tabs update",
+        "Category dropdown refresh"
+      ]
     },
     "files": {
-      "ui": ["CategorySelector.tsx", "useFileApi.ts"],
-      "api": ["server/routes/file-routes.ts"],
-      "data": ["fileCategories"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "CategorySelector.tsx",
+        "useFileApi.ts"
+      ],
+      "api": [
+        "server/routes/file-routes.ts"
+      ],
+      "data": [
+        "fileCategories"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
-      "invalidates": ["query:categories"],
-      "refreshes": ["CategoryTabs", "CategoryDropdown", "CategorySelector"],
-      "triggers": ["category-list-update"]
+      "invalidates": [
+        "query:categories"
+      ],
+      "refreshes": [
+        "CategoryTabs",
+        "CategoryDropdown",
+        "CategorySelector"
+      ],
+      "triggers": [
+        "category-list-update"
+      ]
     },
     "errorPaths": {
       "network": "Retry with exponential backoff",
@@ -44,9 +63,13 @@
       "business": "Max categories limit check"
     },
     "dependencies": {
-      "internal": ["category-dropdown"],
+      "internal": [
+        "category-dropdown"
+      ],
       "external": [],
-      "shared": ["useFileApi"]
+      "shared": [
+        "useFileApi"
+      ]
     }
   },
   "update-category": {
@@ -60,18 +83,40 @@
     "dataFlow": {
       "request": "CategorySelector → useFileApi.updateCategory → /api/categories/:id PUT → fileCategories table",
       "response": "Database → API → React Query → Categories list refresh",
-      "sideEffects": ["File list refresh for affected files", "Category visualization update"]
+      "sideEffects": [
+        "File list refresh for affected files",
+        "Category visualization update"
+      ]
     },
     "files": {
-      "ui": ["CategorySelector.tsx", "useFileApi.ts"],
-      "api": ["server/routes/file-routes.ts"],
-      "data": ["fileCategories"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "CategorySelector.tsx",
+        "useFileApi.ts"
+      ],
+      "api": [
+        "server/routes/file-routes.ts"
+      ],
+      "data": [
+        "fileCategories"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
-      "invalidates": ["query:categories", "query:files"],
-      "refreshes": ["CategoryTabs", "CategoryDropdown", "FileList"],
-      "triggers": ["category-update", "file-refresh"]
+      "invalidates": [
+        "query:categories",
+        "query:files"
+      ],
+      "refreshes": [
+        "CategoryTabs",
+        "CategoryDropdown",
+        "FileList"
+      ],
+      "triggers": [
+        "category-update",
+        "file-refresh"
+      ]
     },
     "errorPaths": {
       "network": "Revert to previous state",
@@ -79,9 +124,13 @@
       "business": "System category protection"
     },
     "dependencies": {
-      "internal": ["category-visualization"],
+      "internal": [
+        "category-visualization"
+      ],
       "external": [],
-      "shared": ["useFileApi"]
+      "shared": [
+        "useFileApi"
+      ]
     }
   },
   "delete-category": {
@@ -95,18 +144,41 @@
     "dataFlow": {
       "request": "CategorySelector → useFileApi.deleteCategory → /api/categories/:id DELETE → fileCategories table",
       "response": "Database → API → React Query → Categories and files refresh",
-      "sideEffects": ["Files moved to uncategorized", "Tab removal"]
+      "sideEffects": [
+        "Files moved to uncategorized",
+        "Tab removal"
+      ]
     },
     "files": {
-      "ui": ["CategorySelector.tsx", "useFileApi.ts"],
-      "api": ["server/routes/file-routes.ts"],
-      "data": ["fileCategories", "files"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "CategorySelector.tsx",
+        "useFileApi.ts"
+      ],
+      "api": [
+        "server/routes/file-routes.ts"
+      ],
+      "data": [
+        "fileCategories",
+        "files"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
-      "invalidates": ["query:categories", "query:files"],
-      "refreshes": ["CategoryTabs", "CategoryDropdown", "FileList"],
-      "triggers": ["category-removal", "file-recategorization"]
+      "invalidates": [
+        "query:categories",
+        "query:files"
+      ],
+      "refreshes": [
+        "CategoryTabs",
+        "CategoryDropdown",
+        "FileList"
+      ],
+      "triggers": [
+        "category-removal",
+        "file-recategorization"
+      ]
     },
     "errorPaths": {
       "network": "Retry with confirmation",
@@ -114,9 +186,13 @@
       "business": "System category protection"
     },
     "dependencies": {
-      "internal": ["category-tabs"],
+      "internal": [
+        "category-tabs"
+      ],
       "external": [],
-      "shared": ["useFileApi"]
+      "shared": [
+        "useFileApi"
+      ]
     }
   },
   "category-tabs": {
@@ -130,18 +206,30 @@
     "dataFlow": {
       "request": "CategoryTabs → useFileManagerState.setActiveTab → state update",
       "response": "State update → FileList filter → UI refresh",
-      "sideEffects": ["File list filtering", "Active tab highlighting"]
+      "sideEffects": [
+        "File list filtering",
+        "Active tab highlighting"
+      ]
     },
     "files": {
-      "ui": ["CategoryTabs.tsx", "useFileManagerState.ts"],
+      "ui": [
+        "CategoryTabs.tsx",
+        "useFileManagerState.ts"
+      ],
       "api": [],
       "data": [],
-      "types": ["shared/schema.ts"]
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
-      "refreshes": ["FileList"],
-      "triggers": ["file-filtering"]
+      "refreshes": [
+        "FileList"
+      ],
+      "triggers": [
+        "file-filtering"
+      ]
     },
     "errorPaths": {
       "network": "N/A - local state only",
@@ -149,9 +237,13 @@
       "business": "Tab availability check"
     },
     "dependencies": {
-      "internal": ["category-visualization"],
+      "internal": [
+        "category-visualization"
+      ],
       "external": [],
-      "shared": ["useFileManagerState"]
+      "shared": [
+        "useFileManagerState"
+      ]
     }
   },
   "category-selector": {
@@ -165,18 +257,38 @@
     "dataFlow": {
       "request": "CategorySelector → useFileApi.categorizeFiles → /api/files/categorize PATCH → files table",
       "response": "Database → API → React Query → File list refresh",
-      "sideEffects": ["File categorization update", "Category count update"]
+      "sideEffects": [
+        "File categorization update",
+        "Category count update"
+      ]
     },
     "files": {
-      "ui": ["CategorySelector.tsx", "FileActionsToolbar.tsx", "useFileApi.ts"],
-      "api": ["server/routes/file-routes.ts"],
-      "data": ["files"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "CategorySelector.tsx",
+        "FileActionsToolbar.tsx",
+        "useFileApi.ts"
+      ],
+      "api": [
+        "server/routes/file-routes.ts"
+      ],
+      "data": [
+        "files"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
-      "invalidates": ["query:files"],
-      "refreshes": ["FileList", "CategoryTabs"],
-      "triggers": ["bulk-categorization"]
+      "invalidates": [
+        "query:files"
+      ],
+      "refreshes": [
+        "FileList",
+        "CategoryTabs"
+      ],
+      "triggers": [
+        "bulk-categorization"
+      ]
     },
     "errorPaths": {
       "network": "Partial success handling",
@@ -184,9 +296,13 @@
       "business": "Category availability check"
     },
     "dependencies": {
-      "internal": ["category-dropdown"],
+      "internal": [
+        "category-dropdown"
+      ],
       "external": [],
-      "shared": ["useFileApi"]
+      "shared": [
+        "useFileApi"
+      ]
     }
   },
   "category-dropdown": {
@@ -200,18 +316,33 @@
     "dataFlow": {
       "request": "CategoryDropdown → useFileApi.getCategories → /api/categories GET → fileCategories table",
       "response": "Database → API → React Query → Dropdown populate",
-      "sideEffects": ["Category list display"]
+      "sideEffects": [
+        "Category list display"
+      ]
     },
     "files": {
-      "ui": ["CategoryDropdown.tsx", "useFileApi.ts"],
-      "api": ["server/routes/file-routes.ts"],
-      "data": ["fileCategories"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "CategoryDropdown.tsx",
+        "useFileApi.ts"
+      ],
+      "api": [
+        "server/routes/file-routes.ts"
+      ],
+      "data": [
+        "fileCategories"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
-      "refreshes": ["CategoryDropdown"],
-      "triggers": ["category-list-load"]
+      "refreshes": [
+        "CategoryDropdown"
+      ],
+      "triggers": [
+        "category-list-load"
+      ]
     },
     "errorPaths": {
       "network": "Show cached categories",
@@ -219,9 +350,13 @@
       "business": "System categories fallback"
     },
     "dependencies": {
-      "internal": ["category-visualization"],
+      "internal": [
+        "category-visualization"
+      ],
       "external": [],
-      "shared": ["useFileApi"]
+      "shared": [
+        "useFileApi"
+      ]
     }
   },
   "category-visualization": {
@@ -235,18 +370,32 @@
     "dataFlow": {
       "request": "UI components → category data → visual rendering",
       "response": "Icons, colors, and styling applied",
-      "sideEffects": ["Visual consistency across components"]
+      "sideEffects": [
+        "Visual consistency across components"
+      ]
     },
     "files": {
-      "ui": ["CategoryTabs.tsx", "CategoryDropdown.tsx", "FileList.tsx"],
+      "ui": [
+        "CategoryTabs.tsx",
+        "CategoryDropdown.tsx",
+        "FileList.tsx"
+      ],
       "api": [],
       "data": [],
-      "types": ["shared/schema.ts"]
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
-      "refreshes": ["CategoryTabs", "CategoryDropdown", "FileList"],
-      "triggers": ["visual-update"]
+      "refreshes": [
+        "CategoryTabs",
+        "CategoryDropdown",
+        "FileList"
+      ],
+      "triggers": [
+        "visual-update"
+      ]
     },
     "errorPaths": {
       "network": "N/A - visual only",
@@ -256,7 +405,74 @@
     "dependencies": {
       "internal": [],
       "external": [],
-      "shared": ["CategoryTabs", "CategoryDropdown"]
+      "shared": [
+        "CategoryTabs",
+        "CategoryDropdown"
+      ]
     }
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "client/src/services/file-compression.ts",
+        "importedBy": [
+          {
+            "domain": "shared/utilities",
+            "file": "client/src/utils/compression-test.ts"
+          },
+          {
+            "domain": "shared/hooks",
+            "file": "client/src/hooks/useOptimizedUpload.ts"
+          }
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileManagement.ts",
+        "importedBy": [
+          {
+            "domain": "chat",
+            "file": "client/src/hooks/useChatActions.ts"
+          },
+          {
+            "domain": "chat",
+            "file": "client/src/components/MessageDisplayArea.tsx"
+          },
+          {
+            "domain": "chat",
+            "file": "client/src/components/ChatInputArea.tsx"
+          },
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/components/AttachmentPreview.tsx"
+          }
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/pages/home.tsx"
+          }
+        ]
+      },
+      {
+        "file": "server/services/go-file-service.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 14
+  },
+  "lastUpdated": "2025-07-11T21:54:27.645Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.645Z",
+    "crossDomainFiles": 4,
+    "internalFiles": 14,
+    "totalDependencies": 17
   }
 }

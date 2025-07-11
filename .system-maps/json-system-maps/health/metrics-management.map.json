@@ -1,11 +1,14 @@
-
 {
   "tableOfContents": {
     "metrics-management": {
-      "features": ["add-metrics", "remove-metrics", "metrics-visibility-control"],
+      "features": [
+        "add-metrics",
+        "remove-metrics",
+        "metrics-visibility-control"
+      ],
       "components": [
         "AddMetricsModal",
-        "RemoveMetricsModal", 
+        "RemoveMetricsModal",
         "MetricsVisibilityCard",
         "useHealthVisibilitySettings",
         "HealthDataSection",
@@ -40,8 +43,10 @@
       ]
     }
   },
-  "lastUpdated": "2025-01-28T18:20:00Z",
-  "dependencies": ["health-dashboard"],
+  "lastUpdated": "2025-07-11T21:54:27.648Z",
+  "dependencies": [
+    "health-dashboard"
+  ],
   "featureGroups": {
     "metrics-management": {
       "description": "User control over health metric visibility and dashboard customization.",
@@ -63,10 +68,17 @@
             "All dependent components refresh automatically",
             "Success notification displays to user"
           ],
-          "components": ["AddMetricsModal", "useHealthVisibilitySettings"],
+          "components": [
+            "AddMetricsModal",
+            "useHealthVisibilitySettings"
+          ],
           "apiIntegration": {
-            "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
-            "actualEndpoints": ["PATCH /api/health-consent/visibility"],
+            "expectedEndpoints": [
+              "PATCH /api/health-consent/visibility"
+            ],
+            "actualEndpoints": [
+              "PATCH /api/health-consent/visibility"
+            ],
             "integrationGaps": [],
             "cacheDependencies": {
               "invalidates": [
@@ -90,11 +102,18 @@
               "trigger": "User clicks 'Add Metrics' button",
               "component": "HealthDataSection.tsx",
               "eventHandler": "handleAddMetrics",
-              "stateChanges": ["showAddModal: true"]
+              "stateChanges": [
+                "showAddModal: true"
+              ]
             },
             "frontendProcessing": {
-              "hooks": ["useHealthVisibilitySettings"],
-              "queryKeys": ["healthVisibilitySettings", "/api/health-consent/visibility"],
+              "hooks": [
+                "useHealthVisibilitySettings"
+              ],
+              "queryKeys": [
+                "healthVisibilitySettings",
+                "/api/health-consent/visibility"
+              ],
               "apiCall": {
                 "endpoint": "PATCH /api/health-consent/visibility",
                 "payload": "{ visible_metrics: string[] }",
@@ -141,8 +160,12 @@
             "MetricsVisibilityCard"
           ],
           "apiIntegration": {
-            "expectedEndpoints": ["PATCH /api/health-consent/visibility"],
-            "actualEndpoints": ["PATCH /api/health-consent/visibility"],
+            "expectedEndpoints": [
+              "PATCH /api/health-consent/visibility"
+            ],
+            "actualEndpoints": [
+              "PATCH /api/health-consent/visibility"
+            ],
             "integrationGaps": [
               "CRITICAL: Cache invalidation chain incomplete",
               "useHealthVisibilitySettings hook cache not invalidated",
@@ -178,11 +201,19 @@
               "trigger": "User clicks 'Remove selected' button",
               "component": "RemoveMetricsModal.tsx",
               "eventHandler": "handleRemoveMetrics",
-              "stateChanges": ["selectedMetrics: []", "isRemoving: true"]
+              "stateChanges": [
+                "selectedMetrics: []",
+                "isRemoving: true"
+              ]
             },
             "frontendProcessing": {
-              "hooks": ["useHealthVisibilitySettings"],
-              "queryKeys": ["healthVisibilitySettings", "/api/health-consent/visibility"],
+              "hooks": [
+                "useHealthVisibilitySettings"
+              ],
+              "queryKeys": [
+                "healthVisibilitySettings",
+                "/api/health-consent/visibility"
+              ],
               "apiCall": {
                 "endpoint": "PATCH /api/health-consent/visibility",
                 "payload": "{ visible_metrics: filteredArray }",
@@ -202,7 +233,7 @@
           "userFlow": [
             "User accesses metrics visibility controls",
             "Current visibility state displays accurately",
-            "User makes changes via add/remove operations", 
+            "User makes changes via add/remove operations",
             "All UI components refresh consistently",
             "Changes persist across app sessions"
           ],
@@ -224,7 +255,7 @@
               "PATCH /api/health-consent/visibility"
             ],
             "actualEndpoints": [
-              "GET /api/health-consent/visibility", 
+              "GET /api/health-consent/visibility",
               "PATCH /api/health-consent/visibility"
             ],
             "integrationGaps": [
@@ -252,30 +283,54 @@
       "path": "client/src/components/health/AddMetricsModal.tsx",
       "type": "React Component",
       "description": "Modal for adding health metrics to dashboard with complete cache invalidation.",
-      "calls": ["PATCH /api/health-consent/visibility"],
-      "uses": ["useHealthVisibilitySettings"],
+      "calls": [
+        "PATCH /api/health-consent/visibility"
+      ],
+      "uses": [
+        "useHealthVisibilitySettings"
+      ],
       "invalidates": [
         "query:/api/health-consent/visibility",
         "query:healthVisibilitySettings"
       ],
-      "integrationStatus": "operational"
+      "integrationStatus": "operational",
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/HealthDataSection.tsx",
+            "domain": "health"
+          }
+        ]
+      }
     },
     "RemoveMetricsModal": {
-      "path": "client/src/components/health/RemoveMetricsModal.tsx", 
+      "path": "client/src/components/health/RemoveMetricsModal.tsx",
       "type": "React Component",
       "description": "Modal for removing health metrics from dashboard.",
-      "calls": ["PATCH /api/health-consent/visibility"],
-      "uses": ["useHealthVisibilitySettings"],
-      "invalidates": ["query:/api/health-consent/visibility"],
+      "calls": [
+        "PATCH /api/health-consent/visibility"
+      ],
+      "uses": [
+        "useHealthVisibilitySettings"
+      ],
+      "invalidates": [
+        "query:/api/health-consent/visibility"
+      ],
       "criticalIssue": "INCOMPLETE CACHE INVALIDATION - Only invalidates direct API query cache, not useHealthVisibilitySettings hook cache, causing UI inconsistency",
       "requiredFix": "Add complete cache invalidation including query:healthVisibilitySettings and all dependent component caches"
     },
     "MetricsVisibilityCard": {
       "path": "client/src/components/health/MetricsVisibilityCard.tsx",
-      "type": "React Component", 
+      "type": "React Component",
       "description": "Displays current metrics visibility settings and provides controls.",
-      "uses": ["useHealthVisibilitySettings"],
-      "dependsOn": ["API /api/health-consent/visibility"],
+      "uses": [
+        "useHealthVisibilitySettings"
+      ],
+      "dependsOn": [
+        "API /api/health-consent/visibility"
+      ],
       "refreshTrigger": "useHealthVisibilitySettings hook updates"
     },
     "useHealthVisibilitySettings": {
@@ -286,7 +341,9 @@
         "GET /api/health-consent/visibility",
         "PATCH /api/health-consent/visibility"
       ],
-      "invalidates": ["query:healthVisibilitySettings"],
+      "invalidates": [
+        "query:healthVisibilitySettings"
+      ],
       "cachingStrategy": "React Query with custom cache key",
       "criticalIssue": "Cache not properly invalidated by RemoveMetricsModal operations"
     },
@@ -294,17 +351,45 @@
       "path": "client/src/components/HealthDataSection.tsx",
       "type": "React Component",
       "description": "Main health dashboard displaying metrics based on visibility settings.",
-      "uses": ["useHealthVisibilitySettings"],
-      "dependsOn": ["API /api/health-consent/visibility"],
-      "refreshTrigger": "useHealthVisibilitySettings hook updates"
+      "uses": [
+        "useHealthVisibilitySettings"
+      ],
+      "dependsOn": [
+        "API /api/health-consent/visibility"
+      ],
+      "refreshTrigger": "useHealthVisibilitySettings hook updates",
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": true,
+        "usedBy": [
+          {
+            "file": "client/src/pages/home.tsx",
+            "domain": "unknown/needs-classification"
+          }
+        ]
+      }
     },
     "KeyMetricsOverview": {
       "path": "client/src/components/health/KeyMetricsOverview.tsx",
       "type": "React Component",
       "description": "Overview of key health metrics based on visibility preferences.",
-      "uses": ["query:/api/health-consent/visibility"],
-      "dependsOn": ["API /api/health-consent/visibility"],
-      "refreshTrigger": "Direct query cache invalidation"
+      "uses": [
+        "query:/api/health-consent/visibility"
+      ],
+      "dependsOn": [
+        "API /api/health-consent/visibility"
+      ],
+      "refreshTrigger": "Direct query cache invalidation",
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/HealthDataSection.tsx",
+            "domain": "health"
+          }
+        ]
+      }
     }
   },
   "apiEndpoints": {
@@ -312,7 +397,9 @@
       "description": "Retrieve user's current health metric visibility preferences.",
       "handlerFile": "server/routes/health-routes.ts",
       "response": "{ visible_metrics: string[] }",
-      "readsFrom": ["users.health_preferences"],
+      "readsFrom": [
+        "users.health_preferences"
+      ],
       "modifies": [],
       "consumedBy": [
         "useHealthVisibilitySettings",
@@ -326,12 +413,19 @@
       "handlerFile": "server/routes/health-routes.ts",
       "requestBody": "{ visible_metrics: string[] }",
       "response": "{ success: boolean }",
-      "readsFrom": ["users"],
-      "modifies": ["users.health_preferences"],
-      "calledBy": ["AddMetricsModal", "RemoveMetricsModal"],
+      "readsFrom": [
+        "users"
+      ],
+      "modifies": [
+        "users.health_preferences"
+      ],
+      "calledBy": [
+        "AddMetricsModal",
+        "RemoveMetricsModal"
+      ],
       "requiresRefresh": [
         "HealthDataSection",
-        "KeyMetricsOverview", 
+        "KeyMetricsOverview",
         "HealthMetricsCard",
         "MetricsVisibilityCard"
       ],
@@ -344,10 +438,25 @@
   "database": {
     "tables": {
       "users": {
-        "columns": ["id", "health_preferences", "created_at", "updated_at"],
-        "indexes": ["idx_users_id"],
-        "modifiedBy": ["PATCH /api/health-consent/visibility"]
+        "columns": [
+          "id",
+          "health_preferences",
+          "created_at",
+          "updated_at"
+        ],
+        "indexes": [
+          "idx_users_id"
+        ],
+        "modifiedBy": [
+          "PATCH /api/health-consent/visibility"
+        ]
       }
     }
+  },
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.648Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 14,
+    "totalDependencies": 18
   }
 }

@@ -1,10 +1,21 @@
-
 {
   "tableOfContents": {
     "conversation-management": {
-      "features": ["conversation-list", "conversation-persistence", "conversation-navigation"],
-      "components": ["ConversationHistory", "ConversationListItem", "ConversationSearch"],
-      "endpoints": ["GET /api/conversations", "DELETE /api/conversations/:id", "PUT /api/conversations/:id"]
+      "features": [
+        "conversation-list",
+        "conversation-persistence",
+        "conversation-navigation"
+      ],
+      "components": [
+        "ConversationHistory",
+        "ConversationListItem",
+        "ConversationSearch"
+      ],
+      "endpoints": [
+        "GET /api/conversations",
+        "DELETE /api/conversations/:id",
+        "PUT /api/conversations/:id"
+      ]
     }
   },
   "integrationStatus": {
@@ -12,23 +23,38 @@
       "status": "active",
       "lastVerified": "2025-07-04",
       "knownIssues": [],
-      "resolvedIssues": ["Latest conversations now appearing with metadata", "UI component fully integrated with enhanced API data", "Streaming endpoint now properly updates conversation history"]
+      "resolvedIssues": [
+        "Latest conversations now appearing with metadata",
+        "UI component fully integrated with enhanced API data",
+        "Streaming endpoint now properly updates conversation history"
+      ]
     },
     "conversation-persistence": {
       "status": "active",
       "lastVerified": "2025-07-04",
       "knownIssues": [],
-      "resolvedIssues": ["Conversation update endpoint implemented", "Streaming endpoint (/api/messages/stream) now persists messages and updates conversation timestamps", "Query cache invalidation properly triggers history refresh"]
+      "resolvedIssues": [
+        "Conversation update endpoint implemented",
+        "Streaming endpoint (/api/messages/stream) now persists messages and updates conversation timestamps",
+        "Query cache invalidation properly triggers history refresh"
+      ]
     },
     "conversation-navigation": {
       "status": "active",
       "lastVerified": "2025-07-04",
       "knownIssues": [],
-      "resolvedIssues": ["Users can now access and switch between previous conversations", "Conversation context switching working properly", "New chat → History flow now shows latest conversation"]
+      "resolvedIssues": [
+        "Users can now access and switch between previous conversations",
+        "Conversation context switching working properly",
+        "New chat → History flow now shows latest conversation"
+      ]
     }
   },
-  "lastUpdated": "2025-07-04T19:30:00Z",
-  "dependencies": ["core-messaging", "memory"],
+  "lastUpdated": "2025-07-11T21:54:27.653Z",
+  "dependencies": [
+    "core-messaging",
+    "memory"
+  ],
   "featureGroups": {
     "conversation-management": {
       "description": "User interface and backend functionality for managing conversation history, including listing, searching, and navigating previous conversations",
@@ -47,20 +73,34 @@
             "Apply pagination to conversation results",
             "Return formatted conversation metadata to frontend"
           ],
-          "components": ["ConversationHistory", "ConversationListItem"],
+          "components": [
+            "ConversationHistory",
+            "ConversationListItem"
+          ],
           "dataFlowTrace": {
             "userAction": "User clicks History button to view previous conversations",
             "frontendFlow": {
               "triggerComponent": "ConversationHistory.tsx",
-              "eventHandlers": ["useQuery hook triggers on mount"],
-              "stateChanges": ["Loading state", "Conversations data populated"],
-              "reactQueryHooks": ["useQuery: ['/api/conversations']"],
+              "eventHandlers": [
+                "useQuery hook triggers on mount"
+              ],
+              "stateChanges": [
+                "Loading state",
+                "Conversations data populated"
+              ],
+              "reactQueryHooks": [
+                "useQuery: ['/api/conversations']"
+              ],
               "apiCalls": {
                 "endpoint": "/api/conversations",
                 "method": "GET",
-                "requestPath": ["ConversationHistory component → useQuery → GET /api/conversations"],
+                "requestPath": [
+                  "ConversationHistory component → useQuery → GET /api/conversations"
+                ],
                 "requestPayload": "none",
-                "headers": ["Content-Type: application/json"]
+                "headers": [
+                  "Content-Type: application/json"
+                ]
               }
             },
             "networkLayer": {
@@ -72,38 +112,75 @@
               "routeHandler": "server/routes/chat-routes.ts:GET /api/conversations",
               "servicesCalled": [],
               "databaseOperations": {
-                "queries": ["SELECT id, title, createdAt, updatedAt FROM conversations WHERE userId = 1 ORDER BY updatedAt DESC"],
-                "tables": ["conversations"],
-                "operations": ["READ"],
+                "queries": [
+                  "SELECT id, title, createdAt, updatedAt FROM conversations WHERE userId = 1 ORDER BY updatedAt DESC"
+                ],
+                "tables": [
+                  "conversations"
+                ],
+                "operations": [
+                  "READ"
+                ],
                 "transactions": []
               },
-              "cacheOperations": ["React Query cache read/write"]
+              "cacheOperations": [
+                "React Query cache read/write"
+              ]
             },
             "responseFlow": {
               "backendResponse": "Array of conversation objects with metadata",
               "frontendHandling": "React Query updates component state",
               "uiUpdate": "ConversationHistory renders list of conversations"
             },
-            "requestPath": ["Frontend: ConversationHistory.tsx", "Hook: useQuery", "API: GET /api/conversations", "Handler: server/routes/chat-routes.ts", "Database: conversations"],
-            "expectedPath": ["Frontend: ConversationHistory.tsx", "Hook: useQuery", "API: GET /api/conversations", "Handler: server/routes/chat-routes.ts", "Database: conversations"],
+            "requestPath": [
+              "Frontend: ConversationHistory.tsx",
+              "Hook: useQuery",
+              "API: GET /api/conversations",
+              "Handler: server/routes/chat-routes.ts",
+              "Database: conversations"
+            ],
+            "expectedPath": [
+              "Frontend: ConversationHistory.tsx",
+              "Hook: useQuery",
+              "API: GET /api/conversations",
+              "Handler: server/routes/chat-routes.ts",
+              "Database: conversations"
+            ],
             "pathVerified": true,
             "bypassedComponents": [],
             "actualHandler": "server/routes/chat-routes.ts:GET /api/conversations",
             "streamingPattern": "Standard REST API retrieval with React Query caching"
           },
           "apiIntegration": {
-            "expectedEndpoints": ["GET /api/conversations"],
-            "actualEndpoints": ["GET /api/conversations"],
+            "expectedEndpoints": [
+              "GET /api/conversations"
+            ],
+            "actualEndpoints": [
+              "GET /api/conversations"
+            ],
             "integrationGaps": [],
-            "resolvedGaps": ["Frontend now properly consuming enhanced conversation data", "Conversation metadata generation working", "React Query cache invalidation implemented", "Go AI Gateway dependency disabled"],
+            "resolvedGaps": [
+              "Frontend now properly consuming enhanced conversation data",
+              "Conversation metadata generation working",
+              "React Query cache invalidation implemented",
+              "Go AI Gateway dependency disabled"
+            ],
             "cacheDependencies": {
-              "invalidates": ["query:conversations"],
-              "refreshesComponents": ["ConversationHistory", "ChatSection"]
+              "invalidates": [
+                "query:conversations"
+              ],
+              "refreshesComponents": [
+                "ConversationHistory",
+                "ChatSection"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
               "knownIssues": [],
-              "resolvedIssues": ["Latest conversations displaying with metadata", "Conversation list properly populated"]
+              "resolvedIssues": [
+                "Latest conversations displaying with metadata",
+                "Conversation list properly populated"
+              ]
             }
           },
           "logging": {
@@ -128,30 +205,49 @@
             "Generate or update conversation title based on content",
             "Store conversation with proper indexing for retrieval"
           ],
-          "components": ["ChatSection", "ConversationHistory"],
+          "components": [
+            "ChatSection",
+            "ConversationHistory"
+          ],
           "dataFlowTrace": {
             "userAction": "User sends a message in chat interface",
             "frontendFlow": {
               "triggerComponent": "ChatSection.tsx",
-              "eventHandlers": ["sendMessage from AppContext"],
-              "stateChanges": ["Optimistic message added", "Streaming state activated"],
-              "reactQueryHooks": ["useMutation: sendMessageMutation"],
+              "eventHandlers": [
+                "sendMessage from AppContext"
+              ],
+              "stateChanges": [
+                "Optimistic message added",
+                "Streaming state activated"
+              ],
+              "reactQueryHooks": [
+                "useMutation: sendMessageMutation"
+              ],
               "apiCalls": {
                 "endpoint": "/api/messages/stream",
                 "method": "POST",
-                "requestPath": ["ChatSection → AppContext.sendMessage → POST /api/messages/stream"],
+                "requestPath": [
+                  "ChatSection → AppContext.sendMessage → POST /api/messages/stream"
+                ],
                 "requestPayload": "{content, conversationId, coachingMode, aiProvider, aiModel, attachments, automaticModelSelection}",
-                "headers": ["Content-Type: application/json"]
+                "headers": [
+                  "Content-Type: application/json"
+                ]
               }
             },
             "networkLayer": {
               "requestRoute": "Frontend → POST /api/messages/stream",
-              "middlewares": ["messageSchema validation"],
+              "middlewares": [
+                "messageSchema validation"
+              ],
               "routeHandler": "server/routes/chat-routes.ts:app.post('/api/messages/stream')"
             },
             "backendFlow": {
               "routeHandler": "server/routes/chat-routes.ts:POST /api/messages/stream",
-              "servicesCalled": ["aiService.getChatResponseStream", "storage.getUser"],
+              "servicesCalled": [
+                "aiService.getChatResponseStream",
+                "storage.getUser"
+              ],
               "databaseOperations": {
                 "queries": [
                   "INSERT INTO conversations (userId, title) VALUES (1, $title) RETURNING *",
@@ -159,32 +255,72 @@
                   "INSERT INTO conversationMessages (conversationId, role, content) VALUES ($id, 'assistant', $response) RETURNING *",
                   "UPDATE conversations SET updatedAt = NOW() WHERE id = $conversationId RETURNING *"
                 ],
-                "tables": ["conversations", "conversationMessages"],
-                "operations": ["CREATE", "UPDATE"],
-                "transactions": ["Message save and conversation update in sequence"]
+                "tables": [
+                  "conversations",
+                  "conversationMessages"
+                ],
+                "operations": [
+                  "CREATE",
+                  "UPDATE"
+                ],
+                "transactions": [
+                  "Message save and conversation update in sequence"
+                ]
               },
-              "cacheOperations": ["React Query invalidation triggered by frontend on success"]
+              "cacheOperations": [
+                "React Query invalidation triggered by frontend on success"
+              ]
             },
             "responseFlow": {
               "backendResponse": "Server-Sent Events stream with chunks, complete, and done events",
               "frontendHandling": "AppContext processes streaming response and updates state",
               "uiUpdate": "Messages rendered in real-time, conversation cache invalidated"
             },
-            "requestPath": ["Frontend: ChatSection.tsx", "Context: AppContext.sendMessage", "API: POST /api/messages/stream", "Handler: server/routes/chat-routes.ts", "Service: aiService", "Database: conversations, conversationMessages"],
-            "expectedPath": ["Frontend: ChatSection.tsx", "Context: AppContext.sendMessage", "API: POST /api/messages/stream", "Handler: server/routes/chat-routes.ts", "Service: aiService", "Database: conversations, conversationMessages"],
+            "requestPath": [
+              "Frontend: ChatSection.tsx",
+              "Context: AppContext.sendMessage",
+              "API: POST /api/messages/stream",
+              "Handler: server/routes/chat-routes.ts",
+              "Service: aiService",
+              "Database: conversations, conversationMessages"
+            ],
+            "expectedPath": [
+              "Frontend: ChatSection.tsx",
+              "Context: AppContext.sendMessage",
+              "API: POST /api/messages/stream",
+              "Handler: server/routes/chat-routes.ts",
+              "Service: aiService",
+              "Database: conversations, conversationMessages"
+            ],
             "pathVerified": true,
             "bypassedComponents": [],
             "actualHandler": "server/routes/chat-routes.ts:POST /api/messages/stream",
             "streamingPattern": "Real-time SSE streaming with database persistence and conversation timestamp updates"
           },
           "apiIntegration": {
-            "expectedEndpoints": ["POST /api/chat", "PUT /api/conversations/:id"],
-            "actualEndpoints": ["POST /api/chat", "PUT /api/conversations/:id"],
+            "expectedEndpoints": [
+              "POST /api/chat",
+              "PUT /api/conversations/:id"
+            ],
+            "actualEndpoints": [
+              "POST /api/chat",
+              "PUT /api/conversations/:id"
+            ],
             "integrationGaps": [],
-            "resolvedGaps": ["Conversation update endpoint implemented", "Streaming endpoint now saves messages to database", "Conversation timestamps properly updated after each message"],
+            "resolvedGaps": [
+              "Conversation update endpoint implemented",
+              "Streaming endpoint now saves messages to database",
+              "Conversation timestamps properly updated after each message"
+            ],
             "cacheDependencies": {
-              "invalidates": ["query:conversations", "query:messages"],
-              "refreshesComponents": ["ConversationHistory", "ChatSection"]
+              "invalidates": [
+                "query:conversations",
+                "query:messages"
+              ],
+              "refreshesComponents": [
+                "ConversationHistory",
+                "ChatSection"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -214,20 +350,35 @@
             "Update chat interface with conversation history",
             "Enable continuation of selected conversation"
           ],
-          "components": ["ConversationHistory", "ChatSection", "MessageDisplayArea"],
+          "components": [
+            "ConversationHistory",
+            "ChatSection",
+            "MessageDisplayArea"
+          ],
           "dataFlowTrace": {
             "userAction": "User clicks on a previous conversation in history list",
             "frontendFlow": {
               "triggerComponent": "ConversationHistory.tsx",
-              "eventHandlers": ["AppContext.selectConversation"],
-              "stateChanges": ["currentConversationId updated", "messages cleared and reloaded"],
-              "reactQueryHooks": ["Messages useEffect triggers conversation loading"],
+              "eventHandlers": [
+                "AppContext.selectConversation"
+              ],
+              "stateChanges": [
+                "currentConversationId updated",
+                "messages cleared and reloaded"
+              ],
+              "reactQueryHooks": [
+                "Messages useEffect triggers conversation loading"
+              ],
               "apiCalls": {
                 "endpoint": "/api/conversations/:id/messages",
                 "method": "GET",
-                "requestPath": ["ConversationHistory → AppContext.selectConversation → useEffect → GET /api/conversations/:id/messages"],
+                "requestPath": [
+                  "ConversationHistory → AppContext.selectConversation → useEffect → GET /api/conversations/:id/messages"
+                ],
                 "requestPayload": "conversationId in URL params",
-                "headers": ["Content-Type: application/json"]
+                "headers": [
+                  "Content-Type: application/json"
+                ]
               }
             },
             "networkLayer": {
@@ -239,9 +390,15 @@
               "routeHandler": "server/routes/chat-routes.ts:GET /api/conversations/:id/messages",
               "servicesCalled": [],
               "databaseOperations": {
-                "queries": ["SELECT * FROM conversationMessages WHERE conversationId = $id ORDER BY createdAt"],
-                "tables": ["conversationMessages"],
-                "operations": ["READ"],
+                "queries": [
+                  "SELECT * FROM conversationMessages WHERE conversationId = $id ORDER BY createdAt"
+                ],
+                "tables": [
+                  "conversationMessages"
+                ],
+                "operations": [
+                  "READ"
+                ],
                 "transactions": []
               },
               "cacheOperations": []
@@ -251,26 +408,55 @@
               "frontendHandling": "AppContext loads messages into state",
               "uiUpdate": "ChatSection displays conversation history, ConversationHistory modal closes"
             },
-            "requestPath": ["Frontend: ConversationHistory.tsx", "Context: AppContext.selectConversation", "API: GET /api/conversations/:id/messages", "Handler: server/routes/chat-routes.ts"],
-            "expectedPath": ["Frontend: ConversationHistory.tsx", "Context: AppContext.selectConversation", "API: GET /api/conversations/:id/messages", "Handler: server/routes/chat-routes.ts"],
+            "requestPath": [
+              "Frontend: ConversationHistory.tsx",
+              "Context: AppContext.selectConversation",
+              "API: GET /api/conversations/:id/messages",
+              "Handler: server/routes/chat-routes.ts"
+            ],
+            "expectedPath": [
+              "Frontend: ConversationHistory.tsx",
+              "Context: AppContext.selectConversation",
+              "API: GET /api/conversations/:id/messages",
+              "Handler: server/routes/chat-routes.ts"
+            ],
             "pathVerified": true,
             "bypassedComponents": [],
             "actualHandler": "server/routes/chat-routes.ts:GET /api/conversations/:id/messages",
             "streamingPattern": "Conversation context switching with message history loading"
           },
           "apiIntegration": {
-            "expectedEndpoints": ["GET /api/conversations/:id/messages", "PUT /api/conversations/:id/select"],
-            "actualEndpoints": ["GET /api/conversations/:id/messages"],
+            "expectedEndpoints": [
+              "GET /api/conversations/:id/messages",
+              "PUT /api/conversations/:id/select"
+            ],
+            "actualEndpoints": [
+              "GET /api/conversations/:id/messages"
+            ],
             "integrationGaps": [],
-            "resolvedGaps": ["Conversation selection API working through AppContext", "Conversation context switching mechanism active", "Conversation history properly loads when selected from list"],
+            "resolvedGaps": [
+              "Conversation selection API working through AppContext",
+              "Conversation context switching mechanism active",
+              "Conversation history properly loads when selected from list"
+            ],
             "cacheDependencies": {
-              "invalidates": ["query:messages", "query:currentConversation"],
-              "refreshesComponents": ["MessageDisplayArea", "ChatSection", "ConversationHistory"]
+              "invalidates": [
+                "query:messages",
+                "query:currentConversation"
+              ],
+              "refreshesComponents": [
+                "MessageDisplayArea",
+                "ChatSection",
+                "ConversationHistory"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
               "knownIssues": [],
-              "resolvedIssues": ["Can click to load previous conversations", "Active conversation indication working"]
+              "resolvedIssues": [
+                "Can click to load previous conversations",
+                "Active conversation indication working"
+              ]
             }
           },
           "logging": {
@@ -289,9 +475,27 @@
       "name": "ConversationHistory",
       "path": "client/src/components/ConversationHistory.tsx",
       "description": "Main conversation history interface displaying list of previous conversations",
-      "uses": ["useChatMessages", "ConversationListItem", "ConversationSearch"],
+      "uses": [
+        "useChatMessages",
+        "ConversationListItem",
+        "ConversationSearch"
+      ],
       "integrationIssues": [],
-      "resolvedIssues": ["Now properly consuming enhanced conversation API data", "Click handlers for conversation selection implemented", "Real-time conversation list updates after sending messages"]
+      "resolvedIssues": [
+        "Now properly consuming enhanced conversation API data",
+        "Click handlers for conversation selection implemented",
+        "Real-time conversation list updates after sending messages"
+      ],
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/ChatSection.tsx",
+            "domain": "chat"
+          }
+        ]
+      }
     },
     "ConversationListItem": {
       "name": "ConversationListItem",
@@ -299,7 +503,10 @@
       "description": "Individual conversation item in history list with title, timestamp, and preview",
       "uses": [],
       "integrationIssues": [],
-      "resolvedIssues": ["Component integrated into ConversationHistory component", "Conversation selection functionality working"]
+      "resolvedIssues": [
+        "Component integrated into ConversationHistory component",
+        "Conversation selection functionality working"
+      ]
     },
     "ConversationSearch": {
       "name": "ConversationSearch",
@@ -307,7 +514,9 @@
       "description": "Search functionality for filtering conversation history",
       "uses": [],
       "integrationIssues": [],
-      "resolvedIssues": ["Search functionality integrated into ConversationHistory component"]
+      "resolvedIssues": [
+        "Search functionality integrated into ConversationHistory component"
+      ]
     }
   },
   "apiEndpoints": {
@@ -315,7 +524,9 @@
       "method": "GET",
       "handler": "server/routes/chat-routes.ts",
       "description": "Retrieve user's conversation history with pagination, ordered by updatedAt DESC",
-      "readsFrom": ["conversations"],
+      "readsFrom": [
+        "conversations"
+      ],
       "modifies": [],
       "implementationStatus": "active",
       "debugLogging": "[CONVERSATIONS_FETCH_DEBUG] logs conversation count and metadata"
@@ -324,33 +535,37 @@
       "method": "POST",
       "handler": "server/routes/chat-routes.ts",
       "description": "Send message via streaming with real-time response and database persistence",
-      "readsFrom": ["conversations", "users"],
-      "modifies": ["conversations", "conversationMessages"],
+      "readsFrom": [
+        "conversations",
+        "users"
+      ],
+      "modifies": [
+        "conversations",
+        "conversationMessages"
+      ],
       "implementationStatus": "active",
       "debugLogging": "[STREAMING_DEBUG] and [CONVERSATION_UPDATE_DEBUG] logs for conversation management",
       "criticalFix": "Now properly saves messages and updates conversation timestamps for history visibility"
     },
     "/api/conversations/:id": {
-      "method": "DELETE",
-      "handler": "server/routes/chat-routes.ts",
-      "description": "Delete a specific conversation and its messages",
-      "readsFrom": ["conversations"],
-      "modifies": ["conversations", "conversation_messages"],
-      "implementationStatus": "active"
-    },
-    "/api/conversations/:id": {
       "method": "PUT",
       "handler": "server/routes/chat-routes.ts",
       "description": "Update conversation metadata (title, etc.)",
-      "readsFrom": ["conversations"],
-      "modifies": ["conversations"],
+      "readsFrom": [
+        "conversations"
+      ],
+      "modifies": [
+        "conversations"
+      ],
       "implementationStatus": "active"
     },
     "/api/conversations/:id/messages": {
       "method": "GET",
       "handler": "server/routes/chat-routes.ts",
       "description": "Load messages for a specific conversation when user selects from history",
-      "readsFrom": ["conversationMessages"],
+      "readsFrom": [
+        "conversationMessages"
+      ],
       "modifies": [],
       "implementationStatus": "active"
     }
@@ -359,20 +574,58 @@
     "tables": {
       "conversations": {
         "description": "Chat conversation metadata and context",
-        "columns": ["id", "title", "created_at", "updated_at", "user_id"],
-        "relations": ["conversation_messages"],
-        "indexes": ["user_id", "created_at"],
+        "columns": [
+          "id",
+          "title",
+          "created_at",
+          "updated_at",
+          "user_id"
+        ],
+        "relations": [
+          "conversation_messages"
+        ],
+        "indexes": [
+          "user_id",
+          "created_at"
+        ],
         "integrationIssues": [],
-        "resolvedIssues": ["Title generation logic working", "Conversation selection tracking active", "Timestamp updates now properly triggered by streaming endpoint"]
+        "resolvedIssues": [
+          "Title generation logic working",
+          "Conversation selection tracking active",
+          "Timestamp updates now properly triggered by streaming endpoint"
+        ]
       },
       "conversation_messages": {
         "description": "Individual chat messages within conversations",
-        "columns": ["id", "conversation_id", "role", "content", "created_at", "message_type", "status"],
-        "relations": ["conversations", "message_attachments"],
-        "indexes": ["conversation_id", "created_at"],
+        "columns": [
+          "id",
+          "conversation_id",
+          "role",
+          "content",
+          "created_at",
+          "message_type",
+          "status"
+        ],
+        "relations": [
+          "conversations",
+          "message_attachments"
+        ],
+        "indexes": [
+          "conversation_id",
+          "created_at"
+        ],
         "integrationIssues": [],
-        "resolvedIssues": ["Messages properly linked to conversation history interface through API endpoints", "Streaming endpoint now persists both user and AI messages to database"]
+        "resolvedIssues": [
+          "Messages properly linked to conversation history interface through API endpoints",
+          "Streaming endpoint now persists both user and AI messages to database"
+        ]
       }
     }
+  },
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.653Z",
+    "crossDomainFiles": 3,
+    "internalFiles": 7,
+    "totalDependencies": 10
   }
 }

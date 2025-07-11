@@ -92,7 +92,9 @@
       "clientSideCategorization": "useMemo to categorize data by health category"
     },
     "cacheDependencies": {
-      "invalidates": ["query:allHealthData"],
+      "invalidates": [
+        "query:allHealthData"
+      ],
       "refreshesComponents": [
         "HealthDataSection",
         "KeyMetricsOverview",
@@ -102,23 +104,39 @@
         "NutritionSummary",
         "HydrationCard"
       ],
-      "triggerEvents": ["timeRange-changed"]
+      "triggerEvents": [
+        "timeRange-changed"
+      ]
     }
   },
   "dataAggregation": {
     "cumulativeMetrics": {
       "description": "Metrics that should be summed over the time period",
-      "examples": ["steps", "calories_burned", "water_intake", "exercise_duration"],
+      "examples": [
+        "steps",
+        "calories_burned",
+        "water_intake",
+        "exercise_duration"
+      ],
       "aggregation": "SUM(value) for all records in timeRange"
     },
     "continuousMetrics": {
       "description": "Metrics that should be averaged over the time period",
-      "examples": ["weight", "heart_rate", "blood_pressure", "bmi"],
+      "examples": [
+        "weight",
+        "heart_rate",
+        "blood_pressure",
+        "bmi"
+      ],
       "aggregation": "AVG(value) for all records in timeRange"
     },
     "occasionalMetrics": {
       "description": "Metrics that should show latest value regardless of timeframe",
-      "examples": ["blood_oxygen", "ecg", "cholesterol_total"],
+      "examples": [
+        "blood_oxygen",
+        "ecg",
+        "cholesterol_total"
+      ],
       "aggregation": "Latest value by timestamp"
     }
   },
@@ -172,5 +190,62 @@
     "status": "active",
     "lastVerified": "2025-01-06",
     "completeness": "Fully integrated with proper aggregation logic"
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "client/src/services/native-health-service.ts",
+        "importedBy": [
+          {
+            "domain": "shared/services",
+            "file": "client/src/services/platform-detection-global.ts"
+          }
+        ]
+      },
+      {
+        "file": "client/src/components/HealthDataSection.tsx",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/pages/home.tsx"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-parser.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-deduplication.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-consent-service.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 14
+  },
+  "lastUpdated": "2025-07-11T21:54:27.649Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.649Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 14,
+    "totalDependencies": 18
   }
 }

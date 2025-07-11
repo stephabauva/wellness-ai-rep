@@ -1,4 +1,3 @@
-
 {
   "_metadata": {
     "featureName": "chat-attachments",
@@ -29,173 +28,474 @@
     "userAction": "User selects files via paperclip or takes photos via camera",
     "frontendFlow": {
       "triggerComponent": "ChatInputArea",
-      "eventHandlers": ["handleFileChange", "handleCameraCapture"],
-      "stateChanges": ["attachedFiles"],
-      "reactQueryHooks": ["useFileManagement", "uploadFileMutation"],
+      "eventHandlers": [
+        "handleFileChange",
+        "handleCameraCapture"
+      ],
+      "stateChanges": [
+        "attachedFiles"
+      ],
+      "reactQueryHooks": [
+        "useFileManagement",
+        "uploadFileMutation"
+      ],
       "apiCalls": {
         "endpoint": "/api/files (actual) vs /api/chat/attachments (expected)",
         "method": "POST",
-        "requestPath": ["ChatInputArea → useFileManagement → POST /api/files → file-routes.ts"],
+        "requestPath": [
+          "ChatInputArea → useFileManagement → POST /api/files → file-routes.ts"
+        ],
         "requestPayload": "FormData with file, metadata, and chat context",
-        "headers": ["multipart/form-data", "Authorization"]
+        "headers": [
+          "multipart/form-data",
+          "Authorization"
+        ]
       }
     },
     "networkLayer": {
       "requestRoute": "Frontend → Express multer middleware → file-routes.ts",
-      "middlewares": ["multer file upload", "authentication", "file validation"],
+      "middlewares": [
+        "multer file upload",
+        "authentication",
+        "file validation"
+      ],
       "routeHandler": "server/routes/file-routes.ts:POST /api/files"
     },
     "backendFlow": {
       "routeHandler": "file-routes.ts:uploadFile function",
-      "servicesCalled": ["attachmentRetentionService", "thumbnail generation", "Go file accelerator"],
-      "externalApiCalls": ["Go file service for large files", "transcription service"],
+      "servicesCalled": [
+        "attachmentRetentionService",
+        "thumbnail generation",
+        "Go file accelerator"
+      ],
+      "externalApiCalls": [
+        "Go file service for large files",
+        "transcription service"
+      ],
       "databaseOperations": {
-        "queries": ["INSERT INTO files", "INSERT INTO message_attachments (planned)"],
-        "tables": ["files", "message_attachments", "transcriptions"],
-        "operations": ["CREATE file record", "CREATE attachment relationship"],
-        "transactions": ["File upload with metadata transaction"]
+        "queries": [
+          "INSERT INTO files",
+          "INSERT INTO message_attachments (planned)"
+        ],
+        "tables": [
+          "files",
+          "message_attachments",
+          "transcriptions"
+        ],
+        "operations": [
+          "CREATE file record",
+          "CREATE attachment relationship"
+        ],
+        "transactions": [
+          "File upload with metadata transaction"
+        ]
       },
-      "cacheOperations": ["Cache file metadata", "Invalidate attachment queries"],
-      "fileSystemOperations": ["Store file to uploads directory", "Generate thumbnails"]
+      "cacheOperations": [
+        "Cache file metadata",
+        "Invalidate attachment queries"
+      ],
+      "fileSystemOperations": [
+        "Store file to uploads directory",
+        "Generate thumbnails"
+      ]
     },
     "responseFlow": {
-      "dataTransformation": ["File metadata normalization", "URL path generation"],
+      "dataTransformation": [
+        "File metadata normalization",
+        "URL path generation"
+      ],
       "responsePayload": "{ id, fileName, fileType, url, thumbnailUrl, transcription }",
-      "statusCodes": ["200 success", "400 validation error", "413 file too large"],
-      "responsePath": ["File system → Route handler → Network → Frontend state"]
+      "statusCodes": [
+        "200 success",
+        "400 validation error",
+        "413 file too large"
+      ],
+      "responsePath": [
+        "File system → Route handler → Network → Frontend state"
+      ]
     },
     "frontendUpdateFlow": {
-      "reactQueryInvalidation": ["query:files", "query:attachments"],
-      "stateUpdates": ["attachedFiles array", "uploadProgress", "transcriptionText"],
-      "uiRefresh": ["AttachmentPreview", "ChatInputArea", "progress indicators"],
-      "cacheConsistency": ["File list cache", "attachment preview cache"],
-      "userFeedback": ["Upload progress bar", "success checkmark", "error messages"]
+      "reactQueryInvalidation": [
+        "query:files",
+        "query:attachments"
+      ],
+      "stateUpdates": [
+        "attachedFiles array",
+        "uploadProgress",
+        "transcriptionText"
+      ],
+      "uiRefresh": [
+        "AttachmentPreview",
+        "ChatInputArea",
+        "progress indicators"
+      ],
+      "cacheConsistency": [
+        "File list cache",
+        "attachment preview cache"
+      ],
+      "userFeedback": [
+        "Upload progress bar",
+        "success checkmark",
+        "error messages"
+      ]
     }
   },
   "architecturalLayers": {
     "presentation": {
       "components": {
-        "primary": ["AttachmentPreview", "ChatInputArea"],
-        "supporting": ["FileUploadProgress", "ThumbnailDisplay"],
-        "shared": ["Button", "Progress", "Dialog", "AlertDialog"]
+        "primary": [
+          "AttachmentPreview",
+          "ChatInputArea"
+        ],
+        "supporting": [
+          "FileUploadProgress",
+          "ThumbnailDisplay"
+        ],
+        "shared": [
+          "Button",
+          "Progress",
+          "Dialog",
+          "AlertDialog"
+        ]
       },
-      "hooks": ["useFileManagement", "useChatActions", "useFileApi"],
-      "utilities": ["chatUtils.getFileIcon", "file validation", "audio processing"],
-      "types": ["AttachedFile", "FileAttachment", "AudioRecording"],
-      "styles": ["attachment preview styles", "upload progress styles", "audio recorder styles"]
+      "hooks": [
+        "useFileManagement",
+        "useChatActions",
+        "useFileApi"
+      ],
+      "utilities": [
+        "chatUtils.getFileIcon",
+        "file validation",
+        "audio processing"
+      ],
+      "types": [
+        "AttachedFile",
+        "FileAttachment",
+        "AudioRecording"
+      ],
+      "styles": [
+        "attachment preview styles",
+        "upload progress styles",
+        "audio recorder styles"
+      ]
     },
     "businessLogic": {
-      "routes": ["file-routes.ts", "chat-routes.ts (planned)"],
-      "services": ["attachmentRetentionService", "chat-context-service"],
-      "middleware": ["multer upload", "file validation", "auth middleware"],
-      "utilities": ["file processing", "thumbnail generation", "audio transcription"],
-      "types": ["AttachmentData", "FileAttachment", "MessageContentPart"]
+      "routes": [
+        "file-routes.ts",
+        "chat-routes.ts (planned)"
+      ],
+      "services": [
+        "attachmentRetentionService",
+        "chat-context-service"
+      ],
+      "middleware": [
+        "multer upload",
+        "file validation",
+        "auth middleware"
+      ],
+      "utilities": [
+        "file processing",
+        "thumbnail generation",
+        "audio transcription"
+      ],
+      "types": [
+        "AttachmentData",
+        "FileAttachment",
+        "MessageContentPart"
+      ]
     },
     "dataLayer": {
       "database": {
-        "tables": ["files", "message_attachments"],
-        "relationships": ["files → message_attachments", "message_attachments → conversation_messages"],
-        "indexes": ["files.uploaded_by", "message_attachments.message_id"],
-        "migrations": ["message_attachments table creation", "transcriptions table"]
+        "tables": [
+          "files",
+          "message_attachments"
+        ],
+        "relationships": [
+          "files → message_attachments",
+          "message_attachments → conversation_messages"
+        ],
+        "indexes": [
+          "files.uploaded_by",
+          "message_attachments.message_id"
+        ],
+        "migrations": [
+          "message_attachments table creation",
+          "transcriptions table"
+        ]
       },
       "cache": {
-        "cacheKeys": ["files:user:", "attachments:message:", "transcriptions:"],
-        "invalidationPatterns": ["file upload", "message send", "attachment delete"],
-        "cacheStrategy": ["TTL 1 hour", "LRU eviction", "query invalidation"]
+        "cacheKeys": [
+          "files:user:",
+          "attachments:message:",
+          "transcriptions:"
+        ],
+        "invalidationPatterns": [
+          "file upload",
+          "message send",
+          "attachment delete"
+        ],
+        "cacheStrategy": [
+          "TTL 1 hour",
+          "LRU eviction",
+          "query invalidation"
+        ]
       },
       "fileSystem": {
-        "uploadPaths": ["uploads/attachments/", "uploads/thumbnails/"],
-        "fileTypes": ["images", "documents", "audio", "video"],
-        "processing": ["thumbnail generation", "audio transcription", "file compression"]
+        "uploadPaths": [
+          "uploads/attachments/",
+          "uploads/thumbnails/"
+        ],
+        "fileTypes": [
+          "images",
+          "documents",
+          "audio",
+          "video"
+        ],
+        "processing": [
+          "thumbnail generation",
+          "audio transcription",
+          "file compression"
+        ]
       }
     },
     "integration": {
       "externalApis": {
-        "services": ["Go file accelerator", "transcription service"],
-        "authentication": ["internal service tokens"],
-        "endpoints": [":8081/process-file", ":8082/transcribe"],
-        "fallbacks": ["TypeScript file processing", "Web Speech API"]
+        "services": [
+          "Go file accelerator",
+          "transcription service"
+        ],
+        "authentication": [
+          "internal service tokens"
+        ],
+        "endpoints": [
+          ":8081/process-file",
+          ":8082/transcribe"
+        ],
+        "fallbacks": [
+          "TypeScript file processing",
+          "Web Speech API"
+        ]
       },
       "browserApis": {
-        "apis": ["File API", "MediaRecorder", "Web Speech API", "Camera API"],
-        "permissions": ["microphone", "camera", "file system access"],
-        "compatibility": ["Chrome 60+", "Safari 14+", "Firefox 70+"]
+        "apis": [
+          "File API",
+          "MediaRecorder",
+          "Web Speech API",
+          "Camera API"
+        ],
+        "permissions": [
+          "microphone",
+          "camera",
+          "file system access"
+        ],
+        "compatibility": [
+          "Chrome 60+",
+          "Safari 14+",
+          "Firefox 70+"
+        ]
       },
       "goServices": {
-        "fileAccelerator": ["Large file processing", "thumbnail generation"],
-        "memoryService": ["Attachment memory integration"],
-        "aiGateway": ["File content for AI processing"]
+        "fileAccelerator": [
+          "Large file processing",
+          "thumbnail generation"
+        ],
+        "memoryService": [
+          "Attachment memory integration"
+        ],
+        "aiGateway": [
+          "File content for AI processing"
+        ]
       }
     }
   },
   "errorBoundaries": {
     "frontendErrors": {
-      "componentErrors": ["AttachmentPreview error boundary", "AudioRecorder failures"],
-      "networkErrors": ["Upload timeout", "File service unavailable"],
-      "validationErrors": ["File size exceeded", "Unsupported file type"],
-      "userInputErrors": ["No file selected", "Recording permission denied"]
+      "componentErrors": [
+        "AttachmentPreview error boundary",
+        "AudioRecorder failures"
+      ],
+      "networkErrors": [
+        "Upload timeout",
+        "File service unavailable"
+      ],
+      "validationErrors": [
+        "File size exceeded",
+        "Unsupported file type"
+      ],
+      "userInputErrors": [
+        "No file selected",
+        "Recording permission denied"
+      ]
     },
     "backendErrors": {
-      "validationErrors": ["File type validation", "File size limits"],
-      "businessLogicErrors": ["Storage quota exceeded", "Retention policy violations"],
-      "databaseErrors": ["File record creation failure", "Attachment relationship errors"],
-      "externalServiceErrors": ["Go service unavailable", "Transcription service down"]
+      "validationErrors": [
+        "File type validation",
+        "File size limits"
+      ],
+      "businessLogicErrors": [
+        "Storage quota exceeded",
+        "Retention policy violations"
+      ],
+      "databaseErrors": [
+        "File record creation failure",
+        "Attachment relationship errors"
+      ],
+      "externalServiceErrors": [
+        "Go service unavailable",
+        "Transcription service down"
+      ]
     },
     "systemErrors": {
-      "memoryErrors": ["Large file processing OOM"],
-      "diskSpaceErrors": ["Upload directory full"],
-      "networkErrors": ["File upload interrupted"],
-      "timeoutErrors": ["Large file upload timeout"]
+      "memoryErrors": [
+        "Large file processing OOM"
+      ],
+      "diskSpaceErrors": [
+        "Upload directory full"
+      ],
+      "networkErrors": [
+        "File upload interrupted"
+      ],
+      "timeoutErrors": [
+        "Large file upload timeout"
+      ]
     },
     "recoveryStrategies": {
-      "retryMechanisms": ["Exponential backoff for uploads", "Service retry logic"],
-      "fallbackBehaviors": ["TypeScript processing fallback", "Client-side transcription"],
-      "userNotifications": ["Upload failed notification", "Retry suggestions"],
-      "dataRecovery": ["Partial upload resume", "File recovery from temp storage"]
+      "retryMechanisms": [
+        "Exponential backoff for uploads",
+        "Service retry logic"
+      ],
+      "fallbackBehaviors": [
+        "TypeScript processing fallback",
+        "Client-side transcription"
+      ],
+      "userNotifications": [
+        "Upload failed notification",
+        "Retry suggestions"
+      ],
+      "dataRecovery": [
+        "Partial upload resume",
+        "File recovery from temp storage"
+      ]
     }
   },
   "performanceConsiderations": {
     "frontendOptimizations": {
-      "bundleSize": ["Lazy load AudioRecorder", "Dynamic import for large file processors"],
-      "renderOptimization": ["Virtualized file lists", "Thumbnail lazy loading"],
-      "cacheStrategy": ["Attachment preview cache", "File metadata cache"],
-      "loadingStates": ["Progressive upload states", "Transcription progress"]
+      "bundleSize": [
+        "Lazy load AudioRecorder",
+        "Dynamic import for large file processors"
+      ],
+      "renderOptimization": [
+        "Virtualized file lists",
+        "Thumbnail lazy loading"
+      ],
+      "cacheStrategy": [
+        "Attachment preview cache",
+        "File metadata cache"
+      ],
+      "loadingStates": [
+        "Progressive upload states",
+        "Transcription progress"
+      ]
     },
     "backendOptimizations": {
-      "databaseOptimization": ["Attachment query indexing", "Batch file operations"],
-      "cacheStrategy": ["File metadata caching", "Thumbnail cache"],
-      "serviceOptimization": ["Go service for large files", "Parallel processing"],
-      "memoryManagement": ["Stream large files", "Cleanup temp files"]
+      "databaseOptimization": [
+        "Attachment query indexing",
+        "Batch file operations"
+      ],
+      "cacheStrategy": [
+        "File metadata caching",
+        "Thumbnail cache"
+      ],
+      "serviceOptimization": [
+        "Go service for large files",
+        "Parallel processing"
+      ],
+      "memoryManagement": [
+        "Stream large files",
+        "Cleanup temp files"
+      ]
     },
     "dataTransferOptimization": {
-      "payloadSize": ["File compression", "Thumbnail optimization"],
-      "compression": ["Image compression", "Audio compression"],
-      "streaming": ["Large file streaming upload", "Progressive download"],
-      "pagination": ["Attachment list pagination", "Lazy loading previews"]
+      "payloadSize": [
+        "File compression",
+        "Thumbnail optimization"
+      ],
+      "compression": [
+        "Image compression",
+        "Audio compression"
+      ],
+      "streaming": [
+        "Large file streaming upload",
+        "Progressive download"
+      ],
+      "pagination": [
+        "Attachment list pagination",
+        "Lazy loading previews"
+      ]
     }
   },
   "securityConsiderations": {
     "authentication": {
-      "userVerification": ["JWT token validation", "File upload permissions"],
-      "sessionManagement": ["Session-based file access"],
-      "tokenValidation": ["Bearer token for file operations"]
+      "userVerification": [
+        "JWT token validation",
+        "File upload permissions"
+      ],
+      "sessionManagement": [
+        "Session-based file access"
+      ],
+      "tokenValidation": [
+        "Bearer token for file operations"
+      ]
     },
     "authorization": {
-      "permissions": ["File upload permissions", "Attachment access control"],
-      "roleBasedAccess": ["User file ownership", "Admin file management"],
-      "dataAccess": ["User can only access own files", "Message attachment security"]
+      "permissions": [
+        "File upload permissions",
+        "Attachment access control"
+      ],
+      "roleBasedAccess": [
+        "User file ownership",
+        "Admin file management"
+      ],
+      "dataAccess": [
+        "User can only access own files",
+        "Message attachment security"
+      ]
     },
     "dataProtection": {
-      "sensitiveData": ["Health data in files", "Personal documents"],
-      "encryption": ["File encryption at rest", "Secure file transmission"],
-      "storage": ["Secure upload directory", "File access logging"],
-      "transmission": ["HTTPS file upload", "Encrypted file URLs"]
+      "sensitiveData": [
+        "Health data in files",
+        "Personal documents"
+      ],
+      "encryption": [
+        "File encryption at rest",
+        "Secure file transmission"
+      ],
+      "storage": [
+        "Secure upload directory",
+        "File access logging"
+      ],
+      "transmission": [
+        "HTTPS file upload",
+        "Encrypted file URLs"
+      ]
     },
     "inputValidation": {
-      "frontendValidation": ["File type validation", "File size limits"],
-      "backendValidation": ["MIME type verification", "File content scanning"],
-      "sanitization": ["File name sanitization", "Metadata cleaning"],
-      "sqlInjectionPrevention": ["Parameterized queries", "File path validation"]
+      "frontendValidation": [
+        "File type validation",
+        "File size limits"
+      ],
+      "backendValidation": [
+        "MIME type verification",
+        "File content scanning"
+      ],
+      "sanitization": [
+        "File name sanitization",
+        "Metadata cleaning"
+      ],
+      "sqlInjectionPrevention": [
+        "Parameterized queries",
+        "File path validation"
+      ]
     }
   },
   "integrationEvidence": {
@@ -206,23 +506,54 @@
       "evidenceLocation": "client/src/components/AttachmentPreview.test.tsx"
     },
     "testingEvidence": {
-      "unitTests": ["AttachmentPreview.test.tsx", "ChatInputArea.test.tsx"],
-      "integrationTests": ["client/src/tests/chat/AttachmentDisplay.test.tsx"],
-      "manualTesting": ["File upload flow", "Audio recording and transcription"],
-      "performanceTests": ["Large file upload testing", "Concurrent upload testing"]
+      "unitTests": [
+        "AttachmentPreview.test.tsx",
+        "ChatInputArea.test.tsx"
+      ],
+      "integrationTests": [
+        "client/src/tests/chat/AttachmentDisplay.test.tsx"
+      ],
+      "manualTesting": [
+        "File upload flow",
+        "Audio recording and transcription"
+      ],
+      "performanceTests": [
+        "Large file upload testing",
+        "Concurrent upload testing"
+      ]
     },
     "deploymentEvidence": {
-      "stagingValidation": ["File upload in staging environment"],
-      "productionValidation": ["Production file upload monitoring"],
-      "rollbackProcedures": ["File service rollback", "Database migration rollback"],
-      "monitoringSetup": ["File upload metrics", "Error rate monitoring"]
+      "stagingValidation": [
+        "File upload in staging environment"
+      ],
+      "productionValidation": [
+        "Production file upload monitoring"
+      ],
+      "rollbackProcedures": [
+        "File service rollback",
+        "Database migration rollback"
+      ],
+      "monitoringSetup": [
+        "File upload metrics",
+        "Error rate monitoring"
+      ]
     }
   },
   "tableOfContents": {
     "file-attachments": {
-      "features": ["file-attachment", "attachment-preview", "camera-capture"],
-      "components": ["AttachmentPreview", "ChatInputArea"],
-      "endpoints": ["POST /api/chat/attachments", "GET /api/chat/attachments/:id"]
+      "features": [
+        "file-attachment",
+        "attachment-preview",
+        "camera-capture"
+      ],
+      "components": [
+        "AttachmentPreview",
+        "ChatInputArea"
+      ],
+      "endpoints": [
+        "POST /api/chat/attachments",
+        "GET /api/chat/attachments/:id"
+      ]
     }
   },
   "integrationStatus": {
@@ -247,14 +578,34 @@
     }
   },
   "dependencies": {
-    "internal": ["file-manager", "core-messaging", "memory-integration"],
-    "external": ["Go file accelerator", "transcription service"],
-    "cross-domain": ["health-data for file processing", "settings for retention policies"]
+    "internal": [
+      "file-manager",
+      "core-messaging",
+      "memory-integration"
+    ],
+    "external": [
+      "Go file accelerator",
+      "transcription service"
+    ],
+    "cross-domain": [
+      "health-data for file processing",
+      "settings for retention policies"
+    ]
   },
   "impacts": {
-    "affects": ["core-messaging", "memory-detection", "ai-provider-integration"],
-    "sharedComponents": ["AttachmentPreview", "FileUploadProgress"],
-    "sharedServices": ["attachmentRetentionService", "Go file services"]
+    "affects": [
+      "core-messaging",
+      "memory-detection",
+      "ai-provider-integration"
+    ],
+    "sharedComponents": [
+      "AttachmentPreview",
+      "FileUploadProgress"
+    ],
+    "sharedServices": [
+      "attachmentRetentionService",
+      "Go file services"
+    ]
   },
   "featureGroups": {
     "file-attachments": {
@@ -276,34 +627,64 @@
             "Store file metadata and associate with message",
             "Include file references in chat message"
           ],
-          "components": ["ChatInputArea", "AttachmentPreview"],
+          "components": [
+            "ChatInputArea",
+            "AttachmentPreview"
+          ],
           "dataFlowTrace": {
-            "requestPath": ["ChatInputArea", "useFileManagement", "POST /api/files", "file-routes.ts"],
-            "expectedPath": ["ChatInputArea", "useFileManagement", "POST /api/chat/attachments", "chat-routes.ts"],
+            "requestPath": [
+              "ChatInputArea",
+              "useFileManagement",
+              "POST /api/files",
+              "file-routes.ts"
+            ],
+            "expectedPath": [
+              "ChatInputArea",
+              "useFileManagement",
+              "POST /api/chat/attachments",
+              "chat-routes.ts"
+            ],
             "pathVerified": false,
-            "bypassedComponents": ["chat-specific attachment handler"],
+            "bypassedComponents": [
+              "chat-specific attachment handler"
+            ],
             "actualHandler": "server/routes/file-routes.ts:POST /api/files"
           },
           "apiIntegration": {
-            "expectedEndpoints": ["POST /api/chat/attachments"],
-            "actualEndpoints": ["POST /api/files"],
+            "expectedEndpoints": [
+              "POST /api/chat/attachments"
+            ],
+            "actualEndpoints": [
+              "POST /api/files"
+            ],
             "integrationGaps": [
               "Missing POST /api/chat/attachments endpoint",
               "No message_attachments table integration"
             ],
             "cacheDependencies": {
-              "invalidates": ["query:attachments", "query:messages"],
-              "refreshesComponents": ["AttachmentPreview", "MessageDisplayArea", "ChatInputArea"]
+              "invalidates": [
+                "query:attachments",
+                "query:messages"
+              ],
+              "refreshesComponents": [
+                "AttachmentPreview",
+                "MessageDisplayArea",
+                "ChatInputArea"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
-              "knownIssues": ["Attachments don't persist with chat messages"]
+              "knownIssues": [
+                "Attachments don't persist with chat messages"
+              ]
             }
           },
           "logging": {
             "$ref": "../infrastructure/logging.map.json#/attachment-logging"
           },
-          "tests": ["client/src/components/AttachmentPreview.test.tsx"]
+          "tests": [
+            "client/src/components/AttachmentPreview.test.tsx"
+          ]
         },
         "attachment-preview": {
           "description": "Preview and display attached files in chat messages and input area",
@@ -319,21 +700,43 @@
             "Generate appropriate preview based on file type",
             "Handle full-size viewing and download"
           ],
-          "components": ["AttachmentPreview"],
+          "components": [
+            "AttachmentPreview"
+          ],
           "dataFlowTrace": {
-            "requestPath": ["AttachmentPreview", "useFileApi", "GET /api/files/:id", "file-routes.ts"],
-            "expectedPath": ["AttachmentPreview", "useFileApi", "GET /api/chat/attachments/:id", "chat-routes.ts"],
+            "requestPath": [
+              "AttachmentPreview",
+              "useFileApi",
+              "GET /api/files/:id",
+              "file-routes.ts"
+            ],
+            "expectedPath": [
+              "AttachmentPreview",
+              "useFileApi",
+              "GET /api/chat/attachments/:id",
+              "chat-routes.ts"
+            ],
             "pathVerified": true,
             "bypassedComponents": [],
             "actualHandler": "server/routes/file-routes.ts:GET /api/files/:id"
           },
           "apiIntegration": {
-            "expectedEndpoints": ["GET /api/chat/attachments/:id"],
-            "actualEndpoints": ["GET /api/files/:id"],
-            "integrationGaps": ["Using generic file endpoint instead of chat-specific"],
+            "expectedEndpoints": [
+              "GET /api/chat/attachments/:id"
+            ],
+            "actualEndpoints": [
+              "GET /api/files/:id"
+            ],
+            "integrationGaps": [
+              "Using generic file endpoint instead of chat-specific"
+            ],
             "cacheDependencies": {
-              "invalidates": ["query:attachments"],
-              "refreshesComponents": ["AttachmentPreview"]
+              "invalidates": [
+                "query:attachments"
+              ],
+              "refreshesComponents": [
+                "AttachmentPreview"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -343,7 +746,9 @@
           "logging": {
             "$ref": "../infrastructure/logging.map.json#/attachment-preview-logging"
           },
-          "tests": ["client/src/tests/chat/AttachmentDisplay.test.tsx"]
+          "tests": [
+            "client/src/tests/chat/AttachmentDisplay.test.tsx"
+          ]
         },
         "camera-capture": {
           "description": "Capture photos directly from device camera for chat attachments",
@@ -365,20 +770,43 @@
             "Pass file through handleCameraCapture for upload",
             "Cleanup: stop all media tracks when modal closes"
           ],
-          "components": ["ChatInputArea"],
+          "components": [
+            "ChatInputArea"
+          ],
           "dataFlowTrace": {
-            "requestPath": ["ChatInputArea.openCamera()", "navigator.mediaDevices.getUserMedia()", "video stream", "canvas capture", "handleCameraCapture()"],
-            "fallbackPath": ["getUserMedia fails", "console.error()", "cameraInputRef.click()", "native file picker with camera"],
+            "requestPath": [
+              "ChatInputArea.openCamera()",
+              "navigator.mediaDevices.getUserMedia()",
+              "video stream",
+              "canvas capture",
+              "handleCameraCapture()"
+            ],
+            "fallbackPath": [
+              "getUserMedia fails",
+              "console.error()",
+              "cameraInputRef.click()",
+              "native file picker with camera"
+            ],
             "errorHandling": "Graceful fallback to file input on permission denial"
           },
           "apiIntegration": {
-            "browserApis": ["MediaDevices.getUserMedia", "HTMLCanvasElement.toBlob", "HTMLVideoElement"],
-            "permissions": ["camera"],
+            "browserApis": [
+              "MediaDevices.getUserMedia",
+              "HTMLCanvasElement.toBlob",
+              "HTMLVideoElement"
+            ],
+            "permissions": [
+              "camera"
+            ],
             "constraints": {
               "video": {
                 "facingMode": "environment",
-                "width": { "ideal": 1920 },
-                "height": { "ideal": 1080 }
+                "width": {
+                  "ideal": 1920
+                },
+                "height": {
+                  "ideal": 1080
+                }
               }
             },
             "fallbackBehavior": "Native file input with capture='environment' attribute"
@@ -394,7 +822,9 @@
               "errorHandling": "Try camera API, fallback to file input on failure"
             }
           },
-          "tests": ["client/src/components/ChatInputArea.test.tsx"]
+          "tests": [
+            "client/src/components/ChatInputArea.test.tsx"
+          ]
         }
       }
     }
@@ -404,21 +834,37 @@
       "name": "AttachmentPreview",
       "path": "client/src/components/AttachmentPreview.tsx",
       "description": "Displays file attachments with appropriate previews and actions",
-      "uses": ["useFileApi"],
+      "uses": [
+        "useFileApi"
+      ],
       "verified": true
     },
-    
     "ChatInputArea": {
       "name": "ChatInputArea",
       "path": "client/src/components/ChatInputArea.tsx",
       "description": "Text input area with attachment support and camera capture",
-      "uses": ["useFileUpload", "AttachmentPreview", "AudioRecorder", "MediaDevices API"],
+      "uses": [
+        "useFileUpload",
+        "AttachmentPreview",
+        "AudioRecorder",
+        "MediaDevices API"
+      ],
       "verified": true,
       "keyFunctions": {
         "openCamera": "Requests camera access and opens modal with video preview",
         "closeCamera": "Stops media tracks and closes camera modal",
         "capturePhoto": "Captures frame from video stream and converts to file",
         "handleKeyPress": "Handles Enter key to send message (not Shift+Enter)"
+      },
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/ChatSection.tsx",
+            "domain": "chat"
+          }
+        ]
       }
     }
   },
@@ -442,10 +888,25 @@
     "tables": {
       "message_attachments": {
         "description": "File attachments associated with chat messages",
-        "columns": ["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
+        "columns": [
+          "id",
+          "message_id",
+          "file_path",
+          "file_name",
+          "file_size",
+          "mime_type",
+          "created_at"
+        ],
         "implemented": false,
         "note": "Table schema defined but not actively used"
       }
     }
+  },
+  "lastUpdated": "2025-07-11T21:54:27.652Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.652Z",
+    "crossDomainFiles": 3,
+    "internalFiles": 7,
+    "totalDependencies": 10
   }
 }

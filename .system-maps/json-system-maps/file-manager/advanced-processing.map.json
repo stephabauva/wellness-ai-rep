@@ -1,4 +1,3 @@
-
 {
   "_tableOfContents": {
     "domain": "file-manager",
@@ -25,18 +24,42 @@
     "dataFlow": {
       "request": "compressFile() → UniversalFileService.initialize() → FileAccelerationService.initialize() → /api/accelerate/health GET (lazy) → /api/accelerate/start POST → Go service spawn",
       "response": "Go service → compressed file → upload completion | Health check → service availability detection",
-      "sideEffects": ["Lazy Go service startup only when compressing", "90%+ compression ratios", "Graceful fallback to TypeScript", "No periodic health checks", "Silent 503 handling"]
+      "sideEffects": [
+        "Lazy Go service startup only when compressing",
+        "90%+ compression ratios",
+        "Graceful fallback to TypeScript",
+        "No periodic health checks",
+        "Silent 503 handling"
+      ]
     },
     "files": {
-      "ui": ["client/src/services/universal-file-service.ts", "client/src/services/file-acceleration-service.ts", "useFileUpload.ts"],
-      "api": ["server/routes/file-routes.ts", "server/routes/shared-utils.ts", "server/services/logger-service.ts"],
-      "data": ["files"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "client/src/services/universal-file-service.ts",
+        "client/src/services/file-acceleration-service.ts",
+        "useFileUpload.ts"
+      ],
+      "api": [
+        "server/routes/file-routes.ts",
+        "server/routes/shared-utils.ts",
+        "server/services/logger-service.ts"
+      ],
+      "data": [
+        "files"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
-      "refreshes": ["AccelerationCapabilities"],
-      "triggers": ["go-service-startup", "compression-processing", "lazy-health-check"]
+      "refreshes": [
+        "AccelerationCapabilities"
+      ],
+      "triggers": [
+        "go-service-startup",
+        "compression-processing",
+        "lazy-health-check"
+      ]
     },
     "errorPaths": {
       "network": "Fallback to TypeScript processing with timeout handling",
@@ -44,9 +67,17 @@
       "business": "Go service availability check with suppressed 503 warning logs"
     },
     "dependencies": {
-      "internal": ["universal-file-service", "compression-optimization"],
-      "external": ["Go file service"],
-      "shared": ["UniversalFileService", "FileAccelerationService"]
+      "internal": [
+        "universal-file-service",
+        "compression-optimization"
+      ],
+      "external": [
+        "Go file service"
+      ],
+      "shared": [
+        "UniversalFileService",
+        "FileAccelerationService"
+      ]
     }
   },
   "compression-optimization": {
@@ -60,18 +91,30 @@
     "dataFlow": {
       "request": "UniversalFileService.compressFile → optimal compression method → file processing",
       "response": "Compressed file → compression metrics → upload completion",
-      "sideEffects": ["Bandwidth reduction", "Storage optimization", "Processing time tracking"]
+      "sideEffects": [
+        "Bandwidth reduction",
+        "Storage optimization",
+        "Processing time tracking"
+      ]
     },
     "files": {
-      "ui": ["UniversalFileService.ts", "FileCompressionService.ts", "FileAccelerationService.ts"],
+      "ui": [
+        "UniversalFileService.ts",
+        "FileCompressionService.ts",
+        "FileAccelerationService.ts"
+      ],
       "api": [],
       "data": [],
-      "types": ["shared/schema.ts"]
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
       "refreshes": [],
-      "triggers": ["compression-processing"]
+      "triggers": [
+        "compression-processing"
+      ]
     },
     "errorPaths": {
       "network": "Uncompressed file upload",
@@ -79,9 +122,16 @@
       "business": "Compression benefit analysis"
     },
     "dependencies": {
-      "internal": ["smart-routing"],
-      "external": ["Compression algorithms"],
-      "shared": ["UniversalFileService", "FileCompressionService"]
+      "internal": [
+        "smart-routing"
+      ],
+      "external": [
+        "Compression algorithms"
+      ],
+      "shared": [
+        "UniversalFileService",
+        "FileCompressionService"
+      ]
     }
   },
   "metadata-extraction": {
@@ -95,18 +145,35 @@
     "dataFlow": {
       "request": "GoFileService → metadata extraction → files.metadata JSON field",
       "response": "Extracted metadata → database storage → UI display",
-      "sideEffects": ["MD5 hash generation", "Perceptual hash for duplicates", "EXIF data extraction", "Thumbnail creation"]
+      "sideEffects": [
+        "MD5 hash generation",
+        "Perceptual hash for duplicates",
+        "EXIF data extraction",
+        "Thumbnail creation"
+      ]
     },
     "files": {
-      "ui": ["GoFileService.ts"],
-      "api": ["go-file-service/main.go"],
-      "data": ["files"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "GoFileService.ts"
+      ],
+      "api": [
+        "go-file-service/main.go"
+      ],
+      "data": [
+        "files"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
-      "refreshes": ["FileList"],
-      "triggers": ["metadata-processing"]
+      "refreshes": [
+        "FileList"
+      ],
+      "triggers": [
+        "metadata-processing"
+      ]
     },
     "errorPaths": {
       "network": "Metadata extraction skip",
@@ -114,9 +181,16 @@
       "business": "Graceful metadata failure handling"
     },
     "dependencies": {
-      "internal": ["go-acceleration"],
-      "external": ["Go file service", "Image processing libraries"],
-      "shared": ["GoFileService"]
+      "internal": [
+        "go-acceleration"
+      ],
+      "external": [
+        "Go file service",
+        "Image processing libraries"
+      ],
+      "shared": [
+        "GoFileService"
+      ]
     }
   },
   "retention-policies": {
@@ -130,18 +204,32 @@
     "dataFlow": {
       "request": "AttachmentRetentionService → content analysis → retention assignment",
       "response": "Retention policy → files table storage → user notification",
-      "sideEffects": ["Medical files: permanent retention", "Fitness files: 365 days", "General files: 90 days"]
+      "sideEffects": [
+        "Medical files: permanent retention",
+        "Fitness files: 365 days",
+        "General files: 90 days"
+      ]
     },
     "files": {
-      "ui": ["useFileUpload.ts"],
-      "api": ["AttachmentRetentionService.ts"],
-      "data": ["files"],
-      "types": ["shared/schema.ts"]
+      "ui": [
+        "useFileUpload.ts"
+      ],
+      "api": [
+        "AttachmentRetentionService.ts"
+      ],
+      "data": [
+        "files"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
       "refreshes": [],
-      "triggers": ["retention-assignment"]
+      "triggers": [
+        "retention-assignment"
+      ]
     },
     "errorPaths": {
       "network": "Default retention policy",
@@ -149,9 +237,15 @@
       "business": "Retention policy fallback"
     },
     "dependencies": {
-      "internal": ["file-lifecycle"],
-      "external": ["Content analysis AI"],
-      "shared": ["AttachmentRetentionService"]
+      "internal": [
+        "file-lifecycle"
+      ],
+      "external": [
+        "Content analysis AI"
+      ],
+      "shared": [
+        "AttachmentRetentionService"
+      ]
     }
   },
   "file-lifecycle": {
@@ -165,18 +259,33 @@
     "dataFlow": {
       "request": "Background service → expiration check → scheduled deletion",
       "response": "Expired files → isDeleted flag → cleanup service",
-      "sideEffects": ["Automatic file cleanup", "Storage optimization"]
+      "sideEffects": [
+        "Automatic file cleanup",
+        "Storage optimization"
+      ]
     },
     "files": {
       "ui": [],
-      "api": ["AttachmentRetentionService.ts"],
-      "data": ["files"],
-      "types": ["shared/schema.ts"]
+      "api": [
+        "AttachmentRetentionService.ts"
+      ],
+      "data": [
+        "files"
+      ],
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
-      "invalidates": ["query:files"],
-      "refreshes": ["FileList"],
-      "triggers": ["file-cleanup"]
+      "invalidates": [
+        "query:files"
+      ],
+      "refreshes": [
+        "FileList"
+      ],
+      "triggers": [
+        "file-cleanup"
+      ]
     },
     "errorPaths": {
       "network": "Retry cleanup operation",
@@ -184,9 +293,15 @@
       "business": "Retention policy verification"
     },
     "dependencies": {
-      "internal": ["retention-policies"],
-      "external": ["Background job scheduler"],
-      "shared": ["AttachmentRetentionService"]
+      "internal": [
+        "retention-policies"
+      ],
+      "external": [
+        "Background job scheduler"
+      ],
+      "shared": [
+        "AttachmentRetentionService"
+      ]
     }
   },
   "universal-file-service": {
@@ -200,18 +315,29 @@
     "dataFlow": {
       "request": "compressFile() → UniversalFileService.initialize() → platform detection → capability assessment",
       "response": "Service routing configuration → unified interface",
-      "sideEffects": ["Lazy platform capability detection", "Service routing setup only when needed"]
+      "sideEffects": [
+        "Lazy platform capability detection",
+        "Service routing setup only when needed"
+      ]
     },
     "files": {
-      "ui": ["UniversalFileService.ts", "FileAccelerationService.ts", "FileCompressionService.ts"],
+      "ui": [
+        "UniversalFileService.ts",
+        "FileAccelerationService.ts",
+        "FileCompressionService.ts"
+      ],
       "api": [],
       "data": [],
-      "types": ["shared/schema.ts"]
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
       "refreshes": [],
-      "triggers": ["service-initialization"]
+      "triggers": [
+        "service-initialization"
+      ]
     },
     "errorPaths": {
       "network": "Fallback to basic file operations",
@@ -219,9 +345,16 @@
       "business": "Service availability validation"
     },
     "dependencies": {
-      "internal": ["smart-routing"],
-      "external": ["Platform detection APIs"],
-      "shared": ["FileAccelerationService", "FileCompressionService"]
+      "internal": [
+        "smart-routing"
+      ],
+      "external": [
+        "Platform detection APIs"
+      ],
+      "shared": [
+        "FileAccelerationService",
+        "FileCompressionService"
+      ]
     }
   },
   "smart-routing": {
@@ -235,18 +368,29 @@
     "dataFlow": {
       "request": "File analysis → routing decision → optimal service selection",
       "response": "Service routing → processing execution → performance tracking",
-      "sideEffects": ["Go acceleration for large files", "TypeScript fallback", "Performance metrics"]
+      "sideEffects": [
+        "Go acceleration for large files",
+        "TypeScript fallback",
+        "Performance metrics"
+      ]
     },
     "files": {
-      "ui": ["UniversalFileService.ts", "FileAccelerationService.ts"],
+      "ui": [
+        "UniversalFileService.ts",
+        "FileAccelerationService.ts"
+      ],
       "api": [],
       "data": [],
-      "types": ["shared/schema.ts"]
+      "types": [
+        "shared/schema.ts"
+      ]
     },
     "cacheFlow": {
       "invalidates": [],
       "refreshes": [],
-      "triggers": ["routing-decision"]
+      "triggers": [
+        "routing-decision"
+      ]
     },
     "errorPaths": {
       "network": "Automatic fallback to TypeScript",
@@ -254,9 +398,81 @@
       "business": "Service availability check"
     },
     "dependencies": {
-      "internal": ["go-acceleration", "compression-optimization"],
-      "external": ["Performance monitoring"],
-      "shared": ["UniversalFileService", "FileAccelerationService"]
+      "internal": [
+        "go-acceleration",
+        "compression-optimization"
+      ],
+      "external": [
+        "Performance monitoring"
+      ],
+      "shared": [
+        "UniversalFileService",
+        "FileAccelerationService"
+      ]
     }
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "client/src/services/file-compression.ts",
+        "importedBy": [
+          {
+            "domain": "shared/utilities",
+            "file": "client/src/utils/compression-test.ts"
+          },
+          {
+            "domain": "shared/hooks",
+            "file": "client/src/hooks/useOptimizedUpload.ts"
+          }
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileManagement.ts",
+        "importedBy": [
+          {
+            "domain": "chat",
+            "file": "client/src/hooks/useChatActions.ts"
+          },
+          {
+            "domain": "chat",
+            "file": "client/src/components/MessageDisplayArea.tsx"
+          },
+          {
+            "domain": "chat",
+            "file": "client/src/components/ChatInputArea.tsx"
+          },
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/components/AttachmentPreview.tsx"
+          }
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/pages/home.tsx"
+          }
+        ]
+      },
+      {
+        "file": "server/services/go-file-service.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 14
+  },
+  "lastUpdated": "2025-07-11T21:54:27.643Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.645Z",
+    "crossDomainFiles": 4,
+    "internalFiles": 14,
+    "totalDependencies": 17
   }
 }

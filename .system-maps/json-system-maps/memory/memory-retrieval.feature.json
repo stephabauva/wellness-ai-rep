@@ -12,15 +12,42 @@
   },
   "files": {
     "ui": [],
-    "api": ["server/routes/memory-routes.ts"],
-    "services": ["server/services/intelligent-memory-retrieval.ts", "server/services/memory-service.ts", "server/services/go-memory-service.ts"],
-    "data": ["memory_entries", "memory_embeddings", "memory_access_log", "similarity-cache"],
-    "types": ["shared/schema.ts"]
+    "api": [
+      "server/routes/memory-routes.ts"
+    ],
+    "services": [
+      "server/services/intelligent-memory-retrieval.ts",
+      "server/services/memory-service.ts",
+      "server/services/go-memory-service.ts"
+    ],
+    "data": [
+      "memory_entries",
+      "memory_embeddings",
+      "memory_access_log",
+      "similarity-cache"
+    ],
+    "types": [
+      "shared/schema.ts"
+    ]
   },
   "cacheFlow": {
-    "invalidates": ["similarity-cache"],
-    "refreshes": ["ChatInterface", "AIResponses"],
-    "triggers": ["memory-access-logging"]
+    "invalidates": [
+      "similarity-cache"
+    ],
+    "refreshes": [
+      "ChatInterface",
+      "AIResponses"
+    ],
+    "triggers": [
+      "memory-access-logging"
+    ],
+    "crossDomainInvalidates": [
+      "query:memory",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing",
+      "query:shared/services",
+      "query:chat"
+    ]
   },
   "errorPaths": {
     "network": "Fallback to cached results or continue without memory",
@@ -28,9 +55,18 @@
     "business": "Graceful degradation with reduced context"
   },
   "dependencies": {
-    "internal": ["semantic-search", "memory-relationships"],
-    "external": ["Go Services", "PostgreSQL"],
-    "shared": ["cache-service", "performance-monitor"]
+    "internal": [
+      "semantic-search",
+      "memory-relationships"
+    ],
+    "external": [
+      "Go Services",
+      "PostgreSQL"
+    ],
+    "shared": [
+      "cache-service",
+      "performance-monitor"
+    ]
   },
   "userFlow": [
     "User sends new message",
@@ -43,5 +79,12 @@
   "performanceTargets": {
     "semantic-search": "<100ms for similarity queries",
     "memory-retrieval": "<200ms for contextual memories"
+  },
+  "lastUpdated": "2025-07-11T21:54:27.657Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.657Z",
+    "crossDomainFiles": 10,
+    "internalFiles": 3,
+    "totalDependencies": 11
   }
 }

@@ -3,7 +3,7 @@
     "domain": "memory",
     "features": [
       "memory-detection",
-      "background-processing", 
+      "background-processing",
       "memory-creation",
       "categorization",
       "semantic-labeling",
@@ -26,11 +26,19 @@
   "dataFlow": {
     "request": "Chat message → memory-service → AI analysis → embedding generation → database storage",
     "response": "Context retrieval → semantic search → relevant memories → AI prompt enhancement",
-    "sideEffects": ["Background processing", "Memory deduplication", "Cache invalidation", "Performance monitoring"]
+    "sideEffects": [
+      "Background processing",
+      "Memory deduplication",
+      "Cache invalidation",
+      "Performance monitoring"
+    ]
   },
   "files": {
     "ui": [],
-    "api": ["server/routes/memory-routes.ts", "server/routes.ts"],
+    "api": [
+      "server/routes/memory-routes.ts",
+      "server/routes.ts"
+    ],
     "services": [
       "server/services/memory-service.ts",
       "server/services/chatgpt-memory-enhancement.ts",
@@ -49,15 +57,44 @@
       "server/services/simple-memory-detection.ts"
     ],
     "data": [
-      "memory_entries", "memory_triggers", "memory_access_log", "conversations", "conversation_messages",
-      "atomic_facts", "memory_relationships", "memory_consolidation_log", "memory_graph_metrics"
+      "memory_entries",
+      "memory_triggers",
+      "memory_access_log",
+      "conversations",
+      "conversation_messages",
+      "atomic_facts",
+      "memory_relationships",
+      "memory_consolidation_log",
+      "memory_graph_metrics"
     ],
-    "types": ["shared/schema.ts"]
+    "types": [
+      "shared/schema.ts"
+    ]
   },
   "cacheFlow": {
-    "invalidates": ["query:memories", "query:memories-overview", "memory-embeddings-cache", "similarity-cache"],
-    "refreshes": ["MemorySection", "ChatInterface", "AIResponses"],
-    "triggers": ["memory-background-processing", "relationship-updates", "consolidation-jobs"]
+    "invalidates": [
+      "query:memories",
+      "query:memories-overview",
+      "memory-embeddings-cache",
+      "similarity-cache"
+    ],
+    "refreshes": [
+      "MemorySection",
+      "ChatInterface",
+      "AIResponses"
+    ],
+    "triggers": [
+      "memory-background-processing",
+      "relationship-updates",
+      "consolidation-jobs"
+    ],
+    "crossDomainInvalidates": [
+      "query:memory",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing",
+      "query:shared/services",
+      "query:chat"
+    ]
   },
   "errorPaths": {
     "network": "Retry with exponential backoff, fallback to cached results",
@@ -65,9 +102,22 @@
     "business": "Graceful degradation, continue without memory enhancement"
   },
   "dependencies": {
-    "internal": ["ai-service", "chat-system", "health-data"],
-    "external": ["OpenAI API", "Google AI", "PostgreSQL", "Go Services"],
-    "shared": ["cache-service", "performance-monitor", "error-handling"]
+    "internal": [
+      "ai-service",
+      "chat-system",
+      "health-data"
+    ],
+    "external": [
+      "OpenAI API",
+      "Google AI",
+      "PostgreSQL",
+      "Go Services"
+    ],
+    "shared": [
+      "cache-service",
+      "performance-monitor",
+      "error-handling"
+    ]
   },
   "features": {
     "memory-detection": {
@@ -86,8 +136,15 @@
         "response": "Non-blocking processing → cache updates → UI refresh triggers"
       },
       "files": {
-        "services": ["enhanced-memory-service.ts", "performance-memory-core.ts", "memory-performance-monitor.ts"],
-        "data": ["memory_entries", "memory_graph_metrics"]
+        "services": [
+          "enhanced-memory-service.ts",
+          "performance-memory-core.ts",
+          "memory-performance-monitor.ts"
+        ],
+        "data": [
+          "memory_entries",
+          "memory_graph_metrics"
+        ]
       },
       "performanceTarget": "<50ms target"
     },
@@ -98,8 +155,15 @@
         "response": "Stored memory → indexing → availability for retrieval"
       },
       "files": {
-        "services": ["memory-service.ts", "enhanced-memory-service.ts"],
-        "data": ["memory_entries", "memory_embeddings", "memory_access_log"]
+        "services": [
+          "memory-service.ts",
+          "enhanced-memory-service.ts"
+        ],
+        "data": [
+          "memory_entries",
+          "memory_embeddings",
+          "memory_access_log"
+        ]
       }
     },
     "categorization": {
@@ -109,8 +173,13 @@
         "response": "Category assignment → confidence scoring → storage"
       },
       "files": {
-        "services": ["memory-service.ts", "nutrition-memory-service.ts"],
-        "data": ["memory_entries"]
+        "services": [
+          "memory-service.ts",
+          "nutrition-memory-service.ts"
+        ],
+        "data": [
+          "memory_entries"
+        ]
       }
     },
     "semantic-labeling": {
@@ -120,16 +189,50 @@
         "response": "Semantic labels assigned → enhanced categorization → improved UI display"
       },
       "files": {
-        "services": ["memory-service.ts", "chatgpt-memory-enhancement.ts"],
-        "data": ["memory_entries"],
-        "ui": ["MemorySection.tsx"]
+        "services": [
+          "memory-service.ts",
+          "chatgpt-memory-enhancement.ts"
+        ],
+        "data": [
+          "memory_entries"
+        ],
+        "ui": [
+          "MemorySection.tsx"
+        ]
       },
       "labelTypes": {
-        "food_diet": ["allergy", "preference", "restriction", "dangerous", "mild", "meal-timing"],
-        "personal_context": ["background", "health-history", "lifestyle", "medical", "physical-limitation"],
-        "goals": ["weight-loss", "muscle-gain", "nutrition", "fitness", "target"],
-        "preferences": ["general", "workout", "environment"],
-        "instructions": ["behavior", "communication", "reminder"]
+        "food_diet": [
+          "allergy",
+          "preference",
+          "restriction",
+          "dangerous",
+          "mild",
+          "meal-timing"
+        ],
+        "personal_context": [
+          "background",
+          "health-history",
+          "lifestyle",
+          "medical",
+          "physical-limitation"
+        ],
+        "goals": [
+          "weight-loss",
+          "muscle-gain",
+          "nutrition",
+          "fitness",
+          "target"
+        ],
+        "preferences": [
+          "general",
+          "workout",
+          "environment"
+        ],
+        "instructions": [
+          "behavior",
+          "communication",
+          "reminder"
+        ]
       },
       "improvements": [
         "Replaced keyword extraction with semantic categorization",
@@ -144,8 +247,16 @@
         "response": "Similarity scores → importance weighting → cache update"
       },
       "files": {
-        "services": ["memory-service.ts", "go-memory-service.ts", "cache-service.ts"],
-        "data": ["memory_entries", "memory_embeddings", "similarity-cache"]
+        "services": [
+          "memory-service.ts",
+          "go-memory-service.ts",
+          "cache-service.ts"
+        ],
+        "data": [
+          "memory_entries",
+          "memory_embeddings",
+          "similarity-cache"
+        ]
       }
     },
     "memory-relationships": {
@@ -155,8 +266,16 @@
         "response": "Relationship mapping → graph updates → enhanced retrieval"
       },
       "files": {
-        "services": ["memory-relationship-engine.ts", "fast-relationship-engine.ts", "memory-graph-service.ts"],
-        "data": ["memory_relationships", "atomic_facts", "memory_graph_metrics"]
+        "services": [
+          "memory-relationship-engine.ts",
+          "fast-relationship-engine.ts",
+          "memory-graph-service.ts"
+        ],
+        "data": [
+          "memory_relationships",
+          "atomic_facts",
+          "memory_graph_metrics"
+        ]
       }
     },
     "performance-monitoring": {
@@ -166,36 +285,69 @@
         "response": "Performance data → optimization triggers → system adjustments"
       },
       "files": {
-        "services": ["memory-performance-monitor.ts", "performance-memory-core.ts"],
-        "data": ["memory_graph_metrics", "memory_access_log"]
+        "services": [
+          "memory-performance-monitor.ts",
+          "performance-memory-core.ts"
+        ],
+        "data": [
+          "memory_graph_metrics",
+          "memory_access_log"
+        ]
       }
     }
   },
   "apiEndpoints": {
     "POST /api/memory/create": {
       "description": "Creates memory entry with confidence scoring and embeddings",
-      "readsFrom": ["users.id"],
-      "modifies": ["memory_entries", "memory_embeddings"]
+      "readsFrom": [
+        "users.id"
+      ],
+      "modifies": [
+        "memory_entries",
+        "memory_embeddings"
+      ]
     },
     "GET /api/memory/contextual": {
       "description": "Retrieves memories relevant to conversation context",
-      "readsFrom": ["memory_entries", "memory_embeddings"],
-      "modifies": ["memory_access_log"]
+      "readsFrom": [
+        "memory_entries",
+        "memory_embeddings"
+      ],
+      "modifies": [
+        "memory_access_log"
+      ]
     },
     "POST /api/memory/enhanced-detect": {
       "description": "Enhanced memory detection with background processing",
-      "readsFrom": ["memory_entries", "conversations"],
-      "modifies": ["memory_entries", "memory_triggers"]
+      "readsFrom": [
+        "memory_entries",
+        "conversations"
+      ],
+      "modifies": [
+        "memory_entries",
+        "memory_triggers"
+      ]
     },
     "POST /api/memory/enhanced-retrieve": {
       "description": "Enhanced memory retrieval with relationship context",
-      "readsFrom": ["memory_entries", "memory_relationships", "atomic_facts"],
-      "modifies": ["memory_access_log"]
+      "readsFrom": [
+        "memory_entries",
+        "memory_relationships",
+        "atomic_facts"
+      ],
+      "modifies": [
+        "memory_access_log"
+      ]
     },
     "POST /api/memory/chatgpt-enhancement-test": {
       "description": "Test ChatGPT-style memory enhancement and deduplication",
-      "readsFrom": ["memory_entries"],
-      "modifies": ["memory_entries", "memory_consolidation_log"]
+      "readsFrom": [
+        "memory_entries"
+      ],
+      "modifies": [
+        "memory_entries",
+        "memory_consolidation_log"
+      ]
     }
   },
   "database": {
@@ -203,81 +355,210 @@
     "tables": {
       "memory_entries": {
         "columns": {
-          "id": { "type": "uuid", "primaryKey": true },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "content": { "type": "text" },
-          "category": { "type": "text", "enum": ["preferences", "personal_context", "instructions", "food_diet", "goals"] },
-          "labels": { "type": "text[]" },
-          "importance": { "type": "real" },
-          "keywords": { "type": "text[]" },
-          "createdAt": { "type": "timestamp" },
-          "accessCount": { "type": "integer" },
-          "isActive": { "type": "boolean" },
-          "embedding": { "type": "vector" },
-          "confidence": { "type": "real" },
-          "semanticHash": { "type": "text" }
+          "id": {
+            "type": "uuid",
+            "primaryKey": true
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "content": {
+            "type": "text"
+          },
+          "category": {
+            "type": "text",
+            "enum": [
+              "preferences",
+              "personal_context",
+              "instructions",
+              "food_diet",
+              "goals"
+            ]
+          },
+          "labels": {
+            "type": "text[]"
+          },
+          "importance": {
+            "type": "real"
+          },
+          "keywords": {
+            "type": "text[]"
+          },
+          "createdAt": {
+            "type": "timestamp"
+          },
+          "accessCount": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "embedding": {
+            "type": "vector"
+          },
+          "confidence": {
+            "type": "real"
+          },
+          "semanticHash": {
+            "type": "text"
+          }
         }
       },
       "memory_triggers": {
         "columns": {
-          "id": { "type": "uuid", "primaryKey": true },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "trigger": { "type": "text" },
-          "createdAt": { "type": "timestamp" }
+          "id": {
+            "type": "uuid",
+            "primaryKey": true
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "trigger": {
+            "type": "text"
+          },
+          "createdAt": {
+            "type": "timestamp"
+          }
         }
       },
       "memory_access_log": {
         "columns": {
-          "id": { "type": "uuid", "primaryKey": true },
-          "memoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "accessType": { "type": "text" },
-          "relevanceScore": { "type": "real" },
-          "accessedAt": { "type": "timestamp" }
+          "id": {
+            "type": "uuid",
+            "primaryKey": true
+          },
+          "memoryId": {
+            "type": "uuid",
+            "foreignKey": "memory_entries.id"
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "accessType": {
+            "type": "text"
+          },
+          "relevanceScore": {
+            "type": "real"
+          },
+          "accessedAt": {
+            "type": "timestamp"
+          }
         }
       },
       "atomic_facts": {
         "columns": {
-          "id": { "type": "uuid", "primaryKey": true },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "memoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
-          "subject": { "type": "text" },
-          "predicate": { "type": "text" },
-          "object": { "type": "text" },
-          "confidence": { "type": "real" },
-          "createdAt": { "type": "timestamp" }
+          "id": {
+            "type": "uuid",
+            "primaryKey": true
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "memoryId": {
+            "type": "uuid",
+            "foreignKey": "memory_entries.id"
+          },
+          "subject": {
+            "type": "text"
+          },
+          "predicate": {
+            "type": "text"
+          },
+          "object": {
+            "type": "text"
+          },
+          "confidence": {
+            "type": "real"
+          },
+          "createdAt": {
+            "type": "timestamp"
+          }
         }
       },
       "memory_relationships": {
         "columns": {
-          "id": { "type": "uuid", "primaryKey": true },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "sourceMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
-          "targetMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
-          "relationshipType": { "type": "text" },
-          "strength": { "type": "real" },
-          "createdAt": { "type": "timestamp" }
+          "id": {
+            "type": "uuid",
+            "primaryKey": true
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "sourceMemoryId": {
+            "type": "uuid",
+            "foreignKey": "memory_entries.id"
+          },
+          "targetMemoryId": {
+            "type": "uuid",
+            "foreignKey": "memory_entries.id"
+          },
+          "relationshipType": {
+            "type": "text"
+          },
+          "strength": {
+            "type": "real"
+          },
+          "createdAt": {
+            "type": "timestamp"
+          }
         }
       },
       "memory_consolidation_log": {
         "columns": {
-          "id": { "type": "uuid", "primaryKey": true },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "sourceMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
-          "targetMemoryId": { "type": "uuid", "foreignKey": "memory_entries.id" },
-          "consolidationType": { "type": "text" },
-          "reason": { "type": "text" },
-          "createdAt": { "type": "timestamp" }
+          "id": {
+            "type": "uuid",
+            "primaryKey": true
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "sourceMemoryId": {
+            "type": "uuid",
+            "foreignKey": "memory_entries.id"
+          },
+          "targetMemoryId": {
+            "type": "uuid",
+            "foreignKey": "memory_entries.id"
+          },
+          "consolidationType": {
+            "type": "text"
+          },
+          "reason": {
+            "type": "text"
+          },
+          "createdAt": {
+            "type": "timestamp"
+          }
         }
       },
       "memory_graph_metrics": {
         "columns": {
-          "id": { "type": "uuid", "primaryKey": true },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "metricType": { "type": "text" },
-          "value": { "type": "real" },
-          "metadata": { "type": "jsonb" },
-          "createdAt": { "type": "timestamp" }
+          "id": {
+            "type": "uuid",
+            "primaryKey": true
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "metricType": {
+            "type": "text"
+          },
+          "value": {
+            "type": "real"
+          },
+          "metadata": {
+            "type": "jsonb"
+          },
+          "createdAt": {
+            "type": "timestamp"
+          }
         }
       }
     }
@@ -295,5 +576,12 @@
     "performance-optimization": "Go services for performance-critical operations",
     "caching-strategy": "Multi-level caching with TTL and invalidation",
     "background-processing": "Non-blocking queues with priority and circuit breakers"
+  },
+  "lastUpdated": "2025-07-11T21:54:27.655Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.655Z",
+    "crossDomainFiles": 10,
+    "internalFiles": 3,
+    "totalDependencies": 11
   }
 }

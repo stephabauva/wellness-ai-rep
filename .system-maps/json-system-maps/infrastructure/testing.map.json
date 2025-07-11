@@ -11,7 +11,7 @@
   },
   "domain": "testing",
   "description": "Comprehensive testing infrastructure using Vitest with consistent mocking patterns and proper test environment configuration",
-  "lastUpdated": "2025-07-10T10:00:00Z",
+  "lastUpdated": "2025-07-11T21:54:27.659Z",
   "featureGroups": {
     "vitest-configuration": {
       "description": "Test runner configuration and environment setup",
@@ -25,7 +25,11 @@
           ],
           "dependencies": {
             "internal": [],
-            "external": ["vitest", "@vitejs/plugin-react", "jsdom"]
+            "external": [
+              "vitest",
+              "@vitejs/plugin-react",
+              "jsdom"
+            ]
           },
           "keyFeatures": [
             "React JSX support with Vite plugin",
@@ -38,13 +42,15 @@
         "test-setup": {
           "name": "Test Environment Setup",
           "description": "Global test environment configuration and utilities",
-          "status": "production", 
+          "status": "production",
           "files": [
             "client/src/setupTests.ts"
           ],
           "dependencies": {
             "internal": [],
-            "external": ["@testing-library/jest-dom"]
+            "external": [
+              "@testing-library/jest-dom"
+            ]
           },
           "keyFeatures": [
             "DOM testing utilities extension",
@@ -66,7 +72,9 @@
           ],
           "dependencies": {
             "internal": [],
-            "external": ["vitest"]
+            "external": [
+              "vitest"
+            ]
           },
           "keyFeatures": [
             "vi.fn() for function mocking",
@@ -83,8 +91,12 @@
             "server/tests/chatgpt-memory-phase1.test.ts"
           ],
           "dependencies": {
-            "internal": ["vitest-mocking"],
-            "external": ["openai"]
+            "internal": [
+              "vitest-mocking"
+            ],
+            "external": [
+              "openai"
+            ]
           },
           "keyFeatures": [
             "OpenAI chat completions mocking",
@@ -107,12 +119,17 @@
             "client/src/tests/chat/AttachmentDisplay.test.tsx"
           ],
           "dependencies": {
-            "internal": ["vitest-configuration"],
-            "external": ["@testing-library/react", "@testing-library/user-event"]
+            "internal": [
+              "vitest-configuration"
+            ],
+            "external": [
+              "@testing-library/react",
+              "@testing-library/user-event"
+            ]
           },
           "keyFeatures": [
             "Component rendering tests",
-            "User interaction simulation", 
+            "User interaction simulation",
             "Props and state testing",
             "Accessibility testing support"
           ]
@@ -125,8 +142,12 @@
             "client/src/tests/MessageDisplayArea.performance.test.tsx"
           ],
           "dependencies": {
-            "internal": ["react-testing"],
-            "external": ["recharts"]
+            "internal": [
+              "react-testing"
+            ],
+            "external": [
+              "recharts"
+            ]
           },
           "keyFeatures": [
             "Chart rendering verification",
@@ -148,8 +169,13 @@
             "server/tests/database-performance.test.ts"
           ],
           "dependencies": {
-            "internal": ["vitest-configuration"],
-            "external": ["supertest", "express"]
+            "internal": [
+              "vitest-configuration"
+            ],
+            "external": [
+              "supertest",
+              "express"
+            ]
           },
           "keyFeatures": [
             "HTTP endpoint testing",
@@ -167,7 +193,9 @@
             "server/tests/memory-service-optimizations.test.ts"
           ],
           "dependencies": {
-            "internal": ["api-mocking"],
+            "internal": [
+              "api-mocking"
+            ],
             "external": []
           },
           "keyFeatures": [
@@ -190,7 +218,9 @@
             "server/tests/chatgpt-memory-phase1.test.ts"
           ],
           "dependencies": {
-            "internal": ["service-testing"],
+            "internal": [
+              "service-testing"
+            ],
             "external": []
           },
           "keyFeatures": [
@@ -208,8 +238,12 @@
             "client/src/tests/performance.test.ts"
           ],
           "dependencies": {
-            "internal": ["chart-testing"],
-            "external": ["recharts"]
+            "internal": [
+              "chart-testing"
+            ],
+            "external": [
+              "recharts"
+            ]
           },
           "keyFeatures": [
             "Chart rendering performance",
@@ -231,12 +265,17 @@
             "system-map-cross-domain-validator.js"
           ],
           "dependencies": {
-            "internal": ["system-map-tracker.js"],
-            "external": ["fs", "path"]
+            "internal": [
+              "system-map-tracker.js"
+            ],
+            "external": [
+              "fs",
+              "path"
+            ]
           },
           "keyFeatures": [
             "Shared component behavior consistency checking",
-            "Endpoint collision detection across domains", 
+            "Endpoint collision detection across domains",
             "Behavioral divergence detection for similar operations",
             "Undocumented cross-domain dependency detection",
             "Automated reporting with severity levels"
@@ -260,12 +299,14 @@
         "system-map-documentation": {
           "name": "System Map Documentation Guide",
           "description": "Comprehensive guide for creating consistent, cross-domain-aware system maps",
-          "status": "production", 
+          "status": "production",
           "files": [
             ".system-maps/optimized-complete-map-blue-original.md"
           ],
           "dependencies": {
-            "internal": ["cross-domain-validator"],
+            "internal": [
+              "cross-domain-validator"
+            ],
             "external": []
           },
           "keyFeatures": [
@@ -304,5 +345,71 @@
         "Cleaner test output and error messages"
       ]
     }
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "server/services/logger-service.ts",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "server/index.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/memory-service.ts"
+          },
+          {
+            "domain": "shared/services",
+            "file": "server/services/database-migration-service.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/cache-service.ts",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "server/storage.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/optimized-memory-service.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/memory-service.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/enhanced-memory-service.ts"
+          },
+          {
+            "domain": "shared/services",
+            "file": "server/services/ai-service.ts"
+          },
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/routes/index.ts",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "server/index.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 0
+  },
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.659Z",
+    "crossDomainFiles": 3,
+    "internalFiles": 0,
+    "totalDependencies": 3
   }
 }

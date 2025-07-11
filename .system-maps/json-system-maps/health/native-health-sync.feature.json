@@ -1,8 +1,7 @@
-
 {
   "_metadata": {
     "featureName": "native-health-sync",
-    "featureGroup": "data-operations", 
+    "featureGroup": "data-operations",
     "parentFile": "./dashboard.map.json",
     "domain": "health"
   },
@@ -41,8 +40,12 @@
     "HealthDataSection updates with sync statistics"
   ],
   "apiIntegration": {
-    "expectedEndpoints": ["POST /api/health-data/native-sync"],
-    "actualEndpoints": ["POST /api/health-data/native-sync"],
+    "expectedEndpoints": [
+      "POST /api/health-data/native-sync"
+    ],
+    "actualEndpoints": [
+      "POST /api/health-data/native-sync"
+    ],
     "integrationGaps": []
   },
   "components": {
@@ -104,24 +107,42 @@
     "web": {
       "fallback": {
         "description": "File upload interface when native access is unavailable",
-        "methods": ["manual file import", "sample data generation"]
+        "methods": [
+          "manual file import",
+          "sample data generation"
+        ]
       }
     }
   },
   "syncModes": {
     "manual": {
       "description": "User-initiated sync with custom date range selection",
-      "options": ["last 7 days", "last 30 days", "last 90 days", "custom range"]
+      "options": [
+        "last 7 days",
+        "last 30 days",
+        "last 90 days",
+        "custom range"
+      ]
     },
     "background": {
       "description": "Automatic periodic sync when app is in background",
-      "intervals": ["hourly", "daily", "weekly"],
-      "requirements": ["background processing permissions", "battery optimization disabled"]
+      "intervals": [
+        "hourly",
+        "daily",
+        "weekly"
+      ],
+      "requirements": [
+        "background processing permissions",
+        "battery optimization disabled"
+      ]
     },
     "realtime": {
       "description": "Live sync as health data is recorded on device",
       "implementation": "Push notifications from native health apps",
-      "limitations": ["iOS HealthKit background delivery", "Android Fit data availability"]
+      "limitations": [
+        "iOS HealthKit background delivery",
+        "Android Fit data availability"
+      ]
     }
   },
   "dataMapping": {
@@ -162,5 +183,62 @@
     "permissionValidation": "Continuous validation of granted permissions",
     "userConsent": "Explicit consent tracking for each data type",
     "dataMinimization": "Only sync explicitly requested data types"
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "client/src/services/native-health-service.ts",
+        "importedBy": [
+          {
+            "domain": "shared/services",
+            "file": "client/src/services/platform-detection-global.ts"
+          }
+        ]
+      },
+      {
+        "file": "client/src/components/HealthDataSection.tsx",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/pages/home.tsx"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-parser.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-deduplication.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-consent-service.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 14
+  },
+  "lastUpdated": "2025-07-11T21:54:27.649Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.649Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 14,
+    "totalDependencies": 18
   }
 }

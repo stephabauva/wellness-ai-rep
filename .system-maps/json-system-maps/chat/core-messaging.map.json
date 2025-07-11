@@ -1,9 +1,22 @@
 {
   "tableOfContents": {
     "core-messaging": {
-      "features": ["send-message", "message-streaming", "message-display"],
-      "components": ["ChatInputArea", "MessageDisplayArea", "SmoothStreamingText", "ChatSection"],
-      "endpoints": ["POST /api/chat", "GET /api/chat/stream", "GET /api/chat/messages"]
+      "features": [
+        "send-message",
+        "message-streaming",
+        "message-display"
+      ],
+      "components": [
+        "ChatInputArea",
+        "MessageDisplayArea",
+        "SmoothStreamingText",
+        "ChatSection"
+      ],
+      "endpoints": [
+        "POST /api/chat",
+        "GET /api/chat/stream",
+        "GET /api/chat/messages"
+      ]
     }
   },
   "integrationStatus": {
@@ -13,18 +26,22 @@
       "knownIssues": []
     },
     "message-streaming": {
-      "status": "active", 
+      "status": "active",
       "lastVerified": "2025-01-27",
       "knownIssues": []
     },
     "message-display": {
       "status": "active",
-      "lastVerified": "2025-01-27", 
+      "lastVerified": "2025-01-27",
       "knownIssues": []
     }
   },
-  "lastUpdated": "2025-01-27T14:30:00Z",
-  "dependencies": ["memory", "file-manager", "attachments"],
+  "lastUpdated": "2025-07-11T21:54:27.654Z",
+  "dependencies": [
+    "memory",
+    "file-manager",
+    "attachments"
+  ],
   "featureGroups": {
     "core-messaging": {
       "description": "Core chat messaging functionality including sending, streaming, and displaying messages",
@@ -46,22 +63,51 @@
             "Stream AI response back to client",
             "Update message status and store complete response"
           ],
-          "components": ["ChatInputArea", "ChatSection"],
+          "components": [
+            "ChatInputArea",
+            "ChatSection"
+          ],
           "dataFlowTrace": {
-            "requestPath": ["Frontend: ChatInputArea.tsx", "Hook: useStreamingChat.ts", "API: POST /api/chat", "Handler: server/routes/chat-routes.ts", "Service: server/services/ai-service.ts", "Provider: OpenAI/Google"],
-            "expectedPath": ["Frontend: ChatInputArea.tsx", "Hook: useStreamingChat.ts", "API: POST /api/chat", "Handler: server/routes/chat-routes.ts", "Service: server/services/ai-service.ts", "Provider: OpenAI/Google"],
+            "requestPath": [
+              "Frontend: ChatInputArea.tsx",
+              "Hook: useStreamingChat.ts",
+              "API: POST /api/chat",
+              "Handler: server/routes/chat-routes.ts",
+              "Service: server/services/ai-service.ts",
+              "Provider: OpenAI/Google"
+            ],
+            "expectedPath": [
+              "Frontend: ChatInputArea.tsx",
+              "Hook: useStreamingChat.ts",
+              "API: POST /api/chat",
+              "Handler: server/routes/chat-routes.ts",
+              "Service: server/services/ai-service.ts",
+              "Provider: OpenAI/Google"
+            ],
             "pathVerified": true,
             "bypassedComponents": [],
             "actualHandler": "server/routes/chat-routes.ts:POST /api/chat",
             "streamingPattern": "Direct Node.js AI Service → Provider (no Go AI Gateway bypass detected)"
           },
           "apiIntegration": {
-            "expectedEndpoints": ["POST /api/chat"],
-            "actualEndpoints": ["POST /api/chat"],
+            "expectedEndpoints": [
+              "POST /api/chat"
+            ],
+            "actualEndpoints": [
+              "POST /api/chat"
+            ],
             "integrationGaps": [],
             "cacheDependencies": {
-              "invalidates": ["query:messages", "query:conversations", "query:chatMessages"],
-              "refreshesComponents": ["MessageDisplayArea", "ConversationHistory", "ChatSection"]
+              "invalidates": [
+                "query:messages",
+                "query:conversations",
+                "query:chatMessages"
+              ],
+              "refreshesComponents": [
+                "MessageDisplayArea",
+                "ConversationHistory",
+                "ChatSection"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -74,7 +120,9 @@
           "performance": {
             "$ref": "../infrastructure/performance.map.json#/chat-performance"
           },
-          "tests": ["client/src/components/ChatInputArea.test.tsx"]
+          "tests": [
+            "client/src/components/ChatInputArea.test.tsx"
+          ]
         },
         "message-streaming": {
           "description": "ChatGPT-style real-time streaming with natural typing rhythm, enhanced cursor animations, content-aware pacing, and micro-animations",
@@ -98,12 +146,31 @@
             "Client accumulates chunks and displays progressively with ChatGPT-style timing",
             "Complete response stored when streaming ends"
           ],
-          "components": ["SmoothStreamingText", "StreamingText", "MessageDisplayArea"],
+          "components": [
+            "SmoothStreamingText",
+            "StreamingText",
+            "MessageDisplayArea"
+          ],
           "dataFlowTrace": {
-            "requestPath": ["Frontend: SmoothStreamingText.tsx", "Hook: useStreamingChat.ts", "API: GET /api/chat/stream", "Handler: server/routes/chat-routes.ts", "Service: server/services/ai-service.ts", "Provider: OpenAI/Google"],
-            "expectedPath": ["Frontend: SmoothStreamingText.tsx", "Hook: useStreamingChat.ts", "API: GET /api/chat/stream", "Gateway: Go AI Gateway", "Provider: OpenAI/Google"],
+            "requestPath": [
+              "Frontend: SmoothStreamingText.tsx",
+              "Hook: useStreamingChat.ts",
+              "API: GET /api/chat/stream",
+              "Handler: server/routes/chat-routes.ts",
+              "Service: server/services/ai-service.ts",
+              "Provider: OpenAI/Google"
+            ],
+            "expectedPath": [
+              "Frontend: SmoothStreamingText.tsx",
+              "Hook: useStreamingChat.ts",
+              "API: GET /api/chat/stream",
+              "Gateway: Go AI Gateway",
+              "Provider: OpenAI/Google"
+            ],
             "pathVerified": false,
-            "bypassedComponents": ["Go AI Gateway"],
+            "bypassedComponents": [
+              "Go AI Gateway"
+            ],
             "actualHandler": "server/routes/chat-routes.ts:GET /api/chat/stream",
             "streamingPattern": "Direct Node.js → AI Provider (bypasses Go AI Gateway architecture)"
           },
@@ -176,12 +243,22 @@
             }
           },
           "apiIntegration": {
-            "expectedEndpoints": ["GET /api/chat/stream"],
-            "actualEndpoints": ["GET /api/chat/stream"],
+            "expectedEndpoints": [
+              "GET /api/chat/stream"
+            ],
+            "actualEndpoints": [
+              "GET /api/chat/stream"
+            ],
             "integrationGaps": [],
             "cacheDependencies": {
-              "invalidates": ["query:messages", "query:chatMessages"],
-              "refreshesComponents": ["MessageDisplayArea", "SmoothStreamingText"]
+              "invalidates": [
+                "query:messages",
+                "query:chatMessages"
+              ],
+              "refreshesComponents": [
+                "MessageDisplayArea",
+                "SmoothStreamingText"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -201,7 +278,9 @@
               "Memory efficient word-boundary buffering"
             ]
           },
-          "tests": ["client/src/tests/performance.test.ts"]
+          "tests": [
+            "client/src/tests/performance.test.ts"
+          ]
         },
         "message-display": {
           "description": "Display of chat messages with proper formatting, attachments, and interaction controls",
@@ -217,22 +296,45 @@
             "Handle attachment previews and downloads",
             "Manage scroll position and virtual scrolling"
           ],
-          "components": ["MessageDisplayArea", "AttachmentPreview"],
+          "components": [
+            "MessageDisplayArea",
+            "AttachmentPreview"
+          ],
           "dataFlowTrace": {
-            "requestPath": ["Frontend: MessageDisplayArea.tsx", "Hook: useChatMessages.ts", "API: GET /api/chat/messages", "Handler: server/routes/chat-routes.ts", "Database: conversation_messages"],
-            "expectedPath": ["Frontend: MessageDisplayArea.tsx", "Hook: useChatMessages.ts", "API: GET /api/chat/messages", "Handler: server/routes/chat-routes.ts", "Database: conversation_messages"],
+            "requestPath": [
+              "Frontend: MessageDisplayArea.tsx",
+              "Hook: useChatMessages.ts",
+              "API: GET /api/chat/messages",
+              "Handler: server/routes/chat-routes.ts",
+              "Database: conversation_messages"
+            ],
+            "expectedPath": [
+              "Frontend: MessageDisplayArea.tsx",
+              "Hook: useChatMessages.ts",
+              "API: GET /api/chat/messages",
+              "Handler: server/routes/chat-routes.ts",
+              "Database: conversation_messages"
+            ],
             "pathVerified": true,
             "bypassedComponents": [],
             "actualHandler": "server/routes/chat-routes.ts:GET /api/chat/messages",
             "streamingPattern": "Standard REST API retrieval"
           },
           "apiIntegration": {
-            "expectedEndpoints": ["GET /api/chat/messages"],
-            "actualEndpoints": ["GET /api/chat/messages"],
+            "expectedEndpoints": [
+              "GET /api/chat/messages"
+            ],
+            "actualEndpoints": [
+              "GET /api/chat/messages"
+            ],
             "integrationGaps": [],
             "cacheDependencies": {
-              "invalidates": ["query:messages"],
-              "refreshesComponents": ["MessageDisplayArea"]
+              "invalidates": [
+                "query:messages"
+              ],
+              "refreshesComponents": [
+                "MessageDisplayArea"
+              ]
             },
             "uiConsistencyValidation": {
               "tested": true,
@@ -245,7 +347,9 @@
           "performance": {
             "$ref": "../infrastructure/performance.map.json#/message-display-performance"
           },
-          "tests": ["client/src/components/MessageDisplayArea.test.tsx"]
+          "tests": [
+            "client/src/components/MessageDisplayArea.test.tsx"
+          ]
         }
       }
     }
@@ -255,19 +359,49 @@
       "name": "ChatInputArea",
       "path": "client/src/components/ChatInputArea.tsx",
       "description": "Text input area with send button, attachment support, and audio recording",
-      "uses": ["useStreamingChat", "useFileUpload", "AudioRecorder"]
+      "uses": [
+        "useStreamingChat",
+        "useFileUpload",
+        "AudioRecorder"
+      ],
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/ChatSection.tsx",
+            "domain": "chat"
+          }
+        ]
+      }
     },
     "MessageDisplayArea": {
-      "name": "MessageDisplayArea", 
+      "name": "MessageDisplayArea",
       "path": "client/src/components/MessageDisplayArea.tsx",
       "description": "Displays chat messages with streaming support and attachment previews",
-      "uses": ["useChatMessages", "AttachmentPreview", "SmoothStreamingText"]
+      "uses": [
+        "useChatMessages",
+        "AttachmentPreview",
+        "SmoothStreamingText"
+      ],
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/ChatSection.tsx",
+            "domain": "chat"
+          }
+        ]
+      }
     },
     "SmoothStreamingText": {
       "name": "SmoothStreamingText",
-      "path": "client/src/components/SmoothStreamingText.tsx", 
+      "path": "client/src/components/SmoothStreamingText.tsx",
       "description": "ChatGPT-style streaming text component with natural timing variations, enhanced cursor animations, content-aware pacing, word-boundary intelligence, and micro-animations",
-      "uses": ["StreamingText"],
+      "uses": [
+        "StreamingText"
+      ],
       "features": [
         "Natural typing rhythm with randomized timing variations",
         "Enhanced cursor with custom fade animations",
@@ -281,7 +415,21 @@
       "name": "ChatSection",
       "path": "client/src/components/ChatSection.tsx",
       "description": "Main chat interface container with input and message display areas",
-      "uses": ["ChatInputArea", "MessageDisplayArea", "ConversationHistory"]
+      "uses": [
+        "ChatInputArea",
+        "MessageDisplayArea",
+        "ConversationHistory"
+      ],
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": true,
+        "usedBy": [
+          {
+            "file": "client/src/pages/home.tsx",
+            "domain": "unknown/needs-classification"
+          }
+        ]
+      }
     }
   },
   "apiEndpoints": {
@@ -289,21 +437,35 @@
       "method": "POST",
       "handler": "server/routes/chat-routes.ts",
       "description": "Send message and receive AI response",
-      "readsFrom": ["conversations", "conversation_messages", "message_attachments"],
-      "modifies": ["conversations", "conversation_messages"]
+      "readsFrom": [
+        "conversations",
+        "conversation_messages",
+        "message_attachments"
+      ],
+      "modifies": [
+        "conversations",
+        "conversation_messages"
+      ]
     },
     "/api/chat/stream": {
       "method": "GET",
       "handler": "server/routes/chat-routes.ts",
       "description": "Stream AI response in real-time",
-      "readsFrom": ["conversations", "conversation_messages"],
+      "readsFrom": [
+        "conversations",
+        "conversation_messages"
+      ],
       "modifies": []
     },
     "/api/chat/messages": {
       "method": "GET",
       "handler": "server/routes/chat-routes.ts",
       "description": "Retrieve chat messages with pagination",
-      "readsFrom": ["conversations", "conversation_messages", "message_attachments"],
+      "readsFrom": [
+        "conversations",
+        "conversation_messages",
+        "message_attachments"
+      ],
       "modifies": []
     }
   },
@@ -311,22 +473,65 @@
     "tables": {
       "conversations": {
         "description": "Chat conversation metadata and context",
-        "columns": ["id", "title", "created_at", "updated_at", "user_id"],
-        "relations": ["conversation_messages"],
-        "indexes": ["user_id", "created_at"]
+        "columns": [
+          "id",
+          "title",
+          "created_at",
+          "updated_at",
+          "user_id"
+        ],
+        "relations": [
+          "conversation_messages"
+        ],
+        "indexes": [
+          "user_id",
+          "created_at"
+        ]
       },
       "conversation_messages": {
         "description": "Individual chat messages within conversations",
-        "columns": ["id", "conversation_id", "role", "content", "created_at", "message_type", "status"],
-        "relations": ["conversations", "message_attachments"],
-        "indexes": ["conversation_id", "created_at"]
+        "columns": [
+          "id",
+          "conversation_id",
+          "role",
+          "content",
+          "created_at",
+          "message_type",
+          "status"
+        ],
+        "relations": [
+          "conversations",
+          "message_attachments"
+        ],
+        "indexes": [
+          "conversation_id",
+          "created_at"
+        ]
       },
       "message_attachments": {
         "description": "File attachments associated with messages",
-        "columns": ["id", "message_id", "file_path", "file_name", "file_size", "mime_type", "created_at"],
-        "relations": ["conversation_messages"],
-        "indexes": ["message_id"]
+        "columns": [
+          "id",
+          "message_id",
+          "file_path",
+          "file_name",
+          "file_size",
+          "mime_type",
+          "created_at"
+        ],
+        "relations": [
+          "conversation_messages"
+        ],
+        "indexes": [
+          "message_id"
+        ]
       }
     }
+  },
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.654Z",
+    "crossDomainFiles": 3,
+    "internalFiles": 7,
+    "totalDependencies": 10
   }
 }

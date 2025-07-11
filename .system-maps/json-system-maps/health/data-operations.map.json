@@ -1,16 +1,24 @@
-
 {
   "tableOfContents": {
     "data-management": {
-      "features": ["data-reset", "pdf-export"],
-      "components": ["useHealthDataApi", "useHealthReport"],
-      "endpoints": ["DELETE /api/health-data/reset", "POST /api/health-data/export/pdf"]
+      "features": [
+        "data-reset",
+        "pdf-export"
+      ],
+      "components": [
+        "useHealthDataApi",
+        "useHealthReport"
+      ],
+      "endpoints": [
+        "DELETE /api/health-data/reset",
+        "POST /api/health-data/export/pdf"
+      ]
     }
   },
   "integrationStatus": {
     "data-reset": {
       "status": "active",
-      "lastVerified": "2025-01-28", 
+      "lastVerified": "2025-01-28",
       "knownIssues": []
     },
     "pdf-export": {
@@ -19,8 +27,10 @@
       "knownIssues": []
     }
   },
-  "lastUpdated": "2025-01-28T18:20:00Z",
-  "dependencies": ["dashboard"],
+  "lastUpdated": "2025-07-11T21:54:27.647Z",
+  "dependencies": [
+    "dashboard"
+  ],
   "featureGroups": {
     "data-management": {
       "description": "Health data management operations.",
@@ -39,7 +49,9 @@
             "Cache invalidated",
             "Dashboard re-renders"
           ],
-          "components": ["useHealthDataApi"]
+          "components": [
+            "useHealthDataApi"
+          ]
         },
         "pdf-export": {
           "description": "Generate PDF reports of health data.",
@@ -53,7 +65,9 @@
             "POST request generates PDF",
             "Browser downloads file"
           ],
-          "components": ["useHealthReport"]
+          "components": [
+            "useHealthReport"
+          ]
         }
       }
     }
@@ -63,9 +77,21 @@
       "path": "client/src/hooks/useHealthReport.ts",
       "type": "React Hook",
       "description": "Generates PDF reports of health data.",
-      "calls": ["POST /api/health-data/export/pdf"],
+      "calls": [
+        "POST /api/health-data/export/pdf"
+      ],
       "uses": [],
-      "invalidates": []
+      "invalidates": [],
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/HealthDataSection.tsx",
+            "domain": "health"
+          }
+        ]
+      }
     }
   },
   "apiEndpoints": {
@@ -73,16 +99,28 @@
       "description": "Delete all health data for user.",
       "handlerFile": "server/routes.ts",
       "response": "{ success: boolean, deletedCount: number }",
-      "readsFrom": ["healthData"],
-      "modifies": ["healthData"]
+      "readsFrom": [
+        "healthData"
+      ],
+      "modifies": [
+        "healthData"
+      ]
     },
     "POST /api/health-data/export/pdf": {
       "description": "Generate PDF report of health data.",
       "handlerFile": "server/routes.ts",
       "requestBody": "{ timeRange?: string }",
       "response": "PDF file download",
-      "readsFrom": ["healthData"],
+      "readsFrom": [
+        "healthData"
+      ],
       "modifies": []
     }
+  },
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.647Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 14,
+    "totalDependencies": 18
   }
 }

@@ -1,168 +1,262 @@
 
 {
-  "tableOfContents": {
-    "fileProcessing": ["go-acceleration", "compression-optimization", "metadata-extraction"],
-    "retentionManagement": ["retention-policies", "file-lifecycle"],
-    "performanceOptimization": ["universal-file-service", "smart-routing"]
+  "_tableOfContents": {
+    "domain": "file-manager",
+    "features": [
+      "go-acceleration",
+      "compression-optimization",
+      "metadata-extraction",
+      "retention-policies",
+      "file-lifecycle",
+      "universal-file-service",
+      "smart-routing"
+    ],
+    "totalFeatures": 7,
+    "lastUpdated": "2025-01-10"
   },
-  "lastUpdated": "2025-06-26T19:52:00Z",
-  "dependencies": ["core-operations"],
-  "featureGroups": {
-    "fileProcessing": {
-      "description": "Advanced file processing with Go microservice acceleration",
-      "features": {
-        "go-acceleration": {
-          "description": "Go microservice acceleration for large file processing",
-          "userFlow": [
-            "Large data files (>5MB XML/JSON/CSV) detected during upload",
-            "UniversalFileService automatically attempts Go service startup",
-            "FileAccelerationService.startGoAccelerationService called",
-            "/api/accelerate/start endpoint spawns Go service",
-            "File processed with Go compression achieving 90%+ compression ratios",
-            "Graceful fallback to TypeScript if Go service unavailable"
-          ],
-          "components": [
-            "UniversalFileService",
-            "FileAccelerationService",
-            "useFileUpload"
-          ]
-        },
-        "compression-optimization": {
-          "description": "Universal file compression with intelligent routing",
-          "userFlow": [
-            "UniversalFileService.compressFile called for each upload",
-            "Service detects file characteristics and system capabilities",
-            "Routes to optimal compression method (TypeScript vs Go)",
-            "Compression results include ratio, algorithm, processing time",
-            "Compressed file uploaded to reduce bandwidth and storage"
-          ],
-          "components": [
-            "UniversalFileService",
-            "FileCompressionService",
-            "FileAccelerationService"
-          ]
-        },
-        "metadata-extraction": {
-          "description": "Extract comprehensive file metadata including EXIF, hashing, dimensions",
-          "userFlow": [
-            "Go file service processes uploaded file in parallel",
-            "Extracts md5Hash for integrity verification",
-            "Generates perceptualHash for duplicate detection",
-            "Extracts EXIF data for images (camera, location, etc.)",
-            "Determines image dimensions and color profile",
-            "Creates thumbnails in multiple sizes",
-            "Metadata stored in files.metadata JSON field"
-          ],
-          "components": [
-            "GoFileService",
-            "go-file-service/main.go"
-          ]
-        }
-      }
+  "go-acceleration": {
+    "_meta": {
+      "feature": "go-acceleration",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
     },
-    "retentionManagement": {
-      "description": "Intelligent file retention policies based on content analysis",
-      "features": {
-        "retention-policies": {
-          "description": "Automatic retention policy assignment based on file content",
-          "userFlow": [
-            "AttachmentRetentionService analyzes uploaded file",
-            "Categorizes as high/medium/low value based on content",
-            "Medical files get permanent retention (-1 days)",
-            "Fitness files get medium retention (365 days)",
-            "General files get standard retention (90 days)",
-            "Retention info stored in files table",
-            "User notified of retention policy in upload toast"
-          ],
-          "components": [
-            "AttachmentRetentionService",
-            "useFileUpload"
-          ]
-        },
-        "file-lifecycle": {
-          "description": "Manage file lifecycle from upload to scheduled deletion",
-          "userFlow": [
-            "Files assigned retention days on upload",
-            "scheduledDeletion field calculated based on retention policy",
-            "Background service monitors for expired files",
-            "Files marked as isDeleted when retention expires",
-            "Physical file deletion handled by cleanup service"
-          ],
-          "components": [
-            "AttachmentRetentionService"
-          ]
-        }
-      }
+    "trigger": "Large data files (>5MB XML/JSON/CSV) detected during upload or health check initialization",
+    "dataFlow": {
+      "request": "UniversalFileService → FileAccelerationService → /api/accelerate/health GET → Go service health check → /api/accelerate/start POST → Go service spawn",
+      "response": "Go service → compressed file → upload completion | Health check → service availability detection",
+      "sideEffects": ["Go service startup", "90%+ compression ratios", "Graceful fallback to TypeScript", "Health check logging suppression"]
     },
-    "performanceOptimization": {
-      "description": "Performance optimization through intelligent service routing",
-      "features": {
-        "universal-file-service": {
-          "description": "Smart file service that routes to optimal processing method",
-          "userFlow": [
-            "UniversalFileService.initialize() called on app startup",
-            "Service detects platform capabilities (web/capacitor/react-native)",
-            "Determines Go acceleration availability",
-            "Routes file operations to best available service",
-            "Provides unified interface regardless of underlying implementation"
-          ],
-          "components": [
-            "UniversalFileService",
-            "FileAccelerationService",
-            "FileCompressionService"
-          ]
-        },
-        "smart-routing": {
-          "description": "Intelligent routing between TypeScript and Go services",
-          "userFlow": [
-            "File characteristics analyzed (size, type, complexity)",
-            "Go acceleration recommended for large structured data files",
-            "TypeScript used for small files and when Go unavailable",
-            "Automatic fallback ensures system always works",
-            "Performance metrics tracked for optimization"
-          ],
-          "components": [
-            "UniversalFileService",
-            "FileAccelerationService"
-          ]
-        }
-      }
-    }
-  },
-  "components": {
-    "UniversalFileService": {
-      "path": "client/src/services/universal-file-service.ts",
-      "description": "Smart routing service for optimal file processing",
-      "dependencies": ["FileCompressionService", "FileAccelerationService"]
-    },
-    "FileAccelerationService": {
-      "path": "client/src/services/file-acceleration-service.ts", 
-      "description": "TypeScript interface to Go acceleration service"
-    },
-    "FileCompressionService": {
-      "path": "client/src/services/file-compression.ts",
-      "description": "TypeScript-based file compression service"
-    },
-    "AttachmentRetentionService": {
-      "path": "server/services/attachment-retention-service.ts",
-      "description": "Server-side retention policy management"
-    },
-    "GoFileService": {
-      "path": "server/services/go-file-service.ts",
-      "description": "Node.js integration with Go file processing service"
-    }
-  },
-  "apiEndpoints": {
-    "/api/accelerate/start": {
-      "method": "POST",
-      "description": "Start Go acceleration service for large file processing",
-      "implementation": "server/routes.ts"
-    }
-  },
-  "database": {
     "files": {
-      "description": "Enhanced files table with processing metadata",
-      "key_fields": ["metadata", "retentionPolicy", "retentionDays", "scheduledDeletion"]
+      "ui": ["client/src/services/universal-file-service.ts", "client/src/services/file-acceleration-service.ts", "useFileUpload.ts"],
+      "api": ["server/routes/file-routes.ts", "server/routes/shared-utils.ts", "server/services/logger-service.ts"],
+      "data": ["files"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["AccelerationCapabilities"],
+      "triggers": ["go-service-startup", "compression-processing", "health-check-polling"]
+    },
+    "errorPaths": {
+      "network": "Fallback to TypeScript processing with timeout handling",
+      "validation": "File size/type validation with graceful degradation",
+      "business": "Go service availability check with suppressed 503 warning logs"
+    },
+    "dependencies": {
+      "internal": ["universal-file-service", "compression-optimization"],
+      "external": ["Go file service"],
+      "shared": ["UniversalFileService", "FileAccelerationService"]
+    }
+  },
+  "compression-optimization": {
+    "_meta": {
+      "feature": "compression-optimization",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "File upload triggers compression analysis",
+    "dataFlow": {
+      "request": "UniversalFileService.compressFile → optimal compression method → file processing",
+      "response": "Compressed file → compression metrics → upload completion",
+      "sideEffects": ["Bandwidth reduction", "Storage optimization", "Processing time tracking"]
+    },
+    "files": {
+      "ui": ["UniversalFileService.ts", "FileCompressionService.ts", "FileAccelerationService.ts"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": [],
+      "triggers": ["compression-processing"]
+    },
+    "errorPaths": {
+      "network": "Uncompressed file upload",
+      "validation": "File format compatibility check",
+      "business": "Compression benefit analysis"
+    },
+    "dependencies": {
+      "internal": ["smart-routing"],
+      "external": ["Compression algorithms"],
+      "shared": ["UniversalFileService", "FileCompressionService"]
+    }
+  },
+  "metadata-extraction": {
+    "_meta": {
+      "feature": "metadata-extraction",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "File upload triggers parallel metadata extraction",
+    "dataFlow": {
+      "request": "GoFileService → metadata extraction → files.metadata JSON field",
+      "response": "Extracted metadata → database storage → UI display",
+      "sideEffects": ["MD5 hash generation", "Perceptual hash for duplicates", "EXIF data extraction", "Thumbnail creation"]
+    },
+    "files": {
+      "ui": ["GoFileService.ts"],
+      "api": ["go-file-service/main.go"],
+      "data": ["files"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": ["FileList"],
+      "triggers": ["metadata-processing"]
+    },
+    "errorPaths": {
+      "network": "Metadata extraction skip",
+      "validation": "File format support check",
+      "business": "Graceful metadata failure handling"
+    },
+    "dependencies": {
+      "internal": ["go-acceleration"],
+      "external": ["Go file service", "Image processing libraries"],
+      "shared": ["GoFileService"]
+    }
+  },
+  "retention-policies": {
+    "_meta": {
+      "feature": "retention-policies",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "File upload triggers retention policy analysis",
+    "dataFlow": {
+      "request": "AttachmentRetentionService → content analysis → retention assignment",
+      "response": "Retention policy → files table storage → user notification",
+      "sideEffects": ["Medical files: permanent retention", "Fitness files: 365 days", "General files: 90 days"]
+    },
+    "files": {
+      "ui": ["useFileUpload.ts"],
+      "api": ["AttachmentRetentionService.ts"],
+      "data": ["files"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": [],
+      "triggers": ["retention-assignment"]
+    },
+    "errorPaths": {
+      "network": "Default retention policy",
+      "validation": "Content analysis failure",
+      "business": "Retention policy fallback"
+    },
+    "dependencies": {
+      "internal": ["file-lifecycle"],
+      "external": ["Content analysis AI"],
+      "shared": ["AttachmentRetentionService"]
+    }
+  },
+  "file-lifecycle": {
+    "_meta": {
+      "feature": "file-lifecycle",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "Background service monitors file expiration",
+    "dataFlow": {
+      "request": "Background service → expiration check → scheduled deletion",
+      "response": "Expired files → isDeleted flag → cleanup service",
+      "sideEffects": ["Automatic file cleanup", "Storage optimization"]
+    },
+    "files": {
+      "ui": [],
+      "api": ["AttachmentRetentionService.ts"],
+      "data": ["files"],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": ["query:files"],
+      "refreshes": ["FileList"],
+      "triggers": ["file-cleanup"]
+    },
+    "errorPaths": {
+      "network": "Retry cleanup operation",
+      "validation": "File lock check",
+      "business": "Retention policy verification"
+    },
+    "dependencies": {
+      "internal": ["retention-policies"],
+      "external": ["Background job scheduler"],
+      "shared": ["AttachmentRetentionService"]
+    }
+  },
+  "universal-file-service": {
+    "_meta": {
+      "feature": "universal-file-service",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "App startup initializes universal file service",
+    "dataFlow": {
+      "request": "UniversalFileService.initialize() → platform detection → capability assessment",
+      "response": "Service routing configuration → unified interface",
+      "sideEffects": ["Platform capability detection", "Service routing setup"]
+    },
+    "files": {
+      "ui": ["UniversalFileService.ts", "FileAccelerationService.ts", "FileCompressionService.ts"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": [],
+      "triggers": ["service-initialization"]
+    },
+    "errorPaths": {
+      "network": "Fallback to basic file operations",
+      "validation": "Platform compatibility check",
+      "business": "Service availability validation"
+    },
+    "dependencies": {
+      "internal": ["smart-routing"],
+      "external": ["Platform detection APIs"],
+      "shared": ["FileAccelerationService", "FileCompressionService"]
+    }
+  },
+  "smart-routing": {
+    "_meta": {
+      "feature": "smart-routing",
+      "domain": "file-manager",
+      "lastUpdated": "2025-01-10",
+      "status": "active"
+    },
+    "trigger": "File characteristics analysis triggers routing decision",
+    "dataFlow": {
+      "request": "File analysis → routing decision → optimal service selection",
+      "response": "Service routing → processing execution → performance tracking",
+      "sideEffects": ["Go acceleration for large files", "TypeScript fallback", "Performance metrics"]
+    },
+    "files": {
+      "ui": ["UniversalFileService.ts", "FileAccelerationService.ts"],
+      "api": [],
+      "data": [],
+      "types": ["shared/schema.ts"]
+    },
+    "cacheFlow": {
+      "invalidates": [],
+      "refreshes": [],
+      "triggers": ["routing-decision"]
+    },
+    "errorPaths": {
+      "network": "Automatic fallback to TypeScript",
+      "validation": "File characteristics validation",
+      "business": "Service availability check"
+    },
+    "dependencies": {
+      "internal": ["go-acceleration", "compression-optimization"],
+      "external": ["Performance monitoring"],
+      "shared": ["UniversalFileService", "FileAccelerationService"]
     }
   }
 }

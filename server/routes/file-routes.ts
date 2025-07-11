@@ -19,6 +19,7 @@ import {
   z
 } from "./shared-dependencies.js";
 import { startGoAccelerationService } from "./shared-utils.js";
+import { seedDefaultCategories } from "../services/category-service.js";
 
 const FIXED_USER_ID = 1;
 
@@ -27,26 +28,40 @@ const upload = multer({
   dest: 'uploads/',
   limits: { fileSize: 200 * 1024 * 1024 }, // 200MB
   fileFilter: (req, file, cb) => {
+    console.log('File filter called with:', { originalname: file.originalname, mimetype: file.mimetype });
     const allowedTypes = [
       'image/', 'video/', 'audio/', 'application/pdf', 'text/',
       'application/json', 'application/xml', 'text/xml', 'text/csv',
-      'application/msword', 'application/vnd.openxmlformats-officedocument'
+      'application/msword', 'application/vnd.openxmlformats-officedocument',
+      'application/gzip', 'application/x-gzip' // Support compressed files
     ];
     const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
+    console.log('File allowed:', isAllowed);
     cb(null, isAllowed);
   }
 });
 
 const categorySchema = z.object({
-  categoryId: z.string().optional()
+  categoryId: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val)
 });
 
 export async function registerFileRoutes(app: Express): Promise<void> {
   // File upload endpoint - CRITICAL: This was missing from routes modularization
   app.post('/api/upload', upload.single('file'), async (req, res) => {
     try {
+      console.log('Upload request received:', { 
+        body: req.body, 
+        file: req.file ? {
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          path: req.file.path
+        } : 'undefined'
+      });
+      
       if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        console.error('No file in request. Multer might have rejected it.');
+        return res.status(400).json({ error: 'No file uploaded or file was rejected' });
       }
 
       const { categoryId } = categorySchema.parse(req.body);
@@ -115,7 +130,12 @@ export async function registerFileRoutes(app: Express): Promise<void> {
       });
     } catch (error) {
       console.error('File upload error:', error);
-      res.status(500).json({ error: 'Failed to upload file' });
+      if (error instanceof Error && error.message.includes('validation')) {
+        console.error('Validation error details:', { body: req.body, error: error.message });
+        res.status(400).json({ error: 'Invalid request data: ' + error.message });
+      } else {
+        res.status(500).json({ error: 'Failed to upload file' });
+      }
     }
   });
 
@@ -296,17 +316,84 @@ export async function registerFileRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Categories CRUD endpoints
+  app.get('/api/categories', async (req, res) => {
+    try {
+      const categories = await categoryService.getCategories(FIXED_USER_ID);
+      res.json(categories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+  });
+
+  app.post('/api/categories', async (req, res) => {
+    try {
+      const categoryData = req.body;
+      const newCategory = await categoryService.createCategory(FIXED_USER_ID, categoryData);
+      res.status(201).json(newCategory);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create category';
+      res.status(400).json({ error: message });
+    }
+  });
+
+  app.put('/api/categories/:id', async (req, res) => {
+    try {
+      const categoryId = req.params.id;
+      const categoryData = req.body;
+      const updatedCategory = await categoryService.updateCategory(FIXED_USER_ID, categoryId, categoryData);
+      
+      if (!updatedCategory) {
+        return res.status(404).json({ error: 'Category not found or not authorized' });
+      }
+      
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error('Error updating category:', error);
+      const message = error instanceof Error ? error.message : 'Failed to update category';
+      res.status(400).json({ error: message });
+    }
+  });
+
+  app.delete('/api/categories/:id', async (req, res) => {
+    try {
+      const categoryId = req.params.id;
+      const result = await categoryService.deleteCategory(FIXED_USER_ID, categoryId);
+      
+      if (!result.success) {
+        return res.status(404).json({ error: result.message });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      const message = error instanceof Error ? error.message : 'Failed to delete category';
+      res.status(400).json({ error: message });
+    }
+  });
+
   // Go acceleration service health check
   app.get('/api/accelerate/health', async (req, res) => {
     try {
-      const healthCheck = await fetch('http://localhost:5001/accelerate/health');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      
+      const healthCheck = await fetch('http://localhost:5001/accelerate/health', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       if (healthCheck.ok) {
         const result = await healthCheck.json();
         res.json(result);
       } else {
+        // Don't log as error - this is expected when Go service is not running
         res.status(503).json({ status: 'Go service not available' });
       }
     } catch (error) {
+      // Don't log as error - this is expected when Go service is not running
       res.status(503).json({ status: 'Go service not available', error: 'Connection failed' });
     }
   });
@@ -321,6 +408,25 @@ export async function registerFileRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: 'Failed to start Go acceleration service' });
     }
   });
+
+  // Seed default categories endpoint (for admin/development)
+  app.post('/api/categories/seed', async (req, res) => {
+    try {
+      await seedDefaultCategories();
+      res.json({ message: 'Default categories seeded successfully' });
+    } catch (error) {
+      console.error('Error seeding default categories:', error);
+      res.status(500).json({ error: 'Failed to seed default categories' });
+    }
+  });
+
+  // Seed default categories on startup
+  try {
+    await seedDefaultCategories();
+    console.log('Default categories seeded on startup');
+  } catch (error) {
+    console.error('Failed to seed default categories on startup:', error);
+  }
 
   console.log('File routes registered successfully');
 }

@@ -64,7 +64,7 @@ export class FileAccelerationService {
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(2000), // 2 second timeout - faster for better UX
+        signal: AbortSignal.timeout(1000), // 1 second timeout - reduce server load
       });
 
       if (response.ok) {
@@ -78,12 +78,18 @@ export class FileAccelerationService {
         console.log('Go acceleration service available:', healthData);
       } else {
         this.capabilities.isAvailable = false;
-        console.warn('Go acceleration service health check failed:', response.status);
+        // Don't log warnings for expected 503 responses
+        if (response.status !== 503) {
+          console.warn('Go acceleration service health check failed:', response.status);
+        }
       }
     } catch (error) {
       this.capabilities.isAvailable = false;
       this.capabilities.lastHealthCheck = Date.now();
-      console.info('Go acceleration service not available, using TypeScript fallback');
+      // Only log in debug mode - this is expected when Go service isn't running
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Go acceleration service not available, using TypeScript fallback');
+      }
     }
   }
 

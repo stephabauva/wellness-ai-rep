@@ -4,6 +4,16 @@ import { Button } from "@/components/ui/button"; // For remove button, though a 
 import { getFileIcon } from "@/utils/chatUtils"; // Assuming this utility exists and is correctly pathed
 import { AttachedFile } from "@/hooks/useFileManagement";
 
+/**
+ * @used-by chat/ChatSection - Display file attachments in chat
+ * @used-by chat/ChatInputArea - Preview files before sending
+ * @used-by chat/MessageDisplayArea - Show attached files in messages
+ * @cross-domain true
+ * @shared-component true
+ * @critical-path true
+ * @risk Different domains may expect different preview behaviors
+ * @recommendation Consider domain-specific variants or configuration
+ */
 interface AttachmentPreviewProps {
   attachedFiles: AttachedFile[] | null;
   onRemoveAttachment: (fileId: string) => void;

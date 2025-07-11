@@ -1,3 +1,12 @@
+/**
+ * @used-by chat/chat-routes - Memory detection in chat messages
+ * @used-by memory/memory-routes - Direct memory operations
+ * @used-by shared/chat-helpers - Chat memory integration
+ * @cross-domain true
+ * @critical-path true
+ * @service-type core
+ * @impact Changes affect chat memory detection and storage
+ */
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '../db';

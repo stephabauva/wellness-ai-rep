@@ -1,31 +1,68 @@
 import React from 'react';
-import { Image, FileText, Stethoscope, Activity, Folder, Heart, Apple, Dumbbell, FileImage, Camera, Users, Settings, Database } from 'lucide-react';
+import { Image, FileText, Stethoscope, Activity, Folder, Heart, Apple, Dumbbell, FileImage, Camera, Users, Settings, Database, FileIcon, VideoIcon, AudioWaveformIcon, File } from 'lucide-react';
 import { FileItem, FileCategoryGroup } from '@/types/fileManager'; // Use FileCategoryGroup
 
-export const getFileIcon = (fileType: string, fileName: string): React.ReactNode => {
+export const getFileIcon = (fileType: string, fileName: string, size: string = "h-6 w-6"): React.ReactNode => {
   const lowerFileType = fileType.toLowerCase();
   const lowerFileName = fileName.toLowerCase();
 
-  if (lowerFileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName)) {
-    return React.createElement(Image, { className: "h-4 w-4" });
+  // Image files
+  if (lowerFileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(fileName)) {
+    return React.createElement(Image, { className: `${size} text-blue-500` });
+  }
+  
+  // Video files
+  if (lowerFileType.startsWith('video/') || /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(fileName)) {
+    return React.createElement(VideoIcon, { className: `${size} text-purple-500` });
+  }
+  
+  // Audio files
+  if (lowerFileType.startsWith('audio/') || /\.(mp3|wav|flac|aac|ogg|wma|m4a)$/i.test(fileName)) {
+    return React.createElement(AudioWaveformIcon, { className: `${size} text-green-500` });
+  }
+  
+  // PDF files
+  if (lowerFileType.includes('pdf') || lowerFileName.endsWith('.pdf')) {
+    return React.createElement(FileText, { className: `${size} text-red-500` });
   }
   
   // XML files
   if (lowerFileType.includes('xml') || lowerFileName.endsWith('.xml')) {
-    return React.createElement(Database, { className: "h-4 w-4" });
+    return React.createElement(Database, { className: `${size} text-orange-500` });
   }
   
   // JSON files
   if (lowerFileType.includes('json') || lowerFileName.endsWith('.json')) {
-    return React.createElement(Database, { className: "h-4 w-4" });
+    return React.createElement(Database, { className: `${size} text-yellow-500` });
   }
   
   // CSV files
   if (lowerFileType.includes('csv') || lowerFileName.endsWith('.csv')) {
-    return React.createElement(Database, { className: "h-4 w-4" });
+    return React.createElement(Database, { className: `${size} text-green-600` });
   }
   
-  return React.createElement(FileText, { className: "h-4 w-4" });
+  // Word documents
+  if (lowerFileType.includes('word') || /\.(doc|docx)$/i.test(fileName)) {
+    return React.createElement(FileText, { className: `${size} text-blue-600` });
+  }
+  
+  // Excel files
+  if (lowerFileType.includes('excel') || lowerFileType.includes('sheet') || /\.(xls|xlsx)$/i.test(fileName)) {
+    return React.createElement(Database, { className: `${size} text-green-700` });
+  }
+  
+  // PowerPoint files
+  if (lowerFileType.includes('powerpoint') || lowerFileType.includes('presentation') || /\.(ppt|pptx)$/i.test(fileName)) {
+    return React.createElement(FileText, { className: `${size} text-orange-600` });
+  }
+  
+  // Text files
+  if (lowerFileType.includes('text') || /\.(txt|md|rtf)$/i.test(fileName)) {
+    return React.createElement(FileText, { className: `${size} text-gray-600` });
+  }
+  
+  // Default file icon
+  return React.createElement(FileIcon, { className: `${size} text-gray-500` });
 };
 
 export const formatFileSize = (bytes: number): string => {

@@ -1,9 +1,18 @@
 {
   "tableOfContents": {
     "core-dashboard": {
-      "features": ["dashboard-display", "metrics-overview"],
-      "components": ["HealthDataSection", "HealthMetricsCard"],
-      "endpoints": ["GET /api/health-data", "GET /api/health-data/categories"]
+      "features": [
+        "dashboard-display",
+        "metrics-overview"
+      ],
+      "components": [
+        "HealthDataSection",
+        "HealthMetricsCard"
+      ],
+      "endpoints": [
+        "GET /api/health-data",
+        "GET /api/health-data/categories"
+      ]
     }
   },
   "integrationStatus": {
@@ -18,7 +27,7 @@
       "knownIssues": []
     }
   },
-  "lastUpdated": "2025-01-28T18:20:00Z",
+  "lastUpdated": "2025-07-11T21:54:27.646Z",
   "dependencies": [],
   "featureGroups": {
     "core-dashboard": {
@@ -36,10 +45,19 @@
             "useHealthDataApi fetches data",
             "HealthMetricsCard components display metrics"
           ],
-          "components": ["HealthDataSection", "HealthMetricsCard"],
+          "components": [
+            "HealthDataSection",
+            "HealthMetricsCard"
+          ],
           "apiIntegration": {
-            "expectedEndpoints": ["GET /api/health-data", "GET /api/health-data/categories"],
-            "actualEndpoints": ["GET /api/health-data", "GET /api/health-data/categories"],
+            "expectedEndpoints": [
+              "GET /api/health-data",
+              "GET /api/health-data/categories"
+            ],
+            "actualEndpoints": [
+              "GET /api/health-data",
+              "GET /api/health-data/categories"
+            ],
             "integrationGaps": []
           }
         },
@@ -55,7 +73,10 @@
             "API calls with date parameters",
             "Charts re-render with filtered data"
           ],
-          "components": ["HealthMetricsCard", "useHealthDataApi"]
+          "components": [
+            "HealthMetricsCard",
+            "useHealthDataApi"
+          ]
         }
       }
     }
@@ -65,25 +86,88 @@
       "path": "client/src/components/HealthDataSection.tsx",
       "type": "React Component",
       "description": "Main container for health dashboard display.",
-      "calls": ["GET /api/health-data", "GET /api/health-data/categories"],
-      "uses": ["useHealthDataApi", "HealthMetricsCard"],
-      "invalidates": ["query:healthData"]
+      "calls": [
+        "GET /api/health-data",
+        "GET /api/health-data/categories"
+      ],
+      "uses": [
+        "useHealthDataApi",
+        "HealthMetricsCard"
+      ],
+      "invalidates": [
+        "query:healthData"
+      ],
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": true,
+        "usedBy": [
+          {
+            "file": "client/src/pages/home.tsx",
+            "domain": "unknown/needs-classification"
+          }
+        ]
+      }
     },
     "HealthMetricsCard": {
       "path": "client/src/components/HealthMetricsCard.tsx",
       "type": "React Component",
       "description": "Displays categorized health metrics with charts.",
       "calls": [],
-      "uses": ["ActivityTrendChart", "HeartRateChart", "SleepQualityChart"],
-      "invalidates": []
+      "uses": [
+        "ActivityTrendChart",
+        "HeartRateChart",
+        "SleepQualityChart"
+      ],
+      "invalidates": [],
+      "actualUsage": {
+        "usageCount": 2,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/HealthDataSection.tsx",
+            "domain": "health"
+          },
+          {
+            "file": "client/src/components/health/HealthCategoryView.tsx",
+            "domain": "health"
+          }
+        ]
+      }
     },
     "useHealthDataApi": {
       "path": "client/src/hooks/useHealthDataApi.ts",
       "type": "React Hook",
       "description": "Fetches health data with time filtering.",
-      "calls": ["GET /api/health-data", "GET /api/health-data/categories"],
+      "calls": [
+        "GET /api/health-data",
+        "GET /api/health-data/categories"
+      ],
       "uses": [],
-      "invalidates": ["query:healthData"]
+      "invalidates": [
+        "query:healthData"
+      ],
+      "actualUsage": {
+        "usageCount": 4,
+        "crossDomain": false,
+        "usedBy": [
+          {
+            "file": "client/src/components/HealthDataSection.tsx",
+            "domain": "health"
+          },
+          {
+            "file": "client/src/components/health/KeyMetricsOverview.tsx",
+            "domain": "health"
+          },
+          {
+            "file": "client/src/components/health/HeartRateChart.tsx",
+            "domain": "health"
+          },
+          {
+            "file": "client/src/components/health/HealthCategoryView.tsx",
+            "domain": "health"
+          }
+        ]
+      }
     }
   },
   "apiEndpoints": {
@@ -91,14 +175,18 @@
       "description": "Fetches health data with time range filtering.",
       "handlerFile": "server/routes.ts",
       "response": "[HealthMetric]",
-      "readsFrom": ["healthData"],
+      "readsFrom": [
+        "healthData"
+      ],
       "modifies": []
     },
     "GET /api/health-data/categories": {
       "description": "Fetches health data grouped by category.",
       "handlerFile": "server/routes.ts",
       "response": "{ [categoryName]: [HealthMetric] }",
-      "readsFrom": ["healthData"],
+      "readsFrom": [
+        "healthData"
+      ],
       "modifies": []
     }
   },
@@ -107,12 +195,26 @@
     "tables": {
       "healthData": {
         "columns": {
-          "id": { "type": "serial", "primaryKey": true },
-          "userId": { "type": "integer", "foreignKey": "users.id" },
-          "dataType": { "type": "text" },
-          "value": { "type": "text" },
-          "timestamp": { "type": "timestamp" },
-          "category": { "type": "text" }
+          "id": {
+            "type": "serial",
+            "primaryKey": true
+          },
+          "userId": {
+            "type": "integer",
+            "foreignKey": "users.id"
+          },
+          "dataType": {
+            "type": "text"
+          },
+          "value": {
+            "type": "text"
+          },
+          "timestamp": {
+            "type": "timestamp"
+          },
+          "category": {
+            "type": "text"
+          }
         }
       }
     }
@@ -122,5 +224,11 @@
       "type": "React Query Key",
       "description": "Caches health data with time-based filtering."
     }
+  },
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.646Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 14,
+    "totalDependencies": 18
   }
 }

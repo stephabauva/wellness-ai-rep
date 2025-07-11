@@ -1,13 +1,15 @@
-
 {
   "appName": "Wellness Coaching Application",
   "version": "1.0.0",
-  "lastUpdated": "2025-07-10T21:15:00Z",
+  "lastUpdated": "2025-07-11T14:37:13.858Z",
   "domains": {
     "chat": {
       "description": "Core chat messaging functionality with AI streaming responses and conversation history",
       "path": ".system-maps/json-system-maps/chat/",
-      "dependencies": ["memory", "file-manager"],
+      "dependencies": [
+        "memory",
+        "file-manager"
+      ],
       "subdomains": {
         "attachments": {
           "description": "File and media attachment handling in chat",
@@ -25,7 +27,7 @@
           "description": "Core chat messaging and streaming functionality",
           "path": ".system-maps/json-system-maps/chat/core-messaging.map.json"
         }
-      }
+      },
     },
     "memory": {
       "description": "AI memory system for context persistence and intelligent memory management",
@@ -191,8 +193,13 @@
   "crossDomainDependencies": {
     "chat → file-manager": {
       "reason": "Chat uploads affect file manager thumbnail display through shared API endpoint",
-      "sharedComponents": ["client/src/components/filemanager/FileList.tsx", "client/src/utils/fileManagerUtils.ts"],
-      "sharedEndpoints": ["/api/upload"],
+      "sharedComponents": [
+        "client/src/components/filemanager/FileList.tsx",
+        "client/src/utils/fileManagerUtils.ts"
+      ],
+      "sharedEndpoints": [
+        "/api/upload"
+      ],
       "behaviorDifferences": {
         "compression": "Chat uploads bypass compression for immediate thumbnails, file-manager applies smart compression (skips media files)",
         "processing": "Chat uses useFileManagement.ts (direct upload), file-manager uses useFileUpload.ts (with compression logic)",

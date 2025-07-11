@@ -1,11 +1,19 @@
 {
   "tableOfContents": {
-    "structured-logging": ["logger-service", "log-levels", "clean-output"],
-    "performance-tracking": ["request-logging", "memory-service-logs", "database-migration-logs"]
+    "structured-logging": [
+      "logger-service",
+      "log-levels",
+      "clean-output"
+    ],
+    "performance-tracking": [
+      "request-logging",
+      "memory-service-logs",
+      "database-migration-logs"
+    ]
   },
   "domain": "logging",
   "version": "1.0.0",
-  "lastUpdated": "2025-06-26T22:10:40Z",
+  "lastUpdated": "2025-07-11T21:54:27.658Z",
   "description": "Production-ready structured logging system with configurable levels and clean output formatting for development and production environments.",
   "featureGroups": [
     {
@@ -185,5 +193,71 @@
       "TypeScript best practices with proper error handling"
     ],
     "integration": "Integrated across all major services (memory, database, express, system)"
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "server/services/logger-service.ts",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "server/index.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/memory-service.ts"
+          },
+          {
+            "domain": "shared/services",
+            "file": "server/services/database-migration-service.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/cache-service.ts",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "server/storage.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/optimized-memory-service.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/memory-service.ts"
+          },
+          {
+            "domain": "memory",
+            "file": "server/services/enhanced-memory-service.ts"
+          },
+          {
+            "domain": "shared/services",
+            "file": "server/services/ai-service.ts"
+          },
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/routes/index.ts",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "server/index.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 0
+  },
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.658Z",
+    "crossDomainFiles": 3,
+    "internalFiles": 0,
+    "totalDependencies": 3
   }
 }

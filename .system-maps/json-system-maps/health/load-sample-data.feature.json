@@ -68,14 +68,19 @@
       "errorHandling": "Try-catch with 500 error response"
     },
     "cacheDependencies": {
-      "invalidates": ["query:allHealthData", "query:healthData"],
+      "invalidates": [
+        "query:allHealthData",
+        "query:healthData"
+      ],
       "refreshesComponents": [
         "HealthDataSection",
         "KeyMetricsOverview",
         "HealthMetricsCard",
         "All health charts and visualizations"
       ],
-      "triggerEvents": ["sample-data-loaded"]
+      "triggerEvents": [
+        "sample-data-loaded"
+      ]
     }
   },
   "storageImplementation": {
@@ -103,8 +108,14 @@
       "name": "sample_health_data",
       "schema": "Replica of health_data table without userId field",
       "columns": [
-        "id", "dataType", "value", "unit", "timestamp",
-        "source", "category", "metadata"
+        "id",
+        "dataType",
+        "value",
+        "unit",
+        "timestamp",
+        "source",
+        "category",
+        "metadata"
       ],
       "population": "Populated by scripts/populate-sample-data.ts",
       "dataRange": "Contains 90 days of realistic health metrics"
@@ -153,5 +164,62 @@
   "relatedFeatures": [
     "reset-health-data: Clears all health data",
     "timeframe-dropdown: Controls data visualization period"
-  ]
+  ],
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "client/src/services/native-health-service.ts",
+        "importedBy": [
+          {
+            "domain": "shared/services",
+            "file": "client/src/services/platform-detection-global.ts"
+          }
+        ]
+      },
+      {
+        "file": "client/src/components/HealthDataSection.tsx",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/pages/home.tsx"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-parser.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-deduplication.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-consent-service.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 14
+  },
+  "lastUpdated": "2025-07-11T21:54:27.648Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.648Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 14,
+    "totalDependencies": 18
+  }
 }

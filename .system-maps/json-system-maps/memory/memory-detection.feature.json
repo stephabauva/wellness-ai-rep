@@ -12,15 +12,39 @@
   },
   "files": {
     "ui": [],
-    "api": ["server/routes/memory-routes.ts"],
-    "services": ["server/services/memory-service.ts", "server/services/simple-memory-detection.ts", "server/services/chatgpt-memory-enhancement.ts"],
-    "data": ["memory_entries", "memory_triggers"],
-    "types": ["shared/schema.ts"]
+    "api": [
+      "server/routes/memory-routes.ts"
+    ],
+    "services": [
+      "server/services/memory-service.ts",
+      "server/services/simple-memory-detection.ts",
+      "server/services/chatgpt-memory-enhancement.ts"
+    ],
+    "data": [
+      "memory_entries",
+      "memory_triggers"
+    ],
+    "types": [
+      "shared/schema.ts"
+    ]
   },
   "cacheFlow": {
-    "invalidates": ["query:memories"],
-    "refreshes": ["MemorySection"],
-    "triggers": ["memory-background-processing"]
+    "invalidates": [
+      "query:memories"
+    ],
+    "refreshes": [
+      "MemorySection"
+    ],
+    "triggers": [
+      "memory-background-processing"
+    ],
+    "crossDomainInvalidates": [
+      "query:memory",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing",
+      "query:shared/services",
+      "query:chat"
+    ]
   },
   "errorPaths": {
     "network": "Skip memory detection, continue with chat",
@@ -28,9 +52,18 @@
     "business": "Graceful degradation without memory enhancement"
   },
   "dependencies": {
-    "internal": ["ai-service", "chat-system"],
-    "external": ["OpenAI API", "Google AI"],
-    "shared": ["cache-service", "error-handling"]
+    "internal": [
+      "ai-service",
+      "chat-system"
+    ],
+    "external": [
+      "OpenAI API",
+      "Google AI"
+    ],
+    "shared": [
+      "cache-service",
+      "error-handling"
+    ]
   },
   "userFlow": [
     "User sends message in chat",
@@ -44,10 +77,36 @@
   "semanticLabeling": {
     "enhancement": "Added AI-powered semantic label extraction to replace keyword-only approach",
     "labelTypes": {
-      "food_diet": ["allergy", "preference", "restriction", "dangerous", "mild", "meal-timing"],
-      "personal_context": ["background", "health-history", "lifestyle", "medical", "physical-limitation"],
-      "goals": ["weight-loss", "muscle-gain", "nutrition", "fitness", "target"]
+      "food_diet": [
+        "allergy",
+        "preference",
+        "restriction",
+        "dangerous",
+        "mild",
+        "meal-timing"
+      ],
+      "personal_context": [
+        "background",
+        "health-history",
+        "lifestyle",
+        "medical",
+        "physical-limitation"
+      ],
+      "goals": [
+        "weight-loss",
+        "muscle-gain",
+        "nutrition",
+        "fitness",
+        "target"
+      ]
     },
     "uiImpact": "Labels displayed as prominent blue badges, keywords de-emphasized"
+  },
+  "lastUpdated": "2025-07-11T21:54:27.656Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.656Z",
+    "crossDomainFiles": 10,
+    "internalFiles": 3,
+    "totalDependencies": 11
   }
 }

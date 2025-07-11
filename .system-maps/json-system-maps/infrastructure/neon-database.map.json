@@ -1,4 +1,3 @@
-
 {
   "_meta": {
     "feature": "neon-database-infrastructure",
@@ -12,7 +11,11 @@
     "initialization": "App startup → Environment detection → Neon connection setup → Pool creation → Schema validation",
     "operations": "API request → Route handler → Service layer → Database query → Neon serverless → Response",
     "connectionManagement": "Connection pooling → Idle timeout → Connection reuse → Graceful shutdown",
-    "sideEffects": ["Connection pool management", "Query performance monitoring", "Automatic scaling"]
+    "sideEffects": [
+      "Connection pool management",
+      "Query performance monitoring",
+      "Automatic scaling"
+    ]
   },
   "files": {
     "core": [
@@ -54,7 +57,7 @@
     "schema": "Complete application schema with indexes",
     "tables": [
       "users",
-      "chat_messages", 
+      "chat_messages",
       "conversations",
       "memories",
       "health_data",
@@ -66,14 +69,27 @@
   },
   "performanceOptimizations": {
     "connectionPooling": "Reuses existing connections to reduce overhead",
-    "preparedStatements": "Cached query plans for frequent operations", 
+    "preparedStatements": "Cached query plans for frequent operations",
     "indexStrategy": "Optimized indexes for chat, memory, and health queries",
     "computeLifecycle": "Handles 5-minute sleep cycle gracefully"
   },
   "cacheFlow": {
-    "invalidates": ["connection-pool-on-error"],
-    "refreshes": ["database-connection-health"],
-    "triggers": ["automatic-reconnection-on-wake"]
+    "invalidates": [
+      "connection-pool-on-error"
+    ],
+    "refreshes": [
+      "database-connection-health"
+    ],
+    "triggers": [
+      "automatic-reconnection-on-wake"
+    ],
+    "crossDomainInvalidates": [
+      "query:infrastructure",
+      "query:unknown/needs-classification",
+      "query:memory",
+      "query:shared/services",
+      "query:infrastructure/routing"
+    ]
   },
   "errorHandling": {
     "connectionFailure": "Automatic retry with exponential backoff",
@@ -116,7 +132,10 @@
     ]
   },
   "gracefulShutdown": {
-    "signals": ["SIGINT", "SIGTERM"],
+    "signals": [
+      "SIGINT",
+      "SIGTERM"
+    ],
     "cleanup": "pool.end() → close all connections",
     "timeout": "Graceful connection closure before exit"
   },
@@ -124,5 +143,12 @@
     "localFallback": "Conditional pg import for local development",
     "environmentSeparation": "Strict Replit vs local detection",
     "migrationSupport": "Drizzle migrations for schema updates"
+  },
+  "lastUpdated": "2025-07-11T21:54:27.658Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.658Z",
+    "crossDomainFiles": 3,
+    "internalFiles": 0,
+    "totalDependencies": 3
   }
 }

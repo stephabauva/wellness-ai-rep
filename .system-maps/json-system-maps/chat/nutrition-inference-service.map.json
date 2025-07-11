@@ -9,21 +9,69 @@
   "dataFlow": {
     "request": "Chat Routes → processNutritionData → nutritionInferenceService.extractNutritionFromText → nutritionMemoryService.enhanceNutritionInference → DateContextParser.parseDateContext → NutritionData validation",
     "response": "Validated NutritionData → formatForStorage → storage.createHealthDataBatch → nutritionInferenceService.updateFoodMemories → Memory system updates",
-    "sideEffects": ["Health data creation", "Nutrition metrics aggregation", "Cache invalidation for health queries", "Food memory pattern updates", "Dietary preference tracking"]
+    "sideEffects": [
+      "Health data creation",
+      "Nutrition metrics aggregation",
+      "Cache invalidation for health queries",
+      "Food memory pattern updates",
+      "Dietary preference tracking"
+    ]
   },
   "files": {
     "ui": [],
-    "api": ["chat-routes.ts (processNutritionData function)"],
-    "services": ["nutrition-inference-service.ts", "nutrition-memory-service.ts", "nutrition-aggregation-service.ts", "storage.ts (createHealthDataBatch)", "memory-service.ts", "cache-service.ts (generic cache methods)"],
-    "utils": ["date-context-parser.ts"],
-    "data": ["health_data table (nutrition category)", "memory_entries table (food_preferences, dietary_restrictions, meal_patterns, nutrition_goals)"],
-    "types": ["NutritionData interface", "nutritionDataSchema", "InsertHealthData", "DateContext interface", "FoodMemoryPattern interface", "DietaryInfo interface", "DailyNutritionSummary interface", "NutritionMealSummary interface", "NutritionUpdateRequest interface"],
-    "tests": ["date-context-parser.test.ts", "nutrition-aggregation-service.test.ts"]
+    "api": [
+      "chat-routes.ts (processNutritionData function)"
+    ],
+    "services": [
+      "nutrition-inference-service.ts",
+      "nutrition-memory-service.ts",
+      "nutrition-aggregation-service.ts",
+      "storage.ts (createHealthDataBatch)",
+      "memory-service.ts",
+      "cache-service.ts (generic cache methods)"
+    ],
+    "utils": [
+      "date-context-parser.ts"
+    ],
+    "data": [
+      "health_data table (nutrition category)",
+      "memory_entries table (food_preferences, dietary_restrictions, meal_patterns, nutrition_goals)"
+    ],
+    "types": [
+      "NutritionData interface",
+      "nutritionDataSchema",
+      "InsertHealthData",
+      "DateContext interface",
+      "FoodMemoryPattern interface",
+      "DietaryInfo interface",
+      "DailyNutritionSummary interface",
+      "NutritionMealSummary interface",
+      "NutritionUpdateRequest interface"
+    ],
+    "tests": [
+      "date-context-parser.test.ts",
+      "nutrition-aggregation-service.test.ts"
+    ]
   },
   "cacheFlow": {
-    "invalidates": ["query:health-data", "query:nutrition-metrics"],
-    "refreshes": ["HealthDashboard", "NutritionCharts"],
-    "triggers": ["health-data-aggregation"]
+    "invalidates": [
+      "query:health-data",
+      "query:nutrition-metrics"
+    ],
+    "refreshes": [
+      "HealthDashboard",
+      "NutritionCharts"
+    ],
+    "triggers": [
+      "health-data-aggregation"
+    ],
+    "crossDomainInvalidates": [
+      "query:chat",
+      "query:unknown/needs-classification",
+      "query:memory",
+      "query:shared/services",
+      "query:infrastructure/routing"
+    ]
   },
   "errorPaths": {
     "parsing": "Returns null for invalid nutrition content",
@@ -31,21 +79,42 @@
     "extraction": "Graceful fallback to empty nutrition data"
   },
   "dependencies": {
-    "internal": ["health-data-storage", "ai-service", "memory-service", "nutrition-memory-service", "nutrition-aggregation-service", "cache-service"],
-    "external": ["zod validation"],
-    "shared": ["logger-service"]
+    "internal": [
+      "health-data-storage",
+      "ai-service",
+      "memory-service",
+      "nutrition-memory-service",
+      "nutrition-aggregation-service",
+      "cache-service"
+    ],
+    "external": [
+      "zod validation"
+    ],
+    "shared": [
+      "logger-service"
+    ]
   },
   "implementation": {
     "extractNutritionFromText": {
       "description": "Main entry point for nutrition extraction from AI responses with memory-enhanced inference",
-      "parameters": ["responseText", "originalMessage", "hasImages", "timezone", "userId"],
+      "parameters": [
+        "responseText",
+        "originalMessage",
+        "hasImages",
+        "timezone",
+        "userId"
+      ],
       "returns": "Promise<NutritionData | null>",
       "validation": "Uses zod schema for data validation",
       "enhancement": "Memory-enhanced inference uses user's food patterns for improved calorie estimation"
     },
     "updateFoodMemories": {
       "description": "Updates user's food memories after successful nutrition data extraction",
-      "parameters": ["userId", "nutritionData", "conversationId"],
+      "parameters": [
+        "userId",
+        "nutritionData",
+        "conversationId"
+      ],
       "functionality": [
         "Updates meal patterns based on food items and meal type",
         "Tracks food preferences from identified food items",
@@ -66,7 +135,11 @@
     },
     "determineConfidence": {
       "description": "Calculates confidence level based on various factors",
-      "factors": ["user_provided_values", "image_analysis", "ai_estimates"],
+      "factors": [
+        "user_provided_values",
+        "image_analysis",
+        "ai_estimates"
+      ],
       "levels": {
         "high": "User provided explicit values",
         "medium": "AI estimates with approximations or image analysis",
@@ -83,7 +156,12 @@
     },
     "extractMealType": {
       "description": "Identifies meal type from context",
-      "types": ["breakfast", "lunch", "dinner", "snack"]
+      "types": [
+        "breakfast",
+        "lunch",
+        "dinner",
+        "snack"
+      ]
     },
     "extractFoodItems": {
       "description": "Identifies specific food items mentioned",
@@ -91,9 +169,19 @@
     },
     "parseDateContext": {
       "description": "Parses date context from conversation text using DateContextParser",
-      "parameters": ["responseText", "originalMessage", "timezone"],
+      "parameters": [
+        "responseText",
+        "originalMessage",
+        "timezone"
+      ],
       "returns": "DateContext object with parsed date and confidence",
-      "patterns": ["today", "yesterday", "last Monday", "3 days ago", "explicit dates (MM/DD)"],
+      "patterns": [
+        "today",
+        "yesterday",
+        "last Monday",
+        "3 days ago",
+        "explicit dates (MM/DD)"
+      ],
       "validation": "Validates parsed dates are within reasonable range (30 days past, 7 days future)"
     },
     "formatForStorage": {
@@ -105,7 +193,11 @@
     },
     "createNutritionDataFromInference": {
       "description": "Stores inferred nutrition data as individual health data entries",
-      "parameters": ["userId", "nutritionData (formatForStorage output)", "conversationId"],
+      "parameters": [
+        "userId",
+        "nutritionData (formatForStorage output)",
+        "conversationId"
+      ],
       "returns": "HealthData[] array of created nutrition entries",
       "functionality": [
         "Creates individual health_data records for each nutrition component (calories, protein, carbs, fat, fiber, sugar, sodium)",
@@ -121,7 +213,10 @@
     "description": "Task 7 implementation: Daily nutrition aggregation with meal-level granularity",
     "getDailyNutritionSummary": {
       "description": "Aggregates nutrition data by date with meal breakdown",
-      "parameters": ["userId", "date"],
+      "parameters": [
+        "userId",
+        "date"
+      ],
       "returns": "DailyNutritionSummary with totals and meal-level breakdown",
       "caching": "1-hour TTL with cache invalidation on data updates",
       "functionality": [
@@ -133,13 +228,19 @@
     },
     "getNutritionSummariesByRange": {
       "description": "Gets nutrition summaries for a date range",
-      "parameters": ["userId", "startDate", "endDate"],
+      "parameters": [
+        "userId",
+        "startDate",
+        "endDate"
+      ],
       "returns": "Array of DailyNutritionSummary objects",
       "usage": "Weekly/monthly nutrition tracking and analysis"
     },
     "updateNutritionEntry": {
       "description": "Updates existing nutrition entries for specific date/meal",
-      "parameters": ["NutritionUpdateRequest with userId, date, mealType, nutrition values"],
+      "parameters": [
+        "NutritionUpdateRequest with userId, date, mealType, nutrition values"
+      ],
       "functionality": [
         "Finds existing entries by date and meal type",
         "Updates individual nutrition components",
@@ -149,12 +250,18 @@
     },
     "getMealNutritionBreakdown": {
       "description": "Gets meal-level nutrition breakdown for a specific date",
-      "parameters": ["userId", "date"],
+      "parameters": [
+        "userId",
+        "date"
+      ],
       "returns": "Object with meal types as keys and NutritionMealSummary as values"
     },
     "getWeeklyNutritionAverages": {
       "description": "Calculates weekly nutrition averages",
-      "parameters": ["userId", "startDate (7 days from this date)"],
+      "parameters": [
+        "userId",
+        "startDate (7 days from this date)"
+      ],
       "returns": "Weekly averages for all nutrition components",
       "excludes": "Days with no nutrition data from average calculation"
     }
@@ -224,7 +331,15 @@
     "description": "Automatic nutrition data extraction from AI chat responses",
     "location": "chat-routes.ts:processNutritionData()",
     "integration": "Called after AI response is saved in both streaming and non-streaming endpoints",
-    "dataTypes": ["calories", "protein", "carbohydrates", "fat", "fiber", "sugar", "sodium"],
+    "dataTypes": [
+      "calories",
+      "protein",
+      "carbohydrates",
+      "fat",
+      "fiber",
+      "sugar",
+      "sodium"
+    ],
     "storage": "Each nutrition component stored as separate health_data record with nutrition category",
     "errorHandling": "Non-blocking background processing with error logging",
     "metadata": {
@@ -306,5 +421,12 @@
       "futureRange": "7 days maximum",
       "fallback": "Current date if parsing fails or out of range"
     }
+  },
+  "lastUpdated": "2025-07-11T21:54:27.655Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-11T21:54:27.655Z",
+    "crossDomainFiles": 3,
+    "internalFiles": 7,
+    "totalDependencies": 10
   }
 }

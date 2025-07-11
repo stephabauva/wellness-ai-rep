@@ -326,6 +326,10 @@ class DependencyTracker {
   }
 
   async generateDependencyMap(outputPath = 'dependency-map.json') {
+    // Create organized system maps instead of single file
+    await this.generateSystemMaps();
+    
+    // Keep the old functionality for backward compatibility
     const dependencyMap = {};
     
     for (const [filePath, info] of this.dependencies.entries()) {
@@ -345,7 +349,236 @@ class DependencyTracker {
     }
     
     fs.writeFileSync(outputPath, JSON.stringify(dependencyMap, null, 2));
-    console.log(`\n💾 Dependency map saved to ${outputPath}`);
+    console.log(`\n💾 Legacy dependency map saved to ${outputPath}`);
+  }
+
+  async generateSystemMaps() {
+    console.log('\n🗺️  Enhancing existing system maps with dependency data...\n');
+    
+    // Organize dependencies by domain
+    const domainDependencies = new Map();
+    const systemMapsDir = '.system-maps/json-system-maps';
+    
+    // Group files by domain and categorize dependencies
+    for (const [filePath, info] of this.dependencies.entries()) {
+      if (info.usedBy.length > 0) {
+        const domain = this.normalizeDomainForMap(info.domain);
+        
+        if (!domainDependencies.has(domain)) {
+          domainDependencies.set(domain, {
+            files: new Map(),
+            crossDomainUsage: [],
+            internalUsage: [],
+            cacheInvalidations: new Set(),
+            performanceTargets: new Map()
+          });
+        }
+        
+        const domainData = domainDependencies.get(domain);
+        
+        // Track file-level dependencies
+        domainData.files.set(filePath, {
+          exports: info.exports.map(e => e.name),
+          usedBy: info.usedBy,
+          crossDomain: info.usedBy.some(u => u.domain !== info.domain),
+          usageCount: info.usedBy.length
+        });
+        
+        // Track cross-domain usage patterns
+        const crossDomainUsage = info.usedBy.filter(u => u.domain !== info.domain);
+        if (crossDomainUsage.length > 0) {
+          domainData.crossDomainUsage.push({
+            file: filePath,
+            crossDomainImports: crossDomainUsage
+          });
+          
+          // Generate cache invalidation patterns
+          domainData.cacheInvalidations.add(`query:${domain}`);
+          crossDomainUsage.forEach(usage => {
+            domainData.cacheInvalidations.add(`query:${usage.domain}`);
+          });
+        }
+        
+        // Track internal usage
+        const internalUsage = info.usedBy.filter(u => u.domain === info.domain);
+        if (internalUsage.length > 0) {
+          domainData.internalUsage.push({
+            file: filePath,
+            internalImports: internalUsage
+          });
+        }
+      }
+    }
+    
+    // Enhance existing system maps instead of creating new files
+    let mapsUpdated = 0;
+    for (const [domain, dependencyData] of domainDependencies.entries()) {
+      const updated = await this.enhanceExistingSystemMaps(domain, dependencyData);
+      mapsUpdated += updated;
+    }
+    
+    console.log(`\n🎯 Enhanced ${mapsUpdated} existing system maps with dependency data`);
+  }
+  
+  async enhanceExistingSystemMaps(domain, dependencyData) {
+    const systemMapsDir = '.system-maps/json-system-maps';
+    let mapsUpdated = 0;
+    
+    // Get existing maps for this domain
+    const domainMaps = await this.getExistingDomainMaps(domain);
+    
+    for (const mapPath of domainMaps) {
+      try {
+        const existingMap = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+        let mapModified = false;
+        
+        // Enhance map with dependency data
+        if (this.enhanceMapWithDependencies(existingMap, dependencyData, domain)) {
+          existingMap.lastUpdated = new Date().toISOString();
+          existingMap.dependencyAnalysis = {
+            lastAnalyzed: new Date().toISOString(),
+            crossDomainFiles: dependencyData.crossDomainUsage.length,
+            internalFiles: dependencyData.internalUsage.length,
+            totalDependencies: dependencyData.files.size
+          };
+          
+          fs.writeFileSync(mapPath, JSON.stringify(existingMap, null, 2));
+          console.log(`✅ Enhanced system map: ${mapPath}`);
+          mapModified = true;
+          mapsUpdated++;
+        }
+        
+      } catch (error) {
+        console.warn(`⚠️  Could not enhance map ${mapPath}: ${error.message}`);
+      }
+    }
+    
+    return mapsUpdated;
+  }
+  
+  async getExistingDomainMaps(domain) {
+    const systemMapsDir = '.system-maps/json-system-maps';
+    const maps = [];
+    
+    // Check for domain directory
+    const domainDir = `${systemMapsDir}/${domain}`;
+    if (fs.existsSync(domainDir)) {
+      const files = fs.readdirSync(domainDir);
+      files.forEach(file => {
+        if (file.endsWith('.map.json') || file.endsWith('.feature.json')) {
+          maps.push(`${domainDir}/${file}`);
+        }
+      });
+    }
+    
+    // Check for single-file maps in root
+    const singleFileMap = `${systemMapsDir}/${domain}.map.json`;
+    if (fs.existsSync(singleFileMap)) {
+      maps.push(singleFileMap);
+    }
+    
+    return maps;
+  }
+  
+  enhanceMapWithDependencies(existingMap, dependencyData, domain) {
+    let modified = false;
+    
+    // Enhance cacheFlow if it exists
+    if (existingMap.cacheFlow) {
+      if (!existingMap.cacheFlow.crossDomainInvalidates) {
+        existingMap.cacheFlow.crossDomainInvalidates = [];
+      }
+      
+      // Add cross-domain cache invalidations
+      for (const cacheKey of dependencyData.cacheInvalidations) {
+        if (!existingMap.cacheFlow.crossDomainInvalidates.includes(cacheKey)) {
+          existingMap.cacheFlow.crossDomainInvalidates.push(cacheKey);
+          modified = true;
+        }
+      }
+    }
+    
+    // Enhance components with actual usage data
+    if (existingMap.components) {
+      for (const [filePath, fileData] of dependencyData.files.entries()) {
+        const componentName = path.basename(filePath, path.extname(filePath));
+        
+        if (existingMap.components[componentName]) {
+          if (!existingMap.components[componentName].actualUsage) {
+            existingMap.components[componentName].actualUsage = {
+              usageCount: fileData.usageCount,
+              crossDomain: fileData.crossDomain,
+              usedBy: fileData.usedBy.map(u => ({ file: u.file, domain: u.domain }))
+            };
+            modified = true;
+          }
+        }
+      }
+    }
+    
+    // Enhance features with dependency data
+    if (existingMap.features || existingMap.featureGroups) {
+      const features = existingMap.features || existingMap.featureGroups;
+      
+      for (const [featureName, feature] of Object.entries(features)) {
+        if (feature.components) {
+          // Add dependency tracking to feature components
+          if (!feature.dependencyTracking) {
+            feature.dependencyTracking = {
+              crossDomainDependencies: dependencyData.crossDomainUsage.length,
+              internalDependencies: dependencyData.internalUsage.length,
+              riskLevel: this.calculateRiskLevel(dependencyData)
+            };
+            modified = true;
+          }
+        }
+      }
+    }
+    
+    // Add dependencies section if it doesn't exist
+    if (!existingMap.dependencies && dependencyData.crossDomainUsage.length > 0) {
+      existingMap.dependencies = {
+        crossDomain: dependencyData.crossDomainUsage.map(usage => ({
+          file: usage.file,
+          importedBy: usage.crossDomainImports.map(imp => ({
+            domain: imp.domain,
+            file: imp.file
+          }))
+        })),
+        internal: dependencyData.internalUsage.length
+      };
+      modified = true;
+    }
+    
+    return modified;
+  }
+  
+  calculateRiskLevel(dependencyData) {
+    const crossDomainRatio = dependencyData.crossDomainUsage.length / Math.max(dependencyData.files.size, 1);
+    
+    if (crossDomainRatio > 0.5) return 'high';
+    if (crossDomainRatio > 0.2) return 'medium';
+    return 'low';
+  }
+  
+  normalizeDomainForMap(domain) {
+    // Convert domain names to match system map structure
+    const mapping = {
+      'app/root': 'app',
+      'infrastructure/database': 'infrastructure',
+      'infrastructure/auth': 'infrastructure', 
+      'infrastructure/cache': 'infrastructure',
+      'infrastructure/logging': 'infrastructure',
+      'infrastructure/routing': 'infrastructure',
+      'shared/ui-components': 'shared',
+      'shared/hooks': 'shared',
+      'shared/utilities': 'shared',
+      'shared/types': 'shared',
+      'shared/services': 'shared',
+      'unknown/needs-classification': 'unknown'
+    };
+    
+    return mapping[domain] || domain;
   }
 }
 

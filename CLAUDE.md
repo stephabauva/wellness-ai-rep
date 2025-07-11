@@ -34,7 +34,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
   - React components: `client/src/components/`
   - Server routes: `server/routes/`
   - Database schema: `shared/schema.ts`
-  - System maps: `.system-maps/json-system-maps/`
+  - System maps: `.system-maps/json-system-maps/` 
+  - System map's guide : `.system-maps/optimized-complete-map-blue-original.md`
 
 ### Replit Constraints (Critical)
 - **Do NOT Touch**: vite.config.ts, WebSocket handling, Build systems, Compression settings

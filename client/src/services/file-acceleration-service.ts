@@ -112,10 +112,8 @@ export class FileAccelerationService {
    * Determine if a file should be accelerated using Go service
    */
   static shouldAccelerate(file: File): boolean {
-    // Refresh health check if needed
-    if (this.shouldRefreshHealthCheck()) {
-      this.performHealthCheck();
-    }
+    // Don't auto-refresh health check to avoid unnecessary 503s
+    // Health check will be done when actually needed
 
     if (!this.capabilities.isAvailable) {
       return false;

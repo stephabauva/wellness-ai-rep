@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { UniversalFileService } from '../services/universal-file-service';
 
@@ -29,12 +29,7 @@ export function useFileUpload(): UseFileUploadReturn {
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Initialize Universal File Service on first use
-  useEffect(() => {
-    UniversalFileService.initialize().catch(err => {
-      console.warn('Universal File Service initialization failed:', err);
-    });
-  }, []);
+  // Remove automatic initialization - services will initialize lazily when needed
 
   const uploadFile = async (file: File, categoryId?: string): Promise<UploadResponse | null> => {
     setIsUploading(true);

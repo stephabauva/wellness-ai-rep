@@ -20,14 +20,14 @@
     "_meta": {
       "feature": "upload-file",
       "domain": "file-manager",
-      "lastUpdated": "2025-07-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
     "trigger": "User clicks upload button and selects files",
     "dataFlow": {
-      "request": "FileUploadDialog → useFileUpload → Smart compression (skip media files) → UniversalFileService → /api/upload → files table",
+      "request": "FileUploadDialog → useFileUpload → uploadFile() → compressFile() → UniversalFileService.initialize() (lazy) → /api/upload → files table",
       "response": "Database → API → React Query → FileList refresh with proper thumbnails",
-      "sideEffects": ["Go acceleration for large files", "Category assignment", "Smart compression (media files excluded)", "Debug logging for uploads"]
+      "sideEffects": ["Lazy Go service initialization only when compressing files", "Category assignment", "Smart compression (media files excluded)", "Debug logging for uploads"]
     },
     "files": {
       "ui": ["FileUploadDialog.tsx", "useFileUpload.ts", "FileActionsToolbar.tsx"],

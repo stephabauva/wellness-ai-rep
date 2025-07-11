@@ -12,20 +12,20 @@
       "smart-routing"
     ],
     "totalFeatures": 7,
-    "lastUpdated": "2025-01-10"
+    "lastUpdated": "2025-07-11"
   },
   "go-acceleration": {
     "_meta": {
       "feature": "go-acceleration",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
-    "trigger": "Large data files (>5MB XML/JSON/CSV) detected during upload or health check initialization",
+    "trigger": "Large data files (>5MB XML/JSON/CSV) detected during upload compression only",
     "dataFlow": {
-      "request": "UniversalFileService → FileAccelerationService → /api/accelerate/health GET → Go service health check → /api/accelerate/start POST → Go service spawn",
+      "request": "compressFile() → UniversalFileService.initialize() → FileAccelerationService.initialize() → /api/accelerate/health GET (lazy) → /api/accelerate/start POST → Go service spawn",
       "response": "Go service → compressed file → upload completion | Health check → service availability detection",
-      "sideEffects": ["Go service startup", "90%+ compression ratios", "Graceful fallback to TypeScript", "Health check logging suppression"]
+      "sideEffects": ["Lazy Go service startup only when compressing", "90%+ compression ratios", "Graceful fallback to TypeScript", "No periodic health checks", "Silent 503 handling"]
     },
     "files": {
       "ui": ["client/src/services/universal-file-service.ts", "client/src/services/file-acceleration-service.ts", "useFileUpload.ts"],
@@ -36,7 +36,7 @@
     "cacheFlow": {
       "invalidates": [],
       "refreshes": ["AccelerationCapabilities"],
-      "triggers": ["go-service-startup", "compression-processing", "health-check-polling"]
+      "triggers": ["go-service-startup", "compression-processing", "lazy-health-check"]
     },
     "errorPaths": {
       "network": "Fallback to TypeScript processing with timeout handling",
@@ -53,7 +53,7 @@
     "_meta": {
       "feature": "compression-optimization",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
     "trigger": "File upload triggers compression analysis",
@@ -88,7 +88,7 @@
     "_meta": {
       "feature": "metadata-extraction",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
     "trigger": "File upload triggers parallel metadata extraction",
@@ -123,7 +123,7 @@
     "_meta": {
       "feature": "retention-policies",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
     "trigger": "File upload triggers retention policy analysis",
@@ -158,7 +158,7 @@
     "_meta": {
       "feature": "file-lifecycle",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
     "trigger": "Background service monitors file expiration",
@@ -193,14 +193,14 @@
     "_meta": {
       "feature": "universal-file-service",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
-    "trigger": "App startup initializes universal file service",
+    "trigger": "File compression triggers lazy universal file service initialization",
     "dataFlow": {
-      "request": "UniversalFileService.initialize() → platform detection → capability assessment",
+      "request": "compressFile() → UniversalFileService.initialize() → platform detection → capability assessment",
       "response": "Service routing configuration → unified interface",
-      "sideEffects": ["Platform capability detection", "Service routing setup"]
+      "sideEffects": ["Lazy platform capability detection", "Service routing setup only when needed"]
     },
     "files": {
       "ui": ["UniversalFileService.ts", "FileAccelerationService.ts", "FileCompressionService.ts"],
@@ -228,7 +228,7 @@
     "_meta": {
       "feature": "smart-routing",
       "domain": "file-manager",
-      "lastUpdated": "2025-01-10",
+      "lastUpdated": "2025-07-11",
       "status": "active"
     },
     "trigger": "File characteristics analysis triggers routing decision",

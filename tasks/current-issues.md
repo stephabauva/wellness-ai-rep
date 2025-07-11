@@ -59,6 +59,8 @@ Two major events have happened that seem to have broken the application : fixes 
 
 # Memory page :
 
+[ ] Labels and keywords are mixed, confusing for user
+
 [X] the overview of the number of memories shows total memories, preferences, instruction and personal info, while the tabs show 'all, preferences, personal, context and instructions', this needs to be harmonized
 
 [ ] In the overview, the count for all memory types is not right, it does not display for the total memories and i need to refresh the page to get the updated count after i add a memory

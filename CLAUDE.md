@@ -41,9 +41,9 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - **Environment**: Port mapping dev (5000) → prod (80), WebSocket/HMR stability required
 
 ### Important References
-- **Planning Process**: See plan.md
-- **Code Best Practices**: See workit.md
-- **Debugging & Investigation**: See zapper.md
+- **Planning Process**: See commands/chew.md
+- **Code Best Practices**: See commands/workit.md
+- **Debugging & Investigation**: See commands/zapper.md
 
 ---
 

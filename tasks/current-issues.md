@@ -4,6 +4,9 @@ Two major events have happened that seem to have broken the application : fixes 
 [ ] Need a central config file manage logging and some parts of settings that should not be handled by the user such as Performance Optimizations
 
 # Chat :
+
+[ ] the chat does not send health data to the ai yet, only memories
+
 [X] npx vitest run --reporter=verbose)
   ⎿  Error: stderr | client/src/components/ChatInputArea.test.tsx > ChatInputArea > 
      should trigger camera input on Camera button click (when getUserMedia fails)
@@ -56,7 +59,7 @@ Two major events have happened that seem to have broken the application : fixes 
 
 # Memory page :
 
-[ ] the overview of the number of memories shows total memories, preferences, instruction and personal info, while the tabs show 'all, preferences, personal, context and instructions', this needs to be harmonized
+[X] the overview of the number of memories shows total memories, preferences, instruction and personal info, while the tabs show 'all, preferences, personal, context and instructions', this needs to be harmonized
 
 [ ] In the overview, the count for all memory types is not right, it does not display for the total memories and i need to refresh the page to get the updated count after i add a memory
 
@@ -70,17 +73,17 @@ Two major events have happened that seem to have broken the application : fixes 
 
 [ ] if there are many memories, simply displaying them all at once will lead to performance issues. need to implement pagination in each tab
 
-[ ] the user is not able to export hsi memories, nothing implemented yet
+[ ] the user is not able to export his memories, nothing implemented yet
 
 # File manager :
 
-[ ] when uploading a file, the user can't choose a category, there are no visible categories.
+[X] when uploading a file, the user can't choose a category, there are no visible categories.
 
-[ ] Only the 'All' and 'Uncategorised' are visible
+[X] Only the 'All' and 'Uncategorised' are visible
 
-[ ] after checking some files boxes and clicking 'categorise', there are no categories visible.
+[X] after checking some files boxes and clicking 'categorise', there are no categories visible.
 
-[ ] Go acceleration service health check fails at startup showing '[WARN ] [express] GET /api/accelerate/health 503' - this is expected behavior since Go service should only start on-demand for large files >5MB, but the health check creates unnecessary warnings
+[X] Go acceleration service health check fails at startup showing '[WARN ] [express] GET /api/accelerate/health 503' - this is expected behavior since Go service should only start on-demand for large files >5MB, but the health check creates unnecessary warnings
 
 # Settings :
 

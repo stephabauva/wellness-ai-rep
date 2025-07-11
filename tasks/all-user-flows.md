@@ -105,19 +105,22 @@ nothing implemented yet
 dependencies : chat, settings 
 
 ## Overview
-The user can see at the top an overview of the number of memories : total memories, preferences, instruction, personal info
+The user can see at the top an overview of the number of memories 
 
 ## Memory tabs
-The user can click on each tab to display the memories associated, the tabs are 'all, preferences, personal, context, instructions'. In each tab, there is an description about what the category in a blue rectangle.
+The user can click on each tab to display the memories associated. In each tab, there is an description about what the category in a blue rectangle.
+
+## labels
+Each memory has labels that can be selected and deselected by user to controlled which memories to display
 
 ## Displaying memory
 To see the memories, the user must press the button 'show my stored memories' (i think this was to load the application faster, so the memories don't have to be loaded on start)
 
 ## Manual memory entry
-The user clicks on 'add memory, a modal opens, the user types a message, choose a category and an importance level. From there, it uses the existing memory processing system like chat does. Hence, it is then sent to an 'ai memory reviewer' (i feel like the importance level should should be attributed by the ai, even the category), the ai response is then added to the memory page and saved in the database.
+The user clicks on 'add memory, a modal opens, the user types a message, choose a category and an importance level. From there, it uses the existing memory processing system like chat does. Hence, it is then sent to an 'ai memory reviewer' (i feel like the importance level should be attributed by the ai, even the category), the ai response is then added to the memory page and saved in the database.
 
 ## Deleting memories
-A checkbox is visible next to all memories, the user check boxes, a red button appears 'delete selected', teh user presses that button, the memories are removed from the page and deleted from the database.
+A checkbox is visible next to all memories, the user check boxes, a red button appears 'delete selected', the user presses that button, the memories are removed from the page and deleted from the database.
 After checking boxes, a 'clear' button also appear, clicling on it, clears all check marks for all boxes, which makes the delete button disappear as well.
 
 ## memory deduplication

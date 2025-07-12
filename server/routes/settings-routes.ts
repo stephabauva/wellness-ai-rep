@@ -3,6 +3,7 @@
 import { Express } from "./shared-dependencies.js";
 import { 
   storage,
+  healthConsentService,
   attachmentRetentionService,
   generatePDFReport,
   enhancedSettingsUpdateSchema,
@@ -18,7 +19,11 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Return comprehensive user settings including AI configuration
+      // Get health consent settings
+      const consentSettings = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+
+      // Return comprehensive user settings including AI configuration and health consent
       const userSettings = {
         ...user.preferences,
         aiProvider: user.aiProvider,
@@ -29,7 +34,8 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
         memoryDetectionProvider: user.memoryDetectionProvider,
         memoryDetectionModel: user.memoryDetectionModel,
         name: user.name,
-        email: user.email
+        email: user.email,
+        health_consent: healthConsent
       };
       
       res.json(userSettings);
@@ -55,7 +61,16 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
         attachmentRetentionService.updateRetentionDurations(retentionUpdates);
       }
 
+      // Update health consent settings if provided
+      if (settings.health_consent) {
+        await healthConsentService.updateConsentSettings(1, settings.health_consent);
+      }
+
       const updatedUser = await storage.updateUserSettings(1, settings);
+
+      // Get updated health consent settings
+      const consentSettings = await healthConsentService.getUserConsentSettings(1);
+      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
 
       // Return comprehensive updated settings
       const updatedSettings = {
@@ -68,7 +83,8 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
         memoryDetectionProvider: updatedUser.memoryDetectionProvider,
         memoryDetectionModel: updatedUser.memoryDetectionModel,
         name: updatedUser.name,
-        email: updatedUser.email
+        email: updatedUser.email,
+        health_consent: healthConsent
       };
       
       res.json(updatedSettings);

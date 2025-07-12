@@ -28,7 +28,7 @@ import { AppPreferencesSettings } from "./settings/AppPreferencesSettings";
 import { FileManagementSettings } from "./settings/FileManagementSettings";
 import { AiConfigurationSettings } from "./settings/AiConfigurationSettings";
 import { PerformanceSettings } from "./settings/PerformanceSettings";
-
+import { HealthDataConsentSettings } from "./settings/HealthDataConsentSettings";
 
 // Define the combined Zod schema for the entire settings form
 // This type will be used by the form
@@ -41,7 +41,7 @@ const settingsSections = [
   { id: 'preferences', label: 'App Preferences', icon: Palette },
   { id: 'files', label: 'File Management', icon: FolderOpen },
   { id: 'ai', label: 'AI Configuration', icon: Bot },
-
+  { id: 'health-consent', label: 'Health Data Privacy', icon: Shield },
   { id: 'performance', label: 'Performance', icon: Zap },
 ];
 
@@ -153,7 +153,24 @@ const SettingsSection: React.FC = () => {
             isLoadingAiModels={isLoadingAiModels}
           />
         );
-
+      case 'health-consent':
+        return (
+          <HealthDataConsentSettings
+            settings={userSettings ? { ...userSettings, username: userSettings.username || "" } : undefined}
+            onSettingsUpdate={(newSettings) => {
+              // Update settings via the existing handler
+              const data = {
+                ...form.getValues(),
+                ...newSettings,
+                aiProvider: newSettings.aiProvider as "openai" | "google", // Cast aiProvider
+                transcriptionProvider: newSettings.transcriptionProvider as "webspeech" | "openai" | "google", // Cast transcriptionProvider
+                memoryDetectionProvider: newSettings.memoryDetectionProvider as "openai" | "google" | "none", // Cast memoryDetectionProvider
+              };
+              onSubmit(data);
+            }}
+            isLoading={isUpdatingSettings}
+          />
+        );
       case 'performance':
         return (
           <PerformanceSettings

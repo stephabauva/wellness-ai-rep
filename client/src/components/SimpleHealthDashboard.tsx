@@ -159,8 +159,13 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
 
   // Process health data for display
   const healthSummary = useMemo(() => {
-    if (!healthData || healthData.length === 0) return null;
+    if (!healthData || healthData.length === 0) {
+      console.log(`[SimpleHealthDashboard] No health data available for ${timeRange}`);
+      return null;
+    }
 
+    console.log(`[SimpleHealthDashboard] Processing ${healthData.length} health records for ${timeRange}`);
+    
     const summary = {
       weight: healthData.find(d => d.dataType === 'weight')?.value || null,
       bmi: healthData.find(d => d.dataType === 'bmi')?.value || null,
@@ -170,10 +175,12 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
       caloriesConsumed: healthData.find(d => d.dataType === 'calories_consumed')?.value || null,
       caloriesBurned: healthData.find(d => d.dataType === 'calories_burned')?.value || null,
       wellnessScore: healthData.find(d => d.dataType === 'wellness_score')?.value || null,
+      totalRecords: healthData.length, // Add this for debugging
     };
 
+    console.log(`[SimpleHealthDashboard] Health summary for ${timeRange}:`, summary);
     return summary;
-  }, [healthData]);
+  }, [healthData, timeRange]);
 
   // AI Analysis (simulated for MVP)
   const aiAnalysis = useMemo(() => {
@@ -272,6 +279,11 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
       {/* Summary Title */}
       <div className="text-lg font-semibold text-green-700">
         Summary - Last {timeRange === "7days" ? "7 days" : "30 days"}
+        {healthSummary && (
+          <span className="text-sm text-gray-500 ml-2">
+            ({healthSummary.totalRecords} records)
+          </span>
+        )}
       </div>
 
       {/* Metrics Grid */}

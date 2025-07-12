@@ -190,7 +190,7 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col max-w-4xl mx-auto p-6 space-y-6">
+    <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
       {/* Header with Gradient */}
       <div className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-lg p-6 text-white">
         <div className="flex items-center gap-3 mb-2">

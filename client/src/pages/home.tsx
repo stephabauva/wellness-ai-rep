@@ -53,7 +53,7 @@ const Home: React.FC = () => {
         <div style={{ display: activeSection === 'chat' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
           {chatSectionComponent}
         </div>
-        <div style={{ display: activeSection === 'health' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
+        <div style={{ display: activeSection === 'health' ? 'block' : 'none', flexGrow: 1, height: '100%', overflowY: 'auto' }}>
           {healthSectionComponent}
         </div>
         <div style={{ display: activeSection === 'devices' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>

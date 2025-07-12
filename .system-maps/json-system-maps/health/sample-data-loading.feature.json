@@ -1,0 +1,85 @@
+{
+  "_metadata": {
+    "featureName": "sample-data-loading",
+    "featureGroup": "health-dashboard",
+    "parentFile": "health-dashboard-core.map.json", 
+    "domain": "health",
+    "description": "Load sample health data for development and testing without requiring device sync",
+    "userFlow": [
+      "User clicks 'Load Sample Data' button",
+      "System copies sample_health_data to user's health profile",
+      "Cache invalidates and dashboard refreshes",
+      "Success message shows records loaded count",
+      "Health metrics immediately populate with realistic data"
+    ],
+    "components": ["Load Sample Data button", "sample data API", "batch data insertion"],
+    "lastUpdated": "2025-07-12",
+    "status": "active"
+  },
+  "trigger": "User clicks 'Load Sample Data' button in health dashboard actions section",
+  "dataFlow": {
+    "request": "Button click → loadSampleMutation → POST /api/health-data/load-sample → storage.loadSampleHealthData → Batch database insertion",
+    "response": "Database insertion → { recordsLoaded: number } → cache invalidation → UI refresh → Success toast",
+    "sideEffects": ["Cache invalidation", "Health data population", "Dashboard refresh", "User notification"]
+  },
+  "files": {
+    "ui": [
+      "client/src/components/SimpleHealthDashboard.tsx (loadSampleMutation)",
+      "client/src/hooks/use-toast.ts"
+    ],
+    "api": [
+      "server/routes/simple-health-routes.ts (POST /api/health-data/load-sample)",
+      "server/storage.ts (loadSampleHealthData method)"
+    ],
+    "data": [
+      "sample_health_data table (source)",
+      "health_data table (destination)",
+      "health-data cache keys"
+    ],
+    "types": [
+      "loadSampleHealthData return type",
+      "API response interface"
+    ]
+  },
+  "cacheFlow": {
+    "invalidates": ["queryClient.invalidateQueries({ queryKey: ['health-data'] })"],
+    "refreshes": ["health metrics display", "all time range views", "metric calculations"],
+    "triggers": ["immediate dashboard refresh", "new data availability"]
+  },
+  "errorPaths": {
+    "network": "Error toast with 'Failed to load sample data' message",
+    "validation": "API validates userId and sample data availability",
+    "business": "Handles duplicate data gracefully with upsert logic"
+  },
+  "dependencies": {
+    "internal": ["health-data-display", "time-range-switching"],
+    "external": ["React Query mutations", "Toast notifications"],
+    "shared": ["Button component", "database storage interface"]
+  },
+  "implementation": {
+    "sample_data": {
+      "volume": "2,288 realistic health records covering 90 days",
+      "categories": "weight, BMI, body_fat_percentage, steps, calories_burned, sleep, heart_rate",
+      "time_distribution": "Daily records across different time periods",
+      "realism": "Medically plausible values with natural variation"
+    },
+    "data_loading": {
+      "source": "sample_health_data table with pre-populated realistic data",
+      "method": "Batch copy with userId mapping and timestamp preservation",
+      "performance": "Efficient batch operations for large datasets",
+      "validation": "Data integrity checks during copy process"
+    },
+    "user_experience": {
+      "feedback": "Immediate success toast with record count",
+      "loading_state": "Button shows loading during operation",
+      "result": "Dashboard immediately populates with meaningful data",
+      "availability": "Works in all environments (development, staging, production)"
+    }
+  },
+  "benefits": {
+    "development": "Developers can test health features without device data",
+    "demonstration": "Realistic data for demos and screenshots",
+    "testing": "Consistent dataset for QA and automated testing",
+    "onboarding": "New users can immediately see dashboard functionality"
+  }
+}

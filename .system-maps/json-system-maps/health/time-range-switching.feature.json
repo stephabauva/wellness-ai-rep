@@ -1,0 +1,88 @@
+{
+  "_metadata": {
+    "featureName": "time-range-switching",
+    "featureGroup": "health-dashboard", 
+    "parentFile": "health-dashboard-core.map.json",
+    "domain": "health",
+    "description": "Switch between 7-day and 30-day health data views with proper aggregation",
+    "userFlow": [
+      "User sees current time range highlighted (7 days default)",
+      "User clicks alternate time range button (30 days)",
+      "Button states update, data refetches",
+      "Metrics recalculate and display updated values",
+      "Record count indicator shows new data volume"
+    ],
+    "components": ["time toggle buttons", "React Query cache", "aggregation logic"],
+    "lastUpdated": "2025-07-12",
+    "status": "active"
+  },
+  "trigger": "User clicks '7 days' or '30 days' button in time period toggle section",
+  "dataFlow": {
+    "request": "Button click → setTimeRange state → queryClient.invalidateQueries → useQuery refetch → /api/health-data?range=X → Database query with date filtering",
+    "response": "Filtered records → aggregation processing → healthSummary memoization → UI re-render with new values",
+    "sideEffects": ["Cache invalidation", "Loading state activation", "Debug logging", "Record count update"]
+  },
+  "files": {
+    "ui": [
+      "client/src/components/SimpleHealthDashboard.tsx (time toggle buttons)",
+      "client/src/components/SimpleHealthDashboard.tsx (aggregation logic)"
+    ],
+    "api": [
+      "server/routes/simple-health-routes.ts (GET /api/health-data)",
+      "server/storage.ts (getHealthData method)"
+    ],
+    "data": [
+      "health_data table with timestamp filtering",
+      "health-data cache keys by time range"
+    ],
+    "types": [
+      "timeRange state (7days | 30days)",
+      "HealthMetric[] interface"
+    ]
+  },
+  "cacheFlow": {
+    "invalidates": ["queryClient.invalidateQueries({ queryKey: ['health-data'] })"],
+    "refreshes": ["health metrics display", "record count indicator", "summary title"],
+    "triggers": ["new data fetch", "aggregation recalculation", "UI state update"]
+  },
+  "errorPaths": {
+    "network": "Previous data remains visible → Error toast → Retry available",
+    "validation": "Invalid time range defaults to 7days with console warning",
+    "business": "Empty results show appropriate message for selected time period"
+  },
+  "dependencies": {
+    "internal": ["health-data-display", "metric-aggregation"],
+    "external": ["React Query invalidation", "React useState"],
+    "shared": ["Button component", "cache service"]
+  },
+  "implementation": {
+    "state_management": {
+      "timeRange": "useState('7days') with string literal types",
+      "button_variants": "default for active, outline for inactive",
+      "cache_keys": "['health-data', timeRange] for proper isolation"
+    },
+    "data_fetching": {
+      "query_params": "?range=${timeRange}&t=${Date.now()} for cache busting",
+      "database_filtering": "startDate calculation based on range selection",
+      "cache_strategy": "staleTime: 0, gcTime: 30s for immediate freshness"
+    },
+    "user_feedback": {
+      "visual_indicators": "Active button styling and record count display",
+      "loading_states": "Preserved during data switching",
+      "debug_logging": "Console logs for debugging time range changes"
+    }
+  },
+  "validation": {
+    "working_correctly": {
+      "7_days": "Shows 220 health records with averaged metrics",
+      "30_days": "Shows 880 health records with different calculations", 
+      "switching": "Immediate cache invalidation and proper data refresh",
+      "ui_updates": "Button states, record counts, and metric values all update"
+    },
+    "performance": {
+      "cache_hits": "Subsequent same-range requests served from cache",
+      "invalidation": "Clean cache clearing on range changes",
+      "aggregation": "Fast client-side metric calculation from fetched data"
+    }
+  }
+}

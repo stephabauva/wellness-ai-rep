@@ -1,0 +1,82 @@
+{
+  "_metadata": {
+    "featureName": "health-data-display",
+    "featureGroup": "health-dashboard",
+    "parentFile": "health-dashboard-core.map.json",
+    "domain": "health",
+    "description": "Display aggregated health metrics in simplified dashboard UI",
+    "userFlow": [
+      "User navigates to health section",
+      "Dashboard loads with 7-day default view", 
+      "Health metrics displayed in 2x4 grid",
+      "AI insights shown in analysis section"
+    ],
+    "components": ["SimpleHealthDashboard.tsx", "health API endpoints"],
+    "lastUpdated": "2025-07-12",
+    "status": "active"
+  },
+  "trigger": "User clicks 'Health' tab in navigation or loads app with health section active",
+  "dataFlow": {
+    "request": "SimpleHealthDashboard → useQuery → /api/health-data → storage.getHealthData → Database",
+    "response": "Database → HealthMetric[] → aggregation logic → UI rendering → 2x4 metrics grid",
+    "sideEffects": ["Cache population", "Loading state management", "Error boundary activation"]
+  },
+  "files": {
+    "ui": [
+      "client/src/components/SimpleHealthDashboard.tsx",
+      "client/src/hooks/use-toast.ts"
+    ],
+    "api": [
+      "server/routes/simple-health-routes.ts"
+    ],
+    "data": [
+      "health_data table",
+      "health-data cache key"
+    ],
+    "types": [
+      "HealthMetric interface",
+      "SimpleHealthDashboardProps interface"
+    ]
+  },
+  "cacheFlow": {
+    "invalidates": [],
+    "refreshes": ["health metrics display", "AI analysis section"],
+    "triggers": ["time range changes", "data updates"]
+  },
+  "errorPaths": {
+    "network": "Loading spinner → Error message → Retry option",
+    "validation": "Invalid data filtered out with console warnings", 
+    "business": "Empty state shown when no health data available"
+  },
+  "dependencies": {
+    "internal": ["time-range-switching", "metric-aggregation"],
+    "external": ["React Query", "Lucide icons"],
+    "shared": ["Button", "Card", "toast notifications"]
+  },
+  "implementation": {
+    "aggregation_logic": {
+      "weight": "average of all weight records in time range",
+      "bmi": "average of all BMI records in time range", 
+      "bodyFat": "average of all body fat records in time range",
+      "steps": "daily average for 7d, total for 30d",
+      "calories": "average calories consumed/burned in time range"
+    },
+    "ui_layout": {
+      "header": "Gradient background with health icon and title",
+      "time_toggles": "7 days / 30 days buttons with active state",
+      "metrics_grid": "2x4 responsive grid with metric cards",
+      "ai_analysis": "Insights section with success/warning/info items"
+    },
+    "performance": {
+      "caching": "30-second cache with immediate stale time",
+      "invalidation": "Explicit query invalidation on time range change",
+      "debugging": "Console logging for data processing steps"
+    }
+  },
+  "user_experience": {
+    "loading_state": "Centered spinner during initial data fetch",
+    "empty_state": "Informative message when no health data available",
+    "error_state": "User-friendly error messages with recovery options",
+    "success_indicators": "Record count display and smooth transitions"
+  }
+}

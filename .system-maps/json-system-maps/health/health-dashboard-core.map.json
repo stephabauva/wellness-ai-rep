@@ -1,0 +1,108 @@
+{
+  "_tableOfContents": {
+    "domain": "health-dashboard",
+    "features": [
+      "health-data-display",
+      "time-range-switching", 
+      "metric-aggregation",
+      "sample-data-loading",
+      "health-report-download",
+      "native-health-sync"
+    ],
+    "totalFeatures": 6,
+    "lastUpdated": "2025-07-12"
+  },
+  "_meta": {
+    "domain": "health-dashboard",
+    "description": "Simplified health dashboard with essential functionality",
+    "architecture": "React + Express + PostgreSQL",
+    "status": "active",
+    "complexity": "simplified",
+    "lastMajorChange": "2025-07-12 - Complete simplification and optimization"
+  },
+  "components": {
+    "core": {
+      "SimpleHealthDashboard.tsx": {
+        "path": "client/src/components/SimpleHealthDashboard.tsx",
+        "type": "react-component",
+        "lines": 200,
+        "responsibilities": ["UI rendering", "time range state", "data aggregation", "user interactions"],
+        "imports": 8,
+        "complexity": "moderate"
+      }
+    },
+    "api": {
+      "simple-health-routes.ts": {
+        "path": "server/routes/simple-health-routes.ts", 
+        "type": "api-routes",
+        "lines": 80,
+        "responsibilities": ["health data API", "sample data loading", "metric removal", "native sync"],
+        "endpoints": 4,
+        "complexity": "low"
+      }
+    },
+    "services": {
+      "storage-interface": {
+        "path": "server/storage.ts",
+        "type": "data-layer",
+        "responsibilities": ["health data queries", "time filtering", "aggregation", "caching"],
+        "complexity": "moderate"
+      }
+    }
+  },
+  "endpoints": {
+    "GET /api/health-data": {
+      "method": "GET",
+      "purpose": "Fetch health metrics with time range filtering",
+      "parameters": ["range"],
+      "response": "HealthMetric[]",
+      "caching": "LRU cache with 30s TTL"
+    },
+    "POST /api/health-data/load-sample": {
+      "method": "POST", 
+      "purpose": "Load sample health data for development/testing",
+      "response": "{ recordsLoaded: number }",
+      "effect": "Cache invalidation"
+    },
+    "POST /api/health-data/remove-metrics": {
+      "method": "POST",
+      "purpose": "Remove selected metric types",
+      "body": "{ dataTypes: string[] }",
+      "response": "{ deletedCount: number }"
+    },
+    "POST /api/health-data/native-sync": {
+      "method": "POST",
+      "purpose": "Sync with native health apps (iOS/Android)",
+      "body": "{ dataTypes?: string[], timeRange?: string }",
+      "response": "{ recordsProcessed: number }"
+    }
+  },
+  "database": {
+    "tables": {
+      "health_data": {
+        "purpose": "Store health metrics with timestamps",
+        "key_columns": ["user_id", "data_type", "timestamp"],
+        "indexes": ["user_time_range", "data_type_filtering"],
+        "retention": "configurable"
+      },
+      "sample_health_data": {
+        "purpose": "Template health data for development",
+        "structure": "mirrors health_data",
+        "size": "2,288 records covering 90 days"
+      }
+    }
+  },
+  "integrations": {
+    "react_query": {
+      "purpose": "Data fetching and caching",
+      "queries": ["health-data with time range"],
+      "mutations": ["load-sample", "remove-metrics", "native-sync"],
+      "cache_strategy": "staleTime: 0, gcTime: 30s"
+    },
+    "toast_notifications": {
+      "purpose": "User feedback",
+      "triggers": ["success operations", "error handling"],
+      "types": ["success", "error", "loading"]
+    }
+  }
+}

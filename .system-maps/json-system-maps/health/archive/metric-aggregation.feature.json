@@ -1,0 +1,91 @@
+{
+  "_metadata": {
+    "featureName": "metric-aggregation",
+    "featureGroup": "health-dashboard",
+    "parentFile": "health-dashboard-core.map.json",
+    "domain": "health",
+    "description": "Aggregate raw health data into meaningful time-period statistics",
+    "userFlow": [
+      "System receives array of health records for time period",
+      "Data grouped by metric type (weight, steps, calories, etc.)",
+      "Calculations applied based on metric type and time range",
+      "Aggregated results formatted for UI display",
+      "Visual record count and data validation included"
+    ],
+    "components": ["aggregation algorithms", "useMemo optimization", "data validation"],
+    "lastUpdated": "2025-07-12",
+    "status": "active"
+  },
+  "trigger": "healthData array changes in SimpleHealthDashboard useMemo dependency",
+  "dataFlow": {
+    "request": "Raw HealthMetric[] → filter by dataType → apply aggregation functions → format results",
+    "response": "Aggregated metrics object → UI rendering → visual display in metric cards", 
+    "sideEffects": ["Debug logging", "Record counting", "Empty state detection"]
+  },
+  "files": {
+    "ui": [
+      "client/src/components/SimpleHealthDashboard.tsx (healthSummary useMemo)",
+      "client/src/components/SimpleHealthDashboard.tsx (aggregation functions)"
+    ],
+    "api": [],
+    "data": [
+      "HealthMetric[] raw data array",
+      "healthSummary aggregated object"
+    ],
+    "types": [
+      "HealthMetric interface",
+      "healthSummary return type"
+    ]
+  },
+  "cacheFlow": {
+    "invalidates": [],
+    "refreshes": ["metric cards display", "AI analysis calculations"],
+    "triggers": ["healthData changes", "timeRange changes"]
+  },
+  "errorPaths": {
+    "network": "Empty data array handled gracefully",
+    "validation": "Invalid values filtered out with parseFloat safety",
+    "business": "Missing data types show null values with fallback display"
+  },
+  "dependencies": {
+    "internal": ["health-data-display", "time-range-switching"],
+    "external": ["React useMemo", "JavaScript array methods"],
+    "shared": ["HealthMetric type definition"]
+  },
+  "implementation": {
+    "aggregation_strategies": {
+      "weight": "Average of all weight values in time period",
+      "bmi": "Average of all BMI values in time period", 
+      "bodyFat": "Average of all body fat percentage values",
+      "steps": "Daily average for 7d, total sum for 30d",
+      "caloriesConsumed": "Average daily calories consumed",
+      "caloriesBurned": "Average daily calories burned"
+    },
+    "calculation_functions": {
+      "average": "(arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length",
+      "total": "(arr: number[]) => arr.reduce((a, b) => a + b, 0)",
+      "safety": "parseFloat() with null fallback for invalid data",
+      "formatting": ".toFixed(1) for averages, .toFixed(0) for totals"
+    },
+    "performance_optimization": {
+      "memoization": "useMemo with [healthData, timeRange] dependencies",
+      "data_filtering": "Single-pass filtering by dataType for efficiency",
+      "calculation_caching": "Results cached until dependencies change",
+      "debug_output": "Console logging for troubleshooting aggregation"
+    }
+  },
+  "validation": {
+    "data_integrity": {
+      "input_validation": "Array length and data type checks",
+      "numeric_conversion": "parseFloat with NaN handling",
+      "null_handling": "Graceful degradation for missing metrics",
+      "count_tracking": "Record counts for debugging and display"
+    },
+    "correctness": {
+      "7_day_results": "220 records → averaged daily values",
+      "30_day_results": "880 records → different calculation strategies",
+      "time_sensitivity": "Results change appropriately with time range",
+      "edge_cases": "Empty arrays, single values, all same values handled"
+    }
+  }
+}

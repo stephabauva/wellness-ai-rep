@@ -1,0 +1,4169 @@
+{
+  "client/src/App.tsx": {
+    "domain": "app/root",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/main.tsx",
+        "domain": "app/root",
+        "imports": [
+          "App"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/utils/upload-progress.ts": {
+    "domain": "shared/utilities",
+    "exports": [
+      "UploadProgress",
+      "UploadSpeedCalculator",
+      "SpeedCalculator",
+      "ProgressTracker",
+      "formatBytes",
+      "formatSpeed",
+      "formatTime",
+      "createUploadProgressCallback"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useOptimizedUpload.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "UploadProgress",
+          "ProgressTracker"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "UploadProgress as UploadProgressType"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "formatBytes",
+          "formatSpeed",
+          "formatTime"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 3
+  },
+  "client/src/utils/fileManagerUtils.ts": {
+    "domain": "shared/utilities",
+    "exports": [
+      "getFileIcon",
+      "formatFileSize",
+      "formatDate",
+      "getRetentionBadgeColor",
+      "categorizeFiles",
+      "getIconFromName"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useFileApi.ts",
+        "domain": "file-manager",
+        "imports": [
+          "formatFileSize"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "categorizeFiles",
+          "getFileIcon",
+          "formatFileSize",
+          "formatDate"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "formatFileSize",
+          "formatDate",
+          "getFileIcon as getFileIconUtil",
+          "// Renamed to avoid conflict\n  getRetentionBadgeColor"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryTabs.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "getIconFromName"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "client/src/utils/chatUtils.tsx": {
+    "domain": "shared/utilities",
+    "exports": [
+      "getFileIcon",
+      "formatTime",
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "generateMessagesToDisplay"
+        ]
+      },
+      {
+        "file": "client/src/components/AttachmentPreview.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "getFileIcon"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/types/fileManager.ts": {
+    "domain": "shared/types",
+    "exports": [
+      "FileRetentionInfo",
+      "FileItem",
+      "FileCategoryGroup",
+      "FileCategory",
+      "ViewMode"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/utils/fileManagerUtils.ts",
+        "domain": "shared/utilities",
+        "imports": [
+          "FileItem",
+          "FileCategoryGroup"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileSharing.ts",
+        "domain": "file-manager",
+        "imports": [
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileManagerState.ts",
+        "domain": "file-manager",
+        "imports": [
+          "ViewMode",
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileApi.ts",
+        "domain": "file-manager",
+        "imports": [
+          "FileItem",
+          "FileCategory"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileCategory",
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileItem",
+          "ViewMode"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "ViewMode",
+          "FileCategory"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryTabs.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileCategory",
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategorySelector.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileCategory"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 9
+  },
+  "client/src/services/universal-file-service.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "PlatformCapabilities",
+      "Platform",
+      "UniversalFileService"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/services/platform-file-service.ts",
+        "domain": "file-manager",
+        "imports": [
+          "UniversalFileService",
+          "type Platform"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileUpload.ts",
+        "domain": "file-manager",
+        "imports": [
+          "UniversalFileService"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/services/platform-detection.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "PlatformCapabilities",
+      "Platform",
+      "PlatformDetectionService"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/services/platform-detection-global.ts",
+        "domain": "shared/services",
+        "imports": [
+          "PlatformDetectionService"
+        ]
+      },
+      {
+        "file": "client/src/services/native-health-service.ts",
+        "domain": "health",
+        "imports": [
+          "PlatformDetectionService",
+          "Platform"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/services/native-health-service.ts": {
+    "domain": "health",
+    "exports": [
+      "HealthDataPoint",
+      "HealthDataQuery",
+      "HealthSyncResult",
+      "HealthPermissions",
+      "HealthKitProvider",
+      "GoogleFitProvider",
+      "NativeHealthService",
+      "nativeHealthService"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/services/platform-detection-global.ts",
+        "domain": "shared/services",
+        "imports": [
+          "nativeHealthService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/services/file-compression.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "CompressionResult",
+      "CompressionOptions",
+      "FileCompressionService"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/utils/compression-test.ts",
+        "domain": "shared/utilities",
+        "imports": [
+          "FileCompressionService"
+        ]
+      },
+      {
+        "file": "client/src/services/universal-file-service.ts",
+        "domain": "file-manager",
+        "imports": [
+          "FileCompressionService",
+          "type CompressionOptions",
+          "type CompressionResult as TSCompressionResult"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useOptimizedUpload.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "FileCompressionService",
+          "CompressionResult"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 3
+  },
+  "client/src/services/file-acceleration-service.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "CompressionResult",
+      "AccelerationCapabilities",
+      "FileAccelerationService"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/services/universal-file-service.ts",
+        "domain": "file-manager",
+        "imports": [
+          "FileAccelerationService",
+          "type CompressionResult"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/services/audio-service.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "AudioRecordingState",
+      "TranscriptionResult",
+      "AudioServiceConfig",
+      "audioService"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/AudioRecorder.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "audioService",
+          "TranscriptionResult"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/not-found.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/lib/utils.ts": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "cn"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/Sidebar.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/MobileNav.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryTabs.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/tooltip.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/toggle.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/toggle-group.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/toast.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/textarea.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/tabs.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/table.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/switch.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/stat-card.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/slider.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/skeleton.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sheet.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/separator.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/select.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/scroll-area.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/resizable.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/radio-group.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/popover.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/pagination.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/navigation-menu.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/menubar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/label.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/input.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/input-otp.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/hover-card.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/form.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/dropdown-menu.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/drawer.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/dialog.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/device-card.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/context-menu.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/command.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/checkbox.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/chat-message.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/chart.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/carousel.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/card.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/calendar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/button.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/breadcrumb.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/badge.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/avatar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/alert.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/alert-dialog.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/accordion.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "cn"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 52
+  },
+  "client/src/lib/queryClient.ts": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "apiRequest",
+      "getQueryFn",
+      "queryClient",
+      "getSectionCacheTime"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useUserSettings.ts",
+        "domain": "settings",
+        "imports": [
+          "apiRequest"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useRetentionSettings.ts",
+        "domain": "settings",
+        "imports": [
+          "apiRequest"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useReportGeneration.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "apiRequest"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useBackgroundPreload.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "getSectionCacheTime"
+        ]
+      },
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "apiRequest",
+          "queryClient"
+        ]
+      },
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "apiRequest"
+        ]
+      },
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "queryClient"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "queryClient"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 8
+  },
+  "client/src/hooks/useWebWorker.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useWebWorker"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "useWebWorker"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/hooks/useVirtualScrolling.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useVirtualScrolling"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "useVirtualScrolling"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/hooks/useUserSettings.ts": {
+    "domain": "settings",
+    "exports": [
+      "settingsFormSchema",
+      "UserSettingsFormValues",
+      "UserSettingsData",
+      "useUserSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/context/AppContext.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "useUserSettings"
+        ]
+      },
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "useUserSettings",
+          "UserSettingsFormValues",
+          "settingsFormSchema as userSettingsFormSchema"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/FileManagementSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AppPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 7
+  },
+  "client/src/hooks/useStreamingChat.ts": {
+    "domain": "chat",
+    "exports": [
+      "useStreamingChat"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useChatActions.ts",
+        "domain": "chat",
+        "imports": [
+          "useStreamingChat"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useRetentionSettings.ts": {
+    "domain": "settings",
+    "exports": [
+      "RetentionSettingsFormValues",
+      "RetentionSettingsData",
+      "useRetentionSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "useRetentionSettings",
+          "RetentionSettingsFormValues"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useMessagePagination.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useMessagePagination"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "useMessagePagination"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/hooks/useLazySection.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "SectionName",
+      "useLazySection"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useStaggeredLoading.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "SectionName"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useBackgroundPreload.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "SectionName"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/hooks/useFileUpload.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileUpload"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileUpload"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useFileSharing.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileSharing"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileSharing"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useFileManagerState.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileManagerState"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileManagerState"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useFileManagement.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "AttachedFile",
+      "useFileManagement",
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useChatActions.ts",
+        "domain": "chat",
+        "imports": [
+          "useFileManagement",
+          "AttachedFile"
+        ]
+      },
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "AttachedFile"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatInputArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "AttachedFile"
+        ]
+      },
+      {
+        "file": "client/src/components/AttachmentPreview.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "AttachedFile"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "client/src/hooks/useFileApi.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileApi"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileApi"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileApi"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/hooks/useChatMessages.ts": {
+    "domain": "chat",
+    "exports": [
+      "useChatMessages"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useChatActions.ts",
+        "domain": "chat",
+        "imports": [
+          "useChatMessages"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "useChatMessages"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/hooks/useChatActions.ts": {
+    "domain": "chat",
+    "exports": [
+      "useChatActions",
+      "UseChatActionsReturn"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "useChatActions"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatInputArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "UseChatActionsReturn"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/hooks/useAiModels.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "AiModelInfo",
+      "AvailableAiModels",
+      "useAiModels"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "useAiModels"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "AvailableAiModels",
+          "AiModelInfo"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/hooks/use-toast.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "reducer",
+      "useToast",
+      "toast"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useUserSettings.ts",
+        "domain": "settings",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useStreamingChat.ts",
+        "domain": "chat",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useRetentionSettings.ts",
+        "domain": "settings",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useReportGeneration.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileSharing.ts",
+        "domain": "file-manager",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileManagement.ts",
+        "domain": "file-manager",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileApi.ts",
+        "domain": "file-manager",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/components/SimpleHealthDashboard.tsx",
+        "domain": "health",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/components/AudioRecorder.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/toaster.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "useToast"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "useToast"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 13
+  },
+  "client/src/hooks/use-mobile.tsx": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useIsMobile"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "useIsMobile"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/context/AppContext.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "Message",
+      "AttachedFile",
+      "ActiveSection",
+      "AppSettings",
+      "AppProvider",
+      "useAppContext"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "AppProvider"
+        ]
+      },
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "useAppContext"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useStreamingChat.ts",
+        "domain": "chat",
+        "imports": [
+          "useAppContext"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useChatMessages.ts",
+        "domain": "chat",
+        "imports": [
+          "useAppContext",
+          "Message"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useChatActions.ts",
+        "domain": "chat",
+        "imports": [
+          "useAppContext",
+          "AppSettings"
+        ]
+      },
+      {
+        "file": "client/src/components/Sidebar.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "useAppContext"
+        ]
+      },
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "useAppContext"
+        ]
+      },
+      {
+        "file": "client/src/components/MobileNav.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "useAppContext"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "useAppContext"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatInputArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "AppSettings"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 10
+  },
+  "client/src/components/StreamingText.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "StreamingText"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/chat-message.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "StreamingText"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/SimpleHealthDashboard.tsx": {
+    "domain": "health",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "SimpleHealthDashboard"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/Sidebar.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Sidebar"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/SettingsSection.tsx": {
+    "domain": "settings",
+    "exports": [
+      "CombinedSettingsFormValues",
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "SettingsSection"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/SectionSkeleton.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "SectionSkeleton"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/MobileNav.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "MobileNav"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/MessageDisplayArea.tsx": {
+    "domain": "chat",
+    "exports": [
+      "MessageDisplayArea"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "MessageDisplayArea"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/MemorySection.tsx": {
+    "domain": "memory",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "MemorySection"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/FileManagerSection.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "FileManagerSection"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ConversationHistory.tsx": {
+    "domain": "chat",
+    "exports": [
+      "ConversationHistory"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "ConversationHistory"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ConnectedDevicesSection.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "ConnectedDevicesSection"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ChatSection.tsx": {
+    "domain": "chat",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "ChatSection"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ChatInputArea.tsx": {
+    "domain": "chat",
+    "exports": [
+      "ChatInputArea"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "ChatInputArea"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ChatErrorBoundary.tsx": {
+    "domain": "chat",
+    "exports": [
+      "ChatErrorBoundary"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "ChatErrorBoundary"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/AudioRecorder.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "AudioRecorder"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatInputArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "AudioRecorder"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/AttachmentPreview.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "AttachmentPreview"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "AttachmentPreview"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/QrCodeDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "QrCodeDialog"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "QrCodeDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileUploadDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileUploadDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileList.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileList"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileList as FileListComponent"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileActionsToolbar.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileActionsToolbar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileActionsToolbar"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryTabs.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryTabs"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryTabs"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategorySelector.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategorySelector"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategorySelector"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryDropdown.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryDropdown"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryDropdown"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/tooltip.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Tooltip",
+      "TooltipTrigger",
+      "TooltipContent",
+      "TooltipProvider"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "TooltipProvider"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Tooltip",
+          "TooltipContent",
+          "TooltipProvider",
+          "TooltipTrigger",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/components/ui/toggle.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Toggle",
+      "toggleVariants"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/toggle-group.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "toggleVariants"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/toaster.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Toaster"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Toaster"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/toast.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "type ToastProps",
+      "type ToastActionElement",
+      "ToastProvider",
+      "ToastViewport",
+      "Toast",
+      "ToastTitle",
+      "ToastDescription",
+      "ToastClose",
+      "ToastAction",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/toaster.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Toast",
+          "ToastClose",
+          "ToastDescription",
+          "ToastProvider",
+          "ToastTitle",
+          "ToastViewport",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/textarea.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Textarea"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Textarea"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/tabs.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Tabs",
+      "TabsList",
+      "TabsTrigger",
+      "TabsContent"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Tabs",
+          "TabsContent",
+          "TabsList",
+          "TabsTrigger"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryTabs.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "TabsList",
+          "TabsTrigger"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/components/ui/switch.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Switch"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Switch"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/PerformanceSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Switch"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Switch"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AppPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Switch"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Switch"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 5
+  },
+  "client/src/components/ui/skeleton.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Skeleton"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "Skeleton"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Skeleton"
+        ]
+      },
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Skeleton"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Skeleton"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "client/src/components/ui/sheet.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Sheet",
+      "SheetPortal",
+      "SheetOverlay",
+      "SheetTrigger",
+      "SheetClose",
+      "SheetContent",
+      "SheetHeader",
+      "SheetFooter",
+      "SheetTitle",
+      "SheetDescription",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Sheet",
+          "SheetContent",
+          "SheetDescription",
+          "SheetHeader",
+          "SheetTitle",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/separator.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Separator"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Separator"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Separator"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/components/ui/select.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Select",
+      "SelectGroup",
+      "SelectValue",
+      "SelectTrigger",
+      "SelectContent",
+      "SelectLabel",
+      "SelectItem",
+      "SelectSeparator",
+      "SelectScrollUpButton",
+      "SelectScrollDownButton",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue",
+          ""
+        ]
+      },
+      {
+        "file": "client/src/components/ui/coach-select.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectGroup",
+          "SelectItem",
+          "SelectLabel",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/FileManagementSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 8
+  },
+  "client/src/components/ui/scroll-area.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ScrollArea",
+      "ScrollBar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "ScrollArea"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/radio-group.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "RadioGroup",
+      "RadioGroupItem"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "RadioGroup",
+          "RadioGroupItem"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/progress.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Progress"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Progress"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/label.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Label"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Label"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/form.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Label"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/PerformanceSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Label"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Label"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "client/src/components/ui/input.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Input"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "Input"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatInputArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "Input"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Input"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Input"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Input"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 5
+  },
+  "client/src/components/ui/form.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "useFormField",
+      "Form",
+      "FormItem",
+      "FormLabel",
+      "FormControl",
+      "FormDescription",
+      "FormMessage",
+      "FormField",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "Form"
+        ]
+      },
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Form",
+          "FormControl",
+          "FormDescription",
+          "FormField",
+          "FormItem",
+          "FormLabel",
+          "FormMessage"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/FileManagementSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "FormField",
+          "FormItem",
+          "FormLabel",
+          "FormControl",
+          "FormMessage",
+          "FormDescription"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "FormField",
+          "FormItem",
+          "FormLabel",
+          "FormControl",
+          "FormMessage"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AppPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "FormField",
+          "FormItem",
+          "FormLabel",
+          "FormControl",
+          "FormDescription"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "FormField",
+          "FormItem",
+          "FormLabel",
+          "FormControl",
+          "FormMessage",
+          "FormDescription"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "FormField",
+          "FormItem",
+          "FormLabel",
+          "FormControl",
+          "FormMessage"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 7
+  },
+  "client/src/components/ui/dropdown-menu.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "DropdownMenu",
+      "DropdownMenuTrigger",
+      "DropdownMenuContent",
+      "DropdownMenuItem",
+      "DropdownMenuCheckboxItem",
+      "DropdownMenuRadioItem",
+      "DropdownMenuLabel",
+      "DropdownMenuSeparator",
+      "DropdownMenuShortcut",
+      "DropdownMenuGroup",
+      "DropdownMenuPortal",
+      "DropdownMenuSub",
+      "DropdownMenuSubContent",
+      "DropdownMenuSubTrigger",
+      "DropdownMenuRadioGroup",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/CategorySelector.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "DropdownMenu",
+          "DropdownMenuContent",
+          "DropdownMenuItem",
+          "DropdownMenuTrigger",
+          "DropdownMenuSeparator",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/dialog.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Dialog",
+      "DialogPortal",
+      "DialogOverlay",
+      "DialogClose",
+      "DialogTrigger",
+      "DialogContent",
+      "DialogHeader",
+      "DialogFooter",
+      "DialogTitle",
+      "DialogDescription",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Dialog",
+          "DialogContent",
+          "DialogDescription",
+          "DialogHeader",
+          "DialogTitle",
+          "DialogTrigger"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Dialog",
+          "DialogContent",
+          "DialogHeader",
+          "DialogTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/QrCodeDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Dialog",
+          "DialogContent",
+          "DialogHeader",
+          "DialogTitle",
+          "DialogFooter",
+          "DialogClose"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Dialog",
+          "DialogContent",
+          "DialogHeader",
+          "DialogTitle",
+          "DialogFooter",
+          ""
+        ]
+      },
+      {
+        "file": "client/src/components/ui/command.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Dialog",
+          "DialogContent"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 5
+  },
+  "client/src/components/ui/device-card.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "DeviceCard"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "DeviceCard"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/collapsible.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Collapsible",
+      "CollapsibleTrigger",
+      "CollapsibleContent"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Collapsible",
+          "CollapsibleContent",
+          "CollapsibleTrigger"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/checkbox.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Checkbox"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Checkbox"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Checkbox"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Checkbox"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Checkbox"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "client/src/components/ui/chat-message.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ChatMessage"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "ChatMessage"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/card.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Card",
+      "CardHeader",
+      "CardFooter",
+      "CardTitle",
+      "CardDescription",
+      "CardContent"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/not-found.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Card",
+          "CardContent"
+        ]
+      },
+      {
+        "file": "client/src/components/SimpleHealthDashboard.tsx",
+        "domain": "health",
+        "imports": [
+          "Card",
+          "CardContent"
+        ]
+      },
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardDescription",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Card",
+          "CardHeader",
+          "CardTitle",
+          "CardContent"
+        ]
+      },
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle",
+          "CardDescription"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatErrorBoundary.tsx",
+        "domain": "chat",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/AttachmentPreview.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Card",
+          "CardContent"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Card",
+          "CardContent"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/PerformanceSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardDescription",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardDescription",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/FileManagementSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AppPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader",
+          "CardTitle"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 17
+  },
+  "client/src/components/ui/button.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ButtonProps",
+      "Button",
+      "buttonVariants"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SimpleHealthDashboard.tsx",
+        "domain": "health",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatInputArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatErrorBoundary.tsx",
+        "domain": "chat",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/AudioRecorder.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/AttachmentPreview.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/QrCodeDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategorySelector.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/pagination.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "ButtonProps",
+          "buttonVariants"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/device-card.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/carousel.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/calendar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "buttonVariants"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/alert-dialog.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "buttonVariants"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Button"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 25
+  },
+  "client/src/components/ui/badge.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "BadgeProps",
+      "Badge",
+      "badgeVariants"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/device-card.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/PerformanceSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Badge"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 9
+  },
+  "client/src/components/settings/PerformanceSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "PerformanceSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "PerformanceSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/HealthDataConsentSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "HealthDataConsentSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "HealthDataConsentSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/FileManagementSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "FileManagementSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "FileManagementSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/CoachingPreferencesSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "CoachingPreferencesSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "CoachingPreferencesSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AppPreferencesSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AppPreferencesSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AppPreferencesSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AiConfigurationSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AiConfigurationSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AiConfigurationSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AccountSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AccountSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AccountSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "server/vite.ts": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "log",
+      "serveStatic"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "setupVite",
+          "serveStatic",
+          "log"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "server/storage.ts": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "IStorage",
+      "MemStorage",
+      "DatabaseStorage",
+      "storage"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes-simple.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "storage"
+        ]
+      },
+      {
+        "file": "server/index.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "storage",
+          "DatabaseStorage"
+        ]
+      },
+      {
+        "file": "server/services/health-data-deduplication.ts",
+        "domain": "health",
+        "imports": [
+          "storage"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "storage"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "server/routes-simple.ts": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "registerSimpleRoutes"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "registerSimpleRoutes"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "server/db.ts": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "db",
+      "pool",
+      "initializeDatabase"
+    ],
+    "usedBy": [
+      {
+        "file": "server/storage.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/routes-simple.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/simple-memory-detection.ts",
+        "domain": "memory",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/prepared-statements-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/performance-memory-core.ts",
+        "domain": "memory",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/optimized-memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/memory-relationship-engine.ts",
+        "domain": "memory",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/enhanced-memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/database-migration-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "db",
+          "pool"
+        ]
+      },
+      {
+        "file": "server/services/chatgpt-memory-enhancement.ts",
+        "domain": "chat",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/category-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/services/attachment-retention-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "db"
+        ]
+      },
+      {
+        "file": "server/migrations/memory-categories-migration.ts",
+        "domain": "memory",
+        "imports": [
+          "db",
+          "initializeDatabase"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 15
+  },
+  "server/services/transcription-service.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "transcriptionService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "transcriptionService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/simple-memory-detection.ts": {
+    "domain": "memory",
+    "exports": [
+      "simpleMemoryDetection"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes-simple.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "simpleMemoryDetection"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/performance-memory-core.ts": {
+    "domain": "memory",
+    "exports": [
+      "PerformanceMemoryCore",
+      "performanceMemoryCore"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "performanceMemoryCore"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/memory-service.ts": {
+    "domain": "memory",
+    "exports": [
+      "memoryService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/memory-relationship-engine.ts",
+        "domain": "memory",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
+        "file": "server/services/enhanced-background-processor.ts",
+        "domain": "shared/services",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
+        "file": "server/services/chatgpt-memory-enhancement.ts",
+        "domain": "chat",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
+        "file": "server/services/chat-context-service.ts",
+        "domain": "chat",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
+        "file": "server/services/advanced-memory-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "memoryService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 7
+  },
+  "server/services/memory-relationship-engine.ts": {
+    "domain": "memory",
+    "exports": [
+      "MemoryRelationshipEngine",
+      "memoryRelationshipEngine"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/advanced-memory-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "memoryRelationshipEngine"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "memoryRelationshipEngine"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "server/services/memory-performance-monitor.ts": {
+    "domain": "memory",
+    "exports": [
+      "MemoryPerformanceMonitor",
+      "memoryPerformanceMonitor"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "memoryPerformanceMonitor"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/memory-feature-flags.ts": {
+    "domain": "memory",
+    "exports": [
+      "MemoryFeatureFlags",
+      "memoryFeatureFlags"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "memoryFeatureFlags"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/memory-enhanced-ai-service.ts": {
+    "domain": "memory",
+    "exports": [
+      "MemoryEnhancedAIService",
+      "memoryEnhancedAIService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "memoryEnhancedAIService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/logger-service.ts": {
+    "domain": "infrastructure/logging",
+    "exports": [
+      "logger"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "logger"
+        ]
+      },
+      {
+        "file": "server/services/memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "logger"
+        ]
+      },
+      {
+        "file": "server/services/database-migration-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "logger"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 3
+  },
+  "server/services/health-data-parser.ts": {
+    "domain": "health",
+    "exports": [
+      "ParsedHealthDataPoint",
+      "ParseResult",
+      "HealthDataParser"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "HealthDataParser"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/health-data-deduplication.ts": {
+    "domain": "health",
+    "exports": [
+      "DuplicateDetectionResult",
+      "DeduplicationOptions",
+      "HealthDataDeduplicationService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "HealthDataDeduplicationService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/health-consent-service.ts": {
+    "domain": "health",
+    "exports": [
+      "HealthConsentService",
+      "healthConsentService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "healthConsentService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/go-memory-service.ts": {
+    "domain": "memory",
+    "exports": [
+      "GoMemoryService",
+      "goMemoryService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "goMemoryService"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "server/services/go-file-service.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "goFileService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "goFileService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/go-ai-gateway-service.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "goAIGatewayService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "goAIGatewayService"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "server/services/enhanced-memory-service.ts": {
+    "domain": "memory",
+    "exports": [
+      "enhancedMemoryService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "enhancedMemoryService"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "enhancedMemoryService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "server/services/enhanced-background-processor.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "EnhancedBackgroundProcessor",
+      "enhancedBackgroundProcessor"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "enhancedBackgroundProcessor"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/database-migration-service.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "DatabaseMigrationService",
+      "databaseMigrationService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "databaseMigrationService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/chatgpt-memory-enhancement.ts": {
+    "domain": "chat",
+    "exports": [
+      "ChatGPTMemoryEnhancement",
+      "chatGPTMemoryEnhancement"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/memory-enhanced-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "chatGPTMemoryEnhancement"
+        ]
+      },
+      {
+        "file": "server/services/enhanced-background-processor.ts",
+        "domain": "shared/services",
+        "imports": [
+          "chatGPTMemoryEnhancement"
+        ]
+      },
+      {
+        "file": "server/services/advanced-memory-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "chatGPTMemoryEnhancement"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "chatGPTMemoryEnhancement"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "server/services/chat-context-service.ts": {
+    "domain": "chat",
+    "exports": [
+      "ChatContextService",
+      "chatContextService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "chatContextService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/category-service.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "categoryService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "categoryService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/cache-service.ts": {
+    "domain": "infrastructure/cache",
+    "exports": [
+      "CacheKeys",
+      "IntelligentCacheService",
+      "cacheService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/storage.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "cacheService"
+        ]
+      },
+      {
+        "file": "server/services/optimized-memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "cacheService"
+        ]
+      },
+      {
+        "file": "server/services/memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "cacheService"
+        ]
+      },
+      {
+        "file": "server/services/enhanced-memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "cacheService"
+        ]
+      },
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "cacheService"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "cacheService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 6
+  },
+  "server/services/attachment-retention-service.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "AttachmentRetentionConfig",
+      "RetentionDurations",
+      "AttachmentRetentionService",
+      "attachmentRetentionService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "attachmentRetentionService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/ai-service.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "aiService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/pdf-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "aiService"
+        ]
+      },
+      {
+        "file": "server/services/memory-enhanced-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "aiService"
+        ]
+      },
+      {
+        "file": "server/services/advanced-memory-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "aiService"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "aiService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 4
+  },
+  "server/services/advanced-memory-ai-service.ts": {
+    "domain": "memory",
+    "exports": [
+      "AdvancedMemoryAIService",
+      "advancedMemoryAIService"
+    ],
+    "usedBy": [
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
+        "imports": [
+          "advancedMemoryAIService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
+    "exports": [
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "registerRoutes"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/services/providers/openai-provider.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "OpenAiProvider"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/chat-context-service.ts",
+        "domain": "chat",
+        "imports": [
+          "OpenAiProvider"
+        ]
+      },
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "OpenAiProvider"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "server/services/providers/google-provider.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "GoogleProvider"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/chat-context-service.ts",
+        "domain": "chat",
+        "imports": [
+          "GoogleProvider"
+        ]
+      },
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "GoogleProvider"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "server/services/providers/ai-provider.interface.ts": {
+    "domain": "shared/services",
+    "exports": [
+      "AIProviderName",
+      "OpenAIModel",
+      "GoogleModel",
+      "ModelName",
+      "ModelInfo",
+      "AvailableModels",
+      "AttachmentData",
+      "MessageContentPart",
+      "ChatMessage",
+      "ChatResponse",
+      "HealthInsightsResponse",
+      "ProviderChatMessage",
+      "ProviderConfig",
+      "AiProvider"
+    ],
+    "usedBy": [
+      {
+        "file": "server/services/memory-enhanced-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "AttachmentData"
+        ]
+      },
+      {
+        "file": "server/services/chat-context-service.ts",
+        "domain": "chat",
+        "imports": [
+          "ProviderChatMessage",
+          "AttachmentData",
+          "MessageContentPart"
+        ]
+      },
+      {
+        "file": "server/services/ai-service.ts",
+        "domain": "shared/services",
+        "imports": [
+          "AiProvider",
+          "AttachmentData",
+          "AvailableModels",
+          "ChatResponse",
+          "HealthInsightsResponse",
+          "AIProviderName",
+          "ModelName",
+          "ProviderChatMessage",
+          ""
+        ]
+      },
+      {
+        "file": "server/services/advanced-memory-ai-service.ts",
+        "domain": "memory",
+        "imports": [
+          "AttachmentData"
+        ]
+      },
+      {
+        "file": "server/services/providers/openai-provider.ts",
+        "domain": "shared/services",
+        "imports": [
+          "AiProvider",
+          "AIProviderName",
+          "ProviderChatMessage",
+          "ChatResponse",
+          "HealthInsightsResponse",
+          "ProviderConfig",
+          "OpenAIModel",
+          "AttachmentData",
+          "MessageContentPart",
+          "AvailableModels",
+          "ModelInfo",
+          ""
+        ]
+      },
+      {
+        "file": "server/services/providers/google-provider.ts",
+        "domain": "shared/services",
+        "imports": [
+          "AiProvider",
+          "AIProviderName",
+          "ProviderChatMessage",
+          "ChatResponse",
+          "HealthInsightsResponse",
+          "ProviderConfig",
+          "GoogleModel",
+          "AttachmentData",
+          "AvailableModels",
+          "ModelInfo",
+          "MessageContentPart",
+          "// Will be mapped to Google's Part[]"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 6
+  }
+}

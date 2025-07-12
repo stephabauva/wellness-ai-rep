@@ -15,12 +15,12 @@ import { categoryService } from "../services/category-service";
 import { attachmentRetentionService } from "../services/attachment-retention-service";
 import { goFileService } from "../services/go-file-service";
 import { HealthDataParser } from "../services/health-data-parser";
-import { HealthDataDeduplicationService } from "../services/health-data-deduplication";
+
 import { enhancedBackgroundProcessor } from "../services/enhanced-background-processor";
 import { memoryFeatureFlags } from "../services/memory-feature-flags";
 import { memoryPerformanceMonitor } from "../services/memory-performance-monitor";
 import { chatGPTMemoryEnhancement } from "../services/chatgpt-memory-enhancement";
-import { healthConsentService } from "../services/health-consent-service";
+
 import { db } from "../db";
 import { eq, desc, and, or } from "drizzle-orm";
 import { 
@@ -41,11 +41,11 @@ export {
   storage, aiService, memoryEnhancedAIService, memoryService, enhancedMemoryService,
   advancedMemoryAIService, memoryRelationshipEngine, performanceMemoryCore, generatePDFReport,
   transcriptionService, cacheService, categoryService, attachmentRetentionService, goFileService,
-  HealthDataParser, HealthDataDeduplicationService, enhancedBackgroundProcessor, memoryFeatureFlags,
-  memoryPerformanceMonitor, chatGPTMemoryEnhancement, healthConsentService, db, eq, desc, and, or,
+  HealthDataParser, enhancedBackgroundProcessor, memoryFeatureFlags,
+  memoryPerformanceMonitor, chatGPTMemoryEnhancement, db, eq, desc, and, or,
   conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories,
   insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics,
-  userHealthConsent, healthDataAccessLog, users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema,
+  users, enhancedSettingsUpdateSchema,
   insertHealthDataSchema, multer, z, nanoid, join, existsSync, statSync, unlinkSync, path, fs, spawn
 };
 export type { Express, UserPreferences };

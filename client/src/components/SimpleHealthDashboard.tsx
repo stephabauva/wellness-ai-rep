@@ -178,29 +178,20 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
     const average = (arr: number[]) => arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : null;
     const total = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0).toFixed(0) : null;
     
-    // Get additional data types that exist in the database
-    const sleepData = healthData.filter(d => d.dataType === 'sleep_total').map(d => parseFloat(d.value));
-    const waterIntakeData = healthData.filter(d => d.dataType === 'water_intake').map(d => parseFloat(d.value));
-    const caloriesData = healthData.filter(d => d.dataType === 'calories').map(d => parseFloat(d.value));
-    
     const summary = {
       weight: average(weightData),
       bmi: average(bmiData),
       bodyFat: average(bodyFatData),
-      sleep: average(sleepData), // Use sleep_total from database
+      sleep: healthData.find(d => d.dataType === 'sleep')?.value || null,
       steps: timeRange === "7days" ? average(stepsData) : total(stepsData), // Daily avg for 7d, total for 30d
-      caloriesConsumed: average(caloriesData), // Use calories from database
+      caloriesConsumed: average(caloriesConsumedData),
       caloriesBurned: average(caloriesBurnedData),
-      hydration: average(waterIntakeData), // Add hydration metric
-      wellnessScore: average(bodyFatData) ? (100 - parseFloat(average(bodyFatData)!)).toFixed(1) : null, // Calculate wellness score from body fat
+      wellnessScore: healthData.find(d => d.dataType === 'wellness_score')?.value || null,
       totalRecords: healthData.length,
       // Add data type counts for debugging
       weightCount: weightData.length,
       stepsCount: stepsData.length,
-      sleepCount: sleepData.length,
-      caloriesCount: caloriesData.length,
-      caloriesBurnedCount: caloriesBurnedData.length,
-      hydrationCount: waterIntakeData.length,
+      caloriesCount: caloriesBurnedData.length,
     };
 
     console.log(`[SimpleHealthDashboard] Health summary for ${timeRange}:`, summary);

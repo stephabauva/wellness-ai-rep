@@ -157,7 +157,7 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
     },
   });
 
-  // Process health data for display
+  // Process health data for display with proper aggregation
   const healthSummary = useMemo(() => {
     if (!healthData || healthData.length === 0) {
       console.log(`[SimpleHealthDashboard] No health data available for ${timeRange}`);
@@ -166,16 +166,32 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
 
     console.log(`[SimpleHealthDashboard] Processing ${healthData.length} health records for ${timeRange}`);
     
+    // Group data by type and calculate averages/totals
+    const weightData = healthData.filter(d => d.dataType === 'weight').map(d => parseFloat(d.value));
+    const bmiData = healthData.filter(d => d.dataType === 'bmi').map(d => parseFloat(d.value));
+    const bodyFatData = healthData.filter(d => d.dataType === 'body_fat_percentage').map(d => parseFloat(d.value));
+    const stepsData = healthData.filter(d => d.dataType === 'steps').map(d => parseFloat(d.value));
+    const caloriesConsumedData = healthData.filter(d => d.dataType === 'calories_consumed').map(d => parseFloat(d.value));
+    const caloriesBurnedData = healthData.filter(d => d.dataType === 'calories_burned').map(d => parseFloat(d.value));
+    
+    // Calculate averages for each metric
+    const average = (arr: number[]) => arr.length > 0 ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : null;
+    const total = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0).toFixed(0) : null;
+    
     const summary = {
-      weight: healthData.find(d => d.dataType === 'weight')?.value || null,
-      bmi: healthData.find(d => d.dataType === 'bmi')?.value || null,
-      bodyFat: healthData.find(d => d.dataType === 'body_fat_percentage')?.value || null,
+      weight: average(weightData),
+      bmi: average(bmiData),
+      bodyFat: average(bodyFatData),
       sleep: healthData.find(d => d.dataType === 'sleep')?.value || null,
-      steps: healthData.find(d => d.dataType === 'steps')?.value || null,
-      caloriesConsumed: healthData.find(d => d.dataType === 'calories_consumed')?.value || null,
-      caloriesBurned: healthData.find(d => d.dataType === 'calories_burned')?.value || null,
+      steps: timeRange === "7days" ? average(stepsData) : total(stepsData), // Daily avg for 7d, total for 30d
+      caloriesConsumed: average(caloriesConsumedData),
+      caloriesBurned: average(caloriesBurnedData),
       wellnessScore: healthData.find(d => d.dataType === 'wellness_score')?.value || null,
-      totalRecords: healthData.length, // Add this for debugging
+      totalRecords: healthData.length,
+      // Add data type counts for debugging
+      weightCount: weightData.length,
+      stepsCount: stepsData.length,
+      caloriesCount: caloriesBurnedData.length,
     };
 
     console.log(`[SimpleHealthDashboard] Health summary for ${timeRange}:`, summary);

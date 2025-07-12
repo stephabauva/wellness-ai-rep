@@ -26,10 +26,15 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
   const { data: healthData = [], isLoading } = useQuery<HealthMetric[]>({
     queryKey: ['health-data', timeRange],
     queryFn: async () => {
-      const response = await fetch(`/api/health-data?range=${timeRange}`);
+      console.log(`[SimpleHealthDashboard] Fetching health data for range: ${timeRange}`);
+      const response = await fetch(`/api/health-data?range=${timeRange}&t=${Date.now()}`);
       if (!response.ok) throw new Error('Failed to fetch health data');
-      return response.json();
+      const data = await response.json();
+      console.log(`[SimpleHealthDashboard] Received ${data.length} health records for ${timeRange}`);
+      return data;
     },
+    staleTime: 0, // Consider data stale immediately
+    gcTime: 1000 * 30, // Keep in cache for 30 seconds only
   });
 
 
@@ -241,14 +246,22 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
       {/* Time Period Toggle */}
       <div className="flex gap-2">
         <Button
-          onClick={() => setTimeRange("7days")}
+          onClick={() => {
+            console.log(`[SimpleHealthDashboard] Switching to 7 days from ${timeRange}`);
+            queryClient.invalidateQueries({ queryKey: ['health-data'] });
+            setTimeRange("7days");
+          }}
           variant={timeRange === "7days" ? "default" : "outline"}
           className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
         >
           7 days
         </Button>
         <Button
-          onClick={() => setTimeRange("30days")}
+          onClick={() => {
+            console.log(`[SimpleHealthDashboard] Switching to 30 days from ${timeRange}`);
+            queryClient.invalidateQueries({ queryKey: ['health-data'] });
+            setTimeRange("30days");
+          }}
           variant={timeRange === "30days" ? "default" : "outline"}
           className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
         >

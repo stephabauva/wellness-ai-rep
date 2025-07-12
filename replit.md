@@ -2,6 +2,12 @@
 
 This is a sophisticated AI-powered wellness chat application built with a modern full-stack architecture. The system implements ChatGPT-style streaming conversations with advanced memory management, file processing, and health data integration. The application focuses on wellness coaching with multiple modes (weight-loss, muscle-gain, fitness, mental-wellness, nutrition) and features real-time AI streaming, intelligent memory detection, and comprehensive health data tracking.
 
+# Important
+**User flows**: how the user interacts with the application is described in ./tasks/all-user-flows.md
+**System map tracker**: system-map-tracker.js scans recently modified Git files and cross-references them with system maps
+**Dependency tracking**: dependency-tracker.js and system-map-cross-domain-validator-v2.js analyze actual code imports
+**@used-by annotations**: Add comments like @used-by domain/component to track dependencies
+
 # System Architecture
 
 ## Frontend Architecture

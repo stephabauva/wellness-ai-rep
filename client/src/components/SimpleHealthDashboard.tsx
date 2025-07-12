@@ -32,24 +32,7 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
     },
   });
 
-  // Load sample data
-  const loadSampleMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/health-data/load-sample', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to load sample data');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['health-data'] });
-      toast({ title: "Sample data loaded successfully" });
-    },
-    onError: () => {
-      toast({ title: "Failed to load sample data", variant: "destructive" });
-    },
-  });
+
 
   // Download report
   const downloadReportMutation = useMutation({
@@ -94,6 +77,59 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
     },
     onError: () => {
       toast({ title: "Failed to share report", variant: "destructive" });
+    },
+  });
+
+  // Reset health data
+  const resetDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/health-data/reset', {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to reset health data');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['health-data'] });
+      toast({ title: "Health data reset successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to reset health data", variant: "destructive" });
+    },
+  });
+
+  // Smart sync: sample data in dev, real health data in iOS production
+  const smartSyncMutation = useMutation({
+    mutationFn: async () => {
+      // Check if we're in development mode or iOS production
+      const isProduction = window.location.protocol === 'https:' && 
+                          (window.location.hostname.includes('.replit.app') || 
+                           window.location.hostname.includes('localhost:3000') === false);
+      
+      if (isProduction && (window as any).Capacitor?.getPlatform() === 'ios') {
+        // iOS production: use real health data
+        const response = await fetch('/api/health-data/native-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ syncAll: true }),
+        });
+        if (!response.ok) throw new Error('Failed to sync health data');
+        return response.json();
+      } else {
+        // Development mode: load sample data
+        const response = await fetch('/api/health-data/load-sample', {
+          method: 'POST',
+        });
+        if (!response.ok) throw new Error('Failed to load sample data');
+        return response.json();
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['health-data'] });
+      toast({ title: "Health data synced successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to sync health data", variant: "destructive" });
     },
   });
 
@@ -338,13 +374,13 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
             No health data available for the selected time range
           </div>
           <div className="flex justify-center gap-2">
-            <Button onClick={() => nativeSyncMutation.mutate()}>
+            <Button onClick={() => smartSyncMutation.mutate()}>
               <Smartphone className="h-4 w-4 mr-2" />
-              Sync Phone Data
+              Sync Health Data
             </Button>
-            <Button onClick={() => loadSampleMutation.mutate()} variant="outline">
+            <Button onClick={() => resetDataMutation.mutate()} variant="outline">
               <Database className="h-4 w-4 mr-2" />
-              Load Sample Data
+              Reset Data
             </Button>
           </div>
         </div>
@@ -391,6 +427,28 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
         >
           <Share2 className="h-4 w-4 mr-2" />
           Share Report
+        </Button>
+      </div>
+
+      {/* Data Management Buttons */}
+      <div className="flex gap-3">
+        <Button
+          onClick={() => smartSyncMutation.mutate()}
+          disabled={smartSyncMutation.isPending}
+          className="flex-1 bg-green-600 hover:bg-green-700"
+        >
+          <Smartphone className="h-4 w-4 mr-2" />
+          Sync Health Data
+        </Button>
+        
+        <Button
+          onClick={() => resetDataMutation.mutate()}
+          disabled={resetDataMutation.isPending}
+          variant="destructive"
+          className="flex-1"
+        >
+          <Database className="h-4 w-4 mr-2" />
+          Reset Data
         </Button>
       </div>
 

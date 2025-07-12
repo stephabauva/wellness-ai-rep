@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 import ChatSection from "@/components/ChatSection";
-import HealthDataSection from "@/components/HealthDataSection";
+import SimpleHealthDashboard from "@/components/SimpleHealthDashboard";
 import ConnectedDevicesSection from "@/components/ConnectedDevicesSection";
 import MemorySection from "@/components/MemorySection";
 import FileManagerSection from "@/components/FileManagerSection";
@@ -17,7 +17,7 @@ const Home: React.FC = () => {
   // Memoize section components with conditional rendering based on loaded sections
   const chatSectionComponent = useMemo(() => <ChatSection />, []);
   const healthSectionComponent = useMemo(() => 
-    loadedSections.includes('health') ? <HealthDataSection /> : <SectionSkeleton type="health" />, 
+    loadedSections.includes('health') ? <SimpleHealthDashboard /> : <SectionSkeleton type="health" />, 
     [loadedSections]
   );
   const devicesSectionComponent = useMemo(() => 

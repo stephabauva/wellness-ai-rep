@@ -2,7 +2,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { registerChatRoutes } from "./chat-routes.js";
-import { registerHealthRoutes } from "./health-routes.js";
+import { registerSimpleHealthRoutes } from "./simple-health-routes.js";
 import { registerMemoryRoutes } from "./memory-routes.js";
 import { registerFileRoutes } from "./file-routes.js";
 import { registerSettingsRoutes } from "./settings-routes.js";
@@ -10,7 +10,7 @@ import { registerMonitoringRoutes } from "./monitoring-routes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const server = await registerChatRoutes(app);
-  await registerHealthRoutes(app);
+  await registerSimpleHealthRoutes(app);
   await registerMemoryRoutes(app);
   await registerFileRoutes(app);
   await registerSettingsRoutes(app);

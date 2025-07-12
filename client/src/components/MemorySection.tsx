@@ -758,9 +758,11 @@ export default function MemorySection() {
                                   <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
                                     {categoryLabels[memory.category as keyof typeof categoryLabels]}
                                   </Badge>
-                                  <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
-                                    {getImportanceLabel(memory.importanceScore)}
-                                  </Badge>
+                                  {memory.importanceScore > 0.7 && (
+                                    <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
+                                      {getImportanceLabel(memory.importanceScore)}
+                                    </Badge>
+                                  )}
                                 </div>
                                 <Button
                                   variant="ghost"
@@ -780,27 +782,13 @@ export default function MemorySection() {
                           {memory.labels && memory.labels.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-3">
                               {memory.labels.map((label: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs bg-blue-100 text-blue-800 font-medium">
+                                <Badge key={index} variant="secondary" className="text-xs bg-gray-100 text-gray-600 font-normal">
                                   {label}
                                 </Badge>
                               ))}
                             </div>
                           )}
                           
-                          {memory.keywords && memory.keywords.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-3">
-                              {memory.keywords.slice(0, 3).map((keyword: string, index: number) => (
-                                <Badge key={index} variant="outline" className="text-xs text-gray-500 border-gray-300">
-                                  {keyword}
-                                </Badge>
-                              ))}
-                              {memory.keywords.length > 3 && (
-                                <Badge variant="outline" className="text-xs text-gray-400 border-gray-300">
-                                  +{memory.keywords.length - 3} more
-                                </Badge>
-                              )}
-                            </div>
-                          )}
                           
                           <div className="flex justify-between text-xs text-gray-500">
                             <span>Created: {new Date(memory.createdAt).toLocaleDateString()}</span>

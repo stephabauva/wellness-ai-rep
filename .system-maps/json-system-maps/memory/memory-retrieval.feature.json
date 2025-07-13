@@ -46,7 +46,8 @@
       "query:unknown/needs-classification",
       "query:infrastructure/routing",
       "query:shared/services",
-      "query:chat"
+      "query:chat",
+      "query:app/pages"
     ]
   },
   "errorPaths": {
@@ -80,11 +81,11 @@
     "semantic-search": "<100ms for similarity queries",
     "memory-retrieval": "<200ms for contextual memories"
   },
-  "lastUpdated": "2025-07-11T21:54:27.657Z",
+  "lastUpdated": "2025-07-13T20:11:53.337Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-11T21:54:27.657Z",
-    "crossDomainFiles": 10,
-    "internalFiles": 3,
-    "totalDependencies": 11
+    "lastAnalyzed": "2025-07-13T20:11:53.337Z",
+    "crossDomainFiles": 2,
+    "internalFiles": 0,
+    "totalDependencies": 2
   }
 }

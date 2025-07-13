@@ -837,7 +837,17 @@
       "uses": [
         "useFileApi"
       ],
-      "verified": true
+      "verified": true,
+      "actualUsage": {
+        "usageCount": 1,
+        "crossDomain": true,
+        "usedBy": [
+          {
+            "file": "client/src/components/ChatSection.tsx",
+            "domain": "chat"
+          }
+        ]
+      }
     },
     "ChatInputArea": {
       "name": "ChatInputArea",
@@ -902,11 +912,11 @@
       }
     }
   },
-  "lastUpdated": "2025-07-11T21:54:27.652Z",
+  "lastUpdated": "2025-07-13T20:11:53.339Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-11T21:54:27.652Z",
-    "crossDomainFiles": 3,
-    "internalFiles": 7,
-    "totalDependencies": 10
+    "lastAnalyzed": "2025-07-13T20:11:53.339Z",
+    "crossDomainFiles": 1,
+    "internalFiles": 0,
+    "totalDependencies": 1
   }
 }

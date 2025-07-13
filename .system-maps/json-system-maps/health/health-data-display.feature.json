@@ -59,7 +59,8 @@
       "query:health",
       "query:shared/services",
       "query:unknown/needs-classification",
-      "query:infrastructure/routing"
+      "query:infrastructure/routing",
+      "query:app/pages"
     ]
   },
   "errorPaths": {
@@ -108,11 +109,11 @@
     "error_state": "User-friendly error messages with recovery options",
     "success_indicators": "Record count display and smooth transitions"
   },
-  "lastUpdated": "2025-07-13T13:01:11.717Z",
+  "lastUpdated": "2025-07-13T20:11:53.333Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-13T13:01:11.717Z",
-    "crossDomainFiles": 5,
+    "lastAnalyzed": "2025-07-13T20:11:53.333Z",
+    "crossDomainFiles": 1,
     "internalFiles": 0,
-    "totalDependencies": 5
+    "totalDependencies": 1
   }
 }

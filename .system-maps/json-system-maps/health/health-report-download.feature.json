@@ -59,7 +59,8 @@
       "query:health",
       "query:shared/services",
       "query:unknown/needs-classification",
-      "query:infrastructure/routing"
+      "query:infrastructure/routing",
+      "query:app/pages"
     ]
   },
   "errorPaths": {
@@ -107,11 +108,11 @@
     "pdf_service": "PDF generation service to be integrated",
     "error_handling": "Complete error handling with user feedback"
   },
-  "lastUpdated": "2025-07-13T13:01:11.717Z",
+  "lastUpdated": "2025-07-13T20:11:53.334Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-13T13:01:11.717Z",
-    "crossDomainFiles": 5,
+    "lastAnalyzed": "2025-07-13T20:11:53.334Z",
+    "crossDomainFiles": 1,
     "internalFiles": 0,
-    "totalDependencies": 5
+    "totalDependencies": 1
   }
 }

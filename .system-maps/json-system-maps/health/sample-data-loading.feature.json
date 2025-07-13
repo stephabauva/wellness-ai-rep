@@ -67,7 +67,8 @@
       "query:health",
       "query:shared/services",
       "query:unknown/needs-classification",
-      "query:infrastructure/routing"
+      "query:infrastructure/routing",
+      "query:app/pages"
     ]
   },
   "errorPaths": {
@@ -115,11 +116,11 @@
     "testing": "Consistent dataset for QA and automated testing",
     "onboarding": "New users can immediately see dashboard functionality"
   },
-  "lastUpdated": "2025-07-13T13:01:11.718Z",
+  "lastUpdated": "2025-07-13T20:11:53.335Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-13T13:01:11.718Z",
-    "crossDomainFiles": 5,
+    "lastAnalyzed": "2025-07-13T20:11:53.335Z",
+    "crossDomainFiles": 1,
     "internalFiles": 0,
-    "totalDependencies": 5
+    "totalDependencies": 1
   }
 }

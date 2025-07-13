@@ -45,7 +45,8 @@
       "query:unknown/needs-classification",
       "query:infrastructure/routing",
       "query:shared/services",
-      "query:chat"
+      "query:chat",
+      "query:app/pages"
     ]
   },
   "errorPaths": {
@@ -75,11 +76,11 @@
     "Singleton pattern prevents duplicate processing instances"
   ],
   "architectureNotes": "Uses singleton pattern to prevent duplicate instances and ensure consistent logging",
-  "lastUpdated": "2025-07-11T21:54:27.656Z",
+  "lastUpdated": "2025-07-13T20:11:53.336Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-11T21:54:27.656Z",
-    "crossDomainFiles": 10,
-    "internalFiles": 3,
-    "totalDependencies": 11
+    "lastAnalyzed": "2025-07-13T20:11:53.336Z",
+    "crossDomainFiles": 2,
+    "internalFiles": 0,
+    "totalDependencies": 2
   }
 }

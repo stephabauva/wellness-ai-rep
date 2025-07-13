@@ -66,7 +66,8 @@
       "query:unknown/needs-classification",
       "query:infrastructure/routing",
       "query:shared/services",
-      "query:chat"
+      "query:chat",
+      "query:app/pages"
     ]
   },
   "errorPaths": {
@@ -515,11 +516,11 @@
       "description": "Caches lightweight memory statistics and category counts"
     }
   },
-  "lastUpdated": "2025-07-11T21:54:27.657Z",
+  "lastUpdated": "2025-07-13T20:11:53.338Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-11T21:54:27.657Z",
-    "crossDomainFiles": 10,
-    "internalFiles": 3,
-    "totalDependencies": 11
+    "lastAnalyzed": "2025-07-13T20:11:53.338Z",
+    "crossDomainFiles": 2,
+    "internalFiles": 0,
+    "totalDependencies": 2
   }
 }

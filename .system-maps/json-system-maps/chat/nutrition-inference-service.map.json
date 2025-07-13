@@ -70,7 +70,8 @@
       "query:unknown/needs-classification",
       "query:memory",
       "query:shared/services",
-      "query:infrastructure/routing"
+      "query:infrastructure/routing",
+      "query:app/pages"
     ]
   },
   "errorPaths": {
@@ -422,11 +423,11 @@
       "fallback": "Current date if parsing fails or out of range"
     }
   },
-  "lastUpdated": "2025-07-11T21:54:27.655Z",
+  "lastUpdated": "2025-07-13T20:11:53.331Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-11T21:54:27.655Z",
-    "crossDomainFiles": 3,
+    "lastAnalyzed": "2025-07-13T20:11:53.332Z",
+    "crossDomainFiles": 1,
     "internalFiles": 7,
-    "totalDependencies": 10
+    "totalDependencies": 8
   }
 }

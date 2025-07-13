@@ -56,7 +56,7 @@
     "usedBy": [
       {
         "file": "client/src/components/AudioRecorder.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "chat/audio",
         "imports": [
           "audioService",
           "TranscriptionResult"
@@ -67,7 +67,7 @@
     "usageCount": 1
   },
   "client/src/pages/not-found.tsx": {
-    "domain": "unknown/needs-classification",
+    "domain": "app/pages",
     "exports": [
       "default"
     ],
@@ -84,7 +84,7 @@
     "usageCount": 1
   },
   "client/src/pages/home.tsx": {
-    "domain": "unknown/needs-classification",
+    "domain": "app/pages",
     "exports": [
       "default"
     ],
@@ -395,7 +395,7 @@
     "usageCount": 2
   },
   "client/src/components/StreamingText.tsx": {
-    "domain": "unknown/needs-classification",
+    "domain": "shared/ui-components",
     "exports": [
       "StreamingText"
     ],
@@ -408,7 +408,7 @@
         ]
       }
     ],
-    "crossDomain": true,
+    "crossDomain": false,
     "usageCount": 1
   },
   "client/src/components/SimpleHealthDashboard.tsx": {
@@ -419,7 +419,7 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "SimpleHealthDashboard"
         ]
@@ -436,13 +436,13 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "Sidebar"
         ]
       }
     ],
-    "crossDomain": false,
+    "crossDomain": true,
     "usageCount": 1
   },
   "client/src/components/SettingsSection.tsx": {
@@ -454,7 +454,7 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "SettingsSection"
         ]
@@ -471,13 +471,13 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "SectionSkeleton"
         ]
       }
     ],
-    "crossDomain": false,
+    "crossDomain": true,
     "usageCount": 1
   },
   "client/src/components/MobileNav.tsx": {
@@ -488,13 +488,13 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "MobileNav"
         ]
       }
     ],
-    "crossDomain": false,
+    "crossDomain": true,
     "usageCount": 1
   },
   "client/src/components/MessageDisplayArea.tsx": {
@@ -522,7 +522,7 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "MemorySection"
         ]
@@ -539,7 +539,7 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "FileManagerSection"
         ]
@@ -573,13 +573,13 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "ConnectedDevicesSection"
         ]
       }
     ],
-    "crossDomain": false,
+    "crossDomain": true,
     "usageCount": 1
   },
   "client/src/components/ChatSection.tsx": {
@@ -590,7 +590,7 @@
     "usedBy": [
       {
         "file": "client/src/pages/home.tsx",
-        "domain": "unknown/needs-classification",
+        "domain": "app/pages",
         "imports": [
           "ChatSection"
         ]
@@ -634,7 +634,7 @@
     "usageCount": 1
   },
   "client/src/components/AudioRecorder.tsx": {
-    "domain": "unknown/needs-classification",
+    "domain": "chat/audio",
     "exports": [
       "AudioRecorder"
     ],
@@ -651,7 +651,7 @@
     "usageCount": 1
   },
   "client/src/components/AttachmentPreview.tsx": {
-    "domain": "unknown/needs-classification",
+    "domain": "chat/attachments",
     "exports": [
       "AttachmentPreview"
     ],
@@ -1033,23 +1033,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "server/services/transcription-service.ts": {
-    "domain": "shared/services",
-    "exports": [
-      "transcriptionService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "transcriptionService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "server/services/simple-memory-detection.ts": {
     "domain": "memory",
     "exports": [
@@ -1067,180 +1050,99 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "server/services/performance-memory-core.ts": {
-    "domain": "memory",
-    "exports": [
-      "PerformanceMemoryCore",
-      "performanceMemoryCore"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "performanceMemoryCore"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/memory-relationship-engine.ts": {
-    "domain": "memory",
-    "exports": [
-      "MemoryRelationshipEngine",
-      "memoryRelationshipEngine"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "memoryRelationshipEngine"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/memory-performance-monitor.ts": {
-    "domain": "memory",
-    "exports": [
-      "MemoryPerformanceMonitor",
-      "memoryPerformanceMonitor"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "memoryPerformanceMonitor"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/memory-feature-flags.ts": {
-    "domain": "memory",
-    "exports": [
-      "MemoryFeatureFlags",
-      "memoryFeatureFlags"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "memoryFeatureFlags"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/health-data-parser.ts": {
-    "domain": "health",
-    "exports": [
-      "ParsedHealthDataPoint",
-      "ParseResult",
-      "HealthDataParser"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "HealthDataParser"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/health-data-deduplication.ts": {
-    "domain": "health",
-    "exports": [
-      "DuplicateDetectionResult",
-      "DeduplicationOptions",
-      "HealthDataDeduplicationService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "HealthDataDeduplicationService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/health-consent-service.ts": {
-    "domain": "health",
-    "exports": [
-      "HealthConsentService",
-      "healthConsentService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "healthConsentService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/go-file-service.ts": {
-    "domain": "file-manager",
-    "exports": [
-      "goFileService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "goFileService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/enhanced-memory-service.ts": {
-    "domain": "memory",
-    "exports": [
-      "enhancedMemoryService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "enhancedMemoryService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/enhanced-background-processor.ts": {
+  "server/services/service-registry.ts": {
     "domain": "shared/services",
     "exports": [
-      "EnhancedBackgroundProcessor",
-      "enhancedBackgroundProcessor"
+      "getMemoryServices",
+      "getHealthServices",
+      "getFileManagerServices",
+      "getSharedServices",
+      "storage",
+      "aiService",
+      "memoryService",
+      "generatePDFReport",
+      "cacheService",
+      "chatGPTMemoryEnhancement",
+      "db",
+      "eq",
+      "desc",
+      "and",
+      "or",
+      "conversations",
+      "conversationMessages",
+      "memoryEntries",
+      "insertFileCategorySchema",
+      "files",
+      "fileCategories",
+      "insertFileSchema",
+      "atomicFacts",
+      "memoryRelationships",
+      "memoryConsolidationLog",
+      "memoryGraphMetrics",
+      "userHealthConsent",
+      "healthDataAccessLog",
+      "users",
+      "enhancedSettingsUpdateSchema",
+      "healthConsentSettingsSchema",
+      "insertHealthDataSchema",
+      "multer",
+      "z",
+      "nanoid",
+      "join",
+      "existsSync",
+      "statSync",
+      "unlinkSync",
+      "path",
+      "fs",
+      "spawn"
     ],
     "usedBy": [
       {
         "file": "server/routes/shared-dependencies.ts",
         "domain": "infrastructure/routing",
         "imports": [
-          "enhancedBackgroundProcessor"
+          "storage",
+          "aiService",
+          "memoryService",
+          "generatePDFReport",
+          "cacheService",
+          "chatGPTMemoryEnhancement",
+          "db",
+          "eq",
+          "desc",
+          "and",
+          "or",
+          "conversations",
+          "conversationMessages",
+          "memoryEntries",
+          "insertFileCategorySchema",
+          "files",
+          "fileCategories",
+          "insertFileSchema",
+          "atomicFacts",
+          "memoryRelationships",
+          "memoryConsolidationLog",
+          "memoryGraphMetrics",
+          "userHealthConsent",
+          "healthDataAccessLog",
+          "users",
+          "enhancedSettingsUpdateSchema",
+          "healthConsentSettingsSchema",
+          "insertHealthDataSchema",
+          "multer",
+          "z",
+          "nanoid",
+          "join",
+          "existsSync",
+          "statSync",
+          "unlinkSync",
+          "path",
+          "fs",
+          "spawn",
+          "getMemoryServices",
+          "getHealthServices",
+          "getFileManagerServices",
+          "getSharedServices"
         ]
       }
     ],
@@ -1259,43 +1161,6 @@
         "domain": "unknown/needs-classification",
         "imports": [
           "databaseMigrationService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/category-service.ts": {
-    "domain": "shared/services",
-    "exports": [
-      "categoryService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "categoryService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/services/attachment-retention-service.ts": {
-    "domain": "shared/services",
-    "exports": [
-      "AttachmentRetentionConfig",
-      "RetentionDurations",
-      "AttachmentRetentionService",
-      "attachmentRetentionService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "attachmentRetentionService"
         ]
       }
     ],

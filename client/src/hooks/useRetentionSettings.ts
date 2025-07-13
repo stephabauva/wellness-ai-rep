@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest } from '@/shared';
 import { useToast } from '@/hooks/use-toast';
 import { z } from "zod";
 

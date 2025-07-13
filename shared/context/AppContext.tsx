@@ -3,6 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CoachingMode } from "@shared/schema";
 import { useUserSettings } from "@/hooks/useUserSettings";
 
+/**
+ * Global application context
+ * @used-by app/root, unknown/needs-classification, chat, settings
+ */
+
 // Define Message type locally for now
 export type Message = {
   id: string;

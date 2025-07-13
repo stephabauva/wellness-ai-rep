@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared";
 
 interface StatCardProps {
   title: string;

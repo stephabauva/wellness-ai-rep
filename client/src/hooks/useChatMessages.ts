@@ -2,7 +2,7 @@
 // This hook will now primarily consume AppContext.
 
 // Import Message type from AppContext to ensure consistency, or a shared types file
-import { useAppContext, Message } from '@/context/AppContext';
+import { useAppContext, Message } from '@/shared';
 // Removed unused React features like useState, useEffect, etc.
 // Removed useMutation, queryClient, apiRequest as mutation is in AppContext
 // Removed AttachedFile type as SendMessageParams is not defined here anymore

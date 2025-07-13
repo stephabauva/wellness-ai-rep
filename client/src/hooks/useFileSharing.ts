@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { FileItem } from '@/types/fileManager';
+import { FileItem } from '@/shared';
 
 export function useFileSharing(allFiles: FileItem[]) { // Takes allFiles to filter selected ones
   const { toast } = useToast();

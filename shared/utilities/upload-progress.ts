@@ -1,3 +1,8 @@
+/**
+ * Upload progress tracking utilities
+ * @used-by shared/hooks, shared/ui-components
+ */
+
 export interface UploadProgress {
   loaded: number;
   total: number;
@@ -116,13 +121,17 @@ export class ProgressTracker {
   }
 }
 
-import { formatFileSize } from './file-utils';
-
-// Re-export formatFileSize for convenience
-export { formatFileSize as formatBytes } from './file-utils';
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  if (i >= sizes.length) return `${(bytes / Math.pow(k, sizes.length - 1)).toFixed(2)} ${sizes[sizes.length - 1]}`;
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 export function formatSpeed(bytesPerSecond: number): string {
-  return formatFileSize(bytesPerSecond) + '/s';
+  return formatBytes(bytesPerSecond) + '/s';
 }
 
 export function formatDuration(seconds: number): string {

@@ -1,6 +1,6 @@
 
 import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest } from '@/shared';
 import { generatePDF } from '@/lib/pdf-generator';
 import { useToast } from '@/hooks/use-toast';
 

@@ -8,7 +8,7 @@ import MemorySection from "@/components/MemorySection";
 import FileManagerSection from "@/components/FileManagerSection";
 import SettingsSection from "@/components/SettingsSection";
 import SectionSkeleton from "@/components/SectionSkeleton";
-import { useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/shared";
 
 const Home: React.FC = () => {
   const { activeSection, loadedSections } = useAppContext(); // Add loadedSections

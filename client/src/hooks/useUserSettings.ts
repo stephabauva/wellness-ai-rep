@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient'; // Assuming apiRequest is a utility for making API calls
+import { apiRequest } from '@/shared'; // Assuming apiRequest is a utility for making API calls
 import { useToast } from '@/hooks/use-toast';
 import { z } from "zod"; // For FormValues type, assuming it's defined here or imported
 

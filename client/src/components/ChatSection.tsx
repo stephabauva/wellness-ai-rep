@@ -5,7 +5,7 @@ import { History } from "lucide-react"; // Only History is needed from lucide-re
 import { useChatMessages } from "@/hooks/useChatMessages";
 // useFileManagement is now used indirectly via useChatActions
 // import { generateMessagesToDisplay } from "@/utils/chatUtils"; // Removed
-import { useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/shared";
 import { useChatActions } from "@/hooks/useChatActions"; // Import the new hook
 
 // Import the new components

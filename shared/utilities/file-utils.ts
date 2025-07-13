@@ -22,6 +22,7 @@ import { FileItem, FileCategoryGroup } from '@/types/fileManager';
 /**
  * Consolidated file utility functions
  * Combines functionality from chatUtils and fileManagerUtils
+ * @used-by shared/utilities, file-manager, unknown/needs-classification, shared/ui-components
  */
 
 export const getFileIcon = (fileType: string, fileName?: string, size: string = "h-6 w-6"): React.ReactNode => {

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Shield, Eye, EyeOff, Clock, Download, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient } from '@/shared';
 import { useToast } from '@/hooks/use-toast';
 // Define local types to avoid import issues during Phase 1 implementation
 interface HealthConsentSettings {

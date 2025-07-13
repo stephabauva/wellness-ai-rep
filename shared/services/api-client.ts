@@ -1,6 +1,11 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Capacitor } from "@capacitor/core";
 
+/**
+ * API client service for making HTTP requests and managing React Query
+ * @used-by settings, shared/hooks, memory, unknown/needs-classification
+ */
+
 function getApiBaseUrl(): string {
   // For native mobile apps, use the production server URL
   if (Capacitor.isNativePlatform()) {

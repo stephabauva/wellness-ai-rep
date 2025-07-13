@@ -1,5 +1,10 @@
 import React from 'react';
 
+/**
+ * File manager type definitions
+ * @used-by shared/utilities, file-manager
+ */
+
 export interface FileRetentionInfo {
   category: 'high' | 'medium' | 'low' | string; // Allow string for flexibility if new categories appear
   retentionDays: number;
@@ -45,7 +50,6 @@ export interface FileCategory {
   createdAt: string;         // Assuming date is serialized as string from API
   // updatedAt?: string; // If you add updatedAt in the schema and API
 }
-
 
 // For view mode toggle
 export type ViewMode = 'list' | 'grid';

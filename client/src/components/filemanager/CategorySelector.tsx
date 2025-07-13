@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Tag, ChevronDown } from 'lucide-react';
-import { FileCategory } from '@/types/fileManager';
+import { FileCategory } from '@/shared';
 
 interface CategorySelectorProps {
   categories: FileCategory[];

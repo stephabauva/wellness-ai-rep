@@ -1,23 +1,45 @@
 import React from 'react';
-import { Image, FileText, Stethoscope, Activity, Folder, Heart, Apple, Dumbbell, FileImage, Camera, Users, Settings, Database, FileIcon, VideoIcon, AudioWaveformIcon, File } from 'lucide-react';
-import { FileItem, FileCategoryGroup } from '@/types/fileManager'; // Use FileCategoryGroup
+import { 
+  Image, 
+  FileText, 
+  Stethoscope, 
+  Activity, 
+  Folder, 
+  Heart, 
+  Apple, 
+  Dumbbell, 
+  FileImage, 
+  Camera, 
+  Users, 
+  Settings, 
+  Database, 
+  FileIcon, 
+  VideoIcon, 
+  AudioWaveformIcon 
+} from 'lucide-react';
+import { FileItem, FileCategoryGroup } from '@/types/fileManager';
 
-export const getFileIcon = (fileType: string, fileName: string, size: string = "h-6 w-6"): React.ReactNode => {
+/**
+ * Consolidated file utility functions
+ * Combines functionality from chatUtils and fileManagerUtils
+ */
+
+export const getFileIcon = (fileType: string, fileName?: string, size: string = "h-6 w-6"): React.ReactNode => {
   const lowerFileType = fileType.toLowerCase();
-  const lowerFileName = fileName.toLowerCase();
+  const lowerFileName = fileName?.toLowerCase() || '';
 
   // Image files
-  if (lowerFileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(fileName)) {
+  if (lowerFileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(lowerFileName)) {
     return React.createElement(Image, { className: `${size} text-blue-500` });
   }
   
   // Video files
-  if (lowerFileType.startsWith('video/') || /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(fileName)) {
+  if (lowerFileType.startsWith('video/') || /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(lowerFileName)) {
     return React.createElement(VideoIcon, { className: `${size} text-purple-500` });
   }
   
   // Audio files
-  if (lowerFileType.startsWith('audio/') || /\.(mp3|wav|flac|aac|ogg|wma|m4a)$/i.test(fileName)) {
+  if (lowerFileType.startsWith('audio/') || /\.(mp3|wav|flac|aac|ogg|wma|m4a)$/i.test(lowerFileName)) {
     return React.createElement(AudioWaveformIcon, { className: `${size} text-green-500` });
   }
   
@@ -42,22 +64,22 @@ export const getFileIcon = (fileType: string, fileName: string, size: string = "
   }
   
   // Word documents
-  if (lowerFileType.includes('word') || /\.(doc|docx)$/i.test(fileName)) {
+  if (lowerFileType.includes('word') || /\.(doc|docx)$/i.test(lowerFileName)) {
     return React.createElement(FileText, { className: `${size} text-blue-600` });
   }
   
   // Excel files
-  if (lowerFileType.includes('excel') || lowerFileType.includes('sheet') || /\.(xls|xlsx)$/i.test(fileName)) {
+  if (lowerFileType.includes('excel') || lowerFileType.includes('sheet') || /\.(xls|xlsx)$/i.test(lowerFileName)) {
     return React.createElement(Database, { className: `${size} text-green-700` });
   }
   
   // PowerPoint files
-  if (lowerFileType.includes('powerpoint') || lowerFileType.includes('presentation') || /\.(ppt|pptx)$/i.test(fileName)) {
+  if (lowerFileType.includes('powerpoint') || lowerFileType.includes('presentation') || /\.(ppt|pptx)$/i.test(lowerFileName)) {
     return React.createElement(FileText, { className: `${size} text-orange-600` });
   }
   
   // Text files
-  if (lowerFileType.includes('text') || /\.(txt|md|rtf)$/i.test(fileName)) {
+  if (lowerFileType.includes('text') || /\.(txt|md|rtf)$/i.test(lowerFileName)) {
     return React.createElement(FileText, { className: `${size} text-gray-600` });
   }
   
@@ -70,7 +92,7 @@ export const formatFileSize = (bytes: number): string => {
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  if (i >= sizes.length) return `${(bytes / Math.pow(k, sizes.length -1 )).toFixed(2)} ${sizes[sizes.length -1]}`;
+  if (i >= sizes.length) return `${(bytes / Math.pow(k, sizes.length - 1)).toFixed(2)} ${sizes[sizes.length - 1]}`;
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
@@ -84,6 +106,16 @@ export const formatDate = (dateString: string): string => {
   });
 };
 
+export const formatTime = (timestamp: Date): string => {
+  if (!timestamp || !(timestamp instanceof Date)) {
+    return "";
+  }
+  return timestamp.toLocaleTimeString([], { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+};
+
 export const getRetentionBadgeColor = (category?: string): string => {
   switch (category) {
     case 'high': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -93,7 +125,7 @@ export const getRetentionBadgeColor = (category?: string): string => {
   }
 };
 
-export const categorizeFiles = (files: FileItem[]): FileCategoryGroup[] => { // Update return type
+export const categorizeFiles = (files: FileItem[]): FileCategoryGroup[] => {
   const medical = files.filter(f => {
     const fileName = f.fileName.toLowerCase();
     const fileType = f.fileType.toLowerCase();

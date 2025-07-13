@@ -23,7 +23,7 @@ import { QrCodeDialog } from './filemanager/QrCodeDialog';
 import FileUploadDialog from './filemanager/FileUploadDialog';
 
 // Import utilities and types
-import { categorizeFiles, getFileIcon, formatFileSize, formatDate } from '@/utils/fileManagerUtils';
+import { categorizeFiles, getFileIcon, formatFileSize, formatDate } from '@/utils/file-utils';
 import { FileCategory, FileItem } from '@/types/fileManager';
 
 

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileCategory, FileItem } from '@/types/fileManager';
-import { getIconFromName } from '@/utils/fileManagerUtils';
+import { getIconFromName } from '@/utils/file-utils';
 import { cn } from '@/lib/utils';
 
 interface CategoryTabsProps {

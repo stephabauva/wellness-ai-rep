@@ -116,21 +116,16 @@ export class ProgressTracker {
   }
 }
 
-export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+import { formatFileSize } from './file-utils';
+
+// Re-export formatFileSize for convenience
+export { formatFileSize as formatBytes } from './file-utils';
 
 export function formatSpeed(bytesPerSecond: number): string {
-  return formatBytes(bytesPerSecond) + '/s';
+  return formatFileSize(bytesPerSecond) + '/s';
 }
 
-export function formatTime(seconds: number): string {
+export function formatDuration(seconds: number): string {
   if (seconds < 60) {
     return `${Math.round(seconds)}s`;
   } else if (seconds < 3600) {

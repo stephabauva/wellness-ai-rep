@@ -11,7 +11,7 @@ import {
   formatDate,
   getFileIcon as getFileIconUtil, // Renamed to avoid conflict
   getRetentionBadgeColor
-} from '@/utils/fileManagerUtils';
+} from '@/utils/file-utils';
 
 interface FileListProps {
   files: FileItem[];

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DateContextParser, type DateContext } from '../utils/date-context-parser.js';
+import { DateContextParser, type DateContext } from './health/date-context-parser.js';
 import { nutritionMemoryService } from './nutrition-memory-service.js';
 
 // Helper function to log with service context

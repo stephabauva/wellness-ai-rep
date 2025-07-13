@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 // Assuming FileCategory will be defined in @/types/fileManager alongside FileItem
 import { FileItem, FileCategory } from '@/types/fileManager';
-import { formatFileSize } from '@/utils/fileManagerUtils'; // For toast message
+import { formatFileSize } from '@/utils/file-utils'; // For toast message
 
 // Type for category data for create operations (aligns with server DTO from insertFileCategorySchema)
 // Requires 'name', other fields from the schema are optional.

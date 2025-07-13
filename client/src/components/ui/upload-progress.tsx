@@ -2,7 +2,8 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UploadProgress as UploadProgressType } from "@/utils/upload-progress";
-import { formatBytes, formatSpeed, formatTime } from "@/utils/upload-progress";
+import { formatSpeed, formatDuration } from "@/utils/upload-progress";
+import { formatFileSize } from "@/utils/file-utils";
 import { Archive, Upload, Loader2, CheckCircle2 } from "lucide-react";
 
 interface UploadProgressProps {
@@ -81,7 +82,7 @@ export function UploadProgressIndicator({
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>
-                {formatBytes(progress.loaded)} / {formatBytes(progress.total)}
+                {formatFileSize(progress.loaded)} / {formatFileSize(progress.total)}
               </span>
               {showDetails && progress.speed > 0 && (
                 <span>{formatSpeed(progress.speed)}</span>
@@ -94,7 +95,7 @@ export function UploadProgressIndicator({
             <div className="flex justify-between text-xs text-muted-foreground">
               <span className="capitalize">{getStageText()}</span>
               {progress.eta > 0 && progress.stage !== 'complete' && (
-                <span>ETA: {formatTime(progress.eta)}</span>
+                <span>ETA: {formatDuration(progress.eta)}</span>
               )}
             </div>
           )}
@@ -128,11 +129,11 @@ export function CompressionResult({ result, className = "" }: CompressionResultP
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
               <p className="text-muted-foreground">Original Size</p>
-              <p className="font-medium">{formatBytes(result.originalSize)}</p>
+              <p className="font-medium">{formatFileSize(result.originalSize)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Compressed Size</p>
-              <p className="font-medium">{formatBytes(result.compressedSize)}</p>
+              <p className="font-medium">{formatFileSize(result.compressedSize)}</p>
             </div>
           </div>
           
@@ -141,7 +142,7 @@ export function CompressionResult({ result, className = "" }: CompressionResultP
               <span className="text-xs text-muted-foreground">Space Saved</span>
               <div className="text-right">
                 <p className="text-sm font-medium text-green-600">
-                  {formatBytes(savedBytes)}
+                  {formatFileSize(savedBytes)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   ({result.compressionRatio.toFixed(1)}% reduction)

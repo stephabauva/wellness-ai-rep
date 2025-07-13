@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button"; // For remove button, though a simple 'x' is used
-import { getFileIcon } from "@/utils/chatUtils"; // Assuming this utility exists and is correctly pathed
+import { getFileIcon } from "@/utils/file-utils";
 import { AttachedFile } from "@/hooks/useFileManagement";
 
 /**

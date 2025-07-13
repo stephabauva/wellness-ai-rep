@@ -16,122 +16,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "client/src/utils/upload-progress.ts": {
-    "domain": "shared/utilities",
-    "exports": [
-      "UploadProgress",
-      "UploadSpeedCalculator",
-      "SpeedCalculator",
-      "ProgressTracker",
-      "formatBytes",
-      "formatSpeed",
-      "formatTime",
-      "createUploadProgressCallback"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/hooks/useOptimizedUpload.ts",
-        "domain": "shared/hooks",
-        "imports": [
-          "UploadProgress",
-          "ProgressTracker"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "UploadProgress as UploadProgressType"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "formatBytes",
-          "formatSpeed",
-          "formatTime"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 3
-  },
-  "client/src/utils/fileManagerUtils.ts": {
-    "domain": "shared/utilities",
-    "exports": [
-      "getFileIcon",
-      "formatFileSize",
-      "formatDate",
-      "getRetentionBadgeColor",
-      "categorizeFiles",
-      "getIconFromName"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/hooks/useFileApi.ts",
-        "domain": "file-manager",
-        "imports": [
-          "formatFileSize"
-        ]
-      },
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "categorizeFiles",
-          "getFileIcon",
-          "formatFileSize",
-          "formatDate"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "formatFileSize",
-          "formatDate",
-          "getFileIcon as getFileIconUtil",
-          "// Renamed to avoid conflict\n  getRetentionBadgeColor"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategoryTabs.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "getIconFromName"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 4
-  },
-  "client/src/utils/chatUtils.tsx": {
-    "domain": "shared/utilities",
-    "exports": [
-      "getFileIcon",
-      "formatTime",
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ChatSection.tsx",
-        "domain": "chat",
-        "imports": [
-          "generateMessagesToDisplay"
-        ]
-      },
-      {
-        "file": "client/src/components/AttachmentPreview.tsx",
-        "domain": "unknown/needs-classification",
-        "imports": [
-          "getFileIcon"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 2
-  },
   "client/src/types/fileManager.ts": {
     "domain": "shared/types",
     "exports": [
@@ -143,7 +27,7 @@
     ],
     "usedBy": [
       {
-        "file": "client/src/utils/fileManagerUtils.ts",
+        "file": "client/src/utils/file-utils.ts",
         "domain": "shared/utilities",
         "imports": [
           "FileItem",
@@ -215,6 +99,151 @@
     ],
     "crossDomain": true,
     "usageCount": 9
+  },
+  "client/src/utils/upload-progress.ts": {
+    "domain": "shared/utilities",
+    "exports": [
+      "UploadProgress",
+      "UploadSpeedCalculator",
+      "SpeedCalculator",
+      "ProgressTracker",
+      "formatSpeed",
+      "formatDuration",
+      "createUploadProgressCallback",
+      "formatBytes"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useOptimizedUpload.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "UploadProgress",
+          "ProgressTracker"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "UploadProgress as UploadProgressType"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "formatSpeed",
+          "formatDuration"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 3
+  },
+  "client/src/utils/file-utils.ts": {
+    "domain": "shared/utilities",
+    "exports": [
+      "getFileIcon",
+      "formatFileSize",
+      "formatDate",
+      "formatTime",
+      "getRetentionBadgeColor",
+      "categorizeFiles",
+      "getIconFromName"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/utils/upload-progress.ts",
+        "domain": "shared/utilities",
+        "imports": [
+          "formatFileSize"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileApi.ts",
+        "domain": "file-manager",
+        "imports": [
+          "formatFileSize"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "categorizeFiles",
+          "getFileIcon",
+          "formatFileSize",
+          "formatDate"
+        ]
+      },
+      {
+        "file": "client/src/components/AttachmentPreview.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "getFileIcon"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "formatFileSize",
+          "formatDate",
+          "getFileIcon as getFileIconUtil",
+          "// Renamed to avoid conflict\n  getRetentionBadgeColor"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryTabs.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "getIconFromName"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "formatFileSize"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 7
+  },
+  "client/src/pages/not-found.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
   },
   "client/src/services/universal-file-service.ts": {
     "domain": "file-manager",
@@ -303,13 +332,6 @@
     ],
     "usedBy": [
       {
-        "file": "client/src/utils/compression-test.ts",
-        "domain": "shared/utilities",
-        "imports": [
-          "FileCompressionService"
-        ]
-      },
-      {
         "file": "client/src/services/universal-file-service.ts",
         "domain": "file-manager",
         "imports": [
@@ -328,7 +350,7 @@
       }
     ],
     "crossDomain": true,
-    "usageCount": 3
+    "usageCount": 2
   },
   "client/src/services/file-acceleration-service.ts": {
     "domain": "file-manager",
@@ -371,40 +393,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/pages/not-found.tsx": {
-    "domain": "unknown/needs-classification",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "NotFound"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/home.tsx": {
-    "domain": "unknown/needs-classification",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "Home"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/lib/utils.ts": {
     "domain": "unknown/needs-classification",
     "exports": [
@@ -433,35 +421,21 @@
         ]
       },
       {
-        "file": "client/src/components/ui/tooltip.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
         "imports": [
           "cn"
         ]
       },
       {
-        "file": "client/src/components/ui/toggle.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/toggle-group.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/filemanager/CategoryTabs.tsx",
+        "domain": "file-manager",
         "imports": [
           "cn"
         ]
       },
       {
         "file": "client/src/components/ui/toast.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/textarea.tsx",
         "domain": "shared/ui-components",
         "imports": [
           "cn"
@@ -482,28 +456,7 @@
         ]
       },
       {
-        "file": "client/src/components/ui/switch.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
         "file": "client/src/components/ui/stat-card.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/slider.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/skeleton.tsx",
         "domain": "shared/ui-components",
         "imports": [
           "cn"
@@ -517,20 +470,6 @@
         ]
       },
       {
-        "file": "client/src/components/ui/sheet.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/separator.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
         "file": "client/src/components/ui/select.tsx",
         "domain": "shared/ui-components",
         "imports": [
@@ -538,84 +477,7 @@
         ]
       },
       {
-        "file": "client/src/components/ui/scroll-area.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/resizable.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/radio-group.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/popover.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/pagination.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/navigation-menu.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/menubar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/label.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
         "file": "client/src/components/ui/input.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/input-otp.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/hover-card.tsx",
         "domain": "shared/ui-components",
         "imports": [
           "cn"
@@ -657,20 +519,6 @@
         ]
       },
       {
-        "file": "client/src/components/ui/context-menu.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/command.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
         "file": "client/src/components/ui/checkbox.tsx",
         "domain": "shared/ui-components",
         "imports": [
@@ -685,28 +533,7 @@
         ]
       },
       {
-        "file": "client/src/components/ui/chart.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/carousel.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
         "file": "client/src/components/ui/card.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/calendar.tsx",
         "domain": "shared/ui-components",
         "imports": [
           "cn"
@@ -720,35 +547,7 @@
         ]
       },
       {
-        "file": "client/src/components/ui/breadcrumb.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
         "file": "client/src/components/ui/badge.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/avatar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/alert.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/alert-dialog.tsx",
         "domain": "shared/ui-components",
         "imports": [
           "cn"
@@ -760,24 +559,10 @@
         "imports": [
           "cn"
         ]
-      },
-      {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "cn"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategoryTabs.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "cn"
-        ]
       }
     ],
     "crossDomain": true,
-    "usageCount": 52
+    "usageCount": 23
   },
   "client/src/lib/queryClient.ts": {
     "domain": "unknown/needs-classification",
@@ -1304,15 +1089,15 @@
         ]
       },
       {
-        "file": "client/src/components/ui/toaster.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
         "imports": [
           "useToast"
         ]
       },
       {
-        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
-        "domain": "settings",
+        "file": "client/src/components/ui/toaster.tsx",
+        "domain": "shared/ui-components",
         "imports": [
           "useToast"
         ]
@@ -1698,6 +1483,244 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "client/src/components/filemanager/QrCodeDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "QrCodeDialog"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "QrCodeDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileUploadDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileUploadDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileList.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileList"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileList as FileListComponent"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileActionsToolbar.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileActionsToolbar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileActionsToolbar"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryTabs.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryTabs"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryTabs"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategorySelector.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategorySelector"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategorySelector"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryDropdown.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryDropdown"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryDropdown"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/PerformanceSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "PerformanceSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "PerformanceSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/HealthDataConsentSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "HealthDataConsentSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "HealthDataConsentSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/FileManagementSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "FileManagementSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "FileManagementSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/CoachingPreferencesSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "CoachingPreferencesSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "CoachingPreferencesSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AppPreferencesSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AppPreferencesSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AppPreferencesSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AiConfigurationSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AiConfigurationSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AiConfigurationSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AccountSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AccountSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AccountSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
   "client/src/components/ui/tooltip.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -1728,24 +1751,6 @@
     ],
     "crossDomain": true,
     "usageCount": 2
-  },
-  "client/src/components/ui/toggle.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Toggle",
-      "toggleVariants"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/toggle-group.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "toggleVariants"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
   },
   "client/src/components/ui/toaster.tsx": {
     "domain": "shared/ui-components",
@@ -1799,6 +1804,7 @@
   "client/src/components/ui/textarea.tsx": {
     "domain": "shared/ui-components",
     "exports": [
+      "TextareaProps",
       "Textarea"
     ],
     "usedBy": [
@@ -1927,38 +1933,6 @@
     "crossDomain": true,
     "usageCount": 4
   },
-  "client/src/components/ui/sheet.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Sheet",
-      "SheetPortal",
-      "SheetOverlay",
-      "SheetTrigger",
-      "SheetClose",
-      "SheetContent",
-      "SheetHeader",
-      "SheetFooter",
-      "SheetTitle",
-      "SheetDescription",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Sheet",
-          "SheetContent",
-          "SheetDescription",
-          "SheetHeader",
-          "SheetTitle",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
   "client/src/components/ui/separator.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -1966,15 +1940,15 @@
     ],
     "usedBy": [
       {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
         "imports": [
           "Separator"
         ]
       },
       {
-        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
-        "domain": "settings",
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
         "imports": [
           "Separator"
         ]
@@ -2011,16 +1985,26 @@
         ]
       },
       {
-        "file": "client/src/components/ui/coach-select.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
         "imports": [
           "Select",
           "SelectContent",
-          "SelectGroup",
           "SelectItem",
-          "SelectLabel",
           "SelectTrigger",
           "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue",
+          ""
         ]
       },
       {
@@ -2066,33 +2050,10 @@
           "SelectTrigger",
           "SelectValue"
         ]
-      },
-      {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue",
-          ""
-        ]
       }
     ],
     "crossDomain": true,
-    "usageCount": 8
+    "usageCount": 7
   },
   "client/src/components/ui/scroll-area.tsx": {
     "domain": "shared/ui-components",
@@ -2131,23 +2092,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/components/ui/progress.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Progress"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Progress"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
   "client/src/components/ui/label.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -2155,8 +2099,8 @@
     ],
     "usedBy": [
       {
-        "file": "client/src/components/ui/form.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
         "imports": [
           "Label"
         ]
@@ -2176,8 +2120,8 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
+        "file": "client/src/components/ui/form.tsx",
+        "domain": "shared/ui-components",
         "imports": [
           "Label"
         ]
@@ -2207,8 +2151,8 @@
         ]
       },
       {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
         "imports": [
           "Input"
         ]
@@ -2221,8 +2165,8 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
         "imports": [
           "Input"
         ]
@@ -2402,14 +2346,6 @@
         ]
       },
       {
-        "file": "client/src/components/ui/command.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Dialog",
-          "DialogContent"
-        ]
-      },
-      {
         "file": "client/src/components/filemanager/QrCodeDialog.tsx",
         "domain": "file-manager",
         "imports": [
@@ -2435,7 +2371,7 @@
       }
     ],
     "crossDomain": true,
-    "usageCount": 5
+    "usageCount": 4
   },
   "client/src/components/ui/device-card.tsx": {
     "domain": "shared/ui-components",
@@ -2496,15 +2432,15 @@
         ]
       },
       {
-        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
-        "domain": "settings",
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
         "imports": [
           "Checkbox"
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
         "imports": [
           "Checkbox"
         ]
@@ -2618,11 +2554,12 @@
         ]
       },
       {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
         "imports": [
           "Card",
-          "CardContent"
+          "CardContent",
+          "CardHeader"
         ]
       },
       {
@@ -2698,12 +2635,11 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
         "imports": [
           "Card",
-          "CardContent",
-          "CardHeader"
+          "CardContent"
         ]
       }
     ],
@@ -2803,63 +2739,6 @@
         ]
       },
       {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Button"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/pagination.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "ButtonProps",
-          "buttonVariants"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/device-card.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Button"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/carousel.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Button"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/calendar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "buttonVariants"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/alert-dialog.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "buttonVariants"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Button"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AccountSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Button"
-        ]
-      },
-      {
         "file": "client/src/components/filemanager/QrCodeDialog.tsx",
         "domain": "file-manager",
         "imports": [
@@ -2893,10 +2772,38 @@
         "imports": [
           "Button"
         ]
+      },
+      {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/device-card.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Button"
+        ]
       }
     ],
     "crossDomain": true,
-    "usageCount": 25
+    "usageCount": 21
   },
   "client/src/components/ui/badge.tsx": {
     "domain": "shared/ui-components",
@@ -2935,15 +2842,8 @@
         ]
       },
       {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Badge"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/device-card.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
         "imports": [
           "Badge"
         ]
@@ -2963,8 +2863,15 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/device-card.tsx",
+        "domain": "shared/ui-components",
         "imports": [
           "Badge"
         ]
@@ -2972,244 +2879,6 @@
     ],
     "crossDomain": true,
     "usageCount": 9
-  },
-  "client/src/components/settings/PerformanceSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "PerformanceSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "PerformanceSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/HealthDataConsentSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "HealthDataConsentSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "HealthDataConsentSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/FileManagementSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "FileManagementSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "FileManagementSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/CoachingPreferencesSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "CoachingPreferencesSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "CoachingPreferencesSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/AppPreferencesSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "AppPreferencesSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "AppPreferencesSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/AiConfigurationSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "AiConfigurationSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "AiConfigurationSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/AccountSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "AccountSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "AccountSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/QrCodeDialog.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "QrCodeDialog"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "QrCodeDialog"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileUploadDialog.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileUploadDialog"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileList.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "FileList"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileList as FileListComponent"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileActionsToolbar.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "FileActionsToolbar"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileActionsToolbar"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategoryTabs.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategoryTabs"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategoryTabs"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategorySelector.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategorySelector"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategorySelector"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategoryDropdown.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategoryDropdown"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategoryDropdown"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
   },
   "server/vite.ts": {
     "domain": "unknown/needs-classification",
@@ -3320,6 +2989,14 @@
         ]
       },
       {
+        "file": "server/migrations/memory-categories-migration.ts",
+        "domain": "memory",
+        "imports": [
+          "db",
+          "initializeDatabase"
+        ]
+      },
+      {
         "file": "server/services/simple-memory-detection.ts",
         "domain": "memory",
         "imports": [
@@ -3395,14 +3072,6 @@
         "domain": "shared/services",
         "imports": [
           "db"
-        ]
-      },
-      {
-        "file": "server/migrations/memory-categories-migration.ts",
-        "domain": "memory",
-        "imports": [
-          "db",
-          "initializeDatabase"
         ]
       }
     ],

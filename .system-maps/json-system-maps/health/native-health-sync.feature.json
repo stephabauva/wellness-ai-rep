@@ -2,7 +2,7 @@
   "_metadata": {
     "featureName": "native-health-sync",
     "featureGroup": "health-dashboard",
-    "parentFile": "health-dashboard-core.map.json", 
+    "parentFile": "health-dashboard-core.map.json",
     "domain": "health",
     "description": "Sync health data from native device health apps (iOS Health, Google Fit)",
     "userFlow": [
@@ -12,7 +12,11 @@
       "Health data synced from device health app",
       "Dashboard refreshes with new data"
     ],
-    "components": ["Sync button", "platform detection", "native health service"],
+    "components": [
+      "Sync button",
+      "platform detection",
+      "native health service"
+    ],
     "lastUpdated": "2025-07-12",
     "status": "active"
   },
@@ -20,7 +24,12 @@
   "dataFlow": {
     "request": "Button click → nativeSyncMutation → POST /api/health-data/native-sync → Platform detection → Native health API calls",
     "response": "Device health data → Processing/validation → Database storage → Cache invalidation → UI refresh",
-    "sideEffects": ["Permission requests", "Cache invalidation", "Background processing", "User notifications"]
+    "sideEffects": [
+      "Permission requests",
+      "Cache invalidation",
+      "Background processing",
+      "User notifications"
+    ]
   },
   "files": {
     "ui": [
@@ -40,9 +49,23 @@
     ]
   },
   "cacheFlow": {
-    "invalidates": ["queryClient.invalidateQueries({ queryKey: ['health-data'] })"],
-    "refreshes": ["entire health dashboard", "all time range views"],
-    "triggers": ["new data availability", "dashboard re-render"]
+    "invalidates": [
+      "queryClient.invalidateQueries({ queryKey: ['health-data'] })"
+    ],
+    "refreshes": [
+      "entire health dashboard",
+      "all time range views"
+    ],
+    "triggers": [
+      "new data availability",
+      "dashboard re-render"
+    ],
+    "crossDomainInvalidates": [
+      "query:health",
+      "query:shared/services",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing"
+    ]
   },
   "errorPaths": {
     "network": "Error toast with sync failure message",
@@ -50,19 +73,35 @@
     "business": "Unsupported platform graceful degradation"
   },
   "dependencies": {
-    "internal": ["health-data-display", "platform-detection"],
-    "external": ["Capacitor Health plugin", "Native device APIs"],
-    "shared": ["Button component", "toast notifications"]
+    "internal": [
+      "health-data-display",
+      "platform-detection"
+    ],
+    "external": [
+      "Capacitor Health plugin",
+      "Native device APIs"
+    ],
+    "shared": [
+      "Button component",
+      "toast notifications"
+    ]
   },
   "implementation": {
     "platform_support": {
       "ios": "HealthKit integration via Capacitor Health plugin",
-      "android": "Google Fit integration via Capacitor Health plugin", 
+      "android": "Google Fit integration via Capacitor Health plugin",
       "web": "Graceful degradation with informative message",
       "detection": "Automatic platform detection and capability checking"
     },
     "data_types": {
-      "supported": ["steps", "heart_rate", "sleep", "weight", "body_fat", "calories"],
+      "supported": [
+        "steps",
+        "heart_rate",
+        "sleep",
+        "weight",
+        "body_fat",
+        "calories"
+      ],
       "mapping": "Native data types mapped to internal HealthMetric format",
       "validation": "Data validation and deduplication during sync",
       "time_range": "Configurable sync period (default: last 30 days)"
@@ -79,5 +118,12 @@
     "selective_sync": "User choice of which data types to sync",
     "sync_history": "Track sync operations and status",
     "conflict_resolution": "Advanced merge strategies for overlapping data"
+  },
+  "lastUpdated": "2025-07-13T13:01:11.718Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-13T13:01:11.718Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 0,
+    "totalDependencies": 5
   }
 }

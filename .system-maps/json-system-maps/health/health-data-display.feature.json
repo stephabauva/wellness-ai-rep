@@ -7,11 +7,14 @@
     "description": "Display aggregated health metrics in simplified dashboard UI",
     "userFlow": [
       "User navigates to health section",
-      "Dashboard loads with 7-day default view", 
+      "Dashboard loads with 7-day default view",
       "Health metrics displayed in 2x4 grid",
       "AI insights shown in analysis section"
     ],
-    "components": ["SimpleHealthDashboard.tsx", "health API endpoints"],
+    "components": [
+      "SimpleHealthDashboard.tsx",
+      "health API endpoints"
+    ],
     "lastUpdated": "2025-07-12",
     "status": "active"
   },
@@ -19,7 +22,11 @@
   "dataFlow": {
     "request": "SimpleHealthDashboard → useQuery → /api/health-data → storage.getHealthData → Database",
     "response": "Database → HealthMetric[] → aggregation logic → UI rendering → 2x4 metrics grid",
-    "sideEffects": ["Cache population", "Loading state management", "Error boundary activation"]
+    "sideEffects": [
+      "Cache population",
+      "Loading state management",
+      "Error boundary activation"
+    ]
   },
   "files": {
     "ui": [
@@ -40,23 +47,45 @@
   },
   "cacheFlow": {
     "invalidates": [],
-    "refreshes": ["health metrics display", "AI analysis section"],
-    "triggers": ["time range changes", "data updates"]
+    "refreshes": [
+      "health metrics display",
+      "AI analysis section"
+    ],
+    "triggers": [
+      "time range changes",
+      "data updates"
+    ],
+    "crossDomainInvalidates": [
+      "query:health",
+      "query:shared/services",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing"
+    ]
   },
   "errorPaths": {
     "network": "Loading spinner → Error message → Retry option",
-    "validation": "Invalid data filtered out with console warnings", 
+    "validation": "Invalid data filtered out with console warnings",
     "business": "Empty state shown when no health data available"
   },
   "dependencies": {
-    "internal": ["time-range-switching", "metric-aggregation"],
-    "external": ["React Query", "Lucide icons"],
-    "shared": ["Button", "Card", "toast notifications"]
+    "internal": [
+      "time-range-switching",
+      "metric-aggregation"
+    ],
+    "external": [
+      "React Query",
+      "Lucide icons"
+    ],
+    "shared": [
+      "Button",
+      "Card",
+      "toast notifications"
+    ]
   },
   "implementation": {
     "aggregation_logic": {
       "weight": "average of all weight records in time range",
-      "bmi": "average of all BMI records in time range", 
+      "bmi": "average of all BMI records in time range",
       "bodyFat": "average of all body fat records in time range",
       "steps": "daily average for 7d, total for 30d",
       "calories": "average calories consumed/burned in time range"
@@ -78,5 +107,12 @@
     "empty_state": "Informative message when no health data available",
     "error_state": "User-friendly error messages with recovery options",
     "success_indicators": "Record count display and smooth transitions"
+  },
+  "lastUpdated": "2025-07-13T13:01:11.717Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-13T13:01:11.717Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 0,
+    "totalDependencies": 5
   }
 }

@@ -1,18 +1,22 @@
 {
   "_metadata": {
-    "featureName": "health-report-download", 
+    "featureName": "health-report-download",
     "featureGroup": "health-dashboard",
     "parentFile": "health-dashboard-core.map.json",
     "domain": "health",
     "description": "Generate and download PDF health reports with current metrics and time range",
     "userFlow": [
       "User clicks download report button",
-      "System generates PDF with current health data", 
+      "System generates PDF with current health data",
       "Browser downloads PDF file automatically",
       "Success notification confirms download",
       "Report includes metrics, charts, and time period"
     ],
-    "components": ["Download button", "PDF generation service", "report templates"],
+    "components": [
+      "Download button",
+      "PDF generation service",
+      "report templates"
+    ],
     "lastUpdated": "2025-07-12",
     "status": "active"
   },
@@ -20,7 +24,11 @@
   "dataFlow": {
     "request": "Button click → downloadReportMutation → POST /api/health-data/report → PDF generation → Binary response",
     "response": "PDF blob → URL.createObjectURL → Automatic download → Success notification",
-    "sideEffects": ["Temporary file creation", "Browser download", "User notification"]
+    "sideEffects": [
+      "Temporary file creation",
+      "Browser download",
+      "User notification"
+    ]
   },
   "files": {
     "ui": [
@@ -43,7 +51,16 @@
   "cacheFlow": {
     "invalidates": [],
     "refreshes": [],
-    "triggers": ["PDF generation", "file download"]
+    "triggers": [
+      "PDF generation",
+      "file download"
+    ],
+    "crossDomainInvalidates": [
+      "query:health",
+      "query:shared/services",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing"
+    ]
   },
   "errorPaths": {
     "network": "Error toast with 'Failed to generate report' message",
@@ -51,9 +68,18 @@
     "business": "Empty data graceful handling with informative report"
   },
   "dependencies": {
-    "internal": ["health-data-display", "current time range selection"],
-    "external": ["PDF generation library", "Browser download API"],
-    "shared": ["Button component", "toast notifications"]
+    "internal": [
+      "health-data-display",
+      "current time range selection"
+    ],
+    "external": [
+      "PDF generation library",
+      "Browser download API"
+    ],
+    "shared": [
+      "Button component",
+      "toast notifications"
+    ]
   },
   "implementation": {
     "pdf_generation": {
@@ -64,7 +90,7 @@
     },
     "data_inclusion": {
       "metrics": "All visible dashboard metrics for selected time range",
-      "summary": "Aggregated statistics and trends", 
+      "summary": "Aggregated statistics and trends",
       "metadata": "Report generation date, time period, data source",
       "branding": "Professional styling with consistent formatting"
     },
@@ -80,5 +106,12 @@
     "backend": "API endpoint planned but not yet implemented",
     "pdf_service": "PDF generation service to be integrated",
     "error_handling": "Complete error handling with user feedback"
+  },
+  "lastUpdated": "2025-07-13T13:01:11.717Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-13T13:01:11.717Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 0,
+    "totalDependencies": 5
   }
 }

@@ -12,15 +12,23 @@
       "Aggregated results formatted for UI display",
       "Visual record count and data validation included"
     ],
-    "components": ["aggregation algorithms", "useMemo optimization", "data validation"],
+    "components": [
+      "aggregation algorithms",
+      "useMemo optimization",
+      "data validation"
+    ],
     "lastUpdated": "2025-07-12",
     "status": "active"
   },
   "trigger": "healthData array changes in SimpleHealthDashboard useMemo dependency",
   "dataFlow": {
     "request": "Raw HealthMetric[] → filter by dataType → apply aggregation functions → format results",
-    "response": "Aggregated metrics object → UI rendering → visual display in metric cards", 
-    "sideEffects": ["Debug logging", "Record counting", "Empty state detection"]
+    "response": "Aggregated metrics object → UI rendering → visual display in metric cards",
+    "sideEffects": [
+      "Debug logging",
+      "Record counting",
+      "Empty state detection"
+    ]
   },
   "files": {
     "ui": [
@@ -39,8 +47,20 @@
   },
   "cacheFlow": {
     "invalidates": [],
-    "refreshes": ["metric cards display", "AI analysis calculations"],
-    "triggers": ["healthData changes", "timeRange changes"]
+    "refreshes": [
+      "metric cards display",
+      "AI analysis calculations"
+    ],
+    "triggers": [
+      "healthData changes",
+      "timeRange changes"
+    ],
+    "crossDomainInvalidates": [
+      "query:health",
+      "query:shared/services",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing"
+    ]
   },
   "errorPaths": {
     "network": "Empty data array handled gracefully",
@@ -48,14 +68,22 @@
     "business": "Missing data types show null values with fallback display"
   },
   "dependencies": {
-    "internal": ["health-data-display", "time-range-switching"],
-    "external": ["React useMemo", "JavaScript array methods"],
-    "shared": ["HealthMetric type definition"]
+    "internal": [
+      "health-data-display",
+      "time-range-switching"
+    ],
+    "external": [
+      "React useMemo",
+      "JavaScript array methods"
+    ],
+    "shared": [
+      "HealthMetric type definition"
+    ]
   },
   "implementation": {
     "aggregation_strategies": {
       "weight": "Average of all weight values in time period",
-      "bmi": "Average of all BMI values in time period", 
+      "bmi": "Average of all BMI values in time period",
       "bodyFat": "Average of all body fat percentage values",
       "steps": "Daily average for 7d, total sum for 30d",
       "caloriesConsumed": "Average daily calories consumed",
@@ -87,5 +115,12 @@
       "time_sensitivity": "Results change appropriately with time range",
       "edge_cases": "Empty arrays, single values, all same values handled"
     }
+  },
+  "lastUpdated": "2025-07-13T13:01:11.717Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-13T13:01:11.717Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 0,
+    "totalDependencies": 5
   }
 }

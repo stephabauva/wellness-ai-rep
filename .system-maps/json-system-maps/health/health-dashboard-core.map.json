@@ -3,7 +3,7 @@
     "domain": "health-dashboard",
     "features": [
       "health-data-display",
-      "time-range-switching", 
+      "time-range-switching",
       "metric-aggregation",
       "sample-data-loading",
       "health-report-download",
@@ -26,17 +26,27 @@
         "path": "client/src/components/SimpleHealthDashboard.tsx",
         "type": "react-component",
         "lines": 200,
-        "responsibilities": ["UI rendering", "time range state", "data aggregation", "user interactions"],
+        "responsibilities": [
+          "UI rendering",
+          "time range state",
+          "data aggregation",
+          "user interactions"
+        ],
         "imports": 8,
         "complexity": "moderate"
       }
     },
     "api": {
       "simple-health-routes.ts": {
-        "path": "server/routes/simple-health-routes.ts", 
+        "path": "server/routes/simple-health-routes.ts",
         "type": "api-routes",
         "lines": 80,
-        "responsibilities": ["health data API", "sample data loading", "metric removal", "native sync"],
+        "responsibilities": [
+          "health data API",
+          "sample data loading",
+          "metric removal",
+          "native sync"
+        ],
         "endpoints": 4,
         "complexity": "low"
       }
@@ -45,7 +55,12 @@
       "storage-interface": {
         "path": "server/storage.ts",
         "type": "data-layer",
-        "responsibilities": ["health data queries", "time filtering", "aggregation", "caching"],
+        "responsibilities": [
+          "health data queries",
+          "time filtering",
+          "aggregation",
+          "caching"
+        ],
         "complexity": "moderate"
       }
     }
@@ -54,12 +69,14 @@
     "GET /api/health-data": {
       "method": "GET",
       "purpose": "Fetch health metrics with time range filtering",
-      "parameters": ["range"],
+      "parameters": [
+        "range"
+      ],
       "response": "HealthMetric[]",
       "caching": "LRU cache with 30s TTL"
     },
     "POST /api/health-data/load-sample": {
-      "method": "POST", 
+      "method": "POST",
       "purpose": "Load sample health data for development/testing",
       "response": "{ recordsLoaded: number }",
       "effect": "Cache invalidation"
@@ -81,8 +98,15 @@
     "tables": {
       "health_data": {
         "purpose": "Store health metrics with timestamps",
-        "key_columns": ["user_id", "data_type", "timestamp"],
-        "indexes": ["user_time_range", "data_type_filtering"],
+        "key_columns": [
+          "user_id",
+          "data_type",
+          "timestamp"
+        ],
+        "indexes": [
+          "user_time_range",
+          "data_type_filtering"
+        ],
         "retention": "configurable"
       },
       "sample_health_data": {
@@ -95,14 +119,84 @@
   "integrations": {
     "react_query": {
       "purpose": "Data fetching and caching",
-      "queries": ["health-data with time range"],
-      "mutations": ["load-sample", "remove-metrics", "native-sync"],
+      "queries": [
+        "health-data with time range"
+      ],
+      "mutations": [
+        "load-sample",
+        "remove-metrics",
+        "native-sync"
+      ],
       "cache_strategy": "staleTime: 0, gcTime: 30s"
     },
     "toast_notifications": {
       "purpose": "User feedback",
-      "triggers": ["success operations", "error handling"],
-      "types": ["success", "error", "loading"]
+      "triggers": [
+        "success operations",
+        "error handling"
+      ],
+      "types": [
+        "success",
+        "error",
+        "loading"
+      ]
     }
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "client/src/services/native-health-service.ts",
+        "importedBy": [
+          {
+            "domain": "shared/services",
+            "file": "client/src/services/platform-detection-global.ts"
+          }
+        ]
+      },
+      {
+        "file": "client/src/components/SimpleHealthDashboard.tsx",
+        "importedBy": [
+          {
+            "domain": "unknown/needs-classification",
+            "file": "client/src/pages/home.tsx"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-parser.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-data-deduplication.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      },
+      {
+        "file": "server/services/health-consent-service.ts",
+        "importedBy": [
+          {
+            "domain": "infrastructure/routing",
+            "file": "server/routes/shared-dependencies.ts"
+          }
+        ]
+      }
+    ],
+    "internal": 0
+  },
+  "lastUpdated": "2025-07-13T13:01:11.715Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-13T13:01:11.716Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 0,
+    "totalDependencies": 5
   }
 }

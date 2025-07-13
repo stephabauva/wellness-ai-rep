@@ -2,7 +2,7 @@
   "_metadata": {
     "featureName": "sample-data-loading",
     "featureGroup": "health-dashboard",
-    "parentFile": "health-dashboard-core.map.json", 
+    "parentFile": "health-dashboard-core.map.json",
     "domain": "health",
     "description": "Load sample health data for development and testing without requiring device sync",
     "userFlow": [
@@ -12,7 +12,11 @@
       "Success message shows records loaded count",
       "Health metrics immediately populate with realistic data"
     ],
-    "components": ["Load Sample Data button", "sample data API", "batch data insertion"],
+    "components": [
+      "Load Sample Data button",
+      "sample data API",
+      "batch data insertion"
+    ],
     "lastUpdated": "2025-07-12",
     "status": "active"
   },
@@ -20,7 +24,12 @@
   "dataFlow": {
     "request": "Button click → loadSampleMutation → POST /api/health-data/load-sample → storage.loadSampleHealthData → Batch database insertion",
     "response": "Database insertion → { recordsLoaded: number } → cache invalidation → UI refresh → Success toast",
-    "sideEffects": ["Cache invalidation", "Health data population", "Dashboard refresh", "User notification"]
+    "sideEffects": [
+      "Cache invalidation",
+      "Health data population",
+      "Dashboard refresh",
+      "User notification"
+    ]
   },
   "files": {
     "ui": [
@@ -42,9 +51,24 @@
     ]
   },
   "cacheFlow": {
-    "invalidates": ["queryClient.invalidateQueries({ queryKey: ['health-data'] })"],
-    "refreshes": ["health metrics display", "all time range views", "metric calculations"],
-    "triggers": ["immediate dashboard refresh", "new data availability"]
+    "invalidates": [
+      "queryClient.invalidateQueries({ queryKey: ['health-data'] })"
+    ],
+    "refreshes": [
+      "health metrics display",
+      "all time range views",
+      "metric calculations"
+    ],
+    "triggers": [
+      "immediate dashboard refresh",
+      "new data availability"
+    ],
+    "crossDomainInvalidates": [
+      "query:health",
+      "query:shared/services",
+      "query:unknown/needs-classification",
+      "query:infrastructure/routing"
+    ]
   },
   "errorPaths": {
     "network": "Error toast with 'Failed to load sample data' message",
@@ -52,9 +76,18 @@
     "business": "Handles duplicate data gracefully with upsert logic"
   },
   "dependencies": {
-    "internal": ["health-data-display", "time-range-switching"],
-    "external": ["React Query mutations", "Toast notifications"],
-    "shared": ["Button component", "database storage interface"]
+    "internal": [
+      "health-data-display",
+      "time-range-switching"
+    ],
+    "external": [
+      "React Query mutations",
+      "Toast notifications"
+    ],
+    "shared": [
+      "Button component",
+      "database storage interface"
+    ]
   },
   "implementation": {
     "sample_data": {
@@ -81,5 +114,12 @@
     "demonstration": "Realistic data for demos and screenshots",
     "testing": "Consistent dataset for QA and automated testing",
     "onboarding": "New users can immediately see dashboard functionality"
+  },
+  "lastUpdated": "2025-07-13T13:01:11.718Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-13T13:01:11.718Z",
+    "crossDomainFiles": 5,
+    "internalFiles": 0,
+    "totalDependencies": 5
   }
 }

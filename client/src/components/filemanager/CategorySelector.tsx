@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+} from '@shared/components/ui/dropdown-menu';
 import { Tag, ChevronDown } from 'lucide-react';
 import { FileCategory } from '@shared';
 

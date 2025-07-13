@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from @shared/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Label } from "@shared/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Zap, ArrowUpDown } from "lucide-react";
 

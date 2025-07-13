@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog'; // Added DialogFooter, DialogClose
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@shared/components/ui/dialog'; // Added DialogFooter, DialogClose
 import { Button } from '@/components/ui/button';
 import { QrCode, X } from 'lucide-react';
 

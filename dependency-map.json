@@ -1001,89 +1001,6 @@
     "crossDomain": true,
     "usageCount": 2
   },
-  "client/src/components/ui/switch.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Switch"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConnectedDevicesSection.tsx",
-        "domain": "unknown/needs-classification",
-        "imports": [
-          "Switch"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/PerformanceSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Switch"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Switch"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AppPreferencesSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Switch"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Switch"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 5
-  },
-  "client/src/components/ui/skeleton.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Skeleton"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "Skeleton"
-        ]
-      },
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Skeleton"
-        ]
-      },
-      {
-        "file": "client/src/components/ConnectedDevicesSection.tsx",
-        "domain": "unknown/needs-classification",
-        "imports": [
-          "Skeleton"
-        ]
-      },
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Skeleton"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 4
-  },
   "client/src/components/ui/separator.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -1107,104 +1024,6 @@
     ],
     "crossDomain": true,
     "usageCount": 2
-  },
-  "client/src/components/ui/select.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Select",
-      "SelectGroup",
-      "SelectValue",
-      "SelectTrigger",
-      "SelectContent",
-      "SelectLabel",
-      "SelectItem",
-      "SelectSeparator",
-      "SelectScrollUpButton",
-      "SelectScrollDownButton",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/FileManagementSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 7
   },
   "client/src/components/ui/scroll-area.tsx": {
     "domain": "shared/ui-components",
@@ -1415,44 +1234,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/components/ui/checkbox.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Checkbox"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "Checkbox"
-        ]
-      },
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Checkbox"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Checkbox"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Checkbox"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 4
-  },
   "client/src/components/ui/chat-message.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -1626,25 +1407,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "server/routes/index.ts": {
-    "domain": "infrastructure/routing",
-    "exports": [
-      "ROUTE_MODULES",
-      "EMERGENCY_FALLBACK",
-      "ROUTE_MODULES_ENABLED"
-    ],
-    "usedBy": [
-      {
-        "file": "server/index.ts",
-        "domain": "unknown/needs-classification",
-        "imports": [
-          "registerRoutes"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "server/services/transcription-service.ts": {
     "domain": "shared/services",
     "exports": [
@@ -1704,13 +1466,6 @@
     ],
     "usedBy": [
       {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "memoryService"
-        ]
-      },
-      {
         "file": "server/services/memory-relationship-engine.ts",
         "domain": "memory",
         "imports": [
@@ -1741,6 +1496,13 @@
       {
         "file": "server/services/chat-context-service.ts",
         "domain": "chat",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
         "imports": [
           "memoryService"
         ]
@@ -1955,15 +1717,15 @@
     ],
     "usedBy": [
       {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
+        "file": "server/services/enhanced-background-processor.ts",
+        "domain": "shared/services",
         "imports": [
           "chatGPTMemoryEnhancement"
         ]
       },
       {
-        "file": "server/services/enhanced-background-processor.ts",
-        "domain": "shared/services",
+        "file": "server/routes/shared-dependencies.ts",
+        "domain": "infrastructure/routing",
         "imports": [
           "chatGPTMemoryEnhancement"
         ]
@@ -2003,6 +1765,25 @@
         "domain": "infrastructure/routing",
         "imports": [
           "attachmentRetentionService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
+    "exports": [
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "registerRoutes"
         ]
       }
     ],

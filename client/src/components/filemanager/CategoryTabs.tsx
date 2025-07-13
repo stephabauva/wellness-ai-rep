@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsList, TabsTrigger } from '@shared/components/ui/tabs';
 import { FileCategory, FileItem } from '@shared';
 import { getIconFromName } from '@shared';
 import { cn } from '@shared';

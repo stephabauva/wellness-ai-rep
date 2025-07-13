@@ -2,7 +2,7 @@
 import type { Express } from "express";
 import { storage } from "@shared/database/storage";
 import { aiService } from "../services/ai-service";
-import { memoryService } from "../services/memory-service";
+import { memoryService } from "@shared/services/memory-service";
 import { enhancedMemoryService } from "../services/enhanced-memory-service";
 import { memoryRelationshipEngine } from '../services/memory-relationship-engine';
 import { performanceMemoryCore } from '../services/performance-memory-core';

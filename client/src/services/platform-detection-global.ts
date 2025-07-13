@@ -3,7 +3,7 @@
  * Makes platform detection available globally for testing
  */
 
-import * as PlatformDetection from './platform-detection';
+import * as PlatformDetection from '@shared/services/platform-detection';
 import { nativeHealthService } from './native-health-service';
 
 // Make services globally available for console testing

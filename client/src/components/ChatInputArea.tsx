@@ -5,7 +5,7 @@ import { Paperclip, Send, Camera, X } from "lucide-react"; // Added X for close 
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { UseChatActionsReturn } from "@/hooks/useChatActions";
 import { AppSettings } from "@shared";
-import { AttachedFile } from "@/hooks/useFileManagement"; // Import AttachedFile
+import { AttachedFile } from "@shared/hooks/useFileManagement"; // Import AttachedFile
 
 interface ChatInputAreaProps {
   inputMessage: string;

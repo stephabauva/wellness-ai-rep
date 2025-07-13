@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button"; // For remove button, though a simple 'x' is used
 import { getFileIcon } from "@shared";
-import { AttachedFile } from "@/hooks/useFileManagement";
+import { AttachedFile } from "@shared/hooks/useFileManagement";
 
 /**
  * @used-by chat/ChatSection - Display file attachments in chat

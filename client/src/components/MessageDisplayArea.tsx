@@ -31,7 +31,7 @@ if (typeof document !== 'undefined' && !document.getElementById('message-animati
   document.head.appendChild(styleElement);
 }
 import { ChatMessage } from "@/components/ui/chat-message";
-import { AttachedFile } from "@/hooks/useFileManagement";
+import { AttachedFile } from "@shared/hooks/useFileManagement";
 import { useVirtualScrolling } from "@/hooks/useVirtualScrolling";
 import { useMessagePagination } from "@/hooks/useMessagePagination";
 import { useWebWorker } from "@/hooks/useWebWorker";

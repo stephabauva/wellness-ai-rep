@@ -6,7 +6,7 @@
  * integration between TypeScript and Go acceleration services.
  */
 
-import { compressFile, shouldCompressFile, type CompressionOptions, type CompressionResult as TSCompressionResult } from './file-compression';
+import { compressFile, shouldCompressFile, type CompressionOptions, type CompressionResult as TSCompressionResult } from '@shared/services/file-compression';
 
 export interface CompressionResult {
   compressedFile: File;

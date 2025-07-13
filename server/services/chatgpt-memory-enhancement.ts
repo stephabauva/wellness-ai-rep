@@ -1,7 +1,7 @@
 import { db } from "@shared/database/db";
 import { memoryEntries, type InsertMemoryEntry, type MemoryEntry, type MemoryCategory } from '../../shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { memoryService } from './memory-service';
+import { memoryService } from '@shared/services/memory-service';
 import crypto from 'crypto';
 
 interface RelevantMemory extends MemoryEntry {

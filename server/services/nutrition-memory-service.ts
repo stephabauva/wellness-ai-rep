@@ -1,4 +1,4 @@
-import { memoryService } from './memory-service.js';
+import { memoryService } from '@shared/services/memory-service';
 import { type MemoryCategory } from '../../shared/schema.js';
 import { type NutritionData } from './nutrition-inference-service.js';
 

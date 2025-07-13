@@ -1,7 +1,7 @@
 import { db } from "@shared/database/db";
 import { memoryEntries, type MemoryEntry } from '../../shared/schema';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
-import { memoryService } from './memory-service';
+import { memoryService } from '@shared/services/memory-service';
 import crypto from 'crypto';
 
 interface MemoryRelationship {

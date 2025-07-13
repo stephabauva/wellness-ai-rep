@@ -1,12 +1,12 @@
-import { memoryService } from "./memory-service";
+import { memoryService } from "@shared/services/memory-service";
 import { CoachingMode, coachingModes } from "@shared/schema";
 import {
   ProviderChatMessage,
   AttachmentData,
   MessageContentPart
-} from "./providers/ai-provider.interface";
-import { OpenAiProvider } from "./providers/openai-provider"; // For OpenAI specific formatting
-import { GoogleProvider } from "./providers/google-provider"; // For Google specific formatting
+} from "@shared/services/providers/ai-provider.interface";
+import { OpenAiProvider } from "@shared/services/providers/openai-provider"; // For OpenAI specific formatting
+import { GoogleProvider } from "@shared/services/providers/google-provider"; // For Google specific formatting
 
 // Helper function to log with service context
 const log = (level: 'info' | 'error' | 'warn', message: string, data?: any) => {

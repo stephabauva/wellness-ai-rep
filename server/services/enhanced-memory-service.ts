@@ -1,4 +1,4 @@
-import { memoryService } from './memory-service';
+import { memoryService } from '@shared/services/memory-service';
 import { logger } from "@shared/services/logger-service";
 
 // Simplified Enhanced Memory Service - Background Processing Only

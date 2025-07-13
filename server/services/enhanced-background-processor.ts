@@ -1,5 +1,5 @@
 import { chatGPTMemoryEnhancement } from './chatgpt-memory-enhancement';
-import { memoryService } from './memory-service';
+import { memoryService } from '@shared/services/memory-service';
 
 /**
  * Phase 3: Enhanced Background Processing

@@ -4,7 +4,7 @@
  * Part of the Capacitor Mobile Health Data Integration Plan
  */
 
-import { getPlatform, isCapacitor, getCapabilities, type Platform } from './platform-detection';
+import { getPlatform, isCapacitor, getCapabilities, type Platform } from '@shared/services/platform-detection';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 

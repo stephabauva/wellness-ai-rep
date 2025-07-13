@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useChatMessages } from "@/hooks/useChatMessages";
-import { useFileManagement, AttachedFile } from "@/hooks/useFileManagement"; // Import AttachedFile
+import { useFileManagement, AttachedFile } from "@shared/hooks/useFileManagement"; // Import AttachedFile
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { useAppContext, AppSettings } from "@shared"; // Import AppSettings
 

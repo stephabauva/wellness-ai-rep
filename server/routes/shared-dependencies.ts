@@ -1,49 +1,43 @@
-// MAX_LINES: 50 - Shared Dependencies for route modules
+// MAX_LINES: 50 - Shared Dependencies for route modules - Using Service Registry
 import type { Express } from "express";
-import { storage } from "@shared/database/storage";
-import { aiService } from "../services/ai-service";
-import { memoryService } from "@shared/services/memory-service";
-import { enhancedMemoryService } from "../services/enhanced-memory-service";
-import { memoryRelationshipEngine } from '../services/memory-relationship-engine';
-import { performanceMemoryCore } from '../services/performance-memory-core';
-import { generatePDFReport } from "../services/pdf-service";
-import { transcriptionService } from "../services/transcription-service";
-import { cacheService } from "../services/cache-service";
-import { categoryService } from "../services/category-service";
-import { attachmentRetentionService } from "../services/attachment-retention-service";
-import { goFileService } from "../services/go-file-service";
-import { HealthDataParser } from "../services/health-data-parser";
-import { HealthDataDeduplicationService } from "../services/health-data-deduplication";
-import { enhancedBackgroundProcessor } from "../services/enhanced-background-processor";
-import { memoryFeatureFlags } from "../services/memory-feature-flags";
-import { memoryPerformanceMonitor } from "../services/memory-performance-monitor";
-import { chatGPTMemoryEnhancement } from "@shared/services/chatgpt-memory-enhancement";
-import { healthConsentService } from "../services/health-consent-service";
-import { db } from "@shared/database/db";
-import { eq, desc, and, or } from "drizzle-orm";
 import { 
-  conversations, conversationMessages, memoryEntries, insertFileCategorySchema,
+  storage, aiService, memoryService, generatePDFReport, cacheService, 
+  chatGPTMemoryEnhancement, db, eq, desc, and, or,
+  conversations, conversationMessages, memoryEntries, insertFileCategorySchema, 
   files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships,
   memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog,
   users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema,
-  insertHealthDataSchema, type UserPreferences
-} from "@shared/schema";
-import multer from "multer";
-import { z } from "zod";
-import { nanoid } from "nanoid"; import { join } from 'path';
-import { existsSync, statSync, unlinkSync } from 'fs';
-import path from 'path'; import fs from 'fs';
-import { spawn } from 'child_process';
+  insertHealthDataSchema, multer, z, nanoid, join, existsSync, statSync, 
+  unlinkSync, path, fs, spawn,
+  getMemoryServices, getHealthServices, getFileManagerServices, getSharedServices
+} from "../services/service-registry";
 
+// Legacy exports for backward compatibility - routes should migrate to use service getters
 export {
-  storage, aiService, memoryService, enhancedMemoryService,
-  memoryRelationshipEngine, performanceMemoryCore, generatePDFReport,
-  transcriptionService, cacheService, categoryService, attachmentRetentionService, goFileService,
-  HealthDataParser, HealthDataDeduplicationService, enhancedBackgroundProcessor, memoryFeatureFlags,
-  memoryPerformanceMonitor, chatGPTMemoryEnhancement, healthConsentService, db, eq, desc, and, or,
-  conversations, conversationMessages, memoryEntries, insertFileCategorySchema, files, fileCategories,
-  insertFileSchema, atomicFacts, memoryRelationships, memoryConsolidationLog, memoryGraphMetrics,
-  userHealthConsent, healthDataAccessLog, users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema,
-  insertHealthDataSchema, multer, z, nanoid, join, existsSync, statSync, unlinkSync, path, fs, spawn
+  storage, aiService, memoryService, generatePDFReport, cacheService, 
+  chatGPTMemoryEnhancement, db, eq, desc, and, or,
+  conversations, conversationMessages, memoryEntries, insertFileCategorySchema, 
+  files, fileCategories, insertFileSchema, atomicFacts, memoryRelationships,
+  memoryConsolidationLog, memoryGraphMetrics, userHealthConsent, healthDataAccessLog,
+  users, enhancedSettingsUpdateSchema, healthConsentSettingsSchema,
+  insertHealthDataSchema, multer, z, nanoid, join, existsSync, statSync, 
+  unlinkSync, path, fs, spawn,
+  getMemoryServices, getHealthServices, getFileManagerServices, getSharedServices
 };
+
+// Deprecated exports - use service getters instead
+export const enhancedMemoryService = () => getMemoryServices().enhancedMemoryService;
+export const memoryRelationshipEngine = () => getMemoryServices().memoryRelationshipEngine;
+export const performanceMemoryCore = () => getMemoryServices().performanceMemoryCore;
+export const memoryFeatureFlags = () => getMemoryServices().memoryFeatureFlags;
+export const memoryPerformanceMonitor = () => getMemoryServices().memoryPerformanceMonitor;
+export const HealthDataParser = () => getHealthServices().healthDataParser;
+export const HealthDataDeduplicationService = () => getHealthServices().healthDataDeduplication;
+export const healthConsentService = () => getHealthServices().healthConsentService;
+export const transcriptionService = () => getFileManagerServices().transcriptionService;
+export const categoryService = () => getFileManagerServices().categoryService;
+export const attachmentRetentionService = () => getFileManagerServices().attachmentRetentionService;
+export const goFileService = () => getFileManagerServices().goFileService;
+export const enhancedBackgroundProcessor = () => getSharedServices().enhancedBackgroundProcessor;
+
 export type { Express, UserPreferences };

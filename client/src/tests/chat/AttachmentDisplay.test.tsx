@@ -2,7 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { AttachmentPreview } from '@/components/AttachmentPreview';
-import { AttachedFile } from '@/hooks/useFileManagement';
+import { AttachedFile } from '@shared/hooks/useFileManagement';
 import testImage from '../assets/test-image.png';
 
 describe('AttachmentPreview', () => {

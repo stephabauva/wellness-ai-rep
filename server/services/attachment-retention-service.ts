@@ -69,8 +69,8 @@ export class AttachmentRetentionService {
     const isImage = fileType.startsWith('image/');
     
     // Import database functions
-    const { db } = await import('../db.js');
-    const { fileCategories } = await import('../../shared/schema.js');
+    const { db } = await import('@shared/database/db');
+    const { fileCategories } = await import('@shared/schema');
     const { eq, isNull } = await import('drizzle-orm');
     
     // Get system categories

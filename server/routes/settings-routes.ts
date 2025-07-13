@@ -20,8 +20,8 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
       }
 
       // Get health consent settings
-      const consentSettings = await healthConsentService.getUserConsentSettings(1);
-      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+      const consentSettings = await healthConsentService().getUserConsentSettings(1);
+      const healthConsent = healthConsentService().transformConsentToSettings(consentSettings);
 
       // Return comprehensive user settings including AI configuration and health consent
       const userSettings = {
@@ -58,19 +58,19 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
         if (settings.mediumValueRetentionDays !== undefined) retentionUpdates.mediumValueRetentionDays = settings.mediumValueRetentionDays;
         if (settings.lowValueRetentionDays !== undefined) retentionUpdates.lowValueRetentionDays = settings.lowValueRetentionDays;
 
-        attachmentRetentionService.updateRetentionDurations(retentionUpdates);
+        attachmentRetentionService().updateRetentionDurations(retentionUpdates);
       }
 
       // Update health consent settings if provided
       if (settings.health_consent) {
-        await healthConsentService.updateConsentSettings(1, settings.health_consent);
+        await healthConsentService().updateConsentSettings(1, settings.health_consent);
       }
 
       const updatedUser = await storage.updateUserSettings(1, settings);
 
       // Get updated health consent settings
-      const consentSettings = await healthConsentService.getUserConsentSettings(1);
-      const healthConsent = healthConsentService.transformConsentToSettings(consentSettings);
+      const consentSettings = await healthConsentService().getUserConsentSettings(1);
+      const healthConsent = healthConsentService().transformConsentToSettings(consentSettings);
 
       // Return comprehensive updated settings
       const updatedSettings = {

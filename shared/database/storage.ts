@@ -64,10 +64,10 @@ export interface IStorage {
   deleteHealthDataByType(userId: number, dataType: string): Promise<{ deletedCount: number }>;
   
   // Nutrition aggregation methods
-  getDailyNutritionSummary(userId: number, date: Date): Promise<import('./services/nutrition-aggregation-service.js').DailyNutritionSummary>;
-  getNutritionSummariesByRange(userId: number, startDate: Date, endDate: Date): Promise<import('./services/nutrition-aggregation-service.js').DailyNutritionSummary[]>;
-  updateNutritionEntry(request: import('./services/nutrition-aggregation-service.js').NutritionUpdateRequest): Promise<void>;
-  getMealNutritionBreakdown(userId: number, date: Date): Promise<{ [mealType: string]: import('./services/nutrition-aggregation-service.js').NutritionMealSummary }>;
+  getDailyNutritionSummary(userId: number, date: Date): Promise<import('../../server/services/nutrition-aggregation-service').DailyNutritionSummary>;
+  getNutritionSummariesByRange(userId: number, startDate: Date, endDate: Date): Promise<import('../../server/services/nutrition-aggregation-service').DailyNutritionSummary[]>;
+  updateNutritionEntry(request: import('../../server/services/nutrition-aggregation-service').NutritionUpdateRequest): Promise<void>;
+  getMealNutritionBreakdown(userId: number, date: Date): Promise<{ [mealType: string]: import('../../server/services/nutrition-aggregation-service').NutritionMealSummary }>;
   getWeeklyNutritionAverages(userId: number, startDate: Date): Promise<{
     averageCalories: number;
     averageProtein: number;

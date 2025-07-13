@@ -3,9 +3,9 @@
  * Implements multi-stage retrieval pipeline with contextual re-ranking
  */
 
-import { aiService } from './ai-service.js';
+import { aiService } from '@shared/services/ai-service';
 import { memoryGraphService } from './memory-graph-service-instance.js';
-import { storage } from '../storage.js';
+import { storage } from '@shared/database/storage';
 import { MemoryEntry, ChatMessage } from '../../shared/schema.js';
 
 
@@ -162,8 +162,8 @@ export class IntelligentMemoryRetrieval {
   ): Promise<RetrievalCandidate[]> {
     try {
       // Get actual memory entries from the database using db connection
-      const { db } = await import('../db.js');
-      const { memoryEntries } = await import('../../shared/schema.js');
+      const { db } = await import('@shared/database/db');
+      const { memoryEntries } = await import('@shared/schema');
       const { eq, and } = await import('drizzle-orm');
 
       const userMemories = await db.select()

@@ -1,7 +1,7 @@
-import { db } from '../db.js';
-import { userHealthConsent, healthDataAccessLog, users, healthData } from '../../shared/schema.js';
+import { db } from '@shared/database/db';
+import { userHealthConsent, healthDataAccessLog, users, healthData } from '@shared/schema';
 import { eq, and, inArray } from 'drizzle-orm';
-import type { HealthConsentSettings, UserHealthConsent, InsertUserHealthConsent, InsertHealthDataAccessLog } from '../../shared/schema.js';
+import type { HealthConsentSettings, UserHealthConsent, InsertUserHealthConsent, InsertHealthDataAccessLog } from '@shared/schema';
 
 export class HealthConsentService {
   /**

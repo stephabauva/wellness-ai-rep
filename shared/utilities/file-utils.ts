@@ -17,7 +17,7 @@ import {
   VideoIcon, 
   AudioWaveformIcon 
 } from 'lucide-react';
-import { FileItem, FileCategoryGroup } from '@/types/fileManager';
+import { FileItem, FileCategoryGroup } from '@shared/types/file-manager';
 
 /**
  * Consolidated file utility functions

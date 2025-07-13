@@ -215,7 +215,7 @@
         "useFileUpload.ts"
       ],
       "api": [
-        "AttachmentRetentionService.ts"
+        "server/services/attachment-retention-service.ts"
       ],
       "data": [
         "files"
@@ -267,7 +267,7 @@
     "files": {
       "ui": [],
       "api": [
-        "AttachmentRetentionService.ts"
+        "server/services/attachment-retention-service.ts"
       ],
       "data": [
         "files"

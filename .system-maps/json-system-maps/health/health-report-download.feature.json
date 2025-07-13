@@ -37,7 +37,7 @@
     ],
     "api": [
       "server/routes/simple-health-routes.ts (report endpoint - planned)",
-      "server/services/pdf-generator.ts (planned)"
+      "client/src/lib/pdf-generator.ts"
     ],
     "data": [
       "health_data table (source)",
@@ -104,8 +104,8 @@
   },
   "current_status": {
     "frontend": "Fully implemented with downloadReportMutation",
-    "backend": "API endpoint planned but not yet implemented",
-    "pdf_service": "PDF generation service to be integrated",
+    "backend": "API endpoint planned but not yet implemented", 
+    "pdf_service": "PDF generation service implemented in client/src/lib/pdf-generator.ts",
     "error_handling": "Complete error handling with user feedback"
   },
   "lastUpdated": "2025-07-13T20:11:53.334Z",

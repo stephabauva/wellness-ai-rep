@@ -6,7 +6,8 @@
       "component-testing": "React component testing with testing-library",
       "server-testing": "Backend API and service testing",
       "performance-testing": "Performance and optimization testing",
-      "system-map-validation": "Cross-domain system map consistency validation"
+      "system-map-validation": "Cross-domain system map consistency validation",
+      "ui-components": "Shared UI components and form utilities"
     }
   },
   "domain": "testing",
@@ -320,6 +321,54 @@
             "Cross-Domain Consistency Requirements (NEW)",
             "Validation checklists and quality gates",
             "Token-optimized templates for LLM efficiency"
+          ]
+        }
+      }
+    },
+    "ui-components": {
+      "description": "Shared UI components and form utilities used across the application",
+      "features": {
+        "form-components": {
+          "name": "Form Components",
+          "description": "Shared form components for consistent UI interactions",
+          "status": "production",
+          "files": [
+            "client/src/components/ui/form.tsx"
+          ],
+          "dependencies": {
+            "internal": [],
+            "external": [
+              "react-hook-form",
+              "@radix-ui/react-label"
+            ]
+          },
+          "keyFeatures": [
+            "Form field wrapper components",
+            "Label and description management",
+            "Error message display",
+            "Accessibility compliance"
+          ]
+        },
+        "toast-system": {
+          "name": "Toast Notification System", 
+          "description": "Application-wide toast notifications for user feedback",
+          "status": "production",
+          "files": [
+            "client/src/components/ui/toaster.tsx",
+            "client/src/components/ui/use-toast.ts"
+          ],
+          "dependencies": {
+            "internal": [],
+            "external": [
+              "@radix-ui/react-toast",
+              "react"
+            ]
+          },
+          "keyFeatures": [
+            "Toast notification management",
+            "Custom hook for toast actions",
+            "Toast positioning and styling",
+            "Auto-dismiss functionality"
           ]
         }
       }

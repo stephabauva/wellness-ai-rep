@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 // Import hooks
-import { useUserSettings, UserSettingsFormValues, settingsFormSchema as userSettingsFormSchema } from "@shared/hooks/useUserSettings";
+import { useUserSettings, UserSettingsFormValues, settingsFormSchema as userSettingsFormSchema } from "@/hooks/useUserSettings";
 import { useRetentionSettings, RetentionSettingsFormValues } from "@/hooks/useRetentionSettings";
 import { useAiModels } from "@shared/hooks/useAiModels";
 

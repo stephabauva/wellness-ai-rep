@@ -455,7 +455,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         const attachmentProcessing = attachments?.length ? 
           Promise.all(attachments.map(async (attachment) => {
             try {
-              const categorization = await attachmentRetentionService.categorizeAttachment(
+              const categorization = await attachmentRetentionService().categorizeAttachment(
                 attachment.displayName || attachment.fileName, attachment.fileType,
                 `Chat upload in conversation: ${currentConversationId}`);
               const retentionDays = categorization.category === 'medium' ? 90 : 
@@ -590,7 +590,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
   app.post("/api/transcribe/openai", audioUpload.single('audio'), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
-      const transcription = await transcriptionService.transcribeWithOpenAI(
+      const transcription = await transcriptionService().transcribeWithOpenAI(
         req.file.buffer,
         req.file.originalname || "audio.wav"
       );
@@ -603,7 +603,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
   app.post("/api/transcribe/google", audioUpload.single('audio'), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
-      const transcription = await transcriptionService.transcribeWithGoogle(req.file.buffer);
+      const transcription = await transcriptionService().transcribeWithGoogle(req.file.buffer);
       res.json(transcription);
     } catch (error) {
       res.status(500).json({ error: 'Transcription failed' });

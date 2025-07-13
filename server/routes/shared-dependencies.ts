@@ -40,4 +40,6 @@ export const attachmentRetentionService = () => getFileManagerServices().attachm
 export const goFileService = () => getFileManagerServices().goFileService;
 export const enhancedBackgroundProcessor = () => getSharedServices().enhancedBackgroundProcessor;
 
+import type { UserPreferences } from '@shared/schema';
+
 export type { Express, UserPreferences };

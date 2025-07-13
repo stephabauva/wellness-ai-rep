@@ -5,7 +5,7 @@
  * and memory consolidation for ChatGPT-level memory intelligence.
  */
 
-import { db } from '../db.js';
+import { db } from '@shared/database/db';
 import { 
   memoryEntries, 
   atomicFacts, 
@@ -18,9 +18,9 @@ import {
   type InsertAtomicFact,
   type InsertMemoryRelationship,
   type InsertMemoryConsolidationLog
-} from '../../shared/schema.js';
+} from '@shared/schema';
 import { eq, and, or, inArray, sql, desc } from 'drizzle-orm';
-import { aiService } from './ai-service.js';
+import { aiService } from '@shared/services/ai-service';
 
 export interface MemoryNode {
   id: string;

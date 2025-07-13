@@ -91,7 +91,7 @@ export async function registerSimpleHealthRoutes(app: Express): Promise<void> {
       // Simple CSV report generation
       const csvHeaders = "Date,Type,Value,Unit\n";
       const csvRows = healthData.map(item => {
-        const date = new Date(item.timestamp).toLocaleDateString();
+        const date = new Date(item.timestamp || Date.now()).toLocaleDateString();
         return `${date},${item.dataType},${item.value},${item.unit || ''}`;
       }).join('\n');
       

@@ -11,6 +11,12 @@
       "useStaggeredLoading",
       "useBackgroundPreload"
     ],
+    "infrastructureServices": [
+      "attachmentRetentionService",
+      "aiService",
+      "fileUtils",
+      "storageUtilities"
+    ],
     "uiPerformanceHooks": [
       "virtualScrolling",
       "messagePagination",
@@ -126,6 +132,59 @@
           "description": "Non-blocking background data prefetching",
           "files": ["client/src/hooks/useBackgroundPreload.ts"],
           "strategy": "Priority-weighted delays with cache-aware prefetching"
+        }
+      }
+    },
+    "infrastructureServices": {
+      "description": "Core infrastructure services supporting application performance and file management",
+      "features": {
+        "attachmentRetentionService": {
+          "description": "Automated file retention and cleanup service for managing storage efficiency",
+          "files": ["server/services/attachment-retention-service.ts"],
+          "purpose": "Categorizes and manages file retention policies based on content type and age",
+          "performance": "Reduces storage overhead through intelligent file lifecycle management",
+          "keyFeatures": [
+            "Automatic categorization of medical/fitness/personal files",
+            "Configurable retention policies (high/medium/low value)",
+            "Background cleanup of expired attachments",
+            "Storage space optimization"
+          ]
+        },
+        "aiService": {
+          "description": "Central AI service coordination for optimal model selection and performance",
+          "files": ["client/src/services/ai-service.ts"],
+          "purpose": "Manages AI provider selection and response optimization",
+          "performance": "Intelligent model selection based on query complexity and attachment types",
+          "keyFeatures": [
+            "Automatic model selection (GPT-4o, Gemini-1.5-pro, etc.)",
+            "Provider fallback handling",
+            "Go AI Gateway integration for performance",
+            "Streaming response support"
+          ]
+        },
+        "fileUtils": {
+          "description": "File processing utilities for enhanced file management operations",
+          "files": ["client/src/utils/file-utils.ts"],
+          "purpose": "Provides optimized file processing and validation utilities",
+          "performance": "Efficient file type detection and processing optimization",
+          "keyFeatures": [
+            "File type validation and detection",
+            "File size optimization",
+            "Metadata extraction utilities",
+            "Cross-platform file handling"
+          ]
+        },
+        "storageUtilities": {
+          "description": "Enhanced storage abstraction layer for database and cache optimization",
+          "files": ["shared/storage.ts"],
+          "purpose": "Optimized storage operations with caching and performance enhancements",
+          "performance": "Reduces database load through intelligent caching and batch operations",
+          "keyFeatures": [
+            "Database abstraction layer",
+            "Cache-aware storage operations",
+            "Batch processing capabilities",
+            "Storage performance monitoring"
+          ]
         }
       }
     }

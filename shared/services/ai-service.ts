@@ -653,7 +653,7 @@ class AiService {
   // Phase 3: Get intelligent memories using the new retrieval system
   private async getIntelligentMemories(message: string, conversationContext: any): Promise<any[]> {
     try {
-      const { intelligentMemoryRetrieval } = await import('./intelligent-memory-retrieval.js');
+      const { intelligentMemoryRetrieval } = await import('../../server/services/intelligent-memory-retrieval');
       
       const intelligentMemories = await intelligentMemoryRetrieval.getContextualMemories(
         conversationContext.userId,
@@ -664,9 +664,9 @@ class AiService {
 
       log('info', '[AiService] Phase 3 intelligent retrieval results:', {
         totalMemories: intelligentMemories.length,
-        avgRelevanceScore: intelligentMemories.reduce((sum, m) => sum + m.relevanceScore, 0) / intelligentMemories.length || 0,
-        avgConfidence: intelligentMemories.reduce((sum, m) => sum + m.confidenceLevel, 0) / intelligentMemories.length || 0,
-        retrievalReasons: intelligentMemories.map(m => m.retrievalReason).join(', ')
+        avgRelevanceScore: intelligentMemories.reduce((sum: number, m: any) => sum + m.relevanceScore, 0) / intelligentMemories.length || 0,
+        avgConfidence: intelligentMemories.reduce((sum: number, m: any) => sum + m.confidenceLevel, 0) / intelligentMemories.length || 0,
+        retrievalReasons: intelligentMemories.map((m: any) => m.retrievalReason).join(', ')
       });
 
       return intelligentMemories;
@@ -677,8 +677,7 @@ class AiService {
       return enhancedMemoryService.getRelevantMemories(
         message, 
         conversationContext.userId, 
-        5, 
-        conversationContext.recentTopics
+        5
       );
     }
   }

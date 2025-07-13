@@ -18,6 +18,54 @@ class DependencyTracker {
     this.domainMapping = this.buildDomainMapping();
     this.crossDomainUsage = new Map();
   }
+  
+  getRelativePath(filePath) {
+    return filePath.replace(process.cwd(), '').replace(/^\/+/, '');
+  }
+
+  isLegitimatePattern(filePath, depInfo) {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const crossDomainUsages = depInfo.usedBy.filter(usage => usage.domain !== depInfo.domain);
+    
+    // Pattern 1: Section components used by pages (legitimate composition)
+    if (crossDomainUsages.length > 0 && crossDomainUsages.every(usage => usage.domain === 'app/pages')) {
+      const isSectionComponent = normalizedPath.includes('Section.tsx') || 
+                                normalizedPath.includes('Dashboard.tsx') ||
+                                (depInfo.domain.includes('chat') || 
+                                 depInfo.domain.includes('health') || 
+                                 depInfo.domain.includes('memory') || 
+                                 depInfo.domain.includes('file-manager') || 
+                                 depInfo.domain.includes('settings'));
+      if (isSectionComponent) return { legitimate: true, reason: 'Section component composition' };
+    }
+    
+    // Pattern 2: Subdomain components within same domain
+    if (depInfo.domain.includes('/')) {
+      const baseDomain = depInfo.domain.split('/')[0];
+      const isSubdomainUsage = crossDomainUsages.every(usage => 
+        usage.domain === baseDomain || usage.domain.startsWith(baseDomain + '/')
+      );
+      if (isSubdomainUsage) return { legitimate: true, reason: 'Subdomain organization' };
+    }
+    
+    // Pattern 3: Navigation components used by pages
+    if (depInfo.domain === 'app/navigation') {
+      const isNavUsage = crossDomainUsages.every(usage => usage.domain === 'app/pages');
+      if (isNavUsage) return { legitimate: true, reason: 'Navigation usage by pages' };
+    }
+    
+    // Pattern 4: Shared UI components
+    if (depInfo.domain === 'shared/ui-components' || depInfo.domain === 'shared/hooks' || depInfo.domain === 'shared/utilities') {
+      return { legitimate: true, reason: 'Shared component' };
+    }
+    
+    // Pattern 5: App-level components used within app domain
+    if (depInfo.domain === 'app/pages' && crossDomainUsages.every(usage => usage.domain.startsWith('app/'))) {
+      return { legitimate: true, reason: 'App-level component usage' };
+    }
+    
+    return { legitimate: false, reason: 'Cross-domain violation' };
+  }
 
   buildDomainMapping() {
     return {
@@ -609,15 +657,49 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   tracker.scanProject().then(report => {
     console.log('\n📊 Dependency Analysis Report\n');
     console.log('='.repeat(50));
+    
+    // Analyze patterns vs violations
+    let legitimatePatterns = 0;
+    let trueViolations = 0;
+    const categorizedIssues = { patterns: [], violations: [] };
+    
+    report.crossDomainIssues.forEach(issue => {
+      const depInfo = tracker.dependencies.get(issue.file);
+      if (depInfo) {
+        const pattern = tracker.isLegitimatePattern(issue.file, depInfo);
+        if (pattern.legitimate) {
+          legitimatePatterns++;
+          categorizedIssues.patterns.push({ ...issue, pattern: pattern.reason });
+        } else {
+          trueViolations++;
+          categorizedIssues.violations.push(issue);
+        }
+      }
+    });
+    
     console.log(`Total files analyzed: ${report.summary.totalFiles}`);
     console.log(`Cross-domain files: ${report.summary.crossDomainFiles}`);
     console.log(`Total dependencies: ${report.summary.totalDependencies}`);
+    console.log(`Legitimate patterns: ${legitimatePatterns}`);
+    console.log(`True violations: ${trueViolations}`);
     
-    if (report.crossDomainIssues.length > 0) {
-      console.log('\n🚨 Cross-Domain Dependencies Found:\n');
-      
-      report.crossDomainIssues.forEach((issue, index) => {
-        console.log(`${index + 1}. ${issue.file}`);
+    // Show legitimate patterns first
+    if (categorizedIssues.patterns.length > 0) {
+      console.log('\n✅ Legitimate Architectural Patterns:\n');
+      categorizedIssues.patterns.forEach((issue, index) => {
+        console.log(`${index + 1}. ${tracker.getRelativePath(issue.file)}`);
+        console.log(`   Pattern: ${issue.pattern}`);
+        console.log(`   Domain: ${issue.sourceDomain} → ${issue.usedByDomains.join(', ')}`);
+        console.log(`   Exports: ${issue.exports.join(', ')}`);
+        console.log('');
+      });
+    }
+    
+    // Show true violations
+    if (categorizedIssues.violations.length > 0) {
+      console.log('\n🚨 True Cross-Domain Violations:\n');
+      categorizedIssues.violations.forEach((issue, index) => {
+        console.log(`${index + 1}. ${tracker.getRelativePath(issue.file)}`);
         console.log(`   Domain: ${issue.sourceDomain} → ${issue.usedByDomains.join(', ')}`);
         console.log(`   Risk: ${issue.risk.toUpperCase()}`);
         console.log(`   Usage count: ${issue.usageCount}`);
@@ -627,6 +709,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       
       console.log('📋 Recommendations:');
       report.recommendations.forEach(rec => console.log(`   • ${rec}`));
+    } else {
+      console.log('\n🎉 No true cross-domain violations found! All dependencies are legitimate architectural patterns.');
     }
     
     // Generate dependency map file

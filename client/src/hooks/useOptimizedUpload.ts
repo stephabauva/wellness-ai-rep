@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { FileCompressionService, CompressionResult } from '@/services/file-compression';
+import { compressFile, shouldCompressFile, CompressionResult } from '@/services/file-compression';
 import { UploadProgress, ProgressTracker } from '@/utils/upload-progress';
 
 export interface OptimizedUploadOptions {
@@ -67,7 +67,7 @@ export function useOptimizedUpload(): UseOptimizedUploadReturn {
       // Phase 1: Compression (if enabled and file is large enough)
       if (enableCompression && 
           file.size > compressionThreshold && 
-          FileCompressionService.shouldCompressFile(file)) {
+          shouldCompressFile(file)) {
         
         setIsCompressing(true);
         onCompressionStart?.();
@@ -85,7 +85,7 @@ export function useOptimizedUpload(): UseOptimizedUploadReturn {
         onProgress?.(compressionProgress);
 
         try {
-          compressionResult = await FileCompressionService.compressFile(file);
+          compressionResult = await compressFile(file);
           fileToUpload = compressionResult.compressedFile;
           
           onCompressionComplete?.(compressionResult);

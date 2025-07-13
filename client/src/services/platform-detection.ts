@@ -1,5 +1,5 @@
 /**
- * Platform Detection Service - Phase 1
+ * Platform Detection Utilities
  * Provides platform detection and capability checking for mobile health data integration
  * Part of the Capacitor Mobile Health Data Integration Plan
  */
@@ -14,102 +14,100 @@ export interface PlatformCapabilities {
 
 export type Platform = 'web' | 'ios' | 'android' | 'desktop';
 
-export class PlatformDetectionService {
-  /**
-   * Detects if the app is running inside Capacitor
-   */
-  static isCapacitor(): boolean {
-    return !!(window as any).Capacitor;
-  }
+/**
+ * Detects if the app is running inside Capacitor
+ */
+export const isCapacitor = (): boolean => {
+  return !!(window as any).Capacitor;
+};
 
-  /**
-   * Gets the current platform
-   */
-  static getPlatform(): Platform {
-    if (!this.isCapacitor()) {
-      // Check if running in desktop environment
-      if (typeof navigator !== 'undefined' && navigator.userAgent) {
-        const userAgent = navigator.userAgent.toLowerCase();
-        if (userAgent.includes('electron')) {
-          return 'desktop';
-        }
+/**
+ * Gets the current platform
+ */
+export const getPlatform = (): Platform => {
+  if (!isCapacitor()) {
+    // Check if running in desktop environment
+    if (typeof navigator !== 'undefined' && navigator.userAgent) {
+      const userAgent = navigator.userAgent.toLowerCase();
+      if (userAgent.includes('electron')) {
+        return 'desktop';
       }
-      return 'web';
     }
-
-    const platform = (window as any).Capacitor.getPlatform();
-    return platform as Platform;
+    return 'web';
   }
 
-  /**
-   * Checks if native health data access is available
-   */
-  static hasHealthAccess(): boolean {
-    const platform = this.getPlatform();
-    return this.isCapacitor() && ['ios', 'android'].includes(platform);
-  }
+  const platform = (window as any).Capacitor.getPlatform();
+  return platform as Platform;
+};
 
-  /**
-   * Gets platform-specific capabilities
-   */
-  static getCapabilities(): PlatformCapabilities {
-    const platform = this.getPlatform();
-    const isCapacitor = this.isCapacitor();
+/**
+ * Checks if native health data access is available
+ */
+export const hasHealthAccess = (): boolean => {
+  const platform = getPlatform();
+  return isCapacitor() && ['ios', 'android'].includes(platform);
+};
 
-    return {
-      healthDataAccess: isCapacitor && ['ios', 'android'].includes(platform),
-      backgroundSync: isCapacitor && ['ios', 'android'].includes(platform),
-      bluetoothLE: isCapacitor && ['ios', 'android'].includes(platform),
-      fileUpload: true, // Always available as fallback
-      pushNotifications: isCapacitor && ['ios', 'android'].includes(platform),
-    };
-  }
+/**
+ * Gets platform-specific capabilities
+ */
+export const getCapabilities = (): PlatformCapabilities => {
+  const platform = getPlatform();
+  const isCapacitorApp = isCapacitor();
 
-  /**
-   * Gets platform-specific health data providers
-   */
-  static getHealthProviders(): string[] {
-    const platform = this.getPlatform();
-    
-    switch (platform) {
-      case 'ios':
-        return ['HealthKit', 'Apple Health'];
-      case 'android':
-        return ['Google Fit', 'Health Connect'];
-      case 'web':
-      case 'desktop':
-      default:
-        return ['File Upload'];
-    }
-  }
+  return {
+    healthDataAccess: isCapacitorApp && ['ios', 'android'].includes(platform),
+    backgroundSync: isCapacitorApp && ['ios', 'android'].includes(platform),
+    bluetoothLE: isCapacitorApp && ['ios', 'android'].includes(platform),
+    fileUpload: true, // Always available as fallback
+    pushNotifications: isCapacitorApp && ['ios', 'android'].includes(platform),
+  };
+};
 
-  /**
-   * Checks if a specific health provider is available
-   */
-  static isHealthProviderAvailable(provider: string): boolean {
-    const availableProviders = this.getHealthProviders();
-    return availableProviders.includes(provider);
+/**
+ * Gets platform-specific health data providers
+ */
+export const getHealthProviders = (): string[] => {
+  const platform = getPlatform();
+  
+  switch (platform) {
+    case 'ios':
+      return ['HealthKit', 'Apple Health'];
+    case 'android':
+      return ['Google Fit', 'Health Connect'];
+    case 'web':
+    case 'desktop':
+    default:
+      return ['File Upload'];
   }
+};
 
-  /**
-   * Gets environment information for debugging
-   */
-  static getEnvironmentInfo() {
-    return {
-      platform: this.getPlatform(),
-      isCapacitor: this.isCapacitor(),
-      capabilities: this.getCapabilities(),
-      healthProviders: this.getHealthProviders(),
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
-      hasCapacitorGlobal: !!(window as any).Capacitor,
-    };
-  }
+/**
+ * Checks if a specific health provider is available
+ */
+export const isHealthProviderAvailable = (provider: string): boolean => {
+  const availableProviders = getHealthProviders();
+  return availableProviders.includes(provider);
+};
 
-  /**
-   * Logs platform information for debugging
-   */
-  static logPlatformInfo(): void {
-    const info = this.getEnvironmentInfo();
-    console.log('[PlatformDetection] Environment Info:', info);
-  }
-}
+/**
+ * Gets environment information for debugging
+ */
+export const getEnvironmentInfo = () => {
+  return {
+    platform: getPlatform(),
+    isCapacitor: isCapacitor(),
+    capabilities: getCapabilities(),
+    healthProviders: getHealthProviders(),
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+    hasCapacitorGlobal: !!(window as any).Capacitor,
+  };
+};
+
+/**
+ * Logs platform information for debugging
+ */
+export const logPlatformInfo = (): void => {
+  const info = getEnvironmentInfo();
+  console.log('[PlatformDetection] Environment Info:', info);
+};

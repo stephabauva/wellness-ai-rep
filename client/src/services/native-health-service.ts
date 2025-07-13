@@ -4,7 +4,7 @@
  * Part of the Capacitor Mobile Health Data Integration Plan
  */
 
-import { PlatformDetectionService, Platform } from './platform-detection';
+import { getPlatform, isCapacitor, getCapabilities, type Platform } from './platform-detection';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 
@@ -48,7 +48,7 @@ export abstract class NativeHealthProvider {
   protected platform: Platform;
 
   constructor() {
-    this.platform = PlatformDetectionService.getPlatform();
+    this.platform = getPlatform();
   }
 
   abstract checkPermissions(): Promise<HealthPermissions>;
@@ -195,7 +195,7 @@ export class HealthKitProvider extends NativeHealthProvider {
     }
     
     // For web development, simulate availability
-    if (PlatformDetectionService.isCapacitor()) {
+    if (isCapacitor()) {
       return true;
     }
     
@@ -456,7 +456,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
     }
     
     // For web development, simulate availability
-    if (PlatformDetectionService.isCapacitor()) {
+    if (isCapacitor()) {
       return true;
     }
     
@@ -613,7 +613,7 @@ export class NativeHealthService {
   }
 
   private initializeProvider(): void {
-    const platform = PlatformDetectionService.getPlatform();
+    const platform = getPlatform();
     
     switch (platform) {
       case 'ios':
@@ -642,8 +642,8 @@ export class NativeHealthService {
    * Gets the current provider information
    */
   getProviderInfo() {
-    const platform = PlatformDetectionService.getPlatform();
-    const capabilities = PlatformDetectionService.getCapabilities();
+    const platform = getPlatform();
+    const capabilities = getCapabilities();
     
     return {
       platform,
@@ -702,7 +702,7 @@ export class NativeHealthService {
     
     try {
       // For web platform, call the backend API directly
-      const platform = PlatformDetectionService.getPlatform();
+      const platform = getPlatform();
       
       if (platform === 'web') {
         const response = await fetch('/api/health-data/native-sync', {
@@ -832,7 +832,7 @@ export class NativeHealthService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           data: healthData,
-          platform: PlatformDetectionService.getPlatform(),
+          platform: getPlatform(),
           provider: this.provider.constructor.name,
           syncTimestamp: new Date().toISOString()
         })

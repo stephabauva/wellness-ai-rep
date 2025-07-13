@@ -6,7 +6,7 @@
  * integration between TypeScript and Go acceleration services.
  */
 
-import { FileCompressionService, type CompressionOptions, type CompressionResult as TSCompressionResult } from './file-compression';
+import { compressFile, shouldCompressFile, type CompressionOptions, type CompressionResult as TSCompressionResult } from './file-compression';
 
 export interface CompressionResult {
   compressedFile: File;
@@ -240,7 +240,7 @@ export class UniversalFileService {
     console.log(`Using TypeScript compression for ${file.name}`);
     
     try {
-      const tsResult = await FileCompressionService.compressFile(file, options);
+      const tsResult = await compressFile(file, options);
       const processingTime = Date.now() - startTime;
       
       // Convert TypeScript result to unified CompressionResult format
@@ -302,44 +302,17 @@ export class UniversalFileService {
       return [];
     }
 
-    // Separate files suitable for Go acceleration
-    const largeFiles = files.filter(file => FileAccelerationService.shouldAccelerate(file));
-    const regularFiles = files.filter(file => !FileAccelerationService.shouldAccelerate(file));
-
     const results: CompressionResult[] = [];
 
-    // Process large files with Go acceleration if available
-    if (largeFiles.length > 0) {
+    // Process all files with TypeScript compression
+    console.log(`Processing ${files.length} files with TypeScript compression`);
+    for (const file of files) {
       try {
-        console.log(`Processing ${largeFiles.length} large files with Go acceleration`);
-        const acceleratedResults = await FileAccelerationService.accelerateBatch(largeFiles);
-        results.push(...acceleratedResults);
+        const result = await this.compressFile(file, options);
+        results.push(result);
       } catch (error) {
-        console.warn('Batch Go acceleration failed, processing individually:', error);
-        // Fallback to individual processing
-        for (const file of largeFiles) {
-          try {
-            const result = await this.compressFile(file, options);
-            results.push(result);
-          } catch (fileError) {
-            console.error(`Failed to compress ${file.name}:`, fileError);
-            // Continue with other files
-          }
-        }
-      }
-    }
-
-    // Process regular files with TypeScript
-    if (regularFiles.length > 0) {
-      console.log(`Processing ${regularFiles.length} regular files with TypeScript`);
-      for (const file of regularFiles) {
-        try {
-          const result = await this.compressFile(file, options);
-          results.push(result);
-        } catch (error) {
-          console.error(`Failed to compress ${file.name}:`, error);
-          // Continue with other files
-        }
+        console.error(`Failed to compress ${file.name}:`, error);
+        // Continue with other files
       }
     }
 
@@ -359,7 +332,7 @@ export class UniversalFileService {
       initialized: this.initialized,
       platform: this.detectPlatform(),
       capabilities: this.getCapabilities(),
-      goService: FileAccelerationService.getCapabilities(),
+      goService: this.getAccelerationCapabilities(),
     };
   }
 
@@ -380,7 +353,7 @@ export class UniversalFileService {
     try {
       const testContent = 'test content for compression';
       const testFile = new File([testContent], 'test.txt', { type: 'text/plain' });
-      await FileCompressionService.compressFile(testFile);
+      await compressFile(testFile);
       typescriptWorking = true;
     } catch (error) {
       console.error('TypeScript compression test failed:', error);
@@ -389,7 +362,8 @@ export class UniversalFileService {
     // Test Go acceleration
     let goWorking = false;
     try {
-      goWorking = await FileAccelerationService.testAcceleration();
+      await this.checkAccelerationHealth();
+      goWorking = this.accelerationCapabilities.isAvailable;
     } catch (error) {
       console.error('Go acceleration test failed:', error);
     }
@@ -420,39 +394,4 @@ export class UniversalFileService {
     return this.ACCELERATION_ENABLED;
   }
 
-  /**
-   * Automatically start Go acceleration service when needed
-   */
-  static async startGoAccelerationService(): Promise<void> {
-    try {
-      console.log('Attempting to start Go acceleration service...');
-      
-      const response = await fetch('/api/accelerate/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reason: 'Large file detected requiring Go acceleration',
-          autoStart: true
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to start Go service: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('Go acceleration service start response:', result);
-      
-      if (result.success) {
-        console.log('Go acceleration service started successfully');
-      } else {
-        throw new Error(result.error || 'Failed to start Go service');
-      }
-    } catch (error) {
-      console.error('Failed to start Go acceleration service:', error);
-      throw error;
-    }
-  }
 }

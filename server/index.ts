@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes/index";
 import { registerSimpleRoutes } from "./routes-simple";
 import { setupVite, serveStatic, log } from "./vite";
-import { storage, DatabaseStorage } from "./storage";
+import { storage, DatabaseStorage } from "@shared/database/storage";
 import { databaseMigrationService } from "./services/database-migration-service";
 import { logger } from "./services/logger-service";
 import { existsSync } from "fs";

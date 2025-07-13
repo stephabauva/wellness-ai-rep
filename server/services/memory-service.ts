@@ -9,7 +9,7 @@
  */
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { db } from '../db';
+import { db } from "@shared/database/db";
 import { 
   memoryEntries, 
   memoryTriggers, 
@@ -23,9 +23,9 @@ import {
   type MemoryCategory
 } from '../../shared/schema';
 import { eq, desc, and, sql, gt } from 'drizzle-orm';
-import { cacheService } from './cache-service';
+import { cacheService } from "@shared/services/cache-service";
 import { goMemoryService } from './go-memory-service';
-import { logger } from './logger-service';
+import { logger } from "@shared/services/logger-service";
 
 interface MemoryDetectionResult {
   shouldRemember: boolean;

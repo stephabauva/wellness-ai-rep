@@ -1,5 +1,5 @@
 import { memoryService } from './memory-service';
-import { logger } from './logger-service';
+import { logger } from "@shared/services/logger-service";
 
 // Simplified Enhanced Memory Service - Background Processing Only
 // Core detection logic has been moved to main memory-service.ts

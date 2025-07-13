@@ -1,4 +1,4 @@
-import { db, initializeDatabase } from '../db';
+import { db, initializeDatabase } from "@shared/database/db";
 import { memoryEntries } from '../../shared/schema';
 import { sql } from 'drizzle-orm';
 

@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { z } from "zod";
-import { db } from "./db";
+import { db } from "@shared/database/db";
 import { conversations, conversationMessages } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import { storage } from "./storage";
+import { storage } from "@shared/database/storage";
 import { analyzeMessage } from './services/simple-memory-detection';
 
 // Simple message schema for testing

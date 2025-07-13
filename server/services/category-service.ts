@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db } from "@shared/database/db";
 import { fileCategories, FileCategory, InsertFileCategory } from '@shared/schema';
 import { eq, and, or, isNull, sql } from 'drizzle-orm';
 // `nanoid` is not strictly needed if relying on `defaultRandom()` for UUIDs in schema,

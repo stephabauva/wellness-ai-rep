@@ -1,6 +1,6 @@
-import { db, pool } from '../db';
+import { db, pool } from "@shared/database/db";
 import { sql } from 'drizzle-orm';
-import { logger } from './logger-service';
+import { logger } from "@shared/services/logger-service";
 
 export class DatabaseMigrationService {
   private static instance: DatabaseMigrationService;

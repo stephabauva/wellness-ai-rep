@@ -1,6 +1,6 @@
 // MAX_LINES: 50 - Shared Dependencies for route modules
 import type { Express } from "express";
-import { storage } from "../storage";
+import { storage } from "@shared/database/storage";
 import { aiService } from "../services/ai-service";
 import { memoryService } from "../services/memory-service";
 import { enhancedMemoryService } from "../services/enhanced-memory-service";
@@ -19,7 +19,7 @@ import { memoryFeatureFlags } from "../services/memory-feature-flags";
 import { memoryPerformanceMonitor } from "../services/memory-performance-monitor";
 import { chatGPTMemoryEnhancement } from "../services/chatgpt-memory-enhancement";
 import { healthConsentService } from "../services/health-consent-service";
-import { db } from "../db";
+import { db } from "@shared/database/db";
 import { eq, desc, and, or } from "drizzle-orm";
 import { 
   conversations, conversationMessages, memoryEntries, insertFileCategorySchema,

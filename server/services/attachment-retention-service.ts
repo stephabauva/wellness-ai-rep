@@ -1,7 +1,7 @@
 
 import { join } from 'path';
 import { existsSync, unlinkSync, statSync } from 'fs';
-import { db } from '../db';
+import { db } from "@shared/database/db";
 import { conversations, conversationMessages } from '@shared/schema';
 import { eq, and, lt } from 'drizzle-orm';
 

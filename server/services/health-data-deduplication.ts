@@ -1,5 +1,5 @@
 import { HealthData, InsertHealthData } from '@shared/schema';
-import { storage } from '../storage';
+import { storage } from "@shared/database/storage";
 
 export interface DuplicateDetectionResult {
   isDuplicate: boolean;

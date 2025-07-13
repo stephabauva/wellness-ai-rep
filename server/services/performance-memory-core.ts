@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db } from "@shared/database/db";
 import { 
   memoryEntries, 
   type InsertMemoryEntry,

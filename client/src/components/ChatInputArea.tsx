@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@shared/components/ui/button";
+import { Input } from "@shared/components/ui/input";
 import { Paperclip, Send, Camera, X } from "lucide-react"; // Added X for close button
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { UseChatActionsReturn } from "@/hooks/useChatActions";

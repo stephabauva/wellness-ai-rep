@@ -1,15 +1,15 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from "@shared/components/ui/switch"';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/components/ui/card';
+import { Switch } from "@shared/components/ui/switch";
 import { Label } from '@shared/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
+import { Badge } from '@shared/components/ui/badge';
+import { Button } from '@shared/components/ui/button';
 import { Separator } from '@shared/components/ui/separator';
 import { Shield, Eye, EyeOff, Clock, Download, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@shared';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@shared/components/ui/use-toast';
 // Define local types to avoid import issues during Phase 1 implementation
 interface HealthConsentSettings {
   data_visibility: {

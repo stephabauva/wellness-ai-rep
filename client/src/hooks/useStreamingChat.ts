@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@shared/components/ui/use-toast';
 import { useAppContext } from '@shared';
 
 interface StreamingMessage {

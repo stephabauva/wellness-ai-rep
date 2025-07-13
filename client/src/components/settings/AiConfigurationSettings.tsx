@@ -1,11 +1,11 @@
 import React from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from @shared/components/ui/select";
-import { Switch } from @shared/components/ui/switch";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@shared/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
+import { Switch } from "@shared/components/ui/switch";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@shared/components/ui/form";
 import { UserSettingsFormValues } from '@/hooks/useUserSettings';
-import { AvailableAiModels, AiModelInfo } from '@/hooks/useAiModels'; // Import model types
+import { AvailableAiModels, AiModelInfo } from '@shared/hooks/useAiModels'; // Import model types
 import { supportedLanguages } from "@shared/schema"; // Assuming this path is correct
 
 interface AiConfigurationSettingsProps {

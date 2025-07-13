@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@shared/components/ui/use-toast';
 // Assuming FileCategory will be defined in @/types/fileManager alongside FileItem
 import { FileItem, FileCategory } from '@shared';
 import { formatFileSize } from '@shared'; // For toast message

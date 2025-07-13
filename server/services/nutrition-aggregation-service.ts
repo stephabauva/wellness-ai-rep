@@ -1,7 +1,7 @@
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
-import { db } from '../db.js';
+import { db } from '@shared/database/db';
 import { healthData, type HealthData } from '@shared/schema';
-import { cacheService } from './cache-service.js';
+import { cacheService } from '../../shared/services/cache-service';
 
 // Helper function to log with service context
 const log = (level: 'info' | 'error' | 'warn', message: string, data?: any) => {

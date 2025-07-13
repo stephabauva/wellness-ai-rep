@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Plus, Settings, Link2Off } from "lucide-react";
 import { DeviceCard } from "@/components/ui/device-card";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@shared/components/ui/card";
+import { Badge } from "@shared/components/ui/badge";
 import { Switch } from "@shared/components/ui/switch";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@shared";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@shared/components/ui/use-toast";
 import { Skeleton } from "@shared/components/ui/skeleton";
 
 const ConnectedDevicesSection: React.FC = () => {

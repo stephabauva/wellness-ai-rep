@@ -1,6 +1,6 @@
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@shared/components/ui/card";
+import { Badge } from "@shared/components/ui/badge";
 import { UploadProgress as UploadProgressType, formatSpeed, formatDuration } from "@shared";
 import { formatFileSize } from "@shared";
 import { Archive, Upload, Loader2, CheckCircle2 } from "lucide-react";

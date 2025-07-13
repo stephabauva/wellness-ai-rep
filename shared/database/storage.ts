@@ -26,8 +26,8 @@ import {
 import { nanoid } from "nanoid";
 import { eq, and, gte, desc } from "drizzle-orm";
 import { db } from "./db";
-import { cacheService } from "./services/cache-service";
-import { nutritionAggregationService, type DailyNutritionSummary, type NutritionUpdateRequest, type NutritionMealSummary } from "./services/nutrition-aggregation-service.js";
+import { cacheService } from "../services/cache-service";
+import { nutritionAggregationService, type DailyNutritionSummary, type NutritionUpdateRequest, type NutritionMealSummary } from "../../server/services/nutrition-aggregation-service.js";
 
 // Interface for storage methods
 export interface IStorage {

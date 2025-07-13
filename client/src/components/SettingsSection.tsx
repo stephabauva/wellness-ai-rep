@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Form } from "@/components/ui/form"; // Only Form component needed at top level
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@shared/components/ui/skeleton"";
+import { Form } from "@shared/components/ui/form"; // Only Form component needed at top level
+import { Button } from "@shared/components/ui/button";
+import { Skeleton } from "@shared/components/ui/skeleton";
 import { useAppContext } from "@shared";
 import { 
   User, 
@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 
 // Import hooks
-import { useUserSettings, UserSettingsFormValues, settingsFormSchema as userSettingsFormSchema } from "@/hooks/useUserSettings";
+import { useUserSettings, UserSettingsFormValues, settingsFormSchema as userSettingsFormSchema } from "@shared/hooks/useUserSettings";
 import { useRetentionSettings, RetentionSettingsFormValues } from "@/hooks/useRetentionSettings";
-import { useAiModels } from "@/hooks/useAiModels";
+import { useAiModels } from "@shared/hooks/useAiModels";
 
 // Import sub-components
 import { AccountSettings } from "./settings/AccountSettings";

@@ -35,7 +35,7 @@ import { AttachedFile } from "@shared/hooks/useFileManagement";
 import { useVirtualScrolling } from "@/hooks/useVirtualScrolling";
 import { useMessagePagination } from "@/hooks/useMessagePagination";
 import { useWebWorker } from "@/hooks/useWebWorker";
-import { Button } from "@/components/ui/button";
+import { Button } from "@shared/components/ui/button";
 import { ChevronUp, Search } from "lucide-react";
 
 // Import the Message type from utils to ensure consistency

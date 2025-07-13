@@ -1,8 +1,8 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from @shared/components/ui/switch";
-import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@shared/components/ui/card";
+import { Switch } from "@shared/components/ui/switch";
+import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@shared/components/ui/form";
 import { UserSettingsFormValues } from '@/hooks/useUserSettings';
 
 export function AppPreferencesSettings() {

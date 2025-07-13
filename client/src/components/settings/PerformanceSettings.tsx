@@ -1,8 +1,8 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from @shared/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@shared/components/ui/card";
+import { Switch } from "@shared/components/ui/switch";
 import { Label } from "@shared/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@shared/components/ui/badge";
 import { AlertTriangle, Zap, ArrowUpDown } from "lucide-react";
 
 interface PerformanceSettingsProps {

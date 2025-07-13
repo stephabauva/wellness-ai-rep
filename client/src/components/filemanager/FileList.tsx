@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from "@shared/components/ui/checkbox"';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader } from '@shared/components/ui/card';
+import { Button } from '@shared/components/ui/button';
+import { Checkbox } from "@shared/components/ui/checkbox";
+import { Badge } from '@shared/components/ui/badge';
 import { Download, FileText, Image as ImageIcon } from 'lucide-react'; // Renamed Image to ImageIcon
 import { cn } from '@shared';
 import { FileItem, ViewMode } from '@shared';

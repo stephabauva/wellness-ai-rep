@@ -1,10 +1,10 @@
 import React from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@shared/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@shared/components/ui/radio-group";
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@shared/components/ui/form";
 import { UserSettingsFormValues } from '@/hooks/useUserSettings';
 
 // Assuming focusAreas options are static or passed as props

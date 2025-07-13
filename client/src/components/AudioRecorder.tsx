@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Mic, MicOff, Square, Loader2, Wifi, WifiOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@shared/components/ui/button";
 import { audioService, TranscriptionResult } from "@/services/audio-service";
 import { TranscriptionProvider } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@shared/components/ui/use-toast";
 
 interface AudioRecorderProps {
   onTranscriptionComplete: (text: string) => void;

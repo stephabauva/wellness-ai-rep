@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@shared/components/ui/button';
 import {
   Share2,
   QrCode,

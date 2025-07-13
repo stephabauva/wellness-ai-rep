@@ -6,10 +6,10 @@ import type { Express } from "express";
 
 // Core shared services that are legitimately shared
 import { storage } from "@shared/database/storage";
-import { aiService } from "./ai-service";
+import { aiService } from "../../shared/services/ai-service";
 import { memoryService } from "@shared/services/memory-service";
 import { generatePDFReport } from "./pdf-service";
-import { cacheService } from "./cache-service";
+import { cacheService } from "../../shared/services/cache-service";
 import { chatGPTMemoryEnhancement } from "@shared/services/chatgpt-memory-enhancement";
 import { db } from "@shared/database/db";
 

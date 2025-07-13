@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@shared/components/ui/button";
 import { History } from "lucide-react"; // Only History is needed from lucide-react here
 import { useChatMessages } from "@/hooks/useChatMessages";
 // useFileManagement is now used indirectly via useChatActions

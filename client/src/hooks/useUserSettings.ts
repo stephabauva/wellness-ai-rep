@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@shared'; // Assuming apiRequest is a utility for making API calls
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@shared/components/ui/use-toast';
 import { z } from "zod"; // For FormValues type, assuming it's defined here or imported
 
 // Define the Zod schema for settings form values if not already centralized

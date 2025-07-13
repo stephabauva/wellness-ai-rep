@@ -1,9 +1,9 @@
 import React from 'react';
 import { useFormContext, Controller } from 'react-hook-form'; // Or pass form control directly
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@shared/components/ui/card";
+import { Button } from "@shared/components/ui/button";
+import { Input } from "@shared/components/ui/input";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@shared/components/ui/form";
 import { UserSettingsFormValues } from '@/hooks/useUserSettings'; // Assuming this type includes account fields
 
 interface AccountSettingsProps {

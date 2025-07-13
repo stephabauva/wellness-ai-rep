@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@shared';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@shared/components/ui/use-toast';
 import { z } from "zod";
 
 // Schema for retention settings form values

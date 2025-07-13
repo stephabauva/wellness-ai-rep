@@ -6,9 +6,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@shared/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Button } from '@shared/components/ui/button';
 import { Label } from '@shared/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Input } from '@shared/components/ui/input';
 // Select components are no longer directly used here, but CategorySelector uses them.
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"';
 import { useFileUpload } from '@/hooks/useFileUpload'; // Import the hook

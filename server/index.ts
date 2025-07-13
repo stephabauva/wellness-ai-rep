@@ -7,7 +7,7 @@ import { registerSimpleRoutes } from "./routes-simple";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage, DatabaseStorage } from "@shared/database/storage";
 import { databaseMigrationService } from "./services/database-migration-service";
-import { logger } from "./services/logger-service";
+import { logger } from "../shared/services/logger-service";
 import { existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -59,9 +59,7 @@ app.use((req, res, next) => {
     const hasLocalEnvFile = existsSync('.env.local');
     
     if (isLocalDatabase && hasLocalEnvFile) {
-      // Initialize local database connection before proceeding
-      const { initializeDatabase: initDb } = await import('./db.js');
-      await initDb();
+      // Local database is initialized by importing db-local.ts
       logger.system('Local database connection initialized');
     } else {
       // Initialize PostgreSQL database with indexes and optimizations for Replit/production

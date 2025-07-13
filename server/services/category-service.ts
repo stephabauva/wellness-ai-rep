@@ -139,31 +139,39 @@ export const categoryService = {
 // Helper function to add default categories if they don't exist
 // This would typically be run once at application startup or via a migration script
 export async function seedDefaultCategories() {
-  const defaultCategories: Omit<InsertFileCategory, 'id' | 'userId' | 'isCustom' | 'createdAt'>[] = [
-    { name: '❤️ Medical', description: 'Medical records, prescriptions, lab results.', icon: 'Heart', color: '#ef4444' },
-    { name: '💪 Fitness', description: 'Workout plans, progress photos, fitness logs.', icon: 'Activity', color: '#22c55e' },
-    { name: '👤 Personal', description: 'Personal documents, notes, journals.', icon: 'User', color: '#a855f7' },
-    { name: '📸 Photo', description: 'Photos and images from chat or uploads.', icon: 'Camera', color: '#ec4899' },
-    { name: '🥗 Nutrition', description: 'Meal plans, nutrition logs, recipes.', icon: 'Apple', color: '#f59e0b' },
-    { name: '📄 General', description: 'General purpose documents.', icon: 'FileText', color: '#6b7280' },
-  ];
+  try {
+    const defaultCategories: Omit<InsertFileCategory, 'id' | 'userId' | 'isCustom' | 'createdAt'>[] = [
+      { name: '❤️ Medical', description: 'Medical records, prescriptions, lab results.', icon: 'Heart', color: '#ef4444' },
+      { name: '💪 Fitness', description: 'Workout plans, progress photos, fitness logs.', icon: 'Activity', color: '#22c55e' },
+      { name: '👤 Personal', description: 'Personal documents, notes, journals.', icon: 'User', color: '#a855f7' },
+      { name: '📸 Photo', description: 'Photos and images from chat or uploads.', icon: 'Camera', color: '#ec4899' },
+      { name: '🥗 Nutrition', description: 'Meal plans, nutrition logs, recipes.', icon: 'Apple', color: '#f59e0b' },
+      { name: '📄 General', description: 'General purpose documents.', icon: 'FileText', color: '#6b7280' },
+    ];
 
-  for (const catData of defaultCategories) {
-    const existing = await db.select().from(fileCategories).where(
-      and(
-        isNull(fileCategories.userId), // System category
-        eq(fileCategories.name, catData.name)
-      )
-    );
+    for (const catData of defaultCategories) {
+      if (!db) {
+        console.warn('Database not initialized for category seeding, skipping...');
+        return;
+      }
+      const existing = await db.select().from(fileCategories).where(
+        and(
+          isNull(fileCategories.userId), // System category
+          eq(fileCategories.name, catData.name)
+        )
+      );
 
-    if (existing.length === 0) {
-      await db.insert(fileCategories).values({
-        ...catData,
-        isCustom: false, // System category
-        userId: null,    // No user associated
-      }).execute();
-      console.log(`Seeded default category: ${catData.name}`);
+      if (existing.length === 0) {
+        await db.insert(fileCategories).values({
+          ...catData,
+          isCustom: false, // System category
+          userId: null,    // No user associated
+        }).execute();
+        console.log(`Seeded default category: ${catData.name}`);
+      }
     }
+  } catch (error) {
+    console.warn('Failed to seed default categories:', error);
   }
 }
 

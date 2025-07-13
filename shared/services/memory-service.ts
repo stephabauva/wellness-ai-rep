@@ -24,7 +24,7 @@ import {
 } from '../../shared/schema';
 import { eq, desc, and, sql, gt } from 'drizzle-orm';
 import { cacheService } from "@shared/services/cache-service";
-import { goMemoryService } from './go-memory-service';
+import { goMemoryService } from '../../server/services/go-memory-service';
 import { logger } from "@shared/services/logger-service";
 
 interface MemoryDetectionResult {

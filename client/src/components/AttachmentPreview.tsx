@@ -1,6 +1,6 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button"; // For remove button, though a simple 'x' is used
+import { Card, CardContent } from "@shared/components/ui/card";
+import { Button } from "@shared/components/ui/button"; // For remove button, though a simple 'x' is used
 import { getFileIcon } from "@shared";
 import { AttachedFile } from "@shared/hooks/useFileManagement";
 

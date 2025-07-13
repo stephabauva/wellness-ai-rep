@@ -1,8 +1,8 @@
+// @used-by memory/domain
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 import { db } from "@shared/database/db";
-import { memoryEntries, users, type InsertMemoryEntry } from '../../shared/schema';
-import { v4 as uuidv4 } from 'uuid';
+import { memoryEntries, users, type InsertMemoryEntry } from '../../../shared/schema';
 import { eq } from 'drizzle-orm';
 
 interface SimpleMemoryResult {

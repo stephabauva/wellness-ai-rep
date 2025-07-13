@@ -1,4 +1,5 @@
 // MAX_LINES: 60 - Routes Module Index
+// @used-by infrastructure/routing
 import type { Express } from "express";
 import type { Server } from "http";
 import { registerChatRoutes } from "./chat-routes.js";

@@ -100,300 +100,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/hooks/useWebWorker.ts": {
-    "domain": "shared/hooks",
-    "exports": [
-      "useWebWorker"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MessageDisplayArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "useWebWorker"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/hooks/useVirtualScrolling.ts": {
-    "domain": "shared/hooks",
-    "exports": [
-      "useVirtualScrolling"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MessageDisplayArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "useVirtualScrolling"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/hooks/useUserSettings.ts": {
-    "domain": "settings",
-    "exports": [
-      "settingsFormSchema",
-      "UserSettingsFormValues",
-      "UserSettingsData",
-      "useUserSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "useUserSettings",
-          "UserSettingsFormValues",
-          "settingsFormSchema as userSettingsFormSchema"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/FileManagementSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "UserSettingsFormValues"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "UserSettingsFormValues"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AppPreferencesSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "UserSettingsFormValues"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "UserSettingsFormValues"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AccountSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "UserSettingsFormValues"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 6
-  },
-  "client/src/hooks/useStreamingChat.ts": {
-    "domain": "chat",
-    "exports": [
-      "useStreamingChat"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/hooks/useChatActions.ts",
-        "domain": "chat",
-        "imports": [
-          "useStreamingChat"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/hooks/useRetentionSettings.ts": {
-    "domain": "settings",
-    "exports": [
-      "RetentionSettingsFormValues",
-      "RetentionSettingsData",
-      "useRetentionSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "useRetentionSettings",
-          "RetentionSettingsFormValues"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/hooks/useMessagePagination.ts": {
-    "domain": "shared/hooks",
-    "exports": [
-      "useMessagePagination"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MessageDisplayArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "useMessagePagination"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/hooks/useLazySection.ts": {
-    "domain": "shared/hooks",
-    "exports": [
-      "SectionName",
-      "useLazySection"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/hooks/useStaggeredLoading.ts",
-        "domain": "shared/hooks",
-        "imports": [
-          "SectionName"
-        ]
-      },
-      {
-        "file": "client/src/hooks/useBackgroundPreload.ts",
-        "domain": "shared/hooks",
-        "imports": [
-          "SectionName"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 2
-  },
-  "client/src/hooks/useFileUpload.ts": {
-    "domain": "file-manager",
-    "exports": [
-      "useFileUpload"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "useFileUpload"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/hooks/useFileSharing.ts": {
-    "domain": "file-manager",
-    "exports": [
-      "useFileSharing"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "useFileSharing"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/hooks/useFileManagerState.ts": {
-    "domain": "file-manager",
-    "exports": [
-      "useFileManagerState"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "useFileManagerState"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/hooks/useFileApi.ts": {
-    "domain": "file-manager",
-    "exports": [
-      "useFileApi"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "useFileApi"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "useFileApi"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 2
-  },
-  "client/src/hooks/useChatMessages.ts": {
-    "domain": "chat",
-    "exports": [
-      "useChatMessages"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/hooks/useChatActions.ts",
-        "domain": "chat",
-        "imports": [
-          "useChatMessages"
-        ]
-      },
-      {
-        "file": "client/src/components/ChatSection.tsx",
-        "domain": "chat",
-        "imports": [
-          "useChatMessages"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 2
-  },
-  "client/src/hooks/useChatActions.ts": {
-    "domain": "chat",
-    "exports": [
-      "useChatActions",
-      "UseChatActionsReturn"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ChatSection.tsx",
-        "domain": "chat",
-        "imports": [
-          "useChatActions"
-        ]
-      },
-      {
-        "file": "client/src/components/ChatInputArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "UseChatActionsReturn"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 2
-  },
   "client/src/components/StreamingText.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -667,6 +373,300 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "client/src/hooks/useWebWorker.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useWebWorker"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "useWebWorker"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/hooks/useVirtualScrolling.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useVirtualScrolling"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "useVirtualScrolling"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/hooks/useUserSettings.ts": {
+    "domain": "settings",
+    "exports": [
+      "settingsFormSchema",
+      "UserSettingsFormValues",
+      "UserSettingsData",
+      "useUserSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "useUserSettings",
+          "UserSettingsFormValues",
+          "settingsFormSchema as userSettingsFormSchema"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/FileManagementSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AppPreferencesSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "UserSettingsFormValues"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 6
+  },
+  "client/src/hooks/useStreamingChat.ts": {
+    "domain": "chat",
+    "exports": [
+      "useStreamingChat"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useChatActions.ts",
+        "domain": "chat",
+        "imports": [
+          "useStreamingChat"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useRetentionSettings.ts": {
+    "domain": "settings",
+    "exports": [
+      "RetentionSettingsFormValues",
+      "RetentionSettingsData",
+      "useRetentionSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "useRetentionSettings",
+          "RetentionSettingsFormValues"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useMessagePagination.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useMessagePagination"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "useMessagePagination"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/hooks/useLazySection.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "SectionName",
+      "useLazySection"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useStaggeredLoading.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "SectionName"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useBackgroundPreload.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "SectionName"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/hooks/useFileUpload.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileUpload"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileUpload"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useFileSharing.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileSharing"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileSharing"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useFileManagerState.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileManagerState"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileManagerState"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useFileApi.ts": {
+    "domain": "file-manager",
+    "exports": [
+      "useFileApi"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileApi"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "useFileApi"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/hooks/useChatMessages.ts": {
+    "domain": "chat",
+    "exports": [
+      "useChatMessages"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "useChatMessages"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useChatActions.ts",
+        "domain": "chat",
+        "imports": [
+          "useChatMessages"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/hooks/useChatActions.ts": {
+    "domain": "chat",
+    "exports": [
+      "useChatActions",
+      "UseChatActionsReturn"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ChatSection.tsx",
+        "domain": "chat",
+        "imports": [
+          "useChatActions"
+        ]
+      },
+      {
+        "file": "client/src/components/ChatInputArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "UseChatActionsReturn"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
   "client/src/components/ui/textarea.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -756,125 +756,6 @@
       }
     ],
     "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/QrCodeDialog.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "QrCodeDialog"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "QrCodeDialog"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileUploadDialog.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileUploadDialog"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileList.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "FileList"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileList as FileListComponent"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileActionsToolbar.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "FileActionsToolbar"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileActionsToolbar"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategoryTabs.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategoryTabs"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategoryTabs"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategorySelector.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategorySelector"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategorySelector"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategoryDropdown.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategoryDropdown"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategoryDropdown"
-        ]
-      }
-    ],
-    "crossDomain": false,
     "usageCount": 1
   },
   "client/src/components/settings/PerformanceSettings.tsx": {
@@ -996,6 +877,125 @@
     "crossDomain": false,
     "usageCount": 1
   },
+  "client/src/components/filemanager/QrCodeDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "QrCodeDialog"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "QrCodeDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileUploadDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileUploadDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileList.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileList"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileList as FileListComponent"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileActionsToolbar.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileActionsToolbar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileActionsToolbar"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryTabs.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryTabs"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryTabs"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategorySelector.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategorySelector"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategorySelector"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryDropdown.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryDropdown"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryDropdown"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
   "server/vite.ts": {
     "domain": "unknown/needs-classification",
     "exports": [
@@ -1033,17 +1033,19 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "server/services/simple-memory-detection.ts": {
-    "domain": "memory",
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
     "exports": [
-      "analyzeMessage"
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
     ],
     "usedBy": [
       {
-        "file": "server/routes-simple.ts",
+        "file": "server/index.ts",
         "domain": "unknown/needs-classification",
         "imports": [
-          "analyzeMessage"
+          "registerRoutes"
         ]
       }
     ],
@@ -1167,19 +1169,17 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "server/routes/index.ts": {
-    "domain": "infrastructure/routing",
+  "server/services/memory/simple-memory-detection.ts": {
+    "domain": "memory",
     "exports": [
-      "ROUTE_MODULES",
-      "EMERGENCY_FALLBACK",
-      "ROUTE_MODULES_ENABLED"
+      "analyzeMessage"
     ],
     "usedBy": [
       {
-        "file": "server/index.ts",
+        "file": "server/routes-simple.ts",
         "domain": "unknown/needs-classification",
         "imports": [
-          "registerRoutes"
+          "analyzeMessage"
         ]
       }
     ],

@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { useAppContext } from '@/shared';
+import { useAppContext } from '@shared';
 
 interface StreamingMessage {
   id: string;

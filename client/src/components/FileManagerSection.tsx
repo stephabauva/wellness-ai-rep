@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/shared';
+import { cn } from '@shared';
 
 // Import hooks
 import { useFileApi } from '@/hooks/useFileApi';
@@ -23,8 +23,8 @@ import { QrCodeDialog } from './filemanager/QrCodeDialog';
 import FileUploadDialog from './filemanager/FileUploadDialog';
 
 // Import utilities and types
-import { categorizeFiles, getFileIcon, formatFileSize, formatDate } from '@/shared';
-import { FileCategory, FileItem } from '@/shared';
+import { categorizeFiles, getFileIcon, formatFileSize, formatDate } from '@shared';
+import { FileCategory, FileItem } from '@shared';
 
 
 const FileManagerSection: React.FC = () => {

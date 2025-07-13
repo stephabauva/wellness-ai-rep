@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { compressFile, shouldCompressFile, CompressionResult } from '@/services/file-compression';
-import { UploadProgress, ProgressTracker } from '@/shared';
+import { UploadProgress, ProgressTracker } from '@shared';
 
 export interface OptimizedUploadOptions {
   enableCompression?: boolean;

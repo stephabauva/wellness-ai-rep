@@ -2,7 +2,7 @@ import React from "react";
 import { Settings as SettingsIcon, Link2Off } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/shared";
+import { cn } from "@shared";
 import { formatDistanceToNow } from "date-fns";
 
 interface DeviceCardProps {

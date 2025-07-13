@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileCategory, FileItem } from '@/shared';
-import { getIconFromName } from '@/shared';
-import { cn } from '@/shared';
+import { FileCategory, FileItem } from '@shared';
+import { getIconFromName } from '@shared';
+import { cn } from '@shared';
 
 interface CategoryTabsProps {
   categories: FileCategory[];

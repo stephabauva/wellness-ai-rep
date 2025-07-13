@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Download, FileText, Image as ImageIcon } from 'lucide-react'; // Renamed Image to ImageIcon
-import { cn } from '@/shared';
-import { FileItem, ViewMode } from '@/shared';
+import { cn } from '@shared';
+import { FileItem, ViewMode } from '@shared';
 import {
   formatFileSize,
   formatDate,
   getFileIcon as getFileIconUtil, // Renamed to avoid conflict
   getRetentionBadgeColor
-} from '@/shared';
+} from '@shared';
 
 interface FileListProps {
   files: FileItem[];

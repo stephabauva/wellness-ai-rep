@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ViewMode, FileItem } from '@/shared';
+import { ViewMode, FileItem } from '@shared';
 
 export function useFileManagerState(initialFiles: FileItem[] = []) {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());

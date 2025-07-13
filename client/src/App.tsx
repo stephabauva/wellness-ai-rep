@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AppProvider } from "@/shared";
+import { AppProvider } from "@shared";
 import "./services/platform-detection-global";
 
 const queryClient = new QueryClient();

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getSectionCacheTime } from '@/shared';
+import { getSectionCacheTime } from '@shared';
 import { SectionName } from './useLazySection';
 
 export const useBackgroundPreload = (sections: SectionName[]) => {

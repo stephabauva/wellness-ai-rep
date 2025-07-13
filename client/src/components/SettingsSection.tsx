@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Form } from "@/components/ui/form"; // Only Form component needed at top level
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAppContext } from "@/shared";
+import { useAppContext } from "@shared";
 import { 
   User, 
   Heart, 

@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Upload
 } from 'lucide-react';
-import { ViewMode, FileCategory } from '@/shared';
+import { ViewMode, FileCategory } from '@shared';
 import { CategorySelector } from './CategorySelector';
 
 interface FileActionsToolbarProps {

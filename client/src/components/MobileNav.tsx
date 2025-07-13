@@ -9,8 +9,8 @@ import {
   Zap,
   FolderOpen
 } from "lucide-react";
-import { useAppContext } from "@/shared";
-import { cn } from "@/shared";
+import { useAppContext } from "@shared";
+import { cn } from "@shared";
 
 const NavButton: React.FC<{
   active: boolean;

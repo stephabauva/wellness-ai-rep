@@ -73,6 +73,11 @@ class MemoryService {
   
   // Tier 2 C: Vector similarity cache
   private similarityCache: Map<string, { score: number, timestamp: Date }> = new Map();
+  
+  // Optimized caching patterns from optimized-memory-service
+  private deduplicationCache = new Map<string, string>();
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private cacheTimestamps = new Map<string, number>();
 
   constructor() {
     this.openai = new OpenAI({
@@ -329,6 +334,86 @@ class MemoryService {
     const hashA = vectorA.slice(0, 10).map(v => Math.round(v * 1000)).join(',');
     const hashB = vectorB.slice(0, 10).map(v => Math.round(v * 1000)).join(',');
     return `sim-${hashA}-${hashB}`;
+  }
+
+  // Fast semantic deduplication (from optimized-memory-service)
+  private generateSemanticHash(message: string): string {
+    const normalizedText = message.toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    const words = normalizedText.split(' ')
+      .filter(word => word.length > 3)
+      .sort()
+      .slice(0, 10);
+
+    const keyContent = words.join('|');
+    return require('crypto').createHash('md5').update(keyContent).digest('hex').slice(0, 16);
+  }
+
+  private async checkSemanticDuplicate(userId: number, semanticHash: string): Promise<boolean> {
+    try {
+      const existing = await db
+        .select({ id: memoryEntries.id })
+        .from(memoryEntries)
+        .where(and(
+          eq(memoryEntries.userId, userId),
+          sql`${memoryEntries.content} ILIKE '%' || ${semanticHash.slice(0, 8)} || '%'`,
+          eq(memoryEntries.isActive, true)
+        ))
+        .limit(1);
+
+      return existing.length > 0;
+    } catch (error) {
+      console.error('[MemoryService] Duplicate check failed:', error);
+      return false;
+    }
+  }
+
+  // Fast pattern-based memory detection (from optimized-memory-service)
+  private detectMemoryWorthyFast(message: string): {
+    shouldRemember: boolean;
+    category: MemoryCategory;
+    importance: number;
+    extractedInfo: string;
+    keywords: string[];
+  } {
+    const text = message.toLowerCase();
+    
+    const memoryPatterns = {
+      goals: ['want to', 'goal is', 'trying to', 'hope to', 'plan to'],
+      preferences: ['prefer', 'like', 'love', 'hate', 'dislike', 'enjoy'],
+      constraints: ['cannot', 'can\'t', 'allergic', 'avoid', 'restrict'],
+      health: ['weight', 'exercise', 'workout', 'diet', 'calories', 'steps']
+    };
+
+    let category: MemoryCategory = 'personal_context';
+    let importance = 0.3;
+    let shouldRemember = false;
+    
+    for (const [cat, patterns] of Object.entries(memoryPatterns)) {
+      if (patterns.some(pattern => text.includes(pattern))) {
+        shouldRemember = true;
+        category = cat as MemoryCategory;
+        importance = cat === 'goals' ? 0.9 : cat === 'constraints' ? 0.8 : 0.6;
+        break;
+      }
+    }
+
+    const words = message.split(/\s+/)
+      .filter(word => word.length > 3)
+      .map(word => word.toLowerCase().replace(/[^\w]/g, ''));
+    
+    const keywords = [...new Set(words)].slice(0, 5);
+
+    return {
+      shouldRemember,
+      category,
+      importance,
+      extractedInfo: message.trim(),
+      keywords
+    };
   }
 
   // Detect explicit memory triggers like "remember this" or "don't forget"

@@ -2,10 +2,8 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import { aiService } from "../services/ai-service";
-import { memoryEnhancedAIService } from "../services/memory-enhanced-ai-service";
 import { memoryService } from "../services/memory-service";
 import { enhancedMemoryService } from "../services/enhanced-memory-service";
-import { advancedMemoryAIService } from '../services/advanced-memory-ai-service';
 import { memoryRelationshipEngine } from '../services/memory-relationship-engine';
 import { performanceMemoryCore } from '../services/performance-memory-core';
 import { generatePDFReport } from "../services/pdf-service";
@@ -38,8 +36,8 @@ import path from 'path'; import fs from 'fs';
 import { spawn } from 'child_process';
 
 export {
-  storage, aiService, memoryEnhancedAIService, memoryService, enhancedMemoryService,
-  advancedMemoryAIService, memoryRelationshipEngine, performanceMemoryCore, generatePDFReport,
+  storage, aiService, memoryService, enhancedMemoryService,
+  memoryRelationshipEngine, performanceMemoryCore, generatePDFReport,
   transcriptionService, cacheService, categoryService, attachmentRetentionService, goFileService,
   HealthDataParser, HealthDataDeduplicationService, enhancedBackgroundProcessor, memoryFeatureFlags,
   memoryPerformanceMonitor, chatGPTMemoryEnhancement, healthConsentService, db, eq, desc, and, or,

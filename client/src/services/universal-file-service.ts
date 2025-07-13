@@ -7,7 +7,17 @@
  */
 
 import { FileCompressionService, type CompressionOptions, type CompressionResult as TSCompressionResult } from './file-compression';
-import { FileAccelerationService, type CompressionResult } from './file-acceleration-service';
+
+export interface CompressionResult {
+  compressedFile: File;
+  compressionRatio: number;
+  originalSize: number;
+  compressedSize: number;
+  processingTime?: number;
+  algorithm?: string;
+  compressionLevel?: number;
+  throughput?: number; // MB/s
+}
 
 export interface PlatformCapabilities {
   nativeCompression: boolean;
@@ -17,11 +27,29 @@ export interface PlatformCapabilities {
   goAcceleration: boolean;
 }
 
+export interface AccelerationCapabilities {
+  isAvailable: boolean;
+  lastHealthCheck: number;
+  version?: string;
+  supportedFormats: string[];
+  minimumFileSize: number;
+}
+
 export type Platform = 'web' | 'capacitor' | 'react-native';
 
 export class UniversalFileService {
   private static initialized = false;
   private static initializationPromise: Promise<void> | null = null;
+  
+  // Acceleration capabilities (merged from file-acceleration-service)
+  private static readonly GO_SERVICE_URL = '/api/accelerate';
+  private static accelerationCapabilities: AccelerationCapabilities = {
+    isAvailable: false,
+    lastHealthCheck: 0,
+    supportedFormats: ['.xml', '.json', '.csv'],
+    minimumFileSize: 5 * 1024 * 1024, // 5MB
+  };
+  private static readonly HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
 
   /**
    * Initialize the universal file service
@@ -42,10 +70,9 @@ export class UniversalFileService {
 
   private static async performInitialization(): Promise<void> {
     try {
-      // Try to initialize Go acceleration service (non-blocking)
-      // This is optional - the service works fine without it
+      // Check Go acceleration capabilities directly
       await Promise.race([
-        FileAccelerationService.initialize(),
+        this.checkAccelerationHealth(),
         new Promise(resolve => setTimeout(resolve, 1000)) // 1 second timeout
       ]);
       
@@ -86,11 +113,41 @@ export class UniversalFileService {
   }
 
   /**
+   * Check Go acceleration service health (merged from file-acceleration-service)
+   */
+  private static async checkAccelerationHealth(): Promise<void> {
+    try {
+      const response = await fetch(`${this.GO_SERVICE_URL}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(3000)
+      });
+
+      if (response.ok) {
+        const healthData = await response.json();
+        this.accelerationCapabilities.isAvailable = true;
+        this.accelerationCapabilities.version = healthData.version;
+        this.accelerationCapabilities.lastHealthCheck = Date.now();
+      } else {
+        this.accelerationCapabilities.isAvailable = false;
+      }
+    } catch (error) {
+      this.accelerationCapabilities.isAvailable = false;
+    }
+  }
+
+  /**
+   * Get acceleration capabilities
+   */
+  static getAccelerationCapabilities(): AccelerationCapabilities {
+    return { ...this.accelerationCapabilities };
+  }
+
+  /**
    * Get current platform capabilities
    */
   static getCapabilities(): PlatformCapabilities {
     const platform = this.detectPlatform();
-    const goCapabilities = FileAccelerationService.getCapabilities();
     
     switch (platform) {
       case 'capacitor':
@@ -99,7 +156,7 @@ export class UniversalFileService {
           backgroundProcessing: true,
           healthDataAccess: true,
           fileSystemAccess: true,
-          goAcceleration: goCapabilities.isAvailable,
+          goAcceleration: this.accelerationCapabilities.isAvailable,
         };
       case 'react-native':
         return {
@@ -107,7 +164,7 @@ export class UniversalFileService {
           backgroundProcessing: true,
           healthDataAccess: true,
           fileSystemAccess: false,
-          goAcceleration: goCapabilities.isAvailable,
+          goAcceleration: this.accelerationCapabilities.isAvailable,
         };
       default:
         return {
@@ -115,9 +172,45 @@ export class UniversalFileService {
           backgroundProcessing: false,
           healthDataAccess: false,
           fileSystemAccess: false,
-          goAcceleration: goCapabilities.isAvailable,
+          goAcceleration: this.accelerationCapabilities.isAvailable,
         };
     }
+  }
+
+  /**
+   * Start Go acceleration service (merged from file-acceleration-service)
+   */
+  static async startGoAccelerationService(): Promise<void> {
+    try {
+      const response = await fetch(`${this.GO_SERVICE_URL}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to start service: ${response.status}`);
+      }
+
+      // Update capabilities after successful start
+      await this.checkAccelerationHealth();
+    } catch (error) {
+      console.warn('Failed to start Go acceleration service:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if file should use acceleration
+   */
+  static shouldUseAcceleration(file: File): boolean {
+    if (!this.accelerationCapabilities.isAvailable) return false;
+    if (file.size < this.accelerationCapabilities.minimumFileSize) return false;
+    
+    const extension = file.name.toLowerCase().split('.').pop() || '';
+    return this.accelerationCapabilities.supportedFormats.some(format => 
+      format.toLowerCase().includes(extension)
+    );
   }
 
   /**
@@ -135,7 +228,7 @@ export class UniversalFileService {
       try {
         console.log(`Large data file detected (${(file.size / (1024 * 1024)).toFixed(1)}MB): ${file.name}`);
         console.log(`Attempting to start Go acceleration service for file management...`);
-        await UniversalFileService.startGoAccelerationService();
+        await this.startGoAccelerationService();
         console.log(`Go acceleration service started successfully for file management`);
       } catch (startError) {
         console.warn('Could not start Go acceleration service:', startError);

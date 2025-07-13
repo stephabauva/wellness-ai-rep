@@ -85,6 +85,13 @@ class DependencyTracker {
       }
     }
     
+    // Specific component classifications (Priority 2 mappings)
+    if (normalizedPath.includes('client/src/pages/home.tsx')) return 'app/pages';
+    if (normalizedPath.includes('client/src/pages/not-found.tsx')) return 'app/pages';
+    if (normalizedPath.includes('client/src/components/AudioRecorder.tsx')) return 'chat/audio';
+    if (normalizedPath.includes('client/src/components/AttachmentPreview.tsx')) return 'chat/attachments';
+    if (normalizedPath.includes('client/src/components/StreamingText.tsx')) return 'shared/ui-components';
+    
     // Check filename patterns
     const filename = path.basename(normalizedPath);
     if (filename.match(/Chat|Message|Conversation/i)) return 'chat';

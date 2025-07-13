@@ -16,90 +16,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "client/src/types/fileManager.ts": {
-    "domain": "shared/types",
-    "exports": [
-      "FileRetentionInfo",
-      "FileItem",
-      "FileCategoryGroup",
-      "FileCategory",
-      "ViewMode"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/utils/file-utils.ts",
-        "domain": "shared/utilities",
-        "imports": [
-          "FileItem",
-          "FileCategoryGroup"
-        ]
-      },
-      {
-        "file": "client/src/hooks/useFileSharing.ts",
-        "domain": "file-manager",
-        "imports": [
-          "FileItem"
-        ]
-      },
-      {
-        "file": "client/src/hooks/useFileManagerState.ts",
-        "domain": "file-manager",
-        "imports": [
-          "ViewMode",
-          "FileItem"
-        ]
-      },
-      {
-        "file": "client/src/hooks/useFileApi.ts",
-        "domain": "file-manager",
-        "imports": [
-          "FileItem",
-          "FileCategory"
-        ]
-      },
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileCategory",
-          "FileItem"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileItem",
-          "ViewMode"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "ViewMode",
-          "FileCategory"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategoryTabs.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileCategory",
-          "FileItem"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategorySelector.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileCategory"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 9
-  },
   "client/src/utils/upload-progress.ts": {
     "domain": "shared/utilities",
     "exports": [
@@ -211,44 +127,96 @@
     "crossDomain": true,
     "usageCount": 7
   },
-  "client/src/pages/not-found.tsx": {
-    "domain": "unknown/needs-classification",
+  "client/src/types/fileManager.ts": {
+    "domain": "shared/types",
     "exports": [
-      "default"
+      "FileRetentionInfo",
+      "FileItem",
+      "FileCategoryGroup",
+      "FileCategory",
+      "ViewMode"
     ],
     "usedBy": [
       {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
+        "file": "client/src/utils/file-utils.ts",
+        "domain": "shared/utilities",
         "imports": [
-          "NotFound"
+          "FileItem",
+          "FileCategoryGroup"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileSharing.ts",
+        "domain": "file-manager",
+        "imports": [
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileManagerState.ts",
+        "domain": "file-manager",
+        "imports": [
+          "ViewMode",
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/hooks/useFileApi.ts",
+        "domain": "file-manager",
+        "imports": [
+          "FileItem",
+          "FileCategory"
+        ]
+      },
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileCategory",
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileItem",
+          "ViewMode"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "ViewMode",
+          "FileCategory"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryTabs.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileCategory",
+          "FileItem"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategorySelector.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileCategory"
         ]
       }
     ],
     "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/home.tsx": {
-    "domain": "unknown/needs-classification",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "Home"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
+    "usageCount": 9
   },
   "client/src/services/universal-file-service.ts": {
     "domain": "file-manager",
     "exports": [
+      "CompressionResult",
       "PlatformCapabilities",
+      "AccelerationCapabilities",
       "Platform",
       "UniversalFileService"
     ],
@@ -277,22 +245,31 @@
     "exports": [
       "PlatformCapabilities",
       "Platform",
-      "PlatformDetectionService"
+      "isCapacitor",
+      "getPlatform",
+      "hasHealthAccess",
+      "getCapabilities",
+      "getHealthProviders",
+      "isHealthProviderAvailable",
+      "getEnvironmentInfo",
+      "logPlatformInfo"
     ],
     "usedBy": [
       {
         "file": "client/src/services/platform-detection-global.ts",
         "domain": "shared/services",
         "imports": [
-          "PlatformDetectionService"
+          "PlatformDetection"
         ]
       },
       {
         "file": "client/src/services/native-health-service.ts",
         "domain": "health",
         "imports": [
-          "PlatformDetectionService",
-          "Platform"
+          "getPlatform",
+          "isCapacitor",
+          "getCapabilities",
+          "type Platform"
         ]
       }
     ],
@@ -328,14 +305,18 @@
     "exports": [
       "CompressionResult",
       "CompressionOptions",
-      "FileCompressionService"
+      "compressFile",
+      "shouldCompressFile",
+      "estimateCompressionRatio",
+      "decompressFile"
     ],
     "usedBy": [
       {
         "file": "client/src/services/universal-file-service.ts",
         "domain": "file-manager",
         "imports": [
-          "FileCompressionService",
+          "compressFile",
+          "shouldCompressFile",
           "type CompressionOptions",
           "type CompressionResult as TSCompressionResult"
         ]
@@ -344,33 +325,14 @@
         "file": "client/src/hooks/useOptimizedUpload.ts",
         "domain": "shared/hooks",
         "imports": [
-          "FileCompressionService",
+          "compressFile",
+          "shouldCompressFile",
           "CompressionResult"
         ]
       }
     ],
     "crossDomain": true,
     "usageCount": 2
-  },
-  "client/src/services/file-acceleration-service.ts": {
-    "domain": "file-manager",
-    "exports": [
-      "CompressionResult",
-      "AccelerationCapabilities",
-      "FileAccelerationService"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/services/universal-file-service.ts",
-        "domain": "file-manager",
-        "imports": [
-          "FileAccelerationService",
-          "type CompressionResult"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
   },
   "client/src/services/audio-service.ts": {
     "domain": "shared/services",
@@ -387,6 +349,40 @@
         "imports": [
           "audioService",
           "TranscriptionResult"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/not-found.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
         ]
       }
     ],
@@ -1483,125 +1479,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/components/filemanager/QrCodeDialog.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "QrCodeDialog"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "QrCodeDialog"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileUploadDialog.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileUploadDialog"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileList.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "FileList"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileList as FileListComponent"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/FileActionsToolbar.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "FileActionsToolbar"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "FileActionsToolbar"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategoryTabs.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategoryTabs"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/FileManagerSection.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategoryTabs"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategorySelector.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategorySelector"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategorySelector"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/filemanager/CategoryDropdown.tsx": {
-    "domain": "file-manager",
-    "exports": [
-      "CategoryDropdown"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "CategoryDropdown"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
   "client/src/components/settings/PerformanceSettings.tsx": {
     "domain": "settings",
     "exports": [
@@ -1715,6 +1592,125 @@
         "domain": "settings",
         "imports": [
           "AccountSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/QrCodeDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "QrCodeDialog"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "QrCodeDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileUploadDialog.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileUploadDialog"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileList.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileList"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileList as FileListComponent"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/FileActionsToolbar.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "FileActionsToolbar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "FileActionsToolbar"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryTabs.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryTabs"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/FileManagerSection.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryTabs"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategorySelector.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategorySelector"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategorySelector"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/filemanager/CategoryDropdown.tsx": {
+    "domain": "file-manager",
+    "exports": [
+      "CategoryDropdown"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "CategoryDropdown"
         ]
       }
     ],
@@ -1985,29 +1981,6 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue"
-        ]
-      },
-      {
-        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Select",
-          "SelectContent",
-          "SelectItem",
-          "SelectTrigger",
-          "SelectValue",
-          ""
-        ]
-      },
-      {
         "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
         "domain": "settings",
         "imports": [
@@ -2049,6 +2022,29 @@
           "SelectItem",
           "SelectTrigger",
           "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/CategoryDropdown.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Select",
+          "SelectContent",
+          "SelectItem",
+          "SelectTrigger",
+          "SelectValue",
+          ""
         ]
       }
     ],
@@ -2099,13 +2095,6 @@
     ],
     "usedBy": [
       {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Label"
-        ]
-      },
-      {
         "file": "client/src/components/settings/PerformanceSettings.tsx",
         "domain": "settings",
         "imports": [
@@ -2115,6 +2104,13 @@
       {
         "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
         "domain": "settings",
+        "imports": [
+          "Label"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
         "imports": [
           "Label"
         ]
@@ -2151,15 +2147,15 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
-        "domain": "file-manager",
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
         "imports": [
           "Input"
         ]
       },
       {
-        "file": "client/src/components/settings/AccountSettings.tsx",
-        "domain": "settings",
+        "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+        "domain": "file-manager",
         "imports": [
           "Input"
         ]
@@ -2432,15 +2428,15 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
+        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+        "domain": "settings",
         "imports": [
           "Checkbox"
         ]
       },
       {
-        "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
-        "domain": "settings",
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
         "imports": [
           "Checkbox"
         ]
@@ -2554,15 +2550,6 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Card",
-          "CardContent",
-          "CardHeader"
-        ]
-      },
-      {
         "file": "client/src/components/settings/PerformanceSettings.tsx",
         "domain": "settings",
         "imports": [
@@ -2632,6 +2619,15 @@
           "CardContent",
           "CardHeader",
           "CardTitle"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
+        "imports": [
+          "Card",
+          "CardContent",
+          "CardHeader"
         ]
       },
       {
@@ -2739,6 +2735,20 @@
         ]
       },
       {
+        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
+        "file": "client/src/components/settings/AccountSettings.tsx",
+        "domain": "settings",
+        "imports": [
+          "Button"
+        ]
+      },
+      {
         "file": "client/src/components/filemanager/QrCodeDialog.tsx",
         "domain": "file-manager",
         "imports": [
@@ -2769,20 +2779,6 @@
       {
         "file": "client/src/components/filemanager/CategorySelector.tsx",
         "domain": "file-manager",
-        "imports": [
-          "Button"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
-        "domain": "settings",
-        "imports": [
-          "Button"
-        ]
-      },
-      {
-        "file": "client/src/components/settings/AccountSettings.tsx",
-        "domain": "settings",
         "imports": [
           "Button"
         ]
@@ -2842,13 +2838,6 @@
         ]
       },
       {
-        "file": "client/src/components/filemanager/FileList.tsx",
-        "domain": "file-manager",
-        "imports": [
-          "Badge"
-        ]
-      },
-      {
         "file": "client/src/components/settings/PerformanceSettings.tsx",
         "domain": "settings",
         "imports": [
@@ -2858,6 +2847,13 @@
       {
         "file": "client/src/components/settings/HealthDataConsentSettings.tsx",
         "domain": "settings",
+        "imports": [
+          "Badge"
+        ]
+      },
+      {
+        "file": "client/src/components/filemanager/FileList.tsx",
+        "domain": "file-manager",
         "imports": [
           "Badge"
         ]
@@ -3018,13 +3014,6 @@
         ]
       },
       {
-        "file": "server/services/optimized-memory-service.ts",
-        "domain": "memory",
-        "imports": [
-          "db"
-        ]
-      },
-      {
         "file": "server/services/memory-service.ts",
         "domain": "memory",
         "imports": [
@@ -3033,13 +3022,6 @@
       },
       {
         "file": "server/services/memory-relationship-engine.ts",
-        "domain": "memory",
-        "imports": [
-          "db"
-        ]
-      },
-      {
-        "file": "server/services/enhanced-memory-service.ts",
         "domain": "memory",
         "imports": [
           "db"
@@ -3076,7 +3058,7 @@
       }
     ],
     "crossDomain": true,
-    "usageCount": 15
+    "usageCount": 13
   },
   "server/routes/index.ts": {
     "domain": "infrastructure/routing",
@@ -3117,14 +3099,14 @@
   "server/services/simple-memory-detection.ts": {
     "domain": "memory",
     "exports": [
-      "simpleMemoryDetection"
+      "analyzeMessage"
     ],
     "usedBy": [
       {
         "file": "server/routes-simple.ts",
         "domain": "unknown/needs-classification",
         "imports": [
-          "simpleMemoryDetection"
+          "analyzeMessage"
         ]
       }
     ],
@@ -3170,6 +3152,13 @@
         ]
       },
       {
+        "file": "server/services/enhanced-memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "memoryService"
+        ]
+      },
+      {
         "file": "server/services/enhanced-background-processor.ts",
         "domain": "shared/services",
         "imports": [
@@ -3196,13 +3185,6 @@
         "imports": [
           "memoryService"
         ]
-      },
-      {
-        "file": "server/services/advanced-memory-ai-service.ts",
-        "domain": "memory",
-        "imports": [
-          "memoryService"
-        ]
       }
     ],
     "crossDomain": true,
@@ -3221,17 +3203,10 @@
         "imports": [
           "memoryRelationshipEngine"
         ]
-      },
-      {
-        "file": "server/services/advanced-memory-ai-service.ts",
-        "domain": "memory",
-        "imports": [
-          "memoryRelationshipEngine"
-        ]
       }
     ],
     "crossDomain": true,
-    "usageCount": 2
+    "usageCount": 1
   },
   "server/services/memory-performance-monitor.ts": {
     "domain": "memory",
@@ -3269,24 +3244,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "server/services/memory-enhanced-ai-service.ts": {
-    "domain": "memory",
-    "exports": [
-      "MemoryEnhancedAIService",
-      "memoryEnhancedAIService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "memoryEnhancedAIService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "server/services/logger-service.ts": {
     "domain": "infrastructure/logging",
     "exports": [
@@ -3308,6 +3265,13 @@
         ]
       },
       {
+        "file": "server/services/enhanced-memory-service.ts",
+        "domain": "memory",
+        "imports": [
+          "logger"
+        ]
+      },
+      {
         "file": "server/services/database-migration-service.ts",
         "domain": "shared/services",
         "imports": [
@@ -3316,7 +3280,7 @@
       }
     ],
     "crossDomain": true,
-    "usageCount": 3
+    "usageCount": 4
   },
   "server/services/health-data-parser.ts": {
     "domain": "health",
@@ -3501,29 +3465,15 @@
         ]
       },
       {
-        "file": "server/services/memory-enhanced-ai-service.ts",
-        "domain": "memory",
-        "imports": [
-          "chatGPTMemoryEnhancement"
-        ]
-      },
-      {
         "file": "server/services/enhanced-background-processor.ts",
         "domain": "shared/services",
-        "imports": [
-          "chatGPTMemoryEnhancement"
-        ]
-      },
-      {
-        "file": "server/services/advanced-memory-ai-service.ts",
-        "domain": "memory",
         "imports": [
           "chatGPTMemoryEnhancement"
         ]
       }
     ],
     "crossDomain": true,
-    "usageCount": 4
+    "usageCount": 2
   },
   "server/services/chat-context-service.ts": {
     "domain": "chat",
@@ -3583,21 +3533,7 @@
         ]
       },
       {
-        "file": "server/services/optimized-memory-service.ts",
-        "domain": "memory",
-        "imports": [
-          "cacheService"
-        ]
-      },
-      {
         "file": "server/services/memory-service.ts",
-        "domain": "memory",
-        "imports": [
-          "cacheService"
-        ]
-      },
-      {
-        "file": "server/services/enhanced-memory-service.ts",
         "domain": "memory",
         "imports": [
           "cacheService"
@@ -3612,7 +3548,7 @@
       }
     ],
     "crossDomain": true,
-    "usageCount": 6
+    "usageCount": 4
   },
   "server/services/attachment-retention-service.ts": {
     "domain": "shared/services",
@@ -3653,42 +3589,10 @@
         "imports": [
           "aiService"
         ]
-      },
-      {
-        "file": "server/services/memory-enhanced-ai-service.ts",
-        "domain": "memory",
-        "imports": [
-          "aiService"
-        ]
-      },
-      {
-        "file": "server/services/advanced-memory-ai-service.ts",
-        "domain": "memory",
-        "imports": [
-          "aiService"
-        ]
       }
     ],
     "crossDomain": true,
-    "usageCount": 4
-  },
-  "server/services/advanced-memory-ai-service.ts": {
-    "domain": "memory",
-    "exports": [
-      "AdvancedMemoryAIService",
-      "advancedMemoryAIService"
-    ],
-    "usedBy": [
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "advancedMemoryAIService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
+    "usageCount": 2
   },
   "server/services/providers/openai-provider.ts": {
     "domain": "shared/services",
@@ -3758,13 +3662,6 @@
     ],
     "usedBy": [
       {
-        "file": "server/services/memory-enhanced-ai-service.ts",
-        "domain": "memory",
-        "imports": [
-          "AttachmentData"
-        ]
-      },
-      {
         "file": "server/services/chat-context-service.ts",
         "domain": "chat",
         "imports": [
@@ -3786,13 +3683,6 @@
           "ModelName",
           "ProviderChatMessage",
           ""
-        ]
-      },
-      {
-        "file": "server/services/advanced-memory-ai-service.ts",
-        "domain": "memory",
-        "imports": [
-          "AttachmentData"
         ]
       },
       {
@@ -3833,6 +3723,6 @@
       }
     ],
     "crossDomain": true,
-    "usageCount": 6
+    "usageCount": 4
   }
 }

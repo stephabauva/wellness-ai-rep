@@ -3,7 +3,6 @@
 import { Express } from "./shared-dependencies.js";
 import { 
   memoryService,
-  memoryEnhancedAIService,
   enhancedMemoryService,
   performanceMemoryCore,
   chatGPTMemoryEnhancement

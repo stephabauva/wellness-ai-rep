@@ -4,7 +4,7 @@ import { db } from "./db";
 import { conversations, conversationMessages } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { storage } from "./storage";
-import { simpleMemoryDetection } from './services/simple-memory-detection';
+import { analyzeMessage } from './services/simple-memory-detection';
 
 // Simple message schema for testing
 const simpleMessageSchema = z.object({
@@ -72,7 +72,7 @@ export function registerSimpleRoutes(app: Express) {
 
       // Analyze user message for memory detection using Google Gemini Flash Lite
       try {
-        await simpleMemoryDetection.analyzeMessage(content, userId);
+        await analyzeMessage(content, userId);
       } catch (memoryError) {
         console.warn('Memory analysis failed:', memoryError);
       }

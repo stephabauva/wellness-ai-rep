@@ -16,6 +16,40 @@
     "crossDomain": false,
     "usageCount": 1
   },
+  "client/src/pages/not-found.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/services/universal-file-service.ts": {
     "domain": "file-manager",
     "exports": [
@@ -60,40 +94,6 @@
         "imports": [
           "audioService",
           "TranscriptionResult"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/not-found.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "NotFound"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/home.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "Home"
         ]
       }
     ],
@@ -1005,7 +1005,7 @@
     "usedBy": [
       {
         "file": "server/index.ts",
-        "domain": "unknown/needs-classification",
+        "domain": "infrastructure/server",
         "imports": [
           "setupVite",
           "serveStatic",
@@ -1013,39 +1013,20 @@
         ]
       }
     ],
-    "crossDomain": false,
+    "crossDomain": true,
     "usageCount": 1
   },
   "server/routes-simple.ts": {
-    "domain": "unknown/needs-classification",
+    "domain": "infrastructure/routing",
     "exports": [
       "registerSimpleRoutes"
     ],
     "usedBy": [
       {
         "file": "server/index.ts",
-        "domain": "unknown/needs-classification",
+        "domain": "infrastructure/server",
         "imports": [
           "registerSimpleRoutes"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "server/routes/index.ts": {
-    "domain": "infrastructure/routing",
-    "exports": [
-      "ROUTE_MODULES",
-      "EMERGENCY_FALLBACK",
-      "ROUTE_MODULES_ENABLED"
-    ],
-    "usedBy": [
-      {
-        "file": "server/index.ts",
-        "domain": "unknown/needs-classification",
-        "imports": [
-          "registerRoutes"
         ]
       }
     ],
@@ -1053,7 +1034,7 @@
     "usageCount": 1
   },
   "server/services/service-registry.ts": {
-    "domain": "shared/services",
+    "domain": "server/routes/shared-dependencies.ts",
     "exports": [
       "getMemoryServices",
       "getHealthServices",
@@ -1160,7 +1141,7 @@
     "usedBy": [
       {
         "file": "server/index.ts",
-        "domain": "unknown/needs-classification",
+        "domain": "infrastructure/server",
         "imports": [
           "databaseMigrationService"
         ]
@@ -1169,15 +1150,34 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
+    "exports": [
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "infrastructure/server",
+        "imports": [
+          "registerRoutes"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "server/services/memory/simple-memory-detection.ts": {
-    "domain": "memory",
+    "domain": "memory/domain",
     "exports": [
       "analyzeMessage"
     ],
     "usedBy": [
       {
         "file": "server/routes-simple.ts",
-        "domain": "unknown/needs-classification",
+        "domain": "infrastructure/routing",
         "imports": [
           "analyzeMessage"
         ]

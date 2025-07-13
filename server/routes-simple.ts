@@ -1,3 +1,4 @@
+// @used-by infrastructure/routing
 import type { Express } from "express";
 import { z } from "zod";
 import { db } from "@shared/database/db";

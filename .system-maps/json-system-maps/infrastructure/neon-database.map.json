@@ -88,7 +88,8 @@
       "query:unknown/needs-classification",
       "query:memory",
       "query:shared/services",
-      "query:infrastructure/routing"
+      "query:infrastructure/routing",
+      "query:infrastructure/server"
     ]
   },
   "errorHandling": {
@@ -144,11 +145,11 @@
     "environmentSeparation": "Strict Replit vs local detection",
     "migrationSupport": "Drizzle migrations for schema updates"
   },
-  "lastUpdated": "2025-07-11T21:54:27.658Z",
+  "lastUpdated": "2025-07-13T21:06:19.040Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-11T21:54:27.658Z",
-    "crossDomainFiles": 3,
+    "lastAnalyzed": "2025-07-13T21:06:19.041Z",
+    "crossDomainFiles": 2,
     "internalFiles": 0,
-    "totalDependencies": 3
+    "totalDependencies": 2
   }
 }

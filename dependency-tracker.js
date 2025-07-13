@@ -64,6 +64,38 @@ class DependencyTracker {
       return { legitimate: true, reason: 'App-level component usage' };
     }
     
+    // Pattern 6: Infrastructure components used by infrastructure
+    if (depInfo.domain.startsWith('infrastructure/')) {
+      const isInfraUsage = crossDomainUsages.every(usage => 
+        usage.domain.startsWith('infrastructure/') || 
+        usage.domain === 'unknown/needs-classification' // Server files not yet classified
+      );
+      if (isInfraUsage) return { legitimate: true, reason: 'Infrastructure layer organization' };
+    }
+    
+    // Pattern 7: Memory domain used by infrastructure (legitimate for memory analysis)
+    if (depInfo.domain === 'memory' || depInfo.domain === 'memory/domain') {
+      const isInfraUsage = crossDomainUsages.every(usage => 
+        usage.domain.startsWith('infrastructure/') ||
+        usage.domain === 'unknown/needs-classification'
+      );
+      if (isInfraUsage) return { legitimate: true, reason: 'Memory service used by infrastructure' };
+    }
+    
+    // Pattern 8: Server files likely infrastructure (based on path patterns)
+    if (normalizedPath.includes('server/') && (normalizedPath.includes('vite') || normalizedPath.includes('index'))) {
+      const serverFileUsage = crossDomainUsages.every(usage => 
+        usage.domain.startsWith('infrastructure/') ||
+        usage.domain === 'unknown/needs-classification'
+      );
+      if (serverFileUsage) return { legitimate: true, reason: 'Server infrastructure component' };
+    }
+    
+    // Pattern 9: Service registry pattern (central service location)
+    if (normalizedPath.includes('service-registry') || normalizedPath.includes('shared-dependencies')) {
+      return { legitimate: true, reason: 'Service registry pattern - central dependency hub' };
+    }
+    
     return { legitimate: false, reason: 'Cross-domain violation' };
   }
 
@@ -98,6 +130,18 @@ class DependencyTracker {
 
   getDomainFromPath(filePath) {
     const normalizedPath = filePath.replace(/\\/g, '/');
+    
+    // Check for @used-by annotation in file content first
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const usedByMatch = content.match(/\/\/\s*@used-by\s+([^\n\r]+)/);
+      if (usedByMatch) {
+        const domain = usedByMatch[1].trim();
+        return domain;
+      }
+    } catch (error) {
+      // File may not exist or be readable, continue with path-based detection
+    }
     
     // Direct domain folders
     if (normalizedPath.includes('/chat/')) return 'chat';

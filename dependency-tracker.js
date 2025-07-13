@@ -91,6 +91,10 @@ class DependencyTracker {
     if (normalizedPath.includes('client/src/components/AudioRecorder.tsx')) return 'chat/audio';
     if (normalizedPath.includes('client/src/components/AttachmentPreview.tsx')) return 'chat/attachments';
     if (normalizedPath.includes('client/src/components/StreamingText.tsx')) return 'shared/ui-components';
+    if (normalizedPath.includes('client/src/components/Sidebar.tsx')) return 'app/navigation';
+    if (normalizedPath.includes('client/src/components/SectionSkeleton.tsx')) return 'shared/ui-components';
+    if (normalizedPath.includes('client/src/components/MobileNav.tsx')) return 'app/navigation';
+    if (normalizedPath.includes('client/src/components/ConnectedDevicesSection.tsx')) return 'health/devices';
     
     // Check filename patterns
     const filename = path.basename(normalizedPath);

@@ -45,30 +45,6 @@
     "crossDomain": false,
     "usageCount": 2
   },
-  "client/src/services/native-health-service.ts": {
-    "domain": "health",
-    "exports": [
-      "HealthDataPoint",
-      "HealthDataQuery",
-      "HealthSyncResult",
-      "HealthPermissions",
-      "HealthKitProvider",
-      "GoogleFitProvider",
-      "NativeHealthService",
-      "nativeHealthService"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/services/platform-detection-global.ts",
-        "domain": "shared/services",
-        "imports": [
-          "nativeHealthService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/services/audio-service.ts": {
     "domain": "shared/services",
     "exports": [
@@ -691,6 +667,97 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "client/src/components/ui/textarea.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "TextareaProps",
+      "Textarea"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Textarea"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/scroll-area.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ScrollArea",
+      "ScrollBar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "ScrollArea"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/device-card.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "DeviceCard"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "unknown/needs-classification",
+        "imports": [
+          "DeviceCard"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/collapsible.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Collapsible",
+      "CollapsibleTrigger",
+      "CollapsibleContent"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "Collapsible",
+          "CollapsibleContent",
+          "CollapsibleTrigger"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/chat-message.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ChatMessage"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "ChatMessage"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/components/settings/PerformanceSettings.tsx": {
     "domain": "settings",
     "exports": [
@@ -927,97 +994,6 @@
       }
     ],
     "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/textarea.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "TextareaProps",
-      "Textarea"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "Textarea"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/scroll-area.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ScrollArea",
-      "ScrollBar"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConversationHistory.tsx",
-        "domain": "chat",
-        "imports": [
-          "ScrollArea"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/device-card.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "DeviceCard"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConnectedDevicesSection.tsx",
-        "domain": "unknown/needs-classification",
-        "imports": [
-          "DeviceCard"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/collapsible.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Collapsible",
-      "CollapsibleTrigger",
-      "CollapsibleContent"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "Collapsible",
-          "CollapsibleContent",
-          "CollapsibleTrigger"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/chat-message.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ChatMessage"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MessageDisplayArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "ChatMessage"
-        ]
-      }
-    ],
-    "crossDomain": true,
     "usageCount": 1
   },
   "server/vite.ts": {
@@ -1288,31 +1264,6 @@
     ],
     "crossDomain": true,
     "usageCount": 1
-  },
-  "server/services/chatgpt-memory-enhancement.ts": {
-    "domain": "chat",
-    "exports": [
-      "ChatGPTMemoryEnhancement",
-      "chatGPTMemoryEnhancement"
-    ],
-    "usedBy": [
-      {
-        "file": "server/services/enhanced-background-processor.ts",
-        "domain": "shared/services",
-        "imports": [
-          "chatGPTMemoryEnhancement"
-        ]
-      },
-      {
-        "file": "server/routes/shared-dependencies.ts",
-        "domain": "infrastructure/routing",
-        "imports": [
-          "chatGPTMemoryEnhancement"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 2
   },
   "server/services/category-service.ts": {
     "domain": "shared/services",

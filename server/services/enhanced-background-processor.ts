@@ -1,4 +1,4 @@
-import { chatGPTMemoryEnhancement } from './chatgpt-memory-enhancement';
+import { chatGPTMemoryEnhancement } from '@shared/services/chatgpt-memory-enhancement';
 import { memoryService } from '@shared/services/memory-service';
 
 /**

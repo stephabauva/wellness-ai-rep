@@ -17,7 +17,7 @@ import { HealthDataDeduplicationService } from "../services/health-data-deduplic
 import { enhancedBackgroundProcessor } from "../services/enhanced-background-processor";
 import { memoryFeatureFlags } from "../services/memory-feature-flags";
 import { memoryPerformanceMonitor } from "../services/memory-performance-monitor";
-import { chatGPTMemoryEnhancement } from "../services/chatgpt-memory-enhancement";
+import { chatGPTMemoryEnhancement } from "@shared/services/chatgpt-memory-enhancement";
 import { healthConsentService } from "../services/health-consent-service";
 import { db } from "@shared/database/db";
 import { eq, desc, and, or } from "drizzle-orm";

@@ -4,7 +4,7 @@
  */
 
 import * as PlatformDetection from '@shared/services/platform-detection';
-import { nativeHealthService } from './native-health-service';
+import { nativeHealthService } from '@shared/services/native-health-service';
 
 // Make services globally available for console testing
 declare global {

@@ -231,8 +231,8 @@ class DependencyTracker {
             line: content.substring(0, match.index).split('\n').length
           });
           
-          // Track cross-domain usage
-          if (importingDomain !== targetDomain && targetDomain !== 'shared') {
+          // Track cross-domain usage (excluding legitimate shared component usage)
+          if (importingDomain !== targetDomain && !this.isLegitimateSharedUsage(importingDomain, targetDomain)) {
             const key = `${resolvedPath}`;
             if (!this.crossDomainUsage.has(key)) {
               this.crossDomainUsage.set(key, {
@@ -246,6 +246,15 @@ class DependencyTracker {
         }
       }
     }
+  }
+
+  isLegitimateSharedUsage(sourceDomain, targetDomain) {
+    // Allow shared components and hooks to be used across domains
+    const legitSharedDomains = [
+      'shared', 'shared/ui-components', 'shared/hooks', 'shared/services', 
+      'shared/utilities', 'shared/types'
+    ];
+    return legitSharedDomains.includes(targetDomain);
   }
 
   resolveImportPath(importPath, fromDir) {

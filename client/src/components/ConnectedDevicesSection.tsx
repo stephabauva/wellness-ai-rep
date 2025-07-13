@@ -4,11 +4,11 @@ import { DeviceCard } from "@/components/ui/device-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@shared/components/ui/switch";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@shared/components/ui/skeleton";
 
 const ConnectedDevicesSection: React.FC = () => {
   const { toast } = useToast();

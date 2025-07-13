@@ -5,7 +5,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@shared/components/ui/select"';
 import { useFileApi } from '@/hooks/useFileApi';
 import { Loader2 } from 'lucide-react';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from "@shared/components/ui/checkbox"';
 import { Badge } from '@/components/ui/badge';
 import { Download, FileText, Image as ImageIcon } from 'lucide-react'; // Renamed Image to ImageIcon
 import { cn } from '@shared';

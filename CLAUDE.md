@@ -46,6 +46,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - **Code Best Practices**: See commands/workit.md
 - **Debugging & Investigation**: See commands/zapper.md
 
+### Manage your memory ##
+You are responsible to manage the size of the conversation context for your best performance. If a task in a todo list is taking a lot of work and the amount of tokens in the context is getting long, you can use the /compact command.
 ---
 
 **Remember**: This app prioritizes simplicity, safety, and user approval. Always reference the appropriate companion file for your task.

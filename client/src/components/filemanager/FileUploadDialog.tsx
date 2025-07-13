@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 // Select components are no longer directly used here, but CategorySelector uses them.
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"';
 import { useFileUpload } from '@/hooks/useFileUpload'; // Import the hook
 import { CategoryDropdown } from './CategoryDropdown'; // Import the new CategoryDropdown
 

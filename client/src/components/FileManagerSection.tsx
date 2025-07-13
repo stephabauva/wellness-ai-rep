@@ -2,12 +2,12 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { RotateCcw, FileText as DefaultFileIcon, QrCode, X, Download } from 'lucide-react';
 
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@shared/components/ui/skeleton"';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from "@shared/components/ui/checkbox"';
 import { cn } from '@shared';
 
 // Import hooks

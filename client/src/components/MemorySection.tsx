@@ -3,14 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@shared/components/ui/card";
 import { Button } from "@shared/components/ui/button";
 import { Badge } from "@shared/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/components/ui/collapsible";
 import { Checkbox } from "@shared/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@shared/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@shared/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target } from "lucide-react";
-import { Eye, Loader2 } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useForm } from "react-hook-form";
@@ -410,9 +409,15 @@ export default function MemorySection() {
     <div className="flex-1 flex flex-col overflow-y-auto">
       <div className="flex-1 p-4 md:p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center gap-2">
-            <Brain className="h-6 w-6 text-blue-600" />
-            <h2 className="text-2xl font-bold">AI Memory</h2>
+          {/* Header with Gradient */}
+          <div className="bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600 rounded-lg p-6 text-white mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Brain className="h-6 w-6" />
+              </div>
+              <h1 className="text-2xl font-bold">AI Memory</h1>
+            </div>
+            <p className="text-white/90">Your AI coach's personalized knowledge about you</p>
           </div>
 
           <Card>
@@ -421,8 +426,8 @@ export default function MemorySection() {
                 <span>Memory Overview</span>
                 <Dialog open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
+                    <Button variant="outline" size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 px-6 py-3 min-h-[48px] touch-manipulation">
+                      <Plus className="h-5 w-5 mr-2" />
                       Add Memory
                     </Button>
                   </DialogTrigger>
@@ -536,96 +541,201 @@ export default function MemorySection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                <div 
-                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-blue-50 border-2 ${
-                    selectedCategory === "all" ? "border-blue-500 bg-blue-50" : "border-gray-200"
+              {/* Memory Summary - Last Period Title */}
+              <div className="text-lg font-semibold text-purple-700 mb-4">
+                Memory Overview
+                <span className="text-sm text-gray-500 ml-2">
+                  ({memoryOverview.total} total memories)
+                </span>
+              </div>
+
+              {/* Memory Categories Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {/* Total Memories */}
+                <Card 
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    selectedCategory === "all" ? "bg-purple-50 border-purple-200 ring-2 ring-purple-300" : "bg-gray-50 border-gray-200"
                   }`}
                   onClick={() => handleCategoryChange("all")}
                 >
-                  <div className="text-2xl font-bold text-blue-600">{memoryOverview.total}</div>
-                  <div className="text-sm text-gray-600">Total Memories</div>
-                </div>
-                <div 
-                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-blue-50 border-2 ${
-                    selectedCategory === "preferences" ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-600">Total Memories</div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {memoryOverview.total}
+                      </div>
+                    </div>
+                    <Brain className="h-5 w-5 text-purple-400" />
+                  </div>
+                </Card>
+
+                {/* Preferences */}
+                <Card 
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    selectedCategory === "preferences" ? "bg-blue-50 border-blue-200 ring-2 ring-blue-300" : "bg-gray-50 border-gray-200"
                   }`}
                   onClick={() => handleCategoryChange("preferences")}
                 >
-                  <div className="text-2xl font-bold text-blue-600">
-                    {memoryOverview.categories.preferences || 0}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-600">Preferences</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {memoryOverview.categories.preferences || 0}
+                      </div>
+                    </div>
+                    <User className="h-5 w-5 text-blue-400" />
                   </div>
-                  <div className="text-sm text-gray-600">Preferences</div>
-                </div>
-                <div 
-                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-green-50 border-2 ${
-                    selectedCategory === "personal_context" ? "border-green-500 bg-green-50" : "border-gray-200"
+                </Card>
+
+                {/* Personal Context */}
+                <Card 
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    selectedCategory === "personal_context" ? "bg-green-50 border-green-200 ring-2 ring-green-300" : "bg-gray-50 border-gray-200"
                   }`}
                   onClick={() => handleCategoryChange("personal_context")}
                 >
-                  <div className="text-2xl font-bold text-green-600">
-                    {memoryOverview.categories.personal_context || 0}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-600">Personal Context</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {memoryOverview.categories.personal_context || 0}
+                      </div>
+                    </div>
+                    <Lightbulb className="h-5 w-5 text-green-400" />
                   </div>
-                  <div className="text-sm text-gray-600">Personal Context</div>
-                </div>
-                <div 
-                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-purple-50 border-2 ${
-                    selectedCategory === "instructions" ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                </Card>
+
+                {/* Instructions */}
+                <Card 
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    selectedCategory === "instructions" ? "bg-purple-50 border-purple-200 ring-2 ring-purple-300" : "bg-gray-50 border-gray-200"
                   }`}
                   onClick={() => handleCategoryChange("instructions")}
                 >
-                  <div className="text-2xl font-bold text-purple-600">
-                    {memoryOverview.categories.instructions || 0}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-600">Instructions</div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {memoryOverview.categories.instructions || 0}
+                      </div>
+                    </div>
+                    <Settings className="h-5 w-5 text-purple-400" />
                   </div>
-                  <div className="text-sm text-gray-600">Instructions</div>
-                </div>
-                <div 
-                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-orange-50 border-2 ${
-                    selectedCategory === "food_diet" ? "border-orange-500 bg-orange-50" : "border-gray-200"
+                </Card>
+
+                {/* Food & Diet */}
+                <Card 
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    selectedCategory === "food_diet" ? "bg-orange-50 border-orange-200 ring-2 ring-orange-300" : "bg-gray-50 border-gray-200"
                   }`}
                   onClick={() => handleCategoryChange("food_diet")}
                 >
-                  <div className="text-2xl font-bold text-orange-600">
-                    {memoryOverview.categories.food_diet || 0}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-600">Food & Diet</div>
+                      <div className="text-2xl font-bold text-orange-600">
+                        {memoryOverview.categories.food_diet || 0}
+                      </div>
+                    </div>
+                    <Apple className="h-5 w-5 text-orange-400" />
                   </div>
-                  <div className="text-sm text-gray-600">Food & Diet</div>
-                </div>
-                <div 
-                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-teal-50 border-2 ${
-                    selectedCategory === "goals" ? "border-teal-500 bg-teal-50" : "border-gray-200"
+                </Card>
+
+                {/* Goals */}
+                <Card 
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                    selectedCategory === "goals" ? "bg-pink-50 border-pink-200 ring-2 ring-pink-300" : "bg-gray-50 border-gray-200"
                   }`}
                   onClick={() => handleCategoryChange("goals")}
                 >
-                  <div className="text-2xl font-bold text-teal-600">
-                    {memoryOverview.categories.goals || 0}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-600">Goals</div>
+                      <div className="text-2xl font-bold text-pink-600">
+                        {memoryOverview.categories.goals || 0}
+                      </div>
+                    </div>
+                    <Target className="h-5 w-5 text-pink-400" />
                   </div>
-                  <div className="text-sm text-gray-600">Goals</div>
-                </div>
+                </Card>
               </div>
 
             </CardContent>
           </Card>
 
           <div className="space-y-4">
+              {/* Memory Insights Section */}
+              {memoryOverview.total > 0 && (
+                <Card className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-2 bg-purple-100 rounded-full">
+                      <Brain className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-purple-800">Memory Insights</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {memoryOverview.total >= 10 && (
+                      <div className="flex items-start gap-3">
+                        <CheckCircle className="h-5 w-5 mt-0.5 text-green-600" />
+                        <span className="text-sm text-gray-700">Strong memory foundation established with {memoryOverview.total} stored memories</span>
+                      </div>
+                    )}
+                    
+                    {memoryOverview.categories.preferences > 0 && (
+                      <div className="flex items-start gap-3">
+                        <CheckCircle className="h-5 w-5 mt-0.5 text-green-600" />
+                        <span className="text-sm text-gray-700">Preferences captured: AI understands your workout and lifestyle choices</span>
+                      </div>
+                    )}
+                    
+                    {memoryOverview.categories.personal_context > 0 && (
+                      <div className="flex items-start gap-3">
+                        <CheckCircle className="h-5 w-5 mt-0.5 text-green-600" />
+                        <span className="text-sm text-gray-700">Personal context recorded: Health conditions and limitations noted</span>
+                      </div>
+                    )}
+                    
+                    {memoryOverview.categories.goals > 0 && (
+                      <div className="flex items-start gap-3">
+                        <CheckCircle className="h-5 w-5 mt-0.5 text-green-600" />
+                        <span className="text-sm text-gray-700">Goals defined: Clear targets set for your wellness journey</span>
+                      </div>
+                    )}
+                    
+                    {memoryOverview.total < 5 && (
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 mt-0.5 text-amber-600" />
+                        <span className="text-sm text-gray-700">Consider adding more memories to improve AI coaching quality</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-start gap-3">
+                      <Lightbulb className="h-5 w-5 mt-0.5 text-purple-600" />
+                      <span className="text-sm text-gray-700">Memory system active: Your AI coach learns and remembers from every conversation</span>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
               {/* Explanation Card */}
               <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
-                <Card className="border-blue-200 bg-blue-50">
+                <Card className="border-purple-200 bg-purple-50">
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-blue-100 transition-colors">
+                    <CardHeader className="cursor-pointer hover:bg-purple-100 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Info className="h-5 w-5 text-blue-600" />
-                          <CardTitle className="text-blue-800">
+                          <Info className="h-5 w-5 text-purple-600" />
+                          <CardTitle className="text-purple-800">
                             {explanationCards[selectedCategory as keyof typeof explanationCards]?.title}
                           </CardTitle>
                         </div>
                         {isExplanationOpen ? (
-                          <ChevronUp className="h-4 w-4 text-blue-600" />
+                          <ChevronUp className="h-4 w-4 text-purple-600" />
                         ) : (
-                          <ChevronDown className="h-4 w-4 text-blue-600" />
+                          <ChevronDown className="h-4 w-4 text-purple-600" />
                         )}
                       </div>
-                      <CardDescription className="text-blue-700">
+                      <CardDescription className="text-purple-700">
                         {explanationCards[selectedCategory as keyof typeof explanationCards]?.description}
                       </CardDescription>
                     </CardHeader>
@@ -634,8 +744,8 @@ export default function MemorySection() {
                     <CardContent className="pt-0">
                       <ul className="space-y-2">
                         {explanationCards[selectedCategory as keyof typeof explanationCards]?.details.map((detail, index) => (
-                          <li key={index} className="flex items-start gap-2 text-blue-700">
-                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                          <li key={index} className="flex items-start gap-2 text-purple-700">
+                            <span className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0" />
                             <span className="text-sm">{detail}</span>
                           </li>
                         ))}
@@ -689,8 +799,8 @@ export default function MemorySection() {
               {showLoadButton ? (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-8">
-                    <Brain className="h-12 w-12 text-blue-400 mb-4" />
-                    <Button onClick={handleLoadMemories} disabled={allMemoriesLoading}>
+                    <Brain className="h-12 w-12 text-purple-400 mb-4" />
+                    <Button onClick={handleLoadMemories} disabled={allMemoriesLoading} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
                       {allMemoriesLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -755,7 +865,7 @@ export default function MemorySection() {
                               size="sm"
                               onClick={handleBulkDelete}
                               disabled={bulkDeleteMutation.isPending}
-                              className="w-full sm:w-auto"
+                              className="w-full sm:w-auto bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 border-0"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               <span className="hidden sm:inline">Delete Selected ({selectedMemoryIds.size})</span>
@@ -769,7 +879,7 @@ export default function MemorySection() {
 
                   <div className="grid gap-4">
                     {memories.map((memory: MemoryEntry) => (
-                      <Card key={memory.id} className="relative">
+                      <Card key={memory.id} className="relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-indigo-50/30 border-purple-100 hover:shadow-md transition-all">
                         <CardHeader className="pb-3">
                           <div className="flex items-start gap-3">
                             <div className="pt-1">
@@ -796,6 +906,7 @@ export default function MemorySection() {
                                   size="sm"
                                   onClick={() => handleDeleteMemory(memory.id)}
                                   disabled={deleteMemoryMutation.isPending}
+                                  className="hover:bg-red-50 hover:text-red-600"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -804,12 +915,12 @@ export default function MemorySection() {
                           </div>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-gray-700 mb-3">{memory.content}</p>
+                          <p className="text-gray-800 mb-3 leading-relaxed">{memory.content}</p>
                           
                           {memory.labels && memory.labels.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-3">
                               {memory.labels.map((label: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs bg-gray-100 text-gray-600 font-normal">
+                                <Badge key={index} variant="secondary" className="text-xs bg-purple-100 text-purple-700 font-normal border-purple-200">
                                   {label}
                                 </Badge>
                               ))}
@@ -817,9 +928,15 @@ export default function MemorySection() {
                           )}
                           
                           
-                          <div className="flex justify-between text-xs text-gray-500">
-                            <span>Created: {new Date(memory.createdAt).toLocaleDateString()}</span>
-                            <span>Used {memory.accessCount} times</span>
+                          <div className="flex justify-between text-xs text-gray-500 pt-2 border-t border-purple-100">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              Created: {new Date(memory.createdAt).toLocaleDateString()}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              Used {memory.accessCount} times
+                            </span>
                           </div>
                         </CardContent>
                       </Card>

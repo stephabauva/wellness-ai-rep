@@ -14,6 +14,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
   app.get("/api/memories/overview", async (req, res) => {
     try {
       const memories = await memoryService.getUserMemories(1);
+      const qualityMetrics = await memoryService.getMemoryQualityMetrics(1);
       
       const overview = {
         total: memories.length,
@@ -27,13 +28,33 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
         recentMemories: memories.slice(0, 3).map(m => ({
           id: m.id, content: m.content.substring(0, 100) + (m.content.length > 100 ? '...' : ''),
           category: m.category, createdAt: m.createdAt
-        }))
+        })),
+        qualityMetrics: {
+          qualityScore: qualityMetrics.qualityScore,
+          duplicateRate: qualityMetrics.duplicateRate,
+          potentialDuplicates: qualityMetrics.potentialDuplicates,
+          averageImportanceScore: qualityMetrics.averageImportanceScore,
+          averageFreshness: qualityMetrics.averageFreshness
+        }
       };
       
       res.json(overview);
     } catch (error) {
       console.error('Error fetching memory overview:', error);
       res.status(500).json({ message: "Failed to fetch memory overview" });
+    }
+  });
+
+  // Memory quality metrics endpoint
+  app.get("/api/memories/quality-metrics", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const qualityMetrics = await memoryService.getMemoryQualityMetrics(userId);
+      
+      res.json(qualityMetrics);
+    } catch (error) {
+      console.error('Error fetching memory quality metrics:', error);
+      res.status(500).json({ message: "Failed to fetch memory quality metrics" });
     }
   });
 

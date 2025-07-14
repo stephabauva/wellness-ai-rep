@@ -1047,6 +1047,212 @@ Use this remembered information to personalize your responses naturally. Don't e
     }
   }
 
+  // Memory Quality Metrics
+  async getMemoryQualityMetrics(userId: number): Promise<{
+    totalMemories: number;
+    duplicateRate: number;
+    averageImportanceScore: number;
+    averageFreshness: number;
+    categoryDistribution: Record<string, number>;
+    qualityScore: number;
+    potentialDuplicates: number;
+    memoryAgeDistribution: {
+      lastWeek: number;
+      lastMonth: number;
+      lastYear: number;
+      older: number;
+    };
+  }> {
+    try {
+      const memories = await db
+        .select()
+        .from(memoryEntries)
+        .where(and(
+          eq(memoryEntries.userId, userId),
+          eq(memoryEntries.isActive, true)
+        ));
+
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+      // Calculate basic metrics
+      const totalMemories = memories.length;
+      const averageImportanceScore = totalMemories > 0 
+        ? memories.reduce((sum, m) => sum + (m.importanceScore || 0), 0) / totalMemories 
+        : 0;
+
+      // Calculate freshness (based on last access vs creation date)
+      const freshnessScores = memories.map(m => {
+        const created = new Date(m.createdAt);
+        const accessed = m.lastAccessed ? new Date(m.lastAccessed) : created;
+        const daysSinceCreation = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+        const daysSinceAccess = (now.getTime() - accessed.getTime()) / (1000 * 60 * 60 * 24);
+        
+        // Fresher memories that have been accessed recently get higher scores
+        return Math.max(0, 1 - (daysSinceAccess / 30)) * (m.accessCount || 0 + 1);
+      });
+      
+      const averageFreshness = freshnessScores.length > 0 
+        ? freshnessScores.reduce((sum, score) => sum + score, 0) / freshnessScores.length 
+        : 0;
+
+      // Category distribution
+      const categoryDistribution: Record<string, number> = {};
+      memories.forEach(m => {
+        const category = m.category || 'unknown';
+        categoryDistribution[category] = (categoryDistribution[category] || 0) + 1;
+      });
+
+      // Age distribution
+      const memoryAgeDistribution = {
+        lastWeek: memories.filter(m => new Date(m.createdAt) >= oneWeekAgo).length,
+        lastMonth: memories.filter(m => new Date(m.createdAt) >= oneMonthAgo && new Date(m.createdAt) < oneWeekAgo).length,
+        lastYear: memories.filter(m => new Date(m.createdAt) >= oneYearAgo && new Date(m.createdAt) < oneMonthAgo).length,
+        older: memories.filter(m => new Date(m.createdAt) < oneYearAgo).length
+      };
+
+      // Detect potential duplicates using simple content similarity
+      const potentialDuplicates = this.detectPotentialDuplicates(memories);
+
+      // Calculate duplicate rate
+      const duplicateRate = totalMemories > 0 ? potentialDuplicates / totalMemories : 0;
+
+      // Calculate overall quality score (0-1)
+      const qualityScore = this.calculateQualityScore({
+        duplicateRate,
+        averageImportanceScore,
+        averageFreshness,
+        categoryBalance: this.calculateCategoryBalance(categoryDistribution),
+        contentLength: this.calculateAverageContentLength(memories)
+      });
+
+      return {
+        totalMemories,
+        duplicateRate,
+        averageImportanceScore,
+        averageFreshness,
+        categoryDistribution,
+        qualityScore,
+        potentialDuplicates,
+        memoryAgeDistribution
+      };
+    } catch (error) {
+      logger.error('Error calculating memory quality metrics', error as Error, { service: 'memory' });
+      return {
+        totalMemories: 0,
+        duplicateRate: 0,
+        averageImportanceScore: 0,
+        averageFreshness: 0,
+        categoryDistribution: {},
+        qualityScore: 0,
+        potentialDuplicates: 0,
+        memoryAgeDistribution: { lastWeek: 0, lastMonth: 0, lastYear: 0, older: 0 }
+      };
+    }
+  }
+
+  private detectPotentialDuplicates(memories: any[]): number {
+    const duplicates = new Set<string>();
+    const processed = new Set<string>();
+    
+    for (let i = 0; i < memories.length; i++) {
+      const memory = memories[i];
+      if (processed.has(memory.id)) continue;
+      
+      const normalizedContent = this.normalizeContent(memory.content);
+      
+      for (let j = i + 1; j < memories.length; j++) {
+        const candidate = memories[j];
+        if (processed.has(candidate.id)) continue;
+        
+        const candidateNormalized = this.normalizeContent(candidate.content);
+        const similarity = this.calculateJaccardSimilarity(normalizedContent, candidateNormalized);
+        
+        if (similarity > 0.7) {
+          duplicates.add(candidate.id);
+          processed.add(candidate.id);
+        }
+      }
+      
+      processed.add(memory.id);
+    }
+    
+    return duplicates.size;
+  }
+
+  private normalizeContent(content: string): string {
+    return content.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private calculateJaccardSimilarity(content1: string, content2: string): number {
+    const words1 = new Set(content1.split(/\s+/).filter(w => w.length > 2));
+    const words2 = new Set(content2.split(/\s+/).filter(w => w.length > 2));
+    
+    const intersection = new Set([...words1].filter(w => words2.has(w)));
+    const union = new Set([...words1, ...words2]);
+    
+    return union.size > 0 ? intersection.size / union.size : 0;
+  }
+
+  private calculateCategoryBalance(categoryDistribution: Record<string, number>): number {
+    const categories = Object.values(categoryDistribution);
+    if (categories.length === 0) return 0;
+    
+    const total = categories.reduce((sum, count) => sum + count, 0);
+    const expectedPerCategory = total / categories.length;
+    
+    // Calculate how evenly distributed the categories are
+    const variance = categories.reduce((sum, count) => 
+      sum + Math.pow(count - expectedPerCategory, 2), 0) / categories.length;
+    
+    // Lower variance = better balance, normalize to 0-1
+    return Math.max(0, 1 - (variance / (expectedPerCategory * expectedPerCategory)));
+  }
+
+  private calculateAverageContentLength(memories: any[]): number {
+    if (memories.length === 0) return 0;
+    
+    const totalLength = memories.reduce((sum, m) => sum + (m.content?.length || 0), 0);
+    return totalLength / memories.length;
+  }
+
+  private calculateQualityScore(metrics: {
+    duplicateRate: number;
+    averageImportanceScore: number;
+    averageFreshness: number;
+    categoryBalance: number;
+    contentLength: number;
+  }): number {
+    const weights = {
+      duplicateRate: 0.3,      // Lower duplicate rate = better quality
+      importanceScore: 0.25,   // Higher importance = better quality
+      freshness: 0.2,          // More fresh memories = better quality
+      categoryBalance: 0.15,   // More balanced categories = better quality
+      contentLength: 0.1       // Appropriate content length = better quality
+    };
+    
+    // Normalize scores to 0-1 range
+    const duplicateScore = Math.max(0, 1 - metrics.duplicateRate);
+    const importanceScore = Math.min(1, metrics.averageImportanceScore / 10);
+    const freshnessScore = Math.min(1, metrics.averageFreshness);
+    const categoryScore = metrics.categoryBalance;
+    const contentScore = Math.min(1, Math.max(0, 
+      1 - Math.abs(metrics.contentLength - 100) / 200)); // Optimal around 100 chars
+    
+    return (
+      duplicateScore * weights.duplicateRate +
+      importanceScore * weights.importanceScore +
+      freshnessScore * weights.freshness +
+      categoryScore * weights.categoryBalance +
+      contentScore * weights.contentLength
+    );
+  }
+
   // Tier 2 C: Delete memory with optimized cache invalidation
   async deleteMemory(memoryId: string, userId: number): Promise<boolean> {
     try {

@@ -151,7 +151,7 @@ export default function MemorySection() {
   });
 
   // Overview count query - lightweight, runs once on mount
-  const { data: memoryOverview = { total: 0, categories: {} }, isLoading: overviewLoading } = useQuery({
+  const { data: memoryOverview = { total: 0, categories: {}, qualityMetrics: {} }, isLoading: overviewLoading } = useQuery({
     queryKey: ["memory-overview"],
     queryFn: async () => {
       const response = await fetch(`/api/memories/overview`);
@@ -528,7 +528,7 @@ export default function MemorySection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{memoryOverview.total}</div>
                   <div className="text-sm text-gray-600">Total Memories</div>
@@ -564,6 +564,48 @@ export default function MemorySection() {
                   <div className="text-sm text-gray-600">Goals</div>
                 </div>
               </div>
+
+              {/* Quality Metrics Section */}
+              {memoryOverview.qualityMetrics && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldAlert className="h-4 w-4 text-gray-600" />
+                    <h3 className="text-sm font-semibold text-gray-700">Memory Quality</h3>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className={`text-lg font-bold ${
+                        memoryOverview.qualityMetrics.qualityScore >= 0.8 ? 'text-green-600' :
+                        memoryOverview.qualityMetrics.qualityScore >= 0.6 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {Math.round((memoryOverview.qualityMetrics.qualityScore || 0) * 100)}%
+                      </div>
+                      <div className="text-xs text-gray-600">Quality Score</div>
+                    </div>
+                    <div className="text-center">
+                      <div className={`text-lg font-bold ${
+                        memoryOverview.qualityMetrics.duplicateRate <= 0.1 ? 'text-green-600' :
+                        memoryOverview.qualityMetrics.duplicateRate <= 0.2 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {Math.round((memoryOverview.qualityMetrics.duplicateRate || 0) * 100)}%
+                      </div>
+                      <div className="text-xs text-gray-600">Duplicate Rate</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-blue-600">
+                        {memoryOverview.qualityMetrics.potentialDuplicates || 0}
+                      </div>
+                      <div className="text-xs text-gray-600">Potential Duplicates</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-purple-600">
+                        {Math.round((memoryOverview.qualityMetrics.averageImportanceScore || 0) * 10) / 10}
+                      </div>
+                      <div className="text-xs text-gray-600">Avg. Importance</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

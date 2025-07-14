@@ -59,7 +59,10 @@ app.use((req, res, next) => {
     const hasLocalEnvFile = existsSync('.env.local');
     
     if (isLocalDatabase && hasLocalEnvFile) {
-      // Local database is initialized by importing db-local.ts
+      // Initialize local database before registering routes
+      logger.system('Initializing local database connection...');
+      const { initializeDatabase } = await import('../shared/database/db.js');
+      await initializeDatabase();
       logger.system('Local database connection initialized');
     } else {
       // Initialize PostgreSQL database with indexes and optimizations for Replit/production

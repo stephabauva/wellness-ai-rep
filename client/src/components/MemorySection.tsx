@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@shared/components/ui/card";
 import { Button } from "@shared/components/ui/button";
 import { Badge } from "@shared/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -538,35 +537,65 @@ export default function MemorySection() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                <div className="text-center">
+                <div 
+                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-blue-50 border-2 ${
+                    selectedCategory === "all" ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                  }`}
+                  onClick={() => handleCategoryChange("all")}
+                >
                   <div className="text-2xl font-bold text-blue-600">{memoryOverview.total}</div>
                   <div className="text-sm text-gray-600">Total Memories</div>
                 </div>
-                <div className="text-center">
+                <div 
+                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-blue-50 border-2 ${
+                    selectedCategory === "preferences" ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                  }`}
+                  onClick={() => handleCategoryChange("preferences")}
+                >
                   <div className="text-2xl font-bold text-blue-600">
                     {memoryOverview.categories.preferences || 0}
                   </div>
                   <div className="text-sm text-gray-600">Preferences</div>
                 </div>
-                <div className="text-center">
+                <div 
+                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-green-50 border-2 ${
+                    selectedCategory === "personal_context" ? "border-green-500 bg-green-50" : "border-gray-200"
+                  }`}
+                  onClick={() => handleCategoryChange("personal_context")}
+                >
                   <div className="text-2xl font-bold text-green-600">
                     {memoryOverview.categories.personal_context || 0}
                   </div>
                   <div className="text-sm text-gray-600">Personal Context</div>
                 </div>
-                <div className="text-center">
+                <div 
+                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-purple-50 border-2 ${
+                    selectedCategory === "instructions" ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                  }`}
+                  onClick={() => handleCategoryChange("instructions")}
+                >
                   <div className="text-2xl font-bold text-purple-600">
                     {memoryOverview.categories.instructions || 0}
                   </div>
                   <div className="text-sm text-gray-600">Instructions</div>
                 </div>
-                <div className="text-center">
+                <div 
+                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-orange-50 border-2 ${
+                    selectedCategory === "food_diet" ? "border-orange-500 bg-orange-50" : "border-gray-200"
+                  }`}
+                  onClick={() => handleCategoryChange("food_diet")}
+                >
                   <div className="text-2xl font-bold text-orange-600">
                     {memoryOverview.categories.food_diet || 0}
                   </div>
                   <div className="text-sm text-gray-600">Food & Diet</div>
                 </div>
-                <div className="text-center">
+                <div 
+                  className={`text-center p-3 rounded-lg cursor-pointer transition-all hover:bg-teal-50 border-2 ${
+                    selectedCategory === "goals" ? "border-teal-500 bg-teal-50" : "border-gray-200"
+                  }`}
+                  onClick={() => handleCategoryChange("goals")}
+                >
                   <div className="text-2xl font-bold text-teal-600">
                     {memoryOverview.categories.goals || 0}
                   </div>
@@ -577,19 +606,7 @@ export default function MemorySection() {
             </CardContent>
           </Card>
 
-          <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
-            <div className="w-full overflow-x-auto">
-              <TabsList className="flex md:grid w-full md:grid-cols-6 gap-1 min-w-max md:min-w-0">
-                <TabsTrigger value="all" className="text-xs md:text-sm flex-shrink-0">All</TabsTrigger>
-                <TabsTrigger value="preferences" className="text-xs md:text-sm flex-shrink-0">Preferences</TabsTrigger>
-                <TabsTrigger value="personal_context" className="text-xs md:text-sm flex-shrink-0">Personal Context</TabsTrigger>
-                <TabsTrigger value="instructions" className="text-xs md:text-sm flex-shrink-0">Instructions</TabsTrigger>
-                <TabsTrigger value="food_diet" className="text-xs md:text-sm flex-shrink-0">Food & Diet</TabsTrigger>
-                <TabsTrigger value="goals" className="text-xs md:text-sm flex-shrink-0">Goals</TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value={selectedCategory} className="space-y-4">
+          <div className="space-y-4">
               {/* Explanation Card */}
               <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
                 <Card className="border-blue-200 bg-blue-50">
@@ -810,8 +827,7 @@ export default function MemorySection() {
                   </div>
                 </>
               )}
-            </TabsContent>
-          </Tabs>
+          </div>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Dependency tracking**: dependency-tracker.js and system-map-cross-domain-validator-v2.js analyze actual code imports
 **@used-by annotations**: Add comments like @used-by domain/component to track dependencies
 **Malformed import detection**: malformed-import-detector.js scans TypeScript/JavaScript files for syntax issues and path resolution problems in import statements
+**Async/await compatibility**: async-await-detector.js prevents "Cannot read properties of undefined" errors by detecting service getter async mismatches
 
 ### Key Commands
 - `npm run dev` - Start development server
@@ -24,6 +25,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `node system-map-tracker.js` - Check if modified files are documented in system maps
 - `node dependency-tracker.js` - Analyze cross-domain dependencies
 - `node system-map-cross-domain-validator-v2.js` - Validate system maps against actual code
+- `npm run check:async` - Check async/await compatibility to prevent undefined errors
 - `./setup-dependency-hook.sh` - Install pre-commit dependency check hook
 
 ### Architecture Patterns & Rules
@@ -44,7 +46,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
   - System map's guide : `.system-maps/optimized-complete-map-blue-original.md`
 
 ### Before Adding ANY New Code (Claude AI Responsibility)
-1. **ALWAYS run architectural checks first**: `node dependency-tracker.js` and `node malformed-import-detector.js`
+1. **ALWAYS run architectural checks first**: `node dependency-tracker.js`, `node malformed-import-detector.js`, and `npm run check:async`
 2. Ask: "Does this belong in shared/ or a specific domain?"
 3. Ask: "Can I enhance existing components vs creating new ones?"
 4. Ask: "Is this service necessary or can it be a simple function?"

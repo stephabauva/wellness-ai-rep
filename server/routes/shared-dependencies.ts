@@ -26,19 +26,19 @@ export {
 };
 
 // Deprecated exports - use service getters instead
-export const enhancedMemoryService = () => getMemoryServices().enhancedMemoryService;
-export const memoryRelationshipEngine = () => getMemoryServices().memoryRelationshipEngine;
-export const performanceMemoryCore = () => getMemoryServices().performanceMemoryCore;
-export const memoryFeatureFlags = () => getMemoryServices().memoryFeatureFlags;
-export const memoryPerformanceMonitor = () => getMemoryServices().memoryPerformanceMonitor;
-export const HealthDataParser = () => getHealthServices().healthDataParser;
-export const HealthDataDeduplicationService = () => getHealthServices().healthDataDeduplication;
-export const healthConsentService = () => getHealthServices().healthConsentService;
-export const transcriptionService = () => getFileManagerServices().transcriptionService;
-export const categoryService = () => getFileManagerServices().categoryService;
-export const attachmentRetentionService = () => getFileManagerServices().attachmentRetentionService;
-export const goFileService = () => getFileManagerServices().goFileService;
-export const enhancedBackgroundProcessor = () => getSharedServices().enhancedBackgroundProcessor;
+export const enhancedMemoryService = async () => (await getMemoryServices()).enhancedMemoryService;
+export const memoryRelationshipEngine = async () => (await getMemoryServices()).memoryRelationshipEngine;
+export const performanceMemoryCore = async () => (await getMemoryServices()).performanceMemoryCore;
+export const memoryFeatureFlags = async () => (await getMemoryServices()).memoryFeatureFlags;
+export const memoryPerformanceMonitor = async () => (await getMemoryServices()).memoryPerformanceMonitor;
+export const HealthDataParser = async () => (await getHealthServices()).healthDataParser;
+export const HealthDataDeduplicationService = async () => (await getHealthServices()).healthDataDeduplication;
+export const healthConsentService = async () => (await getHealthServices()).healthConsentService;
+export const transcriptionService = async () => (await getFileManagerServices()).transcriptionService;
+export const categoryService = async () => (await getFileManagerServices()).categoryService;
+export const attachmentRetentionService = async () => (await getFileManagerServices()).attachmentRetentionService;
+export const goFileService = async () => (await getFileManagerServices()).goFileService;
+export const enhancedBackgroundProcessor = async () => (await getSharedServices()).enhancedBackgroundProcessor;
 
 import type { UserPreferences } from '@shared/schema';
 

@@ -202,7 +202,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
       const { message, conversationHistory, userProfile } = req.body;
       if (!message) return res.status(400).json({ error: "Message is required" });
 
-      const enhancedDetection = await enhancedMemoryService().detectMemoryWorthy(
+      const enhancedDetection = await (await enhancedMemoryService()).detectMemoryWorthy(
         message, conversationHistory || [], userProfile
       );
 
@@ -223,7 +223,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
       if (!query) return res.status(400).json({ error: "Query is required" });
 
       const startTime = Date.now();
-      const memories = await performanceMemoryCore().getMemories(1, query);
+      const memories = await (await performanceMemoryCore()).getMemories(1, query);
       const retrievalTime = Date.now() - startTime;
 
       res.json({

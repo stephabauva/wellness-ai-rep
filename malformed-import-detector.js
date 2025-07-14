@@ -88,6 +88,12 @@ class MalformedImportDetector {
     if (!this.isImportLine(trimmedLine)) {
       return;
     }
+
+    // Check for CommonJS require() in ESM context
+    if (this.isESMProject && trimmedLine.includes('require(')) {
+      this.addIssue(filePath, lineNumber, 'CommonJS require() in ESM project (will cause "require is not defined")', trimmedLine);
+      return;
+    }
     
     // 1. Check for missing quotes around import path
     const missingQuotesRegex = /import.*from\s+([^'"\s][^;\s]*[^'"\s])$/;
@@ -417,7 +423,8 @@ class MalformedImportDetector {
       'Incomplete import statement (missing closing brace)',
       'Malformed require statement (missing quotes)',
       'Unexpected space in import path',
-      'Empty import statement'
+      'Empty import statement',
+      'CommonJS require() in ESM project (will cause "require is not defined")'
     ];
     return syntaxIssueTypes.includes(issueType);
   }

@@ -277,7 +277,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
 
       // Validate category if provided
       if (categoryId) {
-        const category = await categoryService().getCategoryById(categoryId, FIXED_USER_ID);
+        const category = await (await categoryService()).getCategoryById(categoryId, FIXED_USER_ID);
         if (!category) {
           return res.status(400).json({ error: 'Invalid category ID' });
         }
@@ -319,7 +319,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
   // Categories CRUD endpoints
   app.get('/api/categories', async (req, res) => {
     try {
-      const categories = await categoryService().getCategories(FIXED_USER_ID);
+      const categories = await (await categoryService()).getCategories(FIXED_USER_ID);
       res.json(categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -330,7 +330,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
   app.post('/api/categories', async (req, res) => {
     try {
       const categoryData = req.body;
-      const newCategory = await categoryService().createCategory(FIXED_USER_ID, categoryData);
+      const newCategory = await (await categoryService()).createCategory(FIXED_USER_ID, categoryData);
       res.status(201).json(newCategory);
     } catch (error) {
       console.error('Error creating category:', error);
@@ -343,7 +343,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
     try {
       const categoryId = req.params.id;
       const categoryData = req.body;
-      const updatedCategory = await categoryService().updateCategory(FIXED_USER_ID, categoryId, categoryData);
+      const updatedCategory = await (await categoryService()).updateCategory(FIXED_USER_ID, categoryId, categoryData);
       
       if (!updatedCategory) {
         return res.status(404).json({ error: 'Category not found or not authorized' });
@@ -360,7 +360,7 @@ export async function registerFileRoutes(app: Express): Promise<void> {
   app.delete('/api/categories/:id', async (req, res) => {
     try {
       const categoryId = req.params.id;
-      const result = await categoryService().deleteCategory(FIXED_USER_ID, categoryId);
+      const result = await (await categoryService()).deleteCategory(FIXED_USER_ID, categoryId);
       
       if (!result.success) {
         return res.status(404).json({ error: result.message });

@@ -50,7 +50,7 @@ export async function registerMonitoringRoutes(app: Express): Promise<void> {
   // Memory performance monitoring endpoints
   app.get('/api/memory/performance-monitoring-test', async (req, res) => {
     try {
-      const testResults = await memoryPerformanceMonitor().runComprehensiveTest();
+      const testResults = await (await memoryPerformanceMonitor()).runComprehensiveTest();
       res.json({
         status: 'completed',
         timestamp: new Date().toISOString(),
@@ -74,13 +74,13 @@ export async function registerMonitoringRoutes(app: Express): Promise<void> {
 
   app.get('/api/memory/performance-report', async (req, res) => {
     try {
-      const performanceData = await memoryPerformanceMonitor().generatePerformanceReport();
+      const performanceData = await (await memoryPerformanceMonitor()).generatePerformanceReport();
       res.json({
         timestamp: new Date().toISOString(),
         performance: performanceData,
         monitoring: {
           enabled: true,
-          featureFlags: memoryFeatureFlags().getAllFlags(),
+          featureFlags: (await memoryFeatureFlags()).getAllFlags(),
           systemHealth: 'operational'
         }
       });
@@ -99,7 +99,7 @@ export async function registerMonitoringRoutes(app: Express): Promise<void> {
       const { userId = 1, message = "Test memory relationships" } = req.body;
       const startTime = Date.now();
       
-      const testMemories = await performanceMemoryCore().getMemories(userId);
+      const testMemories = await (await performanceMemoryCore()).getMemories(userId);
       const metrics = {
         totalMemories: testMemories.length,
         avgProcessingTime: '15ms',
@@ -144,7 +144,7 @@ export async function registerMonitoringRoutes(app: Express): Promise<void> {
   // Feature flags management
   app.get('/api/memory/feature-flags', async (req, res) => {
     try {
-      const flags = memoryFeatureFlags().getAllFlags();
+      const flags = (await memoryFeatureFlags()).getAllFlags();
       res.json({
         flags,
         lastUpdated: new Date().toISOString(),
@@ -164,11 +164,11 @@ export async function registerMonitoringRoutes(app: Express): Promise<void> {
         return res.status(400).json({ error: 'flagName and enabled (boolean) are required' });
       }
 
-      memoryFeatureFlags().setFlag(flagName, enabled);
+      (await memoryFeatureFlags()).setFlag(flagName, enabled);
       
       res.json({ 
         message: `Feature flag ${flagName} ${enabled ? 'enabled' : 'disabled'}`,
-        flags: memoryFeatureFlags().getAllFlags()
+        flags: (await memoryFeatureFlags()).getAllFlags()
       });
     } catch (error) {
       console.error('Error updating feature flags:', error);

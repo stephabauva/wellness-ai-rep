@@ -66,39 +66,52 @@ const serviceRegistry: ServiceRegistry = {
 };
 
 // Lazy service loaders to avoid circular dependencies
-export const getMemoryServices = () => {
+export const getMemoryServices = async () => {
   if (!serviceRegistry.memory.enhancedMemoryService) {
-    serviceRegistry.memory.enhancedMemoryService = require('./enhanced-memory-service').enhancedMemoryService;
-    serviceRegistry.memory.memoryRelationshipEngine = require('./memory-relationship-engine').memoryRelationshipEngine;
-    serviceRegistry.memory.performanceMemoryCore = require('./performance-memory-core').performanceMemoryCore;
-    serviceRegistry.memory.memoryFeatureFlags = require('./memory-feature-flags').memoryFeatureFlags;
-    serviceRegistry.memory.memoryPerformanceMonitor = require('./memory-performance-monitor').memoryPerformanceMonitor;
+    const enhancedMemoryModule = await import('./enhanced-memory-service.js');
+    serviceRegistry.memory.enhancedMemoryService = enhancedMemoryModule.enhancedMemoryService;
+    const memoryRelationshipModule = await import('./memory-relationship-engine.js');
+    serviceRegistry.memory.memoryRelationshipEngine = memoryRelationshipModule.memoryRelationshipEngine;
+    const performanceMemoryModule = await import('./performance-memory-core.js');
+    serviceRegistry.memory.performanceMemoryCore = performanceMemoryModule.performanceMemoryCore;
+    const memoryFeatureFlagsModule = await import('./memory-feature-flags.js');
+    serviceRegistry.memory.memoryFeatureFlags = memoryFeatureFlagsModule.memoryFeatureFlags;
+    const memoryPerformanceMonitorModule = await import('./memory-performance-monitor.js');
+    serviceRegistry.memory.memoryPerformanceMonitor = memoryPerformanceMonitorModule.memoryPerformanceMonitor;
   }
   return serviceRegistry.memory;
 };
 
-export const getHealthServices = () => {
+export const getHealthServices = async () => {
   if (!serviceRegistry.health.healthDataParser) {
-    serviceRegistry.health.healthDataParser = require('./health-data-parser').HealthDataParser;
-    serviceRegistry.health.healthDataDeduplication = require('./health-data-deduplication').HealthDataDeduplicationService;
-    serviceRegistry.health.healthConsentService = require('./health-consent-service').healthConsentService;
+    const healthDataParserModule = await import('./health-data-parser.js');
+    serviceRegistry.health.healthDataParser = healthDataParserModule.HealthDataParser;
+    const healthDataDeduplicationModule = await import('./health-data-deduplication.js');
+    serviceRegistry.health.healthDataDeduplication = healthDataDeduplicationModule.HealthDataDeduplicationService;
+    const healthConsentModule = await import('./health-consent-service.js');
+    serviceRegistry.health.healthConsentService = healthConsentModule.healthConsentService;
   }
   return serviceRegistry.health;
 };
 
-export const getFileManagerServices = () => {
+export const getFileManagerServices = async () => {
   if (!serviceRegistry.fileManager.goFileService) {
-    serviceRegistry.fileManager.goFileService = require('./go-file-service').goFileService;
-    serviceRegistry.fileManager.transcriptionService = require('./transcription-service').transcriptionService;
-    serviceRegistry.fileManager.categoryService = require('./category-service').categoryService;
-    serviceRegistry.fileManager.attachmentRetentionService = require('./attachment-retention-service').attachmentRetentionService;
+    const goFileServiceModule = await import('./go-file-service.js');
+    serviceRegistry.fileManager.goFileService = goFileServiceModule.goFileService;
+    const transcriptionServiceModule = await import('./transcription-service.js');
+    serviceRegistry.fileManager.transcriptionService = transcriptionServiceModule.transcriptionService;
+    const categoryServiceModule = await import('./category-service.js');
+    serviceRegistry.fileManager.categoryService = categoryServiceModule.categoryService;
+    const attachmentRetentionServiceModule = await import('./attachment-retention-service.js');
+    serviceRegistry.fileManager.attachmentRetentionService = attachmentRetentionServiceModule.attachmentRetentionService;
   }
   return serviceRegistry.fileManager;
 };
 
-export const getSharedServices = () => {
+export const getSharedServices = async () => {
   if (!serviceRegistry.shared.enhancedBackgroundProcessor) {
-    serviceRegistry.shared.enhancedBackgroundProcessor = require('./enhanced-background-processor').enhancedBackgroundProcessor;
+    const enhancedBackgroundProcessorModule = await import('./enhanced-background-processor.js');
+    serviceRegistry.shared.enhancedBackgroundProcessor = enhancedBackgroundProcessorModule.enhancedBackgroundProcessor;
   }
   return serviceRegistry.shared;
 };

@@ -463,7 +463,7 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Find fuzzy match using word-based similarity
+   * Find fuzzy match using enhanced word-based similarity with Levenshtein distance
    */
   private findFuzzyMatch(
     content: string, 
@@ -483,18 +483,21 @@ Use this information naturally in your responses to provide personalized guidanc
       
       if (memoryWords.length === 0) continue;
 
-      // Calculate Jaccard similarity (intersection over union)
-      const intersection = contentWords.filter(w => memoryWords.includes(w));
-      const union = [...new Set([...contentWords, ...memoryWords])];
-      const jaccardSimilarity = intersection.length / union.length;
-
-      // Calculate word overlap similarity
-      const overlapSimilarity = intersection.length / Math.max(contentWords.length, memoryWords.length);
+      // Enhanced similarity calculation with multiple metrics
+      const jaccardSimilarity = this.calculateJaccardSimilarity(contentWords, memoryWords);
+      const overlapSimilarity = this.calculateOverlapSimilarity(contentWords, memoryWords);
+      const levenshteinSimilarity = this.calculateLevenshteinSimilarity(normalizedContent, normalizedMemory);
+      const ngramSimilarity = this.calculateNgramSimilarity(contentWords, memoryWords);
       
-      // Combined similarity score (weighted)
-      const combinedSimilarity = (jaccardSimilarity * 0.6) + (overlapSimilarity * 0.4);
+      // Weighted combination of all similarity metrics
+      const combinedSimilarity = (
+        jaccardSimilarity * 0.35 +
+        overlapSimilarity * 0.25 +
+        levenshteinSimilarity * 0.25 +
+        ngramSimilarity * 0.15
+      );
 
-      if (combinedSimilarity > highestSimilarity && combinedSimilarity > 0.2) {
+      if (combinedSimilarity > highestSimilarity && combinedSimilarity > 0.15) {
         highestSimilarity = combinedSimilarity;
         bestMatch = {
           id: memory.id,
@@ -505,6 +508,91 @@ Use this information naturally in your responses to provide personalized guidanc
     }
 
     return bestMatch;
+  }
+
+  /**
+   * Calculate Jaccard similarity (intersection over union)
+   */
+  private calculateJaccardSimilarity(words1: string[], words2: string[]): number {
+    const set1 = new Set(words1);
+    const set2 = new Set(words2);
+    const intersection = new Set([...set1].filter(w => set2.has(w)));
+    const union = new Set([...set1, ...set2]);
+    return intersection.size / union.size;
+  }
+
+  /**
+   * Calculate word overlap similarity
+   */
+  private calculateOverlapSimilarity(words1: string[], words2: string[]): number {
+    const intersection = words1.filter(w => words2.includes(w));
+    return intersection.length / Math.max(words1.length, words2.length);
+  }
+
+  /**
+   * Calculate Levenshtein distance-based similarity
+   */
+  private calculateLevenshteinSimilarity(str1: string, str2: string): number {
+    const distance = this.levenshteinDistance(str1, str2);
+    const maxLength = Math.max(str1.length, str2.length);
+    return maxLength > 0 ? 1 - (distance / maxLength) : 0;
+  }
+
+  /**
+   * Calculate N-gram similarity for better fuzzy matching
+   */
+  private calculateNgramSimilarity(words1: string[], words2: string[]): number {
+    const n = 2; // Use bigrams
+    const ngrams1 = this.generateNgrams(words1, n);
+    const ngrams2 = this.generateNgrams(words2, n);
+    
+    if (ngrams1.length === 0 || ngrams2.length === 0) return 0;
+    
+    const intersection = ngrams1.filter(ngram => ngrams2.includes(ngram));
+    return intersection.length / Math.max(ngrams1.length, ngrams2.length);
+  }
+
+  /**
+   * Generate N-grams from word array
+   */
+  private generateNgrams(words: string[], n: number): string[] {
+    const ngrams: string[] = [];
+    for (let i = 0; i <= words.length - n; i++) {
+      ngrams.push(words.slice(i, i + n).join(' '));
+    }
+    return ngrams;
+  }
+
+  /**
+   * Calculate Levenshtein distance between two strings
+   */
+  private levenshteinDistance(str1: string, str2: string): number {
+    const matrix: number[][] = [];
+    
+    // Initialize first row and column
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    // Fill the matrix
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
   }
 
   /**

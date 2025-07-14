@@ -7,6 +7,30 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 **System map tracker**: system-map-tracker.js scans recently modified Git files and cross-references them with system maps
 **Dependency tracking**: dependency-tracker.js and system-map-cross-domain-validator-v2.js analyze actual code imports
 **@used-by annotations**: Add comments like @used-by domain/component to track dependencies
+**Malformed import detection**: malformed-import-detector.js scans TypeScript/JavaScript files for syntax issues and path resolution problems in import statements
+
+### Architecture Patterns & Rules
+- **Modular routes**: Strict line limits enforced (≤300 lines each)
+- **Memory system**: ChatGPT-style with deduplication
+- **File processing**: Go microservices for large files
+- **AI streaming**: SSE with smooth typing simulation
+- **Domain Boundaries**: STRICT separation - health/, memory/, chat/, settings/, file-manager/, home/, auth/
+- **Shared Folder Rules**: Only truly cross-cutting concerns (types, API utils, UI primitives)
+- **Component Limits**: Max 25 total UI components, consolidate when exceeded
+- **Service Limits**: Max 20 server services, merge single-method services
+- **Cross-Domain Ban**: Never import from other domains, use proper APIs instead
+
+### Before Adding ANY New Code (Claude AI Responsibility)
+1. **ALWAYS run architectural checks first**: `node dependency-tracker.js` and `node malformed-import-detector.js`
+2. Ask: "Does this belong in shared/ or a specific domain?"
+3. Ask: "Can I enhance existing components vs creating new ones?"
+4. Ask: "Is this service necessary or can it be a simple function?"
+5. **Automatically validate**: Run arch-guard checks before implementing features
+6. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
+
+### Important References
+- **Architecture Guardian**: See .claude/commands/arch-guard.md
+- **Clean Code Checklist**: See .claude/commands/clean-code.md
 
 # System Architecture
 

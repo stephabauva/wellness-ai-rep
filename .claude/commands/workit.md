@@ -5,130 +5,95 @@
 
 ## Development Workflow
 
-### 1. Pre-Execution Checklist
-- [ ] Plan approved by user
-- [ ] System maps reviewed
-- [ ] Dependencies checked
-- [ ] Database migration needs assessed
+### 1. Pre-Execution
+- [ ] Plan approved by user (from chew.md process)
+- [ ] TodoWrite tasks created and prioritized
+- [ ] Architecture validated (clean-code.md checks completed)
 
 ### 2. During Development
-1. **Mark todos** as in_progress/completed in real-time
+1. **Mark TodoWrite tasks** as in_progress/completed in real-time
 2. **High-level updates** to user during execution
-3. **Run system-map-tracker.js** after each file edit
-4. **Test incrementally** - don't wait until end
+3. **Test incrementally** - don't wait until end
+4. **Update system maps** as you modify features
 
-### 3. Post-Development
-1. Update system maps for modified features
-2. Add review section to todo.md
-3. Clean up temporary files
-4. Run final tests
+### 3. Execution Principles
+- **Simplicity first**: Minimal code changes that solve the problem
+- **Integration required**: Everything must be fully functional, no TODOs
+- **Consider Go services**: For performance-critical operations (>5MB files, heavy processing)
+- **Incremental delivery**: Ship working features, enhance iteratively
 
-## Code Quality Standards
+## App-Specific Development Patterns
 
-### Core Principles
-- **Simplicity first**: Minimal code changes
-- **No backward compatibility**: Don't bloat codebase
-- **No optional features**: Everything must be integrated
-- **Production-ready**: Fully functional, no TODOs
-- **Lean approach**: Consider Go over TypeScript for performance
-
-### Code Structure Rules
-- **File size limit**: ≤300 lines per file
-- **Component focus**: Single responsibility
-- **Hook usage**: For state management
-- **Error boundaries**: Always implement
-- **TypeScript strict**: Verify with `npm run check`
-
-### Dependency Management
-```javascript
-// Always add @used-by annotations
-// @used-by chat/ChatInterface
-// @used-by memory/MemoryProcessor
-export const sharedUtility = () => {
-  // ...
-}
-```
-
-### Cross-Domain Safety
-Before modifying shared code:
-1. Run `node dependency-tracker.js`
-2. Check all @used-by annotations
-3. Test each dependent component
-
-## Testing Requirements
-
-### Test Execution
-- `npx vitest` - Run all tests
-- `npx vitest [file]` - Run specific test
-- Always run tests before marking task complete
-
-### Test Types
-- **Unit tests**: Every new function
-- **Integration tests**: API endpoints (supertest)
-- **Component tests**: React components (@testing-library/react)
-- **Performance tests**: Memory operations (<50ms target)
-
-## Performance Guidelines
-
-### Frontend
-- Lazy load large components
-- Implement multi-level caching with TTL
-- Use React.memo for expensive renders
-- Profile with React DevTools
-
-### Backend
-- Circuit breakers for external services
+### Memory System Development
+- Use `chatgpt-memory-enhancement.ts` for memory processing
 - Background processing must be non-blocking
-- Chunk large data operations
-- Consider Go microservices for >5MB files
+- Target <50ms for critical memory operations
+- Always include deduplication logic
 
-### Memory System Specifics
-- Use `chatgpt-memory-enhancement.ts`
-- Always include deduplication
-- Background processing non-blocking
-- Target <50ms for critical paths
-
-## Health Data Processing
+### Health Data Processing
 - Preserve timestamps: `data.timestamp || new Date()`
 - Support formats: Apple Health XML, CDA XML, Google Fit JSON
 - Use Go service for files >5MB
-- Implement chunk-based processing
+- Implement chunk-based processing for large datasets
+
+### AI Integration Patterns
+- Multi-provider system (OpenAI GPT-4o, Google Gemini 2.0 Flash)
+- SSE streaming with smooth typing simulation
+- Context building with memory integration
+- Automatic model selection based on complexity
+
+### Testing During Development
+- `npx vitest` - Run affected tests frequently
+- `npx vitest [file]` - Test specific functionality immediately
+- **Unit tests**: Every new function, especially utilities
+- **Integration tests**: API endpoints with realistic data
+- **Performance tests**: Memory operations, file processing
+- **Component tests**: React components with real user interactions
+
+## Performance Guidelines
+
+### Frontend Performance
+- **Lazy load components**: Use React.lazy() for routes and heavy components
+- **Optimize re-renders**: React.memo for expensive components, useMemo for calculations
+- **Streaming optimizations**: SmoothStreamingText component with natural typing rhythm
+- **Query optimization**: React Query caching for AI responses and health data
+
+### Backend Performance  
+- **Go services**: Leverage existing Go microservices for file processing
+- **Non-blocking operations**: Memory detection and health data processing in background
+- **Chunked processing**: Split large operations (health data imports, file processing)
+- **Connection pooling**: Use Neon serverless connection pooling effectively
+
+### Wellness App Specific Optimizations
+- **AI streaming**: Maintain SSE connections efficiently, handle reconnections
+- **Memory system**: Cache frequent memory queries, batch memory updates
+- **Health data**: Index by date ranges, optimize for time-series queries
 
 ## Integration Verification
 
-### Before Marking Complete
-- [ ] No unused imports or code
+### Before Marking TodoWrite Tasks Complete
+- [ ] Feature fully integrated into existing user flows
+- [ ] Error handling with user-friendly messages
+- [ ] Loading states for all async operations
+- [ ] TypeScript types complete and strict
 - [ ] No console.logs in production code
-- [ ] All features integrated and accessible
-- [ ] Error handling comprehensive
-- [ ] Loading states implemented
-- [ ] TypeScript types complete
+- [ ] System maps updated if architecture changed
 
-### Final Checks
+### Final Validation
 ```bash
-# Must pass all:
-npm run check        # TypeScript
-npx vitest          # Tests
-npm run build       # Build verification
-node system-map-tracker.js  # Documentation
+# Essential checks before completion:
+npm run check        # TypeScript strict validation
+npx vitest          # All tests passing
+npm run build       # Production build works
 ```
 
-## Common Pitfalls to Avoid
-1. **Don't create new files** unless absolutely necessary
-2. **Don't modify vite.config.ts** or WebSocket code
-3. **Don't add features** without integration points
-4. **Don't skip @used-by** annotations
-5. **Don't ignore test failures**
+## Critical Replit Constraints
+- **Never modify**: vite.config.ts, WebSocket handling, compression settings
+- **Environment aware**: Port mapping dev (5000) → prod (80)
+- **HMR stability**: Maintain hot module replacement for development efficiency
 
-## Quick Reference Commands
-```bash
-# During development
-npm run dev                    # Start dev server
-node dependency-tracker.js     # Check dependencies
-node system-map-tracker.js     # Verify documentation
-
-# Before completion
-npm run check                  # TypeScript check
-npx vitest                     # Run tests
-npm run build                  # Verify build
-```
+## Execution Reminders
+- **File limits**: ≤300 lines per route/component
+- **Domain boundaries**: Respect health/, memory/, chat/, settings/, file-manager/, home/, auth/
+- **Component/service limits**: Check totals before creating new ones
+- **Integration first**: Every feature must be accessible through UI and working end-to-end

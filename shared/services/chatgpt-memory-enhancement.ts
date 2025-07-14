@@ -262,8 +262,8 @@ Use this information naturally in your responses to provide personalized guidanc
       // Find semantically similar memory using existing similarity logic
       const similarMemory = await this.findSimilarMemory(messageContent, recentMemories);
       
-      if (similarMemory && similarMemory.similarity > 0.8) {
-        // High similarity - merge instead of creating duplicate
+      if (similarMemory && similarMemory.similarity > 0.6) {
+        // High similarity - merge instead of creating duplicate (lowered from 0.8)
         const result = {
           action: 'merge' as const,
           existingMemoryId: similarMemory.id,
@@ -274,8 +274,8 @@ Use this information naturally in your responses to provide personalized guidanc
         // Cache the result
         this.deduplicationCache.set(cacheKey, similarMemory.id);
         return result;
-      } else if (similarMemory && similarMemory.similarity > 0.6) {
-        // Medium similarity - update existing memory
+      } else if (similarMemory && similarMemory.similarity > 0.4) {
+        // Medium similarity - update existing memory (lowered from 0.6)
         const result = {
           action: 'update' as const,
           existingMemoryId: similarMemory.id,
@@ -326,7 +326,7 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Find similar memory using semantic similarity calculation
+   * Find similar memory using semantic similarity calculation with fuzzy matching fallback
    */
   private async findSimilarMemory(
     content: string, 
@@ -361,10 +361,19 @@ Use this information naturally in your responses to provide personalized guidanc
         }
       }
 
+      // If no good semantic match found, try fuzzy string matching as fallback
+      if (!bestMatch || bestMatch.similarity < 0.3) {
+        const fuzzyMatch = this.findFuzzyMatch(content, memories);
+        if (fuzzyMatch && (!bestMatch || fuzzyMatch.similarity > bestMatch.similarity)) {
+          bestMatch = fuzzyMatch;
+        }
+      }
+
       return bestMatch;
     } catch (error) {
       console.error('[ChatGPTMemoryEnhancement] Similarity check failed:', error);
-      return null;
+      // Fallback to fuzzy matching if embedding fails
+      return this.findFuzzyMatch(content, memories);
     }
   }
 
@@ -440,12 +449,60 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
+   * Find fuzzy match using word-based similarity
+   */
+  private findFuzzyMatch(
+    content: string, 
+    memories: MemoryEntry[]
+  ): { id: string; content: string; similarity: number } | null {
+    const normalizedContent = content.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+    const contentWords = normalizedContent.split(/\s+/).filter(w => w.length > 2);
+    
+    if (contentWords.length === 0) return null;
+
+    let bestMatch: { id: string; content: string; similarity: number } | null = null;
+    let highestSimilarity = 0;
+
+    for (const memory of memories) {
+      const normalizedMemory = memory.content.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      const memoryWords = normalizedMemory.split(/\s+/).filter(w => w.length > 2);
+      
+      if (memoryWords.length === 0) continue;
+
+      // Calculate Jaccard similarity (intersection over union)
+      const intersection = contentWords.filter(w => memoryWords.includes(w));
+      const union = [...new Set([...contentWords, ...memoryWords])];
+      const jaccardSimilarity = intersection.length / union.length;
+
+      // Calculate word overlap similarity
+      const overlapSimilarity = intersection.length / Math.max(contentWords.length, memoryWords.length);
+      
+      // Combined similarity score (weighted)
+      const combinedSimilarity = (jaccardSimilarity * 0.6) + (overlapSimilarity * 0.4);
+
+      if (combinedSimilarity > highestSimilarity && combinedSimilarity > 0.2) {
+        highestSimilarity = combinedSimilarity;
+        bestMatch = {
+          id: memory.id,
+          content: memory.content,
+          similarity: combinedSimilarity
+        };
+      }
+    }
+
+    return bestMatch;
+  }
+
+  /**
    * Get performance metrics for monitoring
    */
   getPerformanceMetrics(): any {
     return {
       cacheSize: this.deduplicationCache.size,
       activeProcessing: this.processingPromises.size,
+      embeddingCacheSize: this.embeddingCache.size,
+      promptCacheSize: this.promptCache.size,
+      memoryRetrievalCacheSize: this.memoryRetrievalCache.size,
       timestamp: new Date().toISOString()
     };
   }

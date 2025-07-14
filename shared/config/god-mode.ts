@@ -13,16 +13,17 @@ interface GodModeConfig {
   };
 }
 
-// Client-safe environment variable access
+// Unified environment variable access using only VITE_GODMODE
 const getGodModeEnabled = (): boolean => {
   // In client-side code, use Vite's import.meta.env
   if (typeof window !== 'undefined') {
     return import.meta.env.VITE_GODMODE === 'true';
   }
   
-  // In server-side code, use process.env
+  // In server-side code, also use VITE_GODMODE from process.env
+  // Vite passes VITE_* variables to both client and server environments
   if (typeof process !== 'undefined' && process.env) {
-    return process.env.GODMODE === 'true';
+    return process.env.VITE_GODMODE === 'true';
   }
   
   return false;

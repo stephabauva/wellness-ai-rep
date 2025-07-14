@@ -5,7 +5,7 @@ import { z } from "zod";
 import { 
   Express, storage, aiService, transcriptionService, db, eq, desc,
   conversations, conversationMessages, files, attachmentRetentionService,
-  multer, join, existsSync
+  multer, join, existsSync, fs, nanoid
 } from "./shared-dependencies.js";
 import { nutritionInferenceService } from "../services/nutrition-inference-service.js";
 
@@ -212,6 +212,86 @@ async function processNutritionData(
 
 export async function registerChatRoutes(app: Express): Promise<Server> {
   
+  // Chat-specific file upload endpoint
+  const chatUpload = multer({
+    dest: 'uploads/',
+    limits: { fileSize: 200 * 1024 * 1024 }, // 200MB
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = [
+        'image/', 'video/', 'audio/', 'application/pdf', 'text/',
+        'application/json', 'application/xml', 'text/xml', 'text/csv',
+        'application/msword', 'application/vnd.openxmlformats-officedocument'
+      ];
+      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
+      cb(null, isAllowed);
+    }
+  });
+
+  app.post('/api/chat/attachments', chatUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Chat-specific file processing
+      const file = req.file;
+      const originalName = file.originalname;
+      const fileName = `${nanoid()}-${originalName}`;
+      const filePath = join(process.cwd(), 'uploads', fileName);
+
+      // Move file to final location
+      fs.renameSync(file.path, filePath);
+      
+      // Chat-specific retention logic
+      const categorization = await attachmentRetentionService().categorizeAttachment(
+        originalName, file.mimetype, "Chat attachment upload"
+      );
+      
+      const retentionDays = categorization.category === 'high' ? -1 : // Keep permanently for high-value content
+                           categorization.category === 'medium' ? 90 : 30;
+      const scheduledDeletion = retentionDays > 0 ? 
+        new Date(Date.now() + (retentionDays * 24 * 60 * 60 * 1000)) : null;
+
+      // Save to files table with chat-specific metadata
+      const [savedFile] = await db.insert(files).values({
+        userId: FIXED_USER_ID,
+        categoryId: categorization.suggestedCategoryId || null,
+        fileName: fileName,
+        displayName: originalName,
+        filePath: filePath,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        uploadSource: 'chat',
+        retentionPolicy: categorization.category,
+        retentionDays,
+        scheduledDeletion,
+        metadata: { 
+          uploadContext: 'chat',
+          categorization,
+          chatSpecific: true
+        }
+      }).returning();
+
+      res.status(201).json({
+        file: {
+          id: savedFile.id,
+          fileName: fileName,
+          originalName: originalName,
+          displayName: originalName,
+          url: `/uploads/${fileName}`,
+          retentionInfo: {
+            category: categorization.category,
+            retentionDays,
+            reason: categorization.reason
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Chat attachment upload error:', error);
+      res.status(500).json({ message: "Failed to upload chat attachment" });
+    }
+  });
+
   // Get all conversations for a user
   app.get('/api/conversations', async (req, res) => {
     try {

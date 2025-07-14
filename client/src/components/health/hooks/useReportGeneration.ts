@@ -1,7 +1,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@shared';
-import { generatePDF } from '@/components/health/utils/pdf-generator';
+import { generatePDF } from '../utils/pdf-generator';
 import { useToast } from '@shared/components/ui/use-toast';
 
 export const useReportGeneration = () => {

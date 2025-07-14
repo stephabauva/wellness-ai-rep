@@ -1,3 +1,4 @@
+// @used-by health/hooks
 import jsPDF from 'jspdf';
 
 export const generatePDF = (data: any) => {

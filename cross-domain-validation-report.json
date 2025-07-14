@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-07-14T08:11:08.196Z",
+  "timestamp": "2025-07-14T08:33:03.654Z",
   "summary": {
-    "totalIssues": 20,
-    "highSeverity": 1,
+    "totalIssues": 19,
+    "highSeverity": 0,
     "mediumSeverity": 19,
     "systemMapComponents": 0,
     "crossDomainDependencies": 18
@@ -120,17 +120,6 @@
     },
     {
       "type": "MISSING_FROM_SYSTEM_MAPS",
-      "component": "pdf-generator",
-      "file": "client/src/components/health/utils/pdf-generator.ts",
-      "actualDomain": "health",
-      "usedByDomains": [
-        "shared/hooks"
-      ],
-      "severity": "medium",
-      "details": "Cross-domain component not documented in any system map"
-    },
-    {
-      "type": "MISSING_FROM_SYSTEM_MAPS",
       "component": "AttachmentPreview",
       "file": "client/src/components/AttachmentPreview.tsx",
       "actualDomain": "chat/attachments",
@@ -147,6 +136,17 @@
       "actualDomain": "chat/audio",
       "usedByDomains": [
         "chat"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "pdf-generator",
+      "file": "client/src/components/health/utils/pdf-generator.ts",
+      "actualDomain": "health/hooks",
+      "usedByDomains": [
+        "health"
       ],
       "severity": "medium",
       "details": "Cross-domain component not documented in any system map"
@@ -215,14 +215,6 @@
       "domains": [
         "chat"
       ]
-    },
-    {
-      "type": "MISSING_DOMAIN_ENDPOINT",
-      "endpoint": "/api/chat/attachments",
-      "severity": "high",
-      "details": "Chat uses generic /api/files endpoint instead of domain-specific endpoint",
-      "recommendation": "Implement /api/chat/attachments to handle chat-specific logic",
-      "impact": "Chat attachments bypass chat-specific processing and retention policies"
     }
   ],
   "recommendations": [

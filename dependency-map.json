@@ -1046,14 +1046,14 @@
     "usageCount": 1
   },
   "client/src/components/health/utils/pdf-generator.ts": {
-    "domain": "health",
+    "domain": "health/hooks",
     "exports": [
       "generatePDF"
     ],
     "usedBy": [
       {
-        "file": "client/src/hooks/useReportGeneration.ts",
-        "domain": "shared/hooks",
+        "file": "client/src/components/health/hooks/useReportGeneration.ts",
+        "domain": "health",
         "imports": [
           "generatePDF"
         ]

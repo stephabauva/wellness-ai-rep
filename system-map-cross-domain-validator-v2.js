@@ -261,16 +261,47 @@ class CrossDomainValidatorV2 {
       });
     }
     
-    // Pattern 3: Missing chat-specific endpoints
+    // Pattern 3: Check for chat-specific endpoints
     const chatAttachmentEndpoint = '/api/chat/attachments';
-    this.issues.push({
-      type: 'MISSING_DOMAIN_ENDPOINT',
-      endpoint: chatAttachmentEndpoint,
-      severity: 'high',
-      details: 'Chat uses generic /api/files endpoint instead of domain-specific endpoint',
-      recommendation: 'Implement /api/chat/attachments to handle chat-specific logic',
-      impact: 'Chat attachments bypass chat-specific processing and retention policies'
-    });
+    
+    // Check if the chat attachments endpoint is implemented
+    let chatEndpointImplemented = false;
+    try {
+      const chatRoutesContent = fs.readFileSync('server/routes/chat-routes.ts', 'utf8');
+      if (chatRoutesContent.includes(chatAttachmentEndpoint)) {
+        chatEndpointImplemented = true;
+      }
+    } catch (error) {
+      // File not found or other error, endpoint not implemented
+    }
+    
+    // Check if chat is still using generic /api/files endpoint
+    let usesGenericEndpoint = false;
+    try {
+      const fileManagementContent = fs.readFileSync('shared/hooks/useFileManagement.ts', 'utf8');
+      if (fileManagementContent.includes('/api/files') && !fileManagementContent.includes('/api/chat/attachments')) {
+        usesGenericEndpoint = true;
+      }
+    } catch (error) {
+      // File not found, assume generic endpoint usage
+      usesGenericEndpoint = true;
+    }
+    
+    // Only report as missing if endpoint is not implemented OR if still using generic endpoint
+    if (!chatEndpointImplemented || usesGenericEndpoint) {
+      this.issues.push({
+        type: 'MISSING_DOMAIN_ENDPOINT',
+        endpoint: chatAttachmentEndpoint,
+        severity: 'high',
+        details: chatEndpointImplemented ? 
+          'Chat-specific endpoint exists but chat code still uses generic /api/files endpoint' :
+          'Chat uses generic /api/files endpoint instead of domain-specific endpoint',
+        recommendation: chatEndpointImplemented ?
+          'Update chat file management to use /api/chat/attachments instead of /api/files' :
+          'Implement /api/chat/attachments to handle chat-specific logic',
+        impact: 'Chat attachments bypass chat-specific processing and retention policies'
+      });
+    }
   }
 
   reportFindings() {

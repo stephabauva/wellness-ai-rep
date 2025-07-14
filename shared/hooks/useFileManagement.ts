@@ -4,12 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@shared/components/ui/use-toast';
 
 /**
- * @used-by chat/ChatInputArea - For file attachments in chat messages
+ * @used-by chat/ChatInputArea - For file attachments in chat messages via /api/chat/attachments
  * @used-by chat/MessageDisplayArea - For displaying attached files
  * @used-by shared/App - Via ChatSection component
- * @cross-domain true
+ * @cross-domain false - Now uses chat-specific endpoint
  * @critical-path true
- * @recommendation Consider creating chat-specific file handling abstraction
+ * @domain-specific true - Chat attachments with chat-specific retention policies
  */
 export type AttachedFile = {
   id: string;
@@ -27,10 +27,10 @@ export type AttachedFile = {
 
 /**
  * @used-by chat/ChatSection - Main chat interface file management
- * @used-by chat/ChatInputArea - File upload functionality
- * @cross-domain true
+ * @used-by chat/ChatInputArea - File upload functionality via /api/chat/attachments
+ * @cross-domain false - Now uses domain-specific chat endpoint
  * @critical-path true
- * @impact Changing this hook affects chat file attachments
+ * @impact Chat attachments now have domain-specific processing and retention
  */
 export const useFileManagement = () => {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
@@ -41,11 +41,11 @@ export const useFileManagement = () => {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch("/api/upload", {
+      const response = await fetch("/api/chat/attachments", {
         method: "POST",
         body: formData,
       });
-      if (!response.ok) throw new Error("Failed to upload file");
+      if (!response.ok) throw new Error("Failed to upload chat attachment");
       return await response.json();
     },
     onSuccess: (data, file) => {
@@ -67,9 +67,13 @@ export const useFileManagement = () => {
       };
       setAttachedFiles((prev) => [...prev, attachedFile]);
       
-      // Invalidate file queries to ensure file management shows updated files
-      queryClient.invalidateQueries({ queryKey: ['files', '/api/files'] });
-      queryClient.invalidateQueries({ queryKey: ['files'] });
+      // Invalidate chat-specific cache keys
+      queryClient.invalidateQueries({ queryKey: ['chat-attachments'] });
+      // Only invalidate general files if this attachment should also appear there
+      if (data.file.retentionInfo?.category === 'high') {
+        queryClient.invalidateQueries({ queryKey: ['files', '/api/files'] });
+        queryClient.invalidateQueries({ queryKey: ['files'] });
+      }
       
       const retentionMessage = data.file.retentionInfo?.retentionDays === -1 
         ? "This file will be kept permanently as it appears to be medical data."

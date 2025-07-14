@@ -15,12 +15,22 @@ class MalformedImportDetector {
     this.filesScanned = 0;
     this.importsChecked = 0;
     this.pathAliases = {
-      '@/': './client/src/',
-      '@shared': './shared',
-      '@shared/': './shared/'
+      '@/': 'client/src/',
+      '@shared/': 'shared/',
+      '@shared': 'shared'
     };
     this.validExtensions = ['.ts', '.tsx', '.js', '.jsx', '.json'];
     this.indexFiles = ['index.ts', 'index.tsx', 'index.js', 'index.jsx'];
+    this.isESMProject = this.checkIfESMProject();
+  }
+
+  checkIfESMProject() {
+    try {
+      const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+      return packageJson.type === 'module';
+    } catch {
+      return false;
+    }
   }
 
   async scanProject() {
@@ -226,11 +236,13 @@ class MalformedImportDetector {
   resolveImportPath(importPath, fromDir) {
     let resolvedPath = importPath;
 
-    // Handle path aliases
+    // Handle path aliases first
     for (const [alias, replacement] of Object.entries(this.pathAliases)) {
       if (importPath.startsWith(alias)) {
         resolvedPath = importPath.replace(alias, replacement);
-        break;
+        // Resolve relative to project root for aliases
+        resolvedPath = path.resolve(process.cwd(), resolvedPath);
+        return this.findExistingFile(resolvedPath, importPath);
       }
     }
 
@@ -243,10 +255,10 @@ class MalformedImportDetector {
     }
 
     // Try different extensions and index files
-    return this.findExistingFile(resolvedPath);
+    return this.findExistingFile(resolvedPath, importPath);
   }
 
-  findExistingFile(basePath) {
+  findExistingFile(basePath, originalImportPath = '') {
     // First try the exact path
     if (fs.existsSync(basePath)) {
       const stats = fs.statSync(basePath);
@@ -263,6 +275,18 @@ class MalformedImportDetector {
         }
       }
       return null;
+    }
+
+    // For ESM TypeScript projects, .js imports should resolve to .ts files
+    if (this.isESMProject && originalImportPath.endsWith('.js')) {
+      const tsPath = basePath.replace(/\.js$/, '.ts');
+      if (fs.existsSync(tsPath)) {
+        return tsPath;
+      }
+      const tsxPath = basePath.replace(/\.js$/, '.tsx');
+      if (fs.existsSync(tsxPath)) {
+        return tsxPath;
+      }
     }
 
     // Try with different extensions
@@ -292,8 +316,15 @@ class MalformedImportDetector {
       return;
     }
 
-    // Check for .js extensions in TypeScript imports
-    if (importPath.endsWith('.js') && resolvedPath.endsWith('.ts')) {
+    // In ESM TypeScript projects, .js extensions are REQUIRED for .ts imports
+    // This is the correct pattern and should not be flagged as an error
+    if (this.isESMProject && importPath.endsWith('.js') && resolvedPath.endsWith('.ts')) {
+      // This is actually correct for ESM TypeScript - don't flag as error
+      return;
+    }
+
+    // For non-ESM projects, flag .js extensions on .ts imports as potentially incorrect
+    if (!this.isESMProject && importPath.endsWith('.js') && resolvedPath.endsWith('.ts')) {
       this.addIssue(filePath, lineNumber, 'TypeScript import uses .js extension for .ts file', line);
       return;
     }

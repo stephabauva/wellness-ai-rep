@@ -151,7 +151,7 @@ export default function MemorySection() {
   });
 
   // Overview count query - lightweight, runs once on mount
-  const { data: memoryOverview = { total: 0, categories: {}, qualityMetrics: {} }, isLoading: overviewLoading } = useQuery({
+  const { data: memoryOverview = { total: 0, categories: {}, qualityMetrics: {} }, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
     queryKey: ["memory-overview"],
     queryFn: async () => {
       const response = await fetch(`/api/memories/overview`);
@@ -255,8 +255,8 @@ export default function MemorySection() {
       });
     },
     onSuccess: async () => {
-      // Invalidate overview to update counts
-      await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
+      // Force immediate refetch of overview for instant UI updates
+      await refetchOverview();
       
       // Invalidate Godmode metrics to update quality indicators
       await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
@@ -286,8 +286,8 @@ export default function MemorySection() {
   const deleteMemoryMutation = useMutation({
     mutationFn: (memoryId: string) => apiRequest(`/api/memories/${memoryId}`, "DELETE"),
     onSuccess: async () => {
-      // Invalidate overview to update counts
-      await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
+      // Force immediate refetch of overview for instant UI updates
+      await refetchOverview();
       
       // Invalidate Godmode metrics to update quality indicators
       await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
@@ -315,8 +315,8 @@ export default function MemorySection() {
   const bulkDeleteMutation = useMutation({
     mutationFn: (memoryIds: string[]) => apiRequest("/api/memories/bulk", "DELETE", { memoryIds }),
     onSuccess: async (data) => {
-      // Invalidate overview to update counts
-      await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
+      // Force immediate refetch of overview for instant UI updates
+      await refetchOverview();
       
       // Invalidate Godmode metrics to update quality indicators
       await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });

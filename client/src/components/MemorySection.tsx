@@ -258,6 +258,9 @@ export default function MemorySection() {
       // Invalidate overview to update counts
       await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
       
+      // Invalidate Godmode metrics to update quality indicators
+      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
+      
       // If memories are loaded, refetch them to show new memory
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
@@ -286,6 +289,9 @@ export default function MemorySection() {
       // Invalidate overview to update counts
       await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
       
+      // Invalidate Godmode metrics to update quality indicators
+      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
+      
       // If memories are loaded, refetch them to update the list
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
@@ -311,6 +317,9 @@ export default function MemorySection() {
     onSuccess: async (data) => {
       // Invalidate overview to update counts
       await queryClient.invalidateQueries({ queryKey: ["memory-overview"] });
+      
+      // Invalidate Godmode metrics to update quality indicators
+      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
       
       // If memories are loaded, refetch them to update the list
       if (memoriesLoaded) {

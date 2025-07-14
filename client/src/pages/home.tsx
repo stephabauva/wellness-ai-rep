@@ -7,8 +7,10 @@ import ConnectedDevicesSection from "@/components/ConnectedDevicesSection";
 import MemorySection from "@/components/MemorySection";
 import FileManagerSection from "@/components/FileManagerSection";
 import SettingsSection from "@/components/SettingsSection";
+import GodModeSection from "@/components/GodModeSection";
 import SectionSkeleton from "@/components/SectionSkeleton";
 import { useAppContext } from "@shared";
+import { isGodModeEnabled } from "@shared/config/god-mode";
 
 const Home: React.FC = () => {
   const { activeSection, loadedSections } = useAppContext(); // Add loadedSections
@@ -35,6 +37,10 @@ const Home: React.FC = () => {
   const settingsSectionComponent = useMemo(() => 
     loadedSections.includes('settings') ? <SettingsSection /> : <SectionSkeleton type="settings" />, 
     [loadedSections]
+  );
+  const godModeSectionComponent = useMemo(() => 
+    isGodModeEnabled() ? <GodModeSection /> : null, 
+    []
   );
 
   // renderActiveSection function is removed
@@ -68,12 +74,17 @@ const Home: React.FC = () => {
         <div style={{ display: activeSection === 'settings' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
           {settingsSectionComponent}
         </div>
+        {isGodModeEnabled() && (
+          <div style={{ display: activeSection === 'godmode' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
+            {godModeSectionComponent}
+          </div>
+        )}
         {/*
           If AppContext guarantees activeSection is always one of the known valid sections (and defaults to 'chat'),
           no explicit default rendering for "unrecognized activeSection" is needed here.
           The original switch defaulted to ChatSection. If AppContext.activeSection can be something else
           unexpectedly, and ChatSection should appear, the display logic for ChatSection would need:
-          display: (activeSection === 'chat' || !['health', 'devices', 'memory', 'files', 'settings'].includes(activeSection)) ? 'flex' : 'none'
+          display: (activeSection === 'chat' || !['health', 'devices', 'memory', 'files', 'settings', 'godmode'].includes(activeSection)) ? 'flex' : 'none'
           For now, assuming AppContext handles default correctly.
         */}
       </div>

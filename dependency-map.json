@@ -531,6 +531,23 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "client/src/components/GodModeSection.tsx": {
+    "domain": "unknown/needs-classification",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "app/pages",
+        "imports": [
+          "GodModeSection"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/components/FileManagerSection.tsx": {
     "domain": "file-manager",
     "exports": [

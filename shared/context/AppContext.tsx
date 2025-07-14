@@ -28,7 +28,7 @@ export type AttachedFile = {
   displayName?: string;
 };
 
-export type ActiveSection = "chat" | "health" | "devices" | "memory" | "files" | "settings";
+export type ActiveSection = "chat" | "health" | "devices" | "memory" | "files" | "settings" | "godmode";
 
 export interface AppSettings {
   aiProvider?: string;

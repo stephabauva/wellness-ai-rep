@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@shared/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, ShieldAlert, Calendar, Target } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target } from "lucide-react";
 import { Eye, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
@@ -565,47 +565,6 @@ export default function MemorySection() {
                 </div>
               </div>
 
-              {/* Quality Metrics Section */}
-              {memoryOverview.qualityMetrics && (
-                <div className="border-t pt-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ShieldAlert className="h-4 w-4 text-gray-600" />
-                    <h3 className="text-sm font-semibold text-gray-700">Memory Quality</h3>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className={`text-lg font-bold ${
-                        memoryOverview.qualityMetrics.qualityScore >= 0.8 ? 'text-green-600' :
-                        memoryOverview.qualityMetrics.qualityScore >= 0.6 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {Math.round((memoryOverview.qualityMetrics.qualityScore || 0) * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Quality Score</div>
-                    </div>
-                    <div className="text-center">
-                      <div className={`text-lg font-bold ${
-                        memoryOverview.qualityMetrics.duplicateRate <= 0.1 ? 'text-green-600' :
-                        memoryOverview.qualityMetrics.duplicateRate <= 0.2 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {Math.round((memoryOverview.qualityMetrics.duplicateRate || 0) * 100)}%
-                      </div>
-                      <div className="text-xs text-gray-600">Duplicate Rate</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-blue-600">
-                        {memoryOverview.qualityMetrics.potentialDuplicates || 0}
-                      </div>
-                      <div className="text-xs text-gray-600">Potential Duplicates</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-600">
-                        {Math.round((memoryOverview.qualityMetrics.averageImportanceScore || 0) * 10) / 10}
-                      </div>
-                      <div className="text-xs text-gray-600">Avg. Importance</div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 

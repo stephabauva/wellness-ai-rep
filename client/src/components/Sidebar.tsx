@@ -6,8 +6,10 @@ import {
   Brain,
   Settings, 
   Zap,
-  FolderOpen
+  FolderOpen,
+  ShieldAlert
 } from "lucide-react";
+import { isGodModeEnabled } from "@shared/config/god-mode";
 import { useAppContext } from "@shared";
 import { cn } from "@shared";
 
@@ -36,7 +38,7 @@ const NavButton: React.FC<{
 const Sidebar: React.FC = () => {
   const { activeSection, setActiveSection } = useAppContext();
 
-  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "files" | "settings") => {
+  const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "files" | "settings" | "godmode") => {
     setActiveSection(section);
   }, [setActiveSection]);
 
@@ -94,6 +96,15 @@ const Sidebar: React.FC = () => {
               label="Settings"
               icon={<Settings className="h-6 w-6" />}
             />
+            
+            {isGodModeEnabled() && (
+              <NavButton 
+                active={activeSection === "godmode"}
+                onClick={() => handleNavClick("godmode")}
+                label="God Mode"
+                icon={<ShieldAlert className="h-6 w-6" />}
+              />
+            )}
           </nav>
           
           {/* User Profile */}

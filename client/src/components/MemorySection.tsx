@@ -7,7 +7,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/com
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@shared/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
 import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@shared";
@@ -424,20 +423,29 @@ export default function MemorySection() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Memory Overview</span>
-                <Dialog open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 px-6 py-3 min-h-[48px] touch-manipulation">
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Memory
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                      <DialogTitle>Manually Add Memory</DialogTitle>
-                      <DialogDescription>
-                        Add important information that your AI coach should remember for future conversations.
-                      </DialogDescription>
-                    </DialogHeader>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 px-6 py-3 min-h-[48px] touch-manipulation"
+                  onClick={() => setIsManualEntryOpen(!isManualEntryOpen)}
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Add Memory
+                </Button>
+              </CardTitle>
+              <CardDescription>
+                Your AI coach remembers important information from your conversations to provide personalized guidance.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Inline Add Memory Form */}
+              <Collapsible open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
+                <CollapsibleContent>
+                  <div className="border rounded-lg p-4 mb-6 bg-gradient-to-r from-purple-50 to-pink-50">
+                    <h3 className="text-lg font-semibold mb-2">Add New Memory</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Add important information that your AI coach should remember for future conversations.
+                    </p>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit((data: ManualMemoryFormData) => createManualMemoryMutation.mutate(data))} className="space-y-4">
                         <FormField
@@ -461,59 +469,61 @@ export default function MemorySection() {
                           )}
                         />
                         
-                        <FormField
-                          control={form.control}
-                          name="category"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Category</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select memory category" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="preferences">Preferences</SelectItem>
-                                  <SelectItem value="personal_context">Personal Context</SelectItem>
-                                  <SelectItem value="instructions">Instructions</SelectItem>
-                                  <SelectItem value="food_diet">Food & Diet</SelectItem>
-                                  <SelectItem value="goals">Goals</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                Choose the type of information this memory represents.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="importance"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Importance Level</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select importance level" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="low">Low - General information</SelectItem>
-                                  <SelectItem value="medium">Medium - Important preference</SelectItem>
-                                  <SelectItem value="high">High - Critical health information</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                How important is this information for coaching decisions?
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="category"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Category</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select memory category" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="preferences">Preferences</SelectItem>
+                                    <SelectItem value="personal_context">Personal Context</SelectItem>
+                                    <SelectItem value="instructions">Instructions</SelectItem>
+                                    <SelectItem value="food_diet">Food & Diet</SelectItem>
+                                    <SelectItem value="goals">Goals</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  Choose the type of information this memory represents.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="importance"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Importance Level</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select importance level" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="low">Low - General information</SelectItem>
+                                    <SelectItem value="medium">Medium - Important preference</SelectItem>
+                                    <SelectItem value="high">High - Critical health information</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  How important is this information for coaching decisions?
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                         
                         <div className="flex justify-end space-x-2 pt-4">
                           <Button
@@ -527,20 +537,24 @@ export default function MemorySection() {
                           <Button
                             type="submit"
                             disabled={createManualMemoryMutation.isPending}
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                           >
-                            {createManualMemoryMutation.isPending ? "Processing..." : "Save Memory"}
+                            {createManualMemoryMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              "Save Memory"
+                            )}
                           </Button>
                         </div>
                       </form>
                     </Form>
-                  </DialogContent>
-                </Dialog>
-              </CardTitle>
-              <CardDescription>
-                Your AI coach remembers important information from your conversations to provide personalized guidance.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
               {/* Memory Summary - Last Period Title */}
               <div className="text-lg font-semibold text-purple-700 mb-4">
                 Memory Overview

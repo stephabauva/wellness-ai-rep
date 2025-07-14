@@ -172,7 +172,7 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Generate semantic hash for deduplication with ultra-fast caching
+   * Generate semantic hash for deduplication using embedding-based approach
    */
   public async generateSemanticHash(message: string): Promise<string> {
     const normalizedMessage = message.toLowerCase().trim();
@@ -184,14 +184,28 @@ Use this information naturally in your responses to provide personalized guidanc
       return this.deduplicationCache.get(cacheKey)!;
     }
 
-    // For performance testing, use lightweight content-based hash
-    // Skip expensive AI embedding generation entirely
-    const fastHash = crypto.createHash('sha256').update(normalizedMessage).digest('hex').slice(0, 64);
-    
-    // Cache the hash for future use
-    this.deduplicationCache.set(cacheKey, fastHash);
-    
-    return fastHash;
+    try {
+      // Use embedding-based approach for better semantic similarity
+      const embedding = await memoryService.generateEmbedding(normalizedMessage);
+      
+      // Create hash from first 50 embedding dimensions for semantic similarity
+      const embeddingHash = crypto.createHash('sha256')
+        .update(embedding.slice(0, 50).join(','))
+        .digest('hex').slice(0, 32);
+      
+      // Cache the hash for future use
+      this.deduplicationCache.set(cacheKey, embeddingHash);
+      
+      return embeddingHash;
+    } catch (error) {
+      console.error('[ChatGPTMemoryEnhancement] Embedding generation failed, falling back to content hash:', error);
+      
+      // Fallback to content-based hash if embedding fails
+      const fallbackHash = crypto.createHash('sha256').update(normalizedMessage).digest('hex').slice(0, 32);
+      this.deduplicationCache.set(cacheKey, fallbackHash);
+      
+      return fallbackHash;
+    }
   }
 
   /**

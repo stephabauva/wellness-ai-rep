@@ -68,7 +68,8 @@
       "query:shared/services",
       "query:unknown/needs-classification",
       "query:infrastructure/routing",
-      "query:app/pages"
+      "query:app/pages",
+      "query:shared/hooks"
     ]
   },
   "errorPaths": {
@@ -120,11 +121,11 @@
       "aggregation": "Fast client-side metric calculation from fetched data"
     }
   },
-  "lastUpdated": "2025-07-13T20:11:53.335Z",
+  "lastUpdated": "2025-07-14T08:11:07.628Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-13T20:11:53.335Z",
-    "crossDomainFiles": 1,
+    "lastAnalyzed": "2025-07-14T08:11:07.628Z",
+    "crossDomainFiles": 2,
     "internalFiles": 0,
-    "totalDependencies": 1
+    "totalDependencies": 2
   }
 }

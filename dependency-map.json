@@ -100,23 +100,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/lib/pdf-generator.ts": {
-    "domain": "unknown/needs-classification",
-    "exports": [
-      "generatePDF"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/hooks/useReportGeneration.ts",
-        "domain": "health",
-        "imports": [
-          "generatePDF"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/hooks/useWebWorker.ts": {
     "domain": "shared/hooks",
     "exports": [
@@ -1062,6 +1045,23 @@
     "crossDomain": false,
     "usageCount": 1
   },
+  "client/src/components/health/utils/pdf-generator.ts": {
+    "domain": "health",
+    "exports": [
+      "generatePDF"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/useReportGeneration.ts",
+        "domain": "shared/hooks",
+        "imports": [
+          "generatePDF"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "server/vite.ts": {
     "domain": "unknown/needs-classification",
     "exports": [
@@ -1093,6 +1093,25 @@
         "domain": "infrastructure/server",
         "imports": [
           "registerSimpleRoutes"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
+    "exports": [
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "infrastructure/server",
+        "imports": [
+          "registerRoutes"
         ]
       }
     ],
@@ -1210,25 +1229,6 @@
         "domain": "infrastructure/server",
         "imports": [
           "databaseMigrationService"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/routes/index.ts": {
-    "domain": "infrastructure/routing",
-    "exports": [
-      "ROUTE_MODULES",
-      "EMERGENCY_FALLBACK",
-      "ROUTE_MODULES_ENABLED"
-    ],
-    "usedBy": [
-      {
-        "file": "server/index.ts",
-        "domain": "infrastructure/server",
-        "imports": [
-          "registerRoutes"
         ]
       }
     ],

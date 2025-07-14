@@ -60,7 +60,8 @@
       "query:shared/services",
       "query:unknown/needs-classification",
       "query:infrastructure/routing",
-      "query:app/pages"
+      "query:app/pages",
+      "query:shared/hooks"
     ]
   },
   "errorPaths": {
@@ -104,15 +105,15 @@
   },
   "current_status": {
     "frontend": "Fully implemented with downloadReportMutation",
-    "backend": "API endpoint planned but not yet implemented", 
+    "backend": "API endpoint planned but not yet implemented",
     "pdf_service": "PDF generation service implemented in client/src/lib/pdf-generator.ts",
     "error_handling": "Complete error handling with user feedback"
   },
-  "lastUpdated": "2025-07-13T20:11:53.334Z",
+  "lastUpdated": "2025-07-14T08:11:07.626Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-13T20:11:53.334Z",
-    "crossDomainFiles": 1,
+    "lastAnalyzed": "2025-07-14T08:11:07.626Z",
+    "crossDomainFiles": 2,
     "internalFiles": 0,
-    "totalDependencies": 1
+    "totalDependencies": 2
   }
 }

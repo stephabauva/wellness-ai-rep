@@ -60,7 +60,8 @@
       "query:shared/services",
       "query:unknown/needs-classification",
       "query:infrastructure/routing",
-      "query:app/pages"
+      "query:app/pages",
+      "query:shared/hooks"
     ]
   },
   "errorPaths": {
@@ -109,11 +110,11 @@
     "error_state": "User-friendly error messages with recovery options",
     "success_indicators": "Record count display and smooth transitions"
   },
-  "lastUpdated": "2025-07-13T20:11:53.333Z",
+  "lastUpdated": "2025-07-14T08:11:07.625Z",
   "dependencyAnalysis": {
-    "lastAnalyzed": "2025-07-13T20:11:53.333Z",
-    "crossDomainFiles": 1,
+    "lastAnalyzed": "2025-07-14T08:11:07.625Z",
+    "crossDomainFiles": 2,
     "internalFiles": 0,
-    "totalDependencies": 1
+    "totalDependencies": 2
   }
 }

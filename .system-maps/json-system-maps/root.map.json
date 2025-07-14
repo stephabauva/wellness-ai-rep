@@ -27,7 +27,7 @@
           "description": "Core chat messaging and streaming functionality",
           "path": ".system-maps/json-system-maps/chat/core-messaging.map.json"
         }
-      },
+      }
     },
     "memory": {
       "description": "AI memory system for context persistence and intelligent memory management",

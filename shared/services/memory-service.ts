@@ -440,6 +440,62 @@ class MemoryService {
     return null;
   }
 
+  // Validate memory content quality to prevent nonsensical memories
+  private validateMemoryContent(extractedInfo: string, category: MemoryCategory): boolean {
+    // Check for minimum content length
+    if (!extractedInfo || extractedInfo.trim().length < 5) {
+      logger.debug('Memory content too short', { content: extractedInfo, service: 'memory' });
+      return false;
+    }
+
+    // Check for undefined or placeholder content
+    if (extractedInfo.includes('undefined') || extractedInfo.includes('null') || extractedInfo.includes('N/A')) {
+      logger.debug('Placeholder content detected', { content: extractedInfo, service: 'memory' });
+      return false;
+    }
+
+    // Define nonsensical patterns
+    const nonsensicalPatterns = [
+      /eating water/i,
+      /drinking food/i,
+      /sleeping exercise/i,
+      /running sleep/i,
+      /breathing exercise.*food/i,
+      /workout.*water.*drink/i
+    ];
+
+    // Category-specific validation
+    if (category === 'food_diet') {
+      const foodLogicPatterns = [
+        /enjoys eating (water|air|nothing)/i,
+        /likes drinking (solid|food)/i,
+        /allergic to (water|air|breathing)/i,
+        /prefers eating (impossible|contradictory)/i
+      ];
+      
+      if (foodLogicPatterns.some(pattern => pattern.test(extractedInfo))) {
+        logger.warn('Nonsensical food/diet content detected', { content: extractedInfo, service: 'memory' });
+        return false;
+      }
+    }
+
+    // General nonsensical content check
+    if (nonsensicalPatterns.some(pattern => pattern.test(extractedInfo))) {
+      logger.warn('Nonsensical content detected', { content: extractedInfo, service: 'memory' });
+      return false;
+    }
+
+    // Check for very repetitive content (likely processing error)
+    const words = extractedInfo.toLowerCase().split(/\s+/);
+    const uniqueWords = new Set(words);
+    if (words.length > 3 && uniqueWords.size / words.length < 0.5) {
+      logger.debug('Overly repetitive content detected', { content: extractedInfo, service: 'memory' });
+      return false;
+    }
+
+    return true;
+  }
+
   // AI-powered detection of memory-worthy content
   async detectMemoryWorthy(message: string, conversationHistory: any[] = []): Promise<MemoryDetectionResult> {
     const prompt = `Analyze this wellness coaching conversation message and determine if it contains information worth remembering for future coaching sessions.
@@ -508,14 +564,28 @@ Respond with JSON:
       }
       
       const result = JSON.parse(content);
+      
+      // Validate content quality before returning positive result
+      const extractedInfo = result.extractedInfo || '';
+      const category = result.category || 'personal_context';
+      const shouldRemember = result.shouldRemember && extractedInfo && this.validateMemoryContent(extractedInfo, category);
+      
+      if (result.shouldRemember && !shouldRemember) {
+        logger.info('Memory rejected due to quality validation', { 
+          originalContent: extractedInfo,
+          category: category,
+          service: 'memory' 
+        });
+      }
+      
       return {
-        shouldRemember: result.shouldRemember || false,
-        category: result.category || 'personal_context',
+        shouldRemember: shouldRemember,
+        category: category,
         importance: result.importance || 0.5,
-        extractedInfo: result.extractedInfo || '',
+        extractedInfo: extractedInfo,
         labels: result.labels || [],
         keywords: result.keywords || [],
-        reasoning: result.reasoning || ''
+        reasoning: shouldRemember ? result.reasoning || '' : 'Content failed quality validation'
       };
     } catch (error) {
       console.error('Timeout or error in memory detection:', error);

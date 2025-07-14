@@ -31,6 +31,61 @@ const getOpenAI = () => {
   return openai;
 };
 
+const validateMemoryContent = (content: string, category: 'personal_info' | 'preference' | 'context' | 'goal'): boolean => {
+  // Check for minimum content length
+  if (!content || content.trim().length < 5) {
+    console.log(`[SimpleMemoryDetection] Content too short: "${content}"`);
+    return false;
+  }
+
+  // Check for undefined or placeholder content
+  if (content.includes('undefined') || content.includes('null') || content.includes('N/A')) {
+    console.log(`[SimpleMemoryDetection] Placeholder content detected: "${content}"`);
+    return false;
+  }
+
+  // Define nonsensical patterns that indicate poor quality content
+  const nonsensicalPatterns = [
+    /eating water/i,
+    /drinking food/i,
+    /sleeping exercise/i,
+    /running sleep/i,
+    /breathing exercise.*food/i,
+    /workout.*water.*drink/i
+  ];
+
+  // Category-specific validation
+  if (category === 'preference') {
+    // For food/diet preferences, check for logical inconsistencies
+    const foodLogicPatterns = [
+      /enjoys eating (water|air|nothing)/i,
+      /likes drinking (solid|food)/i,
+      /prefers (impossible|contradictory)/i
+    ];
+    
+    if (foodLogicPatterns.some(pattern => pattern.test(content))) {
+      console.log(`[SimpleMemoryDetection] Nonsensical food preference: "${content}"`);
+      return false;
+    }
+  }
+
+  // General nonsensical content check
+  if (nonsensicalPatterns.some(pattern => pattern.test(content))) {
+    console.log(`[SimpleMemoryDetection] Nonsensical content detected: "${content}"`);
+    return false;
+  }
+
+  // Check for very repetitive content (likely processing error)
+  const words = content.toLowerCase().split(/\s+/);
+  const uniqueWords = new Set(words);
+  if (words.length > 3 && uniqueWords.size / words.length < 0.5) {
+    console.log(`[SimpleMemoryDetection] Overly repetitive content: "${content}"`);
+    return false;
+  }
+
+  return true;
+};
+
 export const analyzeMessage = async (message: string, userId: number): Promise<void> => {
   console.log(`[SimpleMemoryDetection] Analyzing message for user ${userId}: ${message.substring(0, 100)}...`);
   try {
@@ -129,7 +184,8 @@ Return JSON only:
     
     const result: SimpleMemoryResult = JSON.parse(jsonStr);
 
-    if (result.shouldRemember && result.summary && result.importance > 0.5) {
+    // Validate memory content quality before storage
+    if (result.shouldRemember && result.summary && result.importance > 0.5 && validateMemoryContent(result.summary, result.category)) {
       // Store memory in database
       const memoryEntry: InsertMemoryEntry = {
         userId,

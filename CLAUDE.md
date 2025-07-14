@@ -13,6 +13,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **System map tracker**: system-map-tracker.js scans recently modified Git files and cross-references them with system maps
 **Dependency tracking**: dependency-tracker.js and system-map-cross-domain-validator-v2.js analyze actual code imports
 **@used-by annotations**: Add comments like @used-by domain/component to track dependencies
+**Malformed import detection**: malformed-import-detector.js scans TypeScript/JavaScript files for syntax issues and path resolution problems in import statements
 
 ### Key Commands
 - `npm run dev` - Start development server

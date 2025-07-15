@@ -18,14 +18,14 @@
     "architecture": "React + Express + PostgreSQL",
     "status": "active",
     "complexity": "simplified",
-    "lastMajorChange": "2025-07-12 - Complete simplification and optimization"
+    "lastMajorChange": "2025-07-15 - Moved to health domain structure for better organization"
   },
   "components": {
     "core": {
-      "SimpleHealthDashboard.tsx": {
-        "path": "client/src/components/SimpleHealthDashboard.tsx",
+      "HealthDashboard.tsx": {
+        "path": "client/src/components/health/dashboard/HealthDashboard.tsx",
         "type": "react-component",
-        "lines": 200,
+        "lines": 510,
         "responsibilities": [
           "UI rendering",
           "time range state",
@@ -33,7 +33,8 @@
           "user interactions"
         ],
         "imports": 8,
-        "complexity": "moderate"
+        "complexity": "moderate",
+        "note": "Moved from root components to health domain structure"
       }
     },
     "api": {
@@ -154,7 +155,7 @@
         ]
       },
       {
-        "file": "client/src/components/SimpleHealthDashboard.tsx",
+        "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
         "importedBy": [
           {
             "domain": "unknown/needs-classification",

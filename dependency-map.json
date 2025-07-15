@@ -411,23 +411,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "client/src/components/SimpleHealthDashboard.tsx": {
-    "domain": "health",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/pages/home.tsx",
-        "domain": "app/pages",
-        "imports": [
-          "SimpleHealthDashboard"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/components/Sidebar.tsx": {
     "domain": "app/navigation",
     "exports": [
@@ -684,146 +667,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/components/ui/textarea.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "TextareaProps",
-      "Textarea"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "Textarea"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sheet.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Sheet",
-      "SheetPortal",
-      "SheetOverlay",
-      "SheetTrigger",
-      "SheetClose",
-      "SheetContent",
-      "SheetHeader",
-      "SheetFooter",
-      "SheetTitle",
-      "SheetDescription",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Sheet",
-          "SheetContent",
-          "SheetDescription",
-          "SheetHeader",
-          "SheetTitle",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/scroll-area.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ScrollArea",
-      "ScrollBar"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConversationHistory.tsx",
-        "domain": "chat",
-        "imports": [
-          "ScrollArea"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/progress.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Progress"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Progress"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/device-card.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "DeviceCard"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConnectedDevicesSection.tsx",
-        "domain": "health/devices",
-        "imports": [
-          "DeviceCard"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/collapsible.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Collapsible",
-      "CollapsibleTrigger",
-      "CollapsibleContent"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "Collapsible",
-          "CollapsibleContent",
-          "CollapsibleTrigger"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/chat-message.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ChatMessage"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MessageDisplayArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "ChatMessage"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/components/settings/PerformanceSettings.tsx": {
     "domain": "settings",
     "exports": [
@@ -941,6 +784,107 @@
       }
     ],
     "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/sheet.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Sheet",
+      "SheetPortal",
+      "SheetOverlay",
+      "SheetTrigger",
+      "SheetClose",
+      "SheetContent",
+      "SheetHeader",
+      "SheetFooter",
+      "SheetTitle",
+      "SheetDescription",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Sheet",
+          "SheetContent",
+          "SheetDescription",
+          "SheetHeader",
+          "SheetTitle",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/scroll-area.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ScrollArea",
+      "ScrollBar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "ScrollArea"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/progress.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Progress"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Progress"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/device-card.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "DeviceCard"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "health/devices",
+        "imports": [
+          "DeviceCard"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/chat-message.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ChatMessage"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "ChatMessage"
+        ]
+      }
+    ],
+    "crossDomain": true,
     "usageCount": 1
   },
   "client/src/components/filemanager/QrCodeDialog.tsx": {
@@ -1079,6 +1023,23 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "client/src/components/health/dashboard/HealthDashboard.tsx": {
+    "domain": "health",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/pages/home.tsx",
+        "domain": "app/pages",
+        "imports": [
+          "HealthDashboard"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "server/vite.ts": {
     "domain": "unknown/needs-classification",
     "exports": [
@@ -1110,25 +1071,6 @@
         "domain": "infrastructure/server",
         "imports": [
           "registerSimpleRoutes"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/routes/index.ts": {
-    "domain": "infrastructure/routing",
-    "exports": [
-      "ROUTE_MODULES",
-      "EMERGENCY_FALLBACK",
-      "ROUTE_MODULES_ENABLED"
-    ],
-    "usedBy": [
-      {
-        "file": "server/index.ts",
-        "domain": "infrastructure/server",
-        "imports": [
-          "registerRoutes"
         ]
       }
     ],
@@ -1246,6 +1188,25 @@
         "domain": "infrastructure/server",
         "imports": [
           "databaseMigrationService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
+    "exports": [
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "infrastructure/server",
+        "imports": [
+          "registerRoutes"
         ]
       }
     ],

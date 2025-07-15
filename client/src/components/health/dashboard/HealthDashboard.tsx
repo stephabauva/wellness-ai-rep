@@ -15,9 +15,9 @@ interface HealthMetric {
   category: string | null;
 }
 
-interface SimpleHealthDashboardProps {}
+interface HealthDashboardProps {}
 
-const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
+const HealthDashboard: React.FC<HealthDashboardProps> = () => {
   const [timeRange, setTimeRange] = useState("7days");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -507,4 +507,4 @@ const SimpleHealthDashboard: React.FC<SimpleHealthDashboardProps> = () => {
   );
 };
 
-export default SimpleHealthDashboard;
+export default HealthDashboard;

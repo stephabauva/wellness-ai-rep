@@ -74,7 +74,7 @@ If the user clicks on 'cancel', it unchecks the checkboxes and the buttons 'canc
 ## Trend
 The user clicks on a dropdown to choose between 'last 7 days', 'last 30 days', 'last90 days'. Choosing one changes the trend of all metrics in the page 
 
-## Import health data
+## Import health data -> removed
 The user clicks on 'Import health data', clicks on 'choose file', and choose a file, such as the exported data of the iphone's health app. Then the user chooses the time range (for example: 1 month for the last month of data). Available ranges are 1, 3, 6 and 12 months. The user can choose the 'duplicate detection time window' (i feel like this should be in a config file, not accessible to the user). The user presses 'parse and preview'. The file is sliced, the system iterates through the slices with the most recent data until it reaches the past point selected by the user (here, 1 month), a modal opens with the number of valid data and the number of skipped data, the user presses a button to continue, the data are saved in the database and displayed in the health dashboard, the file is saved in file manager?
 
 ## Reset data
@@ -83,11 +83,11 @@ By pressing the button 'reset data', a confirmation modal opens, the user clicks
 ## Download PDF
 The user clicks on the 'download pdf', the system gathers the latest health data, generates a pdf and makes it available to download. 
 
-## Health Tabs
+## Health Tabs -> removed
 The user can clicks on different tabs (overview, body, heart, lifestyle, medical, advanced) to only display the metrics related to the tab. 
 
 ## AI Access data
-In settings, the user can toggle on or off the type health data the ai has access to, and save the changes.
+In settings, the user can toggle on or off the type of health data the ai has access to, and save the changes.
 
 ## Data retention policies
 In settings, the user how long a type of data needs to be retained.
@@ -105,10 +105,7 @@ nothing implemented yet
 dependencies : chat, settings 
 
 ## Overview
-The user can see at the top an overview of the number of memories 
-
-## Memory tabs
-The user can click on each tab to display the memories associated. In each tab, there is an description about what the category in a blue rectangle.
+The user can see at the top an overview of the number of memories in each category. Clicking on each overview's category displays the memories associated and a description about the category in a blue rectangle.
 
 ## labels
 Each memory has labels that can be selected and deselected by user to controlled which memories to display
@@ -117,10 +114,11 @@ Each memory has labels that can be selected and deselected by user to controlled
 To see the memories, the user must press the button 'show my stored memories' (i think this was to load the application faster, so the memories don't have to be loaded on start)
 
 ## Manual memory entry
-The user clicks on 'add memory, a modal opens, the user types a message, choose a category and an importance level. From there, it uses the existing memory processing system like chat does. Hence, it is then sent to an 'ai memory reviewer' (i feel like the importance level should be attributed by the ai, even the category), the ai response is then added to the memory page and saved in the database.
+The user clicks on 'add memory, a form opens, the user types a message, choose a category and an importance level. 
+[Need to be reviewed after memory system was simplified -> From there, it uses the existing memory processing system like chat does. Hence, it is then sent to an 'ai memory reviewer' (i feel like the importance level should be attributed by the ai, even the category), the ai response is then added to the memory page and saved in the database.]
 
 ## Deleting memories
-A checkbox is visible next to all memories, the user check boxes, a red button appears 'delete selected', the user presses that button, the memories are removed from the page and deleted from the database.
+The user clicks on a memory to select it or a checkbox is visible next to all memories, the user can check boxes. Then a red button appears 'delete selected', the user presses that button, the memories are removed from the page and deleted from the database.
 After checking boxes, a 'clear' button also appear, clicling on it, clears all check marks for all boxes, which makes the delete button disappear as well.
 
 ## memory deduplication

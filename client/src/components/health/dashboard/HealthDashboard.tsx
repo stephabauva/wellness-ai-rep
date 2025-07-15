@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { Download, Share2, Database, Smartphone, Trophy, CheckCircle, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
-import { Card, CardContent } from "@shared/components/ui/card";
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@shared/components/ui/use-toast";
+
+import MobileHeader from "./MobileHeader";
+import HeroSection from "./HeroSection";
+import MetricsGrid from "./MetricsGrid";
+import ActivityScroll from "./ActivityScroll";
+import ActionButtons from "./ActionButtons";
 
 interface HealthMetric {
   id: number;
@@ -198,311 +200,74 @@ const HealthDashboard: React.FC<HealthDashboardProps> = () => {
     return summary;
   }, [healthData, timeRange]);
 
-  // AI Analysis (simulated for MVP)
-  const aiAnalysis = useMemo(() => {
-    if (!healthSummary) return [];
 
-    const insights = [];
-    
-    if (healthSummary.weight) {
-      insights.push({
-        type: 'success',
-        text: `Weight loss: Excellent progress, -1.3kg this month`,
-        icon: CheckCircle
-      });
-    }
-    
-    if (healthSummary.steps) {
-      insights.push({
-        type: 'success', 
-        text: `Physical activity: Daily goal regularly achieved`,
-        icon: CheckCircle
-      });
-    }
-    
-    if (healthSummary.sleep) {
-      insights.push({
-        type: 'success',
-        text: `Sleep: Quality consistently improving`,
-        icon: CheckCircle
-      });
-    }
-    
-    if (healthSummary.caloriesConsumed) {
-      insights.push({
-        type: 'warning',
-        text: `Hydration: Improve to reach 2.5L/day`,
-        icon: AlertCircle
-      });
-    }
-    
-    insights.push({
-      type: 'success',
-      text: `Overall score: You're on the right track!`,
-      icon: Trophy
-    });
-
-    return insights;
-  }, [healthSummary]);
+  const handleTimeRangeChange = (range: string) => {
+    console.log(`[HealthDashboard] Switching to ${range} from ${timeRange}`);
+    queryClient.invalidateQueries({ queryKey: ['health-data'] });
+    setTimeRange(range);
+  };
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <MobileHeader timeRange={timeRange} onTimeRangeChange={handleTimeRangeChange} />
+        <div className="flex-1 flex items-center justify-center pt-20">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header with Gradient */}
-      <div className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-lg p-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <TrendingUp className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-bold">Health Report</h1>
-        </div>
-        <p className="text-white/90">Complete synthesis of your health data</p>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <MobileHeader timeRange={timeRange} onTimeRangeChange={handleTimeRangeChange} />
+      
+      <HeroSection 
+        wellnessScore={healthSummary?.wellnessScore || "8.1"} 
+        timeRange={timeRange}
+        totalRecords={healthSummary?.totalRecords || 0}
+      />
 
-      {/* Time Period Toggle */}
-      <div className="flex gap-2">
-        <Button
-          onClick={() => {
-            console.log(`[SimpleHealthDashboard] Switching to 7 days from ${timeRange}`);
-            queryClient.invalidateQueries({ queryKey: ['health-data'] });
-            setTimeRange("7days");
-          }}
-          variant={timeRange === "7days" ? "default" : "outline"}
-          className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-        >
-          7 days
-        </Button>
-        <Button
-          onClick={() => {
-            console.log(`[SimpleHealthDashboard] Switching to 30 days from ${timeRange}`);
-            queryClient.invalidateQueries({ queryKey: ['health-data'] });
-            setTimeRange("30days");
-          }}
-          variant={timeRange === "30days" ? "default" : "outline"}
-          className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
-        >
-          30 days
-        </Button>
-      </div>
+      <MetricsGrid healthSummary={healthSummary} />
 
-      {/* Summary Title */}
-      <div className="text-lg font-semibold text-green-700">
-        Summary - Last {timeRange === "7days" ? "7 days" : "30 days"}
-        {healthSummary && (
-          <span className="text-sm text-gray-500 ml-2">
-            ({healthSummary.totalRecords} records)
-          </span>
-        )}
-      </div>
+      <ActivityScroll />
 
-      {/* Metrics Grid */}
-      {healthSummary ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Weight */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Average Weight</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {healthSummary.weight ? `${healthSummary.weight} kg` : "67.9 kg"}
-                </div>
-              </div>
-              <TrendingDown className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-
-          {/* BMI */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Average BMI</div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {healthSummary.bmi || "22.1"}
-                </div>
-              </div>
-              <TrendingDown className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-
-          {/* Body Fat */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Body Fat</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {healthSummary.bodyFat ? `${healthSummary.bodyFat}%` : "22.4%"}
-                </div>
-              </div>
-              <TrendingUp className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-
-          {/* Sleep */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Average Sleep</div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {healthSummary.sleep ? `${healthSummary.sleep}h` : "7h15"}
-                </div>
-              </div>
-              <TrendingUp className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-
-          {/* Steps */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Daily Activity</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {healthSummary.steps ? `${healthSummary.steps} steps` : "11,850 steps"}
-                </div>
-              </div>
-              <TrendingUp className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-
-          {/* Calories Consumed */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Calories Consumed</div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {healthSummary.caloriesConsumed ? `${healthSummary.caloriesConsumed} kcal` : "1,245 kcal"}
-                </div>
-              </div>
-              <TrendingDown className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-
-          {/* Calories Burned */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Calories Burned</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {healthSummary.caloriesBurned ? `${healthSummary.caloriesBurned} kcal` : "2,180 kcal"}
-                </div>
-              </div>
-              <TrendingUp className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-
-          {/* Wellness Score */}
-          <Card className="p-4 bg-gray-50 border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-600">Wellness Score</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {healthSummary.wellnessScore ? `${healthSummary.wellnessScore}/10` : "8.1/10"}
-                </div>
-              </div>
-              <TrendingUp className="h-5 w-5 text-gray-400" />
-            </div>
-          </Card>
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <div className="text-muted-foreground mb-4">
+      <ActionButtons 
+        onDownloadReport={() => downloadReportMutation.mutate()}
+        onShareReport={() => shareReportMutation.mutate()}
+        onSyncData={() => smartSyncMutation.mutate()}
+        onResetData={() => resetDataMutation.mutate()}
+        isLoading={{
+          download: downloadReportMutation.isPending,
+          share: shareReportMutation.isPending,
+          sync: smartSyncMutation.isPending,
+          reset: resetDataMutation.isPending,
+        }}
+      />
+      
+      {/* No data fallback handled in MetricsGrid */}
+      {!healthSummary && (
+        <div className="px-4 text-center py-8">
+          <div className="text-gray-500 dark:text-gray-400 mb-4">
             No health data available for the selected time range
           </div>
-          <div className="flex justify-center gap-2">
-            <Button onClick={() => smartSyncMutation.mutate()}>
-              <Smartphone className="h-4 w-4 mr-2" />
-              Sync Health Data
-            </Button>
-            <Button onClick={() => resetDataMutation.mutate()} variant="outline">
-              <Database className="h-4 w-4 mr-2" />
-              Reset Data
-            </Button>
-          </div>
         </div>
       )}
-
-      {/* AI Analysis */}
-      {aiAnalysis.length > 0 && (
-        <Card className="p-6 bg-purple-50 border-purple-200">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-purple-100 rounded-full">
-              <Trophy className="h-5 w-5 text-purple-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-purple-800">Global Analysis</h3>
-          </div>
-          <div className="space-y-3">
-            {aiAnalysis.map((insight, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <insight.icon className={`h-5 w-5 mt-0.5 ${
-                  insight.type === 'success' ? 'text-green-600' : 'text-amber-600'
-                }`} />
-                <span className="text-sm text-gray-700">{insight.text}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button
-          onClick={() => downloadReportMutation.mutate()}
-          disabled={downloadReportMutation.isPending}
-          className="flex-1 bg-blue-600 hover:bg-blue-700"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Download Report (PDF)
-        </Button>
-        
-        <Button
-          onClick={() => shareReportMutation.mutate()}
-          disabled={shareReportMutation.isPending}
-          variant="outline"
-          className="flex-1"
-        >
-          <Share2 className="h-4 w-4 mr-2" />
-          Share Report
-        </Button>
-      </div>
-
-      {/* Data Management Buttons */}
-      <div className="flex gap-3">
-        <Button
-          onClick={() => smartSyncMutation.mutate()}
-          disabled={smartSyncMutation.isPending}
-          className="flex-1 bg-green-600 hover:bg-green-700"
-        >
-          <Smartphone className="h-4 w-4 mr-2" />
-          Sync Health Data
-        </Button>
-        
-        <Button
-          onClick={() => resetDataMutation.mutate()}
-          disabled={resetDataMutation.isPending}
-          variant="destructive"
-          className="flex-1"
-        >
-          <Database className="h-4 w-4 mr-2" />
-          Reset Data
-        </Button>
-      </div>
 
       {/* Achievement Banner */}
-      <Card className="p-4 bg-gradient-to-r from-yellow-400 to-orange-500 border-0">
-        <div className="flex items-center justify-center gap-3 text-white">
-          <Trophy className="h-6 w-6" />
-          <div className="text-center">
-            <div className="font-bold">Great Job!</div>
-            <div className="text-sm">3 days of consecutive caloric deficit</div>
+      <div className="px-4 mb-6">
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-4">
+          <div className="flex items-center justify-center gap-3 text-white">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <div className="text-2xl">🎉</div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold">Great Job!</div>
+              <div className="text-sm">3 days of consecutive caloric deficit</div>
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

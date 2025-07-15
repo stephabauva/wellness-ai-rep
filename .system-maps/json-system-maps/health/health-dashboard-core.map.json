@@ -14,27 +14,87 @@
   },
   "_meta": {
     "domain": "health-dashboard",
-    "description": "Simplified health dashboard with essential functionality",
+    "description": "Mobile-first health dashboard with component-based architecture",
     "architecture": "React + Express + PostgreSQL",
     "status": "active",
-    "complexity": "simplified",
-    "lastMajorChange": "2025-07-15 - Moved to health domain structure for better organization"
+    "complexity": "modular",
+    "lastMajorChange": "2025-07-15 - Implemented mobile-first UI with component breakdown"
   },
   "components": {
     "core": {
       "HealthDashboard.tsx": {
         "path": "client/src/components/health/dashboard/HealthDashboard.tsx",
         "type": "react-component",
-        "lines": 510,
+        "lines": 320,
         "responsibilities": [
-          "UI rendering",
-          "time range state",
-          "data aggregation",
-          "user interactions"
+          "Component orchestration",
+          "Data fetching",
+          "State management",
+          "Mobile-first layout"
         ],
-        "imports": 8,
+        "imports": 5,
         "complexity": "moderate",
-        "note": "Moved from root components to health domain structure"
+        "note": "Refactored into mobile-first component architecture"
+      },
+      "MobileHeader.tsx": {
+        "path": "client/src/components/health/dashboard/MobileHeader.tsx",
+        "type": "react-component",
+        "lines": 60,
+        "responsibilities": [
+          "Sticky header navigation",
+          "Time range selection",
+          "Mobile-optimized UI"
+        ],
+        "imports": 2,
+        "complexity": "low"
+      },
+      "HeroSection.tsx": {
+        "path": "client/src/components/health/dashboard/HeroSection.tsx",
+        "type": "react-component",
+        "lines": 80,
+        "responsibilities": [
+          "Wellness score display",
+          "Gradient background",
+          "Progress visualization"
+        ],
+        "imports": 2,
+        "complexity": "low"
+      },
+      "MetricsGrid.tsx": {
+        "path": "client/src/components/health/dashboard/MetricsGrid.tsx",
+        "type": "react-component",
+        "lines": 140,
+        "responsibilities": [
+          "Health metrics display",
+          "2x3 mobile grid layout",
+          "Metric cards with icons"
+        ],
+        "imports": 2,
+        "complexity": "moderate"
+      },
+      "ActivityScroll.tsx": {
+        "path": "client/src/components/health/dashboard/ActivityScroll.tsx",
+        "type": "react-component",
+        "lines": 130,
+        "responsibilities": [
+          "Horizontal scrolling insights",
+          "Activity progress cards",
+          "Touch-friendly interactions"
+        ],
+        "imports": 2,
+        "complexity": "moderate"
+      },
+      "ActionButtons.tsx": {
+        "path": "client/src/components/health/dashboard/ActionButtons.tsx",
+        "type": "react-component",
+        "lines": 100,
+        "responsibilities": [
+          "Action button grid",
+          "Touch-friendly buttons",
+          "Loading states"
+        ],
+        "imports": 2,
+        "complexity": "low"
       }
     },
     "api": {

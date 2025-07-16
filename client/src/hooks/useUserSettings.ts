@@ -23,6 +23,7 @@ export const settingsFormSchema = z.object({ // Export this schema
   automaticModelSelection: z.boolean(),
   memoryDetectionProvider: z.enum(["google", "openai", "none"]),
   memoryDetectionModel: z.string(),
+  themePreference: z.enum(['light', 'dark', 'system']).optional(),
   // Retention settings might be handled by a separate hook/mutation if their API endpoint is different
   highValueRetentionDays: z.number().optional(), // Made optional if handled separately
   mediumValueRetentionDays: z.number().optional(),
@@ -58,6 +59,7 @@ const defaultUserSettings: UserSettingsData = {
   automaticModelSelection: true,
   memoryDetectionProvider: "none",
   memoryDetectionModel: "",
+  themePreference: "system",
   // Optional retention settings can be omitted or explicitly undefined if truly optional
   // highValueRetentionDays: undefined,
   // mediumValueRetentionDays: undefined,
@@ -90,7 +92,7 @@ export function useUserSettings() {
     mutationFn: async (data: Partial<UserSettingsFormValues>) => { // Allow partial updates
       // Assuming apiRequest is a utility function that handles API calls
       // and PATCH method is used for updates.
-      return apiRequest('PATCH', '/api/settings', data);
+      return apiRequest('/api/settings', 'PATCH', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userSettings', '/api/settings'] });

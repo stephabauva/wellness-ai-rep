@@ -176,7 +176,7 @@ Transform the existing desktop-focused health dashboard into a mobile-first, tou
     - Create `client/src/components/ui/theme-toggle.tsx` (reusable component)
     - Uses lucide-react icons: Sun, Moon, Monitor
 
-- [ ] **Task 3.5**: Add theme toggle to navigation
+- [x ] **Task 3.5**: Add theme toggle to navigation
   - **Problem**: Theme toggle needs to be accessible from navigation
   - **Solution**: Add toggle to the left of burger menu (mobile) and bottom of sidebar (desktop)
   - **Files affected**: 

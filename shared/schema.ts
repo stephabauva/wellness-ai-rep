@@ -8,7 +8,7 @@ export const userPreferenceSchema = z.object({
   coachStyle: z.string().optional(),
   reminderFrequency: z.string().optional(),
   focusAreas: z.array(z.string()).optional(),
-  darkMode: z.boolean().optional(),
+  themePreference: z.enum(['light', 'dark', 'system']).optional(),
   pushNotifications: z.boolean().optional(),
   emailSummaries: z.boolean().optional(),
   dataSharing: z.boolean().optional(),

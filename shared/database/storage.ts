@@ -127,7 +127,7 @@ export class MemStorage implements IStorage {
         coachStyle: "motivational",
         reminderFrequency: "daily",
         focusAreas: ["nutrition", "exercise", "sleep"],
-        darkMode: false,
+        themePreference: "system",
         pushNotifications: true,
         emailSummaries: true,
         dataSharing: false
@@ -747,7 +747,7 @@ export class DatabaseStorage implements IStorage {
       transcriptionProvider, preferredLanguage, memoryDetectionProvider, memoryDetectionModel,
       // health_consent is handled by its own service, not directly set here
       // retention days are also part of preferences or separate settings
-      primaryGoal, coachStyle, reminderFrequency, focusAreas, darkMode,
+      primaryGoal, coachStyle, reminderFrequency, focusAreas, themePreference,
       pushNotifications, emailSummaries, dataSharing, healthVisibilitySettings,
       highValueRetentionDays, mediumValueRetentionDays, lowValueRetentionDays,
       ...otherPossibleSettings // Should be empty if schema is matched
@@ -758,7 +758,7 @@ export class DatabaseStorage implements IStorage {
     if (coachStyle !== undefined) preferencesToUpdate.coachStyle = coachStyle;
     if (reminderFrequency !== undefined) preferencesToUpdate.reminderFrequency = reminderFrequency;
     if (focusAreas !== undefined) preferencesToUpdate.focusAreas = focusAreas;
-    if (darkMode !== undefined) preferencesToUpdate.darkMode = darkMode;
+    if (themePreference !== undefined) preferencesToUpdate.themePreference = themePreference;
     if (pushNotifications !== undefined) preferencesToUpdate.pushNotifications = pushNotifications;
     if (emailSummaries !== undefined) preferencesToUpdate.emailSummaries = emailSummaries;
     if (dataSharing !== undefined) preferencesToUpdate.dataSharing = dataSharing;

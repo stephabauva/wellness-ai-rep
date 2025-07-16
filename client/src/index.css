@@ -1,3 +1,6 @@
+/* Mobile theme optimizations */
+@import './styles/mobile-theme-optimizations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -1,0 +1,112 @@
+/* Mobile Theme Toggle Performance Optimizations */
+
+/* Ensure adequate touch targets for mobile accessibility */
+.theme-toggle-button {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  
+  /* Optimize for touch interactions with hardware acceleration */
+  will-change: transform, background-color;
+  transform: translateZ(0);
+  
+  /* Prevent text selection on mobile */
+  -webkit-user-select: none;
+  user-select: none;
+  
+  /* Reduce tap delay on mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Provide immediate visual feedback on touch */
+.theme-toggle-button:active {
+  transform: scale(0.95) translateZ(0);
+}
+
+/* Optimize theme transitions for mobile */
+.theme-transition {
+  transition-property: background-color, color, border-color, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reduce reflow/repaint operations during theme changes */
+body {
+  /* Promote to composite layer for smoother theme transitions */
+  transform: translateZ(0);
+  
+  /* Optimize for mobile scrolling during theme changes */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimize theme-dependent elements for mobile */
+.theme-optimized {
+  /* Use transform instead of changing layout properties */
+  will-change: transform, opacity;
+  
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+}
+
+/* Mobile-specific optimizations for theme toggle container */
+.theme-toggle-container {
+  /* Prevent layout shifts during theme changes */
+  contain: layout style;
+  
+  /* Optimize for mobile rendering */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Optimize icon animations for mobile */
+.theme-icon {
+  /* Reduce paint complexity */
+  will-change: opacity;
+  
+  /* Ensure crisp rendering on mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent flicker during theme changes on mobile */
+html {
+  /* Ensure consistent rendering during theme transitions */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Mobile-specific dark theme optimizations */
+@media (prefers-color-scheme: dark) {
+  .theme-optimized {
+    /* Reduce battery usage with darker backgrounds */
+    background-color: rgb(0, 0, 0);
+  }
+}
+
+/* Reduce animation complexity on low-end mobile devices */
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle-button,
+  .theme-transition {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* Optimize for mobile landscape orientation */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .theme-toggle-button {
+    /* Slightly smaller touch targets in landscape to save space */
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* High DPI mobile display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2),
+       (min-resolution: 192dpi) {
+  .theme-icon {
+    /* Ensure crisp icons on high DPI screens */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}

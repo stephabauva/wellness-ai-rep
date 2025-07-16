@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useUserSettings } from './useUserSettings';
 
 export type Theme = 'light' | 'dark' | 'system';
@@ -9,13 +9,27 @@ export interface ThemeState {
   resolvedTheme: 'light' | 'dark';
 }
 
+// Cache MediaQueryList to avoid recreation on mobile
+let mediaQueryList: MediaQueryList | null = null;
+const getSystemMediaQuery = () => {
+  if (!mediaQueryList) {
+    mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+  }
+  return mediaQueryList;
+};
+
+// Cache system theme detection for better mobile performance
+const getSystemTheme = (): 'light' | 'dark' => {
+  return getSystemMediaQuery().matches ? 'dark' : 'light';
+};
+
 export function useTheme() {
   const { userSettings, updateUserSettings } = useUserSettings();
   
   const [themeState, setThemeState] = useState<ThemeState>(() => {
     // Prioritize user settings, then localStorage, then default to system
     const savedTheme = userSettings?.themePreference || localStorage.getItem('theme-preference') as Theme || 'system';
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const systemTheme = getSystemTheme();
     const resolvedTheme = savedTheme === 'system' ? systemTheme : savedTheme;
     
     return {
@@ -25,31 +39,37 @@ export function useTheme() {
     };
   });
 
+  // Memoize DOM update function to prevent recreation and optimize mobile performance
   const updateDocumentTheme = useCallback((resolvedTheme: 'light' | 'dark') => {
-    if (resolvedTheme === 'dark') {
+    const isDark = resolvedTheme === 'dark';
+    const hasClass = document.documentElement.classList.contains('dark');
+    
+    // Only update DOM if actually needed to reduce paint operations on mobile
+    if (isDark && !hasClass) {
       document.documentElement.classList.add('dark');
-    } else {
+    } else if (!isDark && hasClass) {
       document.documentElement.classList.remove('dark');
     }
   }, []);
 
+  // Optimized theme setter with requestAnimationFrame for smoother mobile performance
   const setTheme = useCallback((newTheme: Theme) => {
-    // Update localStorage for backward compatibility
-    localStorage.setItem('theme-preference', newTheme);
-    
-    // Update user settings
-    updateUserSettings({ themePreference: newTheme });
-    
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const resolvedTheme = newTheme === 'system' ? systemTheme : newTheme;
-    
-    setThemeState({
-      theme: newTheme,
-      systemTheme,
-      resolvedTheme
+    // Batch DOM updates using requestAnimationFrame for smoother performance on mobile
+    requestAnimationFrame(() => {
+      localStorage.setItem('theme-preference', newTheme);
+      updateUserSettings({ themePreference: newTheme });
+      
+      const systemTheme = getSystemTheme();
+      const resolvedTheme = newTheme === 'system' ? systemTheme : newTheme;
+      
+      setThemeState({
+        theme: newTheme,
+        systemTheme,
+        resolvedTheme
+      });
+      
+      updateDocumentTheme(resolvedTheme);
     });
-    
-    updateDocumentTheme(resolvedTheme);
   }, [updateDocumentTheme, updateUserSettings]);
 
   const cycleTheme = useCallback(() => {
@@ -59,10 +79,10 @@ export function useTheme() {
     setTheme(themeOrder[nextIndex]);
   }, [themeState.theme, setTheme]);
 
-  // Sync with user settings when they change
+  // Sync with user settings when they change, optimized for mobile
   useEffect(() => {
     if (userSettings?.themePreference && userSettings.themePreference !== themeState.theme) {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const systemTheme = getSystemTheme();
       const resolvedTheme = userSettings.themePreference === 'system' ? systemTheme : userSettings.themePreference;
       
       setThemeState({
@@ -73,16 +93,22 @@ export function useTheme() {
       
       updateDocumentTheme(resolvedTheme);
     }
-  }, [userSettings?.themePreference, updateDocumentTheme]);
+  }, [userSettings?.themePreference, themeState.theme, updateDocumentTheme]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery = getSystemMediaQuery();
     
     const handleSystemThemeChange = (e: MediaQueryListEvent) => {
       const newSystemTheme = e.matches ? 'dark' : 'light';
       
       setThemeState(prev => {
         const newResolvedTheme = prev.theme === 'system' ? newSystemTheme : prev.resolvedTheme;
+        
+        // Only update if there's an actual change to prevent unnecessary re-renders on mobile
+        if (prev.systemTheme === newSystemTheme && prev.resolvedTheme === newResolvedTheme) {
+          return prev;
+        }
+        
         return {
           ...prev,
           systemTheme: newSystemTheme,

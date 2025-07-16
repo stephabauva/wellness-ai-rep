@@ -9,6 +9,7 @@ import {
   FolderOpen,
   ShieldAlert
 } from "lucide-react";
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { isGodModeEnabled } from "@shared/config/god-mode";
 import { useAppContext } from "@shared";
 import { cn } from "@shared";
@@ -106,6 +107,11 @@ const Sidebar: React.FC = () => {
               />
             )}
           </nav>
+          
+          {/* Theme Toggle */}
+          <div className="flex-shrink-0 px-2 py-2">
+            <ThemeToggle className="mx-auto" />
+          </div>
           
           {/* User Profile */}
           <div className="flex-shrink-0 px-2 py-4 space-y-1">

@@ -9,6 +9,7 @@ import {
   Zap,
   FolderOpen
 } from "lucide-react";
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAppContext } from "@shared";
 import { cn } from "@shared";
 
@@ -54,14 +55,17 @@ const MobileNav: React.FC = () => {
           </div>
           <span className="font-semibold text-lg">WellnessAI</span>
         </div>
-        <button 
-          type="button"
-          className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none"
-          onClick={toggleNav}
-          aria-label="Toggle mobile menu"
-        >
-          <Menu className="h-6 w-6" />
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button 
+            type="button"
+            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none"
+            onClick={toggleNav}
+            aria-label="Toggle mobile menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
       </div>
       
       {/* Mobile Navigation (Hidden by default) */}

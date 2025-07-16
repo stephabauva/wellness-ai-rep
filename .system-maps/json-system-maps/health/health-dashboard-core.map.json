@@ -7,10 +7,13 @@
       "metric-aggregation",
       "sample-data-loading",
       "health-report-download",
-      "native-health-sync"
+      "native-health-sync",
+      "mobile-animations",
+      "floating-action-button",
+      "touch-interactions"
     ],
-    "totalFeatures": 6,
-    "lastUpdated": "2025-07-12"
+    "totalFeatures": 9,
+    "lastUpdated": "2025-07-16"
   },
   "_meta": {
     "domain": "health-dashboard",
@@ -18,35 +21,51 @@
     "architecture": "React + Express + PostgreSQL",
     "status": "active",
     "complexity": "modular",
-    "lastMajorChange": "2025-07-15 - Implemented mobile-first UI with component breakdown"
+    "lastMajorChange": "2025-07-16 - Added mobile animations, FloatingActionButton, and touch interactions"
   },
   "components": {
     "core": {
       "HealthDashboard.tsx": {
         "path": "client/src/components/health/dashboard/HealthDashboard.tsx",
         "type": "react-component",
-        "lines": 320,
+        "lines": 325,
         "responsibilities": [
           "Component orchestration",
           "Data fetching",
           "State management",
-          "Mobile-first layout"
+          "Mobile-first layout",
+          "Animation coordination",
+          "FloatingActionButton integration"
         ],
-        "imports": 5,
+        "imports": 6,
         "complexity": "moderate",
-        "note": "Refactored into mobile-first component architecture"
+        "note": "Includes AnimatedSection wrappers and enhanced FAB quick actions",
+        "animations": [
+          "Staggered section animations with delays",
+          "Achievement banner with scale animation"
+        ],
+        "integrations": [
+          "FloatingActionButton with toast feedback",
+          "AnimatedSection for section reveals"
+        ]
       },
       "MobileHeader.tsx": {
         "path": "client/src/components/health/dashboard/MobileHeader.tsx",
         "type": "react-component",
-        "lines": 60,
+        "lines": 72,
         "responsibilities": [
           "Sticky header navigation",
           "Time range selection",
-          "Mobile-optimized UI"
+          "Mobile-optimized UI",
+          "Swipe gesture support for time range switching"
         ],
-        "imports": 2,
-        "complexity": "low"
+        "imports": 3,
+        "complexity": "low",
+        "animations": [
+          "Touch feedback on buttons",
+          "Scale animations on hover/active"
+        ],
+        "hooks": ["useSwipe"]
       },
       "HeroSection.tsx": {
         "path": "client/src/components/health/dashboard/HeroSection.tsx",
@@ -75,14 +94,22 @@
       "ActivityScroll.tsx": {
         "path": "client/src/components/health/dashboard/ActivityScroll.tsx",
         "type": "react-component",
-        "lines": 130,
+        "lines": 182,
         "responsibilities": [
           "Horizontal scrolling insights",
           "Activity progress cards",
-          "Touch-friendly interactions"
+          "Touch-friendly interactions",
+          "Scroll-based animations and parallax effects"
         ],
-        "imports": 2,
-        "complexity": "moderate"
+        "imports": 3,
+        "complexity": "moderate",
+        "animations": [
+          "Scroll-based visibility animations",
+          "Card hover effects with scale and translate",
+          "Parallax scroll transform",
+          "Progress bar animations"
+        ],
+        "hooks": ["useScrollAnimation"]
       },
       "ActionButtons.tsx": {
         "path": "client/src/components/health/dashboard/ActionButtons.tsx",
@@ -95,6 +122,92 @@
         ],
         "imports": 2,
         "complexity": "low"
+      },
+      "FloatingActionButton.tsx": {
+        "path": "client/src/components/health/dashboard/FloatingActionButton.tsx",
+        "type": "react-component",
+        "lines": 95,
+        "responsibilities": [
+          "Material Design floating action button",
+          "Expandable quick actions menu",
+          "Touch feedback and animations",
+          "Mobile-optimized interaction patterns"
+        ],
+        "imports": 2,
+        "complexity": "moderate",
+        "animations": [
+          "Expand/collapse with staggered delays",
+          "Scale animations on hover/active",
+          "Rotation animation for main FAB",
+          "Backdrop blur and fade transitions"
+        ],
+        "features": [
+          "Quick weight logging",
+          "Activity logging",
+          "Sleep logging",
+          "Quick weight entry"
+        ]
+      }
+    },
+    "shared": {
+      "AnimatedSection.tsx": {
+        "path": "shared/components/ui/AnimatedSection.tsx",
+        "type": "react-component",
+        "lines": 85,
+        "responsibilities": [
+          "Reusable animation wrapper component",
+          "Multiple animation types support",
+          "Intersection observer integration",
+          "Performance-optimized animations"
+        ],
+        "imports": 2,
+        "complexity": "moderate",
+        "animations": [
+          "fadeUp - slide up with fade",
+          "fadeIn - simple fade transition",
+          "slideLeft - slide from left",
+          "slideRight - slide from right",
+          "scale - scale up animation"
+        ],
+        "usage": "Wraps dashboard sections for coordinated animations"
+      }
+    },
+    "hooks": {
+      "useScrollAnimation.ts": {
+        "path": "client/src/hooks/useScrollAnimation.ts",
+        "type": "custom-hook",
+        "lines": 45,
+        "responsibilities": [
+          "Scroll-based animation detection",
+          "Intersection Observer wrapper",
+          "Progressive animation triggers",
+          "Performance optimization"
+        ],
+        "imports": 2,
+        "complexity": "moderate",
+        "features": [
+          "Threshold-based visibility detection",
+          "Scroll progress calculation",
+          "Element reference management"
+        ]
+      },
+      "useSwipe.ts": {
+        "path": "client/src/hooks/useSwipe.ts",
+        "type": "custom-hook",
+        "lines": 65,
+        "responsibilities": [
+          "Touch gesture detection",
+          "Swipe direction handling",
+          "Mobile interaction support",
+          "Event cleanup management"
+        ],
+        "imports": 2,
+        "complexity": "moderate",
+        "features": [
+          "Left/right swipe detection",
+          "Configurable touch thresholds",
+          "Touch event handling"
+        ]
       }
     },
     "api": {
@@ -194,13 +307,30 @@
       "purpose": "User feedback",
       "triggers": [
         "success operations",
-        "error handling"
+        "error handling",
+        "FloatingActionButton quick actions"
       ],
       "types": [
         "success",
         "error",
-        "loading"
+        "loading",
+        "info with descriptions"
       ]
+    },
+    "animations": {
+      "purpose": "Mobile-optimized user experience",
+      "implementation": "CSS transforms with GPU acceleration",
+      "patterns": [
+        "Staggered section reveals",
+        "Touch feedback animations",
+        "Scroll-based triggers",
+        "Material Design interactions"
+      ],
+      "performance": {
+        "optimization": "transform-gpu and will-change properties",
+        "easing": "ease-out transitions",
+        "duration": "300ms standard, 700ms for complex animations"
+      }
     }
   },
   "dependencies": {
@@ -253,7 +383,7 @@
     ],
     "internal": 0
   },
-  "lastUpdated": "2025-07-13T13:01:11.715Z",
+  "lastUpdated": "2025-07-16T15:30:00.000Z",
   "dependencyAnalysis": {
     "lastAnalyzed": "2025-07-13T13:01:11.716Z",
     "crossDomainFiles": 5,

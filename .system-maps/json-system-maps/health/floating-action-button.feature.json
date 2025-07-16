@@ -1,0 +1,161 @@
+{
+  "_meta": {
+    "feature": "floating-action-button",
+    "domain": "health-dashboard",
+    "description": "Material Design floating action button with expandable quick actions for health data logging",
+    "status": "implemented",
+    "complexity": "moderate",
+    "lastUpdated": "2025-07-16"
+  },
+  "userStory": {
+    "as": "health tracking user",
+    "iWant": "quick access to common logging actions from anywhere on the health dashboard",
+    "soThat": "I can efficiently log health data without navigating through multiple screens"
+  },
+  "implementation": {
+    "component": {
+      "FloatingActionButton": {
+        "path": "client/src/components/health/dashboard/FloatingActionButton.tsx",
+        "type": "react-component",
+        "lines": 95,
+        "materialDesign": true,
+        "position": "fixed bottom-6 right-6 z-50"
+      }
+    },
+    "quickActions": [
+      {
+        "action": "weight",
+        "icon": "Heart",
+        "label": "Log Weight",
+        "color": "bg-red-500 hover:bg-red-600",
+        "purpose": "Quick weight entry"
+      },
+      {
+        "action": "activity",
+        "icon": "Activity",
+        "label": "Log Activity",
+        "color": "bg-green-500 hover:bg-green-600",
+        "purpose": "Activity tracking"
+      },
+      {
+        "action": "sleep",
+        "icon": "Moon",
+        "label": "Log Sleep",
+        "color": "bg-purple-500 hover:bg-purple-600",
+        "purpose": "Sleep quality logging"
+      },
+      {
+        "action": "quick-weight",
+        "icon": "Scale",
+        "label": "Quick Weigh",
+        "color": "bg-blue-500 hover:bg-blue-600",
+        "purpose": "Rapid weight measurement"
+      }
+    ],
+    "animations": {
+      "mainFAB": [
+        "Scale on hover (110%) and active (95%)",
+        "Rotation animation when expanded (45 degrees)",
+        "Icon transition between Plus and X"
+      ],
+      "quickActions": [
+        "Staggered expand animation with 50ms delays",
+        "Slide-in from bottom with fade",
+        "Individual scale animations on interaction"
+      ],
+      "backdrop": [
+        "Blur backdrop when expanded",
+        "Fade transition for overlay"
+      ]
+    }
+  },
+  "interactions": {
+    "expand": {
+      "trigger": "Tap main FAB",
+      "effect": "Shows quick action menu with backdrop"
+    },
+    "collapse": {
+      "triggers": [
+        "Tap main FAB when expanded",
+        "Tap backdrop overlay",
+        "Select any quick action"
+      ]
+    },
+    "quickAction": {
+      "effect": "Triggers toast notification and closes menu",
+      "feedback": "Descriptive toast with action context"
+    }
+  },
+  "integration": {
+    "healthDashboard": {
+      "path": "client/src/components/health/dashboard/HealthDashboard.tsx",
+      "integration": "lines 287-320",
+      "handler": "Enhanced quick action handlers with specific toast messages",
+      "toastFeedback": {
+        "weight": "Weight Logging - Opening weight input form...",
+        "activity": "Activity Logging - Opening activity tracker...",
+        "sleep": "Sleep Logging - Opening sleep quality form...",
+        "quick-weight": "Quick Weight - Opening quick weight entry..."
+      }
+    }
+  },
+  "userExperience": {
+    "accessibility": [
+      "Touch targets meet 44px minimum size",
+      "High contrast colors for visibility",
+      "Clear labels for screen readers"
+    ],
+    "mobileOptimization": [
+      "Fixed positioning avoids content interference",
+      "Touch-friendly interactions",
+      "Immediate visual feedback",
+      "Gesture-based dismissal"
+    ],
+    "visualDesign": [
+      "Gradient background (blue to purple)",
+      "Material Design elevation and shadows",
+      "Consistent with app color scheme",
+      "Clear iconography for actions"
+    ]
+  },
+  "futureEnhancement": {
+    "potentialFeatures": [
+      "Connect quick actions to actual logging forms",
+      "Customizable action set based on user preferences",
+      "Voice input integration for hands-free logging",
+      "Haptic feedback for enhanced mobile experience"
+    ],
+    "dataIntegration": [
+      "Direct health data entry through FAB actions",
+      "Integration with native health apps",
+      "Real-time metric updates"
+    ]
+  },
+  "testingStrategy": {
+    "functionality": "All quick actions trigger appropriate toast notifications",
+    "animations": "Smooth 60fps animations verified on mobile",
+    "accessibility": "Keyboard navigation and screen reader compatibility",
+    "performance": "No impact on dashboard scroll performance"
+  },
+  "dependencies": {
+    "crossDomain": [
+      {
+        "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+        "importedBy": [
+          {
+            "domain": "app/pages",
+            "file": "client/src/pages/home.tsx"
+          }
+        ]
+      }
+    ],
+    "internal": 6
+  },
+  "lastUpdated": "2025-07-16T21:58:50.227Z",
+  "dependencyAnalysis": {
+    "lastAnalyzed": "2025-07-16T21:58:50.228Z",
+    "crossDomainFiles": 1,
+    "internalFiles": 6,
+    "totalDependencies": 7
+  }
+}

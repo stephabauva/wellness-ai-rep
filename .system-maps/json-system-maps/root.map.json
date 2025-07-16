@@ -1,7 +1,7 @@
 {
   "appName": "Wellness Coaching Application",
   "version": "1.0.0",
-  "lastUpdated": "2025-07-11T14:37:13.858Z",
+  "lastUpdated": "2025-07-16T15:30:00.000Z",
   "domains": {
     "chat": {
       "description": "Core chat messaging functionality with AI streaming responses and conversation history",
@@ -90,6 +90,14 @@
         "nutrition-inference": {
           "description": "AI-powered nutrition inference from chat messages",
           "path": ".system-maps/json-system-maps/chat/nutrition-inference-service.map.json"
+        },
+        "mobile-animations": {
+          "description": "Mobile-optimized animation system for health dashboard",
+          "path": ".system-maps/json-system-maps/health/mobile-animations.feature.json"
+        },
+        "floating-action-button": {
+          "description": "Material Design FAB with expandable quick actions",
+          "path": ".system-maps/json-system-maps/health/floating-action-button.feature.json"
         }
       }
     },

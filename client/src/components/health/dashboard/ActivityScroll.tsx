@@ -1,5 +1,6 @@
 import React from "react";
 import { CheckCircle, AlertCircle, Trophy, Target, Zap, Droplets } from "lucide-react";
+import { useScrollAnimation } from "../../../hooks/useScrollAnimation";
 
 interface ActivityItem {
   id: string;
@@ -15,6 +16,10 @@ interface ActivityScrollProps {
 }
 
 const ActivityScroll: React.FC<ActivityScrollProps> = ({ activities }) => {
+  const { elementRef, scrollProgress, isVisible } = useScrollAnimation({
+    threshold: 0.2
+  });
+
   const defaultActivities: ActivityItem[] = [
     {
       id: "1",
@@ -108,18 +113,35 @@ const ActivityScroll: React.FC<ActivityScrollProps> = ({ activities }) => {
   };
 
   return (
-    <div className="mb-6">
-      <div className="px-4 mb-4">
+    <div ref={elementRef} className="mb-6">
+      <div 
+        className="px-4 mb-4 transition-all duration-700 ease-out"
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transform: `translateY(${isVisible ? 0 : 20}px)`
+        }}
+      >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activity & Insights</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">Your health journey highlights</p>
       </div>
       
-      <div className="overflow-x-auto scrollbar-hide">
+      <div 
+        className="overflow-x-auto scrollbar-hide scroll-smooth"
+        style={{ 
+          scrollBehavior: 'smooth',
+          transform: `translateX(${(1 - scrollProgress) * 20}px)`,
+          transition: 'transform 0.3s ease-out'
+        }}
+      >
         <div className="flex gap-3 px-4 pb-2" style={{ width: "max-content" }}>
           {activityData.map((activity) => (
             <div
               key={activity.id}
-              className={`flex-shrink-0 w-64 p-4 rounded-xl border ${getCardStyles(activity.status)}`}
+              className={`flex-shrink-0 w-64 p-4 rounded-xl border transition-all duration-300 ease-out
+                         transform-gpu will-change-transform cursor-pointer
+                         hover:scale-105 hover:shadow-lg hover:-translate-y-1
+                         active:scale-95 active:translate-y-0
+                         ${getCardStyles(activity.status)}`}
             >
               <div className="flex items-start gap-3 mb-3">
                 <activity.icon className={`h-5 w-5 mt-0.5 ${getIconStyles(activity.status)}`} />
@@ -141,9 +163,9 @@ const ActivityScroll: React.FC<ActivityScrollProps> = ({ activities }) => {
                       {activity.progress}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-300 ${getProgressColor(activity.status)}`}
+                      className={`h-1.5 rounded-full transition-all duration-700 ease-out ${getProgressColor(activity.status)}`}
                       style={{ width: `${activity.progress}%` }}
                     />
                   </div>

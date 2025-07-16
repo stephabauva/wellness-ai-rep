@@ -38,17 +38,19 @@ const MetricCard: React.FC<MetricCardProps> = ({
   
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 
-                    min-h-[120px] touch-none select-none transition-all duration-200 
-                    hover:shadow-md hover:scale-[1.02] active:scale-[0.98] 
-                    cursor-pointer min-w-0 flex flex-col justify-between">
+                    min-h-[120px] touch-none select-none transition-all duration-300 ease-out
+                    hover:shadow-lg hover:shadow-blue-500/10 hover:scale-[1.03] hover:-translate-y-1
+                    active:scale-[0.97] active:translate-y-0 active:shadow-md
+                    cursor-pointer min-w-0 flex flex-col justify-between
+                    transform-gpu will-change-transform group">
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-2 rounded-lg ${color} flex-shrink-0`}>
+        <div className={`p-2 rounded-lg ${color} flex-shrink-0 transition-transform duration-300 ease-out group-hover:scale-110`}>
           <Icon className="h-5 w-5 text-white" />
         </div>
-        <TrendIcon className={`h-4 w-4 flex-shrink-0 ${
-          trend === "up" ? "text-green-500" : 
-          trend === "down" ? "text-red-500" : 
-          "text-gray-400"
+        <TrendIcon className={`h-4 w-4 flex-shrink-0 transition-all duration-300 ease-out ${
+          trend === "up" ? "text-green-500 group-hover:animate-bounce" : 
+          trend === "down" ? "text-red-500 group-hover:animate-pulse" : 
+          "text-gray-400 group-hover:animate-pulse"
         }`} />
       </div>
       

@@ -48,17 +48,23 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     <button
       onClick={onClick}
       disabled={isLoading}
-      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all duration-200 ${getButtonStyles()} ${
-        isLoading ? "opacity-50 cursor-not-allowed" : "active:scale-95"
+      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all duration-300 ease-out
+                  transform-gpu will-change-transform group relative overflow-hidden
+                  ${getButtonStyles()} ${
+        isLoading ? "opacity-50 cursor-not-allowed" : 
+        "hover:scale-105 hover:shadow-lg hover:-translate-y-1 active:scale-95 active:translate-y-0"
       }`}
       style={{ minHeight: "88px" }} // Ensure touch-friendly target size
     >
+      {/* Ripple effect overlay */}
+      <div className="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity duration-150 rounded-xl" />
+      
       {isLoading ? (
         <RefreshCw className="h-5 w-5 animate-spin" />
       ) : (
-        <Icon className="h-5 w-5" />
+        <Icon className="h-5 w-5 transition-transform duration-300 ease-out group-hover:scale-110" />
       )}
-      <span className="text-sm font-medium text-center leading-tight">
+      <span className="text-sm font-medium text-center leading-tight transition-transform duration-300 ease-out group-hover:scale-105">
         {label}
       </span>
     </button>

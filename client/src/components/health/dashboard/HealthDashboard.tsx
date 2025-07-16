@@ -7,6 +7,8 @@ import HeroSection from "./HeroSection";
 import MetricsGrid from "./MetricsGrid";
 import ActivityScroll from "./ActivityScroll";
 import ActionButtons from "./ActionButtons";
+import FloatingActionButton from "./FloatingActionButton";
+import AnimatedSection from "@shared/components/ui/AnimatedSection";
 
 interface HealthMetric {
   id: number;
@@ -222,52 +224,73 @@ const HealthDashboard: React.FC<HealthDashboardProps> = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <MobileHeader timeRange={timeRange} onTimeRangeChange={handleTimeRangeChange} />
       
-      <HeroSection 
-        wellnessScore={healthSummary?.wellnessScore || "8.1"} 
-        timeRange={timeRange}
-        totalRecords={healthSummary?.totalRecords || 0}
-      />
+      <AnimatedSection animation="fadeUp" delay={100}>
+        <HeroSection 
+          wellnessScore={healthSummary?.wellnessScore || "8.1"} 
+          timeRange={timeRange}
+          totalRecords={healthSummary?.totalRecords || 0}
+        />
+      </AnimatedSection>
 
-      <MetricsGrid healthSummary={healthSummary} />
+      <AnimatedSection animation="fadeUp" delay={200}>
+        <MetricsGrid healthSummary={healthSummary} />
+      </AnimatedSection>
 
-      <ActivityScroll />
+      <AnimatedSection animation="slideLeft" delay={300}>
+        <ActivityScroll />
+      </AnimatedSection>
 
-      <ActionButtons 
-        onDownloadReport={() => downloadReportMutation.mutate()}
-        onShareReport={() => shareReportMutation.mutate()}
-        onSyncData={() => smartSyncMutation.mutate()}
-        onResetData={() => resetDataMutation.mutate()}
-        isLoading={{
-          download: downloadReportMutation.isPending,
-          share: shareReportMutation.isPending,
-          sync: smartSyncMutation.isPending,
-          reset: resetDataMutation.isPending,
-        }}
-      />
+      <AnimatedSection animation="fadeUp" delay={400}>
+        <ActionButtons 
+          onDownloadReport={() => downloadReportMutation.mutate()}
+          onShareReport={() => shareReportMutation.mutate()}
+          onSyncData={() => smartSyncMutation.mutate()}
+          onResetData={() => resetDataMutation.mutate()}
+          isLoading={{
+            download: downloadReportMutation.isPending,
+            share: shareReportMutation.isPending,
+            sync: smartSyncMutation.isPending,
+            reset: resetDataMutation.isPending,
+          }}
+        />
+      </AnimatedSection>
       
       {/* No data fallback handled in MetricsGrid */}
       {!healthSummary && (
-        <div className="px-4 text-center py-8">
-          <div className="text-gray-500 dark:text-gray-400 mb-4">
-            No health data available for the selected time range
+        <AnimatedSection animation="fadeIn" delay={200}>
+          <div className="px-4 text-center py-8">
+            <div className="text-gray-500 dark:text-gray-400 mb-4">
+              No health data available for the selected time range
+            </div>
           </div>
-        </div>
+        </AnimatedSection>
       )}
 
       {/* Achievement Banner */}
-      <div className="px-4 mb-6">
-        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-4">
-          <div className="flex items-center justify-center gap-3 text-white">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <div className="text-2xl">🎉</div>
-            </div>
-            <div className="text-center">
-              <div className="font-bold">Great Job!</div>
-              <div className="text-sm">3 days of consecutive caloric deficit</div>
+      <AnimatedSection animation="scale" delay={500}>
+        <div className="px-4 mb-6">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-4 transition-all duration-300 ease-out hover:scale-105">
+            <div className="flex items-center justify-center gap-3 text-white">
+              <div className="p-2 bg-white/20 rounded-lg transition-transform duration-300 ease-out hover:rotate-12">
+                <div className="text-2xl">🎉</div>
+              </div>
+              <div className="text-center">
+                <div className="font-bold">Great Job!</div>
+                <div className="text-sm">3 days of consecutive caloric deficit</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </AnimatedSection>
+
+      {/* Floating Action Button for quick actions */}
+      <FloatingActionButton 
+        onQuickAction={(action) => {
+          // Handle quick actions - could integrate with existing mutations
+          console.log('Quick action:', action);
+          toast({ title: `Quick ${action} logging coming soon!` });
+        }}
+      />
     </div>
   );
 };

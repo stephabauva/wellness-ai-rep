@@ -1,13 +1,24 @@
 {
-  "timestamp": "2025-07-14T08:33:03.654Z",
+  "timestamp": "2025-07-16T21:59:10.086Z",
   "summary": {
-    "totalIssues": 19,
+    "totalIssues": 21,
     "highSeverity": 0,
-    "mediumSeverity": 19,
+    "mediumSeverity": 21,
     "systemMapComponents": 0,
-    "crossDomainDependencies": 18
+    "crossDomainDependencies": 20
   },
   "issues": [
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "useUserSettings",
+      "file": "client/src/hooks/useUserSettings.ts",
+      "actualDomain": "settings",
+      "usedByDomains": [
+        "shared/hooks"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
     {
       "type": "MISSING_FROM_SYSTEM_MAPS",
       "component": "home",
@@ -65,8 +76,8 @@
     },
     {
       "type": "MISSING_FROM_SYSTEM_MAPS",
-      "component": "SimpleHealthDashboard",
-      "file": "client/src/components/SimpleHealthDashboard.tsx",
+      "component": "HealthDashboard",
+      "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
       "actualDomain": "health",
       "usedByDomains": [
         "app/pages"
@@ -112,6 +123,17 @@
       "component": "SettingsSection",
       "file": "client/src/components/SettingsSection.tsx",
       "actualDomain": "settings",
+      "usedByDomains": [
+        "app/pages"
+      ],
+      "severity": "medium",
+      "details": "Cross-domain component not documented in any system map"
+    },
+    {
+      "type": "MISSING_FROM_SYSTEM_MAPS",
+      "component": "GodModeSection",
+      "file": "client/src/components/GodModeSection.tsx",
+      "actualDomain": "unknown/needs-classification",
       "usedByDomains": [
         "app/pages"
       ],

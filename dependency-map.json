@@ -225,6 +225,23 @@
     "crossDomain": true,
     "usageCount": 2
   },
+  "client/src/hooks/useSwipe.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useSwipe"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/health/dashboard/MobileHeader.tsx",
+        "domain": "health",
+        "imports": [
+          "useSwipe"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/hooks/useStreamingChat.ts": {
     "domain": "chat",
     "exports": [
@@ -240,6 +257,23 @@
       }
     ],
     "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/hooks/useScrollAnimation.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useScrollAnimation"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/health/dashboard/ActivityScroll.tsx",
+        "domain": "health",
+        "imports": [
+          "useScrollAnimation"
+        ]
+      }
+    ],
+    "crossDomain": true,
     "usageCount": 1
   },
   "client/src/hooks/useRetentionSettings.ts": {
@@ -1147,6 +1181,23 @@
       }
     ],
     "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/health/dashboard/FloatingActionButton.tsx": {
+    "domain": "health",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+        "domain": "health",
+        "imports": [
+          "FloatingActionButton"
+        ]
+      }
+    ],
+    "crossDomain": false,
     "usageCount": 1
   },
   "client/src/components/health/dashboard/ActivityScroll.tsx": {

@@ -94,13 +94,15 @@ export function useUserSettings() {
       // and PATCH method is used for updates.
       return apiRequest('/api/settings', 'PATCH', data);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['userSettings', '/api/settings'] });
-      // Potentially invalidate other related queries if settings changes affect them
-      toast({
-        title: "Settings updated",
-        description: "Your settings have been saved successfully.",
-      });
+      // Only show toast for non-theme preference updates to avoid spam when toggling theme
+      if (!variables.themePreference) {
+        toast({
+          title: "Settings updated",
+          description: "Your settings have been saved successfully.",
+        });
+      }
     },
     onError: (error: Error) => {
       toast({

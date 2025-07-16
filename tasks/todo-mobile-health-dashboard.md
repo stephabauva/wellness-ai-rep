@@ -183,7 +183,7 @@ Transform the existing desktop-focused health dashboard into a mobile-first, tou
     - `client/src/components/MobileNav.tsx:57` (add before Menu button)
     - `client/src/components/Sidebar.tsx:~120` (add near user profile)
 
-- [ ] **Task 3.6**: Sync theme with user settings
+- [x ] **Task 3.6**: Sync theme with user settings
   - **Problem**: Theme changes should persist across sessions
   - **Solution**: Update user settings API to save theme preference
   - **Files affected**: 

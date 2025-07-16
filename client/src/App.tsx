@@ -5,22 +5,40 @@ import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@shared";
+import { useTheme } from "@/hooks/useTheme";
+import { useEffect } from "react";
 import "./services/platform-detection-global";
 
 const queryClient = new QueryClient();
+
+function AppContent() {
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    if (resolvedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [resolvedTheme]);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route component={NotFound} />
+      </Switch>
+      <Toaster />
+    </div>
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
         <TooltipProvider>
-          <div className="min-h-screen bg-background">
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route component={NotFound} />
-            </Switch>
-            <Toaster />
-          </div>
+          <AppContent />
         </TooltipProvider>
       </AppProvider>
     </QueryClientProvider>

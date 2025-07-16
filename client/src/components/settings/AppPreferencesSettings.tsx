@@ -10,11 +10,6 @@ export function AppPreferencesSettings() {
 
   const preferenceItems = [
     {
-      name: "darkMode" as keyof UserSettingsFormValues, // Type assertion
-      label: "Dark Mode",
-      description: "Use dark theme throughout the app",
-    },
-    {
       name: "pushNotifications" as keyof UserSettingsFormValues,
       label: "Push Notifications",
       description: "Receive reminder notifications",

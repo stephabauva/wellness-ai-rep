@@ -37,23 +37,26 @@ const MetricCard: React.FC<MetricCardProps> = ({
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Activity;
   
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 
+                    min-h-[120px] touch-none select-none transition-all duration-200 
+                    hover:shadow-md hover:scale-[1.02] active:scale-[0.98] 
+                    cursor-pointer min-w-0 flex flex-col justify-between">
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-2 rounded-lg ${color}`}>
-          <Icon className="h-4 w-4 text-white" />
+        <div className={`p-2 rounded-lg ${color} flex-shrink-0`}>
+          <Icon className="h-5 w-5 text-white" />
         </div>
-        <TrendIcon className={`h-4 w-4 ${
+        <TrendIcon className={`h-4 w-4 flex-shrink-0 ${
           trend === "up" ? "text-green-500" : 
           trend === "down" ? "text-red-500" : 
           "text-gray-400"
         }`} />
       </div>
       
-      <div className="space-y-1">
-        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{title}</p>
-        <div className="flex items-baseline gap-1">
-          <span className="text-xl font-bold text-gray-900 dark:text-white">{value}</span>
-          {unit && <span className="text-sm text-gray-500 dark:text-gray-400">{unit}</span>}
+      <div className="space-y-1 min-w-0">
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">{title}</p>
+        <div className="flex items-baseline gap-1 min-w-0">
+          <span className="text-xl font-bold text-gray-900 dark:text-white truncate">{value}</span>
+          {unit && <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">{unit}</span>}
         </div>
       </div>
     </div>
@@ -64,11 +67,15 @@ const MetricsGrid: React.FC<MetricsGridProps> = ({ healthSummary }) => {
   if (!healthSummary) {
     return (
       <div className="px-4 mb-6">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-32 h-6 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="w-20 h-4 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 animate-pulse">
+            <div key={i} className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 animate-pulse min-h-[120px]">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-lg" />
+                <div className="w-9 h-9 bg-gray-300 dark:bg-gray-700 rounded-lg" />
                 <div className="w-4 h-4 bg-gray-300 dark:bg-gray-700 rounded" />
               </div>
               <div className="space-y-2">
@@ -142,7 +149,8 @@ const MetricsGrid: React.FC<MetricsGridProps> = ({ healthSummary }) => {
         </span>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
+      {/* Mobile-first 2x2 grid with responsive breakpoints */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6 max-w-full">
         {metrics.map((metric, index) => (
           <MetricCard key={index} {...metric} />
         ))}

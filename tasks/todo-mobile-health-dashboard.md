@@ -145,7 +145,7 @@ Transform the existing desktop-focused health dashboard into a mobile-first, tou
   - **Solution**: Use CSS custom properties for theming
   - **Files affected**: All new component files
 
-- [ ] **Task 3.3**: Create theme management system
+- [ x] **Task 3.3**: Create theme management system
   - **Problem**: No mechanism to toggle between light/dark/system modes
   - **Solution**: Implement useTheme hook with localStorage and system preference support
   - **Theme modes**:
@@ -162,7 +162,7 @@ Transform the existing desktop-focused health dashboard into a mobile-first, tou
     - Update `client/src/App.tsx` to apply theme on mount
     - Remove darkMode setting from `AppPreferencesSettings.tsx`
 
-- [ ] **Task 3.4**: Implement theme toggle button component
+- [ x] **Task 3.4**: Implement theme toggle button component
   - **Problem**: No UI element to switch themes
   - **Solution**: Create pill-shaped toggle with sun/moon icons and system mode
   - **Design specs**:

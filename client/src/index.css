@@ -28,6 +28,11 @@
   --chart-3: 271 81% 56%;
   --chart-4: 0 84% 60%;
   --chart-5: 45 93% 47%;
+  --hero-gradient-from: 134 239% 60%;
+  --hero-gradient-via: 217 91% 60%;
+  --hero-gradient-to: 271 81% 56%;
+  --hero-overlay: 0 0% 0%;
+  --hero-overlay-opacity: 0.1;
 }
 
 .dark {
@@ -51,6 +56,11 @@
   --destructive-foreground: 0 0% 98%;
   --ring: 240 4.9% 83.9%;
   --radius: 0.5rem;
+  --hero-gradient-from: 134 239% 35%;
+  --hero-gradient-via: 217 91% 35%;
+  --hero-gradient-to: 271 81% 35%;
+  --hero-overlay: 0 0% 0%;
+  --hero-overlay-opacity: 0.3;
 }
 
 @layer base {

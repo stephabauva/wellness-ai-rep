@@ -28,7 +28,7 @@ Toast notifications for user feedback
 ## Scope
 
 ### Brief Description
-Transform the existing desktop-focused health dashboard into a mobile-first, touch-optimized experience with enhanced visual design, better component organization, and full dark mode support.
+Transform the existing desktop-focused health dashboard into a mobile-first, touch-optimized experience with enhanced visual design, better component organization, and full dark mode support with a theme toggle that includes light, dark, and system modes.
 
 ### Technical Context
 - **Framework**: React 18 + TypeScript + Vite
@@ -145,6 +145,52 @@ Transform the existing desktop-focused health dashboard into a mobile-first, tou
   - **Solution**: Use CSS custom properties for theming
   - **Files affected**: All new component files
 
+- [ ] **Task 3.3**: Create theme management system
+  - **Problem**: No mechanism to toggle between light/dark/system modes
+  - **Solution**: Implement useTheme hook with localStorage and system preference support
+  - **Theme modes**:
+    - `light`: Force light mode regardless of system
+    - `dark`: Force dark mode regardless of system  
+    - `system`: Follow OS/browser preference (default)
+  - **Implementation details**:
+    - Store preference in localStorage as 'theme-preference'
+    - Apply 'dark' class to document.documentElement
+    - Listen to system preference changes via matchMedia
+    - Provide theme state and setTheme function
+  - **Files affected**: 
+    - Create `client/src/hooks/useTheme.ts` (theme state management)
+    - Update `client/src/App.tsx` to apply theme on mount
+    - Remove darkMode setting from `AppPreferencesSettings.tsx`
+
+- [ ] **Task 3.4**: Implement theme toggle button component
+  - **Problem**: No UI element to switch themes
+  - **Solution**: Create pill-shaped toggle with sun/moon icons and system mode
+  - **Design specs**:
+    - Pill-shaped toggle switch (like iOS)
+    - Light mode: sun icon on left (active), moon icon on right
+    - Dark mode: sun icon on left, moon icon on right (active)
+    - System mode: indicated by Monitor icon or auto-detection
+    - Smooth sliding animation between states
+    - Touch-friendly size (min 44px height)
+  - **Files affected**: 
+    - Create `client/src/components/ui/theme-toggle.tsx` (reusable component)
+    - Uses lucide-react icons: Sun, Moon, Monitor
+
+- [ ] **Task 3.5**: Add theme toggle to navigation
+  - **Problem**: Theme toggle needs to be accessible from navigation
+  - **Solution**: Add toggle to the left of burger menu (mobile) and bottom of sidebar (desktop)
+  - **Files affected**: 
+    - `client/src/components/MobileNav.tsx:57` (add before Menu button)
+    - `client/src/components/Sidebar.tsx:~120` (add near user profile)
+
+- [ ] **Task 3.6**: Sync theme with user settings
+  - **Problem**: Theme changes should persist across sessions
+  - **Solution**: Update user settings API to save theme preference
+  - **Files affected**: 
+    - Update settings API to handle theme preference
+    - Remove darkMode field from database schema if needed
+    - Update `useUserSettings` hook to exclude darkMode
+
 ### Phase 4: Performance & Polish
 - [ ] **Task 4.1**: Optimize for mobile performance
   - **Problem**: Desktop-focused optimizations
@@ -254,6 +300,15 @@ Transform the existing desktop-focused health dashboard into a mobile-first, tou
 - Spring animations for interactions
 - Sticky positioning for header
 - Mobile-optimized typography scales
+
+## Phase 3 Progress Update
+
+### Completed Tasks (3.1 & 3.2)
+- ✅ **Task 3.1**: Extended dark mode CSS variables for gradient backgrounds and overlays
+- ✅ **Task 3.2**: Implemented dark mode for all new mobile components
+
+### New Theme Toggle Tasks (3.3 - 3.6)
+These tasks add a theme toggle switch with light/dark/system modes, making the existing dark mode settings irrelevant and removable. The toggle will appear to the left of the burger menu on mobile and in the sidebar on desktop.
 
 ## Review
 

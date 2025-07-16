@@ -30,10 +30,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <div className="relative mx-4 mt-4 mb-6 rounded-2xl overflow-hidden">
       {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--hero-gradient-from))] via-[hsl(var(--hero-gradient-via))] to-[hsl(var(--hero-gradient-to))]" />
       
       {/* Backdrop Blur Overlay */}
-      <div className="absolute inset-0 backdrop-blur-sm bg-black/10" />
+      <div className="absolute inset-0 backdrop-blur-sm bg-[hsl(var(--hero-overlay))]" style={{ opacity: 'var(--hero-overlay-opacity)' }} />
       
       {/* Content */}
       <div className="relative p-6 text-white">

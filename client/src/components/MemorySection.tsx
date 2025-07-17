@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@shared/components/ui/card";
 import { Button } from "@shared/components/ui/button";
@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/com
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2 } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock } from "lucide-react";
 import { FAB } from "./ui/FAB";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
@@ -128,6 +128,143 @@ const explanationCards = {
   }
 };
 
+// Smart defaults system
+interface SmartDefault {
+  content: string;
+  category: string;
+  importance: string;
+  timestamp: string;
+  frequency: number;
+}
+
+interface PresetButton {
+  id: string;
+  label: string;
+  content: string;
+  category: string;
+  importance: string;
+  icon: string;
+  timeContext?: string[];
+}
+
+const healthPresets: PresetButton[] = [
+  {
+    id: 'morning-routine',
+    label: 'Morning Routine',
+    content: 'I prefer to exercise in the morning',
+    category: 'preferences',
+    importance: 'medium',
+    icon: '🌅',
+    timeContext: ['morning']
+  },
+  {
+    id: 'dietary-restriction',
+    label: 'Dietary Restriction',
+    content: 'I am allergic to',
+    category: 'food_diet',
+    importance: 'high',
+    icon: '🚫',
+  },
+  {
+    id: 'fitness-goal',
+    label: 'Fitness Goal',
+    content: 'My goal is to',
+    category: 'goals',
+    importance: 'high',
+    icon: '🎯',
+  },
+  {
+    id: 'injury-limitation',
+    label: 'Injury/Limitation',
+    content: 'I have a injury/limitation with my',
+    category: 'personal_context',
+    importance: 'high',
+    icon: '⚕️',
+  },
+  {
+    id: 'medication',
+    label: 'Medication',
+    content: 'I take medication for',
+    category: 'personal_context',
+    importance: 'high',
+    icon: '💊',
+  },
+  {
+    id: 'workout-preference',
+    label: 'Workout Preference',
+    content: 'I enjoy doing',
+    category: 'preferences',
+    importance: 'medium',
+    icon: '💪',
+  },
+  {
+    id: 'food-preference',
+    label: 'Food Preference',
+    content: 'I love eating',
+    category: 'food_diet',
+    importance: 'medium',
+    icon: '🥗',
+  },
+  {
+    id: 'coaching-style',
+    label: 'Coaching Style',
+    content: 'I prefer a coaching style that is',
+    category: 'instructions',
+    importance: 'high',
+    icon: '🗣️',
+  }
+];
+
+function getTimeContext(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  return 'evening';
+}
+
+function getSmartDefaults(): SmartDefault[] {
+  const stored = localStorage.getItem('memorySmartDefaults');
+  return stored ? JSON.parse(stored) : [];
+}
+
+function saveSmartDefault(memory: Omit<SmartDefault, 'timestamp' | 'frequency'>) {
+  const defaults = getSmartDefaults();
+  const existing = defaults.find(d => 
+    d.content === memory.content && 
+    d.category === memory.category
+  );
+  
+  if (existing) {
+    existing.frequency += 1;
+    existing.timestamp = new Date().toISOString();
+  } else {
+    defaults.push({
+      ...memory,
+      timestamp: new Date().toISOString(),
+      frequency: 1
+    });
+  }
+  
+  // Keep only the 20 most recent/frequent defaults
+  defaults.sort((a, b) => b.frequency - a.frequency || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const limitedDefaults = defaults.slice(0, 20);
+  
+  localStorage.setItem('memorySmartDefaults', JSON.stringify(limitedDefaults));
+}
+
+function getRecentValues(field: 'content' | 'category' | 'importance', limit = 5): string[] {
+  const defaults = getSmartDefaults();
+  const values = defaults.map(d => d[field]).filter(Boolean);
+  return [...new Set(values)].slice(0, limit);
+}
+
+function getContextualPresets(): PresetButton[] {
+  const timeContext = getTimeContext();
+  return healthPresets.filter(preset => 
+    !preset.timeContext || preset.timeContext.includes(timeContext)
+  );
+}
+
 export default function MemorySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
@@ -139,9 +276,11 @@ export default function MemorySection() {
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
   const [showLoadButton, setShowLoadButton] = useState<boolean>(true);
   const [isVoiceInputActive, setIsVoiceInputActive] = useState<boolean>(false);
+  const [showSmartDefaults, setShowSmartDefaults] = useState<boolean>(false);
+  const [showPresets, setShowPresets] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Form for manual memory entry
+  // Form for manual memory entry with smart defaults
   const form = useForm<ManualMemoryFormData>({
     resolver: zodResolver(manualMemorySchema),
     defaultValues: {
@@ -150,6 +289,77 @@ export default function MemorySection() {
       importance: "medium",
     },
   });
+
+  // Smart defaults state
+  const [smartDefaults, setSmartDefaults] = useState<SmartDefault[]>([]);
+  const [recentContent, setRecentContent] = useState<string[]>([]);
+  const [contextualPresets, setContextualPresets] = useState<PresetButton[]>([]);
+
+  // Load smart defaults on component mount
+  useEffect(() => {
+    setSmartDefaults(getSmartDefaults());
+    setRecentContent(getRecentValues('content'));
+    setContextualPresets(getContextualPresets());
+  }, []);
+
+  // Auto-populate form with smart defaults when opening
+  useEffect(() => {
+    if (isManualEntryOpen && smartDefaults.length > 0) {
+      const mostRecent = smartDefaults[0];
+      const timeContext = getTimeContext();
+      
+      // Set category based on time context or most recent
+      if (timeContext === 'morning' && smartDefaults.find(d => d.category === 'preferences')) {
+        form.setValue('category', 'preferences');
+      } else if (timeContext === 'evening' && smartDefaults.find(d => d.category === 'goals')) {
+        form.setValue('category', 'goals');
+      } else {
+        form.setValue('category', mostRecent.category as any);
+      }
+      
+      // Set importance based on most common choice
+      const importanceFrequency = smartDefaults.reduce((acc, d) => {
+        acc[d.importance] = (acc[d.importance] || 0) + d.frequency;
+        return acc;
+      }, {} as Record<string, number>);
+      const mostCommonImportance = Object.entries(importanceFrequency)
+        .sort(([,a], [,b]) => b - a)[0]?.[0] || 'medium';
+      form.setValue('importance', mostCommonImportance as any);
+    }
+  }, [isManualEntryOpen, smartDefaults, form]);
+
+  // Handle preset selection
+  const handlePresetSelect = (preset: PresetButton) => {
+    form.setValue('content', preset.content);
+    form.setValue('category', preset.category as any);
+    form.setValue('importance', preset.importance as any);
+    setShowPresets(false);
+    toast({
+      title: "Preset Applied",
+      description: `${preset.label} template loaded. Continue editing as needed.`,
+    });
+  };
+
+  // Handle smart default selection
+  const handleSmartDefaultSelect = (defaultValue: SmartDefault) => {
+    form.setValue('content', defaultValue.content);
+    form.setValue('category', defaultValue.category as any);
+    form.setValue('importance', defaultValue.importance as any);
+    setShowSmartDefaults(false);
+    toast({
+      title: "Previous Entry Loaded",
+      description: "Similar content from your history applied.",
+    });
+  };
+
+  // Handle recent content selection
+  const handleRecentContentSelect = (content: string) => {
+    form.setValue('content', content);
+    toast({
+      title: "Recent Content Applied",
+      description: "Previous content loaded for quick editing.",
+    });
+  };
 
   // Voice input integration
   const {
@@ -278,12 +488,19 @@ export default function MemorySection() {
     setSelectedLabels(new Set());
   };
 
-  // Manual memory creation mutation
+  // Manual memory creation mutation with smart defaults tracking
   const createManualMemoryMutation = useMutation({
     mutationFn: async (data: ManualMemoryFormData) => {
       // Convert importance level to numeric score
       const importanceMap = { low: 0.3, medium: 0.6, high: 0.9 };
       const importanceScore = importanceMap[data.importance];
+
+      // Save to smart defaults for future use
+      saveSmartDefault({
+        content: data.content,
+        category: data.category,
+        importance: data.importance,
+      });
 
       // Use the existing memory processing system like chat does
       return apiRequest("/api/memories/manual", "POST", {
@@ -304,6 +521,10 @@ export default function MemorySection() {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
         await refetchMemories();
       }
+      
+      // Update smart defaults state
+      setSmartDefaults(getSmartDefaults());
+      setRecentContent(getRecentValues('content'));
       
       form.reset();
       setIsManualEntryOpen(false);
@@ -481,6 +702,105 @@ export default function MemorySection() {
                     </p>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit((data: ManualMemoryFormData) => createManualMemoryMutation.mutate(data))} className="space-y-4">
+                        {/* Quick Access Buttons */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowPresets(!showPresets)}
+                            className="min-h-[44px] px-4 flex items-center gap-2 justify-start"
+                          >
+                            <Zap className="h-4 w-4" />
+                            <span className="text-sm">Quick Templates</span>
+                            {contextualPresets.length > 0 && (
+                              <Badge variant="secondary" className="ml-auto text-xs">
+                                {contextualPresets.length}
+                              </Badge>
+                            )}
+                          </Button>
+                          
+                          {smartDefaults.length > 0 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setShowSmartDefaults(!showSmartDefaults)}
+                              className="min-h-[44px] px-4 flex items-center gap-2 justify-start"
+                            >
+                              <History className="h-4 w-4" />
+                              <span className="text-sm">Recent Entries</span>
+                              <Badge variant="secondary" className="ml-auto text-xs">
+                                {smartDefaults.length}
+                              </Badge>
+                            </Button>
+                          )}
+                          
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-[44px] px-4 flex items-center gap-2 justify-start text-purple-600"
+                            disabled
+                          >
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm">{getTimeContext().charAt(0).toUpperCase() + getTimeContext().slice(1)}</span>
+                          </Button>
+                        </div>
+
+                        {/* Preset Templates */}
+                        <Collapsible open={showPresets} onOpenChange={setShowPresets}>
+                          <CollapsibleContent>
+                            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <h4 className="text-sm font-medium text-blue-800 mb-3">Quick Templates</h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {contextualPresets.map((preset) => (
+                                  <Button
+                                    key={preset.id}
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => handlePresetSelect(preset)}
+                                    className="min-h-[44px] p-3 text-left justify-start hover:bg-blue-100"
+                                  >
+                                    <span className="mr-2 text-lg">{preset.icon}</span>
+                                    <div className="flex flex-col items-start">
+                                      <span className="text-sm font-medium">{preset.label}</span>
+                                      <span className="text-xs text-gray-600 truncate">{preset.content}</span>
+                                    </div>
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+
+                        {/* Smart Defaults */}
+                        <Collapsible open={showSmartDefaults} onOpenChange={setShowSmartDefaults}>
+                          <CollapsibleContent>
+                            <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                              <h4 className="text-sm font-medium text-green-800 mb-3">Your Recent Entries</h4>
+                              <div className="space-y-2">
+                                {smartDefaults.slice(0, 5).map((defaultValue, index) => (
+                                  <Button
+                                    key={index}
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => handleSmartDefaultSelect(defaultValue)}
+                                    className="w-full min-h-[44px] p-3 text-left justify-start hover:bg-green-100"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {categoryIcons[defaultValue.category as keyof typeof categoryIcons]}
+                                      <div className="flex flex-col items-start">
+                                        <span className="text-sm font-medium truncate max-w-[200px]">{defaultValue.content}</span>
+                                        <span className="text-xs text-gray-600">
+                                          {categoryLabels[defaultValue.category as keyof typeof categoryLabels]} • Used {defaultValue.frequency} times
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                        
                         <FormField
                           control={form.control}
                           name="content"
@@ -536,6 +856,28 @@ export default function MemorySection() {
                                   </span>
                                 )}
                               </FormDescription>
+                              
+                              {/* Recent Content Suggestions */}
+                              {recentContent.length > 0 && field.value.length < 10 && (
+                                <div className="mt-2">
+                                  <div className="text-xs text-gray-600 mb-1">Recent content:</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {recentContent.slice(0, 3).map((content, index) => (
+                                      <Button
+                                        key={index}
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRecentContentSelect(content)}
+                                        className="text-xs h-8 px-2 truncate max-w-[120px]"
+                                      >
+                                        {content.length > 15 ? `${content.substring(0, 15)}...` : content}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
                               <FormMessage />
                             </FormItem>
                           )}

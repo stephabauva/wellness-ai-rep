@@ -8,13 +8,14 @@ import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2 } from "lucide-react";
 import { FAB } from "./ui/FAB";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useVoiceInput } from "../hooks/useVoiceInput";
 
 // Manual memory entry schema
 const manualMemorySchema = z.object({
@@ -138,6 +139,7 @@ export default function MemorySection() {
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
   const [showLoadButton, setShowLoadButton] = useState<boolean>(true);
+  const [isVoiceInputActive, setIsVoiceInputActive] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Form for manual memory entry
@@ -149,6 +151,43 @@ export default function MemorySection() {
       importance: "medium",
     },
   });
+
+  // Voice input integration
+  const {
+    isSupported: isVoiceSupported,
+    isListening,
+    transcript,
+    interimTranscript,
+    error: voiceError,
+    startListening,
+    stopListening,
+    clearTranscript,
+  } = useVoiceInput({
+    onTranscript: (newTranscript) => {
+      const currentContent = form.getValues('content');
+      const updatedContent = currentContent + (currentContent ? ' ' : '') + newTranscript;
+      form.setValue('content', updatedContent);
+    },
+    onError: (error) => {
+      toast({
+        title: "Voice Input Error",
+        description: error,
+        variant: "destructive",
+      });
+    },
+    continuous: false,
+    interimResults: true,
+  });
+
+  const handleVoiceToggle = () => {
+    if (isListening) {
+      stopListening();
+      setIsVoiceInputActive(false);
+    } else {
+      startListening();
+      setIsVoiceInputActive(true);
+    }
+  };
 
   // Overview count query - lightweight, runs once on mount
   const { data: memoryOverview = { total: 0, categories: {}, qualityMetrics: {} }, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
@@ -450,14 +489,53 @@ export default function MemorySection() {
                             <FormItem>
                               <FormLabel>Memory Content</FormLabel>
                               <FormControl>
-                                <Textarea
-                                  placeholder="Enter information you want your AI coach to remember (e.g., 'I prefer morning workouts and have a gluten sensitivity')"
-                                  className="min-h-[100px]"
-                                  {...field}
-                                />
+                                <div className="relative">
+                                  <Textarea
+                                    placeholder="Enter information you want your AI coach to remember (e.g., 'I prefer morning workouts and have a gluten sensitivity')"
+                                    className="min-h-[100px] pr-12"
+                                    {...field}
+                                    value={field.value + (interimTranscript ? ` ${interimTranscript}` : '')}
+                                  />
+                                  {isVoiceSupported && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={handleVoiceToggle}
+                                      className={`absolute right-2 top-2 min-h-[44px] min-w-[44px] p-2 rounded-full touch-manipulation ${
+                                        isListening ? "bg-red-50 text-red-600 hover:bg-red-100" : "hover:bg-gray-100"
+                                      }`}
+                                      disabled={createManualMemoryMutation.isPending}
+                                    >
+                                      {isListening ? (
+                                        <>
+                                          <MicOff className="h-4 w-4" />
+                                          <span className="sr-only">Stop voice input</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Mic className="h-4 w-4" />
+                                          <span className="sr-only">Start voice input</span>
+                                        </>
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
                               </FormControl>
-                              <FormDescription>
-                                Describe the information clearly and specifically.
+                              <FormDescription className="flex items-center gap-2">
+                                <span>Describe the information clearly and specifically.</span>
+                                {isVoiceSupported && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Volume2 className="h-3 w-3" />
+                                    Voice input available
+                                  </span>
+                                )}
+                                {isListening && (
+                                  <span className="text-xs text-red-600 flex items-center gap-1 animate-pulse">
+                                    <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+                                    Listening...
+                                  </span>
+                                )}
                               </FormDescription>
                               <FormMessage />
                             </FormItem>

@@ -996,6 +996,29 @@
     "crossDomain": true,
     "usageCount": 2
   },
+  "client/src/components/ui/PrivacyBadge.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "PrivacyBadgeProps",
+      "PrivacyBadge",
+      "PrivacyIndicatorGroupProps",
+      "PrivacyIndicatorGroup",
+      "PrivacyStatusProps",
+      "PrivacyStatus"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "PrivacyBadge",
+          "PrivacyStatus"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/components/ui/FAB.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -1307,25 +1330,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "server/routes/index.ts": {
-    "domain": "infrastructure/routing",
-    "exports": [
-      "ROUTE_MODULES",
-      "EMERGENCY_FALLBACK",
-      "ROUTE_MODULES_ENABLED"
-    ],
-    "usedBy": [
-      {
-        "file": "server/index.ts",
-        "domain": "infrastructure/server",
-        "imports": [
-          "registerRoutes"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "server/services/service-registry.ts": {
     "domain": "server/routes/shared-dependencies.ts",
     "exports": [
@@ -1437,6 +1441,25 @@
         "domain": "infrastructure/server",
         "imports": [
           "databaseMigrationService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
+    "exports": [
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "infrastructure/server",
+        "imports": [
+          "registerRoutes"
         ]
       }
     ],

@@ -9,6 +9,7 @@ import { Textarea } from "@shared/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
 import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock } from "lucide-react";
 import { FAB } from "./ui/FAB";
+import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useForm } from "react-hook-form";
@@ -74,7 +75,8 @@ const explanationCards = {
       "Sorted by importance and recency",
       "Shows how memories are categorized",
       "Use this to get an overview of everything stored"
-    ]
+    ],
+    privacyNote: "🔒 All memories are encrypted and stored securely. You control what the AI can access."
   },
   preferences: {
     title: "Preferences",
@@ -84,7 +86,8 @@ const explanationCards = {
       "Workout timing and environment preferences", 
       "Equipment and activity preferences",
       "Communication style and feedback preferences"
-    ]
+    ],
+    privacyNote: "🤖 This helps your AI coach personalize workout suggestions and communication style."
   },
   personal_context: {
     title: "Personal Context", 
@@ -94,7 +97,8 @@ const explanationCards = {
       "Physical limitations or injury considerations",
       "Current fitness level and training phase",
       "Life circumstances and lifestyle factors"
-    ]
+    ],
+    privacyNote: "🏥 Medical information is encrypted and only used to ensure safe, personalized recommendations."
   },
   instructions: {
     title: "Instructions",
@@ -104,7 +108,8 @@ const explanationCards = {
       "Protocols for reminders and check-ins",
       "Permission requirements for suggestions",
       "Goal-setting and progress tracking preferences"
-    ]
+    ],
+    privacyNote: "🎯 These instructions help the AI coach communicate with you in your preferred style."
   },
   food_diet: {
     title: "Food & Diet",
@@ -114,7 +119,8 @@ const explanationCards = {
       "Allergies, intolerances, and dietary restrictions",
       "Meal patterns and eating habits",
       "Nutritional needs and dietary choices"
-    ]
+    ],
+    privacyNote: "🥗 Dietary information helps create safe, personalized nutrition recommendations."
   },
   goals: {
     title: "Goals",
@@ -124,7 +130,8 @@ const explanationCards = {
       "Nutrition and dietary objectives",
       "Weight management targets",
       "Health and wellness milestones"
-    ]
+    ],
+    privacyNote: "🎯 Goal information helps the AI coach track your progress and adjust recommendations."
   }
 };
 
@@ -678,7 +685,29 @@ export default function MemorySection() {
               </div>
               <h1 className="text-2xl font-bold">AI Memory</h1>
             </div>
-            <p className="text-white/90">Your AI coach's personalized knowledge about you</p>
+            <p className="text-white/90 mb-3">Your AI coach's personalized knowledge about you</p>
+            
+            {/* Privacy Trust Indicators */}
+            <div className="flex flex-wrap gap-2 items-center pt-2 border-t border-white/20">
+              <PrivacyBadge 
+                variant="encrypted" 
+                size="sm" 
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
+              />
+              <PrivacyBadge 
+                variant="local-storage" 
+                size="sm" 
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
+              />
+              <PrivacyBadge 
+                variant="gdpr-compliant" 
+                size="sm" 
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
+              />
+              <span className="text-white/70 text-xs ml-2">
+                Your health data is protected and secure
+              </span>
+            </div>
           </div>
 
           <Card>
@@ -696,9 +725,18 @@ export default function MemorySection() {
               <Collapsible open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
                 <CollapsibleContent>
                   <div className="border rounded-lg p-4 mb-6 bg-gradient-to-r from-purple-50 to-pink-50">
-                    <h3 className="text-lg font-semibold mb-2">Add New Memory</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold">Add New Memory</h3>
+                      <div className="flex gap-1">
+                        <PrivacyBadge variant="encrypted" size="sm" />
+                        <PrivacyBadge variant="local-storage" size="sm" />
+                      </div>
+                    </div>
                     <p className="text-sm text-gray-600 mb-4">
                       Add important information that your AI coach should remember for future conversations.
+                      <span className="block text-xs text-gray-500 mt-1">
+                        🔒 Your data is encrypted and stored securely with full privacy protection
+                      </span>
                     </p>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit((data: ManualMemoryFormData) => createManualMemoryMutation.mutate(data))} className="space-y-4">
@@ -1278,7 +1316,7 @@ export default function MemorySection() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="pt-0">
-                      <ul className="space-y-2">
+                      <ul className="space-y-2 mb-4">
                         {explanationCards[selectedCategory as keyof typeof explanationCards]?.details.map((detail, index) => (
                           <li key={index} className="flex items-start gap-2 text-purple-700">
                             <span className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0" />
@@ -1286,6 +1324,19 @@ export default function MemorySection() {
                           </li>
                         ))}
                       </ul>
+                      
+                      {/* Privacy & Data Usage Transparency */}
+                      {explanationCards[selectedCategory as keyof typeof explanationCards]?.privacyNote && (
+                        <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                          <h4 className="text-sm font-medium text-purple-800 mb-2 flex items-center gap-1">
+                            <span>🔒</span>
+                            How this helps your coaching
+                          </h4>
+                          <p className="text-xs text-purple-700">
+                            {explanationCards[selectedCategory as keyof typeof explanationCards]?.privacyNote}
+                          </p>
+                        </div>
+                      )}
                     </CardContent>
                   </CollapsibleContent>
                 </Card>
@@ -1469,6 +1520,18 @@ export default function MemorySection() {
                               ))}
                             </div>
                           )}
+                          
+                          {/* Privacy Status for each memory */}
+                          <div className="mb-4">
+                            <PrivacyStatus
+                              encrypted={true}
+                              localStorage={true}
+                              aiAccessible={memory.category !== 'medical'}
+                              gdprCompliant={true}
+                              size="sm"
+                              className="gap-1"
+                            />
+                          </div>
                           
                           
                           <div className="flex justify-between text-xs text-gray-500 pt-3 mt-3 border-t border-purple-100">

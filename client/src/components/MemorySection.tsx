@@ -132,6 +132,8 @@ export default function MemorySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
+  const [showAllCategories, setShowAllCategories] = useState<boolean>(false);
+  const [showInsights, setShowInsights] = useState<boolean>(false);
   const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
@@ -556,9 +558,9 @@ export default function MemorySection() {
                 </span>
               </div>
 
-              {/* Memory Categories Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {/* Total Memories */}
+              {/* Core Actions - 3-Second Rule Compliance */}
+              <div className="space-y-4 mb-6">
+                {/* Primary Action: Total Memories Overview */}
                 <Card 
                   className={`p-4 cursor-pointer transition-all hover:shadow-md ${
                     selectedCategory === "all" ? "bg-purple-50 border-purple-200 ring-2 ring-purple-300" : "bg-gray-50 border-gray-200"
@@ -576,6 +578,55 @@ export default function MemorySection() {
                   </div>
                 </Card>
 
+                {/* Secondary Actions: Quick Category Access */}
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCategoryChange("preferences")}
+                    className={`h-12 px-4 min-h-[44px] ${
+                      selectedCategory === "preferences" ? "bg-blue-50 border-blue-200 text-blue-700" : ""
+                    }`}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Preferences ({memoryOverview.categories.preferences || 0})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCategoryChange("goals")}
+                    className={`h-12 px-4 min-h-[44px] ${
+                      selectedCategory === "goals" ? "bg-pink-50 border-pink-200 text-pink-700" : ""
+                    }`}
+                  >
+                    <Target className="h-4 w-4 mr-2" />
+                    Goals ({memoryOverview.categories.goals || 0})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAllCategories(!showAllCategories)}
+                    className="h-12 px-4 min-h-[44px]"
+                  >
+                    {showAllCategories ? (
+                      <>
+                        <ChevronUp className="h-4 w-4 mr-2" />
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4 mr-2" />
+                        Show All Categories
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Progressive Disclosure: All Categories */}
+              <Collapsible open={showAllCategories} onOpenChange={setShowAllCategories}>
+                <CollapsibleContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {/* Preferences */}
                 <Card 
                   className={`p-4 cursor-pointer transition-all hover:shadow-md ${
@@ -665,15 +716,35 @@ export default function MemorySection() {
                     <Target className="h-5 w-5 text-pink-400" />
                   </div>
                 </Card>
-              </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
             </CardContent>
           </Card>
 
           <div className="space-y-4">
-              {/* Memory Insights Section */}
+              {/* Memory Insights Section - Progressive Disclosure */}
               {memoryOverview.total > 0 && (
-                <Card className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                <div className="space-y-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowInsights(!showInsights)}
+                    className="w-full sm:w-auto h-12 px-4 min-h-[44px]"
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    {showInsights ? 'Hide' : 'Show'} Memory Insights
+                    {showInsights ? (
+                      <ChevronUp className="h-4 w-4 ml-2" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    )}
+                  </Button>
+                  
+                  <Collapsible open={showInsights} onOpenChange={setShowInsights}>
+                    <CollapsibleContent>
+                      <Card className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="p-2 bg-purple-100 rounded-full">
                       <Brain className="h-5 w-5 text-purple-600" />
@@ -720,8 +791,11 @@ export default function MemorySection() {
                       <Lightbulb className="h-5 w-5 mt-0.5 text-purple-600" />
                       <span className="text-sm text-gray-700">Memory system active: Your AI coach learns and remembers from every conversation</span>
                     </div>
-                  </div>
-                </Card>
+                      </div>
+                    </Card>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
               )}
 
               {/* Explanation Card */}

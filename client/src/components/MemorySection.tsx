@@ -6,7 +6,6 @@ import { Badge } from "@shared/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/components/ui/collapsible";
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
 import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2 } from "lucide-react";
 import { FAB } from "./ui/FAB";
@@ -542,27 +541,40 @@ export default function MemorySection() {
                           )}
                         />
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
                           <FormField
                             control={form.control}
                             name="category"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Category</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select memory category" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="preferences">Preferences</SelectItem>
-                                    <SelectItem value="personal_context">Personal Context</SelectItem>
-                                    <SelectItem value="instructions">Instructions</SelectItem>
-                                    <SelectItem value="food_diet">Food & Diet</SelectItem>
-                                    <SelectItem value="goals">Goals</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <FormControl>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {Object.entries(categoryLabels).map(([key, label]) => (
+                                      <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() => field.onChange(key)}
+                                        className={`
+                                          min-h-[56px] p-3 rounded-lg border-2 transition-all
+                                          flex flex-col items-center justify-center gap-1
+                                          touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                                          ${field.value === key 
+                                            ? `${categoryColors[key as keyof typeof categoryColors]} border-current ring-2 ring-offset-2 ring-current` 
+                                            : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
+                                          }
+                                        `}
+                                      >
+                                        <div className={`p-1 rounded-full ${field.value === key ? 'text-current' : 'text-gray-600'}`}>
+                                          {categoryIcons[key as keyof typeof categoryIcons]}
+                                        </div>
+                                        <span className={`text-xs font-medium text-center leading-tight ${field.value === key ? 'text-current' : 'text-gray-700'}`}>
+                                          {label}
+                                        </span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </FormControl>
                                 <FormDescription>
                                   Choose the type of information this memory represents.
                                 </FormDescription>
@@ -577,18 +589,40 @@ export default function MemorySection() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Importance Level</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select importance level" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="low">Low - General information</SelectItem>
-                                    <SelectItem value="medium">Medium - Important preference</SelectItem>
-                                    <SelectItem value="high">High - Critical health information</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <FormControl>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    {[
+                                      { value: 'low', label: 'Low', description: 'General information', color: 'bg-gray-100 text-gray-800', icon: '📝' },
+                                      { value: 'medium', label: 'Medium', description: 'Important preference', color: 'bg-orange-100 text-orange-800', icon: '⚡' },
+                                      { value: 'high', label: 'High', description: 'Critical health information', color: 'bg-red-100 text-red-800', icon: '🚨' }
+                                    ].map((importance) => (
+                                      <button
+                                        key={importance.value}
+                                        type="button"
+                                        onClick={() => field.onChange(importance.value)}
+                                        className={`
+                                          min-h-[56px] p-3 rounded-lg border-2 transition-all
+                                          flex items-center justify-start gap-3
+                                          touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                                          ${field.value === importance.value
+                                            ? `${importance.color} border-current ring-2 ring-offset-2 ring-current`
+                                            : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
+                                          }
+                                        `}
+                                      >
+                                        <span className="text-lg">{importance.icon}</span>
+                                        <div className="flex flex-col items-start">
+                                          <span className={`text-sm font-medium ${field.value === importance.value ? 'text-current' : 'text-gray-900'}`}>
+                                            {importance.label}
+                                          </span>
+                                          <span className={`text-xs ${field.value === importance.value ? 'text-current opacity-90' : 'text-gray-600'}`}>
+                                            {importance.description}
+                                          </span>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </FormControl>
                                 <FormDescription>
                                   How important is this information for coaching decisions?
                                 </FormDescription>

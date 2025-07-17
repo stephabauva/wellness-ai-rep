@@ -526,13 +526,14 @@ export default function MemorySection() {
                             variant="outline"
                             onClick={() => setIsManualEntryOpen(false)}
                             disabled={createManualMemoryMutation.isPending}
+                            className="min-h-[44px] px-6"
                           >
                             Cancel
                           </Button>
                           <Button
                             type="submit"
                             disabled={createManualMemoryMutation.isPending}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 min-h-[44px] px-6"
                           >
                             {createManualMemoryMutation.isPending ? (
                               <>
@@ -802,7 +803,7 @@ export default function MemorySection() {
               <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
                 <Card className="border-purple-200 bg-purple-50">
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-purple-100 transition-colors">
+                    <CardHeader className="cursor-pointer hover:bg-purple-100 transition-colors min-h-[44px] py-4 touch-manipulation">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Info className="h-5 w-5 text-purple-600" />
@@ -852,7 +853,7 @@ export default function MemorySection() {
                           variant="outline"
                           size="sm"
                           onClick={handleSelectAllLabels}
-                          className="text-xs"
+                          className="text-xs min-h-[44px] px-4"
                         >
                           {selectedLabels.size === availableLabels.length ? "Deselect All" : "Select All"}
                         </Button>
@@ -865,7 +866,7 @@ export default function MemorySection() {
                           <Badge
                             key={label}
                             variant={selectedLabels.has(label) ? "default" : "outline"}
-                            className="cursor-pointer hover:bg-gray-100 text-xs"
+                            className="cursor-pointer hover:bg-gray-100 text-xs min-h-[44px] px-3 py-2 flex items-center justify-center touch-manipulation"
                             onClick={() => handleLabelToggle(label)}
                           >
                             {label} ({count})
@@ -881,7 +882,7 @@ export default function MemorySection() {
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-8">
                     <Brain className="h-12 w-12 text-purple-400 mb-4" />
-                    <Button onClick={handleLoadMemories} disabled={allMemoriesLoading} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
+                    <Button onClick={handleLoadMemories} disabled={allMemoriesLoading} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 min-h-[44px] px-6">
                       {allMemoriesLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -915,11 +916,14 @@ export default function MemorySection() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                             <div className="flex items-center gap-2">
-                              <Checkbox
-                                checked={selectedMemoryIds.size === memories.length && memories.length > 0}
-                                onCheckedChange={handleSelectAll}
-                                disabled={memories.length === 0}
-                              />
+                              <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
+                                <Checkbox
+                                  checked={selectedMemoryIds.size === memories.length && memories.length > 0}
+                                  onCheckedChange={handleSelectAll}
+                                  disabled={memories.length === 0}
+                                  className="h-5 w-5"
+                                />
+                              </div>
                               <span className="text-sm font-medium">
                                 Select All ({memories.length})
                               </span>
@@ -933,6 +937,7 @@ export default function MemorySection() {
                                   variant="outline"
                                   size="sm"
                                   onClick={handleClearSelection}
+                                  className="min-h-[44px] px-4"
                                 >
                                   <X className="h-4 w-4 mr-1" />
                                   Clear
@@ -946,7 +951,7 @@ export default function MemorySection() {
                               size="sm"
                               onClick={handleBulkDelete}
                               disabled={bulkDeleteMutation.isPending}
-                              className="w-full sm:w-auto bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 border-0"
+                              className="w-full sm:w-auto bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 border-0 min-h-[44px] px-4"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               <span className="hidden sm:inline">Delete Selected ({selectedMemoryIds.size})</span>
@@ -960,14 +965,17 @@ export default function MemorySection() {
 
                   <div className="grid gap-4">
                     {memories.map((memory: MemoryEntry) => (
-                      <Card key={memory.id} className="relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-indigo-50/30 border-purple-100 hover:shadow-md transition-all">
-                        <CardHeader className="pb-3">
+                      <Card key={memory.id} className="relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-indigo-50/30 border-purple-100 hover:shadow-md transition-all touch-manipulation">
+                        <CardHeader className="pb-3 min-h-[44px] py-4">
                           <div className="flex items-start gap-3">
                             <div className="pt-1">
-                              <Checkbox
-                                checked={selectedMemoryIds.has(memory.id)}
-                                onCheckedChange={() => handleToggleMemorySelection(memory.id)}
-                              />
+                              <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
+                                <Checkbox
+                                  checked={selectedMemoryIds.has(memory.id)}
+                                  onCheckedChange={() => handleToggleMemorySelection(memory.id)}
+                                  className="h-5 w-5"
+                                />
+                              </div>
                             </div>
                             <div className="flex-1">
                               <div className="flex items-start justify-between">
@@ -987,7 +995,7 @@ export default function MemorySection() {
                                   size="sm"
                                   onClick={() => handleDeleteMemory(memory.id)}
                                   disabled={deleteMemoryMutation.isPending}
-                                  className="hover:bg-red-50 hover:text-red-600"
+                                  className="hover:bg-red-50 hover:text-red-600 min-h-[44px] min-w-[44px] p-2"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -995,13 +1003,13 @@ export default function MemorySection() {
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="py-4">
                           <p className="text-gray-800 mb-3 leading-relaxed">{memory.content}</p>
                           
                           {memory.labels && memory.labels.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-3">
+                            <div className="flex flex-wrap gap-2 mb-4">
                               {memory.labels.map((label: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs bg-purple-100 text-purple-700 font-normal border-purple-200">
+                                <Badge key={index} variant="secondary" className="text-xs bg-purple-100 text-purple-700 font-normal border-purple-200 min-h-[32px] px-2 py-1">
                                   {label}
                                 </Badge>
                               ))}
@@ -1009,7 +1017,7 @@ export default function MemorySection() {
                           )}
                           
                           
-                          <div className="flex justify-between text-xs text-gray-500 pt-2 border-t border-purple-100">
+                          <div className="flex justify-between text-xs text-gray-500 pt-3 mt-3 border-t border-purple-100">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               Created: {new Date(memory.createdAt).toLocaleDateString()}

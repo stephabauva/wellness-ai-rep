@@ -7,9 +7,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/com
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3 } from "lucide-react";
 import { FAB } from "./ui/FAB";
 import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
+import { TouchSwipeHandler, createDeleteAction, createEditAction } from "./ui/TouchSwipeHandler";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useForm } from "react-hook-form";
@@ -292,6 +293,8 @@ export default function MemorySection() {
   const [isVoiceInputActive, setIsVoiceInputActive] = useState<boolean>(false);
   const [showSmartDefaults, setShowSmartDefaults] = useState<boolean>(false);
   const [showPresets, setShowPresets] = useState<boolean>(false);
+  const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
+  const [editingMemoryContent, setEditingMemoryContent] = useState<string>("");
   const { toast } = useToast();
 
   // Form for manual memory entry with smart defaults
@@ -585,6 +588,38 @@ export default function MemorySection() {
     }
   });
 
+  const editMemoryMutation = useMutation({
+    mutationFn: ({ memoryId, content }: { memoryId: string; content: string }) => 
+      apiRequest(`/api/memories/${memoryId}`, "PUT", { content }),
+    onSuccess: async () => {
+      // Force immediate refetch of overview for instant UI updates
+      await refetchOverview();
+      
+      // Invalidate Godmode metrics to update quality indicators
+      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
+      
+      // If memories are loaded, refetch them to update the list
+      if (memoriesLoaded) {
+        await queryClient.invalidateQueries({ queryKey: ["memories"] });
+        await refetchMemories();
+      }
+      
+      setEditingMemoryId(null);
+      setEditingMemoryContent("");
+      toast({
+        title: "Memory updated",
+        description: "The memory has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update memory. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const bulkDeleteMutation = useMutation({
     mutationFn: (memoryIds: string[]) => apiRequest("/api/memories/bulk", "DELETE", { memoryIds }),
     onSuccess: async (data) => {
@@ -619,6 +654,32 @@ export default function MemorySection() {
     if (confirm("Are you sure you want to delete this memory?")) {
       deleteMemoryMutation.mutate(memoryId);
     }
+  };
+
+  const handleEditMemory = (memoryId: string, currentContent: string) => {
+    setEditingMemoryId(memoryId);
+    setEditingMemoryContent(currentContent);
+  };
+
+  const handleSaveEdit = (memoryId: string) => {
+    if (editingMemoryContent.trim() === "") {
+      toast({
+        title: "Error",
+        description: "Memory content cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    editMemoryMutation.mutate({
+      memoryId,
+      content: editingMemoryContent.trim()
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMemoryId(null);
+    setEditingMemoryContent("");
   };
 
   const handleToggleMemorySelection = (memoryId: string) => {
@@ -1568,84 +1629,175 @@ export default function MemorySection() {
                   )}
 
                   <div className="grid gap-4">
-                    {memories.map((memory: MemoryEntry) => (
-                      <Card key={memory.id} className="relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-indigo-50/30 border-purple-100 hover:shadow-md transition-all touch-manipulation">
-                        <CardHeader className="pb-3 min-h-[44px] py-4">
-                          <div className="flex items-start gap-3">
-                            <div className="pt-1">
-                              <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
-                                <Checkbox
-                                  checked={selectedMemoryIds.has(memory.id)}
-                                  onCheckedChange={() => handleToggleMemorySelection(memory.id)}
-                                  className="h-5 w-5"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-2">
-                                  {categoryIcons[memory.category as keyof typeof categoryIcons]}
-                                  <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
-                                    {categoryLabels[memory.category as keyof typeof categoryLabels]}
-                                  </Badge>
-                                  {memory.importanceScore > 0.7 && (
-                                    <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
-                                      {getImportanceLabel(memory.importanceScore)}
-                                    </Badge>
-                                  )}
+                    {memories.map((memory: MemoryEntry) => {
+                      const isEditing = editingMemoryId === memory.id;
+                      
+                      return (
+                        <TouchSwipeHandler
+                          key={memory.id}
+                          leftAction={createDeleteAction(() => handleDeleteMemory(memory.id))}
+                          rightAction={createEditAction(() => handleEditMemory(memory.id, memory.content))}
+                          disabled={isEditing || deleteMemoryMutation.isPending || editMemoryMutation.isPending}
+                          className="mb-2"
+                        >
+                          <Card className="relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-indigo-50/30 border-purple-100 hover:shadow-md transition-all touch-manipulation">
+                            <CardHeader className="pb-3 min-h-[44px] py-4">
+                              <div className="flex items-start gap-3">
+                                <div className="pt-1">
+                                  <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
+                                    <Checkbox
+                                      checked={selectedMemoryIds.has(memory.id)}
+                                      onCheckedChange={() => handleToggleMemorySelection(memory.id)}
+                                      className="h-5 w-5"
+                                      disabled={isEditing}
+                                    />
+                                  </div>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteMemory(memory.id)}
-                                  disabled={deleteMemoryMutation.isPending}
-                                  className="hover:bg-red-50 hover:text-red-600 min-h-[44px] min-w-[44px] p-2"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <div className="flex-1">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-2">
+                                      {categoryIcons[memory.category as keyof typeof categoryIcons]}
+                                      <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
+                                        {categoryLabels[memory.category as keyof typeof categoryLabels]}
+                                      </Badge>
+                                      {memory.importanceScore > 0.7 && (
+                                        <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
+                                          {getImportanceLabel(memory.importanceScore)}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                      {isEditing && (
+                                        <>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleSaveEdit(memory.id)}
+                                            disabled={editMemoryMutation.isPending}
+                                            className="hover:bg-green-50 hover:text-green-600 min-h-[44px] min-w-[44px] p-2"
+                                          >
+                                            <CheckCircle className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleCancelEdit}
+                                            disabled={editMemoryMutation.isPending}
+                                            className="hover:bg-gray-50 hover:text-gray-600 min-h-[44px] min-w-[44px] p-2"
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </>
+                                      )}
+                                      {!isEditing && (
+                                        <>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleEditMemory(memory.id, memory.content)}
+                                            disabled={deleteMemoryMutation.isPending || editMemoryMutation.isPending}
+                                            className="hover:bg-blue-50 hover:text-blue-600 min-h-[44px] min-w-[44px] p-2"
+                                          >
+                                            <Edit3 className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleDeleteMemory(memory.id)}
+                                            disabled={deleteMemoryMutation.isPending || editMemoryMutation.isPending}
+                                            className="hover:bg-red-50 hover:text-red-600 min-h-[44px] min-w-[44px] p-2"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="py-4">
-                          <p className="text-gray-800 mb-3 leading-relaxed">{memory.content}</p>
-                          
-                          {memory.labels && memory.labels.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {memory.labels.map((label: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs bg-purple-100 text-purple-700 font-normal border-purple-200 min-h-[32px] px-2 py-1">
-                                  {label}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Privacy Status for each memory */}
-                          <div className="mb-4">
-                            <PrivacyStatus
-                              encrypted={true}
-                              localStorage={true}
-                              aiAccessible={memory.category !== 'medical'}
-                              gdprCompliant={true}
-                              size="sm"
-                              className="gap-1"
-                            />
-                          </div>
-                          
-                          
-                          <div className="flex justify-between text-xs text-gray-500 pt-3 mt-3 border-t border-purple-100">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              Created: {new Date(memory.createdAt).toLocaleDateString()}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Eye className="h-3 w-3" />
-                              Used {memory.accessCount} times
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                  ))}
+                            </CardHeader>
+                            <CardContent className="py-4">
+                              {isEditing ? (
+                                <div className="space-y-3">
+                                  <Textarea
+                                    value={editingMemoryContent}
+                                    onChange={(e) => setEditingMemoryContent(e.target.value)}
+                                    className="min-h-[100px] text-gray-800"
+                                    placeholder="Edit memory content..."
+                                    disabled={editMemoryMutation.isPending}
+                                  />
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleCancelEdit}
+                                      disabled={editMemoryMutation.isPending}
+                                      className="min-h-[44px] px-4"
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleSaveEdit(memory.id)}
+                                      disabled={editMemoryMutation.isPending || editingMemoryContent.trim() === ""}
+                                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 min-h-[44px] px-4"
+                                    >
+                                      {editMemoryMutation.isPending ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                          Saving...
+                                        </>
+                                      ) : (
+                                        "Save Changes"
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-gray-800 mb-3 leading-relaxed">{memory.content}</p>
+                              )}
+                              
+                              {!isEditing && memory.labels && memory.labels.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {memory.labels.map((label: string, index: number) => (
+                                    <Badge key={index} variant="secondary" className="text-xs bg-purple-100 text-purple-700 font-normal border-purple-200 min-h-[32px] px-2 py-1">
+                                      {label}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* Privacy Status for each memory */}
+                              {!isEditing && (
+                                <div className="mb-4">
+                                  <PrivacyStatus
+                                    encrypted={true}
+                                    localStorage={true}
+                                    aiAccessible={memory.category !== 'medical'}
+                                    gdprCompliant={true}
+                                    size="sm"
+                                    className="gap-1"
+                                  />
+                                </div>
+                              )}
+                              
+                              {!isEditing && (
+                                <div className="flex justify-between text-xs text-gray-500 pt-3 mt-3 border-t border-purple-100">
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    Created: {new Date(memory.createdAt).toLocaleDateString()}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Eye className="h-3 w-3" />
+                                    Used {memory.accessCount} times
+                                  </span>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </TouchSwipeHandler>
+                      );
+                    })}
                   </div>
                 </>
               )}

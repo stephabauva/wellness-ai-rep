@@ -8,7 +8,8 @@ import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2 } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle } from "lucide-react";
+import { FAB } from "./ui/FAB";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useForm } from "react-hook-form";
@@ -423,15 +424,7 @@ export default function MemorySection() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Memory Overview</span>
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 px-6 py-3 min-h-[48px] touch-manipulation"
-                  onClick={() => setIsManualEntryOpen(!isManualEntryOpen)}
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Add Memory
-                </Button>
+                {/* FAB replaces this button - now positioned in thumb zone */}
               </CardTitle>
               <CardDescription>
                 Your AI coach remembers important information from your conversations to provide personalized guidance.
@@ -961,6 +954,18 @@ export default function MemorySection() {
           </div>
         </div>
       </div>
+
+      {/* Floating Action Button for Add Memory - positioned in mobile thumb zone */}
+      <FAB
+        onClick={() => setIsManualEntryOpen(!isManualEntryOpen)}
+        position="bottom-right"
+        size="default"
+        className="shadow-xl hover:shadow-2xl transition-all duration-200 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:from-purple-700 active:to-pink-700 safe-area-inset-bottom"
+        aria-label="Add Memory"
+        title="Add Memory"
+      >
+        <Plus className="h-6 w-6" />
+      </FAB>
     </div>
   );
 }

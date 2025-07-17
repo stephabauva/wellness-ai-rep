@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/com
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle } from "lucide-react";
 import { FAB } from "./ui/FAB";
 import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { apiRequest, queryClient } from "@shared";
@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useVoiceInput } from "../hooks/useVoiceInput";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@shared/components/ui/tooltip";
 
 // Manual memory entry schema
 const manualMemorySchema = z.object({
@@ -76,7 +77,8 @@ const explanationCards = {
       "Shows how memories are categorized",
       "Use this to get an overview of everything stored"
     ],
-    privacyNote: "🔒 All memories are encrypted and stored securely. You control what the AI can access."
+    privacyNote: "🔒 All memories are encrypted and stored securely. You control what the AI can access.",
+    coachingBenefits: "Your AI coach uses this complete information to provide holistic, personalized wellness guidance that considers all aspects of your health journey together."
   },
   preferences: {
     title: "Preferences",
@@ -87,7 +89,8 @@ const explanationCards = {
       "Equipment and activity preferences",
       "Communication style and feedback preferences"
     ],
-    privacyNote: "🤖 This helps your AI coach personalize workout suggestions and communication style."
+    privacyNote: "🤖 This helps your AI coach personalize workout suggestions and communication style.",
+    coachingBenefits: "By remembering your preferences, your AI coach can suggest workouts you'll actually enjoy, recommend exercises at your preferred times, and communicate in a way that motivates you best."
   },
   personal_context: {
     title: "Personal Context", 
@@ -98,7 +101,8 @@ const explanationCards = {
       "Current fitness level and training phase",
       "Life circumstances and lifestyle factors"
     ],
-    privacyNote: "🏥 Medical information is encrypted and only used to ensure safe, personalized recommendations."
+    privacyNote: "🏥 Medical information is encrypted and only used to ensure safe, personalized recommendations.",
+    coachingBenefits: "Your AI coach uses this context to ensure all recommendations are safe for your health conditions, appropriate for your fitness level, and adapted to your life circumstances."
   },
   instructions: {
     title: "Instructions",
@@ -109,7 +113,8 @@ const explanationCards = {
       "Permission requirements for suggestions",
       "Goal-setting and progress tracking preferences"
     ],
-    privacyNote: "🎯 These instructions help the AI coach communicate with you in your preferred style."
+    privacyNote: "🎯 These instructions help the AI coach communicate with you in your preferred style.",
+    coachingBenefits: "Instructions ensure your AI coach respects your boundaries, follows your preferred coaching style, and provides guidance in the way that works best for your personality and schedule."
   },
   food_diet: {
     title: "Food & Diet",
@@ -120,7 +125,8 @@ const explanationCards = {
       "Meal patterns and eating habits",
       "Nutritional needs and dietary choices"
     ],
-    privacyNote: "🥗 Dietary information helps create safe, personalized nutrition recommendations."
+    privacyNote: "🥗 Dietary information helps create safe, personalized nutrition recommendations.",
+    coachingBenefits: "Your AI coach uses dietary information to suggest meals you'll enjoy, avoid foods that cause problems, and create nutrition plans that fit your lifestyle and health goals."
   },
   goals: {
     title: "Goals",
@@ -131,7 +137,8 @@ const explanationCards = {
       "Weight management targets",
       "Health and wellness milestones"
     ],
-    privacyNote: "🎯 Goal information helps the AI coach track your progress and adjust recommendations."
+    privacyNote: "🎯 Goal information helps the AI coach track your progress and adjust recommendations.",
+    coachingBenefits: "Goals give your AI coach direction to create focused plans, track your progress meaningfully, celebrate achievements, and adjust strategies when you're not meeting targets."
   }
 };
 
@@ -674,9 +681,10 @@ export default function MemorySection() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto">
-      <div className="flex-1 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+    <TooltipProvider>
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        <div className="flex-1 p-4 md:p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
           {/* Header with Gradient */}
           <div className="bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600 rounded-lg p-6 text-white mb-6">
             <div className="flex items-center gap-3 mb-2">
@@ -684,6 +692,22 @@ export default function MemorySection() {
                 <Brain className="h-6 w-6" />
               </div>
               <h1 className="text-2xl font-bold">AI Memory</h1>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-h-[44px] min-w-[44px] p-2 text-white/70 hover:text-white hover:bg-white/10"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Your AI coach stores important information from your conversations to provide more personalized and effective guidance. All data is encrypted and secure.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             <p className="text-white/90 mb-3">Your AI coach's personalized knowledge about you</p>
             
@@ -931,27 +955,40 @@ export default function MemorySection() {
                                 <FormControl>
                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {Object.entries(categoryLabels).map(([key, label]) => (
-                                      <button
-                                        key={key}
-                                        type="button"
-                                        onClick={() => field.onChange(key)}
-                                        className={`
-                                          min-h-[56px] p-3 rounded-lg border-2 transition-all
-                                          flex flex-col items-center justify-center gap-1
-                                          touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
-                                          ${field.value === key 
-                                            ? `${categoryColors[key as keyof typeof categoryColors]} border-current ring-2 ring-offset-2 ring-current` 
-                                            : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
-                                          }
-                                        `}
-                                      >
-                                        <div className={`p-1 rounded-full ${field.value === key ? 'text-current' : 'text-gray-600'}`}>
-                                          {categoryIcons[key as keyof typeof categoryIcons]}
-                                        </div>
-                                        <span className={`text-xs font-medium text-center leading-tight ${field.value === key ? 'text-current' : 'text-gray-700'}`}>
-                                          {label}
-                                        </span>
-                                      </button>
+                                      <Tooltip key={key}>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() => field.onChange(key)}
+                                            className={`
+                                              min-h-[56px] p-3 rounded-lg border-2 transition-all
+                                              flex flex-col items-center justify-center gap-1
+                                              touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                                              ${field.value === key 
+                                                ? `${categoryColors[key as keyof typeof categoryColors]} border-current ring-2 ring-offset-2 ring-current` 
+                                                : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
+                                              }
+                                            `}
+                                          >
+                                            <div className={`p-1 rounded-full ${field.value === key ? 'text-current' : 'text-gray-600'}`}>
+                                              {categoryIcons[key as keyof typeof categoryIcons]}
+                                            </div>
+                                            <span className={`text-xs font-medium text-center leading-tight ${field.value === key ? 'text-current' : 'text-gray-700'}`}>
+                                              {label}
+                                            </span>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-sm">
+                                          <div className="space-y-2">
+                                            <p className="text-sm font-medium">
+                                              {explanationCards[key as keyof typeof explanationCards]?.description}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                              {explanationCards[key as keyof typeof explanationCards]?.coachingBenefits}
+                                            </p>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
                                     ))}
                                   </div>
                                 </FormControl>
@@ -968,7 +1005,19 @@ export default function MemorySection() {
                             name="importance"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Importance Level</FormLabel>
+                                <FormLabel className="flex items-center gap-2">
+                                  Importance Level
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p className="text-sm">
+                                        Higher importance memories are prioritized when your AI coach makes recommendations. Critical health information should be marked as high importance.
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </FormLabel>
                                 <FormControl>
                                   <div className="grid grid-cols-1 gap-2">
                                     {[
@@ -1121,94 +1170,139 @@ export default function MemorySection() {
                 <CollapsibleContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {/* Preferences */}
-                <Card 
-                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                    selectedCategory === "preferences" ? "bg-blue-50 border-blue-200 ring-2 ring-blue-300" : "bg-gray-50 border-gray-200"
-                  }`}
-                  onClick={() => handleCategoryChange("preferences")}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-gray-600">Preferences</div>
-                      <div className="text-2xl font-bold text-blue-600">
-                        {memoryOverview.categories.preferences || 0}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card 
+                      className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                        selectedCategory === "preferences" ? "bg-blue-50 border-blue-200 ring-2 ring-blue-300" : "bg-gray-50 border-gray-200"
+                      }`}
+                      onClick={() => handleCategoryChange("preferences")}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-sm text-gray-600">Preferences</div>
+                          <div className="text-2xl font-bold text-blue-600">
+                            {memoryOverview.categories.preferences || 0}
+                          </div>
+                        </div>
+                        <User className="h-5 w-5 text-blue-400" />
                       </div>
-                    </div>
-                    <User className="h-5 w-5 text-blue-400" />
-                  </div>
-                </Card>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p className="text-sm">
+                      {explanationCards.preferences.coachingBenefits}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {/* Personal Context */}
-                <Card 
-                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                    selectedCategory === "personal_context" ? "bg-green-50 border-green-200 ring-2 ring-green-300" : "bg-gray-50 border-gray-200"
-                  }`}
-                  onClick={() => handleCategoryChange("personal_context")}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-gray-600">Personal Context</div>
-                      <div className="text-2xl font-bold text-green-600">
-                        {memoryOverview.categories.personal_context || 0}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card 
+                      className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                        selectedCategory === "personal_context" ? "bg-green-50 border-green-200 ring-2 ring-green-300" : "bg-gray-50 border-gray-200"
+                      }`}
+                      onClick={() => handleCategoryChange("personal_context")}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-sm text-gray-600">Personal Context</div>
+                          <div className="text-2xl font-bold text-green-600">
+                            {memoryOverview.categories.personal_context || 0}
+                          </div>
+                        </div>
+                        <Lightbulb className="h-5 w-5 text-green-400" />
                       </div>
-                    </div>
-                    <Lightbulb className="h-5 w-5 text-green-400" />
-                  </div>
-                </Card>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p className="text-sm">
+                      {explanationCards.personal_context.coachingBenefits}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {/* Instructions */}
-                <Card 
-                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                    selectedCategory === "instructions" ? "bg-purple-50 border-purple-200 ring-2 ring-purple-300" : "bg-gray-50 border-gray-200"
-                  }`}
-                  onClick={() => handleCategoryChange("instructions")}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-gray-600">Instructions</div>
-                      <div className="text-2xl font-bold text-purple-600">
-                        {memoryOverview.categories.instructions || 0}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card 
+                      className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                        selectedCategory === "instructions" ? "bg-purple-50 border-purple-200 ring-2 ring-purple-300" : "bg-gray-50 border-gray-200"
+                      }`}
+                      onClick={() => handleCategoryChange("instructions")}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-sm text-gray-600">Instructions</div>
+                          <div className="text-2xl font-bold text-purple-600">
+                            {memoryOverview.categories.instructions || 0}
+                          </div>
+                        </div>
+                        <Settings className="h-5 w-5 text-purple-400" />
                       </div>
-                    </div>
-                    <Settings className="h-5 w-5 text-purple-400" />
-                  </div>
-                </Card>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p className="text-sm">
+                      {explanationCards.instructions.coachingBenefits}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {/* Food & Diet */}
-                <Card 
-                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                    selectedCategory === "food_diet" ? "bg-orange-50 border-orange-200 ring-2 ring-orange-300" : "bg-gray-50 border-gray-200"
-                  }`}
-                  onClick={() => handleCategoryChange("food_diet")}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-gray-600">Food & Diet</div>
-                      <div className="text-2xl font-bold text-orange-600">
-                        {memoryOverview.categories.food_diet || 0}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card 
+                      className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                        selectedCategory === "food_diet" ? "bg-orange-50 border-orange-200 ring-2 ring-orange-300" : "bg-gray-50 border-gray-200"
+                      }`}
+                      onClick={() => handleCategoryChange("food_diet")}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-sm text-gray-600">Food & Diet</div>
+                          <div className="text-2xl font-bold text-orange-600">
+                            {memoryOverview.categories.food_diet || 0}
+                          </div>
+                        </div>
+                        <Apple className="h-5 w-5 text-orange-400" />
                       </div>
-                    </div>
-                    <Apple className="h-5 w-5 text-orange-400" />
-                  </div>
-                </Card>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p className="text-sm">
+                      {explanationCards.food_diet.coachingBenefits}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {/* Goals */}
-                <Card 
-                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                    selectedCategory === "goals" ? "bg-pink-50 border-pink-200 ring-2 ring-pink-300" : "bg-gray-50 border-gray-200"
-                  }`}
-                  onClick={() => handleCategoryChange("goals")}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-gray-600">Goals</div>
-                      <div className="text-2xl font-bold text-pink-600">
-                        {memoryOverview.categories.goals || 0}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card 
+                      className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                        selectedCategory === "goals" ? "bg-pink-50 border-pink-200 ring-2 ring-pink-300" : "bg-gray-50 border-gray-200"
+                      }`}
+                      onClick={() => handleCategoryChange("goals")}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-sm text-gray-600">Goals</div>
+                          <div className="text-2xl font-bold text-pink-600">
+                            {memoryOverview.categories.goals || 0}
+                          </div>
+                        </div>
+                        <Target className="h-5 w-5 text-pink-400" />
                       </div>
-                    </div>
-                    <Target className="h-5 w-5 text-pink-400" />
-                  </div>
-                </Card>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p className="text-sm">
+                      {explanationCards.goals.coachingBenefits}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -1332,9 +1426,14 @@ export default function MemorySection() {
                             <span>🔒</span>
                             How this helps your coaching
                           </h4>
-                          <p className="text-xs text-purple-700">
+                          <p className="text-xs text-purple-700 mb-2">
                             {explanationCards[selectedCategory as keyof typeof explanationCards]?.privacyNote}
                           </p>
+                          <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                            <p className="text-xs text-blue-700">
+                              <strong>Coaching Benefits:</strong> {explanationCards[selectedCategory as keyof typeof explanationCards]?.coachingBenefits}
+                            </p>
+                          </div>
                         </div>
                       )}
                     </CardContent>
@@ -1565,6 +1664,7 @@ export default function MemorySection() {
       >
         <Plus className="h-6 w-6" />
       </FAB>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

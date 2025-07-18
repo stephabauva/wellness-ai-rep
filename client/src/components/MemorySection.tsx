@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/com
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, ChevronDown, ChevronUp, Info, X, Plus, Calendar, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3, MousePointer2, CheckSquare } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, Apple, Target, ChevronDown, ChevronUp, Info, X, Plus, Calendar, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3, MousePointer2, CheckSquare } from "lucide-react";
 import { FAB } from "./ui/FAB";
 import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { TouchSwipeHandler, createDeleteAction, createEditAction } from "./ui/TouchSwipeHandler";

@@ -10,7 +10,8 @@ import { FAB } from "./ui/FAB";
 import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
-import { useVoiceInput } from "../hooks/useVoiceInput";
+import { useVoiceHandlers } from "../hooks/memory/useVoiceHandlers";
+import { useMemoryEdit } from "../hooks/memory/useMemoryEdit";
 import { useInfiniteMemories } from "../hooks/useInfiniteMemories";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@shared/components/ui/tooltip";
@@ -39,9 +40,6 @@ export default function MemorySection() {
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
   const [useInfiniteScrolling, setUseInfiniteScrolling] = useState<boolean>(true);
-  const [isVoiceInputActive, setIsVoiceInputActive] = useState<boolean>(false);
-  const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
-  const [editingMemoryContent, setEditingMemoryContent] = useState<string>("");
   const { toast } = useToast();
 
   // Memory filtering and selection management
@@ -68,39 +66,19 @@ export default function MemorySection() {
   } = memoryFilters;
 
   // Voice input integration
-  const {
-    isSupported: isVoiceSupported,
-    isListening,
-    transcript,
-    interimTranscript,
-    error: voiceError,
-    startListening,
-    stopListening,
-    clearTranscript,
-  } = useVoiceInput({
-    onTranscript: () => {
-      // Voice input handling is now managed by MemoryForm component
-    },
-    onError: (error) => {
-      toast({
-        title: "Voice Input Error",
-        description: error,
-        variant: "destructive",
-      });
-    },
-    continuous: false,
-    interimResults: true,
-  });
+  const { isVoiceInputActive, voiceInput } = useVoiceHandlers();
 
-  const handleVoiceToggle = () => {
-    if (isListening) {
-      stopListening();
-      setIsVoiceInputActive(false);
-    } else {
-      startListening();
-      setIsVoiceInputActive(true);
-    }
-  };
+  // Edit state management
+  const {
+    editingMemoryId,
+    editingMemoryContent,
+    isEditing,
+    handleStartEdit,
+    handleCancelEdit,
+    handleEditingContentChange,
+    setEditingMemoryId,
+    setEditingMemoryContent,
+  } = useMemoryEdit();
 
   // Handle form submission from MemoryForm component
   const handleMemoryFormSubmit = (data: ManualMemoryFormData) => {
@@ -179,8 +157,7 @@ export default function MemorySection() {
       setIsManualEntryOpen(false);
     },
     onMemoryUpdated: () => {
-      setEditingMemoryId(null);
-      setEditingMemoryContent("");
+      handleCancelEdit();
     },
     onMemoryDeleted: () => {
       handleDeselectAll();
@@ -206,19 +183,9 @@ export default function MemorySection() {
   const memories = filteredMemories.length > 0 ? filteredMemories : rawMemories;
   const isLoading = overviewLoading || (memoriesLoaded && infiniteMemoriesQuery.isLoading);
 
-  // Edit state handlers
-  const handleStartEdit = (memoryId: string, currentContent: string) => {
-    setEditingMemoryId(memoryId);
-    setEditingMemoryContent(currentContent);
-  };
-
+  // Edit save handler
   const handleSaveEdit = (memoryId: string) => {
     handleEditMemory(memoryId, editingMemoryContent);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingMemoryId(null);
-    setEditingMemoryContent("");
   };
 
   const handleBulkDeleteAction = () => {
@@ -332,15 +299,7 @@ export default function MemorySection() {
                 onClose={() => setIsManualEntryOpen(false)}
                 onSubmit={handleMemoryFormSubmit}
                 isSubmitting={createManualMemoryMutation.isPending}
-                voiceInput={{
-                  isSupported: isVoiceSupported,
-                  isListening: isListening,
-                  isActive: isVoiceInputActive,
-                  transcript: transcript,
-                  interimTranscript: interimTranscript,
-                  error: voiceError,
-                  onToggle: handleVoiceToggle,
-                }}
+                voiceInput={voiceInput}
               />
 
               {/* Memory Summary - Last Period Title */}
@@ -621,7 +580,7 @@ export default function MemorySection() {
                     selectedMemoryIds={selectedMemoryIds}
                     editingMemoryId={editingMemoryId}
                     editingMemoryContent={editingMemoryContent}
-                    isEditing={!!editingMemoryId}
+                    isEditing={isEditing}
                     deleteMemoryMutation={deleteMemoryMutation}
                     editMemoryMutation={editMemoryMutation}
                     infiniteMemoriesQuery={infiniteMemoriesQuery}
@@ -631,7 +590,7 @@ export default function MemorySection() {
                     onStartEdit={handleStartEdit}
                     onSaveEdit={handleSaveEdit}
                     onCancelEdit={handleCancelEdit}
-                    onEditingContentChange={setEditingMemoryContent}
+                    onEditingContentChange={handleEditingContentChange}
                   />
                 </>)}
           </div>

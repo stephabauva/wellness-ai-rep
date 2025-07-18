@@ -27,6 +27,7 @@ import {
   explanationCards 
 } from "./memory/constants";
 import { useMemoryActions } from "../hooks/memory/useMemoryActions";
+import { useMemoryFilters } from "../hooks/memory/useMemoryFilters";
 import { MemoryCategoryGrid } from "./memory/MemoryCategoryGrid";
 import { MemoryForm } from "./memory/MemoryForm";
 
@@ -34,10 +35,7 @@ import { MemoryForm } from "./memory/MemoryForm";
 
 
 export default function MemorySection() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
-  const [showAllCategories, setShowAllCategories] = useState<boolean>(false);
   const [showInsights, setShowInsights] = useState<boolean>(false);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
@@ -45,11 +43,30 @@ export default function MemorySection() {
   const [isVoiceInputActive, setIsVoiceInputActive] = useState<boolean>(false);
   const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
   const [editingMemoryContent, setEditingMemoryContent] = useState<string>("");
-  const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
-  const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-
+  // Memory filtering and selection management
+  const memoryFilters = useMemoryFilters();
+  const {
+    selectedCategory,
+    selectedLabels,
+    isSelectionMode,
+    selectedMemoryIds,
+    showAllCategories,
+    availableLabels,
+    handleCategoryChange,
+    handleLabelToggle,
+    handleSelectAllLabels,
+    handleToggleSelectionMode,
+    handleToggleMemorySelection,
+    handleSelectAll,
+    handleDeselectAll,
+    toggleShowAllCategories,
+    resetFilters,
+    updateMemories,
+    memories: filteredMemories,
+    setRefetchCallback
+  } = memoryFilters;
 
   // Voice input integration
   const {
@@ -167,91 +184,28 @@ export default function MemorySection() {
       setEditingMemoryContent("");
     },
     onMemoryDeleted: () => {
-      setSelectedMemoryIds(new Set());
+      handleDeselectAll();
     }
   });
 
   // Get memories from infinite scroll
   const rawMemories = infiniteMemoriesQuery.memories;
   
-  // Client-side filtering of memories based on selected category and labels
-  const memories = memoriesLoaded ? 
-    (selectedCategory === "all" ? 
-      rawMemories : 
-      rawMemories.filter((memory: MemoryEntry) => {
-        const categoryMatch = memory.category === selectedCategory;
-        const labelMatch = selectedLabels.size === 0 || 
-          (memory.labels && memory.labels.some(label => selectedLabels.has(label)));
-        return categoryMatch && labelMatch;
-      })
-    ) : [];
+  // Update memories in the filter hook when raw memories change
+  useEffect(() => {
+    if (rawMemories.length > 0) {
+      updateMemories(rawMemories);
+    }
+  }, [rawMemories, updateMemories]);
+
+  // Set refetch callback for category changes
+  useEffect(() => {
+    setRefetchCallback(() => infiniteMemoriesQuery.refetch);
+  }, [setRefetchCallback, infiniteMemoriesQuery.refetch]);
+
+  // Use filtered memories from the hook, fallback to raw memories
+  const memories = filteredMemories.length > 0 ? filteredMemories : rawMemories;
   const isLoading = overviewLoading || (memoriesLoaded && infiniteMemoriesQuery.isLoading);
-
-  // Get available labels for the current category
-  const getAvailableLabels = () => {
-    if (selectedCategory === "all" || !memoriesLoaded) return [];
-    
-    const categoryMemories = rawMemories.filter((memory: MemoryEntry) => memory.category === selectedCategory);
-    const allLabels = categoryMemories.flatMap((memory: MemoryEntry) => memory.labels || []);
-    const labelCounts = allLabels.reduce((acc: Record<string, number>, label: string) => {
-      acc[label] = (acc[label] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    return Object.entries(labelCounts).map(([label, count]) => ({ label, count }));
-  };
-  
-  const availableLabels = getAvailableLabels();
-  
-  // Handle label selection
-  const handleLabelToggle = (label: string) => {
-    const newLabels = new Set(selectedLabels);
-    if (newLabels.has(label)) {
-      newLabels.delete(label);
-    } else {
-      newLabels.add(label);
-    }
-    setSelectedLabels(newLabels);
-  };
-  
-  const handleSelectAllLabels = () => {
-    if (selectedLabels.size === availableLabels.length) {
-      setSelectedLabels(new Set());
-    } else {
-      setSelectedLabels(new Set(availableLabels.map(l => l.label)));
-    }
-  };
-  
-  // Reset labels when category changes
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    setSelectedLabels(new Set());
-    
-    // Refetch with new category
-    if (memoriesLoaded) {
-      infiniteMemoriesQuery.refetch();
-    }
-  };
-
-  // Selection mode handlers
-  const handleToggleMemorySelection = (memoryId: string) => {
-    const newSelection = new Set(selectedMemoryIds);
-    if (newSelection.has(memoryId)) {
-      newSelection.delete(memoryId);
-    } else {
-      newSelection.add(memoryId);
-    }
-    setSelectedMemoryIds(newSelection);
-  };
-
-  const handleSelectAll = () => {
-    const visibleMemoryIds = memories.map((memory: MemoryEntry) => memory.id);
-    setSelectedMemoryIds(new Set(visibleMemoryIds));
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedMemoryIds(new Set());
-  };
 
   // Edit state handlers
   const handleStartEdit = (memoryId: string, currentContent: string) => {
@@ -363,10 +317,7 @@ export default function MemorySection() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setIsSelectionMode(!isSelectionMode);
-                      setSelectedMemoryIds(new Set());
-                    }}
+                    onClick={handleToggleSelectionMode}
                     className="min-h-[44px] px-4 flex items-center gap-2"
                   >
                     {isSelectionMode ? (
@@ -459,7 +410,7 @@ export default function MemorySection() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowAllCategories(!showAllCategories)}
+                    onClick={toggleShowAllCategories}
                     className="h-12 px-4 min-h-[44px]"
                   >
                     {showAllCategories ? (
@@ -478,7 +429,7 @@ export default function MemorySection() {
               </div>
 
               {/* Progressive Disclosure: All Categories */}
-              <Collapsible open={showAllCategories} onOpenChange={setShowAllCategories}>
+              <Collapsible open={showAllCategories} onOpenChange={toggleShowAllCategories}>
                 <CollapsibleContent>
                   <MemoryCategoryGrid 
                     memoryOverview={memoryOverview}

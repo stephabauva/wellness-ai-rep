@@ -3,7 +3,13 @@
 **Safe Large File Refactoring**: Carefully refactor large files without breaking functionality or cross-domain dependencies.
 
 ## Purpose
-Refactor large files (>300 lines) in the wellness AI app while preserving all functionality and respecting architectural boundaries.
+Refactor large files using graduated thresholds in the wellness AI app while preserving all functionality and respecting architectural boundaries.
+
+### File Size Thresholds
+- **≤300 lines**: ✅ Ideal zone - no action needed
+- **300-500 lines**: ⚠️ Review for natural extraction opportunities  
+- **500-800 lines**: 🔴 Should be refactored unless strong justification exists
+- **>800 lines**: 💀 Critical - almost always needs splitting for AI context efficiency
 
 ## Wellness App Safety Protocol
 
@@ -95,7 +101,7 @@ For each extraction:
 4. Refactor remaining core component
 
 ### General Large File Patterns
-**Files >300 lines (use `npm run check:filesize` to identify) should be examined for**:
+**Files >500 lines (use `npm run check:filesize` to identify) should be examined for**:
 - Multiple responsibilities (break into focused components)
 - Complex state management (extract to custom hooks)
 - Utility functions (move to appropriate utils/)
@@ -142,7 +148,7 @@ If any issues arise:
 
 ## Success Criteria
 - Original functionality 100% preserved
-- File sizes reduced to <300 lines where possible
+- File sizes within appropriate thresholds (ideally <500 lines, definitely <800 lines)
 - Zero new architectural violations
 - Improved maintainability and readability
 - Faster development velocity for future changes

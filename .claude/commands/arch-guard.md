@@ -20,7 +20,7 @@ This command runs a comprehensive architectural health check:
 2. **Component Count**: Warns if approaching limits (25 components)
 3. **Service Count**: Warns if approaching limits (20 services)
 4. **Import Malformation**: Detects broken imports
-5. **File Size Analysis**: Enforces line limits (300 for routes/components, 200 for services)
+5. **File Size Analysis**: Enforces graduated thresholds (see safe-refactor.md for details)
 6. **Domain Boundary Check**: Ensures proper separation
 
 ## When to run
@@ -35,7 +35,7 @@ This command runs a comprehensive architectural health check:
 - Zero cross-domain violations
 - Proper domain separation
 - Clean import statements
-- File size limits: 300 lines (routes/components), 200 lines (services)
+- File size thresholds: Review >500 lines, refactor >800 lines (see safe-refactor.md)
 
 ## Quick fixes suggested
 - Consolidate similar components

@@ -27,11 +27,11 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `node dependency-tracker.js` - Analyze cross-domain dependencies
 - `node system-map-cross-domain-validator-v2.js` - Validate system maps against actual code
 - `npm run check:async` - Check async/await compatibility to prevent undefined errors
-- `npm run check:filesize` - Analyze file sizes and enforce line limits (300 for routes/components, 200 for services)
+- `npm run check:filesize` - Analyze file sizes using graduated thresholds (see safe-refactor.md)
 - `./setup-dependency-hook.sh` - Install pre-commit dependency check hook
 
 ### Architecture Patterns & Rules
-- **Modular routes**: Strict line limits enforced (≤300 lines each)
+- **Modular routes**: Graduated size thresholds (300 ideal, 500 review, 800+ refactor)
 - **Memory system**: ChatGPT-style with deduplication
 - **File processing**: Go microservices for large files
 - **AI streaming**: SSE with smooth typing simulation

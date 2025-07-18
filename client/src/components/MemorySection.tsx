@@ -38,6 +38,7 @@ import {
   getRecentValues, 
   getContextualPresets 
 } from "./memory/utils";
+import { useMemoryActions } from "../hooks/memory/useMemoryActions";
 
 
 
@@ -232,6 +233,34 @@ export default function MemorySection() {
     setMemoriesLoaded(true);
   }, []);
 
+  // Memory actions hook
+  const {
+    createManualMemoryMutation,
+    deleteMemoryMutation,
+    editMemoryMutation,
+    bulkDeleteMutation,
+    handleDeleteMemory,
+    handleEditMemory,
+    handleBulkDelete
+  } = useMemoryActions({
+    memoriesLoaded,
+    refetchOverview,
+    infiniteMemoriesQuery,
+    onMemoryCreated: () => {
+      setSmartDefaults(getSmartDefaults());
+      setRecentContent(getRecentValues('content'));
+      form.reset();
+      setIsManualEntryOpen(false);
+    },
+    onMemoryUpdated: () => {
+      setEditingMemoryId(null);
+      setEditingMemoryContent("");
+    },
+    onMemoryDeleted: () => {
+      setSelectedMemoryIds(new Set());
+    }
+  });
+
   // Get memories from infinite scroll
   const rawMemories = infiniteMemoriesQuery.memories;
   
@@ -294,154 +323,6 @@ export default function MemorySection() {
     }
   };
 
-  // Manual memory creation mutation with smart defaults tracking
-  const createManualMemoryMutation = useMutation({
-    mutationFn: async (data: ManualMemoryFormData) => {
-      // Convert importance level to numeric score
-      const importanceMap = { low: 0.3, medium: 0.6, high: 0.9 };
-      const importanceScore = importanceMap[data.importance];
-
-      // Save to smart defaults for future use
-      saveSmartDefault({
-        content: data.content,
-        category: data.category,
-        importance: data.importance,
-      });
-
-      // Use the existing memory processing system like chat does
-      return apiRequest("/api/memories/manual", "POST", {
-        content: data.content,
-        category: data.category,
-        importance: importanceScore,
-      });
-    },
-    onSuccess: async () => {
-      // Force immediate refetch of overview for instant UI updates
-      await refetchOverview();
-      
-      // Invalidate Godmode metrics to update quality indicators
-      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
-      
-      // If memories are loaded, refetch them to show new memory
-      if (memoriesLoaded) {
-        await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
-        await infiniteMemoriesQuery.refetch();
-      }
-      
-      // Update smart defaults state
-      setSmartDefaults(getSmartDefaults());
-      setRecentContent(getRecentValues('content'));
-      
-      form.reset();
-      setIsManualEntryOpen(false);
-      toast({
-        title: "Memory saved",
-        description: "Your memory has been processed and saved successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error?.message || "Failed to save memory. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deleteMemoryMutation = useMutation({
-    mutationFn: (memoryId: string) => apiRequest(`/api/memories/${memoryId}`, "DELETE"),
-    onSuccess: async () => {
-      // Force immediate refetch of overview for instant UI updates
-      await refetchOverview();
-      
-      // Invalidate Godmode metrics to update quality indicators
-      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
-      
-      // If memories are loaded, refetch them to update the list
-      if (memoriesLoaded) {
-        await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
-        await infiniteMemoriesQuery.refetch();
-      }
-      
-      toast({
-        title: "Memory deleted",
-        description: "The memory has been successfully removed.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete memory. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const editMemoryMutation = useMutation({
-    mutationFn: ({ memoryId, content }: { memoryId: string; content: string }) => 
-      apiRequest(`/api/memories/${memoryId}`, "PUT", { content }),
-    onSuccess: async () => {
-      // Force immediate refetch of overview for instant UI updates
-      await refetchOverview();
-      
-      // Invalidate Godmode metrics to update quality indicators
-      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
-      
-      // If memories are loaded, refetch them to update the list
-      if (memoriesLoaded) {
-        await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
-        await infiniteMemoriesQuery.refetch();
-      }
-      
-      setEditingMemoryId(null);
-      setEditingMemoryContent("");
-      toast({
-        title: "Memory updated",
-        description: "The memory has been successfully updated.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update memory. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-
-  const handleDeleteMemory = (memoryId: string) => {
-    if (confirm("Are you sure you want to delete this memory?")) {
-      deleteMemoryMutation.mutate(memoryId);
-    }
-  };
-
-  const handleEditMemory = (memoryId: string, currentContent: string) => {
-    setEditingMemoryId(memoryId);
-    setEditingMemoryContent(currentContent);
-  };
-
-  const handleSaveEdit = (memoryId: string) => {
-    if (editingMemoryContent.trim() === "") {
-      toast({
-        title: "Error",
-        description: "Memory content cannot be empty.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    editMemoryMutation.mutate({
-      memoryId,
-      content: editingMemoryContent.trim()
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingMemoryId(null);
-    setEditingMemoryContent("");
-  };
-
   // Selection mode handlers
   const handleToggleMemorySelection = (memoryId: string) => {
     const newSelection = new Set(selectedMemoryIds);
@@ -462,43 +343,24 @@ export default function MemorySection() {
     setSelectedMemoryIds(new Set());
   };
 
-  const handleBulkDelete = () => {
-    const selectedCount = selectedMemoryIds.size;
-    if (selectedCount === 0) return;
-    
-    const confirmed = confirm(`Are you sure you want to delete ${selectedCount} selected memories?`);
-    if (confirmed) {
-      bulkDeleteMutation.mutate(Array.from(selectedMemoryIds));
-    }
+  // Edit state handlers
+  const handleStartEdit = (memoryId: string, currentContent: string) => {
+    setEditingMemoryId(memoryId);
+    setEditingMemoryContent(currentContent);
   };
 
-  // Bulk delete mutation
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (memoryIds: string[]) => {
-      const deletePromises = memoryIds.map(id => apiRequest(`/api/memories/${id}`, "DELETE"));
-      await Promise.all(deletePromises);
-    },
-    onSuccess: async () => {
-      await refetchOverview();
-      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
-      if (memoriesLoaded) {
-        await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
-        await infiniteMemoriesQuery.refetch();
-      }
-      setSelectedMemoryIds(new Set());
-      toast({
-        title: "Memories deleted",
-        description: `${selectedMemoryIds.size} memories have been successfully removed.`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete memories. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
+  const handleSaveEdit = (memoryId: string) => {
+    handleEditMemory(memoryId, editingMemoryContent);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMemoryId(null);
+    setEditingMemoryContent("");
+  };
+
+  const handleBulkDeleteAction = () => {
+    handleBulkDelete(Array.from(selectedMemoryIds));
+  };
 
 
   const getImportanceLabel = (score: number) => {
@@ -1390,7 +1252,7 @@ export default function MemorySection() {
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={handleBulkDelete}
+                                onClick={handleBulkDeleteAction}
                                 disabled={bulkDeleteMutation.isPending}
                                 className="min-h-[44px] px-4 text-xs"
                               >
@@ -1439,7 +1301,7 @@ export default function MemorySection() {
                         <TouchSwipeHandler
                           key={memory.id}
                           leftAction={!isSelectionMode ? createDeleteAction(() => handleDeleteMemory(memory.id)) : undefined}
-                          rightAction={!isSelectionMode ? createEditAction(() => handleEditMemory(memory.id, memory.content)) : undefined}
+                          rightAction={!isSelectionMode ? createEditAction(() => handleStartEdit(memory.id, memory.content)) : undefined}
                           disabled={isSelectionMode || isEditing || deleteMemoryMutation.isPending || editMemoryMutation.isPending}
                           className="mb-2"
                         >

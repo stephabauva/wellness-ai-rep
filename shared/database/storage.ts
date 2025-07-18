@@ -28,6 +28,9 @@ import { eq, and, gte, desc } from "drizzle-orm";
 import { db } from "./db";
 import { cacheService } from "../services/cache-service";
 import { nutritionAggregationService, type DailyNutritionSummary, type NutritionUpdateRequest, type NutritionMealSummary } from "../../server/services/nutrition-aggregation-service.js";
+import { createDefaultUser, createWelcomeMessage, createComprehensiveHealthData, createConnectedDevices } from "./mock-data";
+import { createNutritionEntries, createNutritionHealthData, type NutritionData } from "./nutrition-utils";
+import { calculateStartDate } from "./time-range-utils";
 
 // Interface for storage methods
 export interface IStorage {
@@ -116,238 +119,24 @@ export class MemStorage implements IStorage {
 
   private initializeDefaultData() {
     // Create default user
-    const defaultUser: User = {
-      id: 1,
-      username: "janesmith",
-      password: "password", // In a real app, this would be hashed
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      preferences: {
-        primaryGoal: "weight-loss",
-        coachStyle: "motivational",
-        reminderFrequency: "daily",
-        focusAreas: ["nutrition", "exercise", "sleep"],
-        themePreference: "system",
-        pushNotifications: true,
-        emailSummaries: true,
-        dataSharing: false
-      },
-      transcriptionProvider: "webspeech",
-      preferredLanguage: "en",
-      automaticModelSelection: true,
-      aiProvider: "google",
-      aiModel: "gemini-2.0-flash-exp",
-      memoryDetectionProvider: "google",
-      memoryDetectionModel: "gemini-2.0-flash-lite",
-      createdAt: new Date()
-    };
+    const defaultUser = createDefaultUser();
     this.users.set(1, defaultUser);
     
     // Create welcome message
-    const initialMessages: ChatMessage[] = [
-      {
-        id: this.messageId++,
-        userId: 1,
-        content: "Welcome to your AI wellness coach! I'm here to support you on your wellness journey with personalized guidance tailored to your goals. Whether you're focused on weight loss, muscle gain, fitness, mental wellness, or nutrition, I'm ready to help. What would you like to work on today?",
-        isUserMessage: false,
-        timestamp: new Date()
-      }
-    ];
-    this.messages.set(1, initialMessages);
+    const welcomeMessage = createWelcomeMessage(this.messageId++);
+    this.messages.set(1, [welcomeMessage]);
     
     // Create comprehensive health data
-    const today = new Date();
-    const healthDataEntries: HealthData[] = [];
-    
-    // Body Composition Data (from smart scale)
-    const bodyCompositionData = [
-      { dataType: "weight", value: "165", unit: "lbs", category: "body_composition" },
-      { dataType: "bmi", value: "22.8", unit: "kg/m²", category: "body_composition" },
-      { dataType: "body_fat_percentage", value: "18.5", unit: "%", category: "body_composition" },
-      { dataType: "subcutaneous_fat", value: "12.3", unit: "%", category: "body_composition" },
-      { dataType: "visceral_fat", value: "6", unit: "level", category: "body_composition" },
-      { dataType: "body_water_percentage", value: "58.2", unit: "%", category: "body_composition" },
-      { dataType: "muscle_mass", value: "134.2", unit: "lbs", category: "body_composition" },
-      { dataType: "bone_mass", value: "6.8", unit: "lbs", category: "body_composition" },
-      { dataType: "bmr", value: "1580", unit: "kcal", category: "body_composition" },
-      { dataType: "metabolic_age", value: "28", unit: "years", category: "body_composition" }
-    ];
-
-    // Cardiovascular Data (from various devices)
-    const cardiovascularData = [
-      { dataType: "blood_pressure_systolic", value: "118", unit: "mmHg", category: "cardiovascular" },
-      { dataType: "blood_pressure_diastolic", value: "75", unit: "mmHg", category: "cardiovascular" },
-      { dataType: "heart_rate", value: "72", unit: "bpm", category: "cardiovascular" },
-      { dataType: "resting_heart_rate", value: "58", unit: "bpm", category: "cardiovascular" },
-      { dataType: "hrv", value: "42", unit: "ms", category: "cardiovascular" },
-      { dataType: "cholesterol_total", value: "185", unit: "mg/dL", category: "cardiovascular" },
-      { dataType: "cholesterol_ldl", value: "110", unit: "mg/dL", category: "cardiovascular" },
-      { dataType: "cholesterol_hdl", value: "55", unit: "mg/dL", category: "cardiovascular" },
-      { dataType: "cholesterol_triglycerides", value: "100", unit: "mg/dL", category: "cardiovascular" },
-      { dataType: "oxygen_saturation", value: "98", unit: "%", category: "cardiovascular" }
-    ];
-
-    // Medical Data (from lab tests and glucose monitors)
-    const medicalData = [
-      { dataType: "blood_glucose_fasting", value: "92", unit: "mg/dL", category: "medical" },
-      { dataType: "blood_glucose_postprandial", value: "135", unit: "mg/dL", category: "medical" },
-      { dataType: "hba1c", value: "5.2", unit: "%", category: "medical" },
-      { dataType: "body_temperature", value: "98.6", unit: "°F", category: "medical" },
-      { dataType: "ketone_levels", value: "0.3", unit: "mmol/L", category: "medical" }
-    ];
-
-    // Advanced Metrics (from fitness trackers and lab analysis)
-    const advancedData = [
-      { dataType: "vo2_max", value: "48", unit: "mL/kg/min", category: "advanced" },
-      { dataType: "lactate_threshold", value: "152", unit: "bpm", category: "advanced" },
-      { dataType: "skin_temperature", value: "89.2", unit: "°F", category: "advanced" }
-    ];
-
-    // Add static data (most recent values)
-    [...bodyCompositionData, ...cardiovascularData, ...medicalData, ...advancedData].forEach(data => {
-      healthDataEntries.push({
-        id: this.healthDataId++,
-        userId: 1,
-        dataType: data.dataType,
-        value: data.value,
-        unit: data.unit,
-        timestamp: new Date(today.getTime() - Math.random() * 24 * 60 * 60 * 1000), // Within last 24 hours
-        source: data.category === "body_composition" ? "smart_scale" : 
-                data.category === "cardiovascular" ? "smartwatch" :
-                data.category === "medical" ? "lab_test" : "fitness_tracker",
-        category: data.category,
-        metadata: null
-      });
-    });
-    
-    // Time series data for trending (last 7 days)
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // Lifestyle metrics with daily variation
-      const lifestyleMetrics = [
-        { 
-          dataType: "steps", 
-          value: (6000 + Math.floor(Math.random() * 5000)).toString(), 
-          unit: "steps",
-          source: "smartwatch" 
-        },
-        { 
-          dataType: "sleep_duration", 
-          value: (6 + Math.random() * 2).toFixed(1), 
-          unit: "hours",
-          source: "smartwatch" 
-        },
-        { 
-          dataType: "sleep_deep", 
-          value: (1.5 + Math.random() * 0.8).toFixed(1), 
-          unit: "hours",
-          source: "smartwatch" 
-        },
-        { 
-          dataType: "sleep_light", 
-          value: (3.5 + Math.random() * 1.2).toFixed(1), 
-          unit: "hours",
-          source: "smartwatch" 
-        },
-        { 
-          dataType: "sleep_rem", 
-          value: (1.0 + Math.random() * 0.8).toFixed(1), 
-          unit: "hours",
-          source: "smartwatch" 
-        },
-        { 
-          dataType: "calories_burned", 
-          value: (1800 + Math.floor(Math.random() * 600)).toString(), 
-          unit: "kcal",
-          source: "smartwatch" 
-        },
-        { 
-          dataType: "calories_intake", 
-          value: (1600 + Math.floor(Math.random() * 800)).toString(), 
-          unit: "kcal",
-          source: "nutrition_app" 
-        },
-        { 
-          dataType: "hydration", 
-          value: (1.2 + Math.random() * 1.0).toFixed(1), 
-          unit: "L",
-          source: "manual" 
-        },
-        { 
-          dataType: "stress_level", 
-          value: Math.floor(1 + Math.random() * 9).toString(), 
-          unit: "1-10",
-          source: "manual" 
-        },
-        { 
-          dataType: "mood", 
-          value: Math.floor(3 + Math.random() * 3).toString(), 
-          unit: "1-5",
-          source: "manual" 
-        }
-      ];
-
-      lifestyleMetrics.forEach(metric => {
-        healthDataEntries.push({
-          id: this.healthDataId++,
-          userId: 1,
-          dataType: metric.dataType,
-          value: metric.value,
-          unit: metric.unit,
-          timestamp: date,
-          source: metric.source,
-          category: "lifestyle",
-          metadata: null
-        });
-      });
-      
-      // Some cardiovascular data that varies daily
-      healthDataEntries.push({
-        id: this.healthDataId++,
-        userId: 1,
-        dataType: "heart_rate",
-        value: (65 + Math.floor(Math.random() * 15)).toString(),
-        unit: "bpm",
-        timestamp: date,
-        source: "smartwatch",
-        category: "cardiovascular",
-        metadata: null
-      });
-    }
-    
+    const healthDataEntries = createComprehensiveHealthData({ current: this.healthDataId });
+    this.healthDataId = this.healthDataId + healthDataEntries.length;
     this.healthData.set(1, healthDataEntries);
     
     // Create connected devices
-    const smartwatch: ConnectedDevice = {
-      id: this.deviceId++,
-      userId: 1,
-      deviceName: "FitTrack Smartwatch",
-      deviceType: "smartwatch",
-      lastSync: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-      isActive: true,
-      metadata: {
-        features: ["Step tracking", "Heart rate", "Sleep tracking", "Exercise detection"]
-      },
-      createdAt: new Date()
-    };
-    
-    const scale: ConnectedDevice = {
-      id: this.deviceId++,
-      userId: 1,
-      deviceName: "HealthScale Pro",
-      deviceType: "scale",
-      lastSync: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-      isActive: true,
-      metadata: {
-        features: ["Weight", "Body fat", "Muscle mass", "BMI"]
-      },
-      createdAt: new Date()
-    };
-    
-    this.devices.set(smartwatch.id, smartwatch);
-    this.devices.set(scale.id, scale);
+    const devices = createConnectedDevices({ current: this.deviceId });
+    devices.forEach(device => {
+      this.devices.set(device.id, device);
+    });
+    this.deviceId = this.deviceId + devices.length;
   }
 
   // User methods
@@ -440,30 +229,7 @@ export class MemStorage implements IStorage {
   // Health data methods
   async getHealthData(userId: number, timeRange: string): Promise<HealthData[]> {
     const allData = this.healthData.get(userId) || [];
-    
-    // Filter based on time range
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (timeRange) {
-      case "1day":
-        startDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
-        break;
-      case "7days":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "30days":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case "90days":
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    }
-    
-    // Set time to start of day to include full day range
-    startDate.setHours(0, 0, 0, 0);
+    const startDate = calculateStartDate(timeRange);
     
     console.log(`[MemStorage] Filtering health data for user ${userId}, range: ${timeRange}, startDate: ${startDate.toISOString()}`);
     const filteredData = allData.filter(data => data.timestamp != null && data.timestamp >= startDate);
@@ -542,69 +308,29 @@ export class MemStorage implements IStorage {
 
   async createNutritionDataFromInference(
     userId: number,
-    nutritionData: {
-      calories?: number;
-      protein?: number;
-      carbs?: number;
-      fat?: number;
-      fiber?: number;
-      sugar?: number;
-      sodium?: number;
-      metadata: any;
-    },
+    nutritionData: NutritionData,
     conversationId?: string
   ): Promise<HealthData[]> {
-    const nutritionEntries: HealthData[] = [];
-    const timestamp = new Date(nutritionData.metadata.timestamp);
-    
-    // Create individual health data entries for each nutrition component
-    const nutritionComponents = [
-      { key: 'calories', unit: 'kcal' },
-      { key: 'protein', unit: 'g' },
-      { key: 'carbs', unit: 'g' },
-      { key: 'fat', unit: 'g' },
-      { key: 'fiber', unit: 'g' },
-      { key: 'sugar', unit: 'g' },
-      { key: 'sodium', unit: 'mg' }
-    ];
-
-    for (const component of nutritionComponents) {
-      const value = nutritionData[component.key as keyof typeof nutritionData];
-      if (value !== undefined && typeof value === 'number') {
-        const id = this.healthDataId++;
-        const userHealthData = this.healthData.get(userId) || [];
-        
-        const newHealthData: HealthData = {
-          id,
-          userId,
-          dataType: component.key,
-          value: value.toString(),
-          unit: component.unit,
-          timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...nutritionData.metadata,
-            conversationId,
-            extractedFrom: 'ai_chat',
-            component: component.key
-          }
-        };
-        
-        userHealthData.push(newHealthData);
-        this.healthData.set(userId, userHealthData);
-        nutritionEntries.push(newHealthData);
-      }
-    }
+    const nutritionEntries = createNutritionHealthData(
+      userId,
+      nutritionData,
+      conversationId,
+      () => this.healthDataId++
+    );
 
     if (nutritionEntries.length === 0) {
       console.log('[MemStorage] No nutrition data to store');
       return [];
     }
 
+    const userHealthData = this.healthData.get(userId) || [];
+    userHealthData.push(...nutritionEntries);
+    this.healthData.set(userId, userHealthData);
+
     console.log(`[MemStorage] Stored ${nutritionEntries.length} nutrition data entries for user ${userId}`);
     
     // Invalidate nutrition aggregation cache for the specific date
+    const timestamp = new Date(nutritionData.metadata.timestamp);
     await nutritionAggregationService.invalidateCache(userId, timestamp);
     
     return nutritionEntries;
@@ -827,28 +553,7 @@ export class DatabaseStorage implements IStorage {
       return cached;
     }
 
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (timeRange) {
-      case "1day":
-        startDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
-        break;
-      case "7days":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "30days":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case "90days":
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    }
-    
-    // Set time to start of day to include full day range
-    startDate.setHours(0, 0, 0, 0);
+    const startDate = calculateStartDate(timeRange);
     
     console.log(`[DatabaseStorage] Fetching health data for user ${userId}, range: ${timeRange}, startDate: ${startDate.toISOString()}`);
     
@@ -873,28 +578,7 @@ export class DatabaseStorage implements IStorage {
   
   // Method to get health data without cache (for debugging)
   async getHealthDataNoCache(userId: number, timeRange: string): Promise<HealthData[]> {
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (timeRange) {
-      case "1day":
-        startDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
-        break;
-      case "7days":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "30days":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case "90days":
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    }
-    
-    // Set time to start of day to include full day range
-    startDate.setHours(0, 0, 0, 0);
+    const startDate = calculateStartDate(timeRange);
     
     console.log(`[DatabaseStorage] Fetching health data WITHOUT CACHE for user ${userId}, range: ${timeRange}, startDate: ${startDate.toISOString()}`);
     
@@ -962,52 +646,10 @@ export class DatabaseStorage implements IStorage {
 
   async createNutritionDataFromInference(
     userId: number,
-    nutritionData: {
-      calories?: number;
-      protein?: number;
-      carbs?: number;
-      fat?: number;
-      fiber?: number;
-      sugar?: number;
-      sodium?: number;
-      metadata: any;
-    },
+    nutritionData: NutritionData,
     conversationId?: string
   ): Promise<HealthData[]> {
-    const nutritionEntries: InsertHealthData[] = [];
-    const timestamp = new Date(nutritionData.metadata.timestamp);
-    
-    // Create individual health data entries for each nutrition component
-    const nutritionComponents = [
-      { key: 'calories', unit: 'kcal' },
-      { key: 'protein', unit: 'g' },
-      { key: 'carbs', unit: 'g' },
-      { key: 'fat', unit: 'g' },
-      { key: 'fiber', unit: 'g' },
-      { key: 'sugar', unit: 'g' },
-      { key: 'sodium', unit: 'mg' }
-    ];
-
-    for (const component of nutritionComponents) {
-      const value = nutritionData[component.key as keyof typeof nutritionData];
-      if (value !== undefined && typeof value === 'number') {
-        nutritionEntries.push({
-          userId,
-          dataType: component.key,
-          value: value.toString(),
-          unit: component.unit,
-          timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...nutritionData.metadata,
-            conversationId,
-            extractedFrom: 'ai_chat',
-            component: component.key
-          }
-        });
-      }
-    }
+    const nutritionEntries = createNutritionEntries(userId, nutritionData, conversationId);
 
     if (nutritionEntries.length === 0) {
       console.log('[DatabaseStorage] No nutrition data to store');
@@ -1018,6 +660,7 @@ export class DatabaseStorage implements IStorage {
     const results = await this.createHealthDataBatch(nutritionEntries);
     
     // Invalidate nutrition aggregation cache for the specific date
+    const timestamp = new Date(nutritionData.metadata.timestamp);
     await nutritionAggregationService.invalidateCache(userId, timestamp);
     
     return results;

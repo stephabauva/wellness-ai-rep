@@ -20,7 +20,8 @@ This command runs a comprehensive architectural health check:
 2. **Component Count**: Warns if approaching limits (25 components)
 3. **Service Count**: Warns if approaching limits (20 services)
 4. **Import Malformation**: Detects broken imports
-5. **Domain Boundary Check**: Ensures proper separation
+5. **File Size Analysis**: Enforces line limits (300 for routes/components, 200 for services)
+6. **Domain Boundary Check**: Ensures proper separation
 
 ## When to run
 - Before starting any new feature
@@ -34,11 +35,13 @@ This command runs a comprehensive architectural health check:
 - Zero cross-domain violations
 - Proper domain separation
 - Clean import statements
+- File size limits: 300 lines (routes/components), 200 lines (services)
 
 ## Quick fixes suggested
 - Consolidate similar components
 - Merge single-method services
 - Move domain-specific code to proper domain
 - Fix malformed imports
+- Split oversized files into smaller, focused modules
 
 Run this before any significant code changes to maintain architectural integrity.

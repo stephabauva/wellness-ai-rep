@@ -8,7 +8,7 @@ Refactor large files (>300 lines) in the wellness AI app while preserving all fu
 ## Wellness App Safety Protocol
 
 ### Pre-Refactoring Validation (MANDATORY)
-1. **Run architectural checks**: `node dependency-tracker.js`, `node malformed-import-detector.js`, `npm run check:async`
+1. **Run architectural checks**: `node dependency-tracker.js`, `node malformed-import-detector.js`, `npm run check:async`, `npm run check:filesize`
 2. **Analyze current file structure**: Map all imports, exports, and dependencies
 3. **Test current functionality**: Ensure all features work before changes
 4. **Backup current state**: Create git stash or commit point
@@ -73,8 +73,8 @@ For each extraction:
 
 ## Specific Large File Strategies
 
-### MemorySection.tsx Refactoring
-**Current issues**: Very long file with mixed concerns
+### MemorySection.tsx Refactoring  
+**Current issues**: 1,853 lines (CRITICAL - 6x over 300-line limit) with mixed concerns
 **Safe extraction candidates**:
 - Memory list rendering logic → `MemoryList.tsx`
 - Memory actions (delete, edit) → `useMemoryActions.ts` hook
@@ -88,7 +88,7 @@ For each extraction:
 4. Refactor remaining core component
 
 ### General Large File Patterns
-**Files >300 lines should be examined for**:
+**Files >300 lines (use `npm run check:filesize` to identify) should be examined for**:
 - Multiple responsibilities (break into focused components)
 - Complex state management (extract to custom hooks)
 - Utility functions (move to appropriate utils/)
@@ -123,9 +123,10 @@ If any issues arise:
 4. **Analyze what went wrong** before attempting again
 
 ## Integration with Existing Tools
-- **Before refactoring**: Always run `node dependency-tracker.js`
-- **After changes**: Run `node system-map-tracker.js` to update documentation
+- **Before refactoring**: Always run `node dependency-tracker.js` and `npm run check:filesize` to identify oversized files
+- **After changes**: Run `node system-map-tracker.js` to update documentation  
 - **Continuous validation**: Use `npm run check:async` for async compatibility
+- **File size monitoring**: Use `npm run check:filesize` to track progress and ensure extractions stay within limits
 
 ## Success Criteria
 - Original functionality 100% preserved

@@ -15,7 +15,8 @@
     "db:reset-local": "dropdb wellness_ai_local --if-exists && createdb wellness_ai_local && npm run db:setup-local",
     "db:seed-user": "tsx scripts/seed-default-user.ts",
     "test:local-db": "npx tsx test-local-setup.js",
-    "check:async": "node async-await-detector.js"
+    "check:async": "node async-await-detector.js",
+    "check:filesize": "node file-size-analyzer.js"
   },
   "dependencies": {
     "@capacitor/app": "^7.0.1",

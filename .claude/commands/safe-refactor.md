@@ -36,8 +36,11 @@ For each extraction:
 1. **Create new file** in appropriate domain folder
 2. **Move code** with exact same functionality
 3. **Update imports** in original file
-4. **Run tests**: `npx vitest` if tests exist
-5. **Run arch checks**: Validate no new violations
+4. **Validation checks**: 
+   - `npm run check` (TypeScript validation)
+   - `npm run dev` (verify server starts without errors)
+   - `npm run check:async && npm run check:filesize` (architecture validation)
+5. **Run tests**: `npx vitest` if tests exist
 6. **Test functionality**: Manual verification of affected features
 7. **Commit changes**: Small, focused commits
 
@@ -64,7 +67,11 @@ For each extraction:
 - Maintain strict shared folder rules
 
 ### Post-Refactoring Validation (MANDATORY)
-1. **Run full architectural checks**: All validation tools
+1. **Run comprehensive validation checks**:
+   - `npm run check` (TypeScript validation)
+   - `npm run dev` (verify server starts without errors) 
+   - `npm run check:async && npm run check:filesize` (architecture validation)
+   - `npm run build` (production build verification)
 2. **Test all affected features**: Manual verification
 3. **Run tests if available**: `npx vitest`
 4. **Check component/service limits**: Ensure within bounds
@@ -99,18 +106,23 @@ For each extraction:
 Before any refactoring:
 - [ ] Current functionality fully working
 - [ ] All architectural checks passing
+- [ ] `npm run dev` starts without errors
 - [ ] No pending changes that could interfere
 - [ ] Test plan for affected features defined
 
 During refactoring:
 - [ ] Extract only 1-2 items per iteration
-- [ ] Run arch checks after each extraction
+- [ ] Run comprehensive validation after each extraction:
+  - [ ] `npm run check` (TypeScript)
+  - [ ] `npm run dev` (server starts)
+  - [ ] `npm run check:async && npm run check:filesize` (architecture)
 - [ ] Test functionality after each change
 - [ ] Commit small, focused changes
 
 After refactoring:
+- [ ] All comprehensive validation checks passing
 - [ ] All original functionality preserved
-- [ ] All architectural checks passing
+- [ ] `npm run build` succeeds
 - [ ] No new cross-domain violations
 - [ ] Performance maintained or improved
 - [ ] Component/service limits respected

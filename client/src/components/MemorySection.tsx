@@ -13,8 +13,6 @@ import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { TouchSwipeHandler, createDeleteAction, createEditAction } from "./ui/TouchSwipeHandler";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useVoiceInput } from "../hooks/useVoiceInput";
 import { useInfiniteMemories } from "../hooks/useInfiniteMemories";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
@@ -28,18 +26,9 @@ import {
   categoryColors, 
   explanationCards 
 } from "./memory/constants";
-import { 
-  SmartDefault, 
-  PresetButton, 
-  healthPresets, 
-  getTimeContext, 
-  getSmartDefaults, 
-  saveSmartDefault, 
-  getRecentValues, 
-  getContextualPresets 
-} from "./memory/utils";
 import { useMemoryActions } from "../hooks/memory/useMemoryActions";
 import { MemoryCategoryGrid } from "./memory/MemoryCategoryGrid";
+import { MemoryForm } from "./memory/MemoryForm";
 
 
 
@@ -54,94 +43,13 @@ export default function MemorySection() {
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
   const [useInfiniteScrolling, setUseInfiniteScrolling] = useState<boolean>(true);
   const [isVoiceInputActive, setIsVoiceInputActive] = useState<boolean>(false);
-  const [showSmartDefaults, setShowSmartDefaults] = useState<boolean>(false);
-  const [showPresets, setShowPresets] = useState<boolean>(false);
   const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
   const [editingMemoryContent, setEditingMemoryContent] = useState<string>("");
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
   const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  // Form for manual memory entry with smart defaults
-  const form = useForm<ManualMemoryFormData>({
-    resolver: zodResolver(manualMemorySchema),
-    defaultValues: {
-      content: "",
-      category: "preferences",
-      importance: "medium",
-    },
-  });
 
-  // Smart defaults state
-  const [smartDefaults, setSmartDefaults] = useState<SmartDefault[]>([]);
-  const [recentContent, setRecentContent] = useState<string[]>([]);
-  const [contextualPresets, setContextualPresets] = useState<PresetButton[]>([]);
-
-  // Load smart defaults on component mount
-  useEffect(() => {
-    setSmartDefaults(getSmartDefaults());
-    setRecentContent(getRecentValues('content'));
-    setContextualPresets(getContextualPresets());
-  }, []);
-
-  // Auto-populate form with smart defaults when opening
-  useEffect(() => {
-    if (isManualEntryOpen && smartDefaults.length > 0) {
-      const mostRecent = smartDefaults[0];
-      const timeContext = getTimeContext();
-      
-      // Set category based on time context or most recent
-      if (timeContext === 'morning' && smartDefaults.find(d => d.category === 'preferences')) {
-        form.setValue('category', 'preferences');
-      } else if (timeContext === 'evening' && smartDefaults.find(d => d.category === 'goals')) {
-        form.setValue('category', 'goals');
-      } else {
-        form.setValue('category', mostRecent.category as any);
-      }
-      
-      // Set importance based on most common choice
-      const importanceFrequency = smartDefaults.reduce((acc, d) => {
-        acc[d.importance] = (acc[d.importance] || 0) + d.frequency;
-        return acc;
-      }, {} as Record<string, number>);
-      const mostCommonImportance = Object.entries(importanceFrequency)
-        .sort(([,a], [,b]) => b - a)[0]?.[0] || 'medium';
-      form.setValue('importance', mostCommonImportance as any);
-    }
-  }, [isManualEntryOpen, smartDefaults, form]);
-
-  // Handle preset selection
-  const handlePresetSelect = (preset: PresetButton) => {
-    form.setValue('content', preset.content);
-    form.setValue('category', preset.category as any);
-    form.setValue('importance', preset.importance as any);
-    setShowPresets(false);
-    toast({
-      title: "Preset Applied",
-      description: `${preset.label} template loaded. Continue editing as needed.`,
-    });
-  };
-
-  // Handle smart default selection
-  const handleSmartDefaultSelect = (defaultValue: SmartDefault) => {
-    form.setValue('content', defaultValue.content);
-    form.setValue('category', defaultValue.category as any);
-    form.setValue('importance', defaultValue.importance as any);
-    setShowSmartDefaults(false);
-    toast({
-      title: "Previous Entry Loaded",
-      description: "Similar content from your history applied.",
-    });
-  };
-
-  // Handle recent content selection
-  const handleRecentContentSelect = (content: string) => {
-    form.setValue('content', content);
-    toast({
-      title: "Recent Content Applied",
-      description: "Previous content loaded for quick editing.",
-    });
-  };
 
   // Voice input integration
   const {
@@ -154,10 +62,8 @@ export default function MemorySection() {
     stopListening,
     clearTranscript,
   } = useVoiceInput({
-    onTranscript: (newTranscript) => {
-      const currentContent = form.getValues('content');
-      const updatedContent = currentContent + (currentContent ? ' ' : '') + newTranscript;
-      form.setValue('content', updatedContent);
+    onTranscript: () => {
+      // Voice input handling is now managed by MemoryForm component
     },
     onError: (error) => {
       toast({
@@ -178,6 +84,12 @@ export default function MemorySection() {
       startListening();
       setIsVoiceInputActive(true);
     }
+  };
+
+  // Handle form submission from MemoryForm component
+  const handleMemoryFormSubmit = (data: ManualMemoryFormData) => {
+    createManualMemoryMutation.mutate(data);
+    setIsManualEntryOpen(false);
   };
 
   // Overview count query - lightweight, runs once on mount
@@ -248,9 +160,6 @@ export default function MemorySection() {
     refetchOverview,
     infiniteMemoriesQuery,
     onMemoryCreated: () => {
-      setSmartDefaults(getSmartDefaults());
-      setRecentContent(getRecentValues('content'));
-      form.reset();
       setIsManualEntryOpen(false);
     },
     onMemoryUpdated: () => {
@@ -479,348 +388,21 @@ export default function MemorySection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Inline Add Memory Form */}
-              <Collapsible open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
-                <CollapsibleContent>
-                  <div className="border rounded-lg p-4 mb-6 bg-gradient-to-r from-purple-50 to-pink-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold">Add New Memory</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Add important information that your AI coach should remember for future conversations.
-                      <span className="block text-xs text-gray-500 mt-1">
-                        🔒 Your data is encrypted and stored securely with full privacy protection
-                      </span>
-                    </p>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit((data: ManualMemoryFormData) => createManualMemoryMutation.mutate(data))} className="space-y-4">
-                        {/* Quick Access Buttons */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setShowPresets(!showPresets)}
-                            className="min-h-[44px] px-4 flex items-center gap-2 justify-start"
-                          >
-                            <Zap className="h-4 w-4" />
-                            <span className="text-sm">Quick Templates</span>
-                            {contextualPresets.length > 0 && (
-                              <Badge variant="secondary" className="ml-auto text-xs">
-                                {contextualPresets.length}
-                              </Badge>
-                            )}
-                          </Button>
-                          
-                          {smartDefaults.length > 0 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setShowSmartDefaults(!showSmartDefaults)}
-                              className="min-h-[44px] px-4 flex items-center gap-2 justify-start"
-                            >
-                              <History className="h-4 w-4" />
-                              <span className="text-sm">Recent Entries</span>
-                              <Badge variant="secondary" className="ml-auto text-xs">
-                                {smartDefaults.length}
-                              </Badge>
-                            </Button>
-                          )}
-                          
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="min-h-[44px] px-4 flex items-center gap-2 justify-start text-purple-600"
-                            disabled
-                          >
-                            <Clock className="h-4 w-4" />
-                            <span className="text-sm">{getTimeContext().charAt(0).toUpperCase() + getTimeContext().slice(1)}</span>
-                          </Button>
-                        </div>
-
-                        {/* Preset Templates */}
-                        <Collapsible open={showPresets} onOpenChange={setShowPresets}>
-                          <CollapsibleContent>
-                            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                              <h4 className="text-sm font-medium text-blue-800 mb-3">Quick Templates</h4>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {contextualPresets.map((preset) => (
-                                  <Button
-                                    key={preset.id}
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => handlePresetSelect(preset)}
-                                    className="min-h-[44px] p-3 text-left justify-start hover:bg-blue-100"
-                                  >
-                                    <span className="mr-2 text-lg">{preset.icon}</span>
-                                    <div className="flex flex-col items-start">
-                                      <span className="text-sm font-medium">{preset.label}</span>
-                                      <span className="text-xs text-gray-600 truncate">{preset.content}</span>
-                                    </div>
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-
-                        {/* Smart Defaults */}
-                        <Collapsible open={showSmartDefaults} onOpenChange={setShowSmartDefaults}>
-                          <CollapsibleContent>
-                            <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                              <h4 className="text-sm font-medium text-green-800 mb-3">Your Recent Entries</h4>
-                              <div className="space-y-2">
-                                {smartDefaults.slice(0, 5).map((defaultValue, index) => (
-                                  <Button
-                                    key={index}
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => handleSmartDefaultSelect(defaultValue)}
-                                    className="w-full min-h-[44px] p-3 text-left justify-start hover:bg-green-100"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      {categoryIcons[defaultValue.category as keyof typeof categoryIcons]}
-                                      <div className="flex flex-col items-start">
-                                        <span className="text-sm font-medium truncate max-w-[200px]">{defaultValue.content}</span>
-                                        <span className="text-xs text-gray-600">
-                                          {categoryLabels[defaultValue.category as keyof typeof categoryLabels]} • Used {defaultValue.frequency} times
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                        
-                        <FormField
-                          control={form.control}
-                          name="content"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Memory Content</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <Textarea
-                                    placeholder="Enter information you want your AI coach to remember (e.g., 'I prefer morning workouts and have a gluten sensitivity')"
-                                    className="min-h-[100px] pr-12"
-                                    {...field}
-                                    value={field.value + (interimTranscript ? ` ${interimTranscript}` : '')}
-                                  />
-                                  {isVoiceSupported && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={handleVoiceToggle}
-                                      className={`absolute right-2 top-2 min-h-[44px] min-w-[44px] p-2 rounded-full touch-manipulation ${
-                                        isListening ? "bg-red-50 text-red-600 hover:bg-red-100" : "hover:bg-gray-100"
-                                      }`}
-                                      disabled={createManualMemoryMutation.isPending}
-                                    >
-                                      {isListening ? (
-                                        <>
-                                          <MicOff className="h-4 w-4" />
-                                          <span className="sr-only">Stop voice input</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Mic className="h-4 w-4" />
-                                          <span className="sr-only">Start voice input</span>
-                                        </>
-                                      )}
-                                    </Button>
-                                  )}
-                                </div>
-                              </FormControl>
-                              <FormDescription className="flex items-center gap-2">
-                                <span>Describe the information clearly and specifically.</span>
-                                {isVoiceSupported && (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Volume2 className="h-3 w-3" />
-                                    Voice input available
-                                  </span>
-                                )}
-                                {isListening && (
-                                  <span className="text-xs text-red-600 flex items-center gap-1 animate-pulse">
-                                    <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
-                                    Listening...
-                                  </span>
-                                )}
-                              </FormDescription>
-                              
-                              {/* Recent Content Suggestions */}
-                              {recentContent.length > 0 && field.value.length < 10 && (
-                                <div className="mt-2">
-                                  <div className="text-xs text-gray-600 mb-1">Recent content:</div>
-                                  <div className="flex flex-wrap gap-1">
-                                    {recentContent.slice(0, 3).map((content, index) => (
-                                      <Button
-                                        key={index}
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleRecentContentSelect(content)}
-                                        className="text-xs h-8 px-2 truncate max-w-[120px]"
-                                      >
-                                        {content.length > 15 ? `${content.substring(0, 15)}...` : content}
-                                      </Button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="category"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Category</FormLabel>
-                                <FormControl>
-                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                    {Object.entries(categoryLabels).map(([key, label]) => (
-                                      <Tooltip key={key}>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            type="button"
-                                            onClick={() => field.onChange(key)}
-                                            className={`
-                                              min-h-[56px] p-3 rounded-lg border-2 transition-all
-                                              flex flex-col items-center justify-center gap-1
-                                              touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
-                                              ${field.value === key 
-                                                ? `${categoryColors[key as keyof typeof categoryColors]} border-current ring-2 ring-offset-2 ring-current` 
-                                                : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
-                                              }
-                                            `}
-                                          >
-                                            <div className={`p-1 rounded-full ${field.value === key ? 'text-current' : 'text-gray-600'}`}>
-                                              {categoryIcons[key as keyof typeof categoryIcons]}
-                                            </div>
-                                            <span className={`text-xs font-medium text-center leading-tight ${field.value === key ? 'text-current' : 'text-gray-700'}`}>
-                                              {label}
-                                            </span>
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-sm">
-                                          <div className="space-y-2">
-                                            <p className="text-sm font-medium">
-                                              {explanationCards[key as keyof typeof explanationCards]?.description}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                              {explanationCards[key as keyof typeof explanationCards]?.coachingBenefits}
-                                            </p>
-                                          </div>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ))}
-                                  </div>
-                                </FormControl>
-                                <FormDescription>
-                                  Choose the type of information this memory represents.
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="importance"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="flex items-center gap-2">
-                                  Importance Level
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <HelpCircle className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p className="text-sm">
-                                        Higher importance memories are prioritized when your AI coach makes recommendations. Critical health information should be marked as high importance.
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </FormLabel>
-                                <FormControl>
-                                  <div className="grid grid-cols-1 gap-2">
-                                    {[
-                                      { value: 'low', label: 'Low', description: 'General information', color: 'bg-gray-100 text-gray-800', icon: '📝' },
-                                      { value: 'medium', label: 'Medium', description: 'Important preference', color: 'bg-orange-100 text-orange-800', icon: '⚡' },
-                                      { value: 'high', label: 'High', description: 'Critical health information', color: 'bg-red-100 text-red-800', icon: '🚨' }
-                                    ].map((importance) => (
-                                      <button
-                                        key={importance.value}
-                                        type="button"
-                                        onClick={() => field.onChange(importance.value)}
-                                        className={`
-                                          min-h-[56px] p-3 rounded-lg border-2 transition-all
-                                          flex items-center justify-start gap-3
-                                          touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
-                                          ${field.value === importance.value
-                                            ? `${importance.color} border-current ring-2 ring-offset-2 ring-current`
-                                            : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
-                                          }
-                                        `}
-                                      >
-                                        <span className="text-lg">{importance.icon}</span>
-                                        <div className="flex flex-col items-start">
-                                          <span className={`text-sm font-medium ${field.value === importance.value ? 'text-current' : 'text-gray-900'}`}>
-                                            {importance.label}
-                                          </span>
-                                          <span className={`text-xs ${field.value === importance.value ? 'text-current opacity-90' : 'text-gray-600'}`}>
-                                            {importance.description}
-                                          </span>
-                                        </div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </FormControl>
-                                <FormDescription>
-                                  How important is this information for coaching decisions?
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="flex justify-end space-x-2 pt-4">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsManualEntryOpen(false)}
-                            disabled={createManualMemoryMutation.isPending}
-                            className="min-h-[44px] px-6"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            disabled={createManualMemoryMutation.isPending}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 min-h-[44px] px-6"
-                          >
-                            {createManualMemoryMutation.isPending ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              "Save Memory"
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+              <MemoryForm 
+                isOpen={isManualEntryOpen}
+                onClose={() => setIsManualEntryOpen(false)}
+                onSubmit={handleMemoryFormSubmit}
+                isSubmitting={createManualMemoryMutation.isPending}
+                voiceInput={{
+                  isSupported: isVoiceSupported,
+                  isListening: isListening,
+                  isActive: isVoiceInputActive,
+                  transcript: transcript,
+                  interimTranscript: interimTranscript,
+                  error: voiceError,
+                  onToggle: handleVoiceToggle,
+                }}
+              />
 
               {/* Memory Summary - Last Period Title */}
               <div className="text-lg font-semibold text-purple-700 mb-4">

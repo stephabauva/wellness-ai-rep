@@ -16,6 +16,40 @@
     "crossDomain": false,
     "usageCount": 1
   },
+  "client/src/pages/not-found.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/services/universal-file-service.ts": {
     "domain": "file-manager",
     "exports": [
@@ -60,40 +94,6 @@
         "imports": [
           "audioService",
           "TranscriptionResult"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/not-found.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "NotFound"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/home.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "Home"
         ]
       }
     ],
@@ -354,6 +354,40 @@
     ],
     "crossDomain": false,
     "usageCount": 2
+  },
+  "client/src/hooks/useInfiniteScroll.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useInfiniteScroll"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "useInfiniteScroll"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/hooks/useInfiniteMemories.ts": {
+    "domain": "shared/hooks",
+    "exports": [
+      "useInfiniteMemories"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "useInfiniteMemories"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
   },
   "client/src/hooks/useFileUpload.ts": {
     "domain": "file-manager",
@@ -752,6 +786,195 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "client/src/components/ui/sheet.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Sheet",
+      "SheetPortal",
+      "SheetOverlay",
+      "SheetTrigger",
+      "SheetClose",
+      "SheetContent",
+      "SheetHeader",
+      "SheetFooter",
+      "SheetTitle",
+      "SheetDescription",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Sheet",
+          "SheetContent",
+          "SheetDescription",
+          "SheetHeader",
+          "SheetTitle",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/scroll-area.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ScrollArea",
+      "ScrollBar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "ScrollArea"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/progress.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Progress"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Progress"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/device-card.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "DeviceCard"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "health/devices",
+        "imports": [
+          "DeviceCard"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/chat-message.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ChatMessage"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "ChatMessage"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/TouchSwipeHandler.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "TouchSwipeHandler",
+      "createDeleteAction",
+      "createEditAction",
+      "createUndoAction"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "TouchSwipeHandler",
+          "createDeleteAction",
+          "createEditAction"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/ThemeToggle.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ThemeToggle"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/Sidebar.tsx",
+        "domain": "app/navigation",
+        "imports": [
+          "ThemeToggle"
+        ]
+      },
+      {
+        "file": "client/src/components/MobileNav.tsx",
+        "domain": "app/navigation",
+        "imports": [
+          "ThemeToggle"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/components/ui/PrivacyBadge.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "PrivacyBadgeProps",
+      "PrivacyBadge",
+      "PrivacyIndicatorGroupProps",
+      "PrivacyIndicatorGroup",
+      "PrivacyStatusProps",
+      "PrivacyStatus"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "PrivacyBadge",
+          "PrivacyStatus"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/FAB.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "FABProps",
+      "FAB",
+      "fabVariants"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "FAB"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/components/settings/PerformanceSettings.tsx": {
     "domain": "settings",
     "exports": [
@@ -869,173 +1092,6 @@
       }
     ],
     "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sheet.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Sheet",
-      "SheetPortal",
-      "SheetOverlay",
-      "SheetTrigger",
-      "SheetClose",
-      "SheetContent",
-      "SheetHeader",
-      "SheetFooter",
-      "SheetTitle",
-      "SheetDescription",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Sheet",
-          "SheetContent",
-          "SheetDescription",
-          "SheetHeader",
-          "SheetTitle",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/scroll-area.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ScrollArea",
-      "ScrollBar"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConversationHistory.tsx",
-        "domain": "chat",
-        "imports": [
-          "ScrollArea"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/progress.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Progress"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Progress"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/device-card.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "DeviceCard"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConnectedDevicesSection.tsx",
-        "domain": "health/devices",
-        "imports": [
-          "DeviceCard"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/chat-message.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ChatMessage"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MessageDisplayArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "ChatMessage"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/ThemeToggle.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ThemeToggle"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/Sidebar.tsx",
-        "domain": "app/navigation",
-        "imports": [
-          "ThemeToggle"
-        ]
-      },
-      {
-        "file": "client/src/components/MobileNav.tsx",
-        "domain": "app/navigation",
-        "imports": [
-          "ThemeToggle"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 2
-  },
-  "client/src/components/ui/PrivacyBadge.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "PrivacyBadgeProps",
-      "PrivacyBadge",
-      "PrivacyIndicatorGroupProps",
-      "PrivacyIndicatorGroup",
-      "PrivacyStatusProps",
-      "PrivacyStatus"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "PrivacyBadge",
-          "PrivacyStatus"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/FAB.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "FABProps",
-      "FAB",
-      "fabVariants"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "FAB"
-        ]
-      }
-    ],
-    "crossDomain": true,
     "usageCount": 1
   },
   "client/src/components/filemanager/QrCodeDialog.tsx": {

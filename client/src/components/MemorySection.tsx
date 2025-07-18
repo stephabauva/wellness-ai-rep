@@ -808,7 +808,7 @@ export default function MemorySection() {
                 className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
               />
               <PrivacyBadge 
-                variant="local-storage" 
+                variant="server-stored" 
                 size="sm" 
                 className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
               />
@@ -862,10 +862,6 @@ export default function MemorySection() {
                   <div className="border rounded-lg p-4 mb-6 bg-gradient-to-r from-purple-50 to-pink-50">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-semibold">Add New Memory</h3>
-                      <div className="flex gap-1">
-                        <PrivacyBadge variant="encrypted" size="sm" />
-                        <PrivacyBadge variant="local-storage" size="sm" />
-                      </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-4">
                       Add important information that your AI coach should remember for future conversations.
@@ -1786,19 +1782,6 @@ export default function MemorySection() {
                                 </div>
                               )}
                               
-                              {/* Privacy Status for each memory */}
-                              {!isEditing && (
-                                <div className="mb-4">
-                                  <PrivacyStatus
-                                    encrypted={true}
-                                    localStorage={true}
-                                    aiAccessible={memory.category !== 'medical'}
-                                    gdprCompliant={true}
-                                    size="sm"
-                                    className="gap-1"
-                                  />
-                                </div>
-                              )}
                               
                               {!isEditing && (
                                 <div className="flex justify-between text-xs text-gray-500 pt-3 mt-3 border-t border-purple-100">

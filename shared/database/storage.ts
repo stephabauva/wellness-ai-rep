@@ -31,6 +31,9 @@ import { nutritionAggregationService, type DailyNutritionSummary, type Nutrition
 import { createDefaultUser, createWelcomeMessage, createComprehensiveHealthData, createConnectedDevices } from "./mock-data";
 import { createNutritionEntries, createNutritionHealthData, type NutritionData } from "./nutrition-utils";
 import { calculateStartDate } from "./time-range-utils";
+import { NutritionDelegationMixin } from "./nutrition-delegation";
+import { processUserSettingsSimple, processUserSettingsDetailed, applyUserSettingsToUser } from "./user-settings-utils";
+import { prepareDeviceUpdateSettings, createUpdatedDevice } from "./device-utils";
 
 // Interface for storage methods
 export interface IStorage {
@@ -93,7 +96,7 @@ export interface IStorage {
   removeDevice(id: number): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
+export class MemStorage extends NutritionDelegationMixin implements IStorage {
   private users: Map<number, User>;
   private messages: Map<number, ChatMessage[]>;
   private healthData: Map<number, HealthData[]>;
@@ -104,6 +107,7 @@ export class MemStorage implements IStorage {
   private deviceId: number;
 
   constructor() {
+    super();
     this.users = new Map();
     this.messages = new Map();
     this.healthData = new Map();
@@ -178,29 +182,9 @@ export class MemStorage implements IStorage {
       throw new Error(`User with id ${id} not found`);
     }
     
-    // Directly parse 'settings' to extract and validate preference fields
-    // .partial() allows only a subset of preference fields to be present
-    // Zod will strip any fields from 'settings' not in 'userPreferenceSchema' (its default behavior)
-    const validatedPreferenceUpdates = userPreferenceSchema.partial().parse(settings);
-    
-    const updatedUser: User = {
-        ...user,
-        // Update top-level User fields from settings if they exist
-        name: settings.name !== undefined ? settings.name : user.name,
-        email: settings.email !== undefined ? settings.email : user.email,
-        aiProvider: settings.aiProvider !== undefined ? settings.aiProvider : user.aiProvider,
-        aiModel: settings.aiModel !== undefined ? settings.aiModel : user.aiModel,
-        automaticModelSelection: settings.automaticModelSelection !== undefined ? settings.automaticModelSelection : user.automaticModelSelection,
-        transcriptionProvider: settings.transcriptionProvider !== undefined ? settings.transcriptionProvider : user.transcriptionProvider,
-        preferredLanguage: settings.preferredLanguage !== undefined ? settings.preferredLanguage : user.preferredLanguage,
-        memoryDetectionProvider: settings.memoryDetectionProvider !== undefined ? settings.memoryDetectionProvider : user.memoryDetectionProvider,
-        memoryDetectionModel: settings.memoryDetectionModel !== undefined ? settings.memoryDetectionModel : user.memoryDetectionModel,
-
-        preferences: {
-            ...user.preferences, // user.preferences is now UserPreferences (non-nullable)
-            ...validatedPreferenceUpdates, // Spread the Zod-validated preference fields
-        },
-    };
+    // Use simple processing approach for memory storage
+    const processed = processUserSettingsSimple(settings);
+    const updatedUser = applyUserSettingsToUser(user, processed);
     
     this.users.set(id, updatedUser);
     return updatedUser;
@@ -373,14 +357,7 @@ export class MemStorage implements IStorage {
       throw new Error(`Device with id ${id} not found`);
     }
     
-    const updatedDevice: ConnectedDevice = {
-      ...device,
-      metadata: {
-        ...((device.metadata && typeof device.metadata === 'object') ? device.metadata : {}),
-        ...((settings && typeof settings === 'object') ? settings : {})
-      },
-      lastSync: new Date()
-    };
+    const updatedDevice = createUpdatedDevice(device, settings);
     
     this.devices.set(id, updatedDevice);
     return updatedDevice;
@@ -394,40 +371,12 @@ export class MemStorage implements IStorage {
     this.devices.delete(id);
   }
 
-  // Nutrition aggregation methods
-  async getDailyNutritionSummary(userId: number, date: Date): Promise<DailyNutritionSummary> {
-    return await nutritionAggregationService.getDailyNutritionSummary(userId, date);
-  }
-
-  async getNutritionSummariesByRange(userId: number, startDate: Date, endDate: Date): Promise<DailyNutritionSummary[]> {
-    return await nutritionAggregationService.getNutritionSummariesByRange(userId, startDate, endDate);
-  }
-
-  async updateNutritionEntry(request: NutritionUpdateRequest): Promise<void> {
-    await nutritionAggregationService.updateNutritionEntry(request);
-  }
-
-  async getMealNutritionBreakdown(userId: number, date: Date): Promise<{ [mealType: string]: NutritionMealSummary }> {
-    return await nutritionAggregationService.getMealNutritionBreakdown(userId, date);
-  }
-
-  async getWeeklyNutritionAverages(userId: number, startDate: Date): Promise<{
-    averageCalories: number;
-    averageProtein: number;
-    averageCarbs: number;
-    averageFat: number;
-    averageFiber: number;
-    averageSugar: number;
-    averageSodium: number;
-    daysWithData: number;
-  }> {
-    return await nutritionAggregationService.getWeeklyNutritionAverages(userId, startDate);
-  }
+  // Nutrition aggregation methods inherited from NutritionDelegationMixin
 }
 
 // Database implementation
 
-export class DatabaseStorage implements IStorage {
+export class DatabaseStorage extends NutritionDelegationMixin implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -467,52 +416,18 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`User with id ${id} not found`);
     }
 
-    // Separate preferences from top-level user fields
-    const {
-      name, email, aiProvider, aiModel, automaticModelSelection,
-      transcriptionProvider, preferredLanguage, memoryDetectionProvider, memoryDetectionModel,
-      // health_consent is handled by its own service, not directly set here
-      // retention days are also part of preferences or separate settings
-      primaryGoal, coachStyle, reminderFrequency, focusAreas, themePreference,
-      pushNotifications, emailSummaries, dataSharing, healthVisibilitySettings,
-      highValueRetentionDays, mediumValueRetentionDays, lowValueRetentionDays,
-      ...otherPossibleSettings // Should be empty if schema is matched
-    } = settings;
-
-    const preferencesToUpdate: Partial<UserPreferences> = {};
-    if (primaryGoal !== undefined) preferencesToUpdate.primaryGoal = primaryGoal;
-    if (coachStyle !== undefined) preferencesToUpdate.coachStyle = coachStyle;
-    if (reminderFrequency !== undefined) preferencesToUpdate.reminderFrequency = reminderFrequency;
-    if (focusAreas !== undefined) preferencesToUpdate.focusAreas = focusAreas;
-    if (themePreference !== undefined) preferencesToUpdate.themePreference = themePreference;
-    if (pushNotifications !== undefined) preferencesToUpdate.pushNotifications = pushNotifications;
-    if (emailSummaries !== undefined) preferencesToUpdate.emailSummaries = emailSummaries;
-    if (dataSharing !== undefined) preferencesToUpdate.dataSharing = dataSharing;
-    if (healthVisibilitySettings !== undefined) preferencesToUpdate.healthVisibilitySettings = healthVisibilitySettings;
-    if (highValueRetentionDays !== undefined) preferencesToUpdate.highValueRetentionDays = highValueRetentionDays;
-    if (mediumValueRetentionDays !== undefined) preferencesToUpdate.mediumValueRetentionDays = mediumValueRetentionDays;
-    if (lowValueRetentionDays !== undefined) preferencesToUpdate.lowValueRetentionDays = lowValueRetentionDays;
-
-    const userFieldsToUpdate: Partial<User> = {};
-    if (name !== undefined) userFieldsToUpdate.name = name;
-    if (email !== undefined) userFieldsToUpdate.email = email;
-    if (aiProvider !== undefined) userFieldsToUpdate.aiProvider = aiProvider;
-    if (aiModel !== undefined) userFieldsToUpdate.aiModel = aiModel;
-    if (automaticModelSelection !== undefined) userFieldsToUpdate.automaticModelSelection = automaticModelSelection;
-    if (transcriptionProvider !== undefined) userFieldsToUpdate.transcriptionProvider = transcriptionProvider;
-    if (preferredLanguage !== undefined) userFieldsToUpdate.preferredLanguage = preferredLanguage;
-    if (memoryDetectionProvider !== undefined) userFieldsToUpdate.memoryDetectionProvider = memoryDetectionProvider;
-    if (memoryDetectionModel !== undefined) userFieldsToUpdate.memoryDetectionModel = memoryDetectionModel;
-
+    // Use detailed processing approach for database storage
+    const processed = processUserSettingsDetailed(settings);
+    
     const finalPreferences = {
-      ...currentUser.preferences, // currentUser.preferences is now non-nullable
-      ...preferencesToUpdate,
+      ...currentUser.preferences,
+      ...processed.preferences,
     };
 
     const [updatedUser] = await db
       .update(users)
       .set({
-        ...userFieldsToUpdate,
+        ...processed.userFields,
         preferences: finalPreferences
       })
       .where(eq(users.id, id))
@@ -768,16 +683,8 @@ export class DatabaseStorage implements IStorage {
     // Invalidate device cache before update
     cacheService.invalidateDeviceData(id);
     
-    // If metadata is being updated, merge it with existing metadata
-    let updatedSettings = { ...settings };
-    if (settings.metadata) {
-      updatedSettings.metadata = {
-        ...((currentDevice.metadata && typeof currentDevice.metadata === 'object') ? currentDevice.metadata : {}),
-        ...((settings.metadata && typeof settings.metadata === 'object') ? settings.metadata : {})
-      };
-    }
-    
-    updatedSettings.lastSync = new Date();
+    // Use utility to prepare update settings with merged metadata and updated sync time
+    const updatedSettings = prepareDeviceUpdateSettings(currentDevice, settings);
     
     const [updatedDevice] = await db
       .update(connectedDevices)
@@ -794,36 +701,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(connectedDevices.id, id));
   }
 
-  // Nutrition aggregation methods
-  async getDailyNutritionSummary(userId: number, date: Date): Promise<DailyNutritionSummary> {
-    return await nutritionAggregationService.getDailyNutritionSummary(userId, date);
-  }
-
-  async getNutritionSummariesByRange(userId: number, startDate: Date, endDate: Date): Promise<DailyNutritionSummary[]> {
-    return await nutritionAggregationService.getNutritionSummariesByRange(userId, startDate, endDate);
-  }
-
-  async updateNutritionEntry(request: NutritionUpdateRequest): Promise<void> {
-    await nutritionAggregationService.updateNutritionEntry(request);
-  }
-
-  async getMealNutritionBreakdown(userId: number, date: Date): Promise<{ [mealType: string]: NutritionMealSummary }> {
-    return await nutritionAggregationService.getMealNutritionBreakdown(userId, date);
-  }
-
-  async getWeeklyNutritionAverages(userId: number, startDate: Date): Promise<{
-    averageCalories: number;
-    averageProtein: number;
-    averageCarbs: number;
-    averageFat: number;
-    averageFiber: number;
-    averageSugar: number;
-    averageSodium: number;
-    daysWithData: number;
-  }> {
-    return await nutritionAggregationService.getWeeklyNutritionAverages(userId, startDate);
-  }
-  
+  // Nutrition aggregation methods inherited from NutritionDelegationMixin
 
 }
 

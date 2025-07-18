@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/com
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3 } from "lucide-react";
+import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3, MousePointer2, CheckSquare } from "lucide-react";
 import { FAB } from "./ui/FAB";
 import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { TouchSwipeHandler, createDeleteAction, createEditAction } from "./ui/TouchSwipeHandler";
@@ -286,7 +286,6 @@ export default function MemorySection() {
   const [isExplanationOpen, setIsExplanationOpen] = useState<boolean>(false);
   const [showAllCategories, setShowAllCategories] = useState<boolean>(false);
   const [showInsights, setShowInsights] = useState<boolean>(false);
-  const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
   const [showLoadButton, setShowLoadButton] = useState<boolean>(true);
@@ -295,6 +294,8 @@ export default function MemorySection() {
   const [showPresets, setShowPresets] = useState<boolean>(false);
   const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
   const [editingMemoryContent, setEditingMemoryContent] = useState<string>("");
+  const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
+  const [selectedMemoryIds, setSelectedMemoryIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Form for manual memory entry with smart defaults
@@ -620,35 +621,6 @@ export default function MemorySection() {
     }
   });
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: (memoryIds: string[]) => apiRequest("/api/memories/bulk", "DELETE", { memoryIds }),
-    onSuccess: async (data) => {
-      // Force immediate refetch of overview for instant UI updates
-      await refetchOverview();
-      
-      // Invalidate Godmode metrics to update quality indicators
-      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
-      
-      // If memories are loaded, refetch them to update the list
-      if (memoriesLoaded) {
-        await queryClient.invalidateQueries({ queryKey: ["memories"] });
-        await refetchMemories();
-      }
-      
-      setSelectedMemoryIds(new Set());
-      toast({
-        title: "Memories deleted",
-        description: `Successfully deleted ${data.successCount} of ${data.totalRequested} memories.`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete memories. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
 
   const handleDeleteMemory = (memoryId: string) => {
     if (confirm("Are you sure you want to delete this memory?")) {
@@ -682,36 +654,64 @@ export default function MemorySection() {
     setEditingMemoryContent("");
   };
 
+  // Selection mode handlers
   const handleToggleMemorySelection = (memoryId: string) => {
-    const newSelected = new Set(selectedMemoryIds);
-    if (newSelected.has(memoryId)) {
-      newSelected.delete(memoryId);
+    const newSelection = new Set(selectedMemoryIds);
+    if (newSelection.has(memoryId)) {
+      newSelection.delete(memoryId);
     } else {
-      newSelected.add(memoryId);
+      newSelection.add(memoryId);
     }
-    setSelectedMemoryIds(newSelected);
+    setSelectedMemoryIds(newSelection);
   };
 
   const handleSelectAll = () => {
-    if (selectedMemoryIds.size === memories.length) {
-      setSelectedMemoryIds(new Set());
-    } else {
-      setSelectedMemoryIds(new Set(memories.map((memory: MemoryEntry) => memory.id)));
-    }
+    const visibleMemoryIds = memories.map((memory: MemoryEntry) => memory.id);
+    setSelectedMemoryIds(new Set(visibleMemoryIds));
   };
 
-  const handleClearSelection = () => {
+  const handleDeselectAll = () => {
     setSelectedMemoryIds(new Set());
   };
 
   const handleBulkDelete = () => {
-    if (selectedMemoryIds.size === 0) return;
+    const selectedCount = selectedMemoryIds.size;
+    if (selectedCount === 0) return;
     
-    const count = selectedMemoryIds.size;
-    if (confirm(`Are you sure you want to delete ${count} selected ${count === 1 ? 'memory' : 'memories'}?`)) {
+    const confirmed = confirm(`Are you sure you want to delete ${selectedCount} selected memories?`);
+    if (confirmed) {
       bulkDeleteMutation.mutate(Array.from(selectedMemoryIds));
     }
   };
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (memoryIds: string[]) => {
+      const deletePromises = memoryIds.map(id => apiRequest(`/api/memories/${id}`, "DELETE"));
+      await Promise.all(deletePromises);
+    },
+    onSuccess: async () => {
+      await refetchOverview();
+      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
+      if (memoriesLoaded) {
+        await queryClient.invalidateQueries({ queryKey: ["memories"] });
+        await refetchMemories();
+      }
+      setSelectedMemoryIds(new Set());
+      toast({
+        title: "Memories deleted",
+        description: `${selectedMemoryIds.size} memories have been successfully removed.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete memories. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
 
   const getImportanceLabel = (score: number) => {
     if (score >= 0.8) return "High";
@@ -799,7 +799,29 @@ export default function MemorySection() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Memory Overview</span>
-                {/* FAB replaces this button - now positioned in thumb zone */}
+                {memoriesLoaded && memories.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsSelectionMode(!isSelectionMode);
+                      setSelectedMemoryIds(new Set());
+                    }}
+                    className="min-h-[44px] px-4 flex items-center gap-2"
+                  >
+                    {isSelectionMode ? (
+                      <>
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </>
+                    ) : (
+                      <>
+                        <MousePointer2 className="h-4 w-4" />
+                        Select
+                      </>
+                    )}
+                  </Button>
+                )}
               </CardTitle>
               <CardDescription>
                 Your AI coach remembers important information from your conversations to provide personalized guidance.
@@ -1574,55 +1596,70 @@ export default function MemorySection() {
                 </Card>
               ) : (
                 <>
-                  {/* Bulk Actions Bar */}
-                  {memories.length > 0 && (
-                    <Card className="bg-gray-50 border-dashed">
-                      <CardContent className="py-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                            <div className="flex items-center gap-2">
-                              <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
-                                <Checkbox
-                                  checked={selectedMemoryIds.size === memories.length && memories.length > 0}
-                                  onCheckedChange={handleSelectAll}
-                                  disabled={memories.length === 0}
-                                  className="h-5 w-5"
-                                />
-                              </div>
-                              <span className="text-sm font-medium">
-                                Select All ({memories.length})
-                              </span>
+                  {/* Selection Mode Controls */}
+                  {isSelectionMode && memories.length > 0 && (
+                    <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                      <CardContent className="py-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-sm text-gray-700">
+                            <div className="p-2 bg-purple-100 rounded-full">
+                              <CheckSquare className="h-4 w-4 text-purple-600" />
                             </div>
+                            <div>
+                              <p className="font-medium">Selection Mode</p>
+                              <p className="text-xs text-gray-600">
+                                {selectedMemoryIds.size} of {memories.length} memories selected
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={selectedMemoryIds.size === memories.length ? handleDeselectAll : handleSelectAll}
+                              className="min-h-[44px] px-4 text-xs"
+                            >
+                              {selectedMemoryIds.size === memories.length ? "Deselect All" : "Select All"}
+                            </Button>
                             {selectedMemoryIds.size > 0 && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600">
-                                  {selectedMemoryIds.size} selected
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={handleClearSelection}
-                                  className="min-h-[44px] px-4"
-                                >
-                                  <X className="h-4 w-4 mr-1" />
-                                  Clear
-                                </Button>
-                              </div>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={handleBulkDelete}
+                                disabled={bulkDeleteMutation.isPending}
+                                className="min-h-[44px] px-4 text-xs"
+                              >
+                                {bulkDeleteMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete ({selectedMemoryIds.size})
+                                  </>
+                                )}
+                              </Button>
                             )}
                           </div>
-                          {selectedMemoryIds.size > 0 && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={handleBulkDelete}
-                              disabled={bulkDeleteMutation.isPending}
-                              className="w-full sm:w-auto bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 border-0 min-h-[44px] px-4"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              <span className="hidden sm:inline">Delete Selected ({selectedMemoryIds.size})</span>
-                              <span className="sm:hidden">Delete ({selectedMemoryIds.size})</span>
-                            </Button>
-                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Swipe Instructions for better UX */}
+                  {!isSelectionMode && memories.length > 0 && (
+                    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                      <CardContent className="py-3">
+                        <div className="flex items-center gap-3 text-sm text-gray-700">
+                          <div className="p-2 bg-blue-100 rounded-full">
+                            <Edit3 className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Swipe to interact</p>
+                            <p className="text-xs text-gray-600">Swipe left to delete, swipe right to edit</p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -1631,89 +1668,62 @@ export default function MemorySection() {
                   <div className="grid gap-4">
                     {memories.map((memory: MemoryEntry) => {
                       const isEditing = editingMemoryId === memory.id;
+                      const isSelected = selectedMemoryIds.has(memory.id);
                       
                       return (
                         <TouchSwipeHandler
                           key={memory.id}
-                          leftAction={createDeleteAction(() => handleDeleteMemory(memory.id))}
-                          rightAction={createEditAction(() => handleEditMemory(memory.id, memory.content))}
-                          disabled={isEditing || deleteMemoryMutation.isPending || editMemoryMutation.isPending}
+                          leftAction={!isSelectionMode ? createDeleteAction(() => handleDeleteMemory(memory.id)) : undefined}
+                          rightAction={!isSelectionMode ? createEditAction(() => handleEditMemory(memory.id, memory.content)) : undefined}
+                          disabled={isSelectionMode || isEditing || deleteMemoryMutation.isPending || editMemoryMutation.isPending}
                           className="mb-2"
                         >
-                          <Card className="relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-indigo-50/30 border-purple-100 hover:shadow-md transition-all touch-manipulation">
+                          <Card className={`relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-indigo-50/30 border-purple-100 hover:shadow-md transition-all touch-manipulation ${
+                            isSelectionMode && isSelected ? 'ring-2 ring-purple-500 bg-purple-50' : ''
+                          }`}>
                             <CardHeader className="pb-3 min-h-[44px] py-4">
-                              <div className="flex items-start gap-3">
-                                <div className="pt-1">
-                                  <div className="min-h-[44px] min-w-[44px] flex items-center justify-center">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-2">
+                                  {isSelectionMode && (
                                     <Checkbox
-                                      checked={selectedMemoryIds.has(memory.id)}
+                                      checked={isSelected}
                                       onCheckedChange={() => handleToggleMemorySelection(memory.id)}
-                                      className="h-5 w-5"
-                                      disabled={isEditing}
+                                      className="mt-1"
+                                      aria-label={`Select memory: ${memory.content.substring(0, 50)}...`}
                                     />
-                                  </div>
+                                  )}
+                                  {categoryIcons[memory.category as keyof typeof categoryIcons]}
+                                  <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
+                                    {categoryLabels[memory.category as keyof typeof categoryLabels]}
+                                  </Badge>
+                                  {memory.importanceScore > 0.7 && (
+                                    <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
+                                      {getImportanceLabel(memory.importanceScore)}
+                                    </Badge>
+                                  )}
                                 </div>
-                                <div className="flex-1">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-2">
-                                      {categoryIcons[memory.category as keyof typeof categoryIcons]}
-                                      <Badge variant="secondary" className={categoryColors[memory.category as keyof typeof categoryColors]}>
-                                        {categoryLabels[memory.category as keyof typeof categoryLabels]}
-                                      </Badge>
-                                      {memory.importanceScore > 0.7 && (
-                                        <Badge variant="outline" className={getImportanceColor(memory.importanceScore)}>
-                                          {getImportanceLabel(memory.importanceScore)}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex gap-2">
-                                      {isEditing && (
-                                        <>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleSaveEdit(memory.id)}
-                                            disabled={editMemoryMutation.isPending}
-                                            className="hover:bg-green-50 hover:text-green-600 min-h-[44px] min-w-[44px] p-2"
-                                          >
-                                            <CheckCircle className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleCancelEdit}
-                                            disabled={editMemoryMutation.isPending}
-                                            className="hover:bg-gray-50 hover:text-gray-600 min-h-[44px] min-w-[44px] p-2"
-                                          >
-                                            <X className="h-4 w-4" />
-                                          </Button>
-                                        </>
-                                      )}
-                                      {!isEditing && (
-                                        <>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleEditMemory(memory.id, memory.content)}
-                                            disabled={deleteMemoryMutation.isPending || editMemoryMutation.isPending}
-                                            className="hover:bg-blue-50 hover:text-blue-600 min-h-[44px] min-w-[44px] p-2"
-                                          >
-                                            <Edit3 className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDeleteMemory(memory.id)}
-                                            disabled={deleteMemoryMutation.isPending || editMemoryMutation.isPending}
-                                            className="hover:bg-red-50 hover:text-red-600 min-h-[44px] min-w-[44px] p-2"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </>
-                                      )}
-                                    </div>
+                                {isEditing && (
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleSaveEdit(memory.id)}
+                                      disabled={editMemoryMutation.isPending}
+                                      className="hover:bg-green-50 hover:text-green-600 min-h-[44px] min-w-[44px] p-2"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={handleCancelEdit}
+                                      disabled={editMemoryMutation.isPending}
+                                      className="hover:bg-gray-50 hover:text-gray-600 min-h-[44px] min-w-[44px] p-2"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
                                   </div>
-                                </div>
+                                )}
                               </div>
                             </CardHeader>
                             <CardContent className="py-4">

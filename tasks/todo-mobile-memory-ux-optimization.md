@@ -164,6 +164,14 @@ Optimize the memory management interface for mobile wellness users focusing on:
      - `client/src/components/MemorySection.tsx:350-400` (memory loading logic)
    - Implementation: React Virtualized or similar, intersection observer
 
+- [ ] **Task 4.3.2: Remove Legacy/Optimized Mode Selection**
+   - Problem: Confusing UX with "optimized" vs "legacy" mode buttons - users shouldn't choose implementation details
+   - Solution: Remove user-facing mode selection, make infinite scroll the default behavior
+   - Files affected:
+     - `client/src/components/MemorySection.tsx:100-150` (mode selection buttons)
+     - `client/src/components/MemorySection.tsx:350-450` (conditional rendering logic)
+   - Implementation: Remove toggle buttons, set infinite scroll as default, keep legacy as hidden fallback only
+
 - [ ] **Task 4.4: Offline Support**
    - Problem: No offline capability for viewing existing memories
    - Solution: Service worker caching for viewed memories

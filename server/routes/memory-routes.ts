@@ -58,12 +58,32 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Get user memories
+  // Get user memories with pagination support
   app.get("/api/memories", async (req, res) => {
     try {
       const userId = 1; // Default user ID
-      const memories = await memoryService.getUserMemories(userId);
-      res.json(memories);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const category = req.query.category as string;
+      const offset = (page - 1) * limit;
+      
+      // Get total count first
+      const allMemories = await memoryService.getUserMemories(userId, category as any);
+      const totalCount = allMemories.length;
+      
+      // Apply pagination
+      const memories = allMemories.slice(offset, offset + limit);
+      
+      res.json({
+        memories,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          hasMore: offset + limit < totalCount
+        }
+      });
     } catch (error) {
       console.error('Error fetching memories:', error);
       res.status(500).json({ message: "Failed to fetch memories" });

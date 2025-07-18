@@ -17,6 +17,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useVoiceInput } from "../hooks/useVoiceInput";
+import { useInfiniteMemories } from "../hooks/useInfiniteMemories";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@shared/components/ui/tooltip";
 
 // Manual memory entry schema
@@ -289,6 +291,7 @@ export default function MemorySection() {
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
   const [showLoadButton, setShowLoadButton] = useState<boolean>(true);
+  const [useInfiniteScrolling, setUseInfiniteScrolling] = useState<boolean>(false);
   const [isVoiceInputActive, setIsVoiceInputActive] = useState<boolean>(false);
   const [showSmartDefaults, setShowSmartDefaults] = useState<boolean>(false);
   const [showPresets, setShowPresets] = useState<boolean>(false);
@@ -429,15 +432,35 @@ export default function MemorySection() {
     refetchInterval: false, // No polling
   });
 
-  // Disabled memory queries by default
+  // Infinite scroll hook for optimized memory loading
+  const infiniteMemoriesQuery = useInfiniteMemories({
+    category: selectedCategory === "all" ? undefined : selectedCategory,
+    limit: 20,
+    enabled: useInfiniteScrolling
+  });
+  
+  // Intersection observer for infinite scroll
+  const { targetRef, isFetching } = useInfiniteScroll({
+    hasMore: infiniteMemoriesQuery.hasMore,
+    isLoading: infiniteMemoriesQuery.isFetchingNextPage,
+    onLoadMore: () => {
+      if (infiniteMemoriesQuery.hasMore && !infiniteMemoriesQuery.isFetchingNextPage) {
+        infiniteMemoriesQuery.fetchNextPage();
+      }
+    },
+    threshold: 0.8,
+    rootMargin: '100px'
+  });
+  
+  // Disabled memory queries by default - legacy fallback
   const { data: allMemories = [], isLoading: allMemoriesLoading, refetch: refetchMemories } = useQuery({
     queryKey: ["memories"],
     queryFn: async () => {
       const response = await fetch(`/api/memories`);
       if (!response.ok) throw new Error("Failed to fetch memories");
       const data = await response.json();
-      // Ensure we always return an array
-      return Array.isArray(data) ? data : [];
+      // Handle both paginated and non-paginated responses
+      return Array.isArray(data) ? data : (data.memories || []);
     },
     enabled: false, // Never automatically fetch
     staleTime: 10 * 60 * 1000, // 10 minutes cache once loaded
@@ -445,25 +468,35 @@ export default function MemorySection() {
     refetchInterval: false, // No polling ever
   });
 
-  // Manual load function
+  // Manual load function with infinite scroll option
   const handleLoadMemories = async () => {
+    setShowLoadButton(false);
+    setUseInfiniteScrolling(true);
+    setMemoriesLoaded(true);
+  };
+  
+  // Legacy load function for fallback
+  const handleLoadMemoriesLegacy = async () => {
     setShowLoadButton(false);
     await refetchMemories();
     setMemoriesLoaded(true);
   };
 
+  // Get memories from infinite scroll or legacy loading
+  const rawMemories = useInfiniteScrolling ? infiniteMemoriesQuery.memories : allMemories;
+  
   // Client-side filtering of memories based on selected category and labels
   const memories = memoriesLoaded ? 
     (selectedCategory === "all" ? 
-      allMemories : 
-      allMemories.filter((memory: MemoryEntry) => {
+      rawMemories : 
+      rawMemories.filter((memory: MemoryEntry) => {
         const categoryMatch = memory.category === selectedCategory;
         const labelMatch = selectedLabels.size === 0 || 
           (memory.labels && memory.labels.some(label => selectedLabels.has(label)));
         return categoryMatch && labelMatch;
       })
     ) : [];
-  const isLoading = overviewLoading || (memoriesLoaded && allMemoriesLoading);
+  const isLoading = overviewLoading || (memoriesLoaded && (allMemoriesLoading || infiniteMemoriesQuery.isLoading));
 
   // Get available labels for the current category
   const getAvailableLabels = () => {
@@ -504,6 +537,11 @@ export default function MemorySection() {
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedLabels(new Set());
+    
+    // If using infinite scroll, refetch with new category
+    if (useInfiniteScrolling && memoriesLoaded) {
+      infiniteMemoriesQuery.refetch();
+    }
   };
 
   // Manual memory creation mutation with smart defaults tracking
@@ -537,7 +575,12 @@ export default function MemorySection() {
       // If memories are loaded, refetch them to show new memory
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
-        await refetchMemories();
+        if (useInfiniteScrolling) {
+          await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
+          await infiniteMemoriesQuery.refetch();
+        } else {
+          await refetchMemories();
+        }
       }
       
       // Update smart defaults state
@@ -572,7 +615,12 @@ export default function MemorySection() {
       // If memories are loaded, refetch them to update the list
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
-        await refetchMemories();
+        if (useInfiniteScrolling) {
+          await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
+          await infiniteMemoriesQuery.refetch();
+        } else {
+          await refetchMemories();
+        }
       }
       
       toast({
@@ -602,7 +650,12 @@ export default function MemorySection() {
       // If memories are loaded, refetch them to update the list
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
-        await refetchMemories();
+        if (useInfiniteScrolling) {
+          await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
+          await infiniteMemoriesQuery.refetch();
+        } else {
+          await refetchMemories();
+        }
       }
       
       setEditingMemoryId(null);
@@ -695,7 +748,12 @@ export default function MemorySection() {
       await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
       if (memoriesLoaded) {
         await queryClient.invalidateQueries({ queryKey: ["memories"] });
-        await refetchMemories();
+        if (useInfiniteScrolling) {
+          await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
+          await infiniteMemoriesQuery.refetch();
+        } else {
+          await refetchMemories();
+        }
       }
       setSelectedMemoryIds(new Set());
       toast({
@@ -1569,19 +1627,34 @@ export default function MemorySection() {
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-8">
                     <Brain className="h-12 w-12 text-purple-400 mb-4" />
-                    <Button onClick={handleLoadMemories} disabled={allMemoriesLoading} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 min-h-[44px] px-6">
-                      {allMemoriesLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Loading Memories...
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Show My Stored Memories
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex flex-col gap-3">
+                      <Button onClick={handleLoadMemories} disabled={infiniteMemoriesQuery.isLoading || allMemoriesLoading} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 min-h-[44px] px-6">
+                        {infiniteMemoriesQuery.isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Loading Memories...
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Show My Stored Memories (Optimized)
+                          </>
+                        )}
+                      </Button>
+                      <Button variant="outline" onClick={handleLoadMemoriesLegacy} disabled={allMemoriesLoading} className="min-h-[44px] px-6">
+                        {allMemoriesLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Show All (Legacy Mode)
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ) : memories.length === 0 ? (
@@ -1809,8 +1882,37 @@ export default function MemorySection() {
                       );
                     })}
                   </div>
-                </>
-              )}
+                  
+                  {/* Infinite scroll trigger */}
+                  {useInfiniteScrolling && infiniteMemoriesQuery.hasMore && (
+                    <div ref={targetRef} className="flex justify-center py-4">
+                      {infiniteMemoriesQuery.isFetchingNextPage ? (
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading more memories...
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          Scroll down to load more memories
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Performance stats for development */}
+                  {useInfiniteScrolling && memories.length > 0 && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div>Performance: {memories.length} memories loaded</div>
+                        <div>Mode: {useInfiniteScrolling ? 'Infinite Scroll' : 'Legacy Loading'}</div>
+                        <div>Total Available: {infiniteMemoriesQuery.totalCount}</div>
+                        {infiniteMemoriesQuery.hasMore && (
+                          <div>More available: {infiniteMemoriesQuery.totalCount - memories.length} remaining</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>)}
           </div>
         </div>
       </div>

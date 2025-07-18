@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/com
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, ChevronDown, ChevronUp, Info, X, Plus, Apple, Calendar, Target, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3, MousePointer2, CheckSquare } from "lucide-react";
+import { Trash2, Brain, ChevronDown, ChevronUp, Info, X, Plus, Calendar, AlertCircle, Eye, Loader2, CheckCircle, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3, MousePointer2, CheckSquare } from "lucide-react";
 import { FAB } from "./ui/FAB";
 import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { TouchSwipeHandler, createDeleteAction, createEditAction } from "./ui/TouchSwipeHandler";
@@ -15,272 +15,32 @@ import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useVoiceInput } from "../hooks/useVoiceInput";
 import { useInfiniteMemories } from "../hooks/useInfiniteMemories";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@shared/components/ui/tooltip";
+import { 
+  manualMemorySchema, 
+  ManualMemoryFormData, 
+  MemoryEntry, 
+  categoryIcons, 
+  categoryLabels, 
+  categoryColors, 
+  explanationCards 
+} from "./memory/constants";
+import { 
+  SmartDefault, 
+  PresetButton, 
+  healthPresets, 
+  getTimeContext, 
+  getSmartDefaults, 
+  saveSmartDefault, 
+  getRecentValues, 
+  getContextualPresets 
+} from "./memory/utils";
 
-// Manual memory entry schema
-const manualMemorySchema = z.object({
-  content: z.string().min(10, "Memory content must be at least 10 characters").max(500, "Memory content must be less than 500 characters"),
-  category: z.enum(["preferences", "personal_context", "instructions", "food_diet", "goals"], {
-    required_error: "Please select a memory category",
-  }),
-  importance: z.enum(["low", "medium", "high"], {
-    required_error: "Please select importance level",
-  }),
-});
 
-type ManualMemoryFormData = z.infer<typeof manualMemorySchema>;
 
-interface MemoryEntry {
-  id: string;
-  content: string;
-  category: string;
-  labels: string[];
-  importanceScore: number;
-  keywords: string[];
-  createdAt: string;
-  accessCount: number;
-  lastAccessed: string;
-}
-
-const categoryIcons = {
-  preferences: <User className="h-4 w-4" />,
-  personal_context: <Lightbulb className="h-4 w-4" />,
-  instructions: <Settings className="h-4 w-4" />,
-  food_diet: <Apple className="h-4 w-4" />,
-  goals: <Target className="h-4 w-4" />
-};
-
-const categoryLabels = {
-  preferences: "Preferences",
-  personal_context: "Personal Context",
-  instructions: "Instructions",
-  food_diet: "Food & Diet",
-  goals: "Goals"
-};
-
-const categoryColors = {
-  preferences: "bg-blue-100 text-blue-800",
-  personal_context: "bg-green-100 text-green-800",
-  instructions: "bg-purple-100 text-purple-800",
-  food_diet: "bg-orange-100 text-orange-800",
-  goals: "bg-teal-100 text-teal-800"
-};
-
-const explanationCards = {
-  all: {
-    title: "All Memories",
-    description: "Complete collection of information your AI coach remembers about you",
-    details: [
-      "Combines all memory types in one view",
-      "Sorted by importance and recency",
-      "Shows how memories are categorized",
-      "Use this to get an overview of everything stored"
-    ],
-    privacyNote: "🔒 All memories are encrypted and stored securely. You control what the AI can access.",
-    coachingBenefits: "Your AI coach uses this complete information to provide holistic, personalized wellness guidance that considers all aspects of your health journey together."
-  },
-  preferences: {
-    title: "Preferences",
-    description: "Your likes, dislikes, and personal choices for workouts and wellness",
-    details: [
-      "Exercise types you enjoy or avoid",
-      "Workout timing and environment preferences", 
-      "Equipment and activity preferences",
-      "Communication style and feedback preferences"
-    ],
-    privacyNote: "🤖 This helps your AI coach personalize workout suggestions and communication style.",
-    coachingBenefits: "By remembering your preferences, your AI coach can suggest workouts you'll actually enjoy, recommend exercises at your preferred times, and communicate in a way that motivates you best."
-  },
-  personal_context: {
-    title: "Personal Context", 
-    description: "Important background information and circumstances that affect your wellness journey",
-    details: [
-      "Health conditions, allergies, and medical information",
-      "Physical limitations or injury considerations",
-      "Current fitness level and training phase",
-      "Life circumstances and lifestyle factors"
-    ],
-    privacyNote: "🏥 Medical information is encrypted and only used to ensure safe, personalized recommendations.",
-    coachingBenefits: "Your AI coach uses this context to ensure all recommendations are safe for your health conditions, appropriate for your fitness level, and adapted to your life circumstances."
-  },
-  instructions: {
-    title: "Instructions",
-    description: "Specific coaching rules and guidance preferences",
-    details: [
-      "How you want to be coached and communicated with",
-      "Protocols for reminders and check-ins",
-      "Permission requirements for suggestions",
-      "Goal-setting and progress tracking preferences"
-    ],
-    privacyNote: "🎯 These instructions help the AI coach communicate with you in your preferred style.",
-    coachingBenefits: "Instructions ensure your AI coach respects your boundaries, follows your preferred coaching style, and provides guidance in the way that works best for your personality and schedule."
-  },
-  food_diet: {
-    title: "Food & Diet",
-    description: "All nutrition-related information including preferences, restrictions, and patterns",
-    details: [
-      "Food preferences and favorites",
-      "Allergies, intolerances, and dietary restrictions",
-      "Meal patterns and eating habits",
-      "Nutritional needs and dietary choices"
-    ],
-    privacyNote: "🥗 Dietary information helps create safe, personalized nutrition recommendations.",
-    coachingBenefits: "Your AI coach uses dietary information to suggest meals you'll enjoy, avoid foods that cause problems, and create nutrition plans that fit your lifestyle and health goals."
-  },
-  goals: {
-    title: "Goals",
-    description: "Your objectives and targets for fitness, nutrition, and overall wellness",
-    details: [
-      "Fitness and exercise goals",
-      "Nutrition and dietary objectives",
-      "Weight management targets",
-      "Health and wellness milestones"
-    ],
-    privacyNote: "🎯 Goal information helps the AI coach track your progress and adjust recommendations.",
-    coachingBenefits: "Goals give your AI coach direction to create focused plans, track your progress meaningfully, celebrate achievements, and adjust strategies when you're not meeting targets."
-  }
-};
-
-// Smart defaults system
-interface SmartDefault {
-  content: string;
-  category: string;
-  importance: string;
-  timestamp: string;
-  frequency: number;
-}
-
-interface PresetButton {
-  id: string;
-  label: string;
-  content: string;
-  category: string;
-  importance: string;
-  icon: string;
-  timeContext?: string[];
-}
-
-const healthPresets: PresetButton[] = [
-  {
-    id: 'morning-routine',
-    label: 'Morning Routine',
-    content: 'I prefer to exercise in the morning',
-    category: 'preferences',
-    importance: 'medium',
-    icon: '🌅',
-    timeContext: ['morning']
-  },
-  {
-    id: 'dietary-restriction',
-    label: 'Dietary Restriction',
-    content: 'I am allergic to',
-    category: 'food_diet',
-    importance: 'high',
-    icon: '🚫',
-  },
-  {
-    id: 'fitness-goal',
-    label: 'Fitness Goal',
-    content: 'My goal is to',
-    category: 'goals',
-    importance: 'high',
-    icon: '🎯',
-  },
-  {
-    id: 'injury-limitation',
-    label: 'Injury/Limitation',
-    content: 'I have a injury/limitation with my',
-    category: 'personal_context',
-    importance: 'high',
-    icon: '⚕️',
-  },
-  {
-    id: 'medication',
-    label: 'Medication',
-    content: 'I take medication for',
-    category: 'personal_context',
-    importance: 'high',
-    icon: '💊',
-  },
-  {
-    id: 'workout-preference',
-    label: 'Workout Preference',
-    content: 'I enjoy doing',
-    category: 'preferences',
-    importance: 'medium',
-    icon: '💪',
-  },
-  {
-    id: 'food-preference',
-    label: 'Food Preference',
-    content: 'I love eating',
-    category: 'food_diet',
-    importance: 'medium',
-    icon: '🥗',
-  },
-  {
-    id: 'coaching-style',
-    label: 'Coaching Style',
-    content: 'I prefer a coaching style that is',
-    category: 'instructions',
-    importance: 'high',
-    icon: '🗣️',
-  }
-];
-
-function getTimeContext(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
-}
-
-function getSmartDefaults(): SmartDefault[] {
-  const stored = localStorage.getItem('memorySmartDefaults');
-  return stored ? JSON.parse(stored) : [];
-}
-
-function saveSmartDefault(memory: Omit<SmartDefault, 'timestamp' | 'frequency'>) {
-  const defaults = getSmartDefaults();
-  const existing = defaults.find(d => 
-    d.content === memory.content && 
-    d.category === memory.category
-  );
-  
-  if (existing) {
-    existing.frequency += 1;
-    existing.timestamp = new Date().toISOString();
-  } else {
-    defaults.push({
-      ...memory,
-      timestamp: new Date().toISOString(),
-      frequency: 1
-    });
-  }
-  
-  // Keep only the 20 most recent/frequent defaults
-  defaults.sort((a, b) => b.frequency - a.frequency || new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  const limitedDefaults = defaults.slice(0, 20);
-  
-  localStorage.setItem('memorySmartDefaults', JSON.stringify(limitedDefaults));
-}
-
-function getRecentValues(field: 'content' | 'category' | 'importance', limit = 5): string[] {
-  const defaults = getSmartDefaults();
-  const values = defaults.map(d => d[field]).filter(Boolean);
-  return [...new Set(values)].slice(0, limit);
-}
-
-function getContextualPresets(): PresetButton[] {
-  const timeContext = getTimeContext();
-  return healthPresets.filter(preset => 
-    !preset.timeContext || preset.timeContext.includes(timeContext)
-  );
-}
 
 export default function MemorySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");

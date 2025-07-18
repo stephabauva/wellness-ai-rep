@@ -43,7 +43,6 @@ interface ServiceRegistry {
     memoryPerformanceMonitor?: any;
   };
   health: {
-    healthDataParser?: any;
     healthDataDeduplication?: any;
     healthConsentService?: any;
   };
@@ -83,9 +82,7 @@ export const getMemoryServices = async () => {
 };
 
 export const getHealthServices = async () => {
-  if (!serviceRegistry.health.healthDataParser) {
-    const healthDataParserModule = await import('./health-data-parser.js');
-    serviceRegistry.health.healthDataParser = healthDataParserModule.HealthDataParser;
+  if (!serviceRegistry.health.healthDataDeduplication) {
     const healthDataDeduplicationModule = await import('./health-data-deduplication.js');
     serviceRegistry.health.healthDataDeduplication = healthDataDeduplicationModule.HealthDataDeduplicationService;
     const healthConsentModule = await import('./health-consent-service.js');

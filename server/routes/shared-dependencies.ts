@@ -31,7 +31,6 @@ export const memoryRelationshipEngine = async () => (await getMemoryServices()).
 export const performanceMemoryCore = async () => (await getMemoryServices()).performanceMemoryCore;
 export const memoryFeatureFlags = async () => (await getMemoryServices()).memoryFeatureFlags;
 export const memoryPerformanceMonitor = async () => (await getMemoryServices()).memoryPerformanceMonitor;
-export const HealthDataParser = async () => (await getHealthServices()).healthDataParser;
 export const HealthDataDeduplicationService = async () => (await getHealthServices()).healthDataDeduplication;
 export const healthConsentService = async () => (await getHealthServices()).healthConsentService;
 export const transcriptionService = async () => (await getFileManagerServices()).transcriptionService;

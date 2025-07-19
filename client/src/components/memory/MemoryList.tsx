@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@shared/components/ui/card";
 import { Button } from "@shared/components/ui/button";
 import { Badge } from "@shared/components/ui/badge";
@@ -7,6 +7,7 @@ import { Textarea } from "@shared/components/ui/textarea";
 import { TouchSwipeHandler, createDeleteAction, createEditAction } from "../ui/TouchSwipeHandler";
 import { CheckCircle, X, Calendar, Eye, Loader2 } from "lucide-react";
 import { MemoryEntry, categoryIcons, categoryLabels, categoryColors } from "./constants";
+import { MemoryRelationships } from "./MemoryRelationships";
 
 interface MemoryListProps {
   memories: MemoryEntry[];
@@ -61,6 +62,17 @@ export const MemoryList: React.FC<MemoryListProps> = ({
   onCancelEdit,
   onEditingContentChange,
 }) => {
+  const [expandedRelationships, setExpandedRelationships] = useState<Set<string>>(new Set());
+
+  const toggleRelationships = (memoryId: string) => {
+    const newExpanded = new Set(expandedRelationships);
+    if (newExpanded.has(memoryId)) {
+      newExpanded.delete(memoryId);
+    } else {
+      newExpanded.add(memoryId);
+    }
+    setExpandedRelationships(newExpanded);
+  };
   return (
     <>
       <div className="grid gap-4">
@@ -173,6 +185,15 @@ export const MemoryList: React.FC<MemoryListProps> = ({
                         </Badge>
                       ))}
                     </div>
+                  )}
+
+                  {!isEditingThis && (
+                    <MemoryRelationships
+                      memoryId={memory.id}
+                      memoryContent={memory.content}
+                      isOpen={expandedRelationships.has(memory.id)}
+                      onToggle={() => toggleRelationships(memory.id)}
+                    />
                   )}
                   
                   {!isEditingThis && (

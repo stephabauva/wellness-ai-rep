@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@shared/components/ui/button";
 import { Card } from "@shared/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@shared/components/ui/collapsible";
-import { Brain, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Lightbulb } from "lucide-react";
+import { Brain, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Lightbulb, Activity, Zap } from "lucide-react";
 
 interface MemoryOverview {
   total: number;
@@ -14,6 +14,14 @@ interface MemoryOverview {
   };
 }
 
+interface ConsolidationMetrics {
+  totalConsolidations: number;
+  duplicateRate: number;
+  qualityScore: number;
+  relationshipsDetected: number;
+  consolidationEffectiveness: number;
+}
+
 interface MemoryInsightsProps {
   memoryOverview: MemoryOverview;
   showInsights: boolean;
@@ -23,8 +31,32 @@ interface MemoryInsightsProps {
 export function MemoryInsights({ 
   memoryOverview, 
   showInsights, 
-  setShowInsights 
+  setShowInsights
 }: MemoryInsightsProps) {
+  const [consolidationMetrics, setConsolidationMetrics] = useState<ConsolidationMetrics | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (showInsights && memoryOverview.total > 0) {
+      fetchConsolidationMetrics();
+    }
+  }, [showInsights, memoryOverview.total]);
+
+  const fetchConsolidationMetrics = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/memory/consolidation-log/1');
+      const data = await response.json();
+      if (data.metrics) {
+        setConsolidationMetrics(data.metrics);
+      }
+    } catch (error) {
+      console.error('Error fetching consolidation metrics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (memoryOverview.total === 0) {
     return null;
   }
@@ -95,6 +127,37 @@ export function MemoryInsights({
                 <Lightbulb className="h-5 w-5 mt-0.5 text-purple-600" />
                 <span className="text-sm text-gray-700">Memory system active: Your AI coach learns and remembers from every conversation</span>
               </div>
+
+              {consolidationMetrics && (
+                <>
+                  <div className="border-t pt-3 mt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-gray-800">Memory Performance</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                      <div>Quality Score: {Math.round(consolidationMetrics.qualityScore * 100)}%</div>
+                      <div>Duplicate Rate: {Math.round(consolidationMetrics.duplicateRate * 100)}%</div>
+                    </div>
+                  </div>
+
+                  {consolidationMetrics.relationshipsDetected > 0 && (
+                    <div className="flex items-start gap-3">
+                      <Zap className="h-5 w-5 mt-0.5 text-amber-600" />
+                      <span className="text-sm text-gray-700">
+                        {consolidationMetrics.relationshipsDetected} memory connections found - AI better understands your preferences
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {loading && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Activity className="h-4 w-4 animate-spin" />
+                  Loading memory performance...
+                </div>
+              )}
             </div>
           </Card>
         </CollapsibleContent>

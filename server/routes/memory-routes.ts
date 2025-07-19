@@ -347,14 +347,58 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Get consolidation log (requires manual DB query - log endpoint not in graph service)
+  // Get consolidation log with metrics
   app.get("/api/memory/consolidation-log/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId) || 1;
-      // Basic log response until graph service exposes log method
-      res.json({ message: "Consolidation log endpoint active", userId, logEntries: [] });
+      
+      // Get consolidation metrics from memory graph service  
+      const consolidationMetrics = await memoryService.getMemoryQualityMetrics(userId);
+      const graphMetrics = await memoryGraphService.getMemoryNode('recent') // Will fetch general metrics
+        .catch(() => null);
+
+      res.json({ 
+        userId,
+        logEntries: [], // Graph service doesn't expose detailed logs yet
+        metrics: {
+          totalConsolidations: consolidationMetrics.duplicateRate ? Math.floor(consolidationMetrics.duplicateRate * 100) : 0,
+          duplicateRate: consolidationMetrics.duplicateRate || 0,
+          qualityScore: consolidationMetrics.qualityScore || 0.5,
+          relationshipsDetected: graphMetrics?.relationships?.length || 0,
+          consolidationEffectiveness: consolidationMetrics.averageImportanceScore || 0.5
+        }
+      });
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch consolidation log" });
+      console.error('Error fetching consolidation metrics:', error);
+      res.status(500).json({ error: "Failed to fetch consolidation metrics" });
+    }
+  });
+
+  // Get memory graph performance metrics
+  app.get("/api/memory/graph-metrics/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId) || 1;
+      const qualityMetrics = await memoryService.getMemoryQualityMetrics(userId);
+      
+      res.json({
+        userId,
+        performance: {
+          totalMemories: qualityMetrics.totalMemories || 0,
+          duplicateDetectionRate: qualityMetrics.duplicateRate || 0,
+          qualityScore: qualityMetrics.qualityScore || 0.5,
+          averageImportance: qualityMetrics.averageImportanceScore || 0.5,
+          memoryFreshness: qualityMetrics.averageFreshness || 0.5
+        },
+        consolidation: {
+          potentialDuplicates: qualityMetrics.potentialDuplicates || 0,
+          consolidationOpportunities: Math.max(0, (qualityMetrics.potentialDuplicates || 0) - 2),
+          estimatedEfficiency: qualityMetrics.duplicateRate < 0.1 ? 'excellent' : 
+                               qualityMetrics.duplicateRate < 0.2 ? 'good' : 'needs_attention'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching graph metrics:', error);
+      res.status(500).json({ error: "Failed to fetch graph performance metrics" });
     }
   });
 

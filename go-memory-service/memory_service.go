@@ -57,20 +57,20 @@ type WorkerPool struct {
 	logger      *logrus.Logger
 }
 
-// NewMemoryService creates a new memory service instance
+// NewMemoryService creates a new memory service instance with optimized configuration
 func NewMemoryService() (*MemoryService, error) {
 	config := &MemoryServiceConfig{
-		CacheSize:           10000,
-		CacheTTL:            time.Hour,
-		CleanupInterval:     30 * time.Minute,
-		SimilarityThreshold: 0.7,
+		CacheSize:           20000,  // Increased cache size for better hit rate
+		CacheTTL:            2 * time.Hour,  // Longer TTL for stability
+		CleanupInterval:     15 * time.Minute,  // More frequent cleanup
+		SimilarityThreshold: 0.65,  // Slightly lower threshold for better recall
 		EnableMetrics:       true,
 		EnableProfiling:     false,
 		WorkerPool: WorkerPoolConfig{
-			MaxWorkers:      runtime.NumCPU() * 2,
-			QueueSize:       1000,
-			WorkerTimeout:   30 * time.Second,
-			ShutdownTimeout: 10 * time.Second,
+			MaxWorkers:      runtime.NumCPU() * 3,  // More workers for higher throughput
+			QueueSize:       2000,  // Larger queue to handle bursts
+			WorkerTimeout:   15 * time.Second,  // Reduced timeout for faster response
+			ShutdownTimeout: 5 * time.Second,
 		},
 	}
 
@@ -204,7 +204,7 @@ func (ms *MemoryService) fastCosineSimilarity(a, b []float64) float64 {
 	return dotProduct / (math.Sqrt(normA) * math.Sqrt(normB))
 }
 
-// CalculateBatchSimilarity efficiently calculates similarity for multiple vectors
+// CalculateBatchSimilarity efficiently calculates similarity for multiple vectors with optimized thresholds
 func (ms *MemoryService) CalculateBatchSimilarity(baseVector []float64, vectors [][]float64) []float64 {
 	results := make([]float64, len(vectors))
 	
@@ -219,14 +219,29 @@ func (ms *MemoryService) CalculateBatchSimilarity(baseVector []float64, vectors 
 		return results // All zeros
 	}
 	
-	// Calculate similarities in parallel for large batches
-	if len(vectors) > 100 {
+	// Optimized threshold for parallel processing (reduced from 100 to 50)
+	if len(vectors) > 50 {
 		return ms.parallelBatchSimilarity(baseVector, vectors, baseNorm)
 	}
 	
-	// Sequential processing for smaller batches
+	// Sequential processing for smaller batches with cache optimization
 	for i, vector := range vectors {
-		results[i] = ms.fastCosineSimilarityWithNorm(baseVector, vector, baseNorm)
+		// Check cache first for frequently calculated similarities
+		cacheKey := ms.createVectorCacheKey(baseVector, vector)
+		if cached := ms.similarityCache.Get(cacheKey); cached != nil {
+			results[i] = cached.Similarity
+			continue
+		}
+		
+		similarity := ms.fastCosineSimilarityWithNorm(baseVector, vector, baseNorm)
+		results[i] = similarity
+		
+		// Cache the result for future use
+		ms.similarityCache.Set(cacheKey, &CacheEntry{
+			Similarity:  similarity,
+			Timestamp:   time.Now(),
+			AccessCount: 1,
+		})
 	}
 	
 	ms.statsMutex.Lock()
@@ -236,14 +251,20 @@ func (ms *MemoryService) CalculateBatchSimilarity(baseVector []float64, vectors 
 	return results
 }
 
-// parallelBatchSimilarity uses goroutines for large batch processing
+// parallelBatchSimilarity uses optimized goroutines for large batch processing
 func (ms *MemoryService) parallelBatchSimilarity(baseVector []float64, vectors [][]float64, baseNorm float64) []float64 {
 	results := make([]float64, len(vectors))
-	numWorkers := runtime.NumCPU()
+	numWorkers := runtime.NumCPU() * 2  // Increased worker count for better parallelization
 	chunkSize := len(vectors) / numWorkers
 	
 	if chunkSize == 0 {
 		chunkSize = 1
+	}
+	
+	// Ensure minimum chunk size for efficiency
+	if chunkSize < 10 && len(vectors) > 20 {
+		chunkSize = 10
+		numWorkers = len(vectors) / chunkSize
 	}
 	
 	var wg sync.WaitGroup
@@ -258,7 +279,22 @@ func (ms *MemoryService) parallelBatchSimilarity(baseVector []float64, vectors [
 		go func(start, end int) {
 			defer wg.Done()
 			for j := start; j < end; j++ {
-				results[j] = ms.fastCosineSimilarityWithNorm(baseVector, vectors[j], baseNorm)
+				// Check cache first in parallel processing
+				cacheKey := ms.createVectorCacheKey(baseVector, vectors[j])
+				if cached := ms.similarityCache.Get(cacheKey); cached != nil {
+					results[j] = cached.Similarity
+					continue
+				}
+				
+				similarity := ms.fastCosineSimilarityWithNorm(baseVector, vectors[j], baseNorm)
+				results[j] = similarity
+				
+				// Cache the result (thread-safe)
+				ms.similarityCache.Set(cacheKey, &CacheEntry{
+					Similarity:  similarity,
+					Timestamp:   time.Now(),
+					AccessCount: 1,
+				})
 			}
 		}(i, end)
 	}
@@ -550,19 +586,23 @@ func (ms *MemoryService) validateVector(vector []float64) bool {
 	return true
 }
 
-// createVectorCacheKey creates a hash-based cache key for vector pairs
+// createVectorCacheKey creates an optimized hash-based cache key for vector pairs
 func (ms *MemoryService) createVectorCacheKey(a, b []float64) string {
-	// Use first few elements to create a lightweight hash
+	// Use fewer elements for faster hash generation (reduced from 10 to 6)
 	hashInput := ""
-	for i := 0; i < min(10, len(a)); i++ {
-		hashInput += fmt.Sprintf("%.3f", a[i])
+	elementsToUse := min(6, len(a))
+	
+	for i := 0; i < elementsToUse; i++ {
+		hashInput += fmt.Sprintf("%.2f", a[i])  // Reduced precision for better performance
 	}
 	hashInput += "|"
-	for i := 0; i < min(10, len(b)); i++ {
-		hashInput += fmt.Sprintf("%.3f", b[i])
+	for i := 0; i < min(6, len(b)); i++ {
+		hashInput += fmt.Sprintf("%.2f", b[i])
 	}
 	
-	return fmt.Sprintf("%x", md5.Sum([]byte(hashInput)))
+	// Use shorter hash for better memory efficiency
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(hashInput)))
+	return hash[:16]  // Use first 16 characters for cache key
 }
 
 func min(a, b int) int {

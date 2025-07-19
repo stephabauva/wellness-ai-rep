@@ -143,12 +143,38 @@ Reconnect and strengthen the dormant memory graph service to provide enhanced de
 
 ### Phase 3: Optimization (Lower Priority)
 
-- [ ] **Task 6: Smart Consolidation Suggestions**
-   - Problem: Manual consolidation requires user awareness
-   - Solution: Add proactive consolidation suggestions in UI
+- [ ] **Task 6: Deduplication Speed Optimization**
+   - Problem: Memory creation deduplication needs performance improvements
+   - Solution: Optimize similarity detection and caching without affecting accuracy
    - Files affected:
-     - `client/src/components/memory/MemoryInsights.tsx` (add suggestions)
-     - `server/routes/memory-routes.ts` (add suggestion endpoint)
+     - `server/services/chatgpt-memory-enhancement.ts` (improve deduplication algorithms)
+     - `go-memory-similarity/` (enhance Go microservice performance)
+   - Performance Targets:
+     - Memory creation with deduplication <200ms average
+     - Cache hit rate >80% for similarity calculations
+     - Maintain >95% duplicate detection accuracy
+
+- [ ] **Task 7: Consolidation Algorithm Optimization**
+   - Problem: Background consolidation processes need speed improvements
+   - Solution: Optimize consolidation algorithms for batch processing
+   - Files affected:
+     - `server/services/memory-graph-service.ts` (optimize consolidation algorithms)
+     - `server/services/enhanced-background-processor.ts` (optimize scheduling)
+   - Performance Targets:
+     - Faster automatic consolidation (<2s for 100 memories)
+     - Optimized relationship detection (background only)
+     - Enhanced cache efficiency (>90% hit rate)
+
+- [ ] **Task 8: Memory Loading Performance**
+   - Problem: Memory retrieval and list loading could be faster
+   - Solution: Optimize database queries and frontend loading
+   - Files affected:
+     - `client/src/components/MemorySection.tsx` (optimize infinite scroll)
+     - `server/routes/memory-routes.ts` (optimize API responses)
+   - Performance Targets:
+     - Better memory loading performance (<100ms for memory list)
+     - Improved infinite scroll responsiveness
+     - Reduced initial load time
 
 ## Safety Checks
 

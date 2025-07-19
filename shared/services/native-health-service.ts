@@ -7,39 +7,8 @@
 import { getPlatform, isCapacitor, getCapabilities, type Platform } from '@shared/services/platform-detection';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
-
-export interface HealthDataPoint {
-  id: string;
-  type: string;
-  value: number;
-  unit: string;
-  timestamp: Date;
-  source: string;
-  metadata?: Record<string, any>;
-}
-
-export interface HealthDataQuery {
-  dataTypes: string[];
-  startDate: Date;
-  endDate: Date;
-  limit?: number;
-}
-
-export interface HealthSyncResult {
-  success: boolean;
-  recordsProcessed: number;
-  recordsImported: number;
-  errors: string[];
-  duration: number;
-}
-
-export interface HealthPermissions {
-  granted: boolean;
-  permissions: {
-    read: string[];
-    write: string[];
-  };
-}
+import type { HealthDataPoint, HealthDataQuery, HealthSyncResult, HealthPermissions } from '@shared/types/health';
+import { healthKitTypes, googleFitTypes, googleFitUnits } from '@shared/services/health/provider-mappings';
 
 /**
  * Abstract base class for native health data access
@@ -62,18 +31,6 @@ export abstract class NativeHealthProvider {
  * iOS HealthKit provider - Phase 2 Real Implementation
  */
 export class HealthKitProvider extends NativeHealthProvider {
-  private readonly healthKitTypes = {
-    'steps': 'HKQuantityTypeIdentifierStepCount',
-    'heart_rate': 'HKQuantityTypeIdentifierHeartRate',
-    'active_energy': 'HKQuantityTypeIdentifierActiveEnergyBurned',
-    'distance_walking': 'HKQuantityTypeIdentifierDistanceWalkingRunning',
-    'sleep_analysis': 'HKCategoryTypeIdentifierSleepAnalysis',
-    'body_mass': 'HKQuantityTypeIdentifierBodyMass',
-    'height': 'HKQuantityTypeIdentifierHeight',
-    'blood_pressure_systolic': 'HKQuantityTypeIdentifierBloodPressureSystolic',
-    'blood_pressure_diastolic': 'HKQuantityTypeIdentifierBloodPressureDiastolic',
-    'respiratory_rate': 'HKQuantityTypeIdentifierRespiratoryRate'
-  };
 
   async checkPermissions(): Promise<HealthPermissions> {
     try {
@@ -120,7 +77,7 @@ export class HealthKitProvider extends NativeHealthProvider {
         throw new Error('HealthKit not available on this device');
       }
 
-      const healthKitIdentifiers = dataTypes.map(type => this.healthKitTypes[type as keyof typeof this.healthKitTypes]).filter(Boolean);
+      const healthKitIdentifiers = dataTypes.map(type => healthKitTypes[type as keyof typeof healthKitTypes]).filter(Boolean);
       
       console.log('[HealthKit] Requesting permissions for types:', healthKitIdentifiers);
 
@@ -163,7 +120,7 @@ export class HealthKitProvider extends NativeHealthProvider {
       }
 
       const healthKitQueries = query.dataTypes.map(type => ({
-        type: this.healthKitTypes[type as keyof typeof this.healthKitTypes],
+        type: healthKitTypes[type as keyof typeof healthKitTypes],
         friendlyName: type
       })).filter(q => q.type);
 
@@ -203,7 +160,7 @@ export class HealthKitProvider extends NativeHealthProvider {
   }
 
   async getSupportedDataTypes(): Promise<string[]> {
-    return Object.keys(this.healthKitTypes);
+    return Object.keys(healthKitTypes);
   }
 
   // Native bridge communication methods
@@ -326,7 +283,7 @@ export class HealthKitProvider extends NativeHealthProvider {
   }
 
   private getTypeFromHealthKitIdentifier(healthKitType: string): string {
-    for (const [friendlyName, hkType] of Object.entries(this.healthKitTypes)) {
+    for (const [friendlyName, hkType] of Object.entries(healthKitTypes)) {
       if (hkType === healthKitType) return friendlyName;
     }
     return healthKitType;
@@ -337,17 +294,6 @@ export class HealthKitProvider extends NativeHealthProvider {
  * Android Google Fit / Health Connect provider - Phase 2 Real Implementation
  */
 export class GoogleFitProvider extends NativeHealthProvider {
-  private readonly googleFitTypes = {
-    'steps': 'com.google.step_count.delta',
-    'heart_rate': 'com.google.heart_rate.bpm',
-    'calories_burned': 'com.google.calories.expended',
-    'distance': 'com.google.distance.delta',
-    'sleep': 'com.google.sleep.segment',
-    'weight': 'com.google.weight',
-    'height': 'com.google.height',
-    'active_minutes': 'com.google.active_minutes',
-    'move_minutes': 'com.google.activity.segment'
-  };
 
   async checkPermissions(): Promise<HealthPermissions> {
     try {
@@ -381,7 +327,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
         throw new Error('Google Fit not available on this device');
       }
 
-      const googleFitDataTypes = dataTypes.map(type => this.googleFitTypes[type as keyof typeof this.googleFitTypes]).filter(Boolean);
+      const googleFitDataTypes = dataTypes.map(type => googleFitTypes[type as keyof typeof googleFitTypes]).filter(Boolean);
       
       console.log('[GoogleFit] Requesting permissions for types:', googleFitDataTypes);
 
@@ -424,7 +370,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
       }
 
       const googleFitQueries = query.dataTypes.map(type => ({
-        type: this.googleFitTypes[type as keyof typeof this.googleFitTypes],
+        type: googleFitTypes[type as keyof typeof googleFitTypes],
         friendlyName: type
       })).filter(q => q.type);
 
@@ -464,7 +410,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
   }
 
   async getSupportedDataTypes(): Promise<string[]> {
-    return Object.keys(this.googleFitTypes);
+    return Object.keys(googleFitTypes);
   }
 
   // Native bridge communication methods
@@ -582,22 +528,14 @@ export class GoogleFitProvider extends NativeHealthProvider {
   }
 
   private getTypeFromGoogleFitIdentifier(googleFitType: string): string {
-    for (const [friendlyName, gfType] of Object.entries(this.googleFitTypes)) {
+    for (const [friendlyName, gfType] of Object.entries(googleFitTypes)) {
       if (gfType === googleFitType) return friendlyName;
     }
     return googleFitType;
   }
 
   private getUnitForType(googleFitType: string): string {
-    const unitMap: Record<string, string> = {
-      'com.google.step_count.delta': 'count',
-      'com.google.heart_rate.bpm': 'bpm',
-      'com.google.calories.expended': 'kcal',
-      'com.google.distance.delta': 'meters',
-      'com.google.weight': 'kg',
-      'com.google.height': 'meters'
-    };
-    return unitMap[googleFitType] || 'unknown';
+    return googleFitUnits[googleFitType] || 'unknown';
   }
 }
 

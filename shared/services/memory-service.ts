@@ -31,12 +31,12 @@ import {
   cosineSimilaritySync,
   createSimilarityCacheKey
 } from './memory/memory-utils';
-import { BackgroundProcessor, type BackgroundTask } from './memory/background-processor';
 import { MemoryCache } from './memory/memory-cache';
 import { AIMemoryDetector, type MemoryDetectionResult } from './memory/ai-detection';
 import { EmbeddingService } from './memory/embedding-service';
 import { MemoryQualityService, type MemoryQualityMetrics } from './memory/quality-metrics';
 import { MemoryRetrievalService } from './memory/retrieval-service';
+import { BackgroundProcessingManager } from './memory/background-processing-manager';
 
 interface RelevantMemory extends MemoryEntry {
   relevanceScore: number;
@@ -48,13 +48,13 @@ class MemoryService {
   private openai: OpenAI;
   private google: GoogleGenerativeAI;
   
-  // Background processor and cache manager
-  private backgroundProcessor: BackgroundProcessor;
+  // Cache manager and services
   private memoryCache: MemoryCache;
   private aiDetector: AIMemoryDetector;
   private embeddingService: EmbeddingService;
   private qualityService: MemoryQualityService;
   private retrievalService: MemoryRetrievalService;
+  private backgroundProcessingManager: BackgroundProcessingManager;
   
   // Optimized caching patterns from optimized-memory-service
   private deduplicationCache = new Map<string, string>();
@@ -85,119 +85,19 @@ class MemoryService {
     // Initialize memory retrieval service
     this.retrievalService = new MemoryRetrievalService(this.embeddingService, this.memoryCache);
     
-    // Initialize background processor with task handlers
-    this.backgroundProcessor = new BackgroundProcessor({
-      memory_processing: this.processBackgroundMemoryTask.bind(this),
-      embedding_generation: this.processBackgroundEmbeddingTask.bind(this),
-      similarity_calculation: this.processBackgroundSimilarityTask.bind(this)
-    });
+    // Initialize background processing manager
+    this.backgroundProcessingManager = new BackgroundProcessingManager(
+      this.memoryCache,
+      this.aiDetector,
+      this.embeddingService
+    );
   }
 
 
 
   // Add task to background queue
   private addBackgroundTask(type: 'memory_processing' | 'embedding_generation' | 'similarity_calculation', payload: any, priority: number = 1): void {
-    this.backgroundProcessor.addBackgroundTask(type, payload, priority);
-  }
-
-
-  // Tier 2 C: Background memory processing task with ChatGPT deduplication
-  private async processBackgroundMemoryTask(payload: any): Promise<void> {
-    const { userId, message, conversationId, messageId, conversationHistory } = payload;
-    
-    try {
-      console.log(`[MemoryService] Processing background memory task with ChatGPT deduplication for user ${userId}, message: "${message.substring(0, 50)}..."`);
-      
-      // Use ChatGPT deduplication system for enhanced memory processing
-      const { chatGPTMemoryEnhancement } = await import('./chatgpt-memory-enhancement.js');
-      
-      // Validate conversationId format - must be valid UUID or null  
-      let validConversationId = conversationId;
-      if (conversationId && typeof conversationId === 'string') {
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(conversationId)) {
-          validConversationId = null;
-        }
-      }
-      
-      // Process with ChatGPT-style deduplication
-      await chatGPTMemoryEnhancement.processWithDeduplication(
-        userId,
-        message,
-        validConversationId || ''
-      );
-      
-      console.log(`[MemoryService] ChatGPT deduplication processing completed for user ${userId}`);
-      
-      // Invalidate user memory cache immediately for real-time updates
-      this.memoryCache.invalidateUserMemoryCache(userId, 100); // Fast invalidation
-      
-      // Force immediate cache cleanup to ensure fresh data
-      this.memoryCache.forceCacheCleanup();
-      logger.debug('Cache forcefully invalidated for immediate UI refresh', { service: 'memory' });
-      
-    } catch (error) {
-      logger.error('ChatGPT deduplication processing failed, falling back to standard processing', error as Error, { service: 'memory' });
-      
-      // Fallback to original memory processing if deduplication fails
-      try {
-        const autoDetection = await this.detectMemoryWorthy(message, conversationHistory);
-        
-        if (autoDetection.shouldRemember) {
-          // Validate conversationId format - must be valid UUID or null
-          let validConversationId: string | undefined = undefined;
-          if (conversationId && typeof conversationId === 'string') {
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            if (uuidRegex.test(conversationId)) {
-              validConversationId = conversationId;
-            }
-          }
-          
-          const savedMemory = await this.saveMemoryEntry(userId, autoDetection.extractedInfo, {
-            category: autoDetection.category,
-            labels: autoDetection.labels,
-            importance_score: autoDetection.importance,
-            sourceConversationId: validConversationId,
-            sourceMessageId: messageId,
-            keywords: autoDetection.keywords,
-          });
-          
-          if (savedMemory) {
-            logger.debug(`Fallback memory saved: ${savedMemory.id}`, { service: 'memory' });
-            this.memoryCache.invalidateUserMemoryCache(userId, 100);
-            this.memoryCache.forceCacheCleanup();
-          }
-        }
-      } catch (fallbackError) {
-        logger.error('Both ChatGPT and fallback memory processing failed', fallbackError as Error, { service: 'memory' });
-      }
-    }
-  }
-
-  // Tier 2 C: Background embedding generation task
-  private async processBackgroundEmbeddingTask(payload: any): Promise<void> {
-    const { text, cacheKey } = payload;
-    
-    try {
-      const embedding = await this.generateEmbedding(text);
-      if (embedding.length > 0) {
-        cacheService.setEmbedding(cacheKey, embedding, 'text-embedding-3-small');
-      }
-    } catch (error) {
-      console.error('[MemoryService] Background embedding generation failed:', error);
-    }
-  }
-
-  // Tier 2 C: Background similarity calculation task
-  private async processBackgroundSimilarityTask(payload: any): Promise<void> {
-    const { vectorA, vectorB, cacheKey } = payload;
-    
-    try {
-      const similarity = await this.cosineSimilarity(vectorA, vectorB);
-      this.memoryCache.setCachedSimilarity(cacheKey, similarity);
-    } catch (error) {
-      console.error('[MemoryService] Background similarity calculation failed:', error);
-    }
+    this.backgroundProcessingManager.addBackgroundTask(type, payload, priority);
   }
 
 
@@ -211,7 +111,7 @@ class MemoryService {
     }
     
     // Schedule background calculation if not cached
-    this.addBackgroundTask('similarity_calculation', {
+    this.backgroundProcessingManager.addBackgroundTask('similarity_calculation', {
       vectorA, vectorB, cacheKey
     }, 2);
     
@@ -525,7 +425,7 @@ class MemoryService {
       // This prevents blocking the main response flow
       
       // Always queue background memory processing for user messages (messageId can be undefined during streaming)
-      this.addBackgroundTask('memory_processing', {
+      this.backgroundProcessingManager.addBackgroundTask('memory_processing', {
         userId,
         message,
         conversationId,
@@ -679,13 +579,7 @@ Use this remembered information to personalize your responses naturally. Don't e
     pendingUpdates: number;
     cacheHitRate: string;
   } {
-    const backgroundStats = this.backgroundProcessor.getPerformanceStats();
-    const cacheStats = this.memoryCache.getCacheStats();
-    
-    return {
-      ...backgroundStats,
-      ...cacheStats
-    };
+    return this.backgroundProcessingManager.getPerformanceStats();
   }
 
   // Force cache cleanup for memory management

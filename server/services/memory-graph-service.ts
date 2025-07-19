@@ -24,6 +24,7 @@ import { aiService } from '@shared/services/ai-service';
 import { MemoryPrompts } from './memory/MemoryPrompts';
 import { ResponseParsers, type RelationshipDetectionResult } from './memory/ResponseParsers';
 import { MemoryCalculations } from './memory/MemoryCalculations';
+import { BatchAnalyzer } from './memory/BatchAnalyzer';
 
 export interface MemoryNode {
   id: string;
@@ -45,34 +46,13 @@ export interface ConsolidationResult {
 }
 
 export class MemoryGraphService {
-  private relationshipCache = new Map<string, RelationshipDetectionResult>();
-  private cacheTimeout = 3600000; // 1 hour
-  private cacheTimestamps = new Map<string, number>();
+  private batchAnalyzer: BatchAnalyzer;
   
   constructor() {
     // Using the singleton aiService instance
-    this.startCacheCleanup();
+    this.batchAnalyzer = new BatchAnalyzer();
   }
 
-  private startCacheCleanup(): void {
-    setInterval(() => this.cleanExpiredCache(), 300000); // 5 minutes
-  }
-
-  private cleanExpiredCache(): void {
-    const now = Date.now();
-    for (const [key, timestamp] of this.cacheTimestamps.entries()) {
-      if (now - timestamp > this.cacheTimeout) {
-        this.relationshipCache.delete(key);
-        this.cacheTimestamps.delete(key);
-      }
-    }
-  }
-
-  private getCacheKey(memory1: MemoryEntry, memory2: MemoryEntry): string {
-    const id1 = memory1.id < memory2.id ? memory1.id : memory2.id;
-    const id2 = memory1.id < memory2.id ? memory2.id : memory1.id;
-    return `${id1}-${id2}`;
-  }
 
   /**
    * Extract atomic facts from memory content
@@ -177,7 +157,7 @@ export class MemoryGraphService {
     const consolidationResults: ConsolidationResult[] = [];
 
     // Optimized batch relationship analysis
-    const relationshipMap = await this.batchAnalyzeRelationships(userMemories);
+    const relationshipMap = await this.batchAnalyzer.batchAnalyzeRelationships(userMemories);
     
     // Find contradictory memories using cached relationships
     const contradictions = this.findContradictoryMemoriesOptimized(userMemories, relationshipMap);
@@ -250,49 +230,6 @@ export class MemoryGraphService {
     };
   }
 
-  /**
-   * Batch analyze relationships for all memory pairs - OPTIMIZED
-   */
-  private async batchAnalyzeRelationships(memories: MemoryEntry[]): Promise<Map<string, RelationshipDetectionResult>> {
-    const relationshipMap = new Map<string, RelationshipDetectionResult>();
-    const uncachedPairs: Array<[MemoryEntry, MemoryEntry, string]> = [];
-
-    // Check cache first
-    for (let i = 0; i < memories.length; i++) {
-      for (let j = i + 1; j < memories.length; j++) {
-        const memory1 = memories[i];
-        const memory2 = memories[j];
-        const cacheKey = this.getCacheKey(memory1, memory2);
-        
-        const cached = this.relationshipCache.get(cacheKey);
-        if (cached && this.isCacheValid(cacheKey)) {
-          relationshipMap.set(cacheKey, cached);
-        } else {
-          uncachedPairs.push([memory1, memory2, cacheKey]);
-        }
-      }
-    }
-
-    // Batch process uncached pairs in chunks of 10 for optimal performance
-    const chunkSize = 10;
-    for (let i = 0; i < uncachedPairs.length; i += chunkSize) {
-      const chunk = uncachedPairs.slice(i, i + chunkSize);
-      const chunkPromises = chunk.map(([memory1, memory2, cacheKey]) => 
-        this.analyzeMemoryRelationshipCached(memory1, memory2, cacheKey)
-      );
-      
-      const chunkResults = await Promise.allSettled(chunkPromises);
-      
-      chunkResults.forEach((result, idx) => {
-        if (result.status === 'fulfilled' && result.value) {
-          const cacheKey = chunk[idx][2];
-          relationshipMap.set(cacheKey, result.value);
-        }
-      });
-    }
-
-    return relationshipMap;
-  }
 
   /**
    * Find contradictory memories using cached relationships - OPTIMIZED
@@ -307,7 +244,7 @@ export class MemoryGraphService {
       for (let j = i + 1; j < memories.length; j++) {
         const memory1 = memories[i];
         const memory2 = memories[j];
-        const cacheKey = this.getCacheKey(memory1, memory2);
+        const cacheKey = this.batchAnalyzer.getCacheKeyForMemories(memory1, memory2);
         
         const relationship = relationshipMap.get(cacheKey);
         if (relationship?.relationshipType === 'contradicts' && relationship.confidence > 0.8) {
@@ -319,59 +256,6 @@ export class MemoryGraphService {
     return contradictoryPairs;
   }
 
-  /**
-   * Analyze relationship with caching - OPTIMIZED
-   */
-  private async analyzeMemoryRelationshipCached(
-    memory1: MemoryEntry,
-    memory2: MemoryEntry,
-    cacheKey: string
-  ): Promise<RelationshipDetectionResult | null> {
-    // Check cache first
-    const cached = this.relationshipCache.get(cacheKey);
-    if (cached && this.isCacheValid(cacheKey)) {
-      return cached;
-    }
-
-    const analysisPrompt = MemoryPrompts.buildRelationshipAnalysisPrompt();
-
-    try {
-      const chatResponse = await aiService.getChatResponse(
-        `Memory 1: ${memory1.content}\n\nMemory 2: ${memory2.content}`,
-        memory1.userId,
-        'memory-relationship-analysis',
-        1,
-        'general',
-        [{ role: 'system', content: analysisPrompt }],
-        { provider: 'openai', model: 'gpt-4o' },
-        [],
-        false
-      );
-      const response = chatResponse.response;
-
-      const result = ResponseParsers.parseRelationshipResponse(response);
-      
-      // Cache the result
-      if (result) {
-        this.relationshipCache.set(cacheKey, result);
-        this.cacheTimestamps.set(cacheKey, Date.now());
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('[MemoryGraphService] Error analyzing relationship:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Check if cache entry is still valid
-   */
-  private isCacheValid(cacheKey: string): boolean {
-    const timestamp = this.cacheTimestamps.get(cacheKey);
-    if (!timestamp) return false;
-    return Date.now() - timestamp < this.cacheTimeout;
-  }
 
   /**
    * Analyze relationship between two memories (legacy method for backward compatibility)
@@ -380,8 +264,7 @@ export class MemoryGraphService {
     memory1: MemoryEntry,
     memory2: MemoryEntry
   ): Promise<RelationshipDetectionResult | null> {
-    const cacheKey = this.getCacheKey(memory1, memory2);
-    return this.analyzeMemoryRelationshipCached(memory1, memory2, cacheKey);
+    return this.batchAnalyzer.analyzeSingleRelationship(memory1, memory2);
   }
 
   /**
@@ -478,7 +361,7 @@ export class MemoryGraphService {
         for (const relatedMemory of categoryMemories) {
           if (relatedMemory.id === memory.id || processed.has(relatedMemory.id)) continue;
           
-          const cacheKey = this.getCacheKey(memory, relatedMemory);
+          const cacheKey = this.batchAnalyzer.getCacheKeyForMemories(memory, relatedMemory);
           const relationship = relationshipMap.get(cacheKey);
           
           if (relationship?.relationshipType === 'elaborates' && relationship.confidence > 0.7) {

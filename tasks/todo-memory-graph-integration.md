@@ -112,6 +112,19 @@ Reconnect and strengthen the dormant memory graph service to provide enhanced de
      - `server/services/memory-service.ts` (add relationship detection)
    - Integration: Use existing ChatGPT deduplication + add relationship analysis
 
+- [ ] **Task 3.5: Optimize Deduplication Performance (Critical)**
+   - Problem: Previous performance issues, some duplicates still detected
+   - Solution: Comprehensive deduplication system optimization
+   - Files affected:
+     - `server/services/chatgpt-memory-enhancement.ts` (optimize similarity algorithms)
+     - `server/services/memory-service.ts` (improve caching, query optimization)
+     - `go-memory-similarity/` (enhance Go microservice performance)
+   - Performance Targets:
+     - <200ms memory creation with deduplication
+     - >95% duplicate detection accuracy
+     - <5% false positive rate
+     - Cache hit rate >80%
+
 ### Phase 2: Strengthen Integration (Medium Priority)
 
 - [ ] **Task 4: Add Consolidation Monitoring**
@@ -148,27 +161,71 @@ Reconnect and strengthen the dormant memory graph service to provide enhanced de
 
 ## Testing Plan
 
+### Deduplication Testing & Performance (Critical)
+
+**Historical Issues to Address:**
+- Previous performance problems with deduplication system
+- Some duplicates were still getting through detection
+- Need rigorous testing to ensure reliability
+
+#### Deduplication Performance Tests
+- [ ] **Semantic Similarity Accuracy Testing**
+  - Test with 1000+ memory pairs with known similarity levels
+  - Verify detection rates: >95% for high similarity, <5% false positives
+  - Test edge cases: similar but distinct memories, paraphrasing variations
+  
+- [ ] **Performance Benchmarking**
+  - Memory creation latency: <200ms for deduplication check
+  - Bulk deduplication processing: <5s for 100 memories
+  - Database query optimization for similarity searches
+  - Cache hit rates: >80% for recent similarity checks
+
+- [ ] **Duplicate Detection Effectiveness**
+  - Create test dataset with known duplicates and near-duplicates
+  - Measure detection accuracy: precision >90%, recall >85%
+  - Test with different content types: preferences, goals, instructions
+  - Verify relationship detection doesn't miss semantic duplicates
+
+- [ ] **Load Testing**
+  - Background consolidation with 10,000+ memories
+  - Concurrent memory creation during consolidation
+  - Database performance under consolidation load
+  - Memory usage and CPU impact monitoring
+
+#### Deduplication Test Scenarios
+- [ ] **Exact Duplicates**: Identical content should be caught 100%
+- [ ] **Paraphrased Content**: "I like morning workouts" vs "Morning exercise is my preference"
+- [ ] **Temporal Variations**: "I worked out yesterday" vs "I exercised on Monday"
+- [ ] **Category Boundaries**: Health goals vs fitness preferences overlap
+- [ ] **Negation Detection**: "I don't like X" vs "I dislike X" vs "X is not my preference"
+
 ### Unit Tests Needed
-- Memory consolidation service methods
-- New API endpoint logic
-- Background processor consolidation jobs
+- Memory consolidation service methods with performance assertions
+- Deduplication algorithms with accuracy measurements
+- New API endpoint logic with response time validation
+- Background processor consolidation jobs with resource monitoring
 
 ### Integration Tests Required
-- Full consolidation workflow (detect → consolidate → log)
-- Background consolidation scheduling
-- Memory creation with relationship detection
+- Full consolidation workflow (detect → consolidate → log) with performance metrics
+- Background consolidation scheduling without memory leaks
+- Memory creation with relationship detection under load
+- End-to-end deduplication pipeline with real conversation data
 
 ### Manual Testing Checklist
-- [ ] Manual consolidation trigger works via API
-- [ ] Background consolidation runs without errors
-- [ ] Memory relationships display correctly
+- [ ] Manual consolidation trigger works via API (<2s response time)
+- [ ] Background consolidation runs without errors or timeouts
+- [ ] Memory relationships display correctly with <1s load time
 - [ ] Consolidation metrics appear in performance monitoring
-- [ ] No performance degradation in memory operations
+- [ ] No performance degradation in memory operations (baseline comparison)
+- [ ] Duplicate detection works across all memory categories
+- [ ] False positive rate acceptable (<10% of consolidation suggestions)
 
 ### Performance Impact Verification
-- [ ] Consolidation doesn't slow down memory retrieval
-- [ ] Background processing doesn't affect chat responsiveness
-- [ ] Database query performance remains optimal
+- [ ] Consolidation doesn't slow down memory retrieval (baseline: current speeds)
+- [ ] Background processing doesn't affect chat responsiveness (<100ms impact)
+- [ ] Database query performance remains optimal (monitor slow queries)
+- [ ] Memory usage stable during long-running consolidation processes
+- [ ] No memory leaks in background consolidation worker
 
 ## Rollback Plan
 
@@ -199,11 +256,21 @@ pm2 restart enhanced-background-processor
 [To be filled after completion]
 
 ### Success Criteria
+
+#### Deduplication Performance (Critical)
+- [ ] **Duplicate Detection Accuracy**: >95% detection rate for true duplicates
+- [ ] **False Positive Rate**: <5% incorrect duplicate flagging
+- [ ] **Performance**: Memory creation with deduplication <200ms average
+- [ ] **Cache Efficiency**: >80% cache hit rate for similarity calculations
+- [ ] **Bulk Processing**: Consolidation of 100 memories <5 seconds
+- [ ] **Zero Regression**: No duplicates slip through that current system catches
+
+#### System Integration
 - [ ] Memory consolidation reduces duplicate memories by >20%
-- [ ] Background consolidation runs without performance impact
-- [ ] Users can manually trigger consolidation via API
+- [ ] Background consolidation runs without performance impact (<100ms chat impact)
+- [ ] Users can manually trigger consolidation via API (<2s response)
 - [ ] Memory relationships visible in performance monitoring
-- [ ] No degradation in existing memory operations
+- [ ] No degradation in existing memory operations (baseline testing)
 
 ### What Worked
 [To be documented]

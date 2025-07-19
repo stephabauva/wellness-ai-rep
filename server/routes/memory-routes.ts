@@ -7,6 +7,7 @@ import {
   performanceMemoryCore,
   chatGPTMemoryEnhancement
 } from "./shared-dependencies.js";
+import { memoryGraphService } from "../services/memory-graph-service-instance.js";
 
 
 export async function registerMemoryRoutes(app: Express): Promise<void> {
@@ -181,6 +182,17 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
         );
 
         if (possibleNewMemory) {
+          // Extract atomic facts and detect relationships for new memory
+          try {
+            await memoryGraphService.extractAtomicFacts(possibleNewMemory);
+            const otherMemories = recentMemories.filter(m => m.id !== possibleNewMemory.id);
+            if (otherMemories.length > 0) {
+              await memoryGraphService.detectMemoryRelationships(possibleNewMemory, otherMemories.slice(0, 10));
+            }
+          } catch (relationshipError) {
+            console.warn('[ManualMemory] Relationship detection failed, continuing:', relationshipError);
+          }
+          
           res.status(201).json({
             success: true,
             memory: {
@@ -308,6 +320,41 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error('ChatGPT memory enhancement test error:', error);
       res.status(500).json({ error: "Failed to test ChatGPT memory enhancement" });
+    }
+  });
+
+  // Manual consolidation trigger
+  app.post("/api/memory/consolidate/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId) || 1;
+      const results = await memoryGraphService.consolidateRelatedMemories(userId);
+      res.json({ success: true, consolidationResults: results, count: results.length });
+    } catch (error) {
+      console.error('Error in memory consolidation:', error);
+      res.status(500).json({ error: "Failed to consolidate memories" });
+    }
+  });
+
+  // Get memory relationships  
+  app.get("/api/memory/relationships/:memoryId", async (req, res) => {
+    try {
+      const memoryNode = await memoryGraphService.getMemoryNode(req.params.memoryId);
+      if (!memoryNode) return res.status(404).json({ error: "Memory not found" });
+      res.json({ relationships: memoryNode.relationships, atomicFacts: memoryNode.atomicFacts });
+    } catch (error) {
+      console.error('Error fetching memory relationships:', error);
+      res.status(500).json({ error: "Failed to fetch memory relationships" });
+    }
+  });
+
+  // Get consolidation log (requires manual DB query - log endpoint not in graph service)
+  app.get("/api/memory/consolidation-log/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId) || 1;
+      // Basic log response until graph service exposes log method
+      res.json({ message: "Consolidation log endpoint active", userId, logEntries: [] });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch consolidation log" });
     }
   });
 

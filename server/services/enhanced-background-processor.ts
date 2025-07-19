@@ -1,5 +1,6 @@
 import { chatGPTMemoryEnhancement } from '@shared/services/chatgpt-memory-enhancement';
 import { memoryService } from '@shared/services/memory-service';
+import { memoryGraphService } from './memory-graph-service-instance.js';
 
 /**
  * Phase 3: Enhanced Background Processing
@@ -118,6 +119,24 @@ export class EnhancedBackgroundProcessor {
     };
     this.failureCount.clear();
     this.lastFailureTime.clear();
+  }
+
+  /**
+   * Daily memory consolidation for active users
+   */
+  async runDailyConsolidation(userIds: number[] = [1]): Promise<void> {
+    console.log(`[EnhancedBackgroundProcessor] Starting daily consolidation for ${userIds.length} users`);
+    
+    for (const userId of userIds) {
+      try {
+        if (!this.isCircuitBreakerOpen(userId)) {
+          const results = await memoryGraphService.consolidateRelatedMemories(userId);
+          console.log(`[EnhancedBackgroundProcessor] User ${userId}: consolidated ${results.length} memory groups`);
+        }
+      } catch (error) {
+        console.error(`[EnhancedBackgroundProcessor] Consolidation failed for user ${userId}:`, error);
+      }
+    }
   }
 
   private async performEnhancedProcessing(

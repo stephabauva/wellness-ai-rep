@@ -9,6 +9,8 @@ import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import type { HealthDataPoint, HealthDataQuery, HealthSyncResult, HealthPermissions } from '@shared/types/health';
 import { healthKitTypes, googleFitTypes, googleFitUnits } from '@shared/services/health/provider-mappings';
+import { generateSampleHealthKitData, generateSampleGoogleFitData } from '@shared/services/health/sample-data-generators';
+import { processHealthKitResults, processGoogleFitResults } from '@shared/services/health/result-processors';
 
 /**
  * Abstract base class for native health data access
@@ -134,9 +136,9 @@ export class HealthKitProvider extends NativeHealthProvider {
             endDate: query.endDate.toISOString(),
             limit: query.limit || 1000
           })
-        : await this.generateSampleHealthData(query);
+        : await generateSampleHealthKitData(query);
 
-      return this.processHealthKitResults(results);
+      return processHealthKitResults(results);
     } catch (error) {
       console.error('[HealthKit] Data query failed:', error);
       throw new Error(`HealthKit data query failed: ${error}`);
@@ -200,7 +202,7 @@ export class HealthKitProvider extends NativeHealthProvider {
       case 'requestPermissions':
         return await this.simulatePermissionRequest(args.readTypes || []);
       case 'queryData':
-        return await this.generateSampleHealthData(args);
+        return await generateSampleHealthKitData(args);
       default:
         return null;
     }
@@ -224,70 +226,8 @@ export class HealthKitProvider extends NativeHealthProvider {
     };
   }
 
-  private async generateSampleHealthData(query: any): Promise<any> {
-    // Generate realistic sample data for development/testing
-    const data = [];
-    const daysDiff = Math.ceil((query.endDate - query.startDate) / (1000 * 60 * 60 * 24));
-    
-    for (const queryItem of query.queries || []) {
-      for (let day = 0; day < Math.min(daysDiff, 30); day++) {
-        const date = new Date(query.startDate);
-        date.setDate(date.getDate() + day);
-        
-        switch (queryItem.friendlyName) {
-          case 'steps':
-            data.push({
-              type: queryItem.type,
-              value: Math.floor(Math.random() * 5000) + 3000,
-              unit: 'count',
-              startDate: date.toISOString(),
-              endDate: date.toISOString()
-            });
-            break;
-          case 'heart_rate':
-            for (let i = 0; i < 5; i++) {
-              const time = new Date(date);
-              time.setHours(8 + i * 3);
-              data.push({
-                type: queryItem.type,
-                value: Math.floor(Math.random() * 40) + 60,
-                unit: 'count/min',
-                startDate: time.toISOString(),
-                endDate: time.toISOString()
-              });
-            }
-            break;
-        }
-      }
-    }
-    
-    return { samples: data };
-  }
 
-  private processHealthKitResults(results: any): HealthDataPoint[] {
-    if (!results?.samples) return [];
-    
-    return results.samples.map((sample: any, index: number) => ({
-      id: `healthkit_${Date.now()}_${index}`,
-      type: this.getTypeFromHealthKitIdentifier(sample.type),
-      value: sample.value,
-      unit: sample.unit,
-      timestamp: new Date(sample.startDate),
-      source: 'HealthKit',
-      metadata: {
-        healthKitType: sample.type,
-        endDate: sample.endDate,
-        device: sample.device || 'iPhone'
-      }
-    }));
-  }
 
-  private getTypeFromHealthKitIdentifier(healthKitType: string): string {
-    for (const [friendlyName, hkType] of Object.entries(healthKitTypes)) {
-      if (hkType === healthKitType) return friendlyName;
-    }
-    return healthKitType;
-  }
 }
 
 /**
@@ -384,9 +324,9 @@ export class GoogleFitProvider extends NativeHealthProvider {
             endTime: query.endDate.getTime(),
             bucketType: 'DAY' // Daily aggregation
           })
-        : await this.generateSampleHealthData(query);
+        : await generateSampleGoogleFitData(query);
 
-      return this.processGoogleFitResults(results);
+      return processGoogleFitResults(results);
     } catch (error) {
       console.error('[GoogleFit] Data query failed:', error);
       throw new Error(`Google Fit data query failed: ${error}`);
@@ -440,7 +380,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
       case 'requestPermissions':
         return await this.simulatePermissionRequest(args.readTypes || []);
       case 'queryData':
-        return await this.generateSampleHealthData(args);
+        return await generateSampleGoogleFitData(args);
       default:
         return null;
     }
@@ -464,79 +404,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
     };
   }
 
-  private async generateSampleHealthData(query: any): Promise<any> {
-    // Generate realistic sample data for development/testing
-    const data = [];
-    const daysDiff = Math.ceil((query.endTime - query.startTime) / (1000 * 60 * 60 * 24));
-    
-    for (const queryItem of query.queries || []) {
-      for (let day = 0; day < Math.min(daysDiff, 30); day++) {
-        const date = new Date(query.startTime + (day * 24 * 60 * 60 * 1000));
-        
-        switch (queryItem.friendlyName) {
-          case 'steps':
-            data.push({
-              type: queryItem.type,
-              value: Math.floor(Math.random() * 6000) + 2000,
-              startTime: date.getTime(),
-              endTime: date.getTime() + (24 * 60 * 60 * 1000)
-            });
-            break;
-          case 'heart_rate':
-            for (let i = 0; i < 6; i++) {
-              const time = new Date(date);
-              time.setHours(7 + i * 2.5);
-              data.push({
-                type: queryItem.type,
-                value: Math.floor(Math.random() * 35) + 65,
-                startTime: time.getTime(),
-                endTime: time.getTime()
-              });
-            }
-            break;
-          case 'calories_burned':
-            data.push({
-              type: queryItem.type,
-              value: Math.floor(Math.random() * 800) + 1200,
-              startTime: date.getTime(),
-              endTime: date.getTime() + (24 * 60 * 60 * 1000)
-            });
-            break;
-        }
-      }
-    }
-    
-    return { buckets: data };
-  }
 
-  private processGoogleFitResults(results: any): HealthDataPoint[] {
-    if (!results?.buckets) return [];
-    
-    return results.buckets.map((bucket: any, index: number) => ({
-      id: `googlefit_${Date.now()}_${index}`,
-      type: this.getTypeFromGoogleFitIdentifier(bucket.type),
-      value: bucket.value,
-      unit: this.getUnitForType(bucket.type),
-      timestamp: new Date(bucket.startTime),
-      source: 'Google Fit',
-      metadata: {
-        googleFitType: bucket.type,
-        endTime: bucket.endTime,
-        device: bucket.device || 'Android'
-      }
-    }));
-  }
-
-  private getTypeFromGoogleFitIdentifier(googleFitType: string): string {
-    for (const [friendlyName, gfType] of Object.entries(googleFitTypes)) {
-      if (gfType === googleFitType) return friendlyName;
-    }
-    return googleFitType;
-  }
-
-  private getUnitForType(googleFitType: string): string {
-    return googleFitUnits[googleFitType] || 'unknown';
-  }
 }
 
 /**

@@ -12,6 +12,7 @@ import { healthKitTypes, googleFitTypes, googleFitUnits } from '@shared/services
 import { processHealthKitResults, processGoogleFitResults } from '@shared/services/health/result-processors';
 import { NativeBridgeProvider } from '@shared/services/health/native-bridge-utils';
 import { NativeMethodHandler } from '@shared/services/health/native-method-handlers';
+import { HealthSyncOperations } from '@shared/services/health/sync-operations';
 
 /**
  * Abstract base class for native health data access
@@ -332,9 +333,11 @@ export class GoogleFitProvider extends NativeHealthProvider {
 export class NativeHealthService {
   private provider: NativeHealthProvider | null = null;
   private initialized = false;
+  private syncOperations: HealthSyncOperations;
 
   constructor() {
     this.initializeProvider();
+    this.syncOperations = new HealthSyncOperations(this.provider);
   }
 
   private initializeProvider(): void {
@@ -353,6 +356,9 @@ export class NativeHealthService {
     }
 
     this.initialized = true;
+    
+    // Update sync operations with new provider
+    this.syncOperations = new HealthSyncOperations(this.provider);
   }
 
   /**
@@ -423,168 +429,21 @@ export class NativeHealthService {
    * Performs a test sync to validate the service and retrieve sample data
    */
   async testSync(): Promise<HealthSyncResult> {
-    const startTime = Date.now();
-    
-    try {
-      // For web platform, call the backend API directly
-      const platform = getPlatform();
-      
-      if (platform === 'web') {
-        const response = await fetch('/api/health-data/native-sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            dataTypes: ['steps', 'heart_rate', 'sleep'],
-            timeRangeDays: 7,
-            platform: 'web'
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Test sync failed: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        
-        return {
-          success: result.success,
-          recordsProcessed: result.recordsProcessed || 0,
-          recordsImported: result.recordsImported || 0,
-          errors: result.errors || [],
-          duration: Date.now() - startTime
-        };
-      }
-
-      // For native platforms, check availability and permissions
-      const isAvailable = await this.isAvailable();
-      if (!isAvailable) {
-        return {
-          success: false,
-          recordsProcessed: 0,
-          recordsImported: 0,
-          errors: ['Native health service not available on this platform'],
-          duration: Date.now() - startTime
-        };
-      }
-
-      const permissions = await this.checkPermissions();
-      if (!permissions.granted) {
-        return {
-          success: false,
-          recordsProcessed: 0,
-          recordsImported: 0,
-          errors: ['Health permissions not granted - please request permissions first'],
-          duration: Date.now() - startTime
-        };
-      }
-
-      // For native platforms with permissions, query actual health data
-      const supportedTypes = await this.getSupportedDataTypes();
-      const testTypes = supportedTypes.slice(0, 3);
-      
-      const testQuery: HealthDataQuery = {
-        dataTypes: testTypes,
-        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        endDate: new Date(),
-        limit: 100
-      };
-
-      const healthData = await this.queryHealthData(testQuery);
-      
-      return {
-        success: true,
-        recordsProcessed: healthData.length,
-        recordsImported: healthData.length,
-        errors: [],
-        duration: Date.now() - startTime
-      };
-    } catch (error) {
-      return {
-        success: false,
-        recordsProcessed: 0,
-        recordsImported: 0,
-        errors: [error instanceof Error ? error.message : 'Test sync failed'],
-        duration: Date.now() - startTime
-      };
-    }
+    return await this.syncOperations.testSync();
   }
 
   /**
    * Performs a full synchronization with the backend
    */
   async performFullSync(dataTypes?: string[], timeRangeDays: number = 30): Promise<HealthSyncResult> {
-    const startTime = Date.now();
-    
-    try {
-      if (!this.provider) {
-        throw new Error('No native health provider available');
-      }
-
-      const permissions = await this.checkPermissions();
-      if (!permissions.granted) {
-        // Attempt to request permissions
-        const supportedTypes = await this.getSupportedDataTypes();
-        const requestTypes = dataTypes || supportedTypes.slice(0, 5);
-        const newPermissions = await this.requestPermissions(requestTypes);
-        
-        if (!newPermissions.granted) {
-          throw new Error('Health permissions denied by user');
-        }
-      }
-
-      const query: HealthDataQuery = {
-        dataTypes: dataTypes || await this.getSupportedDataTypes(),
-        startDate: new Date(Date.now() - timeRangeDays * 24 * 60 * 60 * 1000),
-        endDate: new Date(),
-        limit: 10000
-      };
-
-      const healthData = await this.queryHealthData(query);
-      
-      if (healthData.length === 0) {
-        return {
-          success: true,
-          recordsProcessed: 0,
-          recordsImported: 0,
-          errors: ['No health data found for the specified time range'],
-          duration: Date.now() - startTime
-        };
-      }
-
-      // Send data to backend for processing
-      const response = await fetch('/api/health-data/native-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: healthData,
-          platform: getPlatform(),
-          provider: this.provider.constructor.name,
-          syncTimestamp: new Date().toISOString()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Backend sync failed: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      return {
-        success: true,
-        recordsProcessed: healthData.length,
-        recordsImported: result.imported || healthData.length,
-        errors: result.errors || [],
-        duration: Date.now() - startTime
-      };
-    } catch (error) {
-      return {
-        success: false,
-        recordsProcessed: 0,
-        recordsImported: 0,
-        errors: [error instanceof Error ? error.message : 'Unknown error'],
-        duration: Date.now() - startTime
-      };
-    }
+    return await this.syncOperations.performFullSync(
+      () => this.checkPermissions(),
+      () => this.getSupportedDataTypes(),
+      (types: string[]) => this.requestPermissions(types),
+      (query: HealthDataQuery) => this.queryHealthData(query),
+      dataTypes,
+      timeRangeDays
+    );
   }
 
   /**

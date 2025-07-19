@@ -875,10 +875,17 @@
         "imports": [
           "useSidebar"
         ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar-layout-additional-components.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "useSidebar"
+        ]
       }
     ],
     "crossDomain": false,
-    "usageCount": 2
+    "usageCount": 3
   },
   "client/src/components/ui/sidebar-variants.ts": {
     "domain": "shared/ui-components",
@@ -974,6 +981,29 @@
           "SidebarHeader",
           "SidebarInput",
           "SidebarSeparator",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/sidebar-layout-additional-components.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "SidebarRail",
+      "SidebarInset",
+      "SidebarContent",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "SidebarRail",
+          "SidebarInset",
+          "SidebarContent",
           ""
         ]
       }
@@ -1641,23 +1671,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "client/src/components/health/utils/pdf-generator.ts": {
-    "domain": "health/hooks",
-    "exports": [
-      "generatePDF"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/health/hooks/useReportGeneration.ts",
-        "domain": "health",
-        "imports": [
-          "generatePDF"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/components/health/dashboard/MobileHeader.tsx": {
     "domain": "health",
     "exports": [
@@ -1775,6 +1788,23 @@
       }
     ],
     "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/health/utils/pdf-generator.ts": {
+    "domain": "health/hooks",
+    "exports": [
+      "generatePDF"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/health/hooks/useReportGeneration.ts",
+        "domain": "health",
+        "imports": [
+          "generatePDF"
+        ]
+      }
+    ],
+    "crossDomain": true,
     "usageCount": 1
   },
   "server/vite.ts": {

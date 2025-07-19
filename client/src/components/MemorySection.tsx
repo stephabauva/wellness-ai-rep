@@ -86,27 +86,40 @@ export default function MemorySection() {
     setIsManualEntryOpen(false);
   };
 
-  // Overview count query - lightweight, runs once on mount
+  // Optimized overview query - lightweight, runs once on mount
   const { data: memoryOverview = { total: 0, categories: {}, qualityMetrics: {} }, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
     queryKey: ["memory-overview"],
     queryFn: async () => {
+      const startTime = performance.now();
       const response = await fetch(`/api/memories/overview`);
       if (!response.ok) throw new Error("Failed to fetch memory overview");
-      return response.json();
+      
+      const data = await response.json();
+      const duration = performance.now() - startTime;
+      
+      console.log(`[Memory Overview Performance] Duration: ${duration.toFixed(2)}ms (Target: <100ms)`);
+      
+      if (duration > 100) {
+        console.warn(`[Memory Overview Performance] Slower than target: ${duration.toFixed(2)}ms > 100ms`);
+      }
+      
+      return data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 10 * 60 * 1000, // Increased to 10 minutes cache
+    gcTime: 15 * 60 * 1000, // Keep in memory for 15 minutes
     refetchOnWindowFocus: false,
     refetchInterval: false, // No polling
+    refetchOnMount: false, // Don't refetch on mount if we have data
   });
 
-  // Infinite scroll hook for optimized memory loading
+  // Infinite scroll hook for optimized memory loading - start immediately
   const infiniteMemoriesQuery = useInfiniteMemories({
     category: selectedCategory === "all" ? undefined : selectedCategory,
     limit: 20,
-    enabled: memoriesLoaded
+    enabled: true // Start loading immediately for better performance
   });
   
-  // Intersection observer for infinite scroll
+  // Optimized intersection observer for faster infinite scroll
   const { targetRef, isFetching } = useInfiniteScroll({
     hasMore: infiniteMemoriesQuery.hasMore,
     isLoading: infiniteMemoriesQuery.isFetchingNextPage,
@@ -115,8 +128,8 @@ export default function MemorySection() {
         infiniteMemoriesQuery.fetchNextPage();
       }
     },
-    threshold: 0.8,
-    rootMargin: '100px'
+    threshold: 0.3, // Start loading when 30% from bottom (more aggressive)
+    rootMargin: '200px' // Increased margin for earlier loading
   });
   
   // Legacy fallback query - kept for error recovery but not used by default
@@ -135,7 +148,7 @@ export default function MemorySection() {
     refetchInterval: false, // No polling ever
   });
 
-  // Auto-load memories on mount
+  // Set memories loaded state immediately for UI consistency
   useEffect(() => {
     setMemoriesLoaded(true);
   }, []);

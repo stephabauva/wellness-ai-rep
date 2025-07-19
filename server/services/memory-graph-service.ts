@@ -49,8 +49,33 @@ export interface RelationshipDetectionResult {
 }
 
 export class MemoryGraphService {
+  private relationshipCache = new Map<string, RelationshipDetectionResult>();
+  private cacheTimeout = 3600000; // 1 hour
+  private cacheTimestamps = new Map<string, number>();
+  
   constructor() {
     // Using the singleton aiService instance
+    this.startCacheCleanup();
+  }
+
+  private startCacheCleanup(): void {
+    setInterval(() => this.cleanExpiredCache(), 300000); // 5 minutes
+  }
+
+  private cleanExpiredCache(): void {
+    const now = Date.now();
+    for (const [key, timestamp] of this.cacheTimestamps.entries()) {
+      if (now - timestamp > this.cacheTimeout) {
+        this.relationshipCache.delete(key);
+        this.cacheTimestamps.delete(key);
+      }
+    }
+  }
+
+  private getCacheKey(memory1: MemoryEntry, memory2: MemoryEntry): string {
+    const id1 = memory1.id < memory2.id ? memory1.id : memory2.id;
+    const id2 = memory1.id < memory2.id ? memory2.id : memory1.id;
+    return `${id1}-${id2}`;
   }
 
   /**
@@ -140,9 +165,10 @@ export class MemoryGraphService {
   }
 
   /**
-   * Consolidate related memories intelligently
+   * Consolidate related memories intelligently - OPTIMIZED
    */
   async consolidateRelatedMemories(userId: number): Promise<ConsolidationResult[]> {
+    const startTime = Date.now();
     const userMemories = await db.select()
       .from(memoryEntries)
       .where(and(
@@ -150,24 +176,42 @@ export class MemoryGraphService {
         eq(memoryEntries.isActive, true)
       ));
 
+    if (userMemories.length < 2) return [];
+
     const consolidationResults: ConsolidationResult[] = [];
 
-    // Find contradictory memories
-    const contradictions = await this.findContradictoryMemories(userMemories);
-    for (const contradiction of contradictions) {
-      const result = await this.resolveContradiction(contradiction);
-      if (result) consolidationResults.push(result);
-    }
+    // Optimized batch relationship analysis
+    const relationshipMap = await this.batchAnalyzeRelationships(userMemories);
+    
+    // Find contradictory memories using cached relationships
+    const contradictions = this.findContradictoryMemoriesOptimized(userMemories, relationshipMap);
+    const contradictionPromises = contradictions.map(contradiction => 
+      this.resolveContradiction(contradiction)
+    );
+    
+    // Find mergeable clusters using cached relationships
+    const mergeableClusters = this.findMergeableMemoriesOptimized(userMemories, relationshipMap);
+    const mergePromises = mergeableClusters.map(cluster => 
+      this.mergeMemoryCluster(cluster)
+    );
 
-    // Find memories that can be merged
-    const mergeableClusters = await this.findMergeableMemories(userMemories);
-    for (const cluster of mergeableClusters) {
-      const result = await this.mergeMemoryCluster(cluster);
-      if (result) consolidationResults.push(result);
+    // Process all consolidations in parallel
+    const allResults = await Promise.allSettled([
+      ...contradictionPromises,
+      ...mergePromises
+    ]);
+
+    for (const result of allResults) {
+      if (result.status === 'fulfilled' && result.value) {
+        consolidationResults.push(result.value);
+      }
     }
 
     // Update graph metrics
     await this.updateGraphMetrics(userId);
+
+    const processingTime = Date.now() - startTime;
+    console.log(`[MemoryGraphService] Consolidated ${userMemories.length} memories in ${processingTime}ms`);
 
     return consolidationResults;
   }
@@ -211,17 +255,65 @@ export class MemoryGraphService {
   }
 
   /**
-   * Find memories that contradict each other
+   * Batch analyze relationships for all memory pairs - OPTIMIZED
    */
-  private async findContradictoryMemories(memories: MemoryEntry[]): Promise<MemoryEntry[][]> {
+  private async batchAnalyzeRelationships(memories: MemoryEntry[]): Promise<Map<string, RelationshipDetectionResult>> {
+    const relationshipMap = new Map<string, RelationshipDetectionResult>();
+    const uncachedPairs: Array<[MemoryEntry, MemoryEntry, string]> = [];
+
+    // Check cache first
+    for (let i = 0; i < memories.length; i++) {
+      for (let j = i + 1; j < memories.length; j++) {
+        const memory1 = memories[i];
+        const memory2 = memories[j];
+        const cacheKey = this.getCacheKey(memory1, memory2);
+        
+        const cached = this.relationshipCache.get(cacheKey);
+        if (cached && this.isCacheValid(cacheKey)) {
+          relationshipMap.set(cacheKey, cached);
+        } else {
+          uncachedPairs.push([memory1, memory2, cacheKey]);
+        }
+      }
+    }
+
+    // Batch process uncached pairs in chunks of 10 for optimal performance
+    const chunkSize = 10;
+    for (let i = 0; i < uncachedPairs.length; i += chunkSize) {
+      const chunk = uncachedPairs.slice(i, i + chunkSize);
+      const chunkPromises = chunk.map(([memory1, memory2, cacheKey]) => 
+        this.analyzeMemoryRelationshipCached(memory1, memory2, cacheKey)
+      );
+      
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      
+      chunkResults.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value) {
+          const cacheKey = chunk[idx][2];
+          relationshipMap.set(cacheKey, result.value);
+        }
+      });
+    }
+
+    return relationshipMap;
+  }
+
+  /**
+   * Find contradictory memories using cached relationships - OPTIMIZED
+   */
+  private findContradictoryMemoriesOptimized(
+    memories: MemoryEntry[], 
+    relationshipMap: Map<string, RelationshipDetectionResult>
+  ): MemoryEntry[][] {
     const contradictoryPairs: MemoryEntry[][] = [];
 
     for (let i = 0; i < memories.length; i++) {
       for (let j = i + 1; j < memories.length; j++) {
         const memory1 = memories[i];
         const memory2 = memories[j];
-
-        const relationship = await this.analyzeMemoryRelationship(memory1, memory2);
+        const cacheKey = this.getCacheKey(memory1, memory2);
+        
+        const relationship = relationshipMap.get(cacheKey);
         if (relationship?.relationshipType === 'contradicts' && relationship.confidence > 0.8) {
           contradictoryPairs.push([memory1, memory2]);
         }
@@ -232,12 +324,19 @@ export class MemoryGraphService {
   }
 
   /**
-   * Analyze relationship between two memories
+   * Analyze relationship with caching - OPTIMIZED
    */
-  private async analyzeMemoryRelationship(
+  private async analyzeMemoryRelationshipCached(
     memory1: MemoryEntry,
-    memory2: MemoryEntry
+    memory2: MemoryEntry,
+    cacheKey: string
   ): Promise<RelationshipDetectionResult | null> {
+    // Check cache first
+    const cached = this.relationshipCache.get(cacheKey);
+    if (cached && this.isCacheValid(cacheKey)) {
+      return cached;
+    }
+
     const analysisPrompt = this.buildRelationshipAnalysisPrompt();
 
     try {
@@ -254,11 +353,39 @@ export class MemoryGraphService {
       );
       const response = chatResponse.response;
 
-      return this.parseRelationshipResponse(response);
+      const result = this.parseRelationshipResponse(response);
+      
+      // Cache the result
+      if (result) {
+        this.relationshipCache.set(cacheKey, result);
+        this.cacheTimestamps.set(cacheKey, Date.now());
+      }
+      
+      return result;
     } catch (error) {
       console.error('[MemoryGraphService] Error analyzing relationship:', error);
       return null;
     }
+  }
+
+  /**
+   * Check if cache entry is still valid
+   */
+  private isCacheValid(cacheKey: string): boolean {
+    const timestamp = this.cacheTimestamps.get(cacheKey);
+    if (!timestamp) return false;
+    return Date.now() - timestamp < this.cacheTimeout;
+  }
+
+  /**
+   * Analyze relationship between two memories (legacy method for backward compatibility)
+   */
+  private async analyzeMemoryRelationship(
+    memory1: MemoryEntry,
+    memory2: MemoryEntry
+  ): Promise<RelationshipDetectionResult | null> {
+    const cacheKey = this.getCacheKey(memory1, memory2);
+    return this.analyzeMemoryRelationshipCached(memory1, memory2, cacheKey);
   }
 
   /**
@@ -324,33 +451,50 @@ export class MemoryGraphService {
   }
 
   /**
-   * Find memories that can be merged
+   * Find mergeable memories using cached relationships - OPTIMIZED
    */
-  private async findMergeableMemories(memories: MemoryEntry[]): Promise<MemoryEntry[][]> {
+  private findMergeableMemoriesOptimized(
+    memories: MemoryEntry[],
+    relationshipMap: Map<string, RelationshipDetectionResult>
+  ): MemoryEntry[][] {
     const clusters: MemoryEntry[][] = [];
     const processed = new Set<string>();
 
-    for (const memory of memories) {
-      if (processed.has(memory.id)) continue;
-
-      const relatedMemories = memories.filter(m => 
-        m.id !== memory.id && 
-        !processed.has(m.id) &&
-        m.category === memory.category
-      );
-
-      const cluster = [memory];
-      for (const relatedMemory of relatedMemories) {
-        const relationship = await this.analyzeMemoryRelationship(memory, relatedMemory);
-        if (relationship?.relationshipType === 'elaborates' && relationship.confidence > 0.7) {
-          cluster.push(relatedMemory);
-          processed.add(relatedMemory.id);
-        }
+    // Group by category first for efficiency
+    const categorizedMemories = new Map<string, MemoryEntry[]>();
+    memories.forEach(memory => {
+      const category = memory.category;
+      if (!categorizedMemories.has(category)) {
+        categorizedMemories.set(category, []);
       }
+      categorizedMemories.get(category)!.push(memory);
+    });
 
-      if (cluster.length > 1) {
-        clusters.push(cluster);
-        cluster.forEach(m => processed.add(m.id));
+    // Process each category separately  
+    for (const categoryMemories of categorizedMemories.values()) {
+      if (categoryMemories.length < 2) continue;
+      
+      for (const memory of categoryMemories) {
+        if (processed.has(memory.id)) continue;
+
+        const cluster = [memory];
+        
+        for (const relatedMemory of categoryMemories) {
+          if (relatedMemory.id === memory.id || processed.has(relatedMemory.id)) continue;
+          
+          const cacheKey = this.getCacheKey(memory, relatedMemory);
+          const relationship = relationshipMap.get(cacheKey);
+          
+          if (relationship?.relationshipType === 'elaborates' && relationship.confidence > 0.7) {
+            cluster.push(relatedMemory);
+            processed.add(relatedMemory.id);
+          }
+        }
+
+        if (cluster.length > 1) {
+          clusters.push(cluster);
+          cluster.forEach(m => processed.add(m.id));
+        }
       }
     }
 

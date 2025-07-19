@@ -390,7 +390,7 @@ Use this information naturally in your responses to provide personalized guidanc
       let highestSimilarity = 0;
 
       // Optimized batch similarity calculation for better performance
-      const validMemories = memories.filter(m => m.embedding && m.embedding.length > 0);
+      const validMemories = memories.filter(m => m.embedding && Array.isArray(m.embedding) && m.embedding.length > 0);
       if (validMemories.length === 0) {
         return this.findFuzzyMatch(content, memories);
       }

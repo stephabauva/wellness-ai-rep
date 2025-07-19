@@ -11,35 +11,23 @@ import { memoryGraphService } from "../services/memory-graph-service-instance.js
 
 
 export async function registerMemoryRoutes(app: Express): Promise<void> {
-  // Memory overview endpoint
+  // Optimized memory overview endpoint - reduced data fetching for faster performance
   app.get("/api/memories/overview", async (req, res) => {
     try {
-      const memories = await memoryService.getUserMemories(1);
-      const qualityMetrics = await memoryService.getMemoryQualityMetrics(1);
+      const startTime = performance.now();
+      const userId = 1; // Default user ID
       
-      const overview = {
-        total: memories.length,
-        categories: {
-          preferences: memories.filter(m => m.category === 'preferences').length,
-          personal_context: memories.filter(m => m.category === 'personal_context').length,
-          instructions: memories.filter(m => m.category === 'instructions').length,
-          food_diet: memories.filter(m => m.category === 'food_diet').length,
-          goals: memories.filter(m => m.category === 'goals').length
-        },
-        recentMemories: memories.slice(0, 3).map(m => ({
-          id: m.id, content: m.content.substring(0, 100) + (m.content.length > 100 ? '...' : ''),
-          category: m.category, createdAt: m.createdAt
-        })),
-        qualityMetrics: {
-          qualityScore: qualityMetrics.qualityScore,
-          duplicateRate: qualityMetrics.duplicateRate,
-          potentialDuplicates: qualityMetrics.potentialDuplicates,
-          averageImportanceScore: qualityMetrics.averageImportanceScore,
-          averageFreshness: qualityMetrics.averageFreshness
-        }
-      };
+      // Get lightweight overview data using optimized database queries
+      const overviewResult = await memoryService.getMemoryOverviewOptimized(userId);
       
-      res.json(overview);
+      const duration = performance.now() - startTime;
+      console.log(`[Memory Overview API Performance] Duration: ${duration.toFixed(2)}ms (Target: <100ms)`);
+      
+      if (duration > 100) {
+        console.warn(`[Memory Overview API Performance] Slower than target: ${duration.toFixed(2)}ms > 100ms`);
+      }
+      
+      res.json(overviewResult);
     } catch (error) {
       console.error('Error fetching memory overview:', error);
       res.status(500).json({ message: "Failed to fetch memory overview" });
@@ -59,32 +47,32 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Get user memories with pagination support
+  // Get user memories with optimized database-level pagination
   app.get("/api/memories", async (req, res) => {
     try {
+      const startTime = performance.now();
       const userId = 1; // Default user ID
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50); // Cap at 50 for performance
       const category = req.query.category as string;
       const offset = (page - 1) * limit;
       
-      // Get total count first
-      const allMemories = await memoryService.getUserMemories(userId, category as any);
-      const totalCount = allMemories.length;
-      
-      // Apply pagination
-      const memories = allMemories.slice(offset, offset + limit);
-      
-      res.json({
-        memories,
-        pagination: {
-          page,
-          limit,
-          totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-          hasMore: offset + limit < totalCount
-        }
+      // Use optimized database pagination instead of in-memory filtering
+      const result = await memoryService.getUserMemoriesPaginated(userId, {
+        page,
+        limit,
+        offset,
+        category: category as any
       });
+      
+      const duration = performance.now() - startTime;
+      console.log(`[Memory API Performance] Paginated query: ${duration.toFixed(2)}ms (Target: <100ms)`);
+      
+      if (duration > 100) {
+        console.warn(`[Memory API Performance] Slower than target: ${duration.toFixed(2)}ms > 100ms`);
+      }
+      
+      res.json(result);
     } catch (error) {
       console.error('Error fetching memories:', error);
       res.status(500).json({ message: "Failed to fetch memories" });

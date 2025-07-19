@@ -21,6 +21,9 @@ import {
 } from '@shared/schema';
 import { eq, and, or, inArray, sql, desc } from 'drizzle-orm';
 import { aiService } from '@shared/services/ai-service';
+import { MemoryPrompts } from './memory/MemoryPrompts';
+import { ResponseParsers, type RelationshipDetectionResult } from './memory/ResponseParsers';
+import { MemoryCalculations } from './memory/MemoryCalculations';
 
 export interface MemoryNode {
   id: string;
@@ -41,16 +44,34 @@ export interface ConsolidationResult {
   reason: string;
 }
 
-export interface RelationshipDetectionResult {
-  relationshipType: 'contradicts' | 'supports' | 'elaborates' | 'supersedes' | 'related';
-  confidence: number;
-  strength: number;
-  metadata?: any;
-}
-
 export class MemoryGraphService {
+  private relationshipCache = new Map<string, RelationshipDetectionResult>();
+  private cacheTimeout = 3600000; // 1 hour
+  private cacheTimestamps = new Map<string, number>();
+  
   constructor() {
     // Using the singleton aiService instance
+    this.startCacheCleanup();
+  }
+
+  private startCacheCleanup(): void {
+    setInterval(() => this.cleanExpiredCache(), 300000); // 5 minutes
+  }
+
+  private cleanExpiredCache(): void {
+    const now = Date.now();
+    for (const [key, timestamp] of this.cacheTimestamps.entries()) {
+      if (now - timestamp > this.cacheTimeout) {
+        this.relationshipCache.delete(key);
+        this.cacheTimestamps.delete(key);
+      }
+    }
+  }
+
+  private getCacheKey(memory1: MemoryEntry, memory2: MemoryEntry): string {
+    const id1 = memory1.id < memory2.id ? memory1.id : memory2.id;
+    const id2 = memory1.id < memory2.id ? memory2.id : memory1.id;
+    return `${id1}-${id2}`;
   }
 
   /**
@@ -60,7 +81,7 @@ export class MemoryGraphService {
     memoryEntry: MemoryEntry,
     sourceContext?: string
   ): Promise<AtomicFact[]> {
-    const extractionPrompt = this.buildFactExtractionPrompt(memoryEntry, sourceContext);
+    const extractionPrompt = MemoryPrompts.buildFactExtractionPrompt(memoryEntry, sourceContext);
     
     try {
       const chatResponse = await aiService.getChatResponse(
@@ -76,7 +97,7 @@ export class MemoryGraphService {
       );
       const response = chatResponse.response;
 
-      const factsData = this.parseFactsResponse(response);
+      const factsData = ResponseParsers.parseFactsResponse(response);
       const insertedFacts: AtomicFact[] = [];
 
       for (const factData of factsData) {
@@ -140,9 +161,10 @@ export class MemoryGraphService {
   }
 
   /**
-   * Consolidate related memories intelligently
+   * Consolidate related memories intelligently - OPTIMIZED
    */
   async consolidateRelatedMemories(userId: number): Promise<ConsolidationResult[]> {
+    const startTime = Date.now();
     const userMemories = await db.select()
       .from(memoryEntries)
       .where(and(
@@ -150,24 +172,42 @@ export class MemoryGraphService {
         eq(memoryEntries.isActive, true)
       ));
 
+    if (userMemories.length < 2) return [];
+
     const consolidationResults: ConsolidationResult[] = [];
 
-    // Find contradictory memories
-    const contradictions = await this.findContradictoryMemories(userMemories);
-    for (const contradiction of contradictions) {
-      const result = await this.resolveContradiction(contradiction);
-      if (result) consolidationResults.push(result);
-    }
+    // Optimized batch relationship analysis
+    const relationshipMap = await this.batchAnalyzeRelationships(userMemories);
+    
+    // Find contradictory memories using cached relationships
+    const contradictions = this.findContradictoryMemoriesOptimized(userMemories, relationshipMap);
+    const contradictionPromises = contradictions.map(contradiction => 
+      this.resolveContradiction(contradiction)
+    );
+    
+    // Find mergeable clusters using cached relationships
+    const mergeableClusters = this.findMergeableMemoriesOptimized(userMemories, relationshipMap);
+    const mergePromises = mergeableClusters.map(cluster => 
+      this.mergeMemoryCluster(cluster)
+    );
 
-    // Find memories that can be merged
-    const mergeableClusters = await this.findMergeableMemories(userMemories);
-    for (const cluster of mergeableClusters) {
-      const result = await this.mergeMemoryCluster(cluster);
-      if (result) consolidationResults.push(result);
+    // Process all consolidations in parallel
+    const allResults = await Promise.allSettled([
+      ...contradictionPromises,
+      ...mergePromises
+    ]);
+
+    for (const result of allResults) {
+      if (result.status === 'fulfilled' && result.value) {
+        consolidationResults.push(result.value);
+      }
     }
 
     // Update graph metrics
     await this.updateGraphMetrics(userId);
+
+    const processingTime = Date.now() - startTime;
+    console.log(`[MemoryGraphService] Consolidated ${userMemories.length} memories in ${processingTime}ms`);
 
     return consolidationResults;
   }
@@ -195,8 +235,8 @@ export class MemoryGraphService {
       ));
 
     const memoryEntry = memory[0];
-    const temporalWeight = this.calculateTemporalWeight(memoryEntry.createdAt);
-    const confidenceScore = this.calculateConfidenceScore(facts, relationships);
+    const temporalWeight = MemoryCalculations.calculateTemporalWeight(memoryEntry.createdAt);
+    const confidenceScore = MemoryCalculations.calculateConfidenceScore(facts, relationships);
 
     return {
       id: memoryEntry.id,
@@ -211,17 +251,65 @@ export class MemoryGraphService {
   }
 
   /**
-   * Find memories that contradict each other
+   * Batch analyze relationships for all memory pairs - OPTIMIZED
    */
-  private async findContradictoryMemories(memories: MemoryEntry[]): Promise<MemoryEntry[][]> {
+  private async batchAnalyzeRelationships(memories: MemoryEntry[]): Promise<Map<string, RelationshipDetectionResult>> {
+    const relationshipMap = new Map<string, RelationshipDetectionResult>();
+    const uncachedPairs: Array<[MemoryEntry, MemoryEntry, string]> = [];
+
+    // Check cache first
+    for (let i = 0; i < memories.length; i++) {
+      for (let j = i + 1; j < memories.length; j++) {
+        const memory1 = memories[i];
+        const memory2 = memories[j];
+        const cacheKey = this.getCacheKey(memory1, memory2);
+        
+        const cached = this.relationshipCache.get(cacheKey);
+        if (cached && this.isCacheValid(cacheKey)) {
+          relationshipMap.set(cacheKey, cached);
+        } else {
+          uncachedPairs.push([memory1, memory2, cacheKey]);
+        }
+      }
+    }
+
+    // Batch process uncached pairs in chunks of 10 for optimal performance
+    const chunkSize = 10;
+    for (let i = 0; i < uncachedPairs.length; i += chunkSize) {
+      const chunk = uncachedPairs.slice(i, i + chunkSize);
+      const chunkPromises = chunk.map(([memory1, memory2, cacheKey]) => 
+        this.analyzeMemoryRelationshipCached(memory1, memory2, cacheKey)
+      );
+      
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      
+      chunkResults.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value) {
+          const cacheKey = chunk[idx][2];
+          relationshipMap.set(cacheKey, result.value);
+        }
+      });
+    }
+
+    return relationshipMap;
+  }
+
+  /**
+   * Find contradictory memories using cached relationships - OPTIMIZED
+   */
+  private findContradictoryMemoriesOptimized(
+    memories: MemoryEntry[], 
+    relationshipMap: Map<string, RelationshipDetectionResult>
+  ): MemoryEntry[][] {
     const contradictoryPairs: MemoryEntry[][] = [];
 
     for (let i = 0; i < memories.length; i++) {
       for (let j = i + 1; j < memories.length; j++) {
         const memory1 = memories[i];
         const memory2 = memories[j];
-
-        const relationship = await this.analyzeMemoryRelationship(memory1, memory2);
+        const cacheKey = this.getCacheKey(memory1, memory2);
+        
+        const relationship = relationshipMap.get(cacheKey);
         if (relationship?.relationshipType === 'contradicts' && relationship.confidence > 0.8) {
           contradictoryPairs.push([memory1, memory2]);
         }
@@ -232,13 +320,20 @@ export class MemoryGraphService {
   }
 
   /**
-   * Analyze relationship between two memories
+   * Analyze relationship with caching - OPTIMIZED
    */
-  private async analyzeMemoryRelationship(
+  private async analyzeMemoryRelationshipCached(
     memory1: MemoryEntry,
-    memory2: MemoryEntry
+    memory2: MemoryEntry,
+    cacheKey: string
   ): Promise<RelationshipDetectionResult | null> {
-    const analysisPrompt = this.buildRelationshipAnalysisPrompt();
+    // Check cache first
+    const cached = this.relationshipCache.get(cacheKey);
+    if (cached && this.isCacheValid(cacheKey)) {
+      return cached;
+    }
+
+    const analysisPrompt = MemoryPrompts.buildRelationshipAnalysisPrompt();
 
     try {
       const chatResponse = await aiService.getChatResponse(
@@ -254,11 +349,39 @@ export class MemoryGraphService {
       );
       const response = chatResponse.response;
 
-      return this.parseRelationshipResponse(response);
+      const result = ResponseParsers.parseRelationshipResponse(response);
+      
+      // Cache the result
+      if (result) {
+        this.relationshipCache.set(cacheKey, result);
+        this.cacheTimestamps.set(cacheKey, Date.now());
+      }
+      
+      return result;
     } catch (error) {
       console.error('[MemoryGraphService] Error analyzing relationship:', error);
       return null;
     }
+  }
+
+  /**
+   * Check if cache entry is still valid
+   */
+  private isCacheValid(cacheKey: string): boolean {
+    const timestamp = this.cacheTimestamps.get(cacheKey);
+    if (!timestamp) return false;
+    return Date.now() - timestamp < this.cacheTimeout;
+  }
+
+  /**
+   * Analyze relationship between two memories (legacy method for backward compatibility)
+   */
+  private async analyzeMemoryRelationship(
+    memory1: MemoryEntry,
+    memory2: MemoryEntry
+  ): Promise<RelationshipDetectionResult | null> {
+    const cacheKey = this.getCacheKey(memory1, memory2);
+    return this.analyzeMemoryRelationshipCached(memory1, memory2, cacheKey);
   }
 
   /**
@@ -268,7 +391,7 @@ export class MemoryGraphService {
     if (contradictoryMemories.length !== 2) return null;
 
     const [memory1, memory2] = contradictoryMemories;
-    const resolutionPrompt = this.buildContradictionResolutionPrompt();
+    const resolutionPrompt = MemoryPrompts.buildContradictionResolutionPrompt();
 
     try {
       const chatResponse = await aiService.getChatResponse(
@@ -284,7 +407,7 @@ export class MemoryGraphService {
       );
       const response = chatResponse.response;
 
-      const resolution = this.parseResolutionResponse(response);
+      const resolution = ResponseParsers.parseResolutionResponse(response);
       
       if (resolution.action === 'supersede') {
         // Deactivate the older memory
@@ -324,33 +447,50 @@ export class MemoryGraphService {
   }
 
   /**
-   * Find memories that can be merged
+   * Find mergeable memories using cached relationships - OPTIMIZED
    */
-  private async findMergeableMemories(memories: MemoryEntry[]): Promise<MemoryEntry[][]> {
+  private findMergeableMemoriesOptimized(
+    memories: MemoryEntry[],
+    relationshipMap: Map<string, RelationshipDetectionResult>
+  ): MemoryEntry[][] {
     const clusters: MemoryEntry[][] = [];
     const processed = new Set<string>();
 
-    for (const memory of memories) {
-      if (processed.has(memory.id)) continue;
-
-      const relatedMemories = memories.filter(m => 
-        m.id !== memory.id && 
-        !processed.has(m.id) &&
-        m.category === memory.category
-      );
-
-      const cluster = [memory];
-      for (const relatedMemory of relatedMemories) {
-        const relationship = await this.analyzeMemoryRelationship(memory, relatedMemory);
-        if (relationship?.relationshipType === 'elaborates' && relationship.confidence > 0.7) {
-          cluster.push(relatedMemory);
-          processed.add(relatedMemory.id);
-        }
+    // Group by category first for efficiency
+    const categorizedMemories = new Map<string, MemoryEntry[]>();
+    memories.forEach(memory => {
+      const category = memory.category;
+      if (!categorizedMemories.has(category)) {
+        categorizedMemories.set(category, []);
       }
+      categorizedMemories.get(category)!.push(memory);
+    });
 
-      if (cluster.length > 1) {
-        clusters.push(cluster);
-        cluster.forEach(m => processed.add(m.id));
+    // Process each category separately  
+    for (const categoryMemories of categorizedMemories.values()) {
+      if (categoryMemories.length < 2) continue;
+      
+      for (const memory of categoryMemories) {
+        if (processed.has(memory.id)) continue;
+
+        const cluster = [memory];
+        
+        for (const relatedMemory of categoryMemories) {
+          if (relatedMemory.id === memory.id || processed.has(relatedMemory.id)) continue;
+          
+          const cacheKey = this.getCacheKey(memory, relatedMemory);
+          const relationship = relationshipMap.get(cacheKey);
+          
+          if (relationship?.relationshipType === 'elaborates' && relationship.confidence > 0.7) {
+            cluster.push(relatedMemory);
+            processed.add(relatedMemory.id);
+          }
+        }
+
+        if (cluster.length > 1) {
+          clusters.push(cluster);
+          cluster.forEach(m => processed.add(m.id));
+        }
       }
     }
 
@@ -364,7 +504,7 @@ export class MemoryGraphService {
     if (cluster.length < 2) return null;
 
     const primaryMemory = cluster[0];
-    const mergePrompt = this.buildMergePrompt();
+    const mergePrompt = MemoryPrompts.buildMergePrompt();
     const memoryContents = cluster.map((m, i) => `Memory ${i + 1}: ${m.content}`).join('\n\n');
 
     try {
@@ -485,159 +625,5 @@ export class MemoryGraphService {
           lastCalculated: sql`NOW()`
         }
       });
-  }
-
-  /**
-   * Calculate temporal weight for a memory
-   */
-  private calculateTemporalWeight(createdAt: Date | null): number {
-    if (!createdAt) return 0.5;
-    
-    const now = new Date();
-    const daysSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    
-    // Exponential decay: newer memories have higher weight
-    return Math.exp(-daysSinceCreation / 30); // 30-day half-life
-  }
-
-  /**
-   * Calculate confidence score based on facts and relationships
-   */
-  private calculateConfidenceScore(facts: AtomicFact[], relationships: MemoryRelationship[]): number {
-    const factConfidence = facts.length > 0 
-      ? facts.reduce((sum, fact) => sum + fact.confidence, 0) / facts.length 
-      : 0.5;
-    
-    const relConfidence = relationships.length > 0
-      ? relationships.reduce((sum, rel) => sum + rel.confidence, 0) / relationships.length
-      : 0.5;
-    
-    return (factConfidence + relConfidence) / 2;
-  }
-
-  /**
-   * Build fact extraction prompt
-   */
-  private buildFactExtractionPrompt(memory: MemoryEntry, sourceContext?: string): string {
-    return `You are an expert at extracting atomic facts from memory content. 
-
-Given a memory entry, extract individual atomic facts that can be independently verified.
-Each fact should be:
-1. Atomic (single piece of information)
-2. Specific and verifiable
-3. Categorized by type (preference, attribute, relationship, behavior, goal)
-
-Memory Category: ${memory.category}
-Source Context: ${sourceContext || 'Not provided'}
-
-Return a JSON array of facts with this structure:
-[
-  {
-    "content": "User prefers morning workouts",
-    "type": "preference",
-    "confidence": 0.9
-  }
-]
-
-Focus on extracting 1-5 key facts. Be precise and avoid redundancy.`;
-  }
-
-  /**
-   * Build relationship analysis prompt
-   */
-  private buildRelationshipAnalysisPrompt(): string {
-    return `You are an expert at analyzing relationships between memory entries.
-
-Given two memories, determine their relationship type:
-- contradicts: Information directly conflicts
-- supports: Information reinforces or confirms
-- elaborates: One memory provides additional detail to the other
-- supersedes: Newer information replaces older information
-- related: Memories are connected but don't fit other categories
-
-Return JSON with this structure:
-{
-  "relationshipType": "contradicts|supports|elaborates|supersedes|related",
-  "confidence": 0.0-1.0,
-  "strength": 0.0-1.0,
-  "metadata": { "explanation": "Brief reason for the relationship" }
-}
-
-Only respond if confidence > 0.6, otherwise return null.`;
-  }
-
-  /**
-   * Build contradiction resolution prompt
-   */
-  private buildContradictionResolutionPrompt(): string {
-    return `You are an expert at resolving contradictory information in memory systems.
-
-Given two contradictory memories with timestamps, determine the best resolution:
-- supersede: Newer information should replace older (most common)
-- merge: Both contain valid but different aspects
-- flag: Need human review
-
-Return JSON with this structure:
-{
-  "action": "supersede|merge|flag",
-  "confidence": 0.0-1.0,
-  "reason": "Explanation of why this resolution is appropriate"
-}`;
-  }
-
-  /**
-   * Build memory merge prompt
-   */
-  private buildMergePrompt(): string {
-    return `You are an expert at consolidating related memory entries.
-
-Given multiple related memories, create a single consolidated memory that:
-1. Preserves all important information
-2. Eliminates redundancy
-3. Maintains clarity and specificity
-4. Uses the same tone and style
-
-Return only the consolidated memory content as a single paragraph.`;
-  }
-
-  /**
-   * Parse facts response from AI
-   */
-  private parseFactsResponse(response: string): Array<{content: string, type: string, confidence: number}> {
-    try {
-      const parsed = JSON.parse(response);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      console.error('[MemoryGraphService] Error parsing facts response:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Parse relationship response from AI
-   */
-  private parseRelationshipResponse(response: string): RelationshipDetectionResult | null {
-    try {
-      const parsed = JSON.parse(response);
-      if (parsed && parsed.confidence > 0.6) {
-        return parsed;
-      }
-      return null;
-    } catch (error) {
-      console.error('[MemoryGraphService] Error parsing relationship response:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Parse resolution response from AI
-   */
-  private parseResolutionResponse(response: string): {action: string, confidence: number, reason: string} {
-    try {
-      return JSON.parse(response);
-    } catch (error) {
-      console.error('[MemoryGraphService] Error parsing resolution response:', error);
-      return { action: 'flag', confidence: 0.5, reason: 'Error parsing resolution' };
-    }
   }
 }

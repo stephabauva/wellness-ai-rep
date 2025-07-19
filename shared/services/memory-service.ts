@@ -38,6 +38,7 @@ import { MemoryQualityService, type MemoryQualityMetrics } from './memory/qualit
 import { MemoryRetrievalService } from './memory/retrieval-service';
 import { BackgroundProcessingManager } from './memory/background-processing-manager';
 import { MemoryContentValidator } from './memory/content-validation';
+import { MemoryCacheManager } from './memory/cache-management';
 
 interface RelevantMemory extends MemoryEntry {
   relevanceScore: number;
@@ -57,11 +58,7 @@ class MemoryService {
   private retrievalService: MemoryRetrievalService;
   private backgroundProcessingManager: BackgroundProcessingManager;
   private contentValidator: MemoryContentValidator;
-  
-  // Optimized caching patterns from optimized-memory-service
-  private deduplicationCache = new Map<string, string>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-  private cacheTimestamps = new Map<string, number>();
+  private cacheManager: MemoryCacheManager;
 
   constructor() {
     this.openai = new OpenAI({
@@ -96,6 +93,9 @@ class MemoryService {
     
     // Initialize content validator
     this.contentValidator = new MemoryContentValidator();
+    
+    // Initialize cache manager
+    this.cacheManager = new MemoryCacheManager(this.memoryCache);
   }
 
 
@@ -108,24 +108,19 @@ class MemoryService {
 
   // Get cached vector similarity with background calculation
   private getCachedSimilarity(vectorA: number[], vectorB: number[]): number | null {
-    const cacheKey = this.createSimilarityCacheKey(vectorA, vectorB);
-    const cached = this.memoryCache.getCachedSimilarity(cacheKey);
+    const cached = this.cacheManager.getCachedSimilarity(vectorA, vectorB);
     
     if (cached !== null) {
       return cached;
     }
     
     // Schedule background calculation if not cached
+    const cacheKey = createSimilarityCacheKey(vectorA, vectorB);
     this.backgroundProcessingManager.addBackgroundTask('similarity_calculation', {
       vectorA, vectorB, cacheKey
     }, 2);
     
     return null;
-  }
-
-  // Tier 2 C: Create similarity cache key using imported utility
-  private createSimilarityCacheKey(vectorA: number[], vectorB: number[]): string {
-    return createSimilarityCacheKey(vectorA, vectorB);
   }
 
   // Fast semantic deduplication using imported utility
@@ -318,7 +313,7 @@ class MemoryService {
             .where(eq(memoryTriggers.id, trigger.id));
           
           // Debounced cache invalidation for immediate updates
-          this.memoryCache.invalidateUserMemoryCache(userId, 500); // Faster invalidation for explicit saves
+          this.cacheManager.invalidateUserMemoryCache(userId, 500); // Faster invalidation for explicit saves
         }
       }
 
@@ -461,7 +456,7 @@ Use this remembered information to personalize your responses naturally. Don't e
 
       if (deleted) {
         // Clear user cache
-        this.memoryCache.clearUserCache(userId);
+        this.cacheManager.clearUserCache(userId);
         
         logger.debug(`Memory ${memoryId} marked as inactive and cache cleared`, { service: 'memory' });
       }
@@ -485,7 +480,7 @@ Use this remembered information to personalize your responses naturally. Don't e
 
   // Force cache cleanup for memory management
   forceCacheCleanup(): void {
-    this.memoryCache.forceCacheCleanup();
+    this.cacheManager.forceCacheCleanup();
   }
 
   // Preload user memories for better performance

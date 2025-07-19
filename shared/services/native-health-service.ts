@@ -11,6 +11,7 @@ import type { HealthDataPoint, HealthDataQuery, HealthSyncResult, HealthPermissi
 import { healthKitTypes, googleFitTypes, googleFitUnits } from '@shared/services/health/provider-mappings';
 import { generateSampleHealthKitData, generateSampleGoogleFitData } from '@shared/services/health/sample-data-generators';
 import { processHealthKitResults, processGoogleFitResults } from '@shared/services/health/result-processors';
+import { NativeBridgeProvider } from '@shared/services/health/native-bridge-utils';
 
 /**
  * Abstract base class for native health data access
@@ -33,6 +34,7 @@ export abstract class NativeHealthProvider {
  * iOS HealthKit provider - Phase 2 Real Implementation
  */
 export class HealthKitProvider extends NativeHealthProvider {
+  private bridge = new (class extends NativeBridgeProvider {})();
 
   async checkPermissions(): Promise<HealthPermissions> {
     try {
@@ -92,10 +94,7 @@ export class HealthKitProvider extends NativeHealthProvider {
         : await this.simulatePermissionRequest(dataTypes);
 
       // Store permissions locally for web testing
-      await Preferences.set({
-        key: 'healthkit_permissions',
-        value: JSON.stringify(result)
-      });
+      await this.bridge.storePermissions('healthkit_permissions', result);
 
       return {
         granted: result.granted || false,
@@ -209,21 +208,11 @@ export class HealthKitProvider extends NativeHealthProvider {
   }
 
   private async getStoredPermissions(): Promise<any> {
-    try {
-      const stored = await Preferences.get({ key: 'healthkit_permissions' });
-      return stored.value ? JSON.parse(stored.value) : { granted: false };
-    } catch {
-      return { granted: false };
-    }
+    return await this.bridge.getStoredPermissions('healthkit_permissions');
   }
 
   private async simulatePermissionRequest(dataTypes: string[]): Promise<any> {
-    // For development - simulate user granting permissions
-    return {
-      granted: true,
-      readPermissions: dataTypes,
-      writePermissions: []
-    };
+    return await this.bridge.simulatePermissionRequest(dataTypes);
   }
 
 
@@ -234,6 +223,7 @@ export class HealthKitProvider extends NativeHealthProvider {
  * Android Google Fit / Health Connect provider - Phase 2 Real Implementation
  */
 export class GoogleFitProvider extends NativeHealthProvider {
+  private bridge = new (class extends NativeBridgeProvider {})();
 
   async checkPermissions(): Promise<HealthPermissions> {
     try {
@@ -280,10 +270,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
         : await this.simulatePermissionRequest(dataTypes);
 
       // Store permissions locally for web testing
-      await Preferences.set({
-        key: 'googlefit_permissions',
-        value: JSON.stringify(result)
-      });
+      await this.bridge.storePermissions('googlefit_permissions', result);
 
       return {
         granted: result.granted || false,
@@ -387,21 +374,11 @@ export class GoogleFitProvider extends NativeHealthProvider {
   }
 
   private async getStoredPermissions(): Promise<any> {
-    try {
-      const stored = await Preferences.get({ key: 'googlefit_permissions' });
-      return stored.value ? JSON.parse(stored.value) : { granted: false };
-    } catch {
-      return { granted: false };
-    }
+    return await this.bridge.getStoredPermissions('googlefit_permissions');
   }
 
   private async simulatePermissionRequest(dataTypes: string[]): Promise<any> {
-    // For development - simulate user granting permissions
-    return {
-      granted: true,
-      readPermissions: dataTypes,
-      writePermissions: []
-    };
+    return await this.bridge.simulatePermissionRequest(dataTypes);
   }
 
 

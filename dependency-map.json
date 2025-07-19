@@ -973,6 +973,186 @@
     "crossDomain": false,
     "usageCount": 1
   },
+  "client/src/components/memory/utils.ts": {
+    "domain": "memory",
+    "exports": [
+      "SmartDefault",
+      "PresetButton",
+      "healthPresets",
+      "getTimeContext",
+      "getSmartDefaults",
+      "saveSmartDefault",
+      "getRecentValues",
+      "getContextualPresets"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/hooks/memory/useMemoryActions.ts",
+        "domain": "memory",
+        "imports": [
+          "saveSmartDefault",
+          "getSmartDefaults",
+          "getRecentValues"
+        ]
+      },
+      {
+        "file": "client/src/components/memory/MemoryForm.tsx",
+        "domain": "memory",
+        "imports": [
+          "SmartDefault",
+          "PresetButton",
+          "healthPresets",
+          "getTimeContext",
+          "getSmartDefaults",
+          "saveSmartDefault",
+          "getRecentValues",
+          "getContextualPresets"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/components/memory/constants.tsx": {
+    "domain": "memory",
+    "exports": [
+      "manualMemorySchema",
+      "ManualMemoryFormData",
+      "MemoryEntry",
+      "categoryIcons",
+      "categoryLabels",
+      "categoryColors",
+      "explanationCards"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "manualMemorySchema",
+          "ManualMemoryFormData",
+          "MemoryEntry",
+          "categoryIcons",
+          "categoryLabels",
+          "categoryColors",
+          "explanationCards"
+        ]
+      },
+      {
+        "file": "client/src/hooks/memory/useMemoryFilters.ts",
+        "domain": "memory",
+        "imports": [
+          "MemoryEntry"
+        ]
+      },
+      {
+        "file": "client/src/hooks/memory/useMemoryActions.ts",
+        "domain": "memory",
+        "imports": [
+          "ManualMemoryFormData"
+        ]
+      },
+      {
+        "file": "client/src/components/memory/MemoryList.tsx",
+        "domain": "memory",
+        "imports": [
+          "MemoryEntry",
+          "categoryIcons",
+          "categoryLabels",
+          "categoryColors"
+        ]
+      },
+      {
+        "file": "client/src/components/memory/MemoryForm.tsx",
+        "domain": "memory",
+        "imports": [
+          "manualMemorySchema",
+          "ManualMemoryFormData",
+          "categoryIcons",
+          "categoryLabels",
+          "categoryColors",
+          "explanationCards"
+        ]
+      },
+      {
+        "file": "client/src/components/memory/MemoryCategoryGrid.tsx",
+        "domain": "memory",
+        "imports": [
+          "explanationCards"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 6
+  },
+  "client/src/components/memory/MemoryList.tsx": {
+    "domain": "memory",
+    "exports": [
+      "MemoryList"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "MemoryList"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/memory/MemoryInsights.tsx": {
+    "domain": "memory",
+    "exports": [
+      "MemoryInsights"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "MemoryInsights"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/memory/MemoryForm.tsx": {
+    "domain": "memory",
+    "exports": [
+      "MemoryForm"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "MemoryForm"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/memory/MemoryCategoryGrid.tsx": {
+    "domain": "memory",
+    "exports": [
+      "MemoryCategoryGrid"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "MemoryCategoryGrid"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
   "client/src/components/ui/sheet.tsx": {
     "domain": "shared/ui-components",
     "exports": [
@@ -1162,186 +1342,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/components/memory/utils.ts": {
-    "domain": "memory",
-    "exports": [
-      "SmartDefault",
-      "PresetButton",
-      "healthPresets",
-      "getTimeContext",
-      "getSmartDefaults",
-      "saveSmartDefault",
-      "getRecentValues",
-      "getContextualPresets"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/hooks/memory/useMemoryActions.ts",
-        "domain": "memory",
-        "imports": [
-          "saveSmartDefault",
-          "getSmartDefaults",
-          "getRecentValues"
-        ]
-      },
-      {
-        "file": "client/src/components/memory/MemoryForm.tsx",
-        "domain": "memory",
-        "imports": [
-          "SmartDefault",
-          "PresetButton",
-          "healthPresets",
-          "getTimeContext",
-          "getSmartDefaults",
-          "saveSmartDefault",
-          "getRecentValues",
-          "getContextualPresets"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 2
-  },
-  "client/src/components/memory/constants.tsx": {
-    "domain": "memory",
-    "exports": [
-      "manualMemorySchema",
-      "ManualMemoryFormData",
-      "MemoryEntry",
-      "categoryIcons",
-      "categoryLabels",
-      "categoryColors",
-      "explanationCards"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "manualMemorySchema",
-          "ManualMemoryFormData",
-          "MemoryEntry",
-          "categoryIcons",
-          "categoryLabels",
-          "categoryColors",
-          "explanationCards"
-        ]
-      },
-      {
-        "file": "client/src/hooks/memory/useMemoryFilters.ts",
-        "domain": "memory",
-        "imports": [
-          "MemoryEntry"
-        ]
-      },
-      {
-        "file": "client/src/hooks/memory/useMemoryActions.ts",
-        "domain": "memory",
-        "imports": [
-          "ManualMemoryFormData"
-        ]
-      },
-      {
-        "file": "client/src/components/memory/MemoryList.tsx",
-        "domain": "memory",
-        "imports": [
-          "MemoryEntry",
-          "categoryIcons",
-          "categoryLabels",
-          "categoryColors"
-        ]
-      },
-      {
-        "file": "client/src/components/memory/MemoryForm.tsx",
-        "domain": "memory",
-        "imports": [
-          "manualMemorySchema",
-          "ManualMemoryFormData",
-          "categoryIcons",
-          "categoryLabels",
-          "categoryColors",
-          "explanationCards"
-        ]
-      },
-      {
-        "file": "client/src/components/memory/MemoryCategoryGrid.tsx",
-        "domain": "memory",
-        "imports": [
-          "explanationCards"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 6
-  },
-  "client/src/components/memory/MemoryList.tsx": {
-    "domain": "memory",
-    "exports": [
-      "MemoryList"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "MemoryList"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/memory/MemoryInsights.tsx": {
-    "domain": "memory",
-    "exports": [
-      "MemoryInsights"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "MemoryInsights"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/memory/MemoryForm.tsx": {
-    "domain": "memory",
-    "exports": [
-      "MemoryForm"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "MemoryForm"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/memory/MemoryCategoryGrid.tsx": {
-    "domain": "memory",
-    "exports": [
-      "MemoryCategoryGrid"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "MemoryCategoryGrid"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
   "client/src/components/filemanager/QrCodeDialog.tsx": {
     "domain": "file-manager",
     "exports": [
@@ -1461,6 +1461,23 @@
     "crossDomain": false,
     "usageCount": 1
   },
+  "client/src/components/health/utils/pdf-generator.ts": {
+    "domain": "health/hooks",
+    "exports": [
+      "generatePDF"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/health/hooks/useReportGeneration.ts",
+        "domain": "health",
+        "imports": [
+          "generatePDF"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/components/health/dashboard/MobileHeader.tsx": {
     "domain": "health",
     "exports": [
@@ -1578,23 +1595,6 @@
       }
     ],
     "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/health/utils/pdf-generator.ts": {
-    "domain": "health/hooks",
-    "exports": [
-      "generatePDF"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/health/hooks/useReportGeneration.ts",
-        "domain": "health",
-        "imports": [
-          "generatePDF"
-        ]
-      }
-    ],
-    "crossDomain": true,
     "usageCount": 1
   },
   "server/vite.ts": {

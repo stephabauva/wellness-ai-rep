@@ -66,40 +66,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/pages/not-found.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "NotFound"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/home.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "Home"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/hooks/useWebWorker.ts": {
     "domain": "shared/hooks",
     "exports": [
@@ -780,6 +746,40 @@
         "domain": "chat",
         "imports": [
           "AttachmentPreview"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/not-found.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
         ]
       }
     ],
@@ -1751,18 +1751,18 @@
   "client/src/components/health/utils/pdf-generator.ts": {
     "domain": "health/hooks",
     "exports": [
-      "generatePDF"
+      "generatePdfReport"
     ],
     "usedBy": [
       {
-        "file": "client/src/components/health/hooks/useReportGeneration.ts",
+        "file": "client/src/components/health/HealthExportManager.tsx",
         "domain": "health",
         "imports": [
-          "generatePDF"
+          "generatePdfReport"
         ]
       }
     ],
-    "crossDomain": true,
+    "crossDomain": false,
     "usageCount": 1
   },
   "client/src/components/health/dashboard/MobileHeader.tsx": {
@@ -1882,6 +1882,23 @@
       }
     ],
     "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/health/utils/pdf-generator.ts": {
+    "domain": "health/hooks",
+    "exports": [
+      "generatePDF"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/health/hooks/useReportGeneration.ts",
+        "domain": "health",
+        "imports": [
+          "generatePDF"
+        ]
+      }
+    ],
+    "crossDomain": true,
     "usageCount": 1
   },
   "server/vite.ts": {

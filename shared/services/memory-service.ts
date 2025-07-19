@@ -26,6 +26,18 @@ import { eq, desc, and, sql, gt } from 'drizzle-orm';
 import { cacheService } from "@shared/services/cache-service";
 import { goMemoryService } from '../../server/services/go-memory-service';
 import { logger } from "@shared/services/logger-service";
+import {
+  generateSemanticHash,
+  cosineSimilaritySync,
+  createSimilarityCacheKey,
+  normalizeContent,
+  calculateJaccardSimilarity,
+  calculateAverageContentLength,
+  calculateCategoryBalance,
+  calculateQualityScore
+} from './memory/memory-utils';
+import { BackgroundProcessor, type BackgroundTask } from './memory/background-processor';
+import { MemoryCache } from './memory/memory-cache';
 
 interface MemoryDetectionResult {
   shouldRemember: boolean;
@@ -42,37 +54,14 @@ interface RelevantMemory extends MemoryEntry {
   retrievalReason: string;
 }
 
-interface BackgroundTask {
-  id: string;
-  type: 'memory_processing' | 'embedding_generation' | 'similarity_calculation';
-  payload: any;
-  priority: number;
-  createdAt: Date;
-}
-
-interface MemoryProcessingQueue {
-  tasks: BackgroundTask[];
-  processing: boolean;
-}
 
 class MemoryService {
   private openai: OpenAI;
   private google: GoogleGenerativeAI;
   
-  // Tier 2 C: Background processing queue
-  private backgroundQueue: MemoryProcessingQueue = {
-    tasks: [],
-    processing: false
-  };
-  
-  // Tier 2 C: Debounced update registry
-  private updateTimers: Map<string, NodeJS.Timeout> = new Map();
-  
-  // Tier 2 C: Lazy loading cache for user memories
-  private userMemoryCache: Map<string, { memories: MemoryEntry[], lastFetch: Date }> = new Map();
-  
-  // Tier 2 C: Vector similarity cache
-  private similarityCache: Map<string, { score: number, timestamp: Date }> = new Map();
+  // Background processor and cache manager
+  private backgroundProcessor: BackgroundProcessor;
+  private memoryCache: MemoryCache;
   
   // Optimized caching patterns from optimized-memory-service
   private deduplicationCache = new Map<string, string>();
@@ -88,100 +77,24 @@ class MemoryService {
       process.env.GOOGLE_API_KEY || ''
     );
     
-    // Start background processing
-    this.initializeBackgroundProcessor();
-  }
-
-  // Tier 2 C: Initialize background processor with circuit breaker
-  private initializeBackgroundProcessor(): void {
-    logger.debug('Initializing background processor', { service: 'memory' });
+    // Initialize cache manager
+    this.memoryCache = new MemoryCache();
     
-    setInterval(() => {
-      // Circuit breaker: if queue gets too large, clear old low-priority tasks
-      if (this.backgroundQueue.tasks.length > 20) {
-        logger.warn(`Background queue overflow: ${this.backgroundQueue.tasks.length} tasks, clearing old low-priority tasks`, { service: 'memory' });
-        this.backgroundQueue.tasks = this.backgroundQueue.tasks
-          .filter(task => task.priority > 2 || (Date.now() - task.createdAt.getTime()) < 60000) // Keep high-priority or recent tasks
-          .slice(0, 10); // Limit to 10 tasks maximum
-      }
-      this.processBackgroundQueue();
-    }, 5000); // Process queue every 5 seconds
-    
-    // Cleanup old cache entries every 30 minutes
-    setInterval(() => {
-      this.cleanupExpiredCaches();
-    }, 30 * 60 * 1000);
-  }
-
-  // Tier 2 C: Process background tasks queue
-  private async processBackgroundQueue(): Promise<void> {
-    if (this.backgroundQueue.processing || this.backgroundQueue.tasks.length === 0) {
-      return;
-    }
-
-    this.backgroundQueue.processing = true;
-    
-    try {
-      // Sort by priority (higher numbers = higher priority)
-      this.backgroundQueue.tasks.sort((a, b) => b.priority - a.priority);
-      
-      const task = this.backgroundQueue.tasks.shift();
-      if (!task) return;
-
-      console.log(`[MemoryService] Processing background task: ${task.type}`);
-      
-      switch (task.type) {
-        case 'memory_processing':
-          await this.processBackgroundMemoryTask(task.payload);
-          break;
-        case 'embedding_generation':
-          await this.processBackgroundEmbeddingTask(task.payload);
-          break;
-        case 'similarity_calculation':
-          await this.processBackgroundSimilarityTask(task.payload);
-          break;
-      }
-    } catch (error) {
-      console.error('[MemoryService] Background task processing error:', error);
-    } finally {
-      this.backgroundQueue.processing = false;
-    }
-  }
-
-  // Tier 2 C: Add task to background queue
-  private addBackgroundTask(type: BackgroundTask['type'], payload: any, priority: number = 1): void {
-    const task: BackgroundTask = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      payload,
-      priority,
-      createdAt: new Date()
-    };
-    
-    this.backgroundQueue.tasks.push(task);
-  }
-
-  // Tier 2 C: Cleanup expired cache entries
-  private cleanupExpiredCaches(): void {
-    const now = new Date();
-    const cacheExpiry = 60 * 60 * 1000; // 1 hour
-    
-    // Clean user memory cache
-    Array.from(this.userMemoryCache.entries()).forEach(([key, value]) => {
-      if (now.getTime() - value.lastFetch.getTime() > cacheExpiry) {
-        this.userMemoryCache.delete(key);
-      }
+    // Initialize background processor with task handlers
+    this.backgroundProcessor = new BackgroundProcessor({
+      memory_processing: this.processBackgroundMemoryTask.bind(this),
+      embedding_generation: this.processBackgroundEmbeddingTask.bind(this),
+      similarity_calculation: this.processBackgroundSimilarityTask.bind(this)
     });
-    
-    // Clean similarity cache
-    Array.from(this.similarityCache.entries()).forEach(([key, value]) => {
-      if (now.getTime() - value.timestamp.getTime() > cacheExpiry) {
-        this.similarityCache.delete(key);
-      }
-    });
-    
-    console.log(`[MemoryService] Cache cleanup completed. Active caches: ${this.userMemoryCache.size + this.similarityCache.size}`);
   }
+
+
+
+  // Add task to background queue
+  private addBackgroundTask(type: 'memory_processing' | 'embedding_generation' | 'similarity_calculation', payload: any, priority: number = 1): void {
+    this.backgroundProcessor.addBackgroundTask(type, payload, priority);
+  }
+
 
   // Tier 2 C: Background memory processing task with ChatGPT deduplication
   private async processBackgroundMemoryTask(payload: any): Promise<void> {
@@ -212,10 +125,10 @@ class MemoryService {
       console.log(`[MemoryService] ChatGPT deduplication processing completed for user ${userId}`);
       
       // Invalidate user memory cache immediately for real-time updates
-      this.invalidateUserMemoryCache(userId, 100); // Fast invalidation
+      this.memoryCache.invalidateUserMemoryCache(userId, 100); // Fast invalidation
       
       // Force immediate cache cleanup to ensure fresh data
-      this.forceCacheCleanup();
+      this.memoryCache.forceCacheCleanup();
       logger.debug('Cache forcefully invalidated for immediate UI refresh', { service: 'memory' });
       
     } catch (error) {
@@ -246,8 +159,8 @@ class MemoryService {
           
           if (savedMemory) {
             logger.debug(`Fallback memory saved: ${savedMemory.id}`, { service: 'memory' });
-            this.invalidateUserMemoryCache(userId, 100);
-            this.forceCacheCleanup();
+            this.memoryCache.invalidateUserMemoryCache(userId, 100);
+            this.memoryCache.forceCacheCleanup();
           }
         }
       } catch (fallbackError) {
@@ -276,48 +189,20 @@ class MemoryService {
     
     try {
       const similarity = await this.cosineSimilarity(vectorA, vectorB);
-      this.similarityCache.set(cacheKey, {
-        score: similarity,
-        timestamp: new Date()
-      });
+      this.memoryCache.setCachedSimilarity(cacheKey, similarity);
     } catch (error) {
       console.error('[MemoryService] Background similarity calculation failed:', error);
     }
   }
 
-  // Tier 2 C: Debounced cache invalidation
-  private invalidateUserMemoryCache(userId: number, delay: number = 2000): void {
-    const key = `user-memory-${userId}`;
-    
-    // Clear existing timer
-    const existingTimer = this.updateTimers.get(key);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-    
-    // Set new debounced timer
-    const timer = setTimeout(() => {
-      this.userMemoryCache.delete(key);
-      this.updateTimers.delete(key);
-      logger.debug(`Invalidated memory cache for user ${userId}`, { service: 'memory' });
-    }, delay);
-    
-    this.updateTimers.set(key, timer);
-  }
 
-  // Tier 2 C: Get cached vector similarity with background calculation
+  // Get cached vector similarity with background calculation
   private getCachedSimilarity(vectorA: number[], vectorB: number[]): number | null {
     const cacheKey = this.createSimilarityCacheKey(vectorA, vectorB);
-    const cached = this.similarityCache.get(cacheKey);
+    const cached = this.memoryCache.getCachedSimilarity(cacheKey);
     
-    if (cached) {
-      // Check if cache is still valid (1 hour)
-      const maxAge = 60 * 60 * 1000;
-      if (Date.now() - cached.timestamp.getTime() < maxAge) {
-        return cached.score;
-      } else {
-        this.similarityCache.delete(cacheKey);
-      }
+    if (cached !== null) {
+      return cached;
     }
     
     // Schedule background calculation if not cached
@@ -328,28 +213,14 @@ class MemoryService {
     return null;
   }
 
-  // Tier 2 C: Create similarity cache key
+  // Tier 2 C: Create similarity cache key using imported utility
   private createSimilarityCacheKey(vectorA: number[], vectorB: number[]): string {
-    // Create a hash-like key from vector data
-    const hashA = vectorA.slice(0, 10).map(v => Math.round(v * 1000)).join(',');
-    const hashB = vectorB.slice(0, 10).map(v => Math.round(v * 1000)).join(',');
-    return `sim-${hashA}-${hashB}`;
+    return createSimilarityCacheKey(vectorA, vectorB);
   }
 
-  // Fast semantic deduplication (from optimized-memory-service)
+  // Fast semantic deduplication using imported utility
   private generateSemanticHash(message: string): string {
-    const normalizedText = message.toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    const words = normalizedText.split(' ')
-      .filter(word => word.length > 3)
-      .sort()
-      .slice(0, 10);
-
-    const keyContent = words.join('|');
-    return require('crypto').createHash('md5').update(keyContent).digest('hex').slice(0, 16);
+    return generateSemanticHash(message);
   }
 
   private async checkSemanticDuplicate(userId: number, semanticHash: string): Promise<boolean> {
@@ -444,13 +315,13 @@ class MemoryService {
   private validateMemoryContent(extractedInfo: string, category: MemoryCategory): boolean {
     // Check for minimum content length
     if (!extractedInfo || extractedInfo.trim().length < 5) {
-      logger.debug('Memory content too short', { content: extractedInfo, service: 'memory' });
+      logger.debug('Memory content too short', { service: 'memory' });
       return false;
     }
 
     // Check for undefined or placeholder content
     if (extractedInfo.includes('undefined') || extractedInfo.includes('null') || extractedInfo.includes('N/A')) {
-      logger.debug('Placeholder content detected', { content: extractedInfo, service: 'memory' });
+      logger.debug('Placeholder content detected', { service: 'memory' });
       return false;
     }
 
@@ -474,14 +345,14 @@ class MemoryService {
       ];
       
       if (foodLogicPatterns.some(pattern => pattern.test(extractedInfo))) {
-        logger.warn('Nonsensical food/diet content detected', { content: extractedInfo, service: 'memory' });
+        logger.warn('Nonsensical food/diet content detected', { service: 'memory' });
         return false;
       }
     }
 
     // General nonsensical content check
     if (nonsensicalPatterns.some(pattern => pattern.test(extractedInfo))) {
-      logger.warn('Nonsensical content detected', { content: extractedInfo, service: 'memory' });
+      logger.warn('Nonsensical content detected', { service: 'memory' });
       return false;
     }
 
@@ -489,7 +360,7 @@ class MemoryService {
     const words = extractedInfo.toLowerCase().split(/\s+/);
     const uniqueWords = new Set(words);
     if (words.length > 3 && uniqueWords.size / words.length < 0.5) {
-      logger.debug('Overly repetitive content detected', { content: extractedInfo, service: 'memory' });
+      logger.debug('Overly repetitive content detected', { service: 'memory' });
       return false;
     }
 
@@ -571,11 +442,7 @@ Respond with JSON:
       const shouldRemember = result.shouldRemember && extractedInfo && this.validateMemoryContent(extractedInfo, category);
       
       if (result.shouldRemember && !shouldRemember) {
-        logger.info('Memory rejected due to quality validation', { 
-          originalContent: extractedInfo,
-          category: category,
-          service: 'memory' 
-        });
+        logger.info('Memory rejected due to quality validation', { service: 'memory' });
       }
       
       return {
@@ -706,31 +573,17 @@ Respond with JSON:
     return this.cosineSimilaritySync(a, b);
   }
 
-  // Synchronous cosine similarity for fallback and small vectors
+  // Synchronous cosine similarity using imported utility
   cosineSimilaritySync(a: number[], b: number[]): number {
-    if (a.length !== b.length) return 0;
-    
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-    
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
-    }
-    
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    return cosineSimilaritySync(a, b);
   }
 
-  // Tier 2 C: Lazy loading for user memories with caching
+  // Lazy loading for user memories with caching
   private async getUserMemoriesLazy(userId: number): Promise<MemoryEntry[]> {
-    const cacheKey = `user-memory-${userId}`;
-    const cached = this.userMemoryCache.get(cacheKey);
-    
-    // Return cached memories if fresh (within 30 minutes)
-    if (cached && (Date.now() - cached.lastFetch.getTime()) < 30 * 60 * 1000) {
-      return cached.memories;
+    // Check cache first
+    const cachedMemories = this.memoryCache.getCachedUserMemories(userId);
+    if (cachedMemories) {
+      return cachedMemories;
     }
     
     // Fetch from database
@@ -744,10 +597,7 @@ Respond with JSON:
       .orderBy(desc(memoryEntries.importanceScore));
     
     // Cache the results
-    this.userMemoryCache.set(cacheKey, {
-      memories,
-      lastFetch: new Date()
-    });
+    this.memoryCache.setCachedUserMemories(userId, memories);
     
     return memories;
   }
@@ -923,8 +773,8 @@ Respond with JSON:
             .set({ memoryEntryId: memory.id, processed: true })
             .where(eq(memoryTriggers.id, trigger.id));
           
-          // Tier 2 C: Debounced cache invalidation for immediate updates
-          this.invalidateUserMemoryCache(userId, 500); // Faster invalidation for explicit saves
+          // Debounced cache invalidation for immediate updates
+          this.memoryCache.invalidateUserMemoryCache(userId, 500); // Faster invalidation for explicit saves
         }
       }
 
@@ -1080,11 +930,11 @@ Use this remembered information to personalize your responses naturally. Don't e
       // Calculate basic metrics
       const totalMemories = memories.length;
       const averageImportanceScore = totalMemories > 0 
-        ? memories.reduce((sum, m) => sum + (m.importanceScore || 0), 0) / totalMemories 
+        ? memories.reduce((sum: number, m: any) => sum + (m.importanceScore || 0), 0) / totalMemories 
         : 0;
 
       // Calculate freshness (based on last access vs creation date)
-      const freshnessScores = memories.map(m => {
+      const freshnessScores = memories.map((m: any) => {
         const created = new Date(m.createdAt);
         const accessed = m.lastAccessed ? new Date(m.lastAccessed) : created;
         const daysSinceCreation = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
@@ -1095,22 +945,22 @@ Use this remembered information to personalize your responses naturally. Don't e
       });
       
       const averageFreshness = freshnessScores.length > 0 
-        ? freshnessScores.reduce((sum, score) => sum + score, 0) / freshnessScores.length 
+        ? freshnessScores.reduce((sum: number, score: number) => sum + score, 0) / freshnessScores.length 
         : 0;
 
       // Category distribution
       const categoryDistribution: Record<string, number> = {};
-      memories.forEach(m => {
+      memories.forEach((m: any) => {
         const category = m.category || 'unknown';
         categoryDistribution[category] = (categoryDistribution[category] || 0) + 1;
       });
 
       // Age distribution
       const memoryAgeDistribution = {
-        lastWeek: memories.filter(m => new Date(m.createdAt) >= oneWeekAgo).length,
-        lastMonth: memories.filter(m => new Date(m.createdAt) >= oneMonthAgo && new Date(m.createdAt) < oneWeekAgo).length,
-        lastYear: memories.filter(m => new Date(m.createdAt) >= oneYearAgo && new Date(m.createdAt) < oneMonthAgo).length,
-        older: memories.filter(m => new Date(m.createdAt) < oneYearAgo).length
+        lastWeek: memories.filter((m: any) => new Date(m.createdAt) >= oneWeekAgo).length,
+        lastMonth: memories.filter((m: any) => new Date(m.createdAt) >= oneMonthAgo && new Date(m.createdAt) < oneWeekAgo).length,
+        lastYear: memories.filter((m: any) => new Date(m.createdAt) >= oneYearAgo && new Date(m.createdAt) < oneMonthAgo).length,
+        older: memories.filter((m: any) => new Date(m.createdAt) < oneYearAgo).length
       };
 
       // Detect potential duplicates using simple content similarity
@@ -1183,42 +1033,19 @@ Use this remembered information to personalize your responses naturally. Don't e
   }
 
   private normalizeContent(content: string): string {
-    return content.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    return normalizeContent(content);
   }
 
   private calculateJaccardSimilarity(content1: string, content2: string): number {
-    const words1 = new Set(content1.split(/\s+/).filter(w => w.length > 2));
-    const words2 = new Set(content2.split(/\s+/).filter(w => w.length > 2));
-    
-    const intersection = new Set([...words1].filter(w => words2.has(w)));
-    const union = new Set([...words1, ...words2]);
-    
-    return union.size > 0 ? intersection.size / union.size : 0;
+    return calculateJaccardSimilarity(content1, content2);
   }
 
   private calculateCategoryBalance(categoryDistribution: Record<string, number>): number {
-    const categories = Object.values(categoryDistribution);
-    if (categories.length === 0) return 0;
-    
-    const total = categories.reduce((sum, count) => sum + count, 0);
-    const expectedPerCategory = total / categories.length;
-    
-    // Calculate how evenly distributed the categories are
-    const variance = categories.reduce((sum, count) => 
-      sum + Math.pow(count - expectedPerCategory, 2), 0) / categories.length;
-    
-    // Lower variance = better balance, normalize to 0-1
-    return Math.max(0, 1 - (variance / (expectedPerCategory * expectedPerCategory)));
+    return calculateCategoryBalance(categoryDistribution);
   }
 
   private calculateAverageContentLength(memories: any[]): number {
-    if (memories.length === 0) return 0;
-    
-    const totalLength = memories.reduce((sum, m) => sum + (m.content?.length || 0), 0);
-    return totalLength / memories.length;
+    return calculateAverageContentLength(memories);
   }
 
   private calculateQualityScore(metrics: {
@@ -1228,29 +1055,7 @@ Use this remembered information to personalize your responses naturally. Don't e
     categoryBalance: number;
     contentLength: number;
   }): number {
-    const weights = {
-      duplicateRate: 0.3,      // Lower duplicate rate = better quality
-      importanceScore: 0.25,   // Higher importance = better quality
-      freshness: 0.2,          // More fresh memories = better quality
-      categoryBalance: 0.15,   // More balanced categories = better quality
-      contentLength: 0.1       // Appropriate content length = better quality
-    };
-    
-    // Normalize scores to 0-1 range
-    const duplicateScore = Math.max(0, 1 - metrics.duplicateRate);
-    const importanceScore = Math.min(1, metrics.averageImportanceScore / 10);
-    const freshnessScore = Math.min(1, metrics.averageFreshness);
-    const categoryScore = metrics.categoryBalance;
-    const contentScore = Math.min(1, Math.max(0, 
-      1 - Math.abs(metrics.contentLength - 100) / 200)); // Optimal around 100 chars
-    
-    return (
-      duplicateScore * weights.duplicateRate +
-      importanceScore * weights.importanceScore +
-      freshnessScore * weights.freshness +
-      categoryScore * weights.categoryBalance +
-      contentScore * weights.contentLength
-    );
+    return calculateQualityScore(metrics);
   }
 
   // Tier 2 C: Delete memory with optimized cache invalidation
@@ -1266,12 +1071,8 @@ Use this remembered information to personalize your responses naturally. Don't e
         .returning();
 
       if (deleted) {
-        // Immediate cache invalidation
-        const cacheKey = `user-memory-${userId}`;
-        this.userMemoryCache.delete(cacheKey);
-        
-        // Clear related cache entries
-        cacheService.clearMemorySearchResults(userId);
+        // Clear user cache
+        this.memoryCache.clearUserCache(userId);
         
         logger.debug(`Memory ${memoryId} marked as inactive and cache cleared`, { service: 'memory' });
       }
@@ -1283,27 +1084,28 @@ Use this remembered information to personalize your responses naturally. Don't e
     }
   }
 
-  // Tier 2 C: Get memory service performance stats
+  // Get memory service performance stats
   getPerformanceStats(): {
     backgroundQueueSize: number;
     activeCaches: number;
     pendingUpdates: number;
     cacheHitRate: string;
   } {
+    const backgroundStats = this.backgroundProcessor.getPerformanceStats();
+    const cacheStats = this.memoryCache.getCacheStats();
+    
     return {
-      backgroundQueueSize: this.backgroundQueue.tasks.length,
-      activeCaches: this.userMemoryCache.size + this.similarityCache.size,
-      pendingUpdates: this.updateTimers.size,
-      cacheHitRate: `${Math.round((this.userMemoryCache.size / (this.userMemoryCache.size + 1)) * 100)}%`
+      ...backgroundStats,
+      ...cacheStats
     };
   }
 
-  // Tier 2 C: Force cache cleanup for memory management
+  // Force cache cleanup for memory management
   forceCacheCleanup(): void {
-    this.cleanupExpiredCaches();
+    this.memoryCache.forceCacheCleanup();
   }
 
-  // Tier 2 C: Preload user memories for better performance
+  // Preload user memories for better performance
   async preloadUserMemories(userId: number): Promise<void> {
     try {
       await this.getUserMemoriesLazy(userId);

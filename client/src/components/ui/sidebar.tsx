@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { VariantProps } from "class-variance-authority"
+import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@shared/hooks/use-mobile"
@@ -33,6 +33,9 @@ import {
 import type { SidebarContextProps } from "./sidebar-types"
 import { SidebarContext, useSidebar } from "./useSidebar"
 import { sidebarMenuButtonVariants } from "./sidebar-variants"
+
+
+
 
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
@@ -502,7 +505,6 @@ const SidebarMenuItem = React.forwardRef<
 ))
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
-
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & {
@@ -704,6 +706,10 @@ const SidebarMenuSubButton = React.forwardRef<
   )
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
+
+
+
+
 
 export {
   Sidebar,

@@ -9,9 +9,9 @@ import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import type { HealthDataPoint, HealthDataQuery, HealthSyncResult, HealthPermissions } from '@shared/types/health';
 import { healthKitTypes, googleFitTypes, googleFitUnits } from '@shared/services/health/provider-mappings';
-import { generateSampleHealthKitData, generateSampleGoogleFitData } from '@shared/services/health/sample-data-generators';
 import { processHealthKitResults, processGoogleFitResults } from '@shared/services/health/result-processors';
 import { NativeBridgeProvider } from '@shared/services/health/native-bridge-utils';
+import { NativeMethodHandler } from '@shared/services/health/native-method-handlers';
 
 /**
  * Abstract base class for native health data access
@@ -35,6 +35,19 @@ export abstract class NativeHealthProvider {
  */
 export class HealthKitProvider extends NativeHealthProvider {
   private bridge = new (class extends NativeBridgeProvider {})();
+  private methodHandler = new (class extends NativeMethodHandler {
+    protected async getStoredPermissions(): Promise<any> {
+      return await this.bridge.getStoredPermissions('healthkit_permissions');
+    }
+    
+    protected async simulatePermissionRequest(dataTypes: string[]): Promise<any> {
+      return await this.bridge.simulatePermissionRequest(dataTypes);
+    }
+    
+    constructor(private bridge: NativeBridgeProvider) {
+      super();
+    }
+  })(this.bridge);
 
   async checkPermissions(): Promise<HealthPermissions> {
     try {
@@ -46,7 +59,7 @@ export class HealthKitProvider extends NativeHealthProvider {
       if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
         try {
           // Use native iOS HealthKit API
-          const result = await this.callNativeHealthKit('checkPermissions', {});
+          const result = await this.methodHandler.callHealthKitMethod('checkPermissions', {});
           return {
             granted: result.granted || false,
             permissions: {
@@ -86,12 +99,10 @@ export class HealthKitProvider extends NativeHealthProvider {
       console.log('[HealthKit] Requesting permissions for types:', healthKitIdentifiers);
 
       // Use Capacitor native bridge to request HealthKit permissions
-      const result = await Capacitor.isPluginAvailable('HealthKit')
-        ? await this.callNativeHealthKit('requestPermissions', {
-            readTypes: healthKitIdentifiers,
-            writeTypes: [] // Read-only for now
-          })
-        : await this.simulatePermissionRequest(dataTypes);
+      const result = await this.methodHandler.callHealthKitMethod('requestPermissions', {
+        readTypes: healthKitIdentifiers,
+        writeTypes: [] // Read-only for now
+      });
 
       // Store permissions locally for web testing
       await this.bridge.storePermissions('healthkit_permissions', result);
@@ -128,14 +139,12 @@ export class HealthKitProvider extends NativeHealthProvider {
       console.log('[HealthKit] Querying data for:', healthKitQueries);
 
       // Use Capacitor native bridge to query HealthKit data
-      const results = await Capacitor.isPluginAvailable('HealthKit')
-        ? await this.callNativeHealthKit('queryData', {
-            queries: healthKitQueries,
-            startDate: query.startDate.toISOString(),
-            endDate: query.endDate.toISOString(),
-            limit: query.limit || 1000
-          })
-        : await generateSampleHealthKitData(query);
+      const results = await this.methodHandler.callHealthKitMethod('queryData', {
+        queries: healthKitQueries,
+        startDate: query.startDate.toISOString(),
+        endDate: query.endDate.toISOString(),
+        limit: query.limit || 1000
+      });
 
       return processHealthKitResults(results);
     } catch (error) {
@@ -164,49 +173,7 @@ export class HealthKitProvider extends NativeHealthProvider {
     return Object.keys(healthKitTypes);
   }
 
-  // Native bridge communication methods
-  private async callNativeHealthKit(method: string, args: any): Promise<any> {
-    try {
-      // Use the actual HealthKit plugin for iOS
-      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-        const HealthKitManager = (window as any).Capacitor?.Plugins?.HealthKitManager;
-        if (HealthKitManager) {
-          return await HealthKitManager[method](args);
-        } else {
-          console.warn('[HealthKit] HealthKitManager plugin not found on Capacitor.Plugins');
-        }
-      }
-      
-      // Fallback for development/web
-      const result = await Capacitor.isPluginAvailable('HealthKitManager')
-        ? (window as any).CapacitorHealthKit?.[method]?.(args)
-        : null;
-      
-      if (!result) {
-        console.log('[HealthKit] Native plugin not available, using fallback');
-        return this.getFallbackResult(method, args);
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('[HealthKit] Native call failed:', error);
-      return this.getFallbackResult(method, args);
-    }
-  }
-
-  private async getFallbackResult(method: string, args: any): Promise<any> {
-    switch (method) {
-      case 'checkPermissions':
-        return await this.getStoredPermissions();
-      case 'requestPermissions':
-        return await this.simulatePermissionRequest(args.readTypes || []);
-      case 'queryData':
-        return await generateSampleHealthKitData(args);
-      default:
-        return null;
-    }
-  }
-
+  // Direct access to stored permissions and simulation methods
   private async getStoredPermissions(): Promise<any> {
     return await this.bridge.getStoredPermissions('healthkit_permissions');
   }
@@ -224,6 +191,19 @@ export class HealthKitProvider extends NativeHealthProvider {
  */
 export class GoogleFitProvider extends NativeHealthProvider {
   private bridge = new (class extends NativeBridgeProvider {})();
+  private methodHandler = new (class extends NativeMethodHandler {
+    protected async getStoredPermissions(): Promise<any> {
+      return await this.bridge.getStoredPermissions('googlefit_permissions');
+    }
+    
+    protected async simulatePermissionRequest(dataTypes: string[]): Promise<any> {
+      return await this.bridge.simulatePermissionRequest(dataTypes);
+    }
+    
+    constructor(private bridge: NativeBridgeProvider) {
+      super();
+    }
+  })(this.bridge);
 
   async checkPermissions(): Promise<HealthPermissions> {
     try {
@@ -232,9 +212,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
       }
 
       // Use Capacitor native bridge to check Google Fit permissions
-      const result = await Capacitor.isPluginAvailable('GoogleFit') 
-        ? await this.callNativeGoogleFit('checkPermissions', {})
-        : await this.getStoredPermissions();
+      const result = await this.methodHandler.callGoogleFitMethod('checkPermissions', {});
 
       console.log('[GoogleFit] Permission check result:', result);
       
@@ -262,12 +240,10 @@ export class GoogleFitProvider extends NativeHealthProvider {
       console.log('[GoogleFit] Requesting permissions for types:', googleFitDataTypes);
 
       // Use Capacitor native bridge to request Google Fit permissions
-      const result = await Capacitor.isPluginAvailable('GoogleFit')
-        ? await this.callNativeGoogleFit('requestPermissions', {
-            readTypes: googleFitDataTypes,
-            writeTypes: [] // Read-only for now
-          })
-        : await this.simulatePermissionRequest(dataTypes);
+      const result = await this.methodHandler.callGoogleFitMethod('requestPermissions', {
+        readTypes: googleFitDataTypes,
+        writeTypes: [] // Read-only for now
+      });
 
       // Store permissions locally for web testing
       await this.bridge.storePermissions('googlefit_permissions', result);
@@ -304,14 +280,12 @@ export class GoogleFitProvider extends NativeHealthProvider {
       console.log('[GoogleFit] Querying data for:', googleFitQueries);
 
       // Use Capacitor native bridge to query Google Fit data
-      const results = await Capacitor.isPluginAvailable('GoogleFit')
-        ? await this.callNativeGoogleFit('queryData', {
-            queries: googleFitQueries,
-            startTime: query.startDate.getTime(),
-            endTime: query.endDate.getTime(),
-            bucketType: 'DAY' // Daily aggregation
-          })
-        : await generateSampleGoogleFitData(query);
+      const results = await this.methodHandler.callGoogleFitMethod('queryData', {
+        queries: googleFitQueries,
+        startTime: query.startDate.getTime(),
+        endTime: query.endDate.getTime(),
+        bucketType: 'DAY' // Daily aggregation
+      });
 
       return processGoogleFitResults(results);
     } catch (error) {
@@ -340,39 +314,7 @@ export class GoogleFitProvider extends NativeHealthProvider {
     return Object.keys(googleFitTypes);
   }
 
-  // Native bridge communication methods
-  private async callNativeGoogleFit(method: string, args: any): Promise<any> {
-    try {
-      // This would use a real Google Fit plugin in production
-      const result = await Capacitor.isPluginAvailable('GoogleFit')
-        ? (window as any).CapacitorGoogleFit?.[method]?.(args)
-        : null;
-      
-      if (!result) {
-        console.log('[GoogleFit] Native plugin not available, using fallback');
-        return this.getFallbackResult(method, args);
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('[GoogleFit] Native call failed:', error);
-      return this.getFallbackResult(method, args);
-    }
-  }
-
-  private async getFallbackResult(method: string, args: any): Promise<any> {
-    switch (method) {
-      case 'checkPermissions':
-        return await this.getStoredPermissions();
-      case 'requestPermissions':
-        return await this.simulatePermissionRequest(args.readTypes || []);
-      case 'queryData':
-        return await generateSampleGoogleFitData(args);
-      default:
-        return null;
-    }
-  }
-
+  // Direct access to stored permissions and simulation methods
   private async getStoredPermissions(): Promise<any> {
     return await this.bridge.getStoredPermissions('googlefit_permissions');
   }

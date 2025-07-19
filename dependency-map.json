@@ -16,40 +16,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "client/src/pages/not-found.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "NotFound"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/home.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "Home"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/services/universal-file-service.ts": {
     "domain": "file-manager",
     "exports": [
@@ -94,6 +60,40 @@
         "imports": [
           "audioService",
           "TranscriptionResult"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/not-found.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
         ]
       }
     ],
@@ -854,6 +854,375 @@
     "crossDomain": false,
     "usageCount": 1
   },
+  "client/src/components/ui/useSidebar.ts": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "SidebarContext",
+      "useSidebar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "SidebarContext",
+          "useSidebar"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar-menu-button-components.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "useSidebar"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/components/ui/sidebar-variants.ts": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "sidebarMenuButtonVariants"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "sidebarMenuButtonVariants"
+        ]
+      },
+      {
+        "file": "client/src/components/ui/sidebar-menu-button-components.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "sidebarMenuButtonVariants"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 2
+  },
+  "client/src/components/ui/sidebar-menu-components.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "SidebarMenu",
+      "SidebarMenuItem",
+      "SidebarMenuSub",
+      "SidebarMenuSubItem",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "SidebarMenu",
+          "SidebarMenuItem",
+          "SidebarMenuSub",
+          "SidebarMenuSubItem",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/sidebar-menu-button-components.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "SidebarMenuAction",
+      "SidebarMenuBadge",
+      "SidebarMenuButton",
+      "SidebarMenuSkeleton",
+      "SidebarMenuSubButton",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "SidebarMenuAction",
+          "SidebarMenuBadge",
+          "SidebarMenuButton",
+          "SidebarMenuSkeleton",
+          "SidebarMenuSubButton",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/sidebar-layout-components.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "SidebarFooter",
+      "SidebarHeader",
+      "SidebarInput",
+      "SidebarSeparator",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "SidebarFooter",
+          "SidebarHeader",
+          "SidebarInput",
+          "SidebarSeparator",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/sidebar-group-components.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "SidebarGroup",
+      "SidebarGroupAction",
+      "SidebarGroupContent",
+      "SidebarGroupLabel",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "SidebarGroup",
+          "SidebarGroupAction",
+          "SidebarGroupContent",
+          "SidebarGroupLabel",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/sidebar-constants.ts": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "SIDEBAR_COOKIE_NAME",
+      "SIDEBAR_COOKIE_MAX_AGE",
+      "SIDEBAR_WIDTH",
+      "SIDEBAR_WIDTH_MOBILE",
+      "SIDEBAR_WIDTH_ICON",
+      "SIDEBAR_KEYBOARD_SHORTCUT"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "SIDEBAR_COOKIE_NAME",
+          "SIDEBAR_COOKIE_MAX_AGE",
+          "SIDEBAR_WIDTH",
+          "SIDEBAR_WIDTH_MOBILE",
+          "SIDEBAR_WIDTH_ICON",
+          "SIDEBAR_KEYBOARD_SHORTCUT",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/sheet.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Sheet",
+      "SheetPortal",
+      "SheetOverlay",
+      "SheetTrigger",
+      "SheetClose",
+      "SheetContent",
+      "SheetHeader",
+      "SheetFooter",
+      "SheetTitle",
+      "SheetDescription",
+      ""
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/sidebar.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Sheet",
+          "SheetContent",
+          "SheetDescription",
+          "SheetHeader",
+          "SheetTitle",
+          ""
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/scroll-area.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ScrollArea",
+      "ScrollBar"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConversationHistory.tsx",
+        "domain": "chat",
+        "imports": [
+          "ScrollArea"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/progress.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "Progress"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ui/upload-progress.tsx",
+        "domain": "shared/ui-components",
+        "imports": [
+          "Progress"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/ui/device-card.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "DeviceCard"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/ConnectedDevicesSection.tsx",
+        "domain": "health/devices",
+        "imports": [
+          "DeviceCard"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/chat-message.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ChatMessage"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MessageDisplayArea.tsx",
+        "domain": "chat",
+        "imports": [
+          "ChatMessage"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/TouchSwipeHandler.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "TouchSwipeHandler",
+      "createDeleteAction",
+      "createEditAction",
+      "createUndoAction"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/memory/MemoryList.tsx",
+        "domain": "memory",
+        "imports": [
+          "TouchSwipeHandler",
+          "createDeleteAction",
+          "createEditAction"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/ThemeToggle.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "ThemeToggle"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/Sidebar.tsx",
+        "domain": "app/navigation",
+        "imports": [
+          "ThemeToggle"
+        ]
+      },
+      {
+        "file": "client/src/components/MobileNav.tsx",
+        "domain": "app/navigation",
+        "imports": [
+          "ThemeToggle"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 2
+  },
+  "client/src/components/ui/PrivacyBadge.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "PrivacyBadgeProps",
+      "PrivacyBadge",
+      "PrivacyIndicatorGroupProps",
+      "PrivacyIndicatorGroup",
+      "PrivacyStatusProps",
+      "PrivacyStatus"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "PrivacyBadge",
+          "PrivacyStatus"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/components/ui/FAB.tsx": {
+    "domain": "shared/ui-components",
+    "exports": [
+      "FABProps",
+      "FAB",
+      "fabVariants"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/MemorySection.tsx",
+        "domain": "memory",
+        "imports": [
+          "FAB"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
   "client/src/components/settings/PerformanceSettings.tsx": {
     "domain": "settings",
     "exports": [
@@ -1272,328 +1641,17 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "client/src/components/ui/useSidebar.ts": {
-    "domain": "shared/ui-components",
+  "client/src/components/health/utils/pdf-generator.ts": {
+    "domain": "health/hooks",
     "exports": [
-      "SidebarContext",
-      "useSidebar"
+      "generatePDF"
     ],
     "usedBy": [
       {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
+        "file": "client/src/components/health/hooks/useReportGeneration.ts",
+        "domain": "health",
         "imports": [
-          "SidebarContext",
-          "useSidebar"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sidebar-variants.ts": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "sidebarMenuButtonVariants"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "sidebarMenuButtonVariants"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sidebar-menu-components.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "SidebarMenu",
-      "SidebarMenuItem",
-      "SidebarMenuSub",
-      "SidebarMenuSubItem",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "SidebarMenu",
-          "SidebarMenuItem",
-          "SidebarMenuSub",
-          "SidebarMenuSubItem",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sidebar-layout-components.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "SidebarFooter",
-      "SidebarHeader",
-      "SidebarInput",
-      "SidebarSeparator",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "SidebarFooter",
-          "SidebarHeader",
-          "SidebarInput",
-          "SidebarSeparator",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sidebar-group-components.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "SidebarGroup",
-      "SidebarGroupAction",
-      "SidebarGroupContent",
-      "SidebarGroupLabel",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "SidebarGroup",
-          "SidebarGroupAction",
-          "SidebarGroupContent",
-          "SidebarGroupLabel",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sidebar-constants.ts": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "SIDEBAR_COOKIE_NAME",
-      "SIDEBAR_COOKIE_MAX_AGE",
-      "SIDEBAR_WIDTH",
-      "SIDEBAR_WIDTH_MOBILE",
-      "SIDEBAR_WIDTH_ICON",
-      "SIDEBAR_KEYBOARD_SHORTCUT"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "SIDEBAR_COOKIE_NAME",
-          "SIDEBAR_COOKIE_MAX_AGE",
-          "SIDEBAR_WIDTH",
-          "SIDEBAR_WIDTH_MOBILE",
-          "SIDEBAR_WIDTH_ICON",
-          "SIDEBAR_KEYBOARD_SHORTCUT",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/sheet.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Sheet",
-      "SheetPortal",
-      "SheetOverlay",
-      "SheetTrigger",
-      "SheetClose",
-      "SheetContent",
-      "SheetHeader",
-      "SheetFooter",
-      "SheetTitle",
-      "SheetDescription",
-      ""
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/sidebar.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Sheet",
-          "SheetContent",
-          "SheetDescription",
-          "SheetHeader",
-          "SheetTitle",
-          ""
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/scroll-area.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ScrollArea",
-      "ScrollBar"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConversationHistory.tsx",
-        "domain": "chat",
-        "imports": [
-          "ScrollArea"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/progress.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "Progress"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ui/upload-progress.tsx",
-        "domain": "shared/ui-components",
-        "imports": [
-          "Progress"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/ui/device-card.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "DeviceCard"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/ConnectedDevicesSection.tsx",
-        "domain": "health/devices",
-        "imports": [
-          "DeviceCard"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/chat-message.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ChatMessage"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MessageDisplayArea.tsx",
-        "domain": "chat",
-        "imports": [
-          "ChatMessage"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/TouchSwipeHandler.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "TouchSwipeHandler",
-      "createDeleteAction",
-      "createEditAction",
-      "createUndoAction"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/memory/MemoryList.tsx",
-        "domain": "memory",
-        "imports": [
-          "TouchSwipeHandler",
-          "createDeleteAction",
-          "createEditAction"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/ThemeToggle.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "ThemeToggle"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/Sidebar.tsx",
-        "domain": "app/navigation",
-        "imports": [
-          "ThemeToggle"
-        ]
-      },
-      {
-        "file": "client/src/components/MobileNav.tsx",
-        "domain": "app/navigation",
-        "imports": [
-          "ThemeToggle"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 2
-  },
-  "client/src/components/ui/PrivacyBadge.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "PrivacyBadgeProps",
-      "PrivacyBadge",
-      "PrivacyIndicatorGroupProps",
-      "PrivacyIndicatorGroup",
-      "PrivacyStatusProps",
-      "PrivacyStatus"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "PrivacyBadge",
-          "PrivacyStatus"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/components/ui/FAB.tsx": {
-    "domain": "shared/ui-components",
-    "exports": [
-      "FABProps",
-      "FAB",
-      "fabVariants"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/MemorySection.tsx",
-        "domain": "memory",
-        "imports": [
-          "FAB"
+          "generatePDF"
         ]
       }
     ],
@@ -1719,23 +1777,6 @@
     "crossDomain": false,
     "usageCount": 1
   },
-  "client/src/components/health/utils/pdf-generator.ts": {
-    "domain": "health/hooks",
-    "exports": [
-      "generatePDF"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/health/hooks/useReportGeneration.ts",
-        "domain": "health",
-        "imports": [
-          "generatePDF"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "server/vite.ts": {
     "domain": "unknown/needs-classification",
     "exports": [
@@ -1767,25 +1808,6 @@
         "domain": "infrastructure/server",
         "imports": [
           "registerSimpleRoutes"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "server/routes/index.ts": {
-    "domain": "infrastructure/routing",
-    "exports": [
-      "ROUTE_MODULES",
-      "EMERGENCY_FALLBACK",
-      "ROUTE_MODULES_ENABLED"
-    ],
-    "usedBy": [
-      {
-        "file": "server/index.ts",
-        "domain": "infrastructure/server",
-        "imports": [
-          "registerRoutes"
         ]
       }
     ],
@@ -1903,6 +1925,25 @@
         "domain": "infrastructure/server",
         "imports": [
           "databaseMigrationService"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "server/routes/index.ts": {
+    "domain": "infrastructure/routing",
+    "exports": [
+      "ROUTE_MODULES",
+      "EMERGENCY_FALLBACK",
+      "ROUTE_MODULES_ENABLED"
+    ],
+    "usedBy": [
+      {
+        "file": "server/index.ts",
+        "domain": "infrastructure/server",
+        "imports": [
+          "registerRoutes"
         ]
       }
     ],

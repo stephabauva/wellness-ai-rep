@@ -97,3 +97,4 @@ npm run build       # Production build works
 - **Domain boundaries**: Respect health/, memory/, chat/, settings/, file-manager/, home/, auth/
 - **Component/service limits**: Check totals before creating new ones
 - **Integration first**: Every feature must be accessible through UI and working end-to-end
+- **Remove old code**: When you modify existing code, and you create new code to replace an old one, remove the old one, only active code must stay.

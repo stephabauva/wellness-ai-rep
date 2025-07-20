@@ -6,19 +6,19 @@ This system replicates the Claude Code editor slash command functionality (like 
 
 ```bash
 # Show all available commands
-./run-claude-code-command.sh --help
+./run-claude-code-command-in-replit.sh --help
 
 # Run architecture checks (like $/arch-guard in Claude Code)
-./run-claude-code-command.sh arch-guard
+./run-claude-code-command-in-replit.sh arch-guard
 
 # Start production-ready development mode (like $/workit in Claude Code)
-./run-claude-code-command.sh workit
+./run-claude-code-command-in-replit.sh workit
 
 # Check code quality and limits (like $/clean-code in Claude Code)
-./run-claude-code-command.sh clean-code
+./run-claude-code-command-in-replit.sh clean-code
 
 # Analyze large files for refactoring (like $/safe-refactor in Claude Code)
-./run-claude-code-command.sh safe-refactor
+./run-claude-code-command-in-replit.sh safe-refactor
 ```
 
 ## How It Works
@@ -28,7 +28,7 @@ The system bridges your existing `.claude/commands/*.md` files with executable s
 1. **Command Parser**: `replit-claude-code-commands.js` reads the `.claude/commands/` directory
 2. **Execution Engine**: Runs the appropriate analysis scripts based on the command
 3. **Integration**: Connects with existing tools like `dependency-tracker.js`, `file-size-analyzer.js`, etc.
-4. **Bash Wrapper**: `run-claude-code-command.sh` provides easy command-line access
+4. **Bash Wrapper**: `run-claude-code-command-in-replit.sh` provides easy command-line access
 
 ## Available Commands
 
@@ -99,10 +99,10 @@ The commands enforce strict domain separation:
 
 ## Usage in Development Workflow
 
-1. **Before starting work**: `./run-claude-code-command.sh arch-guard`
-2. **During development**: `./run-claude-code-command.sh workit`
-3. **Before refactoring**: `./run-claude-code-command.sh safe-refactor`
-4. **Before committing**: `./run-claude-code-command.sh clean-code`
+1. **Before starting work**: `./run-claude-code-command-in-replit.sh arch-guard`
+2. **During development**: `./run-claude-code-command-in-replit.sh workit`
+3. **Before refactoring**: `./run-claude-code-command-in-replit.sh safe-refactor`
+4. **Before committing**: `./run-claude-code-command-in-replit.sh clean-code`
 
 ## Alternative Execution Methods
 
@@ -111,10 +111,10 @@ The commands enforce strict domain separation:
 node replit-claude-code-commands.js arch-guard
 
 # Bash wrapper (recommended)
-./run-claude-code-command.sh arch-guard
+./run-claude-code-command-in-replit.sh arch-guard
 
 # Alternative bash syntax
-bash run-claude-code-command.sh arch-guard
+bash run-claude-code-command-in-replit.sh arch-guard
 ```
 
 ## Exit Codes

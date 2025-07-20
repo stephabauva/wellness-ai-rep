@@ -1,0 +1,11 @@
+#!/bin/bash
+# True Slash Command: /workit
+# Usage: ./_slash_workit [prompt]
+
+PROJECT_ROOT="$(dirname "${BASH_SOURCE[0]}")"
+
+if [ "$#" -eq 0 ]; then
+    node "$PROJECT_ROOT/slash-command-parser.js" "/workit"
+else
+    node "$PROJECT_ROOT/slash-command-parser.js" "/workit $*"
+fi

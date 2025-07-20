@@ -44,19 +44,22 @@ These commands replicate the slash commands from Claude Code editor in Replit (l
 
 ### Quick Start Examples
 ```bash
-# Direct slash commands (recommended)
+# SHORTEST COMMANDS (recommended)
+./c arch-guard          # Ultra-short single character!
+./c workit
+./c clean-code
+
+# Short runner
+./run-command.sh arch-guard
+./run-command.sh workit
+
+# Original slash commands  
 ./run-slash-command.sh "/arch-guard"
 ./run-slash-command.sh "/workit"
-./run-slash-command.sh "/safe-refactor analyze large components"
 
 # Individual scripts
 ./slash-commands/arch-guard
-./slash-commands/clean-code
-
-# Shell aliases (after sourcing)
-source ./claude-code-aliases.sh
-arch-guard
-workit
+./_slash_workit
 ```
 
 ### Legacy Command Runner (Still Available)
@@ -147,18 +150,20 @@ These scripts provide automated code quality and architecture analysis:
 
 ## Usage Examples
 ```bash
-# NEW: Claude Code style slash commands (recommended)
+# SHORTEST: Ultra-short commands (recommended)
+./c arch-guard
+./c workit
+./c clean-code
+
+# SHORT: Command runners
+./run-command.sh arch-guard
 ./run-slash-command.sh "/arch-guard"
-./run-slash-command.sh "/workit"
-./run-slash-command.sh "/clean-code"
 
-# Shell aliases (after sourcing)
-source ./claude-code-aliases.sh
-arch-guard
-workit
-clean-code
+# FILES: Individual scripts
+./slash-commands/arch-guard
+./_slash_workit
 
-# Legacy: Original command runner
+# LEGACY: Original command runner
 ./run-claude-code-command-in-replit.sh arch-guard
 
 # Analysis tools (used by slash commands)

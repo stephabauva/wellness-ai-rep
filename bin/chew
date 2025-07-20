@@ -1,0 +1,12 @@
+#!/bin/bash
+# Direct Claude Code Command: chew
+# Usage: chew [prompt]
+
+# Get the project root directory
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ "$#" -eq 0 ]; then
+    node "$PROJECT_ROOT/slash-command-parser.js" "/chew"
+else
+    node "$PROJECT_ROOT/slash-command-parser.js" "/chew $*"
+fi

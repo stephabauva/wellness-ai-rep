@@ -1,0 +1,11 @@
+#!/bin/bash
+# True Slash Command: /clean-code
+# Usage: ./_slash_clean-code [prompt]
+
+PROJECT_ROOT="$(dirname "${BASH_SOURCE[0]}")"
+
+if [ "$#" -eq 0 ]; then
+    node "$PROJECT_ROOT/slash-command-parser.js" "/clean-code"
+else
+    node "$PROJECT_ROOT/slash-command-parser.js" "/clean-code $*"
+fi

@@ -1,0 +1,11 @@
+#!/bin/bash
+# True Slash Command: /zapper
+# Usage: ./_slash_zapper [prompt]
+
+PROJECT_ROOT="$(dirname "${BASH_SOURCE[0]}")"
+
+if [ "$#" -eq 0 ]; then
+    node "$PROJECT_ROOT/slash-command-parser.js" "/zapper"
+else
+    node "$PROJECT_ROOT/slash-command-parser.js" "/zapper $*"
+fi

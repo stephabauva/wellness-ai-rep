@@ -1,0 +1,11 @@
+#!/bin/bash
+# True Slash Command: /ultra-think
+# Usage: ./_slash_ultra-think [prompt]
+
+PROJECT_ROOT="$(dirname "${BASH_SOURCE[0]}")"
+
+if [ "$#" -eq 0 ]; then
+    node "$PROJECT_ROOT/slash-command-parser.js" "/ultra-think"
+else
+    node "$PROJECT_ROOT/slash-command-parser.js" "/ultra-think $*"
+fi

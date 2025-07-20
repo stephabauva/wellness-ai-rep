@@ -32,6 +32,119 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 - **Architecture Guardian**: See .claude/commands/arch-guard.md
 - **Clean Code Checklist**: See .claude/commands/clean-code.md
 
+# Available Scripts and Commands
+
+## Claude Commands (Replicating Claude Code functionality)
+These commands replicate the slash commands from Claude Code editor in Replit:
+
+### Command Runner
+- `node claude-commands.js <command>` - Run any Claude command
+- `./claude.sh <command>` - Bash wrapper for easier access
+- `bash claude.sh <command>` - Alternative bash execution
+
+### Available Claude Commands
+- **arch-guard** - Run comprehensive architecture health checks
+  - Executes: dependency analysis, file size check, malformed imports, async compatibility
+  - Enforces component/service limits and domain boundaries
+  - Example: `./claude.sh arch-guard`
+
+- **workit** - Production-ready development mode
+  - Validates architecture before development starts
+  - Shows development principles and reminders
+  - Example: `./claude.sh workit`
+
+- **clean-code** - Clean code checklist validation
+  - Checks component counts (max 25) and service counts (max 20)
+  - Validates domain placement and import rules
+  - Example: `./claude.sh clean-code`
+
+- **safe-refactor** - Safe large file refactoring guidance
+  - Analyzes file sizes with graduated thresholds
+  - Provides refactoring safety protocols
+  - Example: `./claude.sh safe-refactor`
+
+- **chew** - Deep analysis mode (documentation access)
+- **ultra-think** - Maximum analysis mode (documentation access)
+- **zapper** - Quick problem resolution (documentation access)
+- **mobile-ux** - Mobile-first development (documentation access)
+
+## Analysis Scripts
+These scripts provide automated code quality and architecture analysis:
+
+### Core Analysis Tools
+- `npm run check:filesize` - Analyze file sizes with graduated thresholds
+  - ≤300 lines: ✅ Ideal zone
+  - 300-500 lines: ⚠️ Review needed
+  - 500-800 lines: 🔴 Should refactor
+  - >800 lines: 💀 Critical
+
+- `npm run check:async` - Check async/await compatibility
+  - Prevents "Cannot read properties of undefined" errors
+  - Detects service getter issues and route handler problems
+  - Example: `npm run check:async`
+
+- `node dependency-tracker.js` - Analyze cross-domain dependencies
+  - Maps who uses what across domains
+  - Identifies legitimate patterns vs violations
+  - Tracks @used-by annotations
+
+- `node malformed-import-detector.js` - Detect import syntax issues
+  - Finds malformed import statements
+  - Validates path resolution
+  - Checks ESM compatibility
+
+### Additional Tools
+- `node system-map-tracker.js` - Track if modified files are documented
+- `node system-map-cross-domain-validator-v2.js` - Validate system maps against code
+- `./setup-dependency-hook.sh` - Install pre-commit dependency checking
+
+## Database Scripts
+- `npm run db:push` - Push schema changes to database
+- `npm run db:setup-local` - Set up local PostgreSQL database
+- `npm run db:push-local` - Push to local database
+- `npm run db:reset-local` - Reset local database completely
+- `npm run db:seed-user` - Seed default user data
+
+## Development Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run check` - TypeScript type checking
+- `npx vitest` - Run tests
+
+## File Size Thresholds (used by check:filesize)
+**Routes**: Max 300 lines per file
+**Components**: Max 300 lines per file  
+**Services**: Max 200 lines per file
+**General files**: Max 500 lines per file
+
+**Severity Levels**:
+- LOW: 1-2x over limit
+- MEDIUM: 2-3x over limit  
+- HIGH: 3-5x over limit
+- CRITICAL: 5x+ over limit
+
+## Usage Examples
+```bash
+# Run architecture checks before starting work
+./claude.sh arch-guard
+
+# Check for large files that need refactoring
+npm run check:filesize
+
+# Analyze cross-domain dependencies
+node dependency-tracker.js
+
+# Check async/await compatibility
+npm run check:async
+
+# Validate import statements
+node malformed-import-detector.js
+
+# Run comprehensive development validation
+./claude.sh workit
+```
+
 # System Architecture
 
 ## Frontend Architecture

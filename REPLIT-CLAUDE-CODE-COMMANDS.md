@@ -1,34 +1,34 @@
-# Claude Commands for Replit
+# Claude Code Commands for Replit
 
-This system replicates the Claude Code slash command functionality (like `$/workit`) in Replit, allowing you to execute the same development workflows and checks.
+This system replicates the Claude Code editor slash command functionality (like `$/workit`, `$/arch-guard`, etc.) in Replit, allowing you to execute the same development workflows and checks that you would use in Claude Code.
 
 ## Quick Start
 
 ```bash
 # Show all available commands
-./claude.sh --help
+./run-claude-code-command.sh --help
 
 # Run architecture checks (like $/arch-guard in Claude Code)
-./claude.sh arch-guard
+./run-claude-code-command.sh arch-guard
 
 # Start production-ready development mode (like $/workit in Claude Code)
-./claude.sh workit
+./run-claude-code-command.sh workit
 
 # Check code quality and limits (like $/clean-code in Claude Code)
-./claude.sh clean-code
+./run-claude-code-command.sh clean-code
 
 # Analyze large files for refactoring (like $/safe-refactor in Claude Code)
-./claude.sh safe-refactor
+./run-claude-code-command.sh safe-refactor
 ```
 
 ## How It Works
 
 The system bridges your existing `.claude/commands/*.md` files with executable scripts that run the actual analysis tools:
 
-1. **Command Parser**: `claude-commands.js` reads the `.claude/commands/` directory
+1. **Command Parser**: `replit-claude-code-commands.js` reads the `.claude/commands/` directory
 2. **Execution Engine**: Runs the appropriate analysis scripts based on the command
 3. **Integration**: Connects with existing tools like `dependency-tracker.js`, `file-size-analyzer.js`, etc.
-4. **Bash Wrapper**: `claude.sh` provides easy command-line access
+4. **Bash Wrapper**: `run-claude-code-command.sh` provides easy command-line access
 
 ## Available Commands
 
@@ -99,22 +99,22 @@ The commands enforce strict domain separation:
 
 ## Usage in Development Workflow
 
-1. **Before starting work**: `./claude.sh arch-guard`
-2. **During development**: `./claude.sh workit`
-3. **Before refactoring**: `./claude.sh safe-refactor`
-4. **Before committing**: `./claude.sh clean-code`
+1. **Before starting work**: `./run-claude-code-command.sh arch-guard`
+2. **During development**: `./run-claude-code-command.sh workit`
+3. **Before refactoring**: `./run-claude-code-command.sh safe-refactor`
+4. **Before committing**: `./run-claude-code-command.sh clean-code`
 
 ## Alternative Execution Methods
 
 ```bash
 # Direct node execution
-node claude-commands.js arch-guard
+node replit-claude-code-commands.js arch-guard
 
 # Bash wrapper (recommended)
-./claude.sh arch-guard
+./run-claude-code-command.sh arch-guard
 
 # Alternative bash syntax
-bash claude.sh arch-guard
+bash run-claude-code-command.sh arch-guard
 ```
 
 ## Exit Codes

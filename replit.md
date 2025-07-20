@@ -34,34 +34,34 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 
 # Available Scripts and Commands
 
-## Claude Commands (Replicating Claude Code functionality)
-These commands replicate the slash commands from Claude Code editor in Replit:
+## Claude Code Commands (Replicating Claude Code Editor Functionality)
+These commands replicate the slash commands from Claude Code editor in Replit (like `$/workit`, `$/arch-guard`, etc.):
 
 ### Command Runner
-- `node claude-commands.js <command>` - Run any Claude command
-- `./claude.sh <command>` - Bash wrapper for easier access
-- `bash claude.sh <command>` - Alternative bash execution
+- `node replit-claude-code-commands.js <command>` - Run any Claude Code command
+- `./run-claude-code-command.sh <command>` - Bash wrapper for easier access
+- `bash run-claude-code-command.sh <command>` - Alternative bash execution
 
 ### Available Claude Commands
 - **arch-guard** - Run comprehensive architecture health checks
   - Executes: dependency analysis, file size check, malformed imports, async compatibility
   - Enforces component/service limits and domain boundaries
-  - Example: `./claude.sh arch-guard`
+  - Example: `./run-claude-code-command.sh arch-guard`
 
 - **workit** - Production-ready development mode
   - Validates architecture before development starts
   - Shows development principles and reminders
-  - Example: `./claude.sh workit`
+  - Example: `./run-claude-code-command.sh workit`
 
 - **clean-code** - Clean code checklist validation
   - Checks component counts (max 25) and service counts (max 20)
   - Validates domain placement and import rules
-  - Example: `./claude.sh clean-code`
+  - Example: `./run-claude-code-command.sh clean-code`
 
 - **safe-refactor** - Safe large file refactoring guidance
   - Analyzes file sizes with graduated thresholds
   - Provides refactoring safety protocols
-  - Example: `./claude.sh safe-refactor`
+  - Example: `./run-claude-code-command.sh safe-refactor`
 
 - **chew** - Deep analysis mode (documentation access)
 - **ultra-think** - Maximum analysis mode (documentation access)
@@ -127,7 +127,7 @@ These scripts provide automated code quality and architecture analysis:
 ## Usage Examples
 ```bash
 # Run architecture checks before starting work
-./claude.sh arch-guard
+./run-claude-code-command.sh arch-guard
 
 # Check for large files that need refactoring
 npm run check:filesize
@@ -142,7 +142,7 @@ npm run check:async
 node malformed-import-detector.js
 
 # Run comprehensive development validation
-./claude.sh workit
+./run-claude-code-command.sh workit
 ```
 
 # System Architecture

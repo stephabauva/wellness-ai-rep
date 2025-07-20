@@ -1,12 +1,14 @@
 #!/bin/bash
-# Claude Commands Wrapper for Replit
-# Usage: ./claude.sh <command> or bash claude.sh <command>
+# Claude Code Commands Runner for Replit
+# Replicates Claude Code's slash commands ($/workit, $/arch-guard, etc.) in Replit
+# Usage: ./run-claude-code-command.sh <command> or bash run-claude-code-command.sh <command>
 
 if [ "$#" -eq 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-    echo "🤖 Claude Commands for Replit"
+    echo "🤖 Claude Code Commands for Replit"
+    echo "Replicates Claude Code editor slash commands ($/workit, $/arch-guard, etc.)"
     echo ""
-    echo "Usage: ./claude.sh <command>"
-    echo "   or: bash claude.sh <command>"
+    echo "Usage: ./run-claude-code-command.sh <command>"
+    echo "   or: bash run-claude-code-command.sh <command>"
     echo ""
     echo "Available commands:"
     echo "  arch-guard    - Run architecture guardian checks"
@@ -19,10 +21,10 @@ if [ "$#" -eq 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  mobile-ux     - Mobile-first development"
     echo ""
     echo "Examples:"
-    echo "  ./claude.sh arch-guard"
-    echo "  bash claude.sh workit"
+    echo "  ./run-claude-code-command.sh arch-guard"
+    echo "  bash run-claude-code-command.sh workit"
     exit 0
 fi
 
 # Execute the command
-node claude-commands.js "$1"
+node replit-claude-code-commands.js "$1"

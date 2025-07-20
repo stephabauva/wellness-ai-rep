@@ -11,6 +11,8 @@ import {
 } from './memory/similarity-utils';
 import { isCacheValid, cleanExpiredCaches } from './memory/cache-utils';
 import type { RelevantMemory, DeduplicationResult } from './memory/memory-types';
+import { createNewMemory, updateExistingMemory, mergeWithExistingMemory } from './memory/memory-operations';
+import { getRecentMemories, findSimilarMemory, buildMemoryContext } from './memory/deduplication-helpers';
 
 /**
  * ChatGPT Memory Enhancement Service
@@ -99,7 +101,7 @@ export class ChatGPTMemoryEnhancement {
         prompt = "You are a helpful AI wellness coach.";
       } else {
         // Build memory context in ChatGPT style
-        const memoryContext = this.buildMemoryContext(relevantMemories);
+        const memoryContext = buildMemoryContext(relevantMemories);
         
         prompt = `You are a helpful AI wellness coach. Consider this context about the user:
 
@@ -154,13 +156,13 @@ Use this information naturally in your responses to provide personalized guidanc
           const validConversationId = conversationId.startsWith('test-') 
             ? crypto.randomUUID() 
             : conversationId;
-          await this.createNewMemory(userId, detection, validConversationId, semanticHash);
+          await createNewMemory(userId, detection, validConversationId, semanticHash);
           break;
         case 'update':
-          await this.updateExistingMemory(deduplicationResult.existingMemoryId!, detection);
+          await updateExistingMemory(deduplicationResult.existingMemoryId!, detection);
           break;
         case 'merge':
-          await this.mergeWithExistingMemory(deduplicationResult.existingMemoryId!, detection);
+          await mergeWithExistingMemory(deduplicationResult.existingMemoryId!, detection);
           break;
       }
 
@@ -281,7 +283,7 @@ Use this information naturally in your responses to provide personalized guidanc
       }
 
       // Get recent memories to check for semantic similarity
-      const recentMemories = await this.getRecentMemories(userId, 72); // Check last 3 days
+      const recentMemories = await getRecentMemories(userId, 72); // Check last 3 days
       
       if (recentMemories.length === 0) {
         return {
@@ -292,7 +294,16 @@ Use this information naturally in your responses to provide personalized guidanc
       }
 
       // Find semantically similar memory using existing similarity logic
-      const similarMemory = await this.findSimilarMemory(messageContent, recentMemories);
+      const similarMemory = await findSimilarMemory(
+        messageContent, 
+        recentMemories,
+        this.embeddingCache,
+        this.similarityResultCache,
+        this.cacheTimestamps,
+        (key, ttl) => this.isCacheValid(key, ttl),
+        this.SIMILARITY_CACHE_TTL,
+        (content, memories) => this.findFuzzyMatch(content, memories)
+      );
       
       if (similarMemory && similarMemory.similarity > 0.6) {
         // High similarity - merge instead of creating duplicate (lowered from 0.8)
@@ -339,176 +350,8 @@ Use this information naturally in your responses to provide personalized guidanc
     }
   }
 
-  /**
-   * Get recent memories for comparison
-   */
-  private async getRecentMemories(userId: number, hoursBack: number): Promise<MemoryEntry[]> {
-    const cutoffTime = new Date(Date.now() - (hoursBack * 60 * 60 * 1000));
-    
-    return await db
-      .select()
-      .from(memoryEntries)
-      .where(and(
-        eq(memoryEntries.userId, userId),
-        eq(memoryEntries.isActive, true),
-        sql`${memoryEntries.createdAt} > ${cutoffTime}`
-      ))
-      .orderBy(desc(memoryEntries.createdAt))
-      .limit(20);
-  }
 
-  /**
-   * Find similar memory using optimized semantic similarity calculation with enhanced caching
-   */
-  private async findSimilarMemory(
-    content: string, 
-    memories: MemoryEntry[]
-  ): Promise<{ id: string; content: string; similarity: number } | null> {
-    if (memories.length === 0) return null;
 
-    try {
-      // Fast path: check similarity cache for recent calculations
-      const contentHash = crypto.createHash('md5').update(content.toLowerCase().trim()).digest('hex');
-      
-      // Generate embedding for the new content with caching
-      const embeddingCacheKey = `emb_${contentHash}`;
-      let contentEmbedding: number[];
-      
-      if (this.embeddingCache.has(embeddingCacheKey) && this.isCacheValid(embeddingCacheKey)) {
-        contentEmbedding = this.embeddingCache.get(embeddingCacheKey)!;
-      } else {
-        contentEmbedding = await memoryService.generateEmbedding(content);
-        this.embeddingCache.set(embeddingCacheKey, contentEmbedding);
-        this.cacheTimestamps.set(embeddingCacheKey, Date.now());
-      }
-      
-      let bestMatch: { id: string; content: string; similarity: number } | null = null;
-      let highestSimilarity = 0;
-
-      // Optimized batch similarity calculation for better performance
-      const validMemories = memories.filter(m => m.embedding && Array.isArray(m.embedding) && m.embedding.length > 0);
-      if (validMemories.length === 0) {
-        return this.findFuzzyMatch(content, memories);
-      }
-
-      // Batch process similarities with caching
-      for (const memory of validMemories) {
-        const memoryHash = crypto.createHash('md5').update(memory.content.toLowerCase().trim()).digest('hex');
-        const similarityCacheKey = `sim_${contentHash}_${memoryHash}`;
-        
-        let similarity: number;
-        
-        // Check similarity cache first
-        if (this.similarityResultCache.has(similarityCacheKey) && this.isCacheValid(similarityCacheKey, this.SIMILARITY_CACHE_TTL)) {
-          similarity = this.similarityResultCache.get(similarityCacheKey)!;
-        } else {
-          // Calculate cosine similarity
-          similarity = await memoryService.cosineSimilarity(
-            contentEmbedding, 
-            memory.embedding as number[]
-          );
-          
-          // Cache the result
-          this.similarityResultCache.set(similarityCacheKey, similarity);
-          this.cacheTimestamps.set(similarityCacheKey, Date.now());
-        }
-
-        if (similarity > highestSimilarity) {
-          highestSimilarity = similarity;
-          bestMatch = {
-            id: memory.id,
-            content: memory.content,
-            similarity: similarity
-          };
-        }
-      }
-
-      // If no good semantic match found, try fuzzy string matching as fallback
-      if (!bestMatch || bestMatch.similarity < 0.3) {
-        const fuzzyMatch = this.findFuzzyMatch(content, memories);
-        if (fuzzyMatch && (!bestMatch || fuzzyMatch.similarity > bestMatch.similarity)) {
-          bestMatch = fuzzyMatch;
-        }
-      }
-
-      return bestMatch;
-    } catch (error) {
-      console.error('[ChatGPTMemoryEnhancement] Similarity check failed:', error);
-      // Fallback to fuzzy matching if embedding fails
-      return this.findFuzzyMatch(content, memories);
-    }
-  }
-
-  /**
-   * Create new memory entry
-   */
-  private async createNewMemory(
-    userId: number,
-    detection: any,
-    conversationId: string,
-    semanticHash: string
-  ): Promise<void> {
-    const memoryOptions = {
-      category: detection.category,
-      labels: detection.labels || [],
-      importance_score: detection.importance,
-      sourceConversationId: conversationId,
-      keywords: detection.keywords
-    };
-
-    await memoryService.saveMemoryEntry(userId, detection.extractedInfo, memoryOptions);
-  }
-
-  /**
-   * Update existing memory entry
-   */
-  private async updateExistingMemory(
-    memoryId: string,
-    detection: any
-  ): Promise<void> {
-    try {
-      await db
-        .update(memoryEntries)
-        .set({
-          content: detection.extractedInfo,
-          importanceScore: Math.max(detection.importance, 0.1), // Ensure minimum importance
-          labels: detection.labels || [],
-          keywords: detection.keywords,
-          updateCount: sql`${memoryEntries.updateCount} + 1`,
-          updatedAt: new Date()
-        })
-        .where(eq(memoryEntries.id, memoryId));
-
-      console.log(`[ChatGPTMemoryEnhancement] Updated memory ${memoryId}`);
-    } catch (error) {
-      console.error('[ChatGPTMemoryEnhancement] Memory update failed:', error);
-    }
-  }
-
-  /**
-   * Merge with existing memory (placeholder for future enhancement)
-   */
-  private async mergeWithExistingMemory(
-    memoryId: string,
-    detection: any
-  ): Promise<void> {
-    // For Phase 1, treat merge as update
-    await this.updateExistingMemory(memoryId, detection);
-  }
-
-  /**
-   * Build memory context for system prompt
-   */
-  private buildMemoryContext(memories: RelevantMemory[]): string {
-    return memories
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, 4) // Limit to top 4 memories for optimal prompt length
-      .map((memory, index) => {
-        const priority = memory.importanceScore > 0.8 ? '[Important]' : '';
-        return `- ${priority} ${memory.content}`.trim();
-      })
-      .join('\n');
-  }
 
   /**
    * Find fuzzy match using enhanced word-based similarity with Levenshtein distance

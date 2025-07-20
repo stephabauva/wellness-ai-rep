@@ -34,34 +34,55 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 
 # Available Scripts and Commands
 
-## Claude Code Commands (Replicating Claude Code Editor Functionality)
+## Claude Code Slash Commands (Replicating Claude Code Editor Functionality)
 These commands replicate the slash commands from Claude Code editor in Replit (like `$/workit`, `$/arch-guard`, etc.):
 
-### Command Runner
+### Slash Command System (NEW - Direct Claude Code Style)
+- `./run-slash-command.sh "/command [prompt]"` - Direct slash command execution (like Claude Code)
+- `./slash-commands/command` - Individual command scripts
+- `source ./claude-code-aliases.sh` then `command` - Shell aliases for repeated use
+
+### Quick Start Examples
+```bash
+# Direct slash commands (recommended)
+./run-slash-command.sh "/arch-guard"
+./run-slash-command.sh "/workit"
+./run-slash-command.sh "/safe-refactor analyze large components"
+
+# Individual scripts
+./slash-commands/arch-guard
+./slash-commands/clean-code
+
+# Shell aliases (after sourcing)
+source ./claude-code-aliases.sh
+arch-guard
+workit
+```
+
+### Legacy Command Runner (Still Available)
 - `node replit-claude-code-commands.js <command>` - Run any Claude Code command
 - `./run-claude-code-command-in-replit.sh <command>` - Bash wrapper for easier access
-- `bash run-claude-code-command-in-replit.sh <command>` - Alternative bash execution
 
 ### Available Claude Commands
 - **arch-guard** - Run comprehensive architecture health checks
   - Executes: dependency analysis, file size check, malformed imports, async compatibility
   - Enforces component/service limits and domain boundaries
-  - Example: `./run-claude-code-command-in-replit.sh arch-guard`
+  - Example: `./run-slash-command.sh "/arch-guard"`
 
 - **workit** - Production-ready development mode
   - Validates architecture before development starts
   - Shows development principles and reminders
-  - Example: `./run-claude-code-command-in-replit.sh workit`
+  - Example: `./run-slash-command.sh "/workit"`
 
 - **clean-code** - Clean code checklist validation
   - Checks component counts (max 25) and service counts (max 20)
   - Validates domain placement and import rules
-  - Example: `./run-claude-code-command-in-replit.sh clean-code`
+  - Example: `./run-slash-command.sh "/clean-code"`
 
 - **safe-refactor** - Safe large file refactoring guidance
   - Analyzes file sizes with graduated thresholds
   - Provides refactoring safety protocols
-  - Example: `./run-claude-code-command-in-replit.sh safe-refactor`
+  - Example: `./run-slash-command.sh "/safe-refactor"`
 
 - **chew** - Deep analysis mode (documentation access)
 - **ultra-think** - Maximum analysis mode (documentation access)
@@ -126,23 +147,25 @@ These scripts provide automated code quality and architecture analysis:
 
 ## Usage Examples
 ```bash
-# Run architecture checks before starting work
+# NEW: Claude Code style slash commands (recommended)
+./run-slash-command.sh "/arch-guard"
+./run-slash-command.sh "/workit"
+./run-slash-command.sh "/clean-code"
+
+# Shell aliases (after sourcing)
+source ./claude-code-aliases.sh
+arch-guard
+workit
+clean-code
+
+# Legacy: Original command runner
 ./run-claude-code-command-in-replit.sh arch-guard
 
-# Check for large files that need refactoring
+# Analysis tools (used by slash commands)
 npm run check:filesize
-
-# Analyze cross-domain dependencies
 node dependency-tracker.js
-
-# Check async/await compatibility
 npm run check:async
-
-# Validate import statements
 node malformed-import-detector.js
-
-# Run comprehensive development validation
-./run-claude-code-command-in-replit.sh workit
 ```
 
 # System Architecture
@@ -260,6 +283,16 @@ node malformed-import-detector.js
 # Changelog
 
 Changelog:
+- July 20, 2025. **Claude Code Slash Commands System Complete**:
+  - **Direct Slash Command Support**: Created `/arch-guard` style commands that replicate Claude Code editor functionality
+  - **Three Usage Methods**: Direct slash commands (`./run-slash-command.sh "/arch-guard"`), individual scripts (`./slash-commands/arch-guard`), and shell aliases (`source ./claude-code-aliases.sh && arch-guard`)
+  - **Complete Command Parser**: Built `slash-command-parser.js` that handles `/command [prompt]` syntax with proper error handling and success reporting
+  - **Automatic Setup System**: Created `create-slash-aliases.sh` that generates all slash command infrastructure automatically
+  - **Full Integration**: All slash commands integrate with existing analysis tools (dependency-tracker.js, file-size-analyzer.js, etc.)
+  - **Eight Available Commands**: `/arch-guard`, `/workit`, `/clean-code`, `/safe-refactor`, `/chew`, `/ultra-think`, `/zapper`, `/mobile-ux`
+  - **Professional Documentation**: Complete usage guide in `SLASH-COMMANDS-USAGE.md` with examples and troubleshooting
+  - **Zero Breaking Changes**: Original command system (`./run-claude-code-command-in-replit.sh`) remains fully functional
+  - **Production Ready**: Robust error handling, path resolution, and proper exit code management for professional development workflow
 - June 14, 2025. Initial setup
 - June 14, 2025. **Bulletproof Go Migration Plan - Zero-Risk Progressive Enhancement** completed:
   - Phase 1: Independent Go file accelerator service (port 5001) with health data compression

@@ -1,0 +1,12 @@
+#!/bin/bash
+# Claude Code Slash Command: /safe-refactor
+# Usage: ./safe-refactor [prompt]
+
+# Change to parent directory to find slash-command-parser.js
+cd "$(dirname "$0")/.."
+
+if [ "$#" -eq 0 ]; then
+    node slash-command-parser.js "/safe-refactor"
+else
+    node slash-command-parser.js "/safe-refactor $*"
+fi

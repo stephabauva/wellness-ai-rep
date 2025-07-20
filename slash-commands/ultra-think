@@ -1,0 +1,12 @@
+#!/bin/bash
+# Claude Code Slash Command: /ultra-think
+# Usage: ./ultra-think [prompt]
+
+# Change to parent directory to find slash-command-parser.js
+cd "$(dirname "$0")/.."
+
+if [ "$#" -eq 0 ]; then
+    node slash-command-parser.js "/ultra-think"
+else
+    node slash-command-parser.js "/ultra-think $*"
+fi

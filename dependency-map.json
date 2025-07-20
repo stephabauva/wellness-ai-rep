@@ -66,40 +66,6 @@
     "crossDomain": true,
     "usageCount": 1
   },
-  "client/src/pages/not-found.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "NotFound"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
-  "client/src/pages/home.tsx": {
-    "domain": "app/pages",
-    "exports": [
-      "default"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/App.tsx",
-        "domain": "app/root",
-        "imports": [
-          "Home"
-        ]
-      }
-    ],
-    "crossDomain": true,
-    "usageCount": 1
-  },
   "client/src/hooks/useWebWorker.ts": {
     "domain": "shared/hooks",
     "exports": [
@@ -512,6 +478,40 @@
     ],
     "crossDomain": false,
     "usageCount": 2
+  },
+  "client/src/pages/not-found.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "NotFound"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
+  },
+  "client/src/pages/home.tsx": {
+    "domain": "app/pages",
+    "exports": [
+      "default"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/App.tsx",
+        "domain": "app/root",
+        "imports": [
+          "Home"
+        ]
+      }
+    ],
+    "crossDomain": true,
+    "usageCount": 1
   },
   "client/src/components/StreamingText.tsx": {
     "domain": "shared/ui-components",
@@ -1330,6 +1330,125 @@
     "crossDomain": true,
     "usageCount": 1
   },
+  "client/src/components/settings/PerformanceSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "PerformanceSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "PerformanceSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/HealthDataConsentSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "HealthDataConsentSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "HealthDataConsentSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/FileManagementSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "FileManagementSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "FileManagementSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/CoachingPreferencesSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "CoachingPreferencesSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "CoachingPreferencesSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AppPreferencesSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AppPreferencesSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AppPreferencesSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AiConfigurationSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AiConfigurationSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AiConfigurationSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
+  "client/src/components/settings/AccountSettings.tsx": {
+    "domain": "settings",
+    "exports": [
+      "AccountSettings"
+    ],
+    "usedBy": [
+      {
+        "file": "client/src/components/SettingsSection.tsx",
+        "domain": "settings",
+        "imports": [
+          "AccountSettings"
+        ]
+      }
+    ],
+    "crossDomain": false,
+    "usageCount": 1
+  },
   "client/src/components/memory/utils.ts": {
     "domain": "memory",
     "exports": [
@@ -1521,125 +1640,6 @@
         "domain": "memory",
         "imports": [
           "MemoryCategoryGrid"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/PerformanceSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "PerformanceSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "PerformanceSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/HealthDataConsentSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "HealthDataConsentSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "HealthDataConsentSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/FileManagementSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "FileManagementSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "FileManagementSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/CoachingPreferencesSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "CoachingPreferencesSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "CoachingPreferencesSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/AppPreferencesSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "AppPreferencesSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "AppPreferencesSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/AiConfigurationSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "AiConfigurationSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "AiConfigurationSettings"
-        ]
-      }
-    ],
-    "crossDomain": false,
-    "usageCount": 1
-  },
-  "client/src/components/settings/AccountSettings.tsx": {
-    "domain": "settings",
-    "exports": [
-      "AccountSettings"
-    ],
-    "usedBy": [
-      {
-        "file": "client/src/components/SettingsSection.tsx",
-        "domain": "settings",
-        "imports": [
-          "AccountSettings"
         ]
       }
     ],

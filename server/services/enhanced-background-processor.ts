@@ -1,5 +1,6 @@
 import { chatGPTMemoryEnhancement } from '@shared/services/chatgpt-memory-enhancement';
 import { memoryService } from '@shared/services/memory-service';
+import { memoryGraphService } from './memory-graph-service-instance.js';
 
 /**
  * Phase 3: Enhanced Background Processing
@@ -12,13 +13,16 @@ export class EnhancedBackgroundProcessor {
   private circuitBreakerTimeout = 60000; // 1 minute
   private lastFailureTime = new Map<number, number>();
   
-  // Performance metrics
+  // Performance metrics with consolidation tracking
   private metrics = {
     processedCount: 0,
     failureCount: 0,
     averageProcessingTime: 0,
     totalProcessingTime: 0,
-    circuitBreakerTrips: 0
+    circuitBreakerTrips: 0,
+    consolidationRuns: 0,
+    consolidationTime: 0,
+    consolidationResults: 0
   };
 
   /**
@@ -114,10 +118,64 @@ export class EnhancedBackgroundProcessor {
       failureCount: 0,
       averageProcessingTime: 0,
       totalProcessingTime: 0,
-      circuitBreakerTrips: 0
+      circuitBreakerTrips: 0,
+      consolidationRuns: 0,
+      consolidationTime: 0,
+      consolidationResults: 0
     };
     this.failureCount.clear();
     this.lastFailureTime.clear();
+  }
+
+  /**
+   * Daily memory consolidation for active users - OPTIMIZED
+   */
+  async runDailyConsolidation(userIds: number[] = [1]): Promise<void> {
+    const consolidationStart = Date.now();
+    console.log(`[EnhancedBackgroundProcessor] Starting optimized consolidation for ${userIds.length} users`);
+    
+    // Process users in parallel batches of 3 to avoid overwhelming the system
+    const batchSize = 3;
+    const consolidationResults = new Map<number, number>();
+    
+    for (let i = 0; i < userIds.length; i += batchSize) {
+      const batch = userIds.slice(i, i + batchSize);
+      
+      const batchPromises = batch.map(async (userId) => {
+        try {
+          if (!this.isCircuitBreakerOpen(userId)) {
+            const results = await memoryGraphService.consolidateRelatedMemories(userId);
+            consolidationResults.set(userId, results.length);
+            return { userId, resultCount: results.length, success: true };
+          } else {
+            console.warn(`[EnhancedBackgroundProcessor] Skipping user ${userId} - circuit breaker open`);
+            return { userId, resultCount: 0, success: false, reason: 'circuit_breaker' };
+          }
+        } catch (error) {
+          console.error(`[EnhancedBackgroundProcessor] Consolidation failed for user ${userId}:`, error);
+          return { userId, resultCount: 0, success: false, reason: error.message };
+        }
+      });
+      
+      const batchResults = await Promise.allSettled(batchPromises);
+      
+      // Log batch results
+      batchResults.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value.success) {
+          console.log(`[EnhancedBackgroundProcessor] User ${result.value.userId}: consolidated ${result.value.resultCount} memory groups`);
+        }
+      });
+      
+      // Small delay between batches to prevent overwhelming the database
+      if (i + batchSize < userIds.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    const totalTime = Date.now() - consolidationStart;
+    const totalConsolidations = Array.from(consolidationResults.values()).reduce((sum, count) => sum + count, 0);
+    
+    console.log(`[EnhancedBackgroundProcessor] Consolidation completed: ${totalConsolidations} consolidations for ${userIds.length} users in ${totalTime}ms`);
   }
 
   private async performEnhancedProcessing(

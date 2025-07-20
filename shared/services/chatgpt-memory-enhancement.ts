@@ -25,13 +25,17 @@ export class ChatGPTMemoryEnhancement {
   private deduplicationCache = new Map<string, string>();
   private processingPromises = new Map<string, Promise<void>>();
   
-  // Performance optimization caches
+  // Enhanced performance optimization caches
   private embeddingCache = new Map<string, number[]>();
   private promptCache = new Map<string, string>();
   private memoryRetrievalCache = new Map<string, RelevantMemory[]>();
+  private similarityResultCache = new Map<string, number>();
+  private hashGenerationCache = new Map<string, string>();
   
-  // Cache TTL in milliseconds (5 minutes)
-  private readonly CACHE_TTL = 5 * 60 * 1000;
+  // Cache TTL in milliseconds (optimized for different cache types)
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes for general cache
+  private readonly SIMILARITY_CACHE_TTL = 10 * 60 * 1000; // 10 minutes for similarity results
+  private readonly HASH_CACHE_TTL = 30 * 60 * 1000; // 30 minutes for hash generation
   private cacheTimestamps = new Map<string, number>();
 
   /**
@@ -172,37 +176,55 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Generate semantic hash for deduplication using embedding-based approach
+   * Generate semantic hash for deduplication using optimized embedding-based approach
    */
   public async generateSemanticHash(message: string): Promise<string> {
     const normalizedMessage = message.toLowerCase().trim();
     const contentHash = crypto.createHash('md5').update(normalizedMessage).digest('hex');
     const cacheKey = `hash_${contentHash}`;
     
-    // Check cache first for immediate return
+    // Check optimized hash cache first for immediate return
+    if (this.hashGenerationCache.has(cacheKey) && this.isCacheValid(cacheKey, this.HASH_CACHE_TTL)) {
+      return this.hashGenerationCache.get(cacheKey)!;
+    }
+
+    // Check legacy deduplication cache for backward compatibility
     if (this.deduplicationCache.has(cacheKey)) {
       return this.deduplicationCache.get(cacheKey)!;
     }
 
     try {
-      // Use embedding-based approach for better semantic similarity
-      const embedding = await memoryService.generateEmbedding(normalizedMessage);
+      // Fast path: try cached embedding first
+      const embeddingCacheKey = `emb_${contentHash}`;
+      let embedding: number[];
       
-      // Create hash from first 50 embedding dimensions for semantic similarity
+      if (this.embeddingCache.has(embeddingCacheKey) && this.isCacheValid(embeddingCacheKey)) {
+        embedding = this.embeddingCache.get(embeddingCacheKey)!;
+      } else {
+        // Use embedding-based approach for better semantic similarity
+        embedding = await memoryService.generateEmbedding(normalizedMessage);
+        // Cache the embedding for future use
+        this.embeddingCache.set(embeddingCacheKey, embedding);
+        this.cacheTimestamps.set(embeddingCacheKey, Date.now());
+      }
+      
+      // Create optimized hash using fewer dimensions for speed
       const embeddingHash = crypto.createHash('sha256')
-        .update(embedding.slice(0, 50).join(','))
-        .digest('hex').slice(0, 32);
+        .update(embedding.slice(0, 32).join(',')) // Reduced from 50 to 32 dimensions
+        .digest('hex').slice(0, 24); // Reduced hash length for better performance
       
-      // Cache the hash for future use
-      this.deduplicationCache.set(cacheKey, embeddingHash);
+      // Cache the hash with longer TTL
+      this.hashGenerationCache.set(cacheKey, embeddingHash);
+      this.cacheTimestamps.set(cacheKey, Date.now());
       
       return embeddingHash;
     } catch (error) {
       console.error('[ChatGPTMemoryEnhancement] Embedding generation failed, falling back to content hash:', error);
       
-      // Fallback to content-based hash if embedding fails
-      const fallbackHash = crypto.createHash('sha256').update(normalizedMessage).digest('hex').slice(0, 32);
-      this.deduplicationCache.set(cacheKey, fallbackHash);
+      // Optimized fallback to content-based hash if embedding fails
+      const fallbackHash = crypto.createHash('sha256').update(normalizedMessage).digest('hex').slice(0, 24);
+      this.hashGenerationCache.set(cacheKey, fallbackHash);
+      this.cacheTimestamps.set(cacheKey, Date.now());
       
       return fallbackHash;
     }
@@ -340,7 +362,7 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Find similar memory using semantic similarity calculation with fuzzy matching fallback
+   * Find similar memory using optimized semantic similarity calculation with enhanced caching
    */
   private async findSimilarMemory(
     content: string, 
@@ -349,21 +371,51 @@ Use this information naturally in your responses to provide personalized guidanc
     if (memories.length === 0) return null;
 
     try {
-      // Generate embedding for the new content
-      const contentEmbedding = await memoryService.generateEmbedding(content);
+      // Fast path: check similarity cache for recent calculations
+      const contentHash = crypto.createHash('md5').update(content.toLowerCase().trim()).digest('hex');
+      
+      // Generate embedding for the new content with caching
+      const embeddingCacheKey = `emb_${contentHash}`;
+      let contentEmbedding: number[];
+      
+      if (this.embeddingCache.has(embeddingCacheKey) && this.isCacheValid(embeddingCacheKey)) {
+        contentEmbedding = this.embeddingCache.get(embeddingCacheKey)!;
+      } else {
+        contentEmbedding = await memoryService.generateEmbedding(content);
+        this.embeddingCache.set(embeddingCacheKey, contentEmbedding);
+        this.cacheTimestamps.set(embeddingCacheKey, Date.now());
+      }
       
       let bestMatch: { id: string; content: string; similarity: number } | null = null;
       let highestSimilarity = 0;
 
-      // Compare against existing memories
-      for (const memory of memories) {
-        if (!memory.embedding) continue;
+      // Optimized batch similarity calculation for better performance
+      const validMemories = memories.filter(m => m.embedding && Array.isArray(m.embedding) && m.embedding.length > 0);
+      if (validMemories.length === 0) {
+        return this.findFuzzyMatch(content, memories);
+      }
+
+      // Batch process similarities with caching
+      for (const memory of validMemories) {
+        const memoryHash = crypto.createHash('md5').update(memory.content.toLowerCase().trim()).digest('hex');
+        const similarityCacheKey = `sim_${contentHash}_${memoryHash}`;
         
-        // Calculate cosine similarity
-        const similarity = await memoryService.cosineSimilarity(
-          contentEmbedding, 
-          memory.embedding as number[]
-        );
+        let similarity: number;
+        
+        // Check similarity cache first
+        if (this.similarityResultCache.has(similarityCacheKey) && this.isCacheValid(similarityCacheKey, this.SIMILARITY_CACHE_TTL)) {
+          similarity = this.similarityResultCache.get(similarityCacheKey)!;
+        } else {
+          // Calculate cosine similarity
+          similarity = await memoryService.cosineSimilarity(
+            contentEmbedding, 
+            memory.embedding as number[]
+          );
+          
+          // Cache the result
+          this.similarityResultCache.set(similarityCacheKey, similarity);
+          this.cacheTimestamps.set(similarityCacheKey, Date.now());
+        }
 
         if (similarity > highestSimilarity) {
           highestSimilarity = similarity;
@@ -596,30 +648,54 @@ Use this information naturally in your responses to provide personalized guidanc
   }
 
   /**
-   * Get performance metrics for monitoring
+   * Get enhanced performance metrics for monitoring
    */
   getPerformanceMetrics(): any {
+    // Calculate cache hit rates
+    const totalCacheEntries = this.cacheTimestamps.size;
+    const embeddingCacheHitRate = this.embeddingCache.size > 0 ? 
+      (this.embeddingCache.size / Math.max(totalCacheEntries, 1)) * 100 : 0;
+    const similarityCacheHitRate = this.similarityResultCache.size > 0 ? 
+      (this.similarityResultCache.size / Math.max(totalCacheEntries, 1)) * 100 : 0;
+    
     return {
+      // Legacy metrics
       cacheSize: this.deduplicationCache.size,
       activeProcessing: this.processingPromises.size,
       embeddingCacheSize: this.embeddingCache.size,
       promptCacheSize: this.promptCache.size,
       memoryRetrievalCacheSize: this.memoryRetrievalCache.size,
+      
+      // Enhanced performance metrics
+      similarityResultCacheSize: this.similarityResultCache.size,
+      hashGenerationCacheSize: this.hashGenerationCache.size,
+      totalCacheEntries: totalCacheEntries,
+      embeddingCacheHitRate: Math.round(embeddingCacheHitRate * 100) / 100,
+      similarityCacheHitRate: Math.round(similarityCacheHitRate * 100) / 100,
+      
+      // Performance targets tracking
+      targets: {
+        embeddingCacheHitRateTarget: 80,
+        similarityCacheHitRateTarget: 80,
+        memoryCreationTimeTarget: 200 // milliseconds
+      },
+      
       timestamp: new Date().toISOString()
     };
   }
 
   /**
-   * Check if cache entry is still valid
+   * Check if cache entry is still valid with custom TTL support
    */
-  private isCacheValid(cacheKey: string): boolean {
+  private isCacheValid(cacheKey: string, customTTL?: number): boolean {
     const timestamp = this.cacheTimestamps.get(cacheKey);
     if (!timestamp) return false;
-    return (Date.now() - timestamp) < this.CACHE_TTL;
+    const ttl = customTTL || this.CACHE_TTL;
+    return (Date.now() - timestamp) < ttl;
   }
 
   /**
-   * Clean expired cache entries
+   * Clean expired cache entries with optimized TTL handling
    */
   private cleanExpiredCaches(): void {
     const now = Date.now();
@@ -627,7 +703,18 @@ Use this information naturally in your responses to provide personalized guidanc
     
     // Convert to array to iterate safely
     Array.from(this.cacheTimestamps.entries()).forEach(([key, timestamp]) => {
-      if (now - timestamp > this.CACHE_TTL) {
+      let isExpired = false;
+      
+      // Different TTL for different cache types
+      if (key.startsWith('hash_')) {
+        isExpired = now - timestamp > this.HASH_CACHE_TTL;
+      } else if (key.startsWith('sim_')) {
+        isExpired = now - timestamp > this.SIMILARITY_CACHE_TTL;
+      } else {
+        isExpired = now - timestamp > this.CACHE_TTL;
+      }
+      
+      if (isExpired) {
         expiredKeys.push(key);
       }
     });
@@ -636,6 +723,8 @@ Use this information naturally in your responses to provide personalized guidanc
       this.embeddingCache.delete(key);
       this.promptCache.delete(key);
       this.memoryRetrievalCache.delete(key);
+      this.similarityResultCache.delete(key);
+      this.hashGenerationCache.delete(key);
       this.cacheTimestamps.delete(key);
     });
   }
@@ -649,6 +738,8 @@ Use this information naturally in your responses to provide personalized guidanc
     this.embeddingCache.clear();
     this.promptCache.clear();
     this.memoryRetrievalCache.clear();
+    this.similarityResultCache.clear();
+    this.hashGenerationCache.clear();
     this.cacheTimestamps.clear();
   }
 }

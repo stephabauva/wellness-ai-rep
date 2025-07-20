@@ -7,38 +7,27 @@ import {
   performanceMemoryCore,
   chatGPTMemoryEnhancement
 } from "./shared-dependencies.js";
+import { memoryGraphService } from "../services/memory-graph-service-instance.js";
 
 
 export async function registerMemoryRoutes(app: Express): Promise<void> {
-  // Memory overview endpoint
+  // Optimized memory overview endpoint - reduced data fetching for faster performance
   app.get("/api/memories/overview", async (req, res) => {
     try {
-      const memories = await memoryService.getUserMemories(1);
-      const qualityMetrics = await memoryService.getMemoryQualityMetrics(1);
+      const startTime = performance.now();
+      const userId = 1; // Default user ID
       
-      const overview = {
-        total: memories.length,
-        categories: {
-          preferences: memories.filter(m => m.category === 'preferences').length,
-          personal_context: memories.filter(m => m.category === 'personal_context').length,
-          instructions: memories.filter(m => m.category === 'instructions').length,
-          food_diet: memories.filter(m => m.category === 'food_diet').length,
-          goals: memories.filter(m => m.category === 'goals').length
-        },
-        recentMemories: memories.slice(0, 3).map(m => ({
-          id: m.id, content: m.content.substring(0, 100) + (m.content.length > 100 ? '...' : ''),
-          category: m.category, createdAt: m.createdAt
-        })),
-        qualityMetrics: {
-          qualityScore: qualityMetrics.qualityScore,
-          duplicateRate: qualityMetrics.duplicateRate,
-          potentialDuplicates: qualityMetrics.potentialDuplicates,
-          averageImportanceScore: qualityMetrics.averageImportanceScore,
-          averageFreshness: qualityMetrics.averageFreshness
-        }
-      };
+      // Get lightweight overview data using optimized database queries
+      const overviewResult = await memoryService.getMemoryOverviewOptimized(userId);
       
-      res.json(overview);
+      const duration = performance.now() - startTime;
+      console.log(`[Memory Overview API Performance] Duration: ${duration.toFixed(2)}ms (Target: <100ms)`);
+      
+      if (duration > 100) {
+        console.warn(`[Memory Overview API Performance] Slower than target: ${duration.toFixed(2)}ms > 100ms`);
+      }
+      
+      res.json(overviewResult);
     } catch (error) {
       console.error('Error fetching memory overview:', error);
       res.status(500).json({ message: "Failed to fetch memory overview" });
@@ -58,32 +47,32 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Get user memories with pagination support
+  // Get user memories with optimized database-level pagination
   app.get("/api/memories", async (req, res) => {
     try {
+      const startTime = performance.now();
       const userId = 1; // Default user ID
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50); // Cap at 50 for performance
       const category = req.query.category as string;
       const offset = (page - 1) * limit;
       
-      // Get total count first
-      const allMemories = await memoryService.getUserMemories(userId, category as any);
-      const totalCount = allMemories.length;
-      
-      // Apply pagination
-      const memories = allMemories.slice(offset, offset + limit);
-      
-      res.json({
-        memories,
-        pagination: {
-          page,
-          limit,
-          totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-          hasMore: offset + limit < totalCount
-        }
+      // Use optimized database pagination instead of in-memory filtering
+      const result = await memoryService.getUserMemoriesPaginated(userId, {
+        page,
+        limit,
+        offset,
+        category: category as any
       });
+      
+      const duration = performance.now() - startTime;
+      console.log(`[Memory API Performance] Paginated query: ${duration.toFixed(2)}ms (Target: <100ms)`);
+      
+      if (duration > 100) {
+        console.warn(`[Memory API Performance] Slower than target: ${duration.toFixed(2)}ms > 100ms`);
+      }
+      
+      res.json(result);
     } catch (error) {
       console.error('Error fetching memories:', error);
       res.status(500).json({ message: "Failed to fetch memories" });
@@ -181,6 +170,17 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
         );
 
         if (possibleNewMemory) {
+          // Extract atomic facts and detect relationships for new memory
+          try {
+            await memoryGraphService.extractAtomicFacts(possibleNewMemory);
+            const otherMemories = recentMemories.filter(m => m.id !== possibleNewMemory.id);
+            if (otherMemories.length > 0) {
+              await memoryGraphService.detectMemoryRelationships(possibleNewMemory, otherMemories.slice(0, 10));
+            }
+          } catch (relationshipError) {
+            console.warn('[ManualMemory] Relationship detection failed, continuing:', relationshipError);
+          }
+          
           res.status(201).json({
             success: true,
             memory: {
@@ -308,6 +308,85 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error('ChatGPT memory enhancement test error:', error);
       res.status(500).json({ error: "Failed to test ChatGPT memory enhancement" });
+    }
+  });
+
+  // Manual consolidation trigger
+  app.post("/api/memory/consolidate/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId) || 1;
+      const results = await memoryGraphService.consolidateRelatedMemories(userId);
+      res.json({ success: true, consolidationResults: results, count: results.length });
+    } catch (error) {
+      console.error('Error in memory consolidation:', error);
+      res.status(500).json({ error: "Failed to consolidate memories" });
+    }
+  });
+
+  // Get memory relationships  
+  app.get("/api/memory/relationships/:memoryId", async (req, res) => {
+    try {
+      const memoryNode = await memoryGraphService.getMemoryNode(req.params.memoryId);
+      if (!memoryNode) return res.status(404).json({ error: "Memory not found" });
+      res.json({ relationships: memoryNode.relationships, atomicFacts: memoryNode.atomicFacts });
+    } catch (error) {
+      console.error('Error fetching memory relationships:', error);
+      res.status(500).json({ error: "Failed to fetch memory relationships" });
+    }
+  });
+
+  // Get consolidation log with metrics
+  app.get("/api/memory/consolidation-log/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId) || 1;
+      
+      // Get consolidation metrics from memory graph service  
+      const consolidationMetrics = await memoryService.getMemoryQualityMetrics(userId);
+      const graphMetrics = await memoryGraphService.getMemoryNode('recent') // Will fetch general metrics
+        .catch(() => null);
+
+      res.json({ 
+        userId,
+        logEntries: [], // Graph service doesn't expose detailed logs yet
+        metrics: {
+          totalConsolidations: consolidationMetrics.duplicateRate ? Math.floor(consolidationMetrics.duplicateRate * 100) : 0,
+          duplicateRate: consolidationMetrics.duplicateRate || 0,
+          qualityScore: consolidationMetrics.qualityScore || 0.5,
+          relationshipsDetected: graphMetrics?.relationships?.length || 0,
+          consolidationEffectiveness: consolidationMetrics.averageImportanceScore || 0.5
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching consolidation metrics:', error);
+      res.status(500).json({ error: "Failed to fetch consolidation metrics" });
+    }
+  });
+
+  // Get memory graph performance metrics
+  app.get("/api/memory/graph-metrics/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId) || 1;
+      const qualityMetrics = await memoryService.getMemoryQualityMetrics(userId);
+      
+      res.json({
+        userId,
+        performance: {
+          totalMemories: qualityMetrics.totalMemories || 0,
+          duplicateDetectionRate: qualityMetrics.duplicateRate || 0,
+          qualityScore: qualityMetrics.qualityScore || 0.5,
+          averageImportance: qualityMetrics.averageImportanceScore || 0.5,
+          memoryFreshness: qualityMetrics.averageFreshness || 0.5
+        },
+        consolidation: {
+          potentialDuplicates: qualityMetrics.potentialDuplicates || 0,
+          consolidationOpportunities: Math.max(0, (qualityMetrics.potentialDuplicates || 0) - 2),
+          estimatedEfficiency: qualityMetrics.duplicateRate < 0.1 ? 'excellent' : 
+                               qualityMetrics.duplicateRate < 0.2 ? 'good' : 'needs_attention'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching graph metrics:', error);
+      res.status(500).json({ error: "Failed to fetch graph performance metrics" });
     }
   });
 

@@ -37,9 +37,12 @@ export function useInfiniteMemories({
 }: UseInfiniteMemoriesOptions = {}) {
   const query = useInfiniteQuery<MemoryPage, Error>({
     queryKey: ['memories', 'infinite', category],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1 }: { pageParam: unknown }) => {
+      const page = typeof pageParam === 'number' ? pageParam : 1;
+      const startTime = performance.now();
+      
       const params = new URLSearchParams({
-        page: pageParam.toString(),
+        page: page.toString(),
         limit: limit.toString()
       });
       
@@ -49,15 +52,28 @@ export function useInfiniteMemories({
       
       const response = await fetch(`/api/memories?${params}`);
       if (!response.ok) throw new Error('Failed to fetch memories');
-      return response.json();
+      
+      const data = await response.json();
+      const duration = performance.now() - startTime;
+      
+      console.log(`[Memory Loading Performance] Page ${page}: ${duration.toFixed(2)}ms (Target: <100ms)`);
+      
+      if (duration > 100) {
+        console.warn(`[Memory Loading Performance] Slower than target: ${duration.toFixed(2)}ms > 100ms`);
+      }
+      
+      return data;
     },
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined;
     },
     initialPageParam: 1,
     enabled,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false
+    staleTime: 10 * 60 * 1000, // Increased to 10 minutes for better caching
+    gcTime: 15 * 60 * 1000, // Keep in memory for 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch on mount if we have data
+    refetchOnReconnect: false // Don't refetch on reconnect
   });
 
   // Flatten all memories from all pages

@@ -29,9 +29,12 @@ export function useMemoryActions({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Manual memory creation mutation with smart defaults tracking
+  // Manual memory creation mutation with smart defaults tracking and performance monitoring
   const createManualMemoryMutation = useMutation({
     mutationFn: async (data: ManualMemoryFormData) => {
+      // Start performance timing
+      const startTime = performance.now();
+      
       // Convert importance level to numeric score
       const importanceMap = { low: 0.3, medium: 0.6, high: 0.9 };
       const importanceScore = importanceMap[data.importance];
@@ -43,32 +46,63 @@ export function useMemoryActions({
         importance: data.importance,
       });
 
-      // Use the existing memory processing system like chat does
-      return apiRequest("/api/memories/manual", "POST", {
-        content: data.content,
-        category: data.category,
-        importance: importanceScore,
-      });
-    },
-    onSuccess: async () => {
-      // Force immediate refetch of overview for instant UI updates
-      await refetchOverview();
-      
-      // Invalidate Godmode metrics to update quality indicators
-      await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
-      
-      // If memories are loaded, refetch them to show new memory
-      if (memoriesLoaded) {
-        await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
-        await infiniteMemoriesQuery.refetch();
+      try {
+        // Use the existing memory processing system like chat does
+        const result = await apiRequest("/api/memories/manual", "POST", {
+          content: data.content,
+          category: data.category,
+          importance: importanceScore,
+        });
+        
+        // Log performance metrics for monitoring
+        const duration = performance.now() - startTime;
+        console.log(`[Memory Creation Performance] Duration: ${duration.toFixed(2)}ms (Target: <200ms)`);
+        
+        // Track if we're meeting performance targets
+        if (duration > 200) {
+          console.warn(`[Memory Creation Performance] Slower than target: ${duration.toFixed(2)}ms > 200ms`);
+        }
+        
+        return result;
+      } catch (error) {
+        const duration = performance.now() - startTime;
+        console.error(`[Memory Creation Performance] Failed after ${duration.toFixed(2)}ms:`, error);
+        throw error;
       }
+    },
+    onSuccess: async (result) => {
+      const refreshStartTime = performance.now();
       
-      onMemoryCreated?.();
-      
-      toast({
-        title: "Memory saved",
-        description: "Your memory has been processed and saved successfully.",
-      });
+      try {
+        // Force immediate refetch of overview for instant UI updates
+        await refetchOverview();
+        
+        // Invalidate Godmode metrics to update quality indicators
+        await queryClient.invalidateQueries({ queryKey: ["memory-quality-metrics"] });
+        
+        // If memories are loaded, refetch them to show new memory
+        if (memoriesLoaded) {
+          await queryClient.invalidateQueries({ queryKey: ["memories", "infinite"] });
+          await infiniteMemoriesQuery.refetch();
+        }
+        
+        const refreshDuration = performance.now() - refreshStartTime;
+        console.log(`[Memory UI Refresh Performance] Duration: ${refreshDuration.toFixed(2)}ms`);
+        
+        onMemoryCreated?.();
+        
+        toast({
+          title: "Memory saved",
+          description: "Your memory has been processed and saved successfully.",
+        });
+      } catch (error) {
+        console.error('[Memory UI Refresh] Error during refresh:', error);
+        // Still show success toast since memory was created successfully
+        toast({
+          title: "Memory saved",
+          description: "Your memory has been saved successfully.",
+        });
+      }
     },
     onError: (error: any) => {
       toast({

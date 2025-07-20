@@ -3,18 +3,14 @@ import { memoryEntries, type InsertMemoryEntry, type MemoryEntry, type MemoryCat
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { memoryService } from '@shared/services/memory-service';
 import crypto from 'crypto';
-
-interface RelevantMemory extends MemoryEntry {
-  relevanceScore: number;
-  retrievalReason: string;
-}
-
-interface DeduplicationResult {
-  action: 'skip' | 'merge' | 'update' | 'create';
-  existingMemoryId?: string;
-  confidence: number;
-  reasoning: string;
-}
+import {
+  calculateJaccardSimilarity,
+  calculateOverlapSimilarity,
+  calculateLevenshteinSimilarity,
+  calculateNgramSimilarity
+} from './memory/similarity-utils';
+import { isCacheValid, cleanExpiredCaches } from './memory/cache-utils';
+import type { RelevantMemory, DeduplicationResult } from './memory/memory-types';
 
 /**
  * ChatGPT Memory Enhancement Service
@@ -536,10 +532,10 @@ Use this information naturally in your responses to provide personalized guidanc
       if (memoryWords.length === 0) continue;
 
       // Enhanced similarity calculation with multiple metrics
-      const jaccardSimilarity = this.calculateJaccardSimilarity(contentWords, memoryWords);
-      const overlapSimilarity = this.calculateOverlapSimilarity(contentWords, memoryWords);
-      const levenshteinSimilarity = this.calculateLevenshteinSimilarity(normalizedContent, normalizedMemory);
-      const ngramSimilarity = this.calculateNgramSimilarity(contentWords, memoryWords);
+      const jaccardSimilarity = calculateJaccardSimilarity(contentWords, memoryWords);
+      const overlapSimilarity = calculateOverlapSimilarity(contentWords, memoryWords);
+      const levenshteinSimilarity = calculateLevenshteinSimilarity(normalizedContent, normalizedMemory);
+      const ngramSimilarity = calculateNgramSimilarity(contentWords, memoryWords);
       
       // Weighted combination of all similarity metrics
       const combinedSimilarity = (
@@ -562,90 +558,6 @@ Use this information naturally in your responses to provide personalized guidanc
     return bestMatch;
   }
 
-  /**
-   * Calculate Jaccard similarity (intersection over union)
-   */
-  private calculateJaccardSimilarity(words1: string[], words2: string[]): number {
-    const set1 = new Set(words1);
-    const set2 = new Set(words2);
-    const intersection = new Set([...set1].filter(w => set2.has(w)));
-    const union = new Set([...set1, ...set2]);
-    return intersection.size / union.size;
-  }
-
-  /**
-   * Calculate word overlap similarity
-   */
-  private calculateOverlapSimilarity(words1: string[], words2: string[]): number {
-    const intersection = words1.filter(w => words2.includes(w));
-    return intersection.length / Math.max(words1.length, words2.length);
-  }
-
-  /**
-   * Calculate Levenshtein distance-based similarity
-   */
-  private calculateLevenshteinSimilarity(str1: string, str2: string): number {
-    const distance = this.levenshteinDistance(str1, str2);
-    const maxLength = Math.max(str1.length, str2.length);
-    return maxLength > 0 ? 1 - (distance / maxLength) : 0;
-  }
-
-  /**
-   * Calculate N-gram similarity for better fuzzy matching
-   */
-  private calculateNgramSimilarity(words1: string[], words2: string[]): number {
-    const n = 2; // Use bigrams
-    const ngrams1 = this.generateNgrams(words1, n);
-    const ngrams2 = this.generateNgrams(words2, n);
-    
-    if (ngrams1.length === 0 || ngrams2.length === 0) return 0;
-    
-    const intersection = ngrams1.filter(ngram => ngrams2.includes(ngram));
-    return intersection.length / Math.max(ngrams1.length, ngrams2.length);
-  }
-
-  /**
-   * Generate N-grams from word array
-   */
-  private generateNgrams(words: string[], n: number): string[] {
-    const ngrams: string[] = [];
-    for (let i = 0; i <= words.length - n; i++) {
-      ngrams.push(words.slice(i, i + n).join(' '));
-    }
-    return ngrams;
-  }
-
-  /**
-   * Calculate Levenshtein distance between two strings
-   */
-  private levenshteinDistance(str1: string, str2: string): number {
-    const matrix: number[][] = [];
-    
-    // Initialize first row and column
-    for (let i = 0; i <= str2.length; i++) {
-      matrix[i] = [i];
-    }
-    for (let j = 0; j <= str1.length; j++) {
-      matrix[0][j] = j;
-    }
-    
-    // Fill the matrix
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1, // substitution
-            matrix[i][j - 1] + 1,     // insertion
-            matrix[i - 1][j] + 1      // deletion
-          );
-        }
-      }
-    }
-    
-    return matrix[str2.length][str1.length];
-  }
 
   /**
    * Get enhanced performance metrics for monitoring
@@ -688,45 +600,28 @@ Use this information naturally in your responses to provide personalized guidanc
    * Check if cache entry is still valid with custom TTL support
    */
   private isCacheValid(cacheKey: string, customTTL?: number): boolean {
-    const timestamp = this.cacheTimestamps.get(cacheKey);
-    if (!timestamp) return false;
-    const ttl = customTTL || this.CACHE_TTL;
-    return (Date.now() - timestamp) < ttl;
+    return isCacheValid(this.cacheTimestamps, cacheKey, this.CACHE_TTL, customTTL);
   }
 
   /**
    * Clean expired cache entries with optimized TTL handling
    */
   private cleanExpiredCaches(): void {
-    const now = Date.now();
-    const expiredKeys: string[] = [];
-    
-    // Convert to array to iterate safely
-    Array.from(this.cacheTimestamps.entries()).forEach(([key, timestamp]) => {
-      let isExpired = false;
-      
-      // Different TTL for different cache types
-      if (key.startsWith('hash_')) {
-        isExpired = now - timestamp > this.HASH_CACHE_TTL;
-      } else if (key.startsWith('sim_')) {
-        isExpired = now - timestamp > this.SIMILARITY_CACHE_TTL;
-      } else {
-        isExpired = now - timestamp > this.CACHE_TTL;
+    cleanExpiredCaches(
+      this.cacheTimestamps,
+      {
+        embeddingCache: this.embeddingCache,
+        promptCache: this.promptCache,
+        memoryRetrievalCache: this.memoryRetrievalCache,
+        similarityResultCache: this.similarityResultCache,
+        hashGenerationCache: this.hashGenerationCache
+      },
+      {
+        CACHE_TTL: this.CACHE_TTL,
+        SIMILARITY_CACHE_TTL: this.SIMILARITY_CACHE_TTL,
+        HASH_CACHE_TTL: this.HASH_CACHE_TTL
       }
-      
-      if (isExpired) {
-        expiredKeys.push(key);
-      }
-    });
-    
-    expiredKeys.forEach(key => {
-      this.embeddingCache.delete(key);
-      this.promptCache.delete(key);
-      this.memoryRetrievalCache.delete(key);
-      this.similarityResultCache.delete(key);
-      this.hashGenerationCache.delete(key);
-      this.cacheTimestamps.delete(key);
-    });
+    );
   }
 
   /**

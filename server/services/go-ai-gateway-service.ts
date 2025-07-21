@@ -2,100 +2,15 @@ import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
-
-// Types for Go AI Gateway integration
-interface GoAIRequest {
-  id?: string;
-  provider: 'openai' | 'google';
-  model: string;
-  messages: Array<{
-    role: 'user' | 'assistant' | 'system';
-    content: string;
-  }>;
-  stream?: boolean;
-  temperature?: number;
-  max_tokens?: number;
-  user_id: number;
-  conversation_id: string;
-  coaching_mode?: string;
-  attachments?: Array<{
-    id: string;
-    file_name: string;
-    file_type: string;
-    file_size: number;
-    url?: string;
-    data?: Buffer;
-  }>;
-  auto_model_selection?: boolean;
-  priority?: number;
-  metadata?: Record<string, any>;
-}
-
-interface GoAIResponse {
-  id: string;
-  request_id: string;
-  provider: 'openai' | 'google';
-  model: string;
-  content: string;
-  finish_reason?: string;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-  processing_time: number;
-  cache_hit: boolean;
-  retry_attempt: number;
-  timestamp: string;
-  metadata?: Record<string, any>;
-}
-
-interface GoBatchRequest {
-  id?: string;
-  requests: GoAIRequest[];
-  priority?: number;
-}
-
-interface GoBatchResponse {
-  id: string;
-  responses: GoAIResponse[];
-  processing_time: number;
-  success_count: number;
-  error_count: number;
-  timestamp: string;
-}
-
-interface GoGatewayStats {
-  uptime: number;
-  total_requests: number;
-  cache_hit_rate: number;
-  avg_processing_time_ms: number;
-  queue_length: number;
-  active_workers: number;
-  connection_pools: Array<{
-    provider: string;
-    active_connections: number;
-    idle_connections: number;
-    max_connections: number;
-    total_requests: number;
-    successful_requests: number;
-    failed_requests: number;
-    avg_response_time_ms: number;
-  }>;
-  error_rate: number;
-  requests_per_second: number;
-  memory_usage_bytes: number;
-}
-
-interface GoHealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  timestamp: string;
-  version: string;
-  uptime: number;
-  stats: GoGatewayStats;
-  providers: Record<string, boolean>;
-  errors?: string[];
-}
+import { 
+  GoAIRequest, 
+  GoAIResponse, 
+  GoBatchRequest, 
+  GoBatchResponse, 
+  GoGatewayStats, 
+  GoHealthStatus 
+} from './go-ai-gateway-types.js';
+import { convertToGoRequest, formatPerformanceMetrics, GO_AI_GATEWAY_CONFIG } from './go-ai-gateway-utils.js';
 
 class GoAIGatewayService {
   private goProcess: ChildProcess | null = null;
@@ -104,10 +19,10 @@ class GoAIGatewayService {
   private startPromise: Promise<void> | null = null;
   private isHealthy = false;
   private lastHealthCheck = 0;
-  private healthCheckInterval = 30000; // 30 seconds
+  private healthCheckInterval = GO_AI_GATEWAY_CONFIG.HEALTH_CHECK_INTERVAL;
 
   constructor() {
-    this.serviceUrl = `http://localhost:${process.env.AI_GATEWAY_PORT || 8081}`;
+    this.serviceUrl = `http://localhost:${process.env.AI_GATEWAY_PORT || GO_AI_GATEWAY_CONFIG.DEFAULT_PORT}`;
   }
 
   /**
@@ -152,14 +67,14 @@ class GoAIGatewayService {
           stdio: 'pipe',
           env: {
             ...process.env,
-            AI_GATEWAY_PORT: process.env.AI_GATEWAY_PORT || '8081',
-            LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-            MAX_WORKERS: process.env.MAX_WORKERS || '8',
-            QUEUE_SIZE: process.env.QUEUE_SIZE || '1000',
-            CACHE_TTL_MINUTES: process.env.CACHE_TTL_MINUTES || '30',
-            BATCH_SIZE: process.env.BATCH_SIZE || '10',
-            BATCH_TIMEOUT_MS: process.env.BATCH_TIMEOUT_MS || '1000',
-            API_KEY: process.env.API_KEY || 'ai-gateway-dev-key',
+            AI_GATEWAY_PORT: process.env.AI_GATEWAY_PORT || GO_AI_GATEWAY_CONFIG.DEFAULT_PORT,
+            LOG_LEVEL: process.env.LOG_LEVEL || GO_AI_GATEWAY_CONFIG.DEFAULT_LOG_LEVEL,
+            MAX_WORKERS: process.env.MAX_WORKERS || GO_AI_GATEWAY_CONFIG.DEFAULT_MAX_WORKERS,
+            QUEUE_SIZE: process.env.QUEUE_SIZE || GO_AI_GATEWAY_CONFIG.DEFAULT_QUEUE_SIZE,
+            CACHE_TTL_MINUTES: process.env.CACHE_TTL_MINUTES || GO_AI_GATEWAY_CONFIG.DEFAULT_CACHE_TTL_MINUTES,
+            BATCH_SIZE: process.env.BATCH_SIZE || GO_AI_GATEWAY_CONFIG.DEFAULT_BATCH_SIZE,
+            BATCH_TIMEOUT_MS: process.env.BATCH_TIMEOUT_MS || GO_AI_GATEWAY_CONFIG.DEFAULT_BATCH_TIMEOUT_MS,
+            API_KEY: process.env.API_KEY || GO_AI_GATEWAY_CONFIG.DEFAULT_API_KEY,
           }
         });
 
@@ -226,10 +141,10 @@ class GoAIGatewayService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
+          'X-API-Key': process.env.API_KEY || GO_AI_GATEWAY_CONFIG.DEFAULT_API_KEY,
         },
         body: JSON.stringify(request),
-        signal: AbortSignal.timeout(60000)
+        signal: AbortSignal.timeout(GO_AI_GATEWAY_CONFIG.REQUEST_TIMEOUT)
       });
 
       if (!response.ok) {
@@ -266,10 +181,10 @@ class GoAIGatewayService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
+          'X-API-Key': process.env.API_KEY || GO_AI_GATEWAY_CONFIG.DEFAULT_API_KEY,
         },
         body: JSON.stringify(batchRequest),
-        signal: AbortSignal.timeout(120000)
+        signal: AbortSignal.timeout(GO_AI_GATEWAY_CONFIG.BATCH_TIMEOUT)
       });
 
       if (!response.ok) {
@@ -297,9 +212,9 @@ class GoAIGatewayService {
       const response = await fetch(`${this.serviceUrl}/v1/models`, {
         method: 'GET',
         headers: {
-          'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
+          'X-API-Key': process.env.API_KEY || GO_AI_GATEWAY_CONFIG.DEFAULT_API_KEY,
         },
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(GO_AI_GATEWAY_CONFIG.ADMIN_TIMEOUT)
       });
 
       if (!response.ok) {
@@ -323,9 +238,9 @@ class GoAIGatewayService {
       const response = await fetch(`${this.serviceUrl}/admin/stats`, {
         method: 'GET',
         headers: {
-          'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
+          'X-API-Key': process.env.API_KEY || GO_AI_GATEWAY_CONFIG.DEFAULT_API_KEY,
         },
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(GO_AI_GATEWAY_CONFIG.ADMIN_TIMEOUT)
       });
 
       if (!response.ok) {
@@ -349,9 +264,9 @@ class GoAIGatewayService {
       const response = await fetch(`${this.serviceUrl}/admin/cache`, {
         method: 'GET',
         headers: {
-          'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
+          'X-API-Key': process.env.API_KEY || GO_AI_GATEWAY_CONFIG.DEFAULT_API_KEY,
         },
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(GO_AI_GATEWAY_CONFIG.ADMIN_TIMEOUT)
       });
 
       if (!response.ok) {
@@ -375,9 +290,9 @@ class GoAIGatewayService {
       const response = await fetch(`${this.serviceUrl}/admin/cache`, {
         method: 'DELETE',
         headers: {
-          'X-API-Key': process.env.API_KEY || 'ai-gateway-dev-key',
+          'X-API-Key': process.env.API_KEY || GO_AI_GATEWAY_CONFIG.DEFAULT_API_KEY,
         },
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(GO_AI_GATEWAY_CONFIG.ADMIN_TIMEOUT)
       });
 
       if (!response.ok) {
@@ -398,7 +313,7 @@ class GoAIGatewayService {
     try {
       const response = await fetch(`${this.serviceUrl}/health`, {
         method: 'GET',
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(GO_AI_GATEWAY_CONFIG.ADMIN_TIMEOUT)
       });
 
       if (!response.ok) {
@@ -458,46 +373,18 @@ class GoAIGatewayService {
     automaticModelSelection: boolean = false,
     priority: number = 3
   ): GoAIRequest {
-    // Convert conversation history to messages format
-    const messages = conversationHistory.map(msg => ({
-      role: msg.role as 'user' | 'assistant' | 'system',
-      content: msg.content
-    }));
-
-    // Add current message
-    messages.push({
-      role: 'user' as const,
-      content: message
-    });
-
-    const request: GoAIRequest = {
-      id: `req_${messageId}_${Date.now()}`,
-      provider: aiConfig.provider as 'openai' | 'google',
-      model: aiConfig.model,
-      messages,
-      user_id: userId,
-      conversation_id: conversationId,
-      coaching_mode: coachingMode,
-      auto_model_selection: automaticModelSelection,
-      priority,
-      metadata: {
-        message_id: messageId,
-        timestamp: new Date().toISOString()
-      }
-    };
-
-    // Add attachments if any
-    if (attachments && attachments.length > 0) {
-      request.attachments = attachments.map(att => ({
-        id: att.id,
-        file_name: att.fileName,
-        file_type: att.fileType,
-        file_size: att.fileSize,
-        url: att.url
-      }));
-    }
-
-    return request;
+    return convertToGoRequest(
+      message,
+      userId,
+      conversationId,
+      messageId,
+      coachingMode,
+      conversationHistory,
+      aiConfig,
+      attachments,
+      automaticModelSelection,
+      priority
+    );
   }
 
   /**
@@ -557,27 +444,7 @@ class GoAIGatewayService {
   async getPerformanceMetrics(): Promise<Record<string, { avg: number; min: number; max: number; count: number }>> {
     try {
       const stats = await this.getStats();
-      
-      return {
-        'ai_request_processing': {
-          avg: stats.avg_processing_time_ms,
-          min: 0, // Go service doesn't track min/max separately
-          max: 0,
-          count: stats.total_requests
-        },
-        'cache_hit_rate': {
-          avg: stats.cache_hit_rate * 100,
-          min: 0,
-          max: 100,
-          count: 1
-        },
-        'queue_utilization': {
-          avg: (stats.queue_length / 1000) * 100, // Assuming max queue size of 1000
-          min: 0,
-          max: 100,
-          count: 1
-        }
-      };
+      return formatPerformanceMetrics(stats);
     } catch (error) {
       console.error('[GoAIGateway] Failed to get performance metrics:', error);
       return {};

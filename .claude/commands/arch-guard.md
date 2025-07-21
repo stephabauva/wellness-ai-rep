@@ -7,6 +7,7 @@ Guards against architectural drift and maintains clean code boundaries.
 - Before creating new components/services
 - Before adding features
 - When asked to implement functionality
+- Browser console error detection for runtime issues
 
 ## Manual Usage
 ```bash
@@ -22,6 +23,7 @@ This command runs a comprehensive architectural health check:
 4. **Import Malformation**: Detects broken imports
 5. **File Size Analysis**: Enforces graduated thresholds (see safe-refactor.md for details)
 6. **Domain Boundary Check**: Ensures proper separation
+7. **Browser Console Error Detection**: Scans for runtime error patterns and generates browser tests
 
 ## When to run
 - Before starting any new feature

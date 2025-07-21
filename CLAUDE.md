@@ -16,6 +16,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Malformed import detection**: malformed-import-detector.js scans TypeScript/JavaScript files for syntax issues and path resolution problems in import statements
 **Async/await compatibility**: async-await-detector.js prevents "Cannot read properties of undefined" errors by detecting service getter async mismatches
 **File size analysis**: file-size-analyzer.js enforces line limits (300 for routes/components, 200 for services) and identifies oversized files needing refactoring
+**Browser console error detection**: browser-console-error-detector.cjs scans for runtime error patterns, checks lazy loading, and generates browser console tests
 
 ### Key Commands
 - `npm run dev` - Start development server
@@ -28,6 +29,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `node system-map-cross-domain-validator-v2.js` - Validate system maps against actual code
 - `npm run check:async` - Check async/await compatibility to prevent undefined errors
 - `npm run check:filesize` - Analyze file sizes using graduated thresholds (see .claude/commands/safe-refactor.md)
+- `node browser-console-error-detector.cjs` - Detect runtime browser console errors and generate test script
 - `./setup-dependency-hook.sh` - Install pre-commit dependency check hook
 
 ### Architecture Patterns & Rules
@@ -48,7 +50,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
   - System map's guide : `.system-maps/optimized-complete-map-blue-original.md`
 
 ### Before Adding ANY New Code (Claude AI Responsibility)
-1. **ALWAYS run architectural checks first**: `node dependency-tracker.js` (creates domain-specific dependency maps), `node malformed-import-detector.js`, `npm run check:async`, and `npm run check:filesize`
+1. **ALWAYS run architectural checks first**: `node dependency-tracker.js` (creates domain-specific dependency maps), `node malformed-import-detector.js`, `npm run check:async`, `npm run check:filesize`, and `node browser-console-error-detector.cjs`
 2. Ask: "Does this belong in shared/ or a specific domain?"
 3. Ask: "Can I enhance existing components vs creating new ones?"
 4. Ask: "Is this service necessary or can it be a simple function?"

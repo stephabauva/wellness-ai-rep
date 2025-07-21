@@ -11,6 +11,7 @@
 node system-map-tracker.js              # What's documented?
 node dependency-tracker.js              # What depends on what? (check dependency-maps/ directory)
 node system-map-cross-domain-validator-v2.js  # Architecture violations?
+node browser-console-error-detector.cjs # Runtime error patterns & browser tests?
 git status                              # Recent changes?
 git log --oneline -10                   # Recent commits?
 ```
@@ -21,9 +22,10 @@ git log --oneline -10                   # Recent commits?
 
 ### Symptoms
 - What user sees
-- Error messages
-- Console output
+- Error messages  
+- Console output (check with browser-console-error-detector.cjs)
 - Network tab findings
+- Runtime errors in browser console
 
 ### System Map Analysis
 - Affected domain: [from root.map.json]
@@ -102,6 +104,7 @@ window.fetch = new Proxy(window.fetch, {
 ### 1. "Feature suddenly stopped working"
 - Check recent commits: `git diff HEAD~5`
 - Review @used-by annotations for changes
+- Run browser-console-error-detector.cjs to scan for runtime errors
 - Verify database schema matches code
 - Check environment variables
 
@@ -191,6 +194,7 @@ psql $DATABASE_URL -c "SELECT 1"
 npm run check          # TypeScript errors?
 npx vitest            # Tests passing?
 npm run build         # Build successful?
+node browser-console-error-detector.cjs  # Browser runtime errors?
 
 # Dependency check
 npm ls                # Dependency tree

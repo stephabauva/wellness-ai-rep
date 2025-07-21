@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-21T14:00:30.651Z",
+  "lastUpdated": "2025-07-21T14:08:07.928Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -143,13 +143,7 @@
           "file": "client/src/components/MemorySection.tsx",
           "domain": "memory",
           "imports": [
-            "manualMemorySchema",
-            "ManualMemoryFormData",
-            "MemoryEntry",
-            "categoryIcons",
-            "categoryLabels",
-            "categoryColors",
-            "explanationCards"
+            "ManualMemoryFormData"
           ]
         },
         {
@@ -196,6 +190,13 @@
           ]
         },
         {
+          "file": "client/src/components/memory/MemoryExplanationCard.tsx",
+          "domain": "memory",
+          "imports": [
+            "explanationCards"
+          ]
+        },
+        {
           "file": "client/src/components/memory/MemoryCategoryGrid.tsx",
           "domain": "memory",
           "imports": [
@@ -204,7 +205,7 @@
         }
       ],
       "crossDomain": false,
-      "usageCount": 7
+      "usageCount": 8
     },
     "client/src/components/memory/SelectionModeControls.tsx": {
       "domain": "memory",
@@ -291,6 +292,23 @@
       "crossDomain": false,
       "usageCount": 1
     },
+    "client/src/components/memory/MemoryLabelFilter.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryLabelFilter"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryLabelFilter"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
     "client/src/components/memory/MemoryInsights.tsx": {
       "domain": "memory",
       "exports": [
@@ -331,6 +349,40 @@
       ],
       "crossDomain": false,
       "usageCount": 2
+    },
+    "client/src/components/memory/MemoryExplanationCard.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryExplanationCard"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryExplanationCard"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemoryEmptyState.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryEmptyState"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryEmptyState"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
     },
     "client/src/components/memory/MemoryCategoryGrid.tsx": {
       "domain": "memory",

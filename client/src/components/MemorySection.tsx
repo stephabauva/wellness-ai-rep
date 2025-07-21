@@ -2,12 +2,9 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@shared/components/ui/card";
 import { Button } from "@shared/components/ui/button";
-import { Badge } from "@shared/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@shared/components/ui/collapsible";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Trash2, Brain, User, Settings, Lightbulb, Apple, Target, ChevronDown, ChevronUp, Info, X, Plus, AlertCircle, Loader2, Mic, MicOff, Volume2, History, Zap, Clock, HelpCircle, Edit3, MousePointer2, CheckSquare } from "lucide-react";
+import { Brain, Plus } from "lucide-react";
 import { FAB } from "./ui/FAB";
-import { PrivacyBadge, PrivacyStatus } from "./ui/PrivacyBadge";
 import { apiRequest, queryClient } from "@shared";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useVoiceHandlers } from "../hooks/memory/useVoiceHandlers";
@@ -15,15 +12,7 @@ import { useMemoryEdit } from "../hooks/memory/useMemoryEdit";
 import { useInfiniteMemories } from "../hooks/useInfiniteMemories";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@shared/components/ui/tooltip";
-import { 
-  manualMemorySchema, 
-  ManualMemoryFormData, 
-  MemoryEntry, 
-  categoryIcons, 
-  categoryLabels, 
-  categoryColors, 
-  explanationCards 
-} from "./memory/constants";
+import { ManualMemoryFormData } from "./memory/constants";
 import { useMemoryActions } from "../hooks/memory/useMemoryActions";
 import { useMemoryFilters } from "../hooks/memory/useMemoryFilters";
 import { MemoryCategoryGrid } from "./memory/MemoryCategoryGrid";
@@ -33,6 +22,9 @@ import { MemoryList } from "./memory/MemoryList";
 import { MemoryOverviewHeader } from "./memory/MemoryOverviewHeader";
 import { MemorySummaryCard } from "./memory/MemorySummaryCard";
 import { SelectionModeControls } from "./memory/SelectionModeControls";
+import { MemoryExplanationCard } from "./memory/MemoryExplanationCard";
+import { MemoryLabelFilter } from "./memory/MemoryLabelFilter";
+import { MemoryEmptyState } from "./memory/MemoryEmptyState";
 
 
 
@@ -257,113 +249,22 @@ export default function MemorySection() {
                 setShowInsights={setShowInsights}
               />
 
-              {/* Explanation Card */}
-              <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
-                <Card className="border-purple-200 bg-purple-50">
-                  <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer hover:bg-purple-100 transition-colors min-h-[44px] py-4 touch-manipulation">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Info className="h-5 w-5 text-purple-600" />
-                          <CardTitle className="text-purple-800">
-                            {explanationCards[selectedCategory as keyof typeof explanationCards]?.title}
-                          </CardTitle>
-                        </div>
-                        {isExplanationOpen ? (
-                          <ChevronUp className="h-4 w-4 text-purple-600" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-purple-600" />
-                        )}
-                      </div>
-                      <CardDescription className="text-purple-700">
-                        {explanationCards[selectedCategory as keyof typeof explanationCards]?.description}
-                      </CardDescription>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="pt-0">
-                      <ul className="space-y-2 mb-4">
-                        {explanationCards[selectedCategory as keyof typeof explanationCards]?.details.map((detail, index) => (
-                          <li key={index} className="flex items-start gap-2 text-purple-700">
-                            <span className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0" />
-                            <span className="text-sm">{detail}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      
-                      {/* Privacy & Data Usage Transparency */}
-                      {explanationCards[selectedCategory as keyof typeof explanationCards]?.privacyNote && (
-                        <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                          <h4 className="text-sm font-medium text-purple-800 mb-2 flex items-center gap-1">
-                            <span>🔒</span>
-                            How this helps your coaching
-                          </h4>
-                          <p className="text-xs text-purple-700 mb-2">
-                            {explanationCards[selectedCategory as keyof typeof explanationCards]?.privacyNote}
-                          </p>
-                          <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                            <p className="text-xs text-blue-700">
-                              <strong>Coaching Benefits:</strong> {explanationCards[selectedCategory as keyof typeof explanationCards]?.coachingBenefits}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
+              <MemoryExplanationCard
+                selectedCategory={selectedCategory}
+                isExplanationOpen={isExplanationOpen}
+                onToggleExplanation={setIsExplanationOpen}
+              />
               
-              {/* Label Filtering Section */}
-              {selectedCategory !== "all" && availableLabels.length > 0 && (
-                <Card className="border-gray-200 bg-gray-50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      Filter by Labels
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleSelectAllLabels}
-                          className="text-xs min-h-[44px] px-4"
-                        >
-                          {selectedLabels.size === availableLabels.length ? "Deselect All" : "Select All"}
-                        </Button>
-                        <span className="text-xs text-gray-600">
-                          {selectedLabels.size} of {availableLabels.length} labels selected
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {availableLabels.map(({ label, count }) => (
-                          <Badge
-                            key={label}
-                            variant={selectedLabels.has(label) ? "default" : "outline"}
-                            className="cursor-pointer hover:bg-gray-100 text-xs min-h-[44px] px-3 py-2 flex items-center justify-center touch-manipulation"
-                            onClick={() => handleLabelToggle(label)}
-                          >
-                            {label} ({count})
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              <MemoryLabelFilter
+                selectedCategory={selectedCategory}
+                availableLabels={availableLabels}
+                selectedLabels={selectedLabels}
+                onLabelToggle={handleLabelToggle}
+                onSelectAllLabels={handleSelectAllLabels}
+              />
 
               {memories.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-8">
-                    <Brain className="h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-600 mb-2">No memories yet</h3>
-                    <p className="text-gray-500 text-center">
-                      Start chatting with your AI coach to build a personalized memory bank that helps provide better guidance.
-                    </p>
-                  </CardContent>
-                </Card>
+                <MemoryEmptyState />
               ) : (
                 <>
                   <SelectionModeControls

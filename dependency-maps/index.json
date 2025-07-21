@@ -1,7 +1,7 @@
 {
-  "lastGenerated": "2025-07-21T14:00:30.655Z",
+  "lastGenerated": "2025-07-21T14:08:07.932Z",
   "totalDomains": 17,
-  "totalDependencies": 171,
+  "totalDependencies": 174,
   "domainFiles": [
     {
       "domain": "app",
@@ -17,6 +17,11 @@
       "domain": "shared",
       "filename": "shared-dependencies.json",
       "fileCount": 34
+    },
+    {
+      "domain": "app/pages",
+      "filename": "app-pages-dependencies.json",
+      "fileCount": 2
     },
     {
       "domain": "settings",
@@ -36,7 +41,7 @@
     {
       "domain": "memory",
       "filename": "memory-dependencies.json",
-      "fileCount": 23
+      "fileCount": 26
     },
     {
       "domain": "unknown",
@@ -57,11 +62,6 @@
       "domain": "chat/attachments",
       "filename": "chat-attachments-dependencies.json",
       "fileCount": 1
-    },
-    {
-      "domain": "app/pages",
-      "filename": "app-pages-dependencies.json",
-      "fileCount": 2
     },
     {
       "domain": "health/hooks",

@@ -511,12 +511,41 @@ class DependencyTracker {
     
     // Write individual domain dependency maps
     let mapsCreated = 0;
+    let mapsUpdated = 0;
     for (const [domain, domainData] of domainMaps.entries()) {
       const filename = `${domain.replace(/[^a-zA-Z0-9-]/g, '-')}-dependencies.json`;
       const filepath = path.join(dependencyMapsDir, filename);
       
-      fs.writeFileSync(filepath, JSON.stringify(domainData, null, 2));
-      console.log(`   ✅ Created: ${filepath} (${Object.keys(domainData.dependencies).length} files)`);
+      // Check if file content actually changed (ignoring timestamps)
+      let shouldWrite = true;
+      if (fs.existsSync(filepath)) {
+        try {
+          const existingContent = fs.readFileSync(filepath, 'utf8');
+          const existing = JSON.parse(existingContent);
+          
+          // Create comparison copies without timestamps
+          const existingForComparison = { ...existing };
+          const newForComparison = { ...domainData };
+          delete existingForComparison.lastUpdated;
+          delete newForComparison.lastUpdated;
+          
+          // Only write if actual content changed
+          if (JSON.stringify(existingForComparison, null, 2) === JSON.stringify(newForComparison, null, 2)) {
+            shouldWrite = false;
+          }
+        } catch (error) {
+          // If we can't read/parse existing file, write the new one
+          shouldWrite = true;
+        }
+      }
+      
+      if (shouldWrite) {
+        fs.writeFileSync(filepath, JSON.stringify(domainData, null, 2));
+        console.log(`   ✅ Updated: ${filepath} (${Object.keys(domainData.dependencies).length} files)`);
+        mapsUpdated++;
+      } else {
+        console.log(`   ⏭️  Skipped: ${filepath} (no changes)`);
+      }
       mapsCreated++;
     }
     
@@ -533,7 +562,7 @@ class DependencyTracker {
     };
     
     fs.writeFileSync(path.join(dependencyMapsDir, 'index.json'), JSON.stringify(index, null, 2));
-    console.log(`   📋 Created dependency maps index with ${mapsCreated} domains`);
+    console.log(`   📋 Updated dependency maps index: ${mapsUpdated}/${mapsCreated} domains changed`);
     
     return mapsCreated;
   }

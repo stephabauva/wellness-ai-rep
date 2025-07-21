@@ -1,7 +1,7 @@
 {
-  "lastGenerated": "2025-07-21T13:27:20.523Z",
+  "lastGenerated": "2025-07-21T13:51:09.929Z",
   "totalDomains": 17,
-  "totalDependencies": 163,
+  "totalDependencies": 168,
   "domainFiles": [
     {
       "domain": "app",
@@ -41,7 +41,7 @@
     {
       "domain": "memory",
       "filename": "memory-dependencies.json",
-      "fileCount": 18
+      "fileCount": 20
     },
     {
       "domain": "unknown",
@@ -64,14 +64,14 @@
       "fileCount": 1
     },
     {
-      "domain": "health/hooks",
-      "filename": "health-hooks-dependencies.json",
-      "fileCount": 1
-    },
-    {
       "domain": "health",
       "filename": "health-dependencies.json",
       "fileCount": 7
+    },
+    {
+      "domain": "health/hooks",
+      "filename": "health-hooks-dependencies.json",
+      "fileCount": 1
     },
     {
       "domain": "infrastructure",

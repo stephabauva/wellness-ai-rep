@@ -1,7 +1,6 @@
 // MAX_LINES: 280
 // Chat Routes Module - Conversations, Messages, and Transcription
 import { createServer, type Server } from "http";
-import { z } from "zod";
 import { 
   Express, storage, aiService, transcriptionService, db, eq, desc,
   conversations, conversationMessages, files, attachmentRetentionService,
@@ -13,22 +12,15 @@ import {
   setupStreamingHeaders, sendChunk, sendCompleteResponse, sendError, sendDone,
   sendTypingStart, sendTypingEnd, sendProcessingUpdate, sendCompletion
 } from "../services/chat-streaming-handler.js";
+import { 
+  ensureConversation, getUserConversations, getConversationHistory, 
+  getConversationMessages, updateConversationTimestamp
+} from "../services/chat-conversation-manager.js";
+import { 
+  saveUserMessage, saveAiMessage, createLegacyMessage
+} from "../services/chat-message-handler.js";
+import { messageSchema } from "../services/chat-validation.js";
 
-const attachmentSchema = z.object({
-  id: z.string(), fileName: z.string(), displayName: z.string().optional(),
-  fileType: z.string(), fileSize: z.number(), url: z.string().optional(),
-  retentionInfo: z.any().optional(), categoryId: z.string().optional(),
-});
-
-const messageSchema = z.object({
-  content: z.string(), conversationId: z.string().nullable().optional(),
-  coachingMode: z.string().optional().default("weight-loss"),
-  aiProvider: z.enum(["openai", "google"]).optional().default("openai"),
-  aiModel: z.string().optional().default("gpt-4o"),
-  attachments: z.array(attachmentSchema).optional(),
-  automaticModelSelection: z.boolean().optional().default(false),
-  streaming: z.boolean().optional().default(false)
-});
 
 const audioUpload = multer({
   storage: multer.memoryStorage(),
@@ -63,31 +55,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
   // Get all conversations for a user
   app.get('/api/conversations', async (req, res) => {
     try {
-      const userId = 1; // Fixed user ID
-      
-      console.log('[CONVERSATIONS_FETCH_DEBUG] Fetching conversations for user:', userId);
-      
-      const userConversations = await db
-        .select({
-          id: conversations.id,
-          title: conversations.title,
-          createdAt: conversations.createdAt,
-          updatedAt: conversations.updatedAt,
-        })
-        .from(conversations)
-        .where(eq(conversations.userId, userId))
-        .orderBy(desc(conversations.updatedAt));
-      
-      console.log('[CONVERSATIONS_FETCH_DEBUG] Retrieved conversations:', {
-        count: userConversations.length,
-        conversations: userConversations.map((c: any) => ({
-          id: c.id,
-          title: c.title?.substring(0, 30) + '...',
-          updatedAt: c.updatedAt,
-          timeSinceUpdate: new Date().getTime() - new Date(c.updatedAt).getTime()
-        }))
-      });
-      
+      const userConversations = await getUserConversations();
       res.json(userConversations);
     } catch (error) {
       console.error('Get conversations error:', error);
@@ -128,41 +96,10 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       });
 
       // Create or validate conversation
-      if (currentConversationId) {
-        const existingConv = await db.select().from(conversations).where(eq(conversations.id, currentConversationId)).limit(1);
-        if (existingConv.length === 0) {
-          currentConversationId = null;
-        }
-      }
-
-      if (!currentConversationId) {
-        let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
-        if (!title && attachments?.length) {
-          title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
-        }
-        if (!title) title = "New Conversation";
-
-        const [newConversation] = await db.insert(conversations).values({
-          userId: FIXED_USER_ID, title
-        }).returning();
-        currentConversationId = newConversation.id;
-        
-        console.log('[STREAMING_DEBUG] Created new conversation:', {
-          conversationId: currentConversationId,
-          title: title
-        });
-      }
+      currentConversationId = await ensureConversation(currentConversationId, content, attachments);
 
       // Save user message to database
-      const [savedUserMessage] = await db.insert(conversationMessages).values({
-        conversationId: currentConversationId, role: 'user', content,
-        metadata: attachments?.length ? { attachments } : undefined
-      }).returning();
-
-      console.log('[STREAMING_DEBUG] Saved user message:', {
-        messageId: savedUserMessage.id,
-        conversationId: currentConversationId
-      });
+      const savedUserMessage = await saveUserMessage(currentConversationId, content, attachments);
 
       // Store AI response as it streams
       let fullAiResponse = '';
@@ -182,15 +119,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       );
 
       // Save AI response to database
-      const [savedAiMessage] = await db.insert(conversationMessages).values({
-        conversationId: currentConversationId, role: 'assistant', content: fullAiResponse
-      }).returning();
-
-      console.log('[STREAMING_DEBUG] Saved AI message:', {
-        messageId: savedAiMessage.id,
-        conversationId: currentConversationId,
-        responseLength: fullAiResponse.length
-      });
+      const savedAiMessage = await saveAiMessage(currentConversationId, fullAiResponse);
 
       // Process nutrition data in background (non-blocking)
       if (currentConversationId) {
@@ -206,41 +135,13 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       }
 
       // Update conversation timestamp so it appears at top of history
-      try {
-        const updateResult = await db.update(conversations)
-          .set({ updatedAt: new Date() })
-          .where(eq(conversations.id, currentConversationId!))
-          .returning();
-        
-        console.log('[CONVERSATION_UPDATE_DEBUG] STREAMING: Conversation timestamp updated:', {
-          conversationId: currentConversationId,
-          updateResult: updateResult,
-          newTimestamp: new Date().toISOString()
-        });
-        
-        // Verify the update actually happened
-        const verifyUpdate = await db.select()
-          .from(conversations)
-          .where(eq(conversations.id, currentConversationId!))
-          .limit(1);
-        
-        console.log('[CONVERSATION_UPDATE_VERIFY] STREAMING: Updated conversation in DB:', {
-          conversationId: currentConversationId,
-          dbRecord: verifyUpdate[0],
-          updatedAt: verifyUpdate[0]?.updatedAt
-        });
-      } catch (updateError) {
-        console.error('[CONVERSATION_UPDATE_ERROR] STREAMING: Failed to update conversation timestamp:', {
-          conversationId: currentConversationId,
-          error: updateError
-        });
-      }
+      await updateConversationTimestamp(currentConversationId!);
 
       sendDone(res, currentConversationId!);
       res.end();
     } catch (error) {
       console.error('[STREAMING_ERROR] Error in streaming endpoint:', error);
-      sendError(res, error instanceof z.ZodError ? "Invalid request data" : "Failed to process message");
+      sendError(res, error instanceof Error && error.name === 'ZodError' ? "Invalid request data" : "Failed to process message");
       res.end();
     }
   });
@@ -257,45 +158,20 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       }
 
       const processOperations = async () => {
-        if (currentConversationId) {
-          const existingConv = await db.select().from(conversations).where(eq(conversations.id, currentConversationId!)).limit(1);
-          if (existingConv.length === 0) {
-            currentConversationId = null;
-          } else {
-            conversationHistory = await db.select().from(conversationMessages)
-              .where(eq(conversationMessages.conversationId, currentConversationId!))
-              .orderBy(conversationMessages.createdAt).limit(20);
-          }
-        }
+        // Ensure conversation exists and get history
+        currentConversationId = await ensureConversation(currentConversationId, content, attachments);
+        conversationHistory = await getConversationHistory(currentConversationId, 20);
 
-        if (!currentConversationId) {
-          let title = content?.slice(0, 50) + (content && content.length > 50 ? '...' : '');
-          if (!title && attachments?.length) {
-            title = attachments.map(a => a.displayName || a.fileName).join(', ').slice(0, 50);
-          }
-          if (!title) title = "New Conversation";
-
-          const [newConversation] = await db.insert(conversations).values({
-            userId: FIXED_USER_ID, title
-          }).returning();
-          currentConversationId = newConversation.id;
-          conversationHistory = [];
-        }
-
-        const [savedUserMessage] = await db.insert(conversationMessages).values({
-          conversationId: currentConversationId!, role: 'user', content,
-          metadata: attachments?.length ? { attachments } : undefined
-        }).returning();
+        const savedUserMessage = await saveUserMessage(currentConversationId!, content, attachments);
 
         const attachmentProcessing = attachments?.length ? 
           processMessageAttachments(attachments, currentConversationId!, savedUserMessage.id) : 
           Promise.resolve();
 
-        const legacyUserMessage = await storage.createMessage({
-          userId: FIXED_USER_ID,
-          content: content + (attachments?.length ? ` [${attachments.length} attachment(s)]` : ''),
-          isUserMessage: true
-        });
+        const legacyUserMessage = await createLegacyMessage(
+          content + (attachments?.length ? ` [${attachments.length} attachment(s)]` : ''),
+          true
+        );
 
         if (streaming) {
           sendProcessingUpdate(res, currentConversationId!, savedUserMessage);
@@ -308,9 +184,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
           attachmentProcessing
         ]);
 
-        const [savedAiMessage] = await db.insert(conversationMessages).values({
-          conversationId: currentConversationId!, role: 'assistant', content: aiResult.response
-        }).returning();
+        const savedAiMessage = await saveAiMessage(currentConversationId!, aiResult.response);
 
         // Process nutrition data in background (non-blocking)
         processNutritionData(
@@ -324,40 +198,9 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         });
 
         // Update conversation timestamp so it appears at top of history
-        try {
-          const updateResult = await db.update(conversations)
-            .set({ updatedAt: new Date() })
-            .where(eq(conversations.id, currentConversationId!))
-            .returning();
-          
-          console.log('[CONVERSATION_UPDATE_DEBUG] Conversation timestamp updated:', {
-            conversationId: currentConversationId,
-            updateResult: updateResult,
-            newTimestamp: new Date().toISOString()
-          });
-          
-          // Verify the update actually happened
-          const verifyUpdate = await db.select()
-            .from(conversations)
-            .where(eq(conversations.id, currentConversationId!))
-            .limit(1);
-          
-          console.log('[CONVERSATION_UPDATE_VERIFY] Updated conversation in DB:', {
-            conversationId: currentConversationId,
-            dbRecord: verifyUpdate[0],
-            updatedAt: verifyUpdate[0]?.updatedAt
-          });
-        } catch (updateError) {
-          console.error('[CONVERSATION_UPDATE_ERROR] Failed to update conversation timestamp:', {
-            conversationId: currentConversationId,
-            error: updateError
-          });
-          // Don't throw - this is not critical enough to fail the entire request
-        }
+        await updateConversationTimestamp(currentConversationId!);
 
-        const legacyAiMessage = await storage.createMessage({
-          userId: FIXED_USER_ID, content: aiResult.response, isUserMessage: false
-        });
+        const legacyAiMessage = await createLegacyMessage(aiResult.response, false);
 
         return { userMessage: legacyUserMessage, aiMessage: legacyAiMessage, conversationId: currentConversationId, memoryInfo: aiResult.memoryInfo };
       };
@@ -373,15 +216,15 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       const isStreaming = req.body?.streaming || false;
-      const errorMessage = error instanceof z.ZodError ? "Invalid request data" : "Failed to process message";
+      const errorMessage = error instanceof Error && error.name === 'ZodError' ? "Invalid request data" : "Failed to process message";
       
       if (isStreaming) {
         sendError(res, errorMessage);
         res.end();
       } else {
-        res.status(error instanceof z.ZodError ? 400 : 500).json({ 
+        res.status(error instanceof Error && error.name === 'ZodError' ? 400 : 500).json({ 
           message: errorMessage,
-          ...(error instanceof z.ZodError && { errors: error.errors })
+          ...(error instanceof Error && error.name === 'ZodError' && { errors: (error as any).errors })
         });
       }
     }
@@ -390,7 +233,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
 
   app.get("/api/conversations/:id/messages", async (req, res) => {
     try {
-      const messages = await db.select().from(conversationMessages).where(eq(conversationMessages.conversationId, req.params.id)).orderBy(conversationMessages.createdAt);
+      const messages = await getConversationMessages(req.params.id);
       res.json(messages);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch conversation messages" });

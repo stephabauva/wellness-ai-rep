@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-21T13:27:20.519Z",
+  "lastUpdated": "2025-07-21T13:37:34.206Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -284,6 +284,33 @@
       "crossDomain": false,
       "usageCount": 1
     },
+    "server/services/memory/memory-relationship-utils.ts": {
+      "domain": "memory",
+      "exports": [
+        "calculateContradictionScore",
+        "calculateSupportScore",
+        "calculateTemporalScore",
+        "findCommonWords",
+        "groupMemoriesByCategory",
+        "classifyFactType",
+        "calculateFactConfidence",
+        "calculateClusterCoherence"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory/memory-relationship-analyzer.ts",
+          "domain": "memory",
+          "imports": [
+            "calculateContradictionScore",
+            "calculateSupportScore",
+            "calculateTemporalScore",
+            "findCommonWords"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
     "server/services/memory/memory-relationship-types.ts": {
       "domain": "memory",
       "exports": [
@@ -292,6 +319,13 @@
         "SemanticCluster"
       ],
       "usedBy": [
+        {
+          "file": "server/services/memory/memory-retrieval-manager.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryRelationship"
+          ]
+        },
         {
           "file": "server/services/memory/memory-relationship-utils.ts",
           "domain": "memory",
@@ -307,10 +341,35 @@
             "AtomicFact",
             "SemanticCluster"
           ]
+        },
+        {
+          "file": "server/services/memory/memory-relationship-analyzer.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryRelationship",
+            "AtomicFact"
+          ]
         }
       ],
       "crossDomain": false,
-      "usageCount": 2
+      "usageCount": 4
+    },
+    "server/services/memory/memory-relationship-cache.ts": {
+      "domain": "memory",
+      "exports": [
+        "MemoryRelationshipCache"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory/memory-retrieval-manager.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryRelationshipCache"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
     },
     "server/services/memory/ResponseParsers.ts": {
       "domain": "memory",

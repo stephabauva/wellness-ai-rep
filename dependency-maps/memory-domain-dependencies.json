@@ -1,6 +1,6 @@
 {
   "domain": "memory/domain",
-  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "lastUpdated": "2025-07-21T09:36:23.714Z",
   "dependencies": {
     "server/services/memory/simple-memory-detection.ts": {
       "domain": "memory/domain",

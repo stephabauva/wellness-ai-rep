@@ -1,6 +1,6 @@
 {
   "domain": "server/routes/shared-dependencies.ts",
-  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "lastUpdated": "2025-07-21T09:36:23.714Z",
   "dependencies": {
     "server/services/service-registry.ts": {
       "domain": "server/routes/shared-dependencies.ts",

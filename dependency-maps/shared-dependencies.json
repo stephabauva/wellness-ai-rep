@@ -1,0 +1,743 @@
+{
+  "domain": "shared",
+  "lastUpdated": "2025-07-21T07:47:45.912Z",
+  "dependencies": {
+    "client/src/services/audio-service.ts": {
+      "domain": "shared/services",
+      "exports": [
+        "AudioRecordingState",
+        "TranscriptionResult",
+        "AudioServiceConfig",
+        "audioService"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/AudioRecorder.tsx",
+          "domain": "chat/audio",
+          "imports": [
+            "audioService",
+            "TranscriptionResult"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useWebWorker.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useWebWorker"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MessageDisplayArea.tsx",
+          "domain": "chat",
+          "imports": [
+            "useWebWorker"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useVoiceInput.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useVoiceInput"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/hooks/memory/useVoiceHandlers.ts",
+          "domain": "memory",
+          "imports": [
+            "useVoiceInput"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useVirtualScrolling.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useVirtualScrolling"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MessageDisplayArea.tsx",
+          "domain": "chat",
+          "imports": [
+            "useVirtualScrolling"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useTheme.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "Theme",
+        "ThemeState",
+        "useTheme"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/App.tsx",
+          "domain": "app/root",
+          "imports": [
+            "useTheme"
+          ]
+        },
+        {
+          "file": "client/src/components/ui/ThemeToggle.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "useTheme",
+            "Theme"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 2
+    },
+    "client/src/hooks/useSwipe.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useSwipe"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/MobileHeader.tsx",
+          "domain": "health",
+          "imports": [
+            "useSwipe"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useScrollAnimation.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useScrollAnimation"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/ActivityScroll.tsx",
+          "domain": "health",
+          "imports": [
+            "useScrollAnimation"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useMessagePagination.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useMessagePagination"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MessageDisplayArea.tsx",
+          "domain": "chat",
+          "imports": [
+            "useMessagePagination"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useLazySection.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "SectionName",
+        "useLazySection"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/hooks/useStaggeredLoading.ts",
+          "domain": "shared/hooks",
+          "imports": [
+            "SectionName"
+          ]
+        },
+        {
+          "file": "client/src/hooks/useBackgroundPreload.ts",
+          "domain": "shared/hooks",
+          "imports": [
+            "SectionName"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
+    },
+    "client/src/hooks/useInfiniteScroll.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useInfiniteScroll"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useInfiniteScroll"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/useInfiniteMemories.ts": {
+      "domain": "shared/hooks",
+      "exports": [
+        "useInfiniteMemories"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useInfiniteMemories"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/StreamingText.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "StreamingText"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/chat-message.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "StreamingText"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/SectionSkeleton.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "SectionSkeleton"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/ui/useSidebar.ts": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarContext",
+        "useSidebar"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "useSidebar"
+          ]
+        },
+        {
+          "file": "client/src/components/ui/sidebar-trigger-component.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "useSidebar"
+          ]
+        },
+        {
+          "file": "client/src/components/ui/sidebar-provider-component.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarContext"
+          ]
+        },
+        {
+          "file": "client/src/components/ui/sidebar-menu-button-components.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "useSidebar"
+          ]
+        },
+        {
+          "file": "client/src/components/ui/sidebar-main-component.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "useSidebar"
+          ]
+        },
+        {
+          "file": "client/src/components/ui/sidebar-layout-additional-components.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "useSidebar"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 6
+    },
+    "client/src/components/ui/sidebar-variants.ts": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "sidebarMenuButtonVariants"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar-menu-button-components.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "sidebarMenuButtonVariants"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-trigger-component.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarTrigger",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarTrigger",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-provider-component.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarProvider",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarProvider",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-menu-components.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarMenu",
+        "SidebarMenuItem",
+        "SidebarMenuSub",
+        "SidebarMenuSubItem",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarMenu",
+            "SidebarMenuItem",
+            "SidebarMenuSub",
+            "SidebarMenuSubItem",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-menu-button-components.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarMenuAction",
+        "SidebarMenuBadge",
+        "SidebarMenuButton",
+        "SidebarMenuSkeleton",
+        "SidebarMenuSubButton",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarMenuAction",
+            "SidebarMenuBadge",
+            "SidebarMenuButton",
+            "SidebarMenuSkeleton",
+            "SidebarMenuSubButton",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-main-component.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "Sidebar",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "Sidebar",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-layout-components.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarFooter",
+        "SidebarHeader",
+        "SidebarInput",
+        "SidebarSeparator",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarFooter",
+            "SidebarHeader",
+            "SidebarInput",
+            "SidebarSeparator",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-layout-additional-components.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarRail",
+        "SidebarInset",
+        "SidebarContent",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarRail",
+            "SidebarInset",
+            "SidebarContent",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-group-components.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SidebarGroup",
+        "SidebarGroupAction",
+        "SidebarGroupContent",
+        "SidebarGroupLabel",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SidebarGroup",
+            "SidebarGroupAction",
+            "SidebarGroupContent",
+            "SidebarGroupLabel",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/sidebar-constants.ts": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "SIDEBAR_COOKIE_NAME",
+        "SIDEBAR_COOKIE_MAX_AGE",
+        "SIDEBAR_WIDTH",
+        "SIDEBAR_WIDTH_MOBILE",
+        "SIDEBAR_WIDTH_ICON",
+        "SIDEBAR_KEYBOARD_SHORTCUT"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar-provider-component.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SIDEBAR_COOKIE_NAME",
+            "SIDEBAR_COOKIE_MAX_AGE",
+            "SIDEBAR_WIDTH",
+            "SIDEBAR_WIDTH_ICON",
+            "SIDEBAR_KEYBOARD_SHORTCUT",
+            ""
+          ]
+        },
+        {
+          "file": "client/src/components/ui/sidebar-main-component.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "SIDEBAR_WIDTH_MOBILE",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
+    },
+    "client/src/components/ui/sheet.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "Sheet",
+        "SheetPortal",
+        "SheetOverlay",
+        "SheetTrigger",
+        "SheetClose",
+        "SheetContent",
+        "SheetHeader",
+        "SheetFooter",
+        "SheetTitle",
+        "SheetDescription",
+        ""
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/sidebar-main-component.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "Sheet",
+            "SheetContent",
+            "SheetDescription",
+            "SheetHeader",
+            "SheetTitle",
+            ""
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/scroll-area.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "ScrollArea",
+        "ScrollBar"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ConversationHistory.tsx",
+          "domain": "chat",
+          "imports": [
+            "ScrollArea"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/ui/progress.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "Progress"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/upload-progress.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "Progress"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/ui/device-card.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "DeviceCard"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ConnectedDevicesSection.tsx",
+          "domain": "health/devices",
+          "imports": [
+            "DeviceCard"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/ui/chat-message.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "ChatMessage"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MessageDisplayArea.tsx",
+          "domain": "chat",
+          "imports": [
+            "ChatMessage"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/ui/TouchSwipeHandler.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "TouchSwipeHandler",
+        "createDeleteAction",
+        "createEditAction",
+        "createUndoAction"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/memory/MemoryList.tsx",
+          "domain": "memory",
+          "imports": [
+            "TouchSwipeHandler",
+            "createDeleteAction",
+            "createEditAction"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/ui/ThemeToggle.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "ThemeToggle"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/Sidebar.tsx",
+          "domain": "app/navigation",
+          "imports": [
+            "ThemeToggle"
+          ]
+        },
+        {
+          "file": "client/src/components/MobileNav.tsx",
+          "domain": "app/navigation",
+          "imports": [
+            "ThemeToggle"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 2
+    },
+    "client/src/components/ui/PrivacyBadge.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "PrivacyBadgeProps",
+        "PrivacyBadge",
+        "PrivacyIndicatorGroupProps",
+        "PrivacyIndicatorGroup",
+        "PrivacyStatusProps",
+        "PrivacyStatus"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "PrivacyBadge",
+            "PrivacyStatus"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/ui/FAB.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "FABProps",
+        "FAB",
+        "fabVariants"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "FAB"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "server/services/database-migration-service.ts": {
+      "domain": "shared/services",
+      "exports": [
+        "DatabaseMigrationService",
+        "databaseMigrationService"
+      ],
+      "usedBy": [
+        {
+          "file": "server/index.ts",
+          "domain": "infrastructure/server",
+          "imports": [
+            "databaseMigrationService"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

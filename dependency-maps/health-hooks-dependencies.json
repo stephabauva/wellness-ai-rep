@@ -1,0 +1,23 @@
+{
+  "domain": "health/hooks",
+  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "dependencies": {
+    "client/src/components/health/utils/pdf-generator.ts": {
+      "domain": "health/hooks",
+      "exports": [
+        "generatePDF"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/hooks/useReportGeneration.ts",
+          "domain": "health",
+          "imports": [
+            "generatePDF"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

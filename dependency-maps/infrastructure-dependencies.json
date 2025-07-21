@@ -1,0 +1,42 @@
+{
+  "domain": "infrastructure",
+  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "dependencies": {
+    "server/routes-simple.ts": {
+      "domain": "infrastructure/routing",
+      "exports": [
+        "registerSimpleRoutes"
+      ],
+      "usedBy": [
+        {
+          "file": "server/index.ts",
+          "domain": "infrastructure/server",
+          "imports": [
+            "registerSimpleRoutes"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "server/routes/index.ts": {
+      "domain": "infrastructure/routing",
+      "exports": [
+        "ROUTE_MODULES",
+        "EMERGENCY_FALLBACK",
+        "ROUTE_MODULES_ENABLED"
+      ],
+      "usedBy": [
+        {
+          "file": "server/index.ts",
+          "domain": "infrastructure/server",
+          "imports": [
+            "registerRoutes"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

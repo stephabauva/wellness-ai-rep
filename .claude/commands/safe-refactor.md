@@ -19,6 +19,8 @@ Refactor large files using graduated thresholds in the wellness AI app while pre
 3. **Test current functionality**: Ensure all features work before changes
 4. **Backup current state**: Create git stash or commit point
 
+**Note**: The dependency tracker now generates split dependency maps in `dependency-maps/` instead of one large `dependency-map.json` file. This reduces merge conflicts and improves maintainability.
+
 ### Refactoring Strategy
 
 #### 1. Dependency Mapping Phase

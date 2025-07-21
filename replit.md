@@ -5,7 +5,7 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 # Important
 **User flows**: how the user interacts with the application is described in ./tasks/all-user-flows.md
 **System map tracker**: system-map-tracker.js scans recently modified Git files and cross-references them with system maps
-**Dependency tracking**: dependency-tracker.js and system-map-cross-domain-validator-v2.js analyze actual code imports
+**Dependency tracking**: dependency-tracker.js generates split dependency maps by domain (see dependency-maps/) and system-map-cross-domain-validator-v2.js analyze actual code imports
 **@used-by annotations**: Add comments like @used-by domain/component to track dependencies
 **Malformed import detection**: malformed-import-detector.js scans TypeScript/JavaScript files for syntax issues and path resolution problems in import statements
 
@@ -590,6 +590,16 @@ Changelog:
   - **Complete Trace Coverage**: Each feature map follows optimized blueprint with trigger → dataFlow → files → cacheFlow → errorPaths → dependencies → implementation details
   - **Production Validation**: All maps reflect actual working implementation with accurate file paths, API endpoints, and data flows
   - **Dependency Optimization Foundation**: System maps provide baseline for upcoming dependency bloat reduction plan (4,169 → ~800 lines target)
+
+- July 21, 2025. **Dependency Map Refactoring - Split Architecture for Merge Conflict Prevention**:
+  - **Problem Solved**: Eliminated massive dependency-map.json file (4,000+ lines) that caused merge conflicts when working with branches
+  - **Split Architecture**: Refactored dependency-tracker.js to generate domain-specific dependency maps in `dependency-maps/` directory
+  - **17 Domain Files**: Dependencies now split across focused files (shared-dependencies.json, chat-dependencies.json, health-dependencies.json, etc.)
+  - **Index File**: Created index.json with overview of all domain files and counts for easy navigation
+  - **Backward Compatibility**: Legacy single-file generation available with `--legacy-format` flag
+  - **Merge-Friendly**: Individual domain files prevent conflicts when different teams work on separate domains
+  - **Updated Documentation**: Enhanced safe-refactor.md and replit.md with new dependency tracking approach
+  - **Benefits**: Faster processing, better organization, reduced git conflicts, domain isolation
 
 # User Preferences
 

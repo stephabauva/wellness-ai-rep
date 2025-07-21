@@ -1,0 +1,23 @@
+{
+  "domain": "health/devices",
+  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "dependencies": {
+    "client/src/components/ConnectedDevicesSection.tsx": {
+      "domain": "health/devices",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "ConnectedDevicesSection"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "domain": "unknown",
+  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "dependencies": {
+    "client/src/components/GodModeSection.tsx": {
+      "domain": "unknown/needs-classification",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "GodModeSection"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "server/vite.ts": {
+      "domain": "unknown/needs-classification",
+      "exports": [
+        "log",
+        "serveStatic"
+      ],
+      "usedBy": [
+        {
+          "file": "server/index.ts",
+          "domain": "infrastructure/server",
+          "imports": [
+            "setupVite",
+            "serveStatic",
+            "log"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

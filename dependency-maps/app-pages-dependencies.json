@@ -1,0 +1,40 @@
+{
+  "domain": "app/pages",
+  "lastUpdated": "2025-07-21T07:47:45.912Z",
+  "dependencies": {
+    "client/src/pages/not-found.tsx": {
+      "domain": "app/pages",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/App.tsx",
+          "domain": "app/root",
+          "imports": [
+            "NotFound"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/pages/home.tsx": {
+      "domain": "app/pages",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/App.tsx",
+          "domain": "app/root",
+          "imports": [
+            "Home"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

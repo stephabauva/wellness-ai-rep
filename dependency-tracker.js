@@ -441,12 +441,61 @@ class DependencyTracker {
     // Create organized system maps instead of single file
     await this.generateSystemMaps();
     
-    // Keep the old functionality for backward compatibility
-    const dependencyMap = {};
+    // Generate split dependency maps by domain instead of one large file
+    await this.generateSplitDependencyMaps();
+    
+    // Only generate the large legacy file if explicitly requested
+    if (process.argv.includes('--legacy-format')) {
+      const dependencyMap = {};
+      
+      for (const [filePath, info] of this.dependencies.entries()) {
+        if (info.usedBy.length > 0) {
+          dependencyMap[filePath] = {
+            domain: info.domain,
+            exports: info.exports.map(e => e.name),
+            usedBy: info.usedBy.map(u => ({
+              file: u.file,
+              domain: u.domain,
+              imports: u.imports
+            })),
+            crossDomain: info.usedBy.some(u => u.domain !== info.domain),
+            usageCount: info.usedBy.length
+          };
+        }
+      }
+      
+      fs.writeFileSync(outputPath, JSON.stringify(dependencyMap, null, 2));
+      console.log(`\n💾 Legacy dependency map saved to ${outputPath}`);
+    } else {
+      console.log(`\n✅ Split dependency maps generated (use --legacy-format for single file)`);
+    }
+  }
+
+  async generateSplitDependencyMaps() {
+    console.log('\n📁 Generating split dependency maps by domain...\n');
+    
+    // Create dependency-maps directory
+    const dependencyMapsDir = 'dependency-maps';
+    if (!fs.existsSync(dependencyMapsDir)) {
+      fs.mkdirSync(dependencyMapsDir, { recursive: true });
+    }
+    
+    // Group dependencies by domain
+    const domainMaps = new Map();
     
     for (const [filePath, info] of this.dependencies.entries()) {
       if (info.usedBy.length > 0) {
-        dependencyMap[filePath] = {
+        const domain = this.normalizeDomainForMap(info.domain);
+        
+        if (!domainMaps.has(domain)) {
+          domainMaps.set(domain, {
+            domain,
+            lastUpdated: new Date().toISOString(),
+            dependencies: {}
+          });
+        }
+        
+        domainMaps.get(domain).dependencies[filePath] = {
           domain: info.domain,
           exports: info.exports.map(e => e.name),
           usedBy: info.usedBy.map(u => ({
@@ -460,8 +509,33 @@ class DependencyTracker {
       }
     }
     
-    fs.writeFileSync(outputPath, JSON.stringify(dependencyMap, null, 2));
-    console.log(`\n💾 Legacy dependency map saved to ${outputPath}`);
+    // Write individual domain dependency maps
+    let mapsCreated = 0;
+    for (const [domain, domainData] of domainMaps.entries()) {
+      const filename = `${domain.replace(/[^a-zA-Z0-9-]/g, '-')}-dependencies.json`;
+      const filepath = path.join(dependencyMapsDir, filename);
+      
+      fs.writeFileSync(filepath, JSON.stringify(domainData, null, 2));
+      console.log(`   ✅ Created: ${filepath} (${Object.keys(domainData.dependencies).length} files)`);
+      mapsCreated++;
+    }
+    
+    // Create index file for easy access
+    const index = {
+      lastGenerated: new Date().toISOString(),
+      totalDomains: mapsCreated,
+      totalDependencies: this.dependencies.size,
+      domainFiles: Array.from(domainMaps.keys()).map(domain => ({
+        domain,
+        filename: `${domain.replace(/[^a-zA-Z0-9-]/g, '-')}-dependencies.json`,
+        fileCount: Object.keys(domainMaps.get(domain).dependencies).length
+      }))
+    };
+    
+    fs.writeFileSync(path.join(dependencyMapsDir, 'index.json'), JSON.stringify(index, null, 2));
+    console.log(`   📋 Created dependency maps index with ${mapsCreated} domains`);
+    
+    return mapsCreated;
   }
 
   async generateSystemMaps() {

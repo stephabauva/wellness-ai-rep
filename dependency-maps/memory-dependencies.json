@@ -1,0 +1,407 @@
+{
+  "domain": "memory",
+  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "dependencies": {
+    "client/src/components/MemorySection.tsx": {
+      "domain": "memory",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "MemorySection"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/hooks/memory/useVoiceHandlers.ts": {
+      "domain": "memory",
+      "exports": [
+        "useVoiceHandlers"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useVoiceHandlers"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/memory/useMemoryFilters.ts": {
+      "domain": "memory",
+      "exports": [
+        "useMemoryFilters"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useMemoryFilters"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/memory/useMemoryEdit.ts": {
+      "domain": "memory",
+      "exports": [
+        "useMemoryEdit"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useMemoryEdit"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/memory/useMemoryActions.ts": {
+      "domain": "memory",
+      "exports": [
+        "useMemoryActions"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useMemoryActions"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/utils.ts": {
+      "domain": "memory",
+      "exports": [
+        "SmartDefault",
+        "PresetButton",
+        "healthPresets",
+        "getTimeContext",
+        "getSmartDefaults",
+        "saveSmartDefault",
+        "getRecentValues",
+        "getContextualPresets"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/hooks/memory/useMemoryActions.ts",
+          "domain": "memory",
+          "imports": [
+            "saveSmartDefault",
+            "getSmartDefaults",
+            "getRecentValues"
+          ]
+        },
+        {
+          "file": "client/src/components/memory/MemoryForm.tsx",
+          "domain": "memory",
+          "imports": [
+            "SmartDefault",
+            "PresetButton",
+            "healthPresets",
+            "getTimeContext",
+            "getSmartDefaults",
+            "saveSmartDefault",
+            "getRecentValues",
+            "getContextualPresets"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
+    },
+    "client/src/components/memory/constants.tsx": {
+      "domain": "memory",
+      "exports": [
+        "manualMemorySchema",
+        "ManualMemoryFormData",
+        "MemoryEntry",
+        "categoryIcons",
+        "categoryLabels",
+        "categoryColors",
+        "explanationCards"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "manualMemorySchema",
+            "ManualMemoryFormData",
+            "MemoryEntry",
+            "categoryIcons",
+            "categoryLabels",
+            "categoryColors",
+            "explanationCards"
+          ]
+        },
+        {
+          "file": "client/src/hooks/memory/useMemoryFilters.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryEntry"
+          ]
+        },
+        {
+          "file": "client/src/hooks/memory/useMemoryActions.ts",
+          "domain": "memory",
+          "imports": [
+            "ManualMemoryFormData"
+          ]
+        },
+        {
+          "file": "client/src/components/memory/MemoryList.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryEntry",
+            "categoryIcons",
+            "categoryLabels",
+            "categoryColors"
+          ]
+        },
+        {
+          "file": "client/src/components/memory/MemoryForm.tsx",
+          "domain": "memory",
+          "imports": [
+            "manualMemorySchema",
+            "ManualMemoryFormData",
+            "categoryIcons",
+            "categoryLabels",
+            "categoryColors",
+            "explanationCards"
+          ]
+        },
+        {
+          "file": "client/src/components/memory/MemoryCategoryGrid.tsx",
+          "domain": "memory",
+          "imports": [
+            "explanationCards"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 6
+    },
+    "client/src/components/memory/MemoryRelationships.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryRelationships"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/memory/MemoryList.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryRelationships"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemoryList.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryList"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryList"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemoryInsights.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryInsights"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryInsights"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemoryForm.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryForm"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryForm"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemoryCategoryGrid.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryCategoryGrid"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryCategoryGrid"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "server/services/memory/ResponseParsers.ts": {
+      "domain": "memory",
+      "exports": [
+        "RelationshipDetectionResult",
+        "ResponseParsers"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory-graph-service.ts",
+          "domain": "memory",
+          "imports": [
+            "ResponseParsers",
+            "type RelationshipDetectionResult"
+          ]
+        },
+        {
+          "file": "server/services/memory/ConsolidationEngine.ts",
+          "domain": "memory",
+          "imports": [
+            "ResponseParsers",
+            "type RelationshipDetectionResult"
+          ]
+        },
+        {
+          "file": "server/services/memory/BatchAnalyzer.ts",
+          "domain": "memory",
+          "imports": [
+            "ResponseParsers",
+            "type RelationshipDetectionResult"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 3
+    },
+    "server/services/memory/MemoryPrompts.ts": {
+      "domain": "memory",
+      "exports": [
+        "MemoryPrompts"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory-graph-service.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryPrompts"
+          ]
+        },
+        {
+          "file": "server/services/memory/ConsolidationEngine.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryPrompts"
+          ]
+        },
+        {
+          "file": "server/services/memory/BatchAnalyzer.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryPrompts"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 3
+    },
+    "server/services/memory/MemoryCalculations.ts": {
+      "domain": "memory",
+      "exports": [
+        "MemoryCalculations"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory-graph-service.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryCalculations"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "server/services/memory/ConsolidationEngine.ts": {
+      "domain": "memory",
+      "exports": [
+        "ConsolidationResult",
+        "ConsolidationEngine"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory-graph-service.ts",
+          "domain": "memory",
+          "imports": [
+            "ConsolidationEngine",
+            "type ConsolidationResult"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "server/services/memory/BatchAnalyzer.ts": {
+      "domain": "memory",
+      "exports": [
+        "BatchAnalyzer"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory-graph-service.ts",
+          "domain": "memory",
+          "imports": [
+            "BatchAnalyzer"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    }
+  }
+}

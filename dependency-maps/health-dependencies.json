@@ -1,0 +1,125 @@
+{
+  "domain": "health",
+  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "dependencies": {
+    "client/src/components/health/dashboard/MobileHeader.tsx": {
+      "domain": "health",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+          "domain": "health",
+          "imports": [
+            "MobileHeader"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/health/dashboard/MetricsGrid.tsx": {
+      "domain": "health",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+          "domain": "health",
+          "imports": [
+            "MetricsGrid"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/health/dashboard/HeroSection.tsx": {
+      "domain": "health",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+          "domain": "health",
+          "imports": [
+            "HeroSection"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/health/dashboard/HealthDashboard.tsx": {
+      "domain": "health",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "HealthDashboard"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/health/dashboard/FloatingActionButton.tsx": {
+      "domain": "health",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+          "domain": "health",
+          "imports": [
+            "FloatingActionButton"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/health/dashboard/ActivityScroll.tsx": {
+      "domain": "health",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+          "domain": "health",
+          "imports": [
+            "ActivityScroll"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/health/dashboard/ActionButtons.tsx": {
+      "domain": "health",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/health/dashboard/HealthDashboard.tsx",
+          "domain": "health",
+          "imports": [
+            "ActionButtons"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    }
+  }
+}

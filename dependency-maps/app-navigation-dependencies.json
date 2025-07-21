@@ -1,0 +1,40 @@
+{
+  "domain": "app/navigation",
+  "lastUpdated": "2025-07-21T07:47:45.912Z",
+  "dependencies": {
+    "client/src/components/Sidebar.tsx": {
+      "domain": "app/navigation",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "Sidebar"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/MobileNav.tsx": {
+      "domain": "app/navigation",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "MobileNav"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "domain": "chat/audio",
+  "lastUpdated": "2025-07-21T07:47:45.913Z",
+  "dependencies": {
+    "client/src/components/AudioRecorder.tsx": {
+      "domain": "chat/audio",
+      "exports": [
+        "AudioRecorder"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ChatInputArea.tsx",
+          "domain": "chat",
+          "imports": [
+            "AudioRecorder"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    }
+  }
+}

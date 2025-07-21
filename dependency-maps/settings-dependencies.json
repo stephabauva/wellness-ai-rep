@@ -1,0 +1,227 @@
+{
+  "domain": "settings",
+  "lastUpdated": "2025-07-21T07:47:45.912Z",
+  "dependencies": {
+    "client/src/hooks/useUserSettings.ts": {
+      "domain": "settings",
+      "exports": [
+        "settingsFormSchema",
+        "UserSettingsFormValues",
+        "UserSettingsData",
+        "useUserSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/hooks/useTheme.ts",
+          "domain": "shared/hooks",
+          "imports": [
+            "useUserSettings"
+          ]
+        },
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "useUserSettings",
+            "UserSettingsFormValues",
+            "settingsFormSchema as userSettingsFormSchema"
+          ]
+        },
+        {
+          "file": "client/src/components/settings/FileManagementSettings.tsx",
+          "domain": "settings",
+          "imports": [
+            "UserSettingsFormValues"
+          ]
+        },
+        {
+          "file": "client/src/components/settings/CoachingPreferencesSettings.tsx",
+          "domain": "settings",
+          "imports": [
+            "UserSettingsFormValues"
+          ]
+        },
+        {
+          "file": "client/src/components/settings/AppPreferencesSettings.tsx",
+          "domain": "settings",
+          "imports": [
+            "UserSettingsFormValues"
+          ]
+        },
+        {
+          "file": "client/src/components/settings/AiConfigurationSettings.tsx",
+          "domain": "settings",
+          "imports": [
+            "UserSettingsFormValues"
+          ]
+        },
+        {
+          "file": "client/src/components/settings/AccountSettings.tsx",
+          "domain": "settings",
+          "imports": [
+            "UserSettingsFormValues"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 7
+    },
+    "client/src/hooks/useRetentionSettings.ts": {
+      "domain": "settings",
+      "exports": [
+        "RetentionSettingsFormValues",
+        "RetentionSettingsData",
+        "useRetentionSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "useRetentionSettings",
+            "RetentionSettingsFormValues"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/SettingsSection.tsx": {
+      "domain": "settings",
+      "exports": [
+        "CombinedSettingsFormValues",
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "SettingsSection"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/settings/PerformanceSettings.tsx": {
+      "domain": "settings",
+      "exports": [
+        "PerformanceSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "PerformanceSettings"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/settings/HealthDataConsentSettings.tsx": {
+      "domain": "settings",
+      "exports": [
+        "HealthDataConsentSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "HealthDataConsentSettings"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/settings/FileManagementSettings.tsx": {
+      "domain": "settings",
+      "exports": [
+        "FileManagementSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "FileManagementSettings"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/settings/CoachingPreferencesSettings.tsx": {
+      "domain": "settings",
+      "exports": [
+        "CoachingPreferencesSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "CoachingPreferencesSettings"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/settings/AppPreferencesSettings.tsx": {
+      "domain": "settings",
+      "exports": [
+        "AppPreferencesSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "AppPreferencesSettings"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/settings/AiConfigurationSettings.tsx": {
+      "domain": "settings",
+      "exports": [
+        "AiConfigurationSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "AiConfigurationSettings"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/settings/AccountSettings.tsx": {
+      "domain": "settings",
+      "exports": [
+        "AccountSettings"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/SettingsSection.tsx",
+          "domain": "settings",
+          "imports": [
+            "AccountSettings"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    }
+  }
+}

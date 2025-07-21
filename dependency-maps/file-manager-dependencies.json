@@ -1,0 +1,246 @@
+{
+  "domain": "file-manager",
+  "lastUpdated": "2025-07-21T07:47:45.912Z",
+  "dependencies": {
+    "client/src/services/universal-file-service.ts": {
+      "domain": "file-manager",
+      "exports": [
+        "CompressionResult",
+        "PlatformCapabilities",
+        "AccelerationCapabilities",
+        "Platform",
+        "UniversalFileService"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/services/platform-file-service.ts",
+          "domain": "file-manager",
+          "imports": [
+            "UniversalFileService",
+            "type Platform"
+          ]
+        },
+        {
+          "file": "client/src/hooks/useFileUpload.ts",
+          "domain": "file-manager",
+          "imports": [
+            "UniversalFileService"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
+    },
+    "client/src/hooks/useFileUpload.ts": {
+      "domain": "file-manager",
+      "exports": [
+        "useFileUpload"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "useFileUpload"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/useFileSharing.ts": {
+      "domain": "file-manager",
+      "exports": [
+        "useFileSharing"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "useFileSharing"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/useFileManagerState.ts": {
+      "domain": "file-manager",
+      "exports": [
+        "useFileManagerState"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "useFileManagerState"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/useFileApi.ts": {
+      "domain": "file-manager",
+      "exports": [
+        "useFileApi"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "useFileApi"
+          ]
+        },
+        {
+          "file": "client/src/components/filemanager/CategoryDropdown.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "useFileApi"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
+    },
+    "client/src/components/FileManagerSection.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "FileManagerSection"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/filemanager/QrCodeDialog.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "QrCodeDialog"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "QrCodeDialog"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/filemanager/FileUploadDialog.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "FileUploadDialog"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/filemanager/FileList.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "FileList"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "FileList as FileListComponent"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/filemanager/FileActionsToolbar.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "FileActionsToolbar"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "FileActionsToolbar"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/filemanager/CategoryTabs.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "CategoryTabs"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/FileManagerSection.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "CategoryTabs"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/filemanager/CategorySelector.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "CategorySelector"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/filemanager/FileActionsToolbar.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "CategorySelector"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/filemanager/CategoryDropdown.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "CategoryDropdown"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/filemanager/FileUploadDialog.tsx",
+          "domain": "file-manager",
+          "imports": [
+            "CategoryDropdown"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    }
+  }
+}

@@ -9,3 +9,6 @@ uploads/
 .env
 .env.local
 .neon
+
+# Legacy dependency map (replaced with split maps in dependency-maps/)
+dependency-map.json

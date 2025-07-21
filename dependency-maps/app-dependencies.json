@@ -1,0 +1,23 @@
+{
+  "domain": "app",
+  "lastUpdated": "2025-07-21T07:47:45.911Z",
+  "dependencies": {
+    "client/src/App.tsx": {
+      "domain": "app/root",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/main.tsx",
+          "domain": "app/root",
+          "imports": [
+            "App"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    }
+  }
+}

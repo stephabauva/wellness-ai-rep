@@ -1,0 +1,92 @@
+{
+  "lastGenerated": "2025-07-21T07:47:45.927Z",
+  "totalDomains": 17,
+  "totalDependencies": 156,
+  "domainFiles": [
+    {
+      "domain": "app",
+      "filename": "app-dependencies.json",
+      "fileCount": 1
+    },
+    {
+      "domain": "file-manager",
+      "filename": "file-manager-dependencies.json",
+      "fileCount": 13
+    },
+    {
+      "domain": "shared",
+      "filename": "shared-dependencies.json",
+      "fileCount": 34
+    },
+    {
+      "domain": "settings",
+      "filename": "settings-dependencies.json",
+      "fileCount": 10
+    },
+    {
+      "domain": "chat",
+      "filename": "chat-dependencies.json",
+      "fileCount": 8
+    },
+    {
+      "domain": "app/pages",
+      "filename": "app-pages-dependencies.json",
+      "fileCount": 2
+    },
+    {
+      "domain": "app/navigation",
+      "filename": "app-navigation-dependencies.json",
+      "fileCount": 2
+    },
+    {
+      "domain": "memory",
+      "filename": "memory-dependencies.json",
+      "fileCount": 17
+    },
+    {
+      "domain": "unknown",
+      "filename": "unknown-dependencies.json",
+      "fileCount": 2
+    },
+    {
+      "domain": "health/devices",
+      "filename": "health-devices-dependencies.json",
+      "fileCount": 1
+    },
+    {
+      "domain": "chat/audio",
+      "filename": "chat-audio-dependencies.json",
+      "fileCount": 1
+    },
+    {
+      "domain": "chat/attachments",
+      "filename": "chat-attachments-dependencies.json",
+      "fileCount": 1
+    },
+    {
+      "domain": "health/hooks",
+      "filename": "health-hooks-dependencies.json",
+      "fileCount": 1
+    },
+    {
+      "domain": "health",
+      "filename": "health-dependencies.json",
+      "fileCount": 7
+    },
+    {
+      "domain": "infrastructure",
+      "filename": "infrastructure-dependencies.json",
+      "fileCount": 2
+    },
+    {
+      "domain": "server/routes/shared-dependencies.ts",
+      "filename": "server-routes-shared-dependencies-ts-dependencies.json",
+      "fileCount": 1
+    },
+    {
+      "domain": "memory/domain",
+      "filename": "memory-domain-dependencies.json",
+      "fileCount": 1
+    }
+  ]
+}

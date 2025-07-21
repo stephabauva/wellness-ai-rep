@@ -1,5 +1,5 @@
 {
-  "lastGenerated": "2025-07-21T19:53:19.692Z",
+  "lastGenerated": "2025-07-21T19:59:22.064Z",
   "totalDomains": 17,
   "totalDependencies": 176,
   "domainFiles": [
@@ -64,14 +64,14 @@
       "fileCount": 1
     },
     {
-      "domain": "health/hooks",
-      "filename": "health-hooks-dependencies.json",
-      "fileCount": 1
-    },
-    {
       "domain": "health",
       "filename": "health-dependencies.json",
       "fileCount": 7
+    },
+    {
+      "domain": "health/hooks",
+      "filename": "health-hooks-dependencies.json",
+      "fileCount": 1
     },
     {
       "domain": "infrastructure",

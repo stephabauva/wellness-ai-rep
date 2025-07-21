@@ -1,6 +1,6 @@
 import { memoryService } from '@shared/services/memory-service';
 import { type MemoryCategory } from '../../shared/schema.js';
-import { type NutritionData } from './nutrition-inference-service.js';
+import { type NutritionData } from '../types/nutrition-types.js';
 
 interface FoodMemoryPattern {
   foodItem: string;

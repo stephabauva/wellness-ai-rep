@@ -3,6 +3,7 @@
 
 import { nutritionInferenceService } from "./nutrition-inference-service.js";
 import { storage } from "./service-registry.js";
+import { formatForStorage } from "../utilities/nutrition-formatters.js";
 
 interface HealthDataEntry {
   userId: number;
@@ -55,7 +56,7 @@ export async function processNutritionData(
       });
 
       // Format for storage
-      const formattedData = nutritionInferenceService.formatForStorage(nutritionData);
+      const formattedData = formatForStorage(nutritionData);
 
       // Store nutrition data as health records
       const healthDataEntries: HealthDataEntry[] = [];

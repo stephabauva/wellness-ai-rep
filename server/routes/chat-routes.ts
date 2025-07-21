@@ -7,7 +7,12 @@ import {
   conversations, conversationMessages, files, attachmentRetentionService,
   multer, join, existsSync, fs, nanoid
 } from "./shared-dependencies.js";
-import { nutritionInferenceService } from "../services/nutrition-inference-service.js";
+import { processNutritionData } from "../services/chat-nutrition-processor.js";
+import { chatUpload, processChatAttachment, processMessageAttachments } from "../services/chat-attachment-handler.js";
+import { 
+  setupStreamingHeaders, sendChunk, sendCompleteResponse, sendError, sendDone,
+  sendTypingStart, sendTypingEnd, sendProcessingUpdate, sendCompletion
+} from "../services/chat-streaming-handler.js";
 
 const attachmentSchema = z.object({
   id: z.string(), fileName: z.string(), displayName: z.string().optional(),
@@ -38,254 +43,17 @@ const audioUpload = multer({
   }
 });
 
-// Helper function to process nutrition data from AI response
-async function processNutritionData(
-  aiResponse: string,
-  originalMessage: string,
-  userId: number,
-  conversationId: string,
-  hasImages: boolean = false
-): Promise<void> {
-  try {
-    console.log('[NUTRITION_PROCESSING] Starting nutrition data extraction');
-    
-    // Extract nutrition data from AI response with memory enhancement
-    const nutritionData = await nutritionInferenceService.extractNutritionFromText(
-      aiResponse,
-      originalMessage,
-      hasImages,
-      undefined, // timezone - could be added later
-      userId
-    );
-
-    if (nutritionData) {
-      console.log('[NUTRITION_PROCESSING] Nutrition data extracted:', {
-        calories: nutritionData.calories,
-        confidence: nutritionData.confidence,
-        source: nutritionData.source,
-        foodItems: nutritionData.foodItems?.length || 0
-      });
-
-      // Format for storage
-      const formattedData = nutritionInferenceService.formatForStorage(nutritionData);
-
-      // Store nutrition data as health records
-      const healthDataEntries = [];
-
-      // Create individual entries for each nutrition component
-      if (formattedData.calories !== undefined) {
-        healthDataEntries.push({
-          userId: userId,
-          dataType: 'calories',
-          value: formattedData.calories.toString(),
-          unit: 'kcal',
-          timestamp: nutritionData.timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...formattedData.metadata,
-            conversationId: conversationId,
-            extractedFrom: 'ai_chat'
-          }
-        });
-      }
-
-      if (formattedData.protein !== undefined) {
-        healthDataEntries.push({
-          userId: userId,
-          dataType: 'protein',
-          value: formattedData.protein.toString(),
-          unit: 'g',
-          timestamp: nutritionData.timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...formattedData.metadata,
-            conversationId: conversationId,
-            extractedFrom: 'ai_chat'
-          }
-        });
-      }
-
-      if (formattedData.carbs !== undefined) {
-        healthDataEntries.push({
-          userId: userId,
-          dataType: 'carbohydrates',
-          value: formattedData.carbs.toString(),
-          unit: 'g',
-          timestamp: nutritionData.timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...formattedData.metadata,
-            conversationId: conversationId,
-            extractedFrom: 'ai_chat'
-          }
-        });
-      }
-
-      if (formattedData.fat !== undefined) {
-        healthDataEntries.push({
-          userId: userId,
-          dataType: 'fat',
-          value: formattedData.fat.toString(),
-          unit: 'g',
-          timestamp: nutritionData.timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...formattedData.metadata,
-            conversationId: conversationId,
-            extractedFrom: 'ai_chat'
-          }
-        });
-      }
-
-      if (formattedData.fiber !== undefined) {
-        healthDataEntries.push({
-          userId: userId,
-          dataType: 'fiber',
-          value: formattedData.fiber.toString(),
-          unit: 'g',
-          timestamp: nutritionData.timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...formattedData.metadata,
-            conversationId: conversationId,
-            extractedFrom: 'ai_chat'
-          }
-        });
-      }
-
-      if (formattedData.sugar !== undefined) {
-        healthDataEntries.push({
-          userId: userId,
-          dataType: 'sugar',
-          value: formattedData.sugar.toString(),
-          unit: 'g',
-          timestamp: nutritionData.timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...formattedData.metadata,
-            conversationId: conversationId,
-            extractedFrom: 'ai_chat'
-          }
-        });
-      }
-
-      if (formattedData.sodium !== undefined) {
-        healthDataEntries.push({
-          userId: userId,
-          dataType: 'sodium',
-          value: formattedData.sodium.toString(),
-          unit: 'mg',
-          timestamp: nutritionData.timestamp,
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: {
-            ...formattedData.metadata,
-            conversationId: conversationId,
-            extractedFrom: 'ai_chat'
-          }
-        });
-      }
-
-      // Store all nutrition data as batch
-      if (healthDataEntries.length > 0) {
-        await storage.createHealthDataBatch(healthDataEntries);
-        console.log('[NUTRITION_PROCESSING] Successfully stored', healthDataEntries.length, 'nutrition entries');
-        
-        // Update food memories after successful storage
-        await nutritionInferenceService.updateFoodMemories(userId, nutritionData, conversationId);
-        console.log('[NUTRITION_PROCESSING] Updated food memories for user', userId);
-      }
-    } else {
-      console.log('[NUTRITION_PROCESSING] No nutrition data found in AI response');
-    }
-  } catch (error) {
-    console.error('[NUTRITION_PROCESSING] Error processing nutrition data:', error);
-    // Don't throw - nutrition processing is supplementary and shouldn't break chat
-  }
-}
-
 export async function registerChatRoutes(app: Express): Promise<Server> {
   
   // Chat-specific file upload endpoint
-  const chatUpload = multer({
-    dest: 'uploads/',
-    limits: { fileSize: 200 * 1024 * 1024 }, // 200MB
-    fileFilter: (req, file, cb) => {
-      const allowedTypes = [
-        'image/', 'video/', 'audio/', 'application/pdf', 'text/',
-        'application/json', 'application/xml', 'text/xml', 'text/csv',
-        'application/msword', 'application/vnd.openxmlformats-officedocument'
-      ];
-      const isAllowed = allowedTypes.some(type => file.mimetype.startsWith(type));
-      cb(null, isAllowed);
-    }
-  });
-
   app.post('/api/chat/attachments', chatUpload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      // Chat-specific file processing
-      const file = req.file;
-      const originalName = file.originalname;
-      const fileName = `${nanoid()}-${originalName}`;
-      const filePath = join(process.cwd(), 'uploads', fileName);
-
-      // Move file to final location
-      fs.renameSync(file.path, filePath);
-      
-      // Chat-specific retention logic
-      const categorization = await (await attachmentRetentionService()).categorizeAttachment(
-        originalName, file.mimetype, "Chat attachment upload"
-      );
-      
-      const retentionDays = categorization.category === 'high' ? -1 : // Keep permanently for high-value content
-                           categorization.category === 'medium' ? 90 : 30;
-      const scheduledDeletion = retentionDays > 0 ? 
-        new Date(Date.now() + (retentionDays * 24 * 60 * 60 * 1000)) : null;
-
-      // Save to files table with chat-specific metadata
-      const [savedFile] = await db.insert(files).values({
-        userId: FIXED_USER_ID,
-        categoryId: categorization.suggestedCategoryId || null,
-        fileName: fileName,
-        displayName: originalName,
-        filePath: filePath,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        uploadSource: 'chat',
-        retentionPolicy: categorization.category,
-        retentionDays,
-        scheduledDeletion,
-        metadata: { 
-          uploadContext: 'chat',
-          categorization,
-          chatSpecific: true
-        }
-      }).returning();
-
-      res.status(201).json({
-        file: {
-          id: savedFile.id,
-          fileName: fileName,
-          originalName: originalName,
-          displayName: originalName,
-          url: `/uploads/${fileName}`,
-          retentionInfo: {
-            category: categorization.category,
-            retentionDays,
-            reason: categorization.reason
-          }
-        }
-      });
+      const result = await processChatAttachment(req.file);
+      res.status(201).json(result);
     } catch (error) {
       console.error('Chat attachment upload error:', error);
       res.status(500).json({ message: "Failed to upload chat attachment" });
@@ -351,11 +119,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       const userAiModel = aiModel || user?.aiModel || 'gemini-2.0-flash-exp';
       const userAutoSelection = automaticModelSelection ?? user?.automaticModelSelection ?? true;
 
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive', 'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
-      });
+      setupStreamingHeaders(res);
 
       console.log('[STREAMING_DEBUG] Starting streaming request:', {
         conversationId: currentConversationId,
@@ -408,15 +172,13 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         { provider: userAiProvider, model: userAiModel }, attachments || [], userAutoSelection,
         (chunk: string) => {
           fullAiResponse += chunk;
-          // Send chunk immediately and flush the response
-          res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-          if ((res as any).flush) (res as any).flush();
+          sendChunk(res, chunk);
         },
         (complete: string) => {
           fullAiResponse = complete; // Use complete response if provided
-          res.write(`data: ${JSON.stringify({ type: 'complete', fullResponse: complete })}\n\n`);
+          sendCompleteResponse(res, complete);
         },
-        (error: Error) => res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`)
+        (error: Error) => sendError(res, error.message)
       );
 
       // Save AI response to database
@@ -474,14 +236,11 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         });
       }
 
-      res.write(`data: ${JSON.stringify({ type: 'done', conversationId: currentConversationId })}\n\n`);
+      sendDone(res, currentConversationId!);
       res.end();
     } catch (error) {
       console.error('[STREAMING_ERROR] Error in streaming endpoint:', error);
-      res.write(`data: ${JSON.stringify({ 
-        type: 'error', 
-        message: error instanceof z.ZodError ? "Invalid request data" : "Failed to process message"
-      })}\n\n`);
+      sendError(res, error instanceof z.ZodError ? "Invalid request data" : "Failed to process message");
       res.end();
     }
   });
@@ -493,12 +252,8 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       let conversationHistory: any[] = [];
 
       if (streaming) {
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive', 'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Cache-Control'
-        });
-        res.write(`data: ${JSON.stringify({ type: 'typing_start' })}\n\n`);
+        setupStreamingHeaders(res);
+        sendTypingStart(res);
       }
 
       const processOperations = async () => {
@@ -533,32 +288,8 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         }).returning();
 
         const attachmentProcessing = attachments?.length ? 
-          Promise.all(attachments.map(async (attachment) => {
-            try {
-              const categorization = await (await attachmentRetentionService()).categorizeAttachment(
-                attachment.displayName || attachment.fileName, attachment.fileType,
-                `Chat upload in conversation: ${currentConversationId}`);
-              const retentionDays = categorization.category === 'medium' ? 90 : 
-                                  categorization.category === 'low' ? 30 : null;
-              const scheduledDeletion = retentionDays ? new Date(Date.now() + (retentionDays * 24 * 60 * 60 * 1000)) : null;
-
-              const existingFile = await db.select().from(files).where(eq(files.fileName, attachment.fileName)).limit(1);
-              if (existingFile.length === 0) {
-                await db.insert(files).values({
-                  userId: FIXED_USER_ID, categoryId: categorization.suggestedCategoryId || null,
-                  fileName: attachment.fileName, displayName: attachment.displayName || attachment.fileName,
-                  filePath: join(process.cwd(), 'uploads', attachment.fileName),
-                  fileType: attachment.fileType, fileSize: attachment.fileSize,
-                  uploadSource: 'chat', retentionPolicy: categorization.category,
-                  retentionDays, scheduledDeletion,
-                  metadata: { uploadContext: 'chat', conversationId: currentConversationId, 
-                           messageId: savedUserMessage.id, categorization }
-                });
-              }
-            } catch (error) {
-              console.error(`Failed to save attachment ${attachment.fileName}:`, error);
-            }
-          })) : Promise.resolve();
+          processMessageAttachments(attachments, currentConversationId!, savedUserMessage.id) : 
+          Promise.resolve();
 
         const legacyUserMessage = await storage.createMessage({
           userId: FIXED_USER_ID,
@@ -567,7 +298,7 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
         });
 
         if (streaming) {
-          res.write(`data: ${JSON.stringify({ type: 'processing', conversationId: currentConversationId, userMessage: savedUserMessage })}\n\n`);
+          sendProcessingUpdate(res, currentConversationId!, savedUserMessage);
         }
 
         const [aiResult] = await Promise.all([
@@ -634,23 +365,22 @@ export async function registerChatRoutes(app: Express): Promise<Server> {
       const result = await processOperations();
 
       if (streaming) {
-        res.write(`data: ${JSON.stringify({ type: 'complete', ...result })}\n\n`);
-        res.write(`data: ${JSON.stringify({ type: 'typing_end' })}\n\n`);
+        sendCompletion(res, result);
+        sendTypingEnd(res);
         res.end();
       } else {
         res.status(201).json(result);
       }
     } catch (error) {
       const isStreaming = req.body?.streaming || false;
+      const errorMessage = error instanceof z.ZodError ? "Invalid request data" : "Failed to process message";
+      
       if (isStreaming) {
-        res.write(`data: ${JSON.stringify({ 
-          type: 'error', 
-          message: error instanceof z.ZodError ? "Invalid request data" : "Failed to process message"
-        })}\n\n`);
+        sendError(res, errorMessage);
         res.end();
       } else {
         res.status(error instanceof z.ZodError ? 400 : 500).json({ 
-          message: error instanceof z.ZodError ? "Invalid request data" : "Failed to process message",
+          message: errorMessage,
           ...(error instanceof z.ZodError && { errors: error.errors })
         });
       }

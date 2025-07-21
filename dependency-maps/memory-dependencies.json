@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-21T09:36:23.714Z",
+  "lastUpdated": "2025-07-21T13:27:20.519Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -283,6 +283,34 @@
       ],
       "crossDomain": false,
       "usageCount": 1
+    },
+    "server/services/memory/memory-relationship-types.ts": {
+      "domain": "memory",
+      "exports": [
+        "MemoryRelationship",
+        "AtomicFact",
+        "SemanticCluster"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/memory/memory-relationship-utils.ts",
+          "domain": "memory",
+          "imports": [
+            "AtomicFact"
+          ]
+        },
+        {
+          "file": "server/services/memory/memory-relationship-cache.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryRelationship",
+            "AtomicFact",
+            "SemanticCluster"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
     },
     "server/services/memory/ResponseParsers.ts": {
       "domain": "memory",

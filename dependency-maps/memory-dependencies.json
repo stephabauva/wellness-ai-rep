@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-21T14:08:07.928Z",
+  "lastUpdated": "2025-07-21T19:53:19.688Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -275,6 +275,23 @@
       "crossDomain": false,
       "usageCount": 1
     },
+    "client/src/components/memory/MemoryLoadingSkeleton.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryLoadingSkeleton"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryLoadingSkeleton"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
     "client/src/components/memory/MemoryList.tsx": {
       "domain": "memory",
       "exports": [
@@ -333,13 +350,6 @@
       ],
       "usedBy": [
         {
-          "file": "client/src/components/MemorySection.tsx",
-          "domain": "memory",
-          "imports": [
-            "MemoryForm"
-          ]
-        },
-        {
           "file": "client/src/components/memory/MemorySummaryCard.tsx",
           "domain": "memory",
           "imports": [
@@ -348,7 +358,7 @@
         }
       ],
       "crossDomain": false,
-      "usageCount": 2
+      "usageCount": 1
     },
     "client/src/components/memory/MemoryExplanationCard.tsx": {
       "domain": "memory",
@@ -391,13 +401,6 @@
       ],
       "usedBy": [
         {
-          "file": "client/src/components/MemorySection.tsx",
-          "domain": "memory",
-          "imports": [
-            "MemoryCategoryGrid"
-          ]
-        },
-        {
           "file": "client/src/components/memory/MemorySummaryCard.tsx",
           "domain": "memory",
           "imports": [
@@ -406,7 +409,24 @@
         }
       ],
       "crossDomain": false,
-      "usageCount": 2
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemoryAddFAB.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryAddFAB"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryAddFAB"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
     },
     "server/services/memory/memory-relationship-utils.ts": {
       "domain": "memory",

@@ -1,7 +1,7 @@
 {
-  "lastGenerated": "2025-07-21T14:08:07.932Z",
+  "lastGenerated": "2025-07-21T19:53:19.692Z",
   "totalDomains": 17,
-  "totalDependencies": 174,
+  "totalDependencies": 176,
   "domainFiles": [
     {
       "domain": "app",
@@ -41,7 +41,7 @@
     {
       "domain": "memory",
       "filename": "memory-dependencies.json",
-      "fileCount": 26
+      "fileCount": 28
     },
     {
       "domain": "unknown",

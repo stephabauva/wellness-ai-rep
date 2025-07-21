@@ -1,22 +1,14 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@shared/components/ui/card";
-import { Button } from "@shared/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@shared/components/ui/form";
-import { Brain, Plus } from "lucide-react";
-import { FAB } from "./ui/FAB";
-import { apiRequest, queryClient } from "@shared";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useVoiceHandlers } from "../hooks/memory/useVoiceHandlers";
 import { useMemoryEdit } from "../hooks/memory/useMemoryEdit";
 import { useInfiniteMemories } from "../hooks/useInfiniteMemories";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@shared/components/ui/tooltip";
+import { TooltipProvider } from "@shared/components/ui/tooltip";
 import { ManualMemoryFormData } from "./memory/constants";
 import { useMemoryActions } from "../hooks/memory/useMemoryActions";
 import { useMemoryFilters } from "../hooks/memory/useMemoryFilters";
-import { MemoryCategoryGrid } from "./memory/MemoryCategoryGrid";
-import { MemoryForm } from "./memory/MemoryForm";
 import { MemoryInsights } from "./memory/MemoryInsights";
 import { MemoryList } from "./memory/MemoryList";
 import { MemoryOverviewHeader } from "./memory/MemoryOverviewHeader";
@@ -25,6 +17,8 @@ import { SelectionModeControls } from "./memory/SelectionModeControls";
 import { MemoryExplanationCard } from "./memory/MemoryExplanationCard";
 import { MemoryLabelFilter } from "./memory/MemoryLabelFilter";
 import { MemoryEmptyState } from "./memory/MemoryEmptyState";
+import { MemoryLoadingSkeleton } from "./memory/MemoryLoadingSkeleton";
+import { MemoryAddFAB } from "./memory/MemoryAddFAB";
 
 
 
@@ -203,19 +197,7 @@ export default function MemorySection() {
 
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 mb-6">
-          <Brain className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold">AI Memory</h2>
-        </div>
-        <div className="grid gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-lg" />
-          ))}
-        </div>
-      </div>
-    );
+    return <MemoryLoadingSkeleton />;
   }
 
   return (
@@ -301,16 +283,7 @@ export default function MemorySection() {
       </div>
 
       {/* Floating Action Button for Add Memory - positioned in mobile thumb zone */}
-      <FAB
-        onClick={() => setIsManualEntryOpen(!isManualEntryOpen)}
-        position="bottom-right"
-        size="default"
-        className="shadow-xl hover:shadow-2xl transition-all duration-200 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:from-purple-700 active:to-pink-700 safe-area-inset-bottom"
-        aria-label="Add Memory"
-        title="Add Memory"
-      >
-        <Plus className="h-6 w-6" />
-      </FAB>
+      <MemoryAddFAB onClick={() => setIsManualEntryOpen(!isManualEntryOpen)} />
       </div>
     </TooltipProvider>
   );

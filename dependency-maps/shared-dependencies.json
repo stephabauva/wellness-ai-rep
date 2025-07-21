@@ -1,6 +1,6 @@
 {
   "domain": "shared",
-  "lastUpdated": "2025-07-21T14:08:07.928Z",
+  "lastUpdated": "2025-07-21T19:53:19.688Z",
   "dependencies": {
     "client/src/services/audio-service.ts": {
       "domain": "shared/services",
@@ -710,7 +710,7 @@
       ],
       "usedBy": [
         {
-          "file": "client/src/components/MemorySection.tsx",
+          "file": "client/src/components/memory/MemoryAddFAB.tsx",
           "domain": "memory",
           "imports": [
             "FAB"

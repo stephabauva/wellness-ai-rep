@@ -2,6 +2,7 @@
  * Phase 4: Production Deployment - Performance Monitoring
  * Comprehensive performance tracking with alerts and reporting
  */
+import { calculateAverage, calculatePercentile, trimArray } from './memory-performance-utils.js';
 export class MemoryPerformanceMonitor {
   private metrics = {
     memoryProcessingTime: [] as number[],
@@ -44,7 +45,7 @@ export class MemoryPerformanceMonitor {
    */
   trackMemoryProcessing(duration: number, success: boolean): void {
     this.metrics.memoryProcessingTime.push(duration);
-    this.trimArray(this.metrics.memoryProcessingTime);
+    trimArray(this.metrics.memoryProcessingTime, this.MAX_SAMPLES);
 
     if (!success) {
       this.metrics.errorRates.memoryProcessing++;
@@ -64,7 +65,7 @@ export class MemoryPerformanceMonitor {
    */
   trackSystemPromptGeneration(duration: number, success: boolean): void {
     this.metrics.systemPromptGenerationTime.push(duration);
-    this.trimArray(this.metrics.systemPromptGenerationTime);
+    trimArray(this.metrics.systemPromptGenerationTime, this.MAX_SAMPLES);
 
     if (!success) {
       this.metrics.errorRates.promptGeneration++;
@@ -100,7 +101,7 @@ export class MemoryPerformanceMonitor {
   trackChatResponseTime(baselineTime: number, actualTime: number): void {
     const impact = ((actualTime - baselineTime) / baselineTime) * 100;
     this.metrics.chatResponseTimeImpact.push(impact);
-    this.trimArray(this.metrics.chatResponseTimeImpact);
+    trimArray(this.metrics.chatResponseTimeImpact, this.MAX_SAMPLES);
 
     // Check if response time increased too much
     if (impact > this.alertThresholds.chatResponseTimeIncrease) {
@@ -162,10 +163,10 @@ export class MemoryPerformanceMonitor {
 
     const summary = {
       uptime: `${uptimeHours.toFixed(2)} hours`,
-      avgMemoryProcessing: this.calculateAverage(this.metrics.memoryProcessingTime),
-      avgPromptGeneration: this.calculateAverage(this.metrics.systemPromptGenerationTime),
+      avgMemoryProcessing: calculateAverage(this.metrics.memoryProcessingTime),
+      avgPromptGeneration: calculateAverage(this.metrics.systemPromptGenerationTime),
       deduplicationHitRate: this.metrics.deduplicationHitRate,
-      avgChatResponseImpact: this.calculateAverage(this.metrics.chatResponseTimeImpact),
+      avgChatResponseImpact: calculateAverage(this.metrics.chatResponseTimeImpact),
       totalCircuitBreakerTrips: this.metrics.circuitBreakerTrips,
       status: this.getOverallStatus()
     };
@@ -173,15 +174,15 @@ export class MemoryPerformanceMonitor {
     const detailed = {
       processingTimes: {
         memory: {
-          avg: this.calculateAverage(this.metrics.memoryProcessingTime),
-          p95: this.calculatePercentile(this.metrics.memoryProcessingTime, 95),
-          p99: this.calculatePercentile(this.metrics.memoryProcessingTime, 99),
+          avg: calculateAverage(this.metrics.memoryProcessingTime),
+          p95: calculatePercentile(this.metrics.memoryProcessingTime, 95),
+          p99: calculatePercentile(this.metrics.memoryProcessingTime, 99),
           samples: this.metrics.memoryProcessingTime.length
         },
         prompts: {
-          avg: this.calculateAverage(this.metrics.systemPromptGenerationTime),
-          p95: this.calculatePercentile(this.metrics.systemPromptGenerationTime, 95),
-          p99: this.calculatePercentile(this.metrics.systemPromptGenerationTime, 99),
+          avg: calculateAverage(this.metrics.systemPromptGenerationTime),
+          p95: calculatePercentile(this.metrics.systemPromptGenerationTime, 95),
+          p99: calculatePercentile(this.metrics.systemPromptGenerationTime, 99),
           samples: this.metrics.systemPromptGenerationTime.length
         }
       },
@@ -306,23 +307,6 @@ export class MemoryPerformanceMonitor {
     this.startTime = Date.now();
   }
 
-  private calculateAverage(numbers: number[]): number {
-    if (numbers.length === 0) return 0;
-    return numbers.reduce((a, b) => a + b, 0) / numbers.length;
-  }
-
-  private calculatePercentile(numbers: number[], percentile: number): number {
-    if (numbers.length === 0) return 0;
-    const sorted = [...numbers].sort((a, b) => a - b);
-    const index = Math.ceil((percentile / 100) * sorted.length) - 1;
-    return sorted[Math.max(0, index)];
-  }
-
-  private trimArray(array: number[]): void {
-    while (array.length > this.MAX_SAMPLES) {
-      array.shift();
-    }
-  }
 
   private triggerAlert(type: string, data: any): void {
     console.warn(`[MemoryPerformanceMonitor] ALERT: ${type}`, data);
@@ -332,12 +316,12 @@ export class MemoryPerformanceMonitor {
   private getActiveAlerts(): string[] {
     const alerts: string[] = [];
     
-    const avgMemoryTime = this.calculateAverage(this.metrics.memoryProcessingTime);
+    const avgMemoryTime = calculateAverage(this.metrics.memoryProcessingTime);
     if (avgMemoryTime > this.alertThresholds.memoryProcessingTime) {
       alerts.push(`Memory processing time above threshold: ${avgMemoryTime.toFixed(2)}ms`);
     }
 
-    const avgResponseImpact = this.calculateAverage(this.metrics.chatResponseTimeImpact);
+    const avgResponseImpact = calculateAverage(this.metrics.chatResponseTimeImpact);
     if (avgResponseImpact > this.alertThresholds.chatResponseTimeIncrease) {
       alerts.push(`Chat response time impact above threshold: ${avgResponseImpact.toFixed(2)}%`);
     }
@@ -360,7 +344,7 @@ export class MemoryPerformanceMonitor {
   private generateRecommendations(): string[] {
     const recommendations: string[] = [];
     
-    const avgMemoryTime = this.calculateAverage(this.metrics.memoryProcessingTime);
+    const avgMemoryTime = calculateAverage(this.metrics.memoryProcessingTime);
     if (avgMemoryTime > 50) {
       recommendations.push('Consider enabling Go acceleration service for memory processing');
     }

@@ -1,6 +1,6 @@
 {
   "domain": "shared",
-  "lastUpdated": "2025-07-21T19:53:19.688Z",
+  "lastUpdated": "2025-07-21T20:29:58.682Z",
   "dependencies": {
     "client/src/services/audio-service.ts": {
       "domain": "shared/services",
@@ -718,6 +718,48 @@
         }
       ],
       "crossDomain": true,
+      "usageCount": 1
+    },
+    "server/services/nutrition-utils.ts": {
+      "domain": "shared/services",
+      "exports": [
+        "NutritionMealSummary",
+        "extractMealType",
+        "createEmptyMealSummary",
+        "formatDate"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/nutrition-aggregation-service.ts",
+          "domain": "shared/services",
+          "imports": [
+            "extractMealType",
+            "createEmptyMealSummary",
+            "formatDate",
+            "type NutritionMealSummary"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "server/services/nutrition-types.ts": {
+      "domain": "shared/services",
+      "exports": [
+        "DailyNutritionSummary",
+        "NutritionUpdateRequest"
+      ],
+      "usedBy": [
+        {
+          "file": "server/services/nutrition-aggregation-service.ts",
+          "domain": "shared/services",
+          "imports": [
+            "type DailyNutritionSummary",
+            "type NutritionUpdateRequest"
+          ]
+        }
+      ],
+      "crossDomain": false,
       "usageCount": 1
     },
     "server/services/database-migration-service.ts": {

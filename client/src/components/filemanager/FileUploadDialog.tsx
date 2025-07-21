@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@shared/components/ui/dialog';
-import { Button } from '@shared/components/ui/button';
-import { Label } from '@shared/components/ui/label';
-import { Input } from '@shared/components/ui/input';
-// Select components are no longer directly used here, but CategorySelector uses them.
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"';
-import { useFileUpload } from '@/hooks/useFileUpload'; // Import the hook
-import { CategoryDropdown } from './CategoryDropdown'; // Import the new CategoryDropdown
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { CategoryDropdown } from './CategoryDropdown';
 
 
 interface FileUploadDialogProps {
@@ -21,12 +9,9 @@ interface FileUploadDialogProps {
   onUploadSuccess: () => void;
 }
 
-// const predefinedCategories = ["Medical", "Fitness", "General", "Financial", "Personal"]; // Removed
-
 const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ isOpen, onClose, onUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  // const [selectedCategory, setSelectedCategory] = useState<string>(predefinedCategories[0]); // Removed
-  const [currentCategoryId, setCurrentCategoryId] = useState<string | undefined>(undefined); // New state for category ID
+  const [currentCategoryId, setCurrentCategoryId] = useState<string | undefined>(undefined);
   const { uploadFile, isUploading, error: uploadError } = useFileUpload();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,9 +24,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ isOpen, onClose, on
 
   const handleClose = () => {
     setSelectedFile(null);
-    // setSelectedCategory(predefinedCategories[0]); // Removed
-    setCurrentCategoryId(undefined); // Reset currentCategoryId
-    // Do not reset uploadError here, it might be useful to see it briefly
+    setCurrentCategoryId(undefined);
     onClose();
   };
 
@@ -49,80 +32,184 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ isOpen, onClose, on
     if (!selectedFile) {
       return;
     }
-    // Use currentCategoryId in the upload call
+    
     const result = await uploadFile(selectedFile, currentCategoryId);
+    
     if (result && !uploadError) {
-      onUploadSuccess(); // Call the success callback
-      handleClose(); // Close dialog and reset state
-    } else if (uploadError) {
-      // Error is already set by the hook, display it or log
-      console.error("Upload failed:", uploadError);
-      // Optionally: alert(`Upload failed: ${uploadError}`);
+      onUploadSuccess();
+      handleClose();
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Upload New File</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="file-input" className="text-right">
-              File
-            </Label>
-            <Input
-              id="file-input"
+    <div 
+      style={{
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        zIndex: 10000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onClick={handleClose}
+    >
+      <div 
+        style={{
+          backgroundColor: 'white',
+          padding: '24px',
+          borderRadius: '8px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+          maxWidth: '425px',
+          width: '90%',
+          maxHeight: '90vh',
+          overflow: 'auto'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ borderBottom: '1px solid #e5e7eb', paddingBottom: '16px', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0' }}>
+            Upload New File
+          </h2>
+        </div>
+
+        {/* Content */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <label 
+              htmlFor="file-upload-input" 
+              style={{ 
+                display: 'block', 
+                fontSize: '14px', 
+                fontWeight: '500', 
+                color: '#374151',
+                marginBottom: '8px' 
+              }}
+            >
+              Select File
+            </label>
+            <input
+              id="file-upload-input"
               type="file"
               onChange={handleFileChange}
-              className="col-span-3"
+              style={{
+                display: 'block',
+                width: '100%',
+                fontSize: '14px',
+                color: '#6b7280',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                padding: '8px'
+              }}
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="category-select" className="text-right pt-2"> {/* Added pt-2 for alignment with selector */}
-              Category
-            </Label>
-            <CategoryDropdown
-              selectedCategoryId={currentCategoryId}
-              onCategoryChange={setCurrentCategoryId}
-              placeholder="Select a category (optional)"
-              allowClear={true}
-              disabled={isUploading}
-              className="col-span-3"
-            />
-            {/* The CategorySelector is a single component, ensure it spans correctly if needed, or adjust grid.
-                Assuming CategorySelector's internal SelectTrigger will take col-span-3 effectively if needed,
-                or the label and selector are meant to be in separate effective rows if grid-cols-4 is for the whole item.
-                For simplicity, placing it directly. If layout is off, may need to wrap CategorySelector or adjust grid.
-                The provided CategorySelector structure implies it's a self-contained unit.
-                The Label is col-span-1, CategorySelector would implicitly be col-span-3 if the parent div is grid-cols-4.
-                Let's ensure the CategorySelector is in the correct grid column.
-                The CategorySelector itself will be on the "col-span-3" area.
-            */}
-          </div>
-          {/* The above div should be grid grid-cols-4 items-center gap-4, so CategorySelector will take the remaining space */}
+
           {selectedFile && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="col-start-2 col-span-3 text-sm text-muted-foreground">
-                <p>Selected: {selectedFile.name} ({ (selectedFile.size / 1024).toFixed(2) } KB)</p>
-              </div>
+            <div style={{ 
+              fontSize: '14px', 
+              color: '#6b7280', 
+              backgroundColor: '#f9fafb',
+              padding: '12px',
+              borderRadius: '6px',
+              marginBottom: '16px'
+            }}>
+              <p style={{ margin: '0' }}>
+                📁 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+              </p>
             </div>
           )}
-          {isUploading && <div className="text-center text-sm text-blue-500">Uploading...</div>}
-          {uploadError && <div className="text-center text-sm text-red-500">Error: {uploadError}</div>}
-          {!isUploading && !uploadError && <div className="text-center text-sm">File validation and preview placeholder</div>}
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ 
+              display: 'block', 
+              fontSize: '14px', 
+              fontWeight: '500', 
+              color: '#374151',
+              marginBottom: '8px' 
+            }}>
+              Category (Optional)
+            </label>
+            <CategoryDropdown 
+              selectedCategoryId={currentCategoryId}
+              onCategoryChange={setCurrentCategoryId}
+              allowClear={true}
+            />
+          </div>
+
+          {isUploading && (
+            <div style={{ 
+              textAlign: 'center', 
+              fontSize: '14px', 
+              color: '#3b82f6',
+              marginBottom: '16px' 
+            }}>
+              ⏳ Uploading...
+            </div>
+          )}
+          
+          {uploadError && (
+            <div style={{ 
+              textAlign: 'center', 
+              fontSize: '14px', 
+              color: '#dc2626',
+              backgroundColor: '#fef2f2',
+              padding: '12px',
+              borderRadius: '6px',
+              marginBottom: '16px'
+            }}>
+              ❌ Error: {uploadError}
+            </div>
+          )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isUploading}>
+
+        {/* Footer */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '12px', 
+          justifyContent: 'flex-end',
+          borderTop: '1px solid #e5e7eb',
+          paddingTop: '16px'
+        }}>
+          <button
+            onClick={handleClose}
+            disabled={isUploading}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              border: '1px solid #d1d5db',
+              backgroundColor: 'white',
+              color: '#374151',
+              borderRadius: '6px',
+              cursor: isUploading ? 'not-allowed' : 'pointer',
+              opacity: isUploading ? 0.6 : 1
+            }}
+          >
             Cancel
-          </Button>
-          <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
+          </button>
+          <button
+            onClick={handleUpload}
+            disabled={!selectedFile || isUploading}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              border: 'none',
+              backgroundColor: (!selectedFile || isUploading) ? '#9ca3af' : '#3b82f6',
+              color: 'white',
+              borderRadius: '6px',
+              cursor: (!selectedFile || isUploading) ? 'not-allowed' : 'pointer'
+            }}
+          >
             {isUploading ? "Uploading..." : "Upload"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

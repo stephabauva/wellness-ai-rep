@@ -32,6 +32,14 @@ export function useFileUpload(): UseFileUploadReturn {
   // Remove automatic initialization - services will initialize lazily when needed
 
   const uploadFile = async (file: File, categoryId?: string): Promise<UploadResponse | null> => {
+    console.log('[useFileUpload] Starting uploadFile function', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      categoryId: categoryId,
+      currentIsUploading: isUploading
+    });
+    
     setIsUploading(true);
     setError(null);
 
@@ -94,14 +102,35 @@ export function useFileUpload(): UseFileUploadReturn {
         formData.append('categoryId', categoryId);
       }
 
+      console.log('[useFileUpload] Making fetch request to /api/upload', {
+        method: 'POST',
+        hasFormData: !!formData,
+        categoryId: categoryId,
+        originalFileName: file.name,
+        uploadFileName: fileToUpload.name,
+        uploadFileSize: fileToUpload.size
+      });
+
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
         // Do NOT set Content-Type header manually for FormData
       });
 
+      console.log('[useFileUpload] Fetch response received', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
+        console.error('[useFileUpload] Upload request failed', {
+          status: response.status,
+          statusText: response.statusText
+        });
         const errorData = await response.json().catch(() => ({ message: 'Upload failed with status: ' + response.status }));
+        console.error('[useFileUpload] Error data from server:', errorData);
         throw new Error(errorData.message || `HTTP error ${response.status}`);
       }
 
@@ -121,7 +150,12 @@ export function useFileUpload(): UseFileUploadReturn {
       setIsUploading(false);
       return result;
     } catch (e: any) {
-      console.error('Upload error:', e);
+      console.error('[useFileUpload] Caught error during upload:', {
+        error: e,
+        message: e.message,
+        stack: e.stack,
+        fileName: file.name
+      });
       setError(e.message || 'An unknown error occurred during upload.');
       setIsUploading(false);
       return null;

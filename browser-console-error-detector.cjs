@@ -95,8 +95,8 @@ function scanFileForErrors(filePath) {
 // 2. Scan TypeScript/JavaScript files
 const filesToScan = [
   'client/src/components/FileManagerSection.tsx',
-  'client/src/components/filemanager/MobileHeader.tsx', 
-  'client/src/components/filemanager/HeroSection.tsx',
+  'client/src/components/filemanager/FileUploadDialog.tsx',
+  'client/src/components/filemanager/FileList.tsx',
   'client/src/components/MobileNav.tsx',
   'client/src/pages/home.tsx',
   'shared/context/AppContext.tsx'

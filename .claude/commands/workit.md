@@ -45,6 +45,7 @@
 ### Testing During Development
 - `npx vitest` - Run affected tests frequently
 - `npx vitest [file]` - Test specific functionality immediately
+- `node frontend-ui-monitor.cjs` - Check UI components for prop mismatches and rendering issues
 - **Unit tests**: Every new function, especially utilities
 - **Integration tests**: API endpoints with realistic data
 - **Performance tests**: Memory operations, file processing
@@ -85,6 +86,7 @@
 npm run check        # TypeScript strict validation
 npx vitest          # All tests passing
 npm run build       # Production build works
+node frontend-ui-monitor.cjs  # UI component validation
 ```
 
 ## Critical Replit Constraints

@@ -1,6 +1,6 @@
 {
   "domain": "file-manager",
-  "lastUpdated": "2025-07-21T09:36:23.714Z",
+  "lastUpdated": "2025-07-21T21:09:34.918Z",
   "dependencies": {
     "client/src/services/universal-file-service.ts": {
       "domain": "file-manager",

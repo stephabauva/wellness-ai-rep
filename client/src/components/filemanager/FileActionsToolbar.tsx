@@ -98,7 +98,10 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={onUploadClick}
+          onClick={(e) => {
+            console.log('[FileActionsToolbar] Upload button clicked', e);
+            onUploadClick();
+          }}
           className="h-8"
           title="Upload files"
         >

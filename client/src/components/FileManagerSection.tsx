@@ -41,6 +41,7 @@ const FileManagerSection: React.FC = () => {
   } = useFileApi();
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  
 
   const {
     selectedFiles,
@@ -142,7 +143,9 @@ const FileManagerSection: React.FC = () => {
             onRefresh={refetchFiles}
             isDeleting={isDeletingFiles}
             isCategorizing={isCategorizingFiles}
-            onUploadClick={() => setIsUploadDialogOpen(true)}
+            onUploadClick={() => {
+              setIsUploadDialogOpen(true);
+            }}
             categories={categories || []}
           />
         </div>
@@ -207,13 +210,16 @@ const FileManagerSection: React.FC = () => {
       {/* File Upload Modal */}
       <FileUploadDialog
         isOpen={isUploadDialogOpen}
-        onClose={() => setIsUploadDialogOpen(false)}
+        onClose={() => {
+          setIsUploadDialogOpen(false);
+        }}
         onUploadSuccess={() => {
           refetchFiles();
           // Optionally, you might want to clear selection or reset active tab here
           // depending on desired UX after upload.
         }}
       />
+      
     </div>
   );
 };

@@ -8,6 +8,7 @@ Guards against architectural drift and maintains clean code boundaries.
 - Before adding features
 - When asked to implement functionality
 - Browser console error detection for runtime issues
+- Frontend UI component validation for prop mismatches and rendering problems
 
 ## Manual Usage
 ```bash
@@ -24,6 +25,7 @@ This command runs a comprehensive architectural health check:
 5. **File Size Analysis**: Enforces graduated thresholds (see safe-refactor.md for details)
 6. **Domain Boundary Check**: Ensures proper separation
 7. **Browser Console Error Detection**: Scans for runtime error patterns and generates browser tests
+8. **Frontend UI Component Validation**: Detects component prop mismatches, missing required props, and styling issues
 
 ## When to run
 - Before starting any new feature
@@ -45,5 +47,7 @@ This command runs a comprehensive architectural health check:
 - Move domain-specific code to proper domain
 - Fix malformed imports
 - Split oversized files into smaller, focused modules
+- Fix component prop mismatches and missing required props
+- Replace problematic shared Dialog components with custom implementations
 
 Run this before any significant code changes to maintain architectural integrity.

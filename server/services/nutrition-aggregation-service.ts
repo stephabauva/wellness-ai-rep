@@ -2,55 +2,14 @@ import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { db } from '@shared/database/db';
 import { healthData, type HealthData } from '@shared/schema';
 import { cacheService } from '../../shared/services/cache-service';
+import { extractMealType, createEmptyMealSummary, formatDate, type NutritionMealSummary } from './nutrition-utils';
+import { type DailyNutritionSummary, type NutritionUpdateRequest } from './nutrition-types';
 
 // Helper function to log with service context
 const log = (level: 'info' | 'error' | 'warn', message: string, data?: any) => {
   console[level](`[NutritionAggregationService] ${message}`, data || '');
 };
 
-// Types for aggregated nutrition data
-export interface DailyNutritionSummary {
-  date: string; // YYYY-MM-DD format
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-  totalFiber: number;
-  totalSugar: number;
-  totalSodium: number;
-  mealBreakdown: {
-    breakfast: NutritionMealSummary;
-    lunch: NutritionMealSummary;
-    dinner: NutritionMealSummary;
-    snack: NutritionMealSummary;
-  };
-  entryCount: number;
-  lastUpdated: Date;
-}
-
-export interface NutritionMealSummary {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
-  sugar: number;
-  sodium: number;
-  entryCount: number;
-}
-
-export interface NutritionUpdateRequest {
-  userId: number;
-  date: Date;
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-  calories?: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
-  fiber?: number;
-  sugar?: number;
-  sodium?: number;
-}
 
 export class NutritionAggregationService {
   private static readonly CACHE_PREFIX = 'nutrition-aggregation:';
@@ -67,7 +26,7 @@ export class NutritionAggregationService {
     userId: number,
     date: Date
   ): Promise<DailyNutritionSummary> {
-    const dateStr = this.formatDate(date);
+    const dateStr = formatDate(date);
     const cacheKey = `${NutritionAggregationService.CACHE_PREFIX}daily:${userId}:${dateStr}`;
     
     // Try to get from cache first
@@ -138,7 +97,7 @@ export class NutritionAggregationService {
    */
   public async updateNutritionEntry(request: NutritionUpdateRequest): Promise<void> {
     const { userId, date, mealType } = request;
-    const dateStr = this.formatDate(date);
+    const dateStr = formatDate(date);
     
     // Calculate date range for the day
     const startOfDay = new Date(date);
@@ -300,10 +259,10 @@ export class NutritionAggregationService {
       totalSugar: 0,
       totalSodium: 0,
       mealBreakdown: {
-        breakfast: this.createEmptyMealSummary(),
-        lunch: this.createEmptyMealSummary(),
-        dinner: this.createEmptyMealSummary(),
-        snack: this.createEmptyMealSummary()
+        breakfast: createEmptyMealSummary(),
+        lunch: createEmptyMealSummary(),
+        dinner: createEmptyMealSummary(),
+        snack: createEmptyMealSummary()
       },
       entryCount: entries.length,
       lastUpdated: new Date()
@@ -315,7 +274,7 @@ export class NutritionAggregationService {
       if (isNaN(value)) continue;
 
       // Determine meal type from metadata
-      const mealType = this.extractMealType(entry);
+      const mealType = extractMealType(entry);
       
       // Add to totals
       switch (entry.dataType) {
@@ -356,49 +315,12 @@ export class NutritionAggregationService {
     return summary;
   }
 
-  /**
-   * Extract meal type from health data entry metadata
-   */
-  private extractMealType(entry: HealthData): 'breakfast' | 'lunch' | 'dinner' | 'snack' {
-    if (entry.metadata && typeof entry.metadata === 'object' && 'mealType' in entry.metadata) {
-      const mealType = entry.metadata.mealType;
-      if (typeof mealType === 'string' && ['breakfast', 'lunch', 'dinner', 'snack'].includes(mealType)) {
-        return mealType as 'breakfast' | 'lunch' | 'dinner' | 'snack';
-      }
-    }
-    
-    // Default to snack if no meal type specified
-    return 'snack';
-  }
-
-  /**
-   * Create empty meal summary
-   */
-  private createEmptyMealSummary(): NutritionMealSummary {
-    return {
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      fiber: 0,
-      sugar: 0,
-      sodium: 0,
-      entryCount: 0
-    };
-  }
-
-  /**
-   * Format date as YYYY-MM-DD string
-   */
-  private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
-  }
 
   /**
    * Invalidate cache for a specific user and date
    */
   public async invalidateCache(userId: number, date: Date): Promise<void> {
-    const dateStr = this.formatDate(date);
+    const dateStr = formatDate(date);
     const cacheKey = `${NutritionAggregationService.CACHE_PREFIX}daily:${userId}:${dateStr}`;
     await cacheService.del(cacheKey);
     

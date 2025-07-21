@@ -1,4 +1,6 @@
-import { nutritionAggregationService, type DailyNutritionSummary, type NutritionUpdateRequest, type NutritionMealSummary } from "../../server/services/nutrition-aggregation-service.js";
+import { nutritionAggregationService } from "../../server/services/nutrition-aggregation-service.js";
+import { type DailyNutritionSummary, type NutritionUpdateRequest } from "../../server/services/nutrition-types.js";
+import { type NutritionMealSummary } from "../../server/services/nutrition-utils.js";
 
 /**
  * Shared nutrition aggregation methods that delegate to nutritionAggregationService

@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { NutritionAggregationService } from './nutrition-aggregation-service.js';
 
-// Mock the dependencies
-vi.mock('./cache-service.js', () => ({
+// Mock the dependencies first
+vi.mock('../../shared/services/cache-service.js', () => ({
   cacheService: {
     get: vi.fn(),
     set: vi.fn(),
@@ -11,7 +10,7 @@ vi.mock('./cache-service.js', () => ({
   }
 }));
 
-vi.mock('../db.js', () => ({
+vi.mock('../../shared/database/db.js', () => ({
   db: {
     select: vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
@@ -28,6 +27,16 @@ vi.mock('../db.js', () => ({
   }
 }));
 
+// Import the modules after mocking
+import { NutritionAggregationService } from './nutrition-aggregation-service.js';
+import { 
+  createBreakfastEntry,
+  createLunchEntry,
+  createProteinEntry,
+  createDailySummaryMock,
+  createWeeklySummaryMocks
+} from './nutrition-aggregation-test-utils.js';
+
 describe('NutritionAggregationService', () => {
   let service: NutritionAggregationService;
   let mockCacheService: any;
@@ -35,8 +44,8 @@ describe('NutritionAggregationService', () => {
 
   beforeEach(async () => {
     service = new NutritionAggregationService();
-    mockCacheService = (await import('./cache-service.js')).cacheService;
-    mockDb = (await import('../db.js')).db;
+    mockCacheService = (await import('../../shared/services/cache-service.js')).cacheService;
+    mockDb = (await import('../../shared/database/db.js')).db;
     
     // Reset all mocks
     vi.clearAllMocks();
@@ -46,24 +55,7 @@ describe('NutritionAggregationService', () => {
     it('should return cached data when available', async () => {
       const userId = 1;
       const date = new Date('2024-01-15');
-      const cachedSummary = {
-        date: '2024-01-15',
-        totalCalories: 2000,
-        totalProtein: 100,
-        totalCarbs: 250,
-        totalFat: 67,
-        totalFiber: 25,
-        totalSugar: 50,
-        totalSodium: 2300,
-        mealBreakdown: {
-          breakfast: { calories: 500, protein: 25, carbs: 60, fat: 15, fiber: 8, sugar: 12, sodium: 400, entryCount: 3 },
-          lunch: { calories: 700, protein: 35, carbs: 80, fat: 25, fiber: 10, sugar: 15, sodium: 800, entryCount: 4 },
-          dinner: { calories: 600, protein: 30, carbs: 70, fat: 20, fiber: 5, sugar: 10, sodium: 900, entryCount: 3 },
-          snack: { calories: 200, protein: 10, carbs: 40, fat: 7, fiber: 2, sugar: 13, sodium: 200, entryCount: 2 }
-        },
-        entryCount: 12,
-        lastUpdated: new Date()
-      };
+      const cachedSummary = createDailySummaryMock();
 
       mockCacheService.get.mockResolvedValue(cachedSummary);
 
@@ -78,39 +70,9 @@ describe('NutritionAggregationService', () => {
       const userId = 1;
       const date = new Date('2024-01-15');
       const mockNutritionEntries = [
-        {
-          id: 1,
-          userId: 1,
-          dataType: 'calories',
-          value: '500',
-          unit: 'kcal',
-          timestamp: new Date('2024-01-15T08:00:00Z'),
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: { mealType: 'breakfast' }
-        },
-        {
-          id: 2,
-          userId: 1,
-          dataType: 'protein',
-          value: '25',
-          unit: 'g',
-          timestamp: new Date('2024-01-15T08:00:00Z'),
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: { mealType: 'breakfast' }
-        },
-        {
-          id: 3,
-          userId: 1,
-          dataType: 'calories',
-          value: '700',
-          unit: 'kcal',
-          timestamp: new Date('2024-01-15T12:00:00Z'),
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: { mealType: 'lunch' }
-        }
+        createBreakfastEntry(),
+        createProteinEntry(),
+        createLunchEntry()
       ];
 
       mockCacheService.get.mockResolvedValue(null);
@@ -173,27 +135,8 @@ describe('NutritionAggregationService', () => {
       const endDate = new Date('2024-01-16');
 
       // Mock getDailyNutritionSummary to return different summaries for each day
-      const mockSummary1 = {
-        date: '2024-01-15',
-        totalCalories: 2000,
-        totalProtein: 100,
-        totalCarbs: 250,
-        totalFat: 67,
-        totalFiber: 25,
-        totalSugar: 50,
-        totalSodium: 2300,
-        mealBreakdown: {
-          breakfast: { calories: 500, protein: 25, carbs: 60, fat: 15, fiber: 8, sugar: 12, sodium: 400, entryCount: 3 },
-          lunch: { calories: 700, protein: 35, carbs: 80, fat: 25, fiber: 10, sugar: 15, sodium: 800, entryCount: 4 },
-          dinner: { calories: 600, protein: 30, carbs: 70, fat: 20, fiber: 5, sugar: 10, sodium: 900, entryCount: 3 },
-          snack: { calories: 200, protein: 10, carbs: 40, fat: 7, fiber: 2, sugar: 13, sodium: 200, entryCount: 2 }
-        },
-        entryCount: 12,
-        lastUpdated: new Date()
-      };
-
-      const mockSummary2 = {
-        date: '2024-01-16',
+      const mockSummary1 = createDailySummaryMock('2024-01-15');
+      const mockSummary2 = createDailySummaryMock('2024-01-16', {
         totalCalories: 1800,
         totalProtein: 90,
         totalCarbs: 220,
@@ -207,9 +150,8 @@ describe('NutritionAggregationService', () => {
           dinner: { calories: 550, protein: 28, carbs: 65, fat: 18, fiber: 4, sugar: 8, sodium: 800, entryCount: 3 },
           snack: { calories: 200, protein: 10, carbs: 30, fat: 8, fiber: 2, sugar: 15, sodium: 300, entryCount: 2 }
         },
-        entryCount: 10,
-        lastUpdated: new Date()
-      };
+        entryCount: 10
+      });
 
       // Mock cache to return different summaries
       mockCacheService.get
@@ -237,28 +179,8 @@ describe('NutritionAggregationService', () => {
       };
 
       const mockExistingEntries = [
-        {
-          id: 1,
-          userId: 1,
-          dataType: 'calories',
-          value: '500',
-          unit: 'kcal',
-          timestamp: new Date('2024-01-15T08:00:00Z'),
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: { mealType: 'breakfast' }
-        },
-        {
-          id: 2,
-          userId: 1,
-          dataType: 'protein',
-          value: '25',
-          unit: 'g',
-          timestamp: new Date('2024-01-15T08:00:00Z'),
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: { mealType: 'breakfast' }
-        }
+        createBreakfastEntry(),
+        createProteinEntry()
       ];
 
       mockDb.select.mockReturnValue({
@@ -288,17 +210,7 @@ describe('NutritionAggregationService', () => {
       };
 
       const mockExistingEntries = [
-        {
-          id: 1,
-          userId: 1,
-          dataType: 'calories',
-          value: '500',
-          unit: 'kcal',
-          timestamp: new Date('2024-01-15T08:00:00Z'),
-          source: 'chat_inference',
-          category: 'nutrition',
-          metadata: { mealType: 'breakfast' }
-        }
+        createBreakfastEntry()
       ];
 
       mockDb.select.mockReturnValue({
@@ -325,15 +237,7 @@ describe('NutritionAggregationService', () => {
       const startDate = new Date('2024-01-15');
       
       // Mock daily summaries for a week
-      const mockSummaries = [
-        { date: '2024-01-15', totalCalories: 2000, totalProtein: 100, totalCarbs: 250, totalFat: 67, totalFiber: 25, totalSugar: 50, totalSodium: 2300, entryCount: 12 },
-        { date: '2024-01-16', totalCalories: 1800, totalProtein: 90, totalCarbs: 220, totalFat: 60, totalFiber: 20, totalSugar: 45, totalSodium: 2100, entryCount: 10 },
-        { date: '2024-01-17', totalCalories: 2200, totalProtein: 110, totalCarbs: 270, totalFat: 73, totalFiber: 30, totalSugar: 55, totalSodium: 2400, entryCount: 14 },
-        { date: '2024-01-18', totalCalories: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0, totalFiber: 0, totalSugar: 0, totalSodium: 0, entryCount: 0 }, // No data day
-        { date: '2024-01-19', totalCalories: 1900, totalProtein: 95, totalCarbs: 230, totalFat: 63, totalFiber: 22, totalSugar: 48, totalSodium: 2200, entryCount: 11 },
-        { date: '2024-01-20', totalCalories: 2100, totalProtein: 105, totalCarbs: 260, totalFat: 70, totalFiber: 28, totalSugar: 52, totalSodium: 2350, entryCount: 13 },
-        { date: '2024-01-21', totalCalories: 1950, totalProtein: 98, totalCarbs: 240, totalFat: 65, totalFiber: 24, totalSugar: 49, totalSodium: 2250, entryCount: 12 }
-      ];
+      const mockSummaries = createWeeklySummaryMocks();
 
       // Mock cache to return the summaries
       mockCacheService.get

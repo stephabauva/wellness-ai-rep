@@ -30,6 +30,9 @@ import { MemoryCategoryGrid } from "./memory/MemoryCategoryGrid";
 import { MemoryForm } from "./memory/MemoryForm";
 import { MemoryInsights } from "./memory/MemoryInsights";
 import { MemoryList } from "./memory/MemoryList";
+import { MemoryOverviewHeader } from "./memory/MemoryOverviewHeader";
+import { MemorySummaryCard } from "./memory/MemorySummaryCard";
+import { SelectionModeControls } from "./memory/SelectionModeControls";
 
 
 
@@ -228,179 +231,24 @@ export default function MemorySection() {
       <div className="flex-1 flex flex-col overflow-y-auto">
         <div className="flex-1 p-4 md:p-6">
           <div className="max-w-7xl mx-auto space-y-6">
-          {/* Header with Gradient */}
-          <div className="bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-600 rounded-lg p-6 text-white mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-white/20 rounded-lg">
-                <Brain className="h-6 w-6" />
-              </div>
-              <h1 className="text-2xl font-bold">AI Memory</h1>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="min-h-[44px] min-w-[44px] p-2 text-white/70 hover:text-white hover:bg-white/10"
-                  >
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
-                    Your AI coach stores important information from your conversations to provide more personalized and effective guidance. All data is encrypted and secure.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <p className="text-white/90 mb-3">Your AI coach's personalized knowledge about you</p>
-            
-            {/* Privacy Trust Indicators */}
-            <div className="flex flex-wrap gap-2 items-center pt-2 border-t border-white/20">
-              <PrivacyBadge 
-                variant="encrypted" 
-                size="sm" 
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
-              />
-              <PrivacyBadge 
-                variant="server-stored" 
-                size="sm" 
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
-              />
-              <PrivacyBadge 
-                variant="gdpr-compliant" 
-                size="sm" 
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20" 
-              />
-              <span className="text-white/70 text-xs ml-2">
-                Your health data is protected and secure
-              </span>
-            </div>
-          </div>
+          <MemoryOverviewHeader />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Memory Overview</span>
-                {memoriesLoaded && memories.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleToggleSelectionMode}
-                    className="min-h-[44px] px-4 flex items-center gap-2"
-                  >
-                    {isSelectionMode ? (
-                      <>
-                        <X className="h-4 w-4" />
-                        Cancel
-                      </>
-                    ) : (
-                      <>
-                        <MousePointer2 className="h-4 w-4" />
-                        Select
-                      </>
-                    )}
-                  </Button>
-                )}
-              </CardTitle>
-              <CardDescription>
-                Your AI coach remembers important information from your conversations to provide personalized guidance.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MemoryForm 
-                isOpen={isManualEntryOpen}
-                onClose={() => setIsManualEntryOpen(false)}
-                onSubmit={handleMemoryFormSubmit}
-                isSubmitting={createManualMemoryMutation.isPending}
-                voiceInput={voiceInput}
-              />
-
-              {/* Memory Summary - Last Period Title */}
-              <div className="text-lg font-semibold text-purple-700 mb-4">
-                Memory Overview
-                <span className="text-sm text-gray-500 ml-2">
-                  ({memoryOverview.total} total memories)
-                </span>
-              </div>
-
-              {/* Core Actions - 3-Second Rule Compliance */}
-              <div className="space-y-4 mb-6">
-                {/* Primary Action: Total Memories Overview */}
-                <Card 
-                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                    selectedCategory === "all" ? "bg-purple-50 border-purple-200 ring-2 ring-purple-300" : "bg-gray-50 border-gray-200"
-                  }`}
-                  onClick={() => handleCategoryChange("all")}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-gray-600">Total Memories</div>
-                      <div className="text-2xl font-bold text-purple-600">
-                        {memoryOverview.total}
-                      </div>
-                    </div>
-                    <Brain className="h-5 w-5 text-purple-400" />
-                  </div>
-                </Card>
-
-                {/* Secondary Actions: Quick Category Access */}
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleCategoryChange("preferences")}
-                    className={`h-12 px-4 min-h-[44px] ${
-                      selectedCategory === "preferences" ? "bg-blue-50 border-blue-200 text-blue-700" : ""
-                    }`}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Preferences ({memoryOverview.categories.preferences || 0})
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleCategoryChange("goals")}
-                    className={`h-12 px-4 min-h-[44px] ${
-                      selectedCategory === "goals" ? "bg-pink-50 border-pink-200 text-pink-700" : ""
-                    }`}
-                  >
-                    <Target className="h-4 w-4 mr-2" />
-                    Goals ({memoryOverview.categories.goals || 0})
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleShowAllCategories}
-                    className="h-12 px-4 min-h-[44px]"
-                  >
-                    {showAllCategories ? (
-                      <>
-                        <ChevronUp className="h-4 w-4 mr-2" />
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-4 w-4 mr-2" />
-                        Show All Categories
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Progressive Disclosure: All Categories */}
-              <Collapsible open={showAllCategories} onOpenChange={toggleShowAllCategories}>
-                <CollapsibleContent>
-                  <MemoryCategoryGrid 
-                    memoryOverview={memoryOverview}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={handleCategoryChange}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
-
-            </CardContent>
-          </Card>
+          <MemorySummaryCard
+            memoryOverview={memoryOverview}
+            memoriesLoaded={memoriesLoaded}
+            memories={memories}
+            selectedCategory={selectedCategory}
+            showAllCategories={showAllCategories}
+            isManualEntryOpen={isManualEntryOpen}
+            isSelectionMode={isSelectionMode}
+            createManualMemoryMutation={createManualMemoryMutation}
+            voiceInput={voiceInput}
+            onCategoryChange={handleCategoryChange}
+            onToggleShowAllCategories={toggleShowAllCategories}
+            onToggleSelectionMode={handleToggleSelectionMode}
+            onManualEntryClose={() => setIsManualEntryOpen(false)}
+            onMemoryFormSubmit={handleMemoryFormSubmit}
+          />
 
           <div className="space-y-4">
               <MemoryInsights 
@@ -518,74 +366,15 @@ export default function MemorySection() {
                 </Card>
               ) : (
                 <>
-                  {/* Selection Mode Controls */}
-                  {isSelectionMode && memories.length > 0 && (
-                    <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-                      <CardContent className="py-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 text-sm text-gray-700">
-                            <div className="p-2 bg-purple-100 rounded-full">
-                              <CheckSquare className="h-4 w-4 text-purple-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium">Selection Mode</p>
-                              <p className="text-xs text-gray-600">
-                                {selectedMemoryIds.size} of {memories.length} memories selected
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={selectedMemoryIds.size === memories.length ? handleDeselectAll : handleSelectAll}
-                              className="min-h-[44px] px-4 text-xs"
-                            >
-                              {selectedMemoryIds.size === memories.length ? "Deselect All" : "Select All"}
-                            </Button>
-                            {selectedMemoryIds.size > 0 && (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={handleBulkDeleteAction}
-                                disabled={bulkDeleteMutation.isPending}
-                                className="min-h-[44px] px-4 text-xs"
-                              >
-                                {bulkDeleteMutation.isPending ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Deleting...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete ({selectedMemoryIds.size})
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Swipe Instructions for better UX */}
-                  {!isSelectionMode && memories.length > 0 && (
-                    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-                      <CardContent className="py-3">
-                        <div className="flex items-center gap-3 text-sm text-gray-700">
-                          <div className="p-2 bg-blue-100 rounded-full">
-                            <Edit3 className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">Swipe to interact</p>
-                            <p className="text-xs text-gray-600">Swipe left to delete, swipe right to edit</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                  <SelectionModeControls
+                    isSelectionMode={isSelectionMode}
+                    memories={memories}
+                    selectedMemoryIds={selectedMemoryIds}
+                    bulkDeleteMutation={bulkDeleteMutation}
+                    onSelectAll={handleSelectAll}
+                    onDeselectAll={handleDeselectAll}
+                    onBulkDelete={handleBulkDeleteAction}
+                  />
 
                   <MemoryList
                     memories={memories}

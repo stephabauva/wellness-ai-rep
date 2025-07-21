@@ -1,7 +1,7 @@
 {
-  "lastGenerated": "2025-07-21T13:51:09.929Z",
+  "lastGenerated": "2025-07-21T14:00:30.655Z",
   "totalDomains": 17,
-  "totalDependencies": 168,
+  "totalDependencies": 171,
   "domainFiles": [
     {
       "domain": "app",
@@ -17,11 +17,6 @@
       "domain": "shared",
       "filename": "shared-dependencies.json",
       "fileCount": 34
-    },
-    {
-      "domain": "app/pages",
-      "filename": "app-pages-dependencies.json",
-      "fileCount": 2
     },
     {
       "domain": "settings",
@@ -41,7 +36,7 @@
     {
       "domain": "memory",
       "filename": "memory-dependencies.json",
-      "fileCount": 20
+      "fileCount": 23
     },
     {
       "domain": "unknown",
@@ -64,14 +59,19 @@
       "fileCount": 1
     },
     {
-      "domain": "health",
-      "filename": "health-dependencies.json",
-      "fileCount": 7
+      "domain": "app/pages",
+      "filename": "app-pages-dependencies.json",
+      "fileCount": 2
     },
     {
       "domain": "health/hooks",
       "filename": "health-hooks-dependencies.json",
       "fileCount": 1
+    },
+    {
+      "domain": "health",
+      "filename": "health-dependencies.json",
+      "fileCount": 7
     },
     {
       "domain": "infrastructure",

@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-21T13:37:34.206Z",
+  "lastUpdated": "2025-07-21T14:00:30.651Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -167,6 +167,13 @@
           ]
         },
         {
+          "file": "client/src/components/memory/MemorySummaryCard.tsx",
+          "domain": "memory",
+          "imports": [
+            "ManualMemoryFormData"
+          ]
+        },
+        {
           "file": "client/src/components/memory/MemoryList.tsx",
           "domain": "memory",
           "imports": [
@@ -197,7 +204,41 @@
         }
       ],
       "crossDomain": false,
-      "usageCount": 6
+      "usageCount": 7
+    },
+    "client/src/components/memory/SelectionModeControls.tsx": {
+      "domain": "memory",
+      "exports": [
+        "SelectionModeControls"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "SelectionModeControls"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemorySummaryCard.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemorySummaryCard"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemorySummaryCard"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
     },
     "client/src/components/memory/MemoryRelationships.tsx": {
       "domain": "memory",
@@ -210,6 +251,23 @@
           "domain": "memory",
           "imports": [
             "MemoryRelationships"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/MemoryOverviewHeader.tsx": {
+      "domain": "memory",
+      "exports": [
+        "MemoryOverviewHeader"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryOverviewHeader"
           ]
         }
       ],
@@ -262,10 +320,17 @@
           "imports": [
             "MemoryForm"
           ]
+        },
+        {
+          "file": "client/src/components/memory/MemorySummaryCard.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryForm"
+          ]
         }
       ],
       "crossDomain": false,
-      "usageCount": 1
+      "usageCount": 2
     },
     "client/src/components/memory/MemoryCategoryGrid.tsx": {
       "domain": "memory",
@@ -279,10 +344,17 @@
           "imports": [
             "MemoryCategoryGrid"
           ]
+        },
+        {
+          "file": "client/src/components/memory/MemorySummaryCard.tsx",
+          "domain": "memory",
+          "imports": [
+            "MemoryCategoryGrid"
+          ]
         }
       ],
       "crossDomain": false,
-      "usageCount": 1
+      "usageCount": 2
     },
     "server/services/memory/memory-relationship-utils.ts": {
       "domain": "memory",

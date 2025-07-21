@@ -1,6 +1,6 @@
 {
   "domain": "shared",
-  "lastUpdated": "2025-07-21T09:36:23.714Z",
+  "lastUpdated": "2025-07-21T14:00:30.651Z",
   "dependencies": {
     "client/src/services/audio-service.ts": {
       "domain": "shared/services",
@@ -697,10 +697,17 @@
             "PrivacyBadge",
             "PrivacyStatus"
           ]
+        },
+        {
+          "file": "client/src/components/memory/MemoryOverviewHeader.tsx",
+          "domain": "memory",
+          "imports": [
+            "PrivacyBadge"
+          ]
         }
       ],
       "crossDomain": true,
-      "usageCount": 1
+      "usageCount": 2
     },
     "client/src/components/ui/FAB.tsx": {
       "domain": "shared/ui-components",

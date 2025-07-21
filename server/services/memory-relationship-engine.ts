@@ -3,48 +3,30 @@ import { memoryEntries, type MemoryEntry } from '../../shared/schema';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { memoryService } from '@shared/services/memory-service';
 import crypto from 'crypto';
-
-interface MemoryRelationship {
-  id: string;
-  sourceMemoryId: string;
-  targetMemoryId: string;
-  relationshipType: 'supports' | 'contradicts' | 'builds_on' | 'related_to' | 'temporal_sequence';
-  strength: number; // 0.0 to 1.0
-  confidence: number; // 0.0 to 1.0
-  context: string;
-  createdAt: Date;
-}
-
-interface AtomicFact {
-  id: string;
-  memoryId: string;
-  factType: 'preference' | 'goal' | 'constraint' | 'experience' | 'knowledge';
-  content: string;
-  confidence: number;
-  extractedAt: Date;
-}
-
-interface SemanticCluster {
-  id: string;
-  centroidEmbedding: number[];
-  memoryIds: string[];
-  clusterType: string;
-  coherenceScore: number;
-  lastUpdated: Date;
-}
+import { 
+  MemoryRelationship, 
+  AtomicFact, 
+  SemanticCluster 
+} from './memory/memory-relationship-types.js';
+import { 
+  calculateContradictionScore,
+  calculateSupportScore,
+  calculateTemporalScore,
+  findCommonWords,
+  groupMemoriesByCategory,
+  classifyFactType,
+  calculateFactConfidence,
+  calculateClusterCoherence,
+  calculateCentroidEmbedding
+} from './memory/memory-relationship-utils.js';
+import { MemoryRelationshipCache } from './memory/memory-relationship-cache.js';
 
 /**
  * Phase 2: Advanced Memory Relationship Engine
  * Implements semantic memory graphs, atomic fact extraction, and relationship mapping
  */
 export class MemoryRelationshipEngine {
-  private relationshipCache = new Map<string, MemoryRelationship[]>();
-  private atomicFactCache = new Map<string, AtomicFact[]>();
-  private clusterCache = new Map<string, SemanticCluster>();
-  
-  // Performance optimization caches
-  private readonly CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-  private cacheTimestamps = new Map<string, number>();
+  private cache = new MemoryRelationshipCache();
 
   /**
    * Ultra-fast atomic facts extraction with pattern matching
@@ -53,8 +35,9 @@ export class MemoryRelationshipEngine {
     const cacheKey = `facts_${memoryId}`;
     
     // Check cache first
-    if (this.atomicFactCache.has(cacheKey) && this.isCacheValid(cacheKey)) {
-      return this.atomicFactCache.get(cacheKey)!;
+    const cachedFacts = this.cache.getAtomicFacts(cacheKey);
+    if (cachedFacts) {
+      return cachedFacts;
     }
 
     const startTime = Date.now();
@@ -87,8 +70,7 @@ export class MemoryRelationshipEngine {
       }
       
       // Cache the results aggressively
-      this.atomicFactCache.set(cacheKey, facts);
-      this.cacheTimestamps.set(cacheKey, Date.now());
+      this.cache.setAtomicFacts(cacheKey, facts);
       
       const processingTime = Date.now() - startTime;
       console.log(`[MemoryRelationshipEngine] Extracted ${facts.length} atomic facts in ${processingTime}ms`);
@@ -106,8 +88,9 @@ export class MemoryRelationshipEngine {
   async discoverRelationships(sourceMemoryId: string, candidateMemories: MemoryEntry[]): Promise<MemoryRelationship[]> {
     const cacheKey = `relationships_${sourceMemoryId}`;
     
-    if (this.relationshipCache.has(cacheKey) && this.isCacheValid(cacheKey)) {
-      return this.relationshipCache.get(cacheKey)!;
+    const cachedRelationships = this.cache.getRelationships(cacheKey);
+    if (cachedRelationships) {
+      return cachedRelationships;
     }
 
     const startTime = Date.now();
@@ -139,8 +122,7 @@ export class MemoryRelationshipEngine {
       }
       
       // Cache the results
-      this.relationshipCache.set(cacheKey, relationships);
-      this.cacheTimestamps.set(cacheKey, Date.now());
+      this.cache.setRelationships(cacheKey, relationships);
       
       const processingTime = Date.now() - startTime;
       console.log(`[MemoryRelationshipEngine] Discovered ${relationships.length} relationships in ${processingTime}ms`);
@@ -163,17 +145,17 @@ export class MemoryRelationshipEngine {
       const clusters: SemanticCluster[] = [];
       
       // Group memories by category first for performance
-      const categorizedMemories = this.groupMemoriesByCategory(memories);
+      const categorizedMemories = groupMemoriesByCategory(memories);
       
       for (const [category, categoryMemories] of categorizedMemories.entries()) {
         if (categoryMemories.length < 2) continue; // Need at least 2 memories for a cluster
         
         const cluster: SemanticCluster = {
           id: crypto.randomUUID(),
-          centroidEmbedding: await this.calculateCentroidEmbedding(categoryMemories),
+          centroidEmbedding: await calculateCentroidEmbedding(categoryMemories),
           memoryIds: categoryMemories.map(m => m.id),
           clusterType: category,
-          coherenceScore: this.calculateClusterCoherence(categoryMemories),
+          coherenceScore: calculateClusterCoherence(categoryMemories),
           lastUpdated: new Date()
         };
         
@@ -255,7 +237,7 @@ export class MemoryRelationshipEngine {
       const targetContent = target.content.toLowerCase();
       
       // Check for contradictions using keyword overlap
-      const contradictionScore = this.calculateContradictionScore(sourceContent, targetContent);
+      const contradictionScore = calculateContradictionScore(sourceContent, targetContent);
       if (contradictionScore > 0.7) {
         return {
           id: crypto.randomUUID(),
@@ -270,7 +252,7 @@ export class MemoryRelationshipEngine {
       }
       
       // Check for support relationships using fact overlap
-      const supportScore = this.calculateSupportScore(sourceFacts, sourceContent, targetContent);
+      const supportScore = calculateSupportScore(sourceFacts, sourceContent, targetContent);
       if (supportScore > 0.5) {
         return {
           id: crypto.randomUUID(),
@@ -285,7 +267,7 @@ export class MemoryRelationshipEngine {
       }
       
       // Check for temporal relationships
-      const temporalScore = this.calculateTemporalScore(source, target);
+      const temporalScore = calculateTemporalScore(source, target);
       if (temporalScore > 0.6) {
         return {
           id: crypto.randomUUID(),
@@ -306,87 +288,13 @@ export class MemoryRelationshipEngine {
     }
   }
 
-  private calculateContradictionScore(sourceContent: string, targetContent: string): number {
-    const contradictionPairs = [
-      ['want', 'dont want'], ['like', 'hate'], ['love', 'dislike'],
-      ['increase', 'decrease'], ['gain', 'lose'], ['more', 'less']
-    ];
-    
-    let contradictions = 0;
-    for (const [pos, neg] of contradictionPairs) {
-      if ((sourceContent.includes(pos) && targetContent.includes(neg)) ||
-          (sourceContent.includes(neg) && targetContent.includes(pos))) {
-        contradictions++;
-      }
-    }
-    
-    return Math.min(contradictions * 0.3, 1.0);
-  }
 
-  private calculateSupportScore(sourceFacts: AtomicFact[], sourceContent: string, targetContent: string): number {
-    // Simple keyword overlap scoring
-    const sourceWords = new Set(sourceContent.split(/\s+/).filter(w => w.length > 3));
-    const targetWords = new Set(targetContent.split(/\s+/).filter(w => w.length > 3));
-    
-    const overlap = [...sourceWords].filter(word => targetWords.has(word)).length;
-    const maxWords = Math.max(sourceWords.size, targetWords.size);
-    
-    return maxWords > 0 ? (overlap / maxWords) * 0.8 : 0;
-  }
 
-  private calculateTemporalScore(source: MemoryEntry, target: MemoryEntry): number {
-    const sourceTime = source.createdAt?.getTime();
-    const targetTime = target.createdAt?.getTime();
-    
-    // If either createdAt is null, cannot calculate a meaningful temporal score
-    if (sourceTime === undefined || sourceTime === null || targetTime === undefined || targetTime === null) {
-      return 0;
-    }
-    
-    const timeDiff = Math.abs(sourceTime - targetTime);
-    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
-    
-    // Higher score for memories created close in time
-    return Math.max(0, 1 - (daysDiff / 30)); // Decay over 30 days
-  }
 
   /**
    * Private helper methods
    */
-  private classifyFactType(content: string): AtomicFact['factType'] {
-    const lowerContent = content.toLowerCase();
-    
-    if (lowerContent.includes('want') || lowerContent.includes('like') || lowerContent.includes('prefer')) {
-      return 'preference';
-    }
-    if (lowerContent.includes('goal') || lowerContent.includes('target') || lowerContent.includes('aim')) {
-      return 'goal';
-    }
-    if (lowerContent.includes('cannot') || lowerContent.includes('avoid') || lowerContent.includes('limit')) {
-      return 'constraint';
-    }
-    if (lowerContent.includes('did') || lowerContent.includes('went') || lowerContent.includes('tried')) {
-      return 'experience';
-    }
-    
-    return 'knowledge';
-  }
 
-  private calculateFactConfidence(content: string): number {
-    // Simple confidence scoring based on content characteristics
-    let confidence = 0.5;
-    
-    // Increase confidence for specific statements
-    if (content.includes('always') || content.includes('never')) confidence += 0.2;
-    if (content.includes('specifically') || content.includes('exactly')) confidence += 0.15;
-    if (content.length > 50) confidence += 0.1; // Longer statements tend to be more detailed
-    
-    // Decrease confidence for uncertain language
-    if (content.includes('maybe') || content.includes('probably')) confidence -= 0.2;
-    if (content.includes('think') || content.includes('believe')) confidence -= 0.1;
-    
-    return Math.max(0.1, Math.min(1.0, confidence));
-  }
 
   private async analyzeMemoryRelationship(
     source: MemoryEntry,
@@ -422,7 +330,7 @@ export class MemoryRelationshipEngine {
       }
       
       // Check for supporting relationships
-      const commonWords = this.findCommonWords(sourceContent, targetContent);
+      const commonWords = findCommonWords(sourceContent, targetContent);
       if (commonWords.length > 2) {
         return {
           id: crypto.randomUUID(),
@@ -463,53 +371,9 @@ export class MemoryRelationshipEngine {
     }
   }
 
-  private findCommonWords(text1: string, text2: string): string[] {
-    const words1 = new Set(text1.split(/\s+/).filter(w => w.length > 3));
-    const words2 = new Set(text2.split(/\s+/).filter(w => w.length > 3));
-    
-    return Array.from(words1).filter(word => words2.has(word));
-  }
 
-  private groupMemoriesByCategory(memories: MemoryEntry[]): Map<string, MemoryEntry[]> {
-    const groups = new Map<string, MemoryEntry[]>();
-    
-    for (const memory of memories) {
-      const category = memory.category || 'general';
-      if (!groups.has(category)) {
-        groups.set(category, []);
-      }
-      groups.get(category)!.push(memory);
-    }
-    
-    return groups;
-  }
 
-  /**
-   * Cache validity check for performance optimization
-   */
-  private isCacheValid(cacheKey: string): boolean {
-    const timestamp = this.cacheTimestamps.get(cacheKey);
-    if (!timestamp) return false;
-    
-    return (Date.now() - timestamp) < this.CACHE_TTL;
-  }
 
-  private async calculateCentroidEmbedding(memories: MemoryEntry[]): Promise<number[]> {
-    // Simplified centroid calculation - in production, this would use actual embeddings
-    const words = memories.flatMap(m => m.content.toLowerCase().split(/\s+/));
-    const wordFreq = new Map<string, number>();
-    
-    for (const word of words) {
-      wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
-    }
-    
-    // Create a simple frequency-based "embedding"
-    const topWords = Array.from(wordFreq.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-    
-    return topWords.map(([_, freq]) => freq / words.length);
-  }
 
   /**
    * Fast candidate memory retrieval with caching
@@ -517,8 +381,9 @@ export class MemoryRelationshipEngine {
   async getCandidateMemories(memoryId: string): Promise<MemoryEntry[]> {
     const cacheKey = `candidates_${memoryId}`;
     
-    if (this.relationshipCache.has(cacheKey) && this.isCacheValid(cacheKey)) {
-      return this.relationshipCache.get(cacheKey) as any;
+    const cachedMemories = this.cache.getRelationships(cacheKey) as any;
+    if (cachedMemories) {
+      return cachedMemories;
     }
 
     try {
@@ -533,8 +398,7 @@ export class MemoryRelationshipEngine {
         .limit(10); // Reduced limit for performance
       
       // Cache the results
-      this.relationshipCache.set(cacheKey, memories as any);
-      this.cacheTimestamps.set(cacheKey, Date.now());
+      this.cache.setRelationships(cacheKey, memories as any);
       
       return memories;
     } catch (error) {
@@ -543,50 +407,20 @@ export class MemoryRelationshipEngine {
     }
   }
 
-  private calculateClusterCoherence(memories: MemoryEntry[]): number {
-    if (memories.length < 2) return 0;
-    
-    // Simple coherence based on shared words
-    const allWords = memories.map(m => new Set(m.content.toLowerCase().split(/\s+/)));
-    let totalOverlap = 0;
-    let comparisons = 0;
-    
-    for (let i = 0; i < allWords.length; i++) {
-      for (let j = i + 1; j < allWords.length; j++) {
-        const intersection = new Set([...allWords[i]].filter(x => allWords[j].has(x)));
-        const union = new Set([...allWords[i], ...allWords[j]]);
-        totalOverlap += intersection.size / union.size;
-        comparisons++;
-      }
-    }
-    
-    return comparisons > 0 ? totalOverlap / comparisons : 0;
-  }
 
-  // Removed duplicate getCandidateMemories function
-
-  // Removed duplicate isCacheValid function
 
   /**
    * Performance monitoring
    */
   getPerformanceMetrics(): any {
-    return {
-      relationshipCacheSize: this.relationshipCache.size,
-      atomicFactCacheSize: this.atomicFactCache.size,
-      clusterCacheSize: this.clusterCache.size,
-      timestamp: new Date().toISOString()
-    };
+    return this.cache.getPerformanceMetrics();
   }
 
   /**
    * Clear caches (for testing and maintenance)
    */
   clearCaches(): void {
-    this.relationshipCache.clear();
-    this.atomicFactCache.clear();
-    this.clusterCache.clear();
-    this.cacheTimestamps.clear();
+    this.cache.clearCaches();
   }
 }
 

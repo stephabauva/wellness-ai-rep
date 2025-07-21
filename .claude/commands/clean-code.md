@@ -42,7 +42,7 @@ Ensures every new code addition maintains architectural quality.
 
 ### 4. Validation Commands
 ```bash
-node dependency-tracker.js          # Check cross-domain violations
+node dependency-tracker.js          # Check cross-domain violations (creates split dependency maps)
 node malformed-import-detector.js   # Check import syntax
 npm run build                       # Ensure it builds
 npx vitest                         # Ensure tests pass

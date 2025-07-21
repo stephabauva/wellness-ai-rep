@@ -8,7 +8,7 @@
 ### 1. Pre-Planning Investigation
 - Navigate the codebase thoroughly
 - Check relevant system maps in `.system-maps/json-system-maps/`
-- Run dependency tracker to understand connections
+- Run dependency tracker to understand connections (generates split dependency maps in dependency-maps/)
 - Consider ALL possible impacts
 
 ### 2. Create Written Plan
@@ -25,7 +25,7 @@
 ## Context & Investigation
 - Current state analysis
 - System map references checked
-- Dependencies identified via dependency-tracker.js
+- Dependencies identified via dependency-tracker.js (split maps in dependency-maps/ directory)
 
 ## Scope
 - Brief description
@@ -83,7 +83,7 @@ If something breaks:
 ### Feature Isolation (I1)
 **Never alter code linked to other features without full impact analysis**
 - Check all @used-by annotations
-- Run dependency-tracker.js first
+- Run dependency-tracker.js first (creates domain-specific dependency maps)
 - Document cascade effects
 - Get approval for each affected domain
 

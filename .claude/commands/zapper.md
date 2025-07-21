@@ -9,7 +9,7 @@
 ```bash
 # Start with these commands
 node system-map-tracker.js              # What's documented?
-node dependency-tracker.js              # What depends on what?
+node dependency-tracker.js              # What depends on what? (check dependency-maps/ directory)
 node system-map-cross-domain-validator-v2.js  # Architecture violations?
 git status                              # Recent changes?
 git log --oneline -10                   # Recent commits?
@@ -28,7 +28,7 @@ git log --oneline -10                   # Recent commits?
 ### System Map Analysis
 - Affected domain: [from root.map.json]
 - Component hierarchy: [trace through maps]
-- Cross-domain touchpoints: [from dependency tracker]
+- Cross-domain touchpoints: [from dependency tracker - check dependency-maps/ for domain-specific analysis]
 
 ### Potential Causes (ALL of them)
 1. **Frontend**

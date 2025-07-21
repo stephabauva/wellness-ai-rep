@@ -11,7 +11,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **System maps**: maps the architecture of each feature - .system-maps/json-system-maps/root.map.json is the main index that points to all domains and their subdomain maps
 **User flows**: how the user interacts with the application is described in ./tasks/all-user-flows.md
 **System map tracker**: system-map-tracker.js scans recently modified Git files and cross-references them with system maps
-**Dependency tracking**: dependency-tracker.js and system-map-cross-domain-validator-v2.js analyze actual code imports
+**Dependency tracking**: dependency-tracker.js generates split dependency maps by domain (see dependency-maps/) and system-map-cross-domain-validator-v2.js analyze actual code imports
 **@used-by annotations**: Add comments like @used-by domain/component to track dependencies
 **Malformed import detection**: malformed-import-detector.js scans TypeScript/JavaScript files for syntax issues and path resolution problems in import statements
 **Async/await compatibility**: async-await-detector.js prevents "Cannot read properties of undefined" errors by detecting service getter async mismatches
@@ -24,7 +24,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `npm run db:push` - Push database schema changes
 - `cd go-[service] && go run .` - Start Go microservices
 - `node system-map-tracker.js` - Check if modified files are documented in system maps
-- `node dependency-tracker.js` - Analyze cross-domain dependencies
+- `node dependency-tracker.js` - Analyze cross-domain dependencies (creates split maps in dependency-maps/)
 - `node system-map-cross-domain-validator-v2.js` - Validate system maps against actual code
 - `npm run check:async` - Check async/await compatibility to prevent undefined errors
 - `npm run check:filesize` - Analyze file sizes using graduated thresholds (see .claude/commands/safe-refactor.md)
@@ -48,7 +48,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
   - System map's guide : `.system-maps/optimized-complete-map-blue-original.md`
 
 ### Before Adding ANY New Code (Claude AI Responsibility)
-1. **ALWAYS run architectural checks first**: `node dependency-tracker.js`, `node malformed-import-detector.js`, `npm run check:async`, and `npm run check:filesize`
+1. **ALWAYS run architectural checks first**: `node dependency-tracker.js` (creates domain-specific dependency maps), `node malformed-import-detector.js`, `npm run check:async`, and `npm run check:filesize`
 2. Ask: "Does this belong in shared/ or a specific domain?"
 3. Ask: "Can I enhance existing components vs creating new ones?"
 4. Ask: "Is this service necessary or can it be a simple function?"

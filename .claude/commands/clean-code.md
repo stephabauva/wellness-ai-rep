@@ -41,12 +41,15 @@ Ensures every new code addition maintains architectural quality.
 ## After Writing Code
 
 ### 4. Validation Commands
+**Note**: These are automatically run by `/arch-guard` command - no need to run manually
 ```bash
-node dependency-tracker.js          # Check cross-domain violations (creates split dependency maps)
-node malformed-import-detector.js   # Check import syntax
-node browser-console-error-detector.cjs  # Check runtime error patterns
-npm run build                       # Ensure it builds
-npx vitest                         # Ensure tests pass
+# Comprehensive validation (use /arch-guard instead):
+node dependency-tracker.js          # Cross-domain violations
+node malformed-import-detector.js   # Import syntax  
+node browser-console-error-detector.cjs  # Runtime errors
+node frontend-ui-monitor.cjs        # UI component validation
+npm run build                       # Build verification
+npx vitest                         # Test verification
 ```
 
 ### 5. Import Rules

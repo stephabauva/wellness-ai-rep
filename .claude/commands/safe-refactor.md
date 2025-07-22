@@ -14,7 +14,13 @@ Refactor large files using graduated thresholds in the wellness AI app while pre
 ## Wellness App Safety Protocol
 
 ### Pre-Refactoring Validation (MANDATORY)
-1. **Run architectural checks**: `node dependency-tracker.js`, `node malformed-import-detector.js`, `npm run check:async`, `npm run check:filesize`
+1. **Run comprehensive architectural checks**:
+   - `node dependency-tracker.js` (cross-domain dependency analysis)
+   - `node malformed-import-detector.js` (import syntax validation)
+   - `npm run check:async` (async/await compatibility)
+   - `npm run check:filesize` (file size analysis)
+   - `node browser-console-error-detector.cjs` (runtime error detection)
+   - `node frontend-ui-monitor.cjs` (UI component validation)
 2. **Analyze current file structure**: Map all imports, exports, and dependencies
 3. **Test current functionality**: Ensure all features work before changes
 4. **Backup current state**: Create git stash or commit point
@@ -48,6 +54,8 @@ For each extraction:
    - `npm run check` (TypeScript validation)
    - `npm run dev` (verify server starts without errors)
    - `npm run check:async && npm run check:filesize` (architecture validation)
+   - `node browser-console-error-detector.cjs` (runtime error detection)
+   - `node frontend-ui-monitor.cjs` (UI component validation)
 5. **Run tests**: `npx vitest` if tests exist
 6. **Test functionality**: Manual verification of affected features
 7. **Commit changes**: Small, focused commits
@@ -79,6 +87,9 @@ For each extraction:
    - `npm run check` (TypeScript validation)
    - `npm run dev` (verify server starts without errors) 
    - `npm run check:async && npm run check:filesize` (architecture validation)
+   - `node browser-console-error-detector.cjs` (runtime error detection)
+   - `node frontend-ui-monitor.cjs` (UI component validation)
+   - `node system-map-tracker.js` (update system documentation)
    - `npm run build` (production build verification)
 2. **Test all affected features**: Manual verification
 3. **Run tests if available**: `npx vitest`
@@ -124,13 +135,21 @@ During refactoring:
   - [ ] `npm run check` (TypeScript)
   - [ ] `npm run dev` (server starts)
   - [ ] `npm run check:async && npm run check:filesize` (architecture)
+  - [ ] `node browser-console-error-detector.cjs` (runtime errors)
+  - [ ] `node frontend-ui-monitor.cjs` (UI component validation)
 - [ ] Test functionality after each change
 - [ ] Commit small, focused changes
 
 After refactoring:
-- [ ] All comprehensive validation checks passing
+- [ ] All comprehensive validation checks passing:
+  - [ ] `npm run check` (TypeScript)
+  - [ ] `npm run dev` (server starts)
+  - [ ] `npm run check:async && npm run check:filesize` (architecture)
+  - [ ] `node browser-console-error-detector.cjs` (runtime errors)
+  - [ ] `node frontend-ui-monitor.cjs` (UI components)
+  - [ ] `node system-map-tracker.js` (documentation updated)
+  - [ ] `npm run build` (production build)
 - [ ] All original functionality preserved
-- [ ] `npm run build` succeeds
 - [ ] No new cross-domain violations
 - [ ] Performance maintained or improved
 - [ ] Component/service limits respected
@@ -143,10 +162,20 @@ If any issues arise:
 4. **Analyze what went wrong** before attempting again
 
 ## Integration with Existing Tools
-- **Before refactoring**: Always run `node dependency-tracker.js` and `npm run check:filesize` to identify oversized files
-- **After changes**: Run `node system-map-tracker.js` to update documentation  
-- **Continuous validation**: Use `npm run check:async` for async compatibility
-- **File size monitoring**: Use `npm run check:filesize` to track progress and ensure extractions stay within limits
+- **Before refactoring**: Always run comprehensive validation suite:
+  - `node dependency-tracker.js` (dependency analysis)
+  - `npm run check:filesize` (identify oversized files)
+  - `node browser-console-error-detector.cjs` (baseline runtime errors)
+  - `node frontend-ui-monitor.cjs` (UI component health check)
+- **During refactoring**: Continuous validation at each step
+- **After changes**: Complete validation suite including:
+  - `node system-map-tracker.js` (update documentation)
+  - All validation scripts to ensure no regressions
+- **Monitoring**: 
+  - `npm run check:async` for async compatibility
+  - `npm run check:filesize` to track progress and ensure extractions stay within limits
+  - Runtime error monitoring with browser console detector
+  - UI component integrity with frontend UI monitor
 
 ## Success Criteria
 - Original functionality 100% preserved

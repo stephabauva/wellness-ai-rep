@@ -86,7 +86,9 @@
 npm run check        # TypeScript strict validation
 npx vitest          # All tests passing
 npm run build       # Production build works
+node browser-console-error-detector.cjs  # Runtime error detection
 node frontend-ui-monitor.cjs  # UI component validation
+node system-map-tracker.js    # Documentation updates
 ```
 
 ## Critical Replit Constraints

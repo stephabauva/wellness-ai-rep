@@ -5,7 +5,7 @@
  * Run this before/after refactoring to catch stub implementations
  */
 
-const { execSync } = require('child_process');
+import { execSync } from 'child_process';
 
 console.log('🚀 Quick Functional Validation\n');
 

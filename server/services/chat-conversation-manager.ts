@@ -56,7 +56,7 @@ export async function ensureConversation(
     });
   }
 
-  return currentConversationId;
+  return currentConversationId!;
 }
 
 /**

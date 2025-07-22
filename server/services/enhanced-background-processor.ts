@@ -153,7 +153,7 @@ export class EnhancedBackgroundProcessor {
           }
         } catch (error) {
           console.error(`[EnhancedBackgroundProcessor] Consolidation failed for user ${userId}:`, error);
-          return { userId, resultCount: 0, success: false, reason: error.message };
+          return { userId, resultCount: 0, success: false, reason: error instanceof Error ? error.message : String(error) };
         }
       });
       

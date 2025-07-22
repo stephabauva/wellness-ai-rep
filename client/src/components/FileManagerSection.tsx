@@ -21,6 +21,7 @@ import { FileActionsToolbar } from './filemanager/FileActionsToolbar';
 import { CategoryTabs } from './filemanager/CategoryTabs';
 import { QrCodeDialog } from './filemanager/QrCodeDialog';
 import FileUploadDialog from './filemanager/FileUploadDialog';
+import { FloatingActionButton } from './filemanager/FloatingActionButton';
 
 // Import utilities and types
 import { categorizeFiles, getFileIcon, formatFileSize, formatDate } from '@shared';
@@ -112,11 +113,87 @@ const FileManagerSection: React.FC = () => {
   
   if (isLoadingFiles) {
     return (
-      <div className="flex-1 flex flex-col h-full p-4 md:p-6 space-y-4">
-        <Skeleton className="h-10 w-1/3" /> {/* Title placeholder */}
-        <Skeleton className="h-8 w-full" /> {/* Toolbar placeholder */}
-        <Skeleton className="h-10 w-full" /> {/* Tabs placeholder */}
-        <Skeleton className="flex-1 w-full" /> {/* File list placeholder */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Hero Section Loading */}
+        <div className="relative rounded-2xl overflow-hidden mx-4 mt-4 mb-6">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 animate-pulse" />
+          <div className="relative px-4 py-6 backdrop-blur-sm">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-64" />
+              <div className="flex items-center gap-4 pt-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky toolbar loading */}
+        <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-4">
+          <div className="py-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-20 rounded-xl" />
+                <Skeleton className="h-8 w-16 rounded-xl" />
+                <Skeleton className="h-8 w-24 rounded-xl" />
+              </div>
+              <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-auto">
+                <Skeleton className="h-8 w-28 rounded-xl" />
+                <div className="flex gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                </div>
+                <Skeleton className="h-8 w-20 rounded-xl" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 px-4 pt-4 pb-6 overflow-auto space-y-4">
+          {/* Category tabs loading */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-11 w-24 rounded-xl flex-shrink-0" />
+            ))}
+          </div>
+
+          {/* File list loading */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </div>
+            <div className="p-4 space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-xl">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-12 w-12 rounded-xl" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -192,14 +269,30 @@ const FileManagerSection: React.FC = () => {
           totalFilesCount={files.length}
         />
 
-        <FileListComponent
-          files={activeFiles}
-          selectedFiles={selectedFiles}
-          onSelectFile={handleSelectFile}
-          onSelectAll={() => handleSelectAll(activeFiles)}
-          viewMode={viewMode}
-          categories={categories}
-        />
+        <div className="relative">
+          {/* Loading overlay for delete/categorize operations */}
+          {(isDeletingFiles || isCategorizingFiles) && (
+            <div className="absolute inset-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-xl border-2 border-blue-500/20">
+              <div className="flex items-center justify-center h-full">
+                <div className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                  <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    {isDeletingFiles ? 'Deleting files...' : 'Updating categories...'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <FileListComponent
+            files={activeFiles}
+            selectedFiles={selectedFiles}
+            onSelectFile={handleSelectFile}
+            onSelectAll={() => handleSelectAll(activeFiles)}
+            viewMode={viewMode}
+            categories={categories}
+          />
+        </div>
       </div>
 
       {/* QR Code Modal */}
@@ -250,6 +343,12 @@ const FileManagerSection: React.FC = () => {
           // Optionally, you might want to clear selection or reset active tab here
           // depending on desired UX after upload.
         }}
+      />
+
+      {/* Floating Action Button for Upload */}
+      <FloatingActionButton
+        onClick={() => setIsUploadDialogOpen(true)}
+        title="Upload Files"
       />
       
     </div>

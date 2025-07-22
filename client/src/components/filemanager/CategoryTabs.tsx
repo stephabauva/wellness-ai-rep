@@ -50,29 +50,38 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
   return (
     <div className="w-full">
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth -webkit-overflow-scrolling-touch">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
+          const IconComponent = tab.icon ? getIconFromName(tab.icon) : null;
           
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-                "min-w-0 flex-shrink-0",
+                "flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium whitespace-nowrap",
+                "min-w-0 flex-shrink-0 min-h-[44px] transition-all duration-300 ease-out",
+                "transform-gpu will-change-transform",
+                "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
+                "hover:scale-105 hover:shadow-md active:scale-95",
                 isActive 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                  ? "bg-blue-500 text-white border-blue-500 shadow-md hover:bg-blue-600" 
+                  : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border"
               )}
               aria-controls={`tabpanel-${tab.id}`}
+              aria-pressed={isActive}
             >
-              <span className="truncate max-w-[120px]">{tab.label}</span>
+              {IconComponent && (
+                <IconComponent className="h-4 w-4 flex-shrink-0" />
+              )}
+              <span className="truncate max-w-[100px] sm:max-w-[120px]">{tab.label}</span>
               <span className={cn(
-                "text-xs px-1.5 py-0.5 rounded-full",
+                "text-xs px-2 py-1 rounded-full font-medium flex-shrink-0",
+                "transition-all duration-200",
                 isActive 
-                  ? "bg-primary-foreground/20 text-primary-foreground" 
-                  : "bg-background text-muted-foreground"
+                  ? "bg-white/20 text-white" 
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
               )}>
                 {tab.count}
               </span>

@@ -7,8 +7,11 @@ Guards against architectural drift and maintains clean code boundaries.
 - Before creating new components/services
 - Before adding features
 - When asked to implement functionality
+- Comprehensive component analysis (npm run check:all) including UI, visual, integration, async, and filesize checks
 - Browser console error detection for runtime issues
-- Frontend UI component validation for prop mismatches and rendering problems
+- Frontend UI component validation for prop mismatches and rendering problems with severity escalation
+- Visual regression detection for component rendering and layout issues
+- Integration test analysis for user interaction flows and missing test coverage
 
 ## Manual Usage
 ```bash
@@ -25,7 +28,9 @@ This command runs a comprehensive architectural health check:
 5. **File Size Analysis**: Enforces graduated thresholds (see safe-refactor.md for details)
 6. **Domain Boundary Check**: Ensures proper separation
 7. **Browser Console Error Detection**: Scans for runtime error patterns and generates browser tests
-8. **Frontend UI Component Validation**: Detects component prop mismatches, missing required props, and styling issues
+8. **Frontend UI Component Validation**: Detects component prop mismatches, missing required props, and styling issues with severity escalation for critical user flows
+9. **Visual Regression Detection**: Tests component rendering, modal visibility, z-index conflicts, and layout issues
+10. **Integration Test Analysis**: Generates user interaction tests and identifies missing test coverage for critical flows
 
 ## When to run
 - Before starting any new feature
@@ -49,5 +54,8 @@ This command runs a comprehensive architectural health check:
 - Split oversized files into smaller, focused modules
 - Fix component prop mismatches and missing required props
 - Replace problematic shared Dialog components with custom implementations
+- Fix visual regression issues (modal visibility, z-index conflicts, layout problems)
+- Add missing integration tests for critical user flows (upload, login, delete operations)
+- Add data-testid attributes for automated testing
 
 Run this before any significant code changes to maintain architectural integrity.

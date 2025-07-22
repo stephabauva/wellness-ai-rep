@@ -9,7 +9,9 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 **@used-by annotations**: Add comments like @used-by domain/component to track dependencies
 **Malformed import detection**: malformed-import-detector.js scans TypeScript/JavaScript files for syntax issues and path resolution problems in import statements
 **Browser console error detection**: browser-console-error-detector.cjs scans for runtime error patterns, checks lazy loading, and generates browser console tests
-**Frontend UI component monitoring**: frontend-ui-monitor.cjs detects component prop mismatches, missing required props, styling issues, and shared Dialog component problems
+**Frontend UI component monitoring**: frontend-ui-monitor.cjs detects component prop mismatches, missing required props, styling issues, and shared Dialog component problems with severity escalation for critical user flows
+**Visual regression detection**: visual-regression-detector.cjs tests component rendering, modal visibility, z-index conflicts, and layout issues
+**Integration testing analysis**: component-integration-test.cjs generates user interaction tests and identifies missing test coverage for critical user flows
 
 ### Architecture Patterns & Rules
 - **Modular routes**: Strict line limits enforced (≤300 lines each)
@@ -23,7 +25,7 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 - **Cross-Domain Ban**: Never import from other domains, use proper APIs instead
 
 ### Before Adding ANY New Code (Claude AI Responsibility)
-1. **ALWAYS run architectural checks first**: `node dependency-tracker.js`, `node malformed-import-detector.js`, `node browser-console-error-detector.cjs`, and `node frontend-ui-monitor.cjs`
+1. **ALWAYS run comprehensive architectural checks first**: `npm run check:all` (includes UI, visual, integration, async, filesize analysis) plus `node dependency-tracker.js`, `node malformed-import-detector.js`, and `node browser-console-error-detector.cjs`
 2. Ask: "Does this belong in shared/ or a specific domain?"
 3. Ask: "Can I enhance existing components vs creating new ones?"
 4. Ask: "Is this service necessary or can it be a simple function?"

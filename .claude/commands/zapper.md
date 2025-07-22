@@ -11,8 +11,8 @@
 node system-map-tracker.js              # What's documented?
 node dependency-tracker.js              # What depends on what? (check dependency-maps/ directory)
 node system-map-cross-domain-validator-v2.js  # Architecture violations?
+npm run check:all                       # Comprehensive component analysis (UI, visual, integration, async, filesize)
 node browser-console-error-detector.cjs # Runtime error patterns & browser tests?
-node frontend-ui-monitor.cjs            # UI component prop mismatches & styling issues?
 git status                              # Recent changes?
 git log --oneline -10                   # Recent commits?
 ```
@@ -25,7 +25,9 @@ git log --oneline -10                   # Recent commits?
 - What user sees
 - Error messages  
 - Console output (check with browser-console-error-detector.cjs)
-- UI component rendering issues (check with frontend-ui-monitor.cjs)
+- UI component rendering issues (check with npm run check:ui)
+- Visual regression issues (check with npm run check:visual)
+- Missing integration tests (check with npm run check:integration)
 - Network tab findings
 - Runtime errors in browser console
 
@@ -38,7 +40,9 @@ git log --oneline -10                   # Recent commits?
 1. **Frontend**
    - Component state issue?
    - Prop drilling problem?
-   - Component prop mismatches (use frontend-ui-monitor.cjs)?
+   - Component prop mismatches (use npm run check:ui)?
+   - Visual regression issues (use npm run check:visual)?
+   - Missing user interaction tests (use npm run check:integration)?
    - Event handler bug?
    - Render cycle issue?
    - Dialog/Modal rendering problems?
@@ -198,8 +202,8 @@ psql $DATABASE_URL -c "SELECT 1"
 npm run check          # TypeScript errors?
 npx vitest            # Tests passing?
 npm run build         # Build successful?
+npm run check:all      # Comprehensive component analysis (UI, visual, integration, async, filesize)
 node browser-console-error-detector.cjs  # Browser runtime errors?
-node frontend-ui-monitor.cjs  # UI component issues?
 
 # Dependency check
 npm ls                # Dependency tree

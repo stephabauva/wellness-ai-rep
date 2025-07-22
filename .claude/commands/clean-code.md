@@ -44,6 +44,7 @@ Ensures every new code addition maintains architectural quality.
 ```bash
 node dependency-tracker.js          # Check cross-domain violations (creates split dependency maps)
 node malformed-import-detector.js   # Check import syntax
+npm run check:all                   # Comprehensive component analysis (UI, visual, integration, async, filesize)
 node browser-console-error-detector.cjs  # Check runtime error patterns
 npm run build                       # Ensure it builds
 npx vitest                         # Ensure tests pass

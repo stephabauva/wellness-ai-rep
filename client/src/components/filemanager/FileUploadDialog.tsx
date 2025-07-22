@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { CategoryDropdown } from './CategoryDropdown';
+import { Button } from '@shared/components/ui/button';
+import { Skeleton } from '@shared/components/ui/skeleton';
+import { Upload, FileImage, AlertCircle, X } from 'lucide-react';
+import { cn } from '@shared';
 
 
 interface FileUploadDialogProps {
@@ -45,94 +49,94 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ isOpen, onClose, on
 
   return (
     <div 
-      style={{
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        zIndex: 10000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={handleClose}
     >
       <div 
-        style={{
-          backgroundColor: 'white',
-          padding: '24px',
-          borderRadius: '8px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-          maxWidth: '425px',
-          width: '90%',
-          maxHeight: '90vh',
-          overflow: 'auto'
-        }}
+        className={cn(
+          "relative w-full max-w-md mx-4 rounded-2xl border-0",
+          "bg-white dark:bg-gray-800 shadow-2xl",
+          "transform-gpu will-change-transform",
+          "animate-in fade-in-0 zoom-in-95 duration-300"
+        )}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          className={cn(
+            "absolute right-4 top-4 rounded-full p-2",
+            "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300",
+            "hover:bg-gray-100 dark:hover:bg-gray-700",
+            "transition-all duration-200",
+            "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          )}
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </button>
+
         {/* Header */}
-        <div style={{ borderBottom: '1px solid #e5e7eb', paddingBottom: '16px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: '0' }}>
+        <div className="p-6 pb-4">
+          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+            <Upload className="h-6 w-6 text-white" />
+          </div>
+          <h2 className="text-xl font-semibold text-center text-gray-900 dark:text-white">
             Upload New File
           </h2>
         </div>
-
+        
         {/* Content */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ marginBottom: '16px' }}>
+        <div className="px-6 space-y-6">
+          {/* File Input Section */}
+          <div className="space-y-3">
             <label 
               htmlFor="file-upload-input" 
-              style={{ 
-                display: 'block', 
-                fontSize: '14px', 
-                fontWeight: '500', 
-                color: '#374151',
-                marginBottom: '8px' 
-              }}
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Select File
             </label>
-            <input
-              id="file-upload-input"
-              type="file"
-              onChange={handleFileChange}
-              style={{
-                display: 'block',
-                width: '100%',
-                fontSize: '14px',
-                color: '#6b7280',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                padding: '8px'
-              }}
-            />
+            <div className="relative">
+              <input
+                id="file-upload-input"
+                type="file"
+                onChange={handleFileChange}
+                className={cn(
+                  "block w-full text-sm text-gray-500 dark:text-gray-400",
+                  "file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0",
+                  "file:text-sm file:font-medium",
+                  "file:bg-gradient-to-r file:from-blue-50 file:to-purple-50",
+                  "file:text-blue-600 dark:file:bg-gradient-to-r dark:file:from-blue-900/20 dark:file:to-purple-900/20",
+                  "dark:file:text-blue-400",
+                  "hover:file:from-blue-100 hover:file:to-purple-100",
+                  "file:transition-all file:duration-300 file:cursor-pointer",
+                  "border border-gray-200 dark:border-gray-600 rounded-xl",
+                  "bg-white dark:bg-gray-700",
+                  "transition-colors duration-300",
+                  "focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                )}
+              />
+            </div>
           </div>
 
+          {/* Selected File Preview */}
           {selectedFile && (
-            <div style={{ 
-              fontSize: '14px', 
-              color: '#6b7280', 
-              backgroundColor: '#f9fafb',
-              padding: '12px',
-              borderRadius: '6px',
-              marginBottom: '16px'
-            }}>
-              <p style={{ margin: '0' }}>
-                📁 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
-              </p>
+            <div className="flex items-center p-4 rounded-xl bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 border border-gray-200 dark:border-gray-600">
+              <FileImage className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {selectedFile.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(selectedFile.size / 1024).toFixed(2)} KB
+                </p>
+              </div>
             </div>
           )}
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ 
-              display: 'block', 
-              fontSize: '14px', 
-              fontWeight: '500', 
-              color: '#374151',
-              marginBottom: '8px' 
-            }}>
+          {/* Category Selection */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Category (Optional)
             </label>
             <CategoryDropdown 
@@ -142,71 +146,68 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ isOpen, onClose, on
             />
           </div>
 
+          {/* Loading State */}
           {isUploading && (
-            <div style={{ 
-              textAlign: 'center', 
-              fontSize: '14px', 
-              color: '#3b82f6',
-              marginBottom: '16px' 
-            }}>
-              ⏳ Uploading...
+            <div className="space-y-3">
+              <div className="flex items-center justify-center p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                    Uploading your file...
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-2 w-full rounded-full" />
+                <Skeleton className="h-2 w-3/4 rounded-full" />
+              </div>
             </div>
           )}
           
+          {/* Error State */}
           {uploadError && (
-            <div style={{ 
-              textAlign: 'center', 
-              fontSize: '14px', 
-              color: '#dc2626',
-              backgroundColor: '#fef2f2',
-              padding: '12px',
-              borderRadius: '6px',
-              marginBottom: '16px'
-            }}>
-              ❌ Error: {uploadError}
+            <div className="flex items-start p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-red-800 dark:text-red-300">Upload Failed</h4>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{uploadError}</p>
+              </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '12px', 
-          justifyContent: 'flex-end',
-          borderTop: '1px solid #e5e7eb',
-          paddingTop: '16px'
-        }}>
-          <button
+        <div className="flex flex-col sm:flex-row gap-3 p-6 pt-6">
+          <Button
+            variant="outline"
             onClick={handleClose}
             disabled={isUploading}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px',
-              border: '1px solid #d1d5db',
-              backgroundColor: 'white',
-              color: '#374151',
-              borderRadius: '6px',
-              cursor: isUploading ? 'not-allowed' : 'pointer',
-              opacity: isUploading ? 0.6 : 1
-            }}
+            className={cn(
+              "flex-1 sm:flex-none rounded-xl border-gray-200 dark:border-gray-600",
+              "transition-all duration-300 ease-out",
+              "hover:scale-105 hover:shadow-lg active:scale-95",
+              isUploading && "opacity-50 cursor-not-allowed"
+            )}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleUpload}
             disabled={!selectedFile || isUploading}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px',
-              border: 'none',
-              backgroundColor: (!selectedFile || isUploading) ? '#9ca3af' : '#3b82f6',
-              color: 'white',
-              borderRadius: '6px',
-              cursor: (!selectedFile || isUploading) ? 'not-allowed' : 'pointer'
-            }}
+            className={cn(
+              "flex-1 sm:flex-none rounded-xl",
+              "bg-gradient-to-r from-blue-500 to-purple-600",
+              "hover:from-blue-600 hover:to-purple-700",
+              "transition-all duration-300 ease-out",
+              "transform-gpu will-change-transform",
+              "hover:scale-105 hover:shadow-lg active:scale-95",
+              "disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed",
+              "disabled:hover:scale-100 disabled:hover:shadow-none"
+            )}
           >
-            {isUploading ? "Uploading..." : "Upload"}
-          </button>
+            <Upload className="h-4 w-4 mr-2" />
+            {isUploading ? "Uploading..." : "Upload File"}
+          </Button>
         </div>
       </div>
     </div>

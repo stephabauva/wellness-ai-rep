@@ -8,7 +8,7 @@ import {
   chatGPTMemoryEnhancement
 } from "./shared-dependencies.js";
 import { memoryGraphService } from "../services/memory-graph-service-instance.js";
-import { findSimilarMemory, getRecentMemories } from "../../shared/services/memory/deduplication-helpers.js";
+import { getRecentMemories } from "../../shared/services/memory/deduplication-helpers.js";
 
 
 export async function registerMemoryRoutes(app: Express): Promise<void> {
@@ -130,7 +130,7 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     }
   });
 
-  // Check for duplicate memories before creation
+  // Check for duplicate memories before creation (Task 4 - Enhanced with preview mode)
   app.post("/api/memories/check-duplicates", async (req, res) => {
     try {
       const { content, category } = req.body;
@@ -145,72 +145,18 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
         return res.status(400).json({ message: "Invalid category" });
       }
 
-      console.log(`[DuplicateCheck] Checking for duplicates for user ${userId}`);
+      console.log(`[DuplicateCheck] Using enhanced preview mode for user ${userId}`);
 
-      const startTime = performance.now();
-      
-      // Get recent memories for comparison
-      const recentMemories = await getRecentMemories(userId, 24 * 7); // Last 7 days
-      
-      // Find similar memories using existing deduplication logic
-      const embeddingCache = new Map<string, number[]>();
-      const similarityResultCache = new Map<string, number>();
-      const cacheTimestamps = new Map<string, number>();
-      
-      const isCacheValid = (key: string, ttl: number = 300000): boolean => {
-        const timestamp = cacheTimestamps.get(key);
-        return timestamp ? (Date.now() - timestamp) < ttl : false;
-      };
+      // Use the new preview duplicate detection method from memory service
+      const duplicateResult = await memoryService.previewDuplicateMemories(content, userId, {
+        hoursBack: 24 * 7, // Last 7 days
+        similarityThreshold: 0.3,
+        maxResults: 5
+      });
 
-      const findFuzzyMatch = (content: string, memories: any[]) => {
-        const normalizedContent = content.toLowerCase().trim();
-        for (const memory of memories) {
-          const normalizedMemory = memory.content.toLowerCase().trim();
-          if (normalizedMemory.includes(normalizedContent) || normalizedContent.includes(normalizedMemory)) {
-            return {
-              id: memory.id,
-              content: memory.content,
-              similarity: 0.8 // High fuzzy match score
-            };
-          }
-        }
-        return null;
-      };
+      console.log(`[DuplicateCheck] Duration: ${duplicateResult.processingTime}`);
 
-      const similarMemory = await findSimilarMemory(
-        content.trim(),
-        recentMemories,
-        embeddingCache,
-        similarityResultCache,
-        cacheTimestamps,
-        isCacheValid,
-        300000, // 5 minute cache TTL
-        findFuzzyMatch
-      );
-
-      const duration = performance.now() - startTime;
-      console.log(`[DuplicateCheck] Duration: ${duration.toFixed(2)}ms`);
-
-      if (similarMemory && similarMemory.similarity >= 0.3) {
-        // Found potential duplicate
-        res.json({
-          hasDuplicates: true,
-          similarMemories: [{
-            id: similarMemory.id,
-            content: similarMemory.content,
-            similarity: similarMemory.similarity,
-            category: recentMemories.find(m => m.id === similarMemory.id)?.category || category
-          }],
-          processingTime: `${duration.toFixed(2)}ms`
-        });
-      } else {
-        // No duplicates found
-        res.json({
-          hasDuplicates: false,
-          similarMemories: [],
-          processingTime: `${duration.toFixed(2)}ms`
-        });
-      }
+      res.json(duplicateResult);
 
     } catch (error) {
       console.error('Error checking for duplicates:', error);

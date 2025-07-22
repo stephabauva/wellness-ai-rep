@@ -322,6 +322,31 @@ class MemoryService {
   async preloadUserMemories(userId: number): Promise<void> {
     return this.performanceUtils.preloadUserMemories(userId);
   }
+
+  // Preview duplicate detection for UI (Task 4 implementation)
+  async previewDuplicateMemories(
+    content: string,
+    userId: number,
+    options: {
+      hoursBack?: number;
+      similarityThreshold?: number;
+      maxResults?: number;
+    } = {}
+  ): Promise<{
+    hasDuplicates: boolean;
+    similarMemories: Array<{
+      id: string;
+      content: string;
+      similarity: number;
+      category: string;
+      createdAt?: string;
+    }>;
+    processingTime: string;
+  }> {
+    // Import the preview function dynamically to avoid circular dependency
+    const { findSimilarMemoriesForPreview } = await import('./memory/deduplication-helpers');
+    return findSimilarMemoriesForPreview(content, userId, options);
+  }
 }
 
 export const memoryService = new MemoryService();

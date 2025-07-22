@@ -1,6 +1,10 @@
 /**
  * Deduplication Helper Utilities
  * Support functions for semantic duplicate detection and memory retrieval
+ * 
+ * @used-by memory/memory-routes - Duplicate detection API endpoint
+ * @used-by memory/MemorySection - Duplicate notification UI integration  
+ * @used-by shared/services/memory-service - Preview duplicate detection
  */
 
 import { db } from "@shared/database/db";
@@ -113,6 +117,123 @@ export async function findSimilarMemory(
     console.error('[ChatGPTMemoryEnhancement] Similarity check failed:', error);
     // Fallback to fuzzy matching if embedding fails
     return findFuzzyMatchFn(content, memories);
+  }
+}
+
+/**
+ * Preview mode: Find similar memories for duplicate detection UI
+ * This is a simplified wrapper around findSimilarMemory for frontend preview
+ */
+export async function findSimilarMemoriesForPreview(
+  content: string,
+  userId: number,
+  options: {
+    hoursBack?: number;
+    similarityThreshold?: number;
+    maxResults?: number;
+  } = {}
+): Promise<{
+  hasDuplicates: boolean;
+  similarMemories: Array<{
+    id: string;
+    content: string;
+    similarity: number;
+    category: string;
+    createdAt?: string;
+  }>;
+  processingTime: string;
+}> {
+  const startTime = performance.now();
+  
+  try {
+    // Default options
+    const {
+      hoursBack = 24 * 7, // 7 days
+      similarityThreshold = 0.3,
+      maxResults = 5
+    } = options;
+
+    // Get recent memories
+    const recentMemories = await getRecentMemories(userId, hoursBack);
+    
+    if (recentMemories.length === 0) {
+      return {
+        hasDuplicates: false,
+        similarMemories: [],
+        processingTime: `${(performance.now() - startTime).toFixed(2)}ms`
+      };
+    }
+
+    // Initialize caches for similarity calculation
+    const embeddingCache = new Map<string, number[]>();
+    const similarityResultCache = new Map<string, number>();
+    const cacheTimestamps = new Map<string, number>();
+    
+    const isCacheValid = (key: string, ttl: number = 300000): boolean => {
+      const timestamp = cacheTimestamps.get(key);
+      return timestamp ? (Date.now() - timestamp) < ttl : false;
+    };
+
+    // Fuzzy matching fallback
+    const findFuzzyMatch = (content: string, memories: any[]) => {
+      const normalizedContent = content.toLowerCase().trim();
+      for (const memory of memories) {
+        const normalizedMemory = memory.content.toLowerCase().trim();
+        if (normalizedMemory.includes(normalizedContent) || normalizedContent.includes(normalizedMemory)) {
+          return {
+            id: memory.id,
+            content: memory.content,
+            similarity: 0.8 // High fuzzy match score
+          };
+        }
+      }
+      return null;
+    };
+
+    // Find the most similar memory
+    const similarMemory = await findSimilarMemory(
+      content.trim(),
+      recentMemories,
+      embeddingCache,
+      similarityResultCache,
+      cacheTimestamps,
+      isCacheValid,
+      300000, // 5 minute cache TTL
+      findFuzzyMatch
+    );
+
+    const duration = performance.now() - startTime;
+    
+    if (similarMemory && similarMemory.similarity >= similarityThreshold) {
+      // Found potential duplicate
+      const matchedMemory = recentMemories.find(m => m.id === similarMemory.id);
+      
+      return {
+        hasDuplicates: true,
+        similarMemories: [{
+          id: similarMemory.id,
+          content: similarMemory.content,
+          similarity: similarMemory.similarity,
+          category: matchedMemory?.category || 'unknown',
+          createdAt: matchedMemory?.createdAt?.toISOString()
+        }],
+        processingTime: `${duration.toFixed(2)}ms`
+      };
+    }
+
+    return {
+      hasDuplicates: false,
+      similarMemories: [],
+      processingTime: `${duration.toFixed(2)}ms`
+    };
+
+  } catch (error) {
+    console.error('[DuplicatePreview] Error finding similar memories:', error);
+    return {
+      hasDuplicates: false,
+      similarMemories: [],
+      processingTime: `${(performance.now() - startTime).toFixed(2)}ms`
+    };
   }
 }
 

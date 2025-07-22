@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Upload
 } from 'lucide-react';
-import { ViewMode, FileCategory } from '@shared';
+import { ViewMode, FileCategory, cn } from '@shared';
 import { CategorySelector } from './CategorySelector';
 
 interface FileActionsToolbarProps {
@@ -53,7 +53,7 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
               size="sm"
               onClick={onShare}
               title="Share selected files"
-              className="flex-1 sm:flex-none" // Allow buttons to take full width on mobile if alone
+              className="flex-1 sm:flex-none rounded-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600"
             >
               <Share2 className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Share</span>
@@ -64,7 +64,7 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
               size="sm"
               onClick={onQrCode}
               title="Generate QR code for selected files"
-              className="flex-1 sm:flex-none"
+              className="flex-1 sm:flex-none rounded-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600"
             >
               <QrCode className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">QR</span>
@@ -82,7 +82,7 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
             size="sm"
             onClick={onDelete}
             disabled={isDeleting}
-            className="w-full sm:w-auto" // Full width on mobile, auto on larger
+            className="w-full sm:w-auto rounded-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             title={isDeleting ? "Deleting..." : `Delete ${selectedFilesCount} selected file(s)`}
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -99,32 +99,41 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
           variant="outline"
           size="sm"
           onClick={(e) => {
-            console.log('[FileActionsToolbar] Upload button clicked', e);
             onUploadClick();
           }}
-          className="h-8"
+          className="h-8 rounded-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300"
           title="Upload files"
         >
           <Upload className="h-4 w-4 sm:mr-2" />
           <span className="hidden sm:inline">Upload Files</span>
           <span className="sm:hidden">Upload</span>
         </Button>
-        <div className="flex gap-1 border rounded-md p-0.5 bg-muted dark:bg-background"> {/* Adjusted padding for a tighter look */}
+        <div className="flex gap-1 border rounded-xl p-0.5 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 transition-all duration-300">
           <Button
-            variant={currentViewMode === 'list' ? 'secondary' : 'ghost'} // Use secondary for active
+            variant={currentViewMode === 'list' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => onSetViewMode('list')}
-            className="h-7 w-7 p-0"
+            className={cn(
+              "h-7 w-7 p-0 rounded-lg transition-all duration-300 ease-out hover:scale-110 active:scale-95",
+              currentViewMode === 'list' 
+                ? "bg-blue-500 text-white shadow-md hover:bg-blue-600" 
+                : "hover:bg-gray-100 dark:hover:bg-gray-700"
+            )}
             title="List view"
             aria-pressed={currentViewMode === 'list'}
           >
-            <List className="h-4 w-4" /> {/* Slightly larger icons */}
+            <List className="h-4 w-4" />
           </Button>
           <Button
             variant={currentViewMode === 'grid' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => onSetViewMode('grid')}
-            className="h-7 w-7 p-0"
+            className={cn(
+              "h-7 w-7 p-0 rounded-lg transition-all duration-300 ease-out hover:scale-110 active:scale-95",
+              currentViewMode === 'grid' 
+                ? "bg-blue-500 text-white shadow-md hover:bg-blue-600" 
+                : "hover:bg-gray-100 dark:hover:bg-gray-700"
+            )}
             title="Grid view"
             aria-pressed={currentViewMode === 'grid'}
           >
@@ -136,7 +145,7 @@ export const FileActionsToolbar: React.FC<FileActionsToolbarProps> = ({
           variant="outline"
           size="sm"
           onClick={onRefresh}
-          className="h-8" // Match height of view mode toggle group approximately
+          className="h-8 rounded-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600"
           title="Refresh file list"
         >
           <RotateCcw className="h-4 w-4 sm:mr-2" />

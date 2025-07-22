@@ -1,6 +1,6 @@
 {
   "domain": "file-manager",
-  "lastUpdated": "2025-07-21T21:09:34.918Z",
+  "lastUpdated": "2025-07-22T08:48:16.386Z",
   "dependencies": {
     "client/src/services/universal-file-service.ts": {
       "domain": "file-manager",
@@ -30,6 +30,23 @@
       ],
       "crossDomain": false,
       "usageCount": 2
+    },
+    "client/src/components/FileManagerSection.tsx": {
+      "domain": "file-manager",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "FileManagerSection"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
     },
     "client/src/hooks/useFileUpload.ts": {
       "domain": "file-manager",
@@ -105,23 +122,6 @@
       ],
       "crossDomain": false,
       "usageCount": 2
-    },
-    "client/src/components/FileManagerSection.tsx": {
-      "domain": "file-manager",
-      "exports": [
-        "default"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/pages/home.tsx",
-          "domain": "app/pages",
-          "imports": [
-            "FileManagerSection"
-          ]
-        }
-      ],
-      "crossDomain": true,
-      "usageCount": 1
     },
     "client/src/components/filemanager/QrCodeDialog.tsx": {
       "domain": "file-manager",

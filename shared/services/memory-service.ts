@@ -39,11 +39,19 @@ import { MemoryRetrievalService } from './memory/retrieval-service';
 import { BackgroundProcessingManager } from './memory/background-processing-manager';
 import { MemoryContentValidator } from './memory/content-validation';
 import { MemoryCacheManager } from './memory/cache-management';
-
-interface RelevantMemory extends MemoryEntry {
-  relevanceScore: number;
-  retrievalReason: string;
-}
+import type { RelevantMemory } from './memory/memory-types';
+import { buildSystemPromptWithMemories } from './memory/prompt-utils';
+import { mapAndSortMemories, mapMemoryFields, processRecentMemoriesForOverview } from './memory/memory-mappers';
+import { calculateCosineSimilarityWithFallback } from './memory/similarity-utils';
+import { getCachedSimilarityWithFallback } from './memory/cache-utils';
+import { checkSemanticDuplicate } from './memory/database-utils';
+import { MemoryPerformanceUtils } from './memory/performance-utils';
+import { MemoryHashUtils } from './memory/hash-utils';
+import { MemoryDatabaseOperations } from './memory/database-operations';
+import { MemoryLoggingUtils } from './memory/logging-utils';
+import { MemoryQueryOperations } from './memory/query-operations';
+import { MemorySimilarityOperations } from './memory/similarity-operations';
+import { MemoryMessageProcessor } from './memory/message-processor';
 
 
 class MemoryService {
@@ -59,6 +67,13 @@ class MemoryService {
   private backgroundProcessingManager: BackgroundProcessingManager;
   private contentValidator: MemoryContentValidator;
   private cacheManager: MemoryCacheManager;
+  private performanceUtils: MemoryPerformanceUtils;
+  private hashUtils: MemoryHashUtils;
+  private databaseOps: MemoryDatabaseOperations;
+  private loggingUtils: MemoryLoggingUtils;
+  private queryOps: MemoryQueryOperations;
+  private similarityOps: MemorySimilarityOperations;
+  private messageProcessor: MemoryMessageProcessor;
 
   constructor() {
     this.openai = new OpenAI({
@@ -96,6 +111,41 @@ class MemoryService {
     
     // Initialize cache manager
     this.cacheManager = new MemoryCacheManager(this.memoryCache);
+    
+    // Initialize performance utilities
+    this.performanceUtils = new MemoryPerformanceUtils(
+      this.backgroundProcessingManager,
+      this.cacheManager
+    );
+    
+    // Initialize hash utilities
+    this.hashUtils = new MemoryHashUtils();
+    
+    // Initialize database operations
+    this.databaseOps = new MemoryDatabaseOperations(
+      this.cacheManager,
+      this.generateEmbedding.bind(this)
+    );
+    
+    // Initialize logging utilities
+    this.loggingUtils = new MemoryLoggingUtils();
+    
+    // Initialize query operations
+    this.queryOps = new MemoryQueryOperations(this.qualityService);
+    
+    // Initialize similarity operations
+    this.similarityOps = new MemorySimilarityOperations(
+      this.cacheManager,
+      this.backgroundProcessingManager
+    );
+    
+    // Initialize message processor
+    this.messageProcessor = new MemoryMessageProcessor(
+      this.contentValidator,
+      this.cacheManager,
+      this.backgroundProcessingManager,
+      this.databaseOps
+    );
   }
 
 
@@ -108,43 +158,16 @@ class MemoryService {
 
   // Get cached vector similarity with background calculation
   private getCachedSimilarity(vectorA: number[], vectorB: number[]): number | null {
-    const cached = this.cacheManager.getCachedSimilarity(vectorA, vectorB);
-    
-    if (cached !== null) {
-      return cached;
-    }
-    
-    // Schedule background calculation if not cached
-    const cacheKey = createSimilarityCacheKey(vectorA, vectorB);
-    this.backgroundProcessingManager.addBackgroundTask('similarity_calculation', {
-      vectorA, vectorB, cacheKey
-    }, 2);
-    
-    return null;
+    return this.similarityOps.getCachedSimilarity(vectorA, vectorB);
   }
 
-  // Fast semantic deduplication using imported utility
+  // Fast semantic deduplication using hash utilities
   private generateSemanticHash(message: string): string {
-    return generateSemanticHash(message);
+    return this.hashUtils.generateSemanticHash(message);
   }
 
   private async checkSemanticDuplicate(userId: number, semanticHash: string): Promise<boolean> {
-    try {
-      const existing = await db
-        .select({ id: memoryEntries.id })
-        .from(memoryEntries)
-        .where(and(
-          eq(memoryEntries.userId, userId),
-          sql`${memoryEntries.content} ILIKE '%' || ${semanticHash.slice(0, 8)} || '%'`,
-          eq(memoryEntries.isActive, true)
-        ))
-        .limit(1);
-
-      return existing.length > 0;
-    } catch (error) {
-      console.error('[MemoryService] Duplicate check failed:', error);
-      return false;
-    }
+    return this.hashUtils.checkSemanticDuplicate(userId, semanticHash);
   }
 
   // Fast pattern-based memory detection
@@ -210,48 +233,18 @@ class MemoryService {
       keywords?: string[];
     }
   ): Promise<MemoryEntry | null> {
-    try {
-      const embedding = await this.generateEmbedding(content);
-      
-      const memoryData: InsertMemoryEntry = {
-        userId,
-        content,
-        category: options.category,
-        labels: options.labels || [],
-        importanceScore: options.importance_score,
-        keywords: options.keywords || [],
-        embedding: JSON.stringify(embedding),
-        sourceConversationId: options.sourceConversationId || null,
-        sourceMessageId: options.sourceMessageId || null,
-      };
-
-      const [memory] = await db.insert(memoryEntries).values(memoryData).returning();
-      return memory;
-    } catch (error) {
-      console.error('Error saving memory entry:', error);
-      return null;
-    }
+    return this.databaseOps.saveMemoryEntry(userId, content, options);
   }
 
   // Calculate cosine similarity between two vectors
   // Tier 3 A: Use Go service for performance-critical similarity calculations
   async cosineSimilarity(a: number[], b: number[]): Promise<number> {
-    // Try Go service first for better performance
-    if (goMemoryService.isAvailable() && a.length > 100) {
-      try {
-        return await goMemoryService.calculateCosineSimilarity(a, b);
-      } catch (error) {
-        console.warn('[MemoryService] Go service fallback to TypeScript implementation:', error);
-      }
-    }
-    
-    // Fallback to TypeScript implementation
-    return this.cosineSimilaritySync(a, b);
+    return this.similarityOps.cosineSimilarity(a, b);
   }
 
   // Synchronous cosine similarity using imported utility
   cosineSimilaritySync(a: number[], b: number[]): number {
-    return cosineSimilaritySync(a, b);
+    return this.similarityOps.cosineSimilaritySync(a, b);
   }
 
   // Retrieve relevant memories based on context
@@ -275,65 +268,7 @@ class MemoryService {
     autoDetectedMemory?: MemoryEntry;
     triggers: any[];
   }> {
-    const results: {
-      explicitMemory?: MemoryEntry;
-      autoDetectedMemory?: MemoryEntry;
-      triggers: any[];
-    } = { triggers: [] };
-
-    try {
-      // Check for explicit triggers (immediate processing for user-requested saves)
-      const explicitTrigger = this.contentValidator.detectExplicitMemoryTriggers(message);
-      if (explicitTrigger) {
-        // Save explicit memory trigger
-        const triggerData: InsertMemoryTrigger = {
-          messageId,
-          triggerType: explicitTrigger.type,
-          triggerPhrase: explicitTrigger.content,
-          confidence: explicitTrigger.confidence,
-        };
-
-        const [trigger] = await db.insert(memoryTriggers).values(triggerData).returning();
-        results.triggers.push(trigger);
-
-        // Save the memory immediately for explicit requests
-        const memory = await this.saveMemoryEntry(userId, explicitTrigger.content, {
-          category: 'instructions',
-          importance_score: 0.9,
-          sourceConversationId: conversationId,
-          sourceMessageId: messageId,
-        });
-
-        if (memory) {
-          results.explicitMemory = memory;
-          // Update trigger with memory ID
-          await db
-            .update(memoryTriggers)
-            .set({ memoryEntryId: memory.id, processed: true })
-            .where(eq(memoryTriggers.id, trigger.id));
-          
-          // Debounced cache invalidation for immediate updates
-          this.cacheManager.invalidateUserMemoryCache(userId, 500); // Faster invalidation for explicit saves
-        }
-      }
-
-      // Tier 2 C: Background processing for automatic memory detection
-      // This prevents blocking the main response flow
-      
-      // Always queue background memory processing for user messages (messageId can be undefined during streaming)
-      this.backgroundProcessingManager.addBackgroundTask('memory_processing', {
-        userId,
-        message,
-        conversationId,
-        messageId: messageId || null,
-        conversationHistory
-      }, 3); // Medium priority
-
-      return results;
-    } catch (error) {
-      logger.error('Error processing message for memory', error as Error, { service: 'memory' });
-      return { triggers: [] };
-    }
+    return this.messageProcessor.processMessageForMemory(userId, message, conversationId, messageId, conversationHistory);
   }
 
   // Log memory usage for analytics
@@ -342,98 +277,17 @@ class MemoryService {
     conversationId: string, 
     usedInResponse: boolean = true
   ): Promise<void> {
-    try {
-      const accessLogs: InsertMemoryAccessLog[] = memories.map(memory => ({
-        memoryEntryId: memory.id,
-        conversationId: conversationId || null,
-        relevanceScore: memory.relevanceScore,
-        usedInResponse,
-      }));
-
-      if (accessLogs.length > 0) {
-        await db.insert(memoryAccessLog).values(accessLogs);
-
-        // Update access count and last accessed timestamp
-        for (const memory of memories) {
-          await db
-            .update(memoryEntries)
-            .set({ 
-              accessCount: sql`${memoryEntries.accessCount} + 1`,
-              lastAccessed: new Date()
-            })
-            .where(eq(memoryEntries.id, memory.id));
-        }
-      }
-    } catch (error) {
-      logger.error('Error logging memory usage', error as Error, { service: 'memory' });
-    }
+    return this.loggingUtils.logMemoryUsage(memories, conversationId, usedInResponse);
   }
 
   // Build system prompt with relevant memories
   buildSystemPromptWithMemories(memories: RelevantMemory[], basePersona?: string): string {
-    const persona = basePersona || "You are a helpful AI wellness coach. Provide personalized advice based on the conversation.";
-    
-    if (memories.length === 0) {
-      return persona;
-    }
-
-    const memoryContext = memories.map(memory => 
-      `- ${memory.content} (${memory.category}, importance: ${memory.importanceScore})`
-    ).join('\n');
-
-    return `${persona}
-
-REMEMBERED INFORMATION ABOUT THIS USER:
-${memoryContext}
-
-Use this remembered information to personalize your responses naturally. Don't explicitly mention that you're using stored information unless directly relevant to the conversation.`;
+    return buildSystemPromptWithMemories(memories, basePersona);
   }
 
   // Tier 2 C: Optimized user memories with caching and filtering
   async getUserMemories(userId: number, category?: MemoryCategory): Promise<MemoryEntry[]> {
-    try {
-      // Force fresh data by bypassing cache
-      const allMemories = await db
-        .select()
-        .from(memoryEntries)
-        .where(and(
-          eq(memoryEntries.userId, userId),
-          eq(memoryEntries.isActive, true)
-        ))
-        .orderBy(desc(memoryEntries.importanceScore));
-
-      // Apply category filter if specified
-      let filteredMemories = allMemories;
-      if (category) {
-        filteredMemories = allMemories.filter((memory: any) => memory.category === category);
-      }
-
-      // Map database fields to frontend expected format
-      const mappedMemories = filteredMemories.map((memory: any) => ({
-        ...memory,
-        importanceScore: memory.importanceScore,
-        accessCount: memory.accessCount || 0,
-        lastAccessed: memory.lastAccessed || memory.createdAt,
-        createdAt: memory.createdAt,
-        keywords: memory.keywords || []
-      }));
-
-      // Sort by importance and creation date
-      const sortedMemories = mappedMemories.sort((a: any, b: any) => {
-        if (a.importanceScore !== b.importanceScore) {
-          return b.importanceScore - a.importanceScore;
-        }
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-      
-      logger.memory('getUserMemories', { userId, count: sortedMemories.length });
-      return sortedMemories;
-    } catch (error) {
-      logger.error('Error getting user memories', error as Error, { service: 'memory' });
-      return [];
-    }
+    return this.queryOps.getUserMemories(userId, category);
   }
 
   // Optimized paginated user memories for better performance
@@ -452,78 +306,7 @@ Use this remembered information to personalize your responses naturally. Don't e
       hasMore: boolean;
     };
   }> {
-    try {
-      const { page, limit, offset, category } = options;
-      
-      // Build optimized query with database-level filtering and pagination
-      let query = db
-        .select()
-        .from(memoryEntries)
-        .where(and(
-          eq(memoryEntries.userId, userId),
-          eq(memoryEntries.isActive, true),
-          ...(category ? [eq(memoryEntries.category, category)] : [])
-        ))
-        .orderBy(desc(memoryEntries.importanceScore), desc(memoryEntries.createdAt));
-
-      // Get total count for pagination info
-      const countQuery = db
-        .select({ count: sql<number>`count(*)` })
-        .from(memoryEntries)
-        .where(and(
-          eq(memoryEntries.userId, userId),
-          eq(memoryEntries.isActive, true),
-          ...(category ? [eq(memoryEntries.category, category)] : [])
-        ));
-
-      // Execute both queries in parallel for better performance
-      const [memories, countResult] = await Promise.all([
-        query.limit(limit).offset(offset),
-        countQuery
-      ]);
-
-      const totalCount = countResult[0]?.count || 0;
-      const totalPages = Math.ceil(totalCount / limit);
-      const hasMore = offset + limit < totalCount;
-
-      // Map database fields to frontend expected format
-      const mappedMemories = memories.map((memory: any) => ({
-        ...memory,
-        importanceScore: memory.importanceScore,
-        accessCount: memory.accessCount || 0,
-        lastAccessed: memory.lastAccessed || memory.createdAt,
-        createdAt: memory.createdAt,
-        keywords: memory.keywords || []
-      }));
-
-      logger.memory('getUserMemoriesPaginated', { 
-        userId, 
-        count: mappedMemories.length 
-      });
-
-      return {
-        memories: mappedMemories,
-        pagination: {
-          page,
-          limit,
-          totalCount,
-          totalPages,
-          hasMore
-        }
-      };
-    } catch (error) {
-      logger.error('Error getting paginated user memories', error as Error, { service: 'memory' });
-      return {
-        memories: [],
-        pagination: {
-          page: options.page,
-          limit: options.limit,
-          totalCount: 0,
-          totalPages: 0,
-          hasMore: false
-        }
-      };
-    }
+    return this.queryOps.getUserMemoriesPaginated(userId, options);
   }
 
   // Optimized memory overview for faster performance
@@ -544,133 +327,18 @@ Use this remembered information to personalize your responses naturally. Don't e
       averageFreshness: number;
     };
   }> {
-    try {
-      // Run optimized parallel queries for better performance
-      const [categoryCounts, recentMemories, qualityMetrics] = await Promise.all([
-        // Get category counts with single aggregation query
-        db
-          .select({
-            category: memoryEntries.category,
-            count: sql<number>`count(*)`
-          })
-          .from(memoryEntries)
-          .where(and(
-            eq(memoryEntries.userId, userId),
-            eq(memoryEntries.isActive, true)
-          ))
-          .groupBy(memoryEntries.category),
-        
-        // Get only the 3 most recent memories
-        db
-          .select({
-            id: memoryEntries.id,
-            content: memoryEntries.content,
-            category: memoryEntries.category,
-            createdAt: memoryEntries.createdAt
-          })
-          .from(memoryEntries)
-          .where(and(
-            eq(memoryEntries.userId, userId),
-            eq(memoryEntries.isActive, true)
-          ))
-          .orderBy(desc(memoryEntries.createdAt))
-          .limit(3),
-        
-        // Get quality metrics
-        this.qualityService.getMemoryQualityMetrics(userId)
-      ]);
-
-      // Process category counts
-      const categories: Record<string, number> = {
-        preferences: 0,
-        personal_context: 0,
-        instructions: 0,
-        food_diet: 0,
-        goals: 0
-      };
-
-      let total = 0;
-      for (const categoryCount of categoryCounts) {
-        const count = Number(categoryCount.count);
-        categories[categoryCount.category] = count;
-        total += count;
-      }
-
-      // Process recent memories with truncated content
-      const processedRecentMemories = recentMemories.map((memory: any) => ({
-        id: memory.id,
-        content: memory.content.substring(0, 100) + (memory.content.length > 100 ? '...' : ''),
-        category: memory.category,
-        createdAt: memory.createdAt.toISOString()
-      }));
-
-      logger.memory('getMemoryOverviewOptimized', { userId, count: processedRecentMemories.length });
-
-      return {
-        total,
-        categories,
-        recentMemories: processedRecentMemories,
-        qualityMetrics: {
-          qualityScore: qualityMetrics.qualityScore,
-          duplicateRate: qualityMetrics.duplicateRate,
-          potentialDuplicates: qualityMetrics.potentialDuplicates,
-          averageImportanceScore: qualityMetrics.averageImportanceScore,
-          averageFreshness: qualityMetrics.averageFreshness
-        }
-      };
-    } catch (error) {
-      logger.error('Error getting optimized memory overview', error as Error, { service: 'memory' });
-      return {
-        total: 0,
-        categories: {
-          preferences: 0,
-          personal_context: 0,
-          instructions: 0,
-          food_diet: 0,
-          goals: 0
-        },
-        recentMemories: [],
-        qualityMetrics: {
-          qualityScore: 0,
-          duplicateRate: 0,
-          potentialDuplicates: 0,
-          averageImportanceScore: 0,
-          averageFreshness: 0
-        }
-      };
-    }
+    return this.queryOps.getMemoryOverviewOptimized(userId);
   }
 
   // Memory Quality Metrics
   async getMemoryQualityMetrics(userId: number): Promise<MemoryQualityMetrics> {
-    return this.qualityService.getMemoryQualityMetrics(userId);
+    return this.queryOps.getMemoryQualityMetrics(userId);
   }
 
 
   // Tier 2 C: Delete memory with optimized cache invalidation
   async deleteMemory(memoryId: string, userId: number): Promise<boolean> {
-    try {
-      const [deleted] = await db
-        .update(memoryEntries)
-        .set({ isActive: false })
-        .where(and(
-          eq(memoryEntries.id, memoryId),
-          eq(memoryEntries.userId, userId)
-        ))
-        .returning();
-
-      if (deleted) {
-        // Clear user cache
-        this.cacheManager.clearUserCache(userId);
-        
-        logger.debug(`Memory ${memoryId} marked as inactive and cache cleared`, { service: 'memory' });
-      }
-
-      return !!deleted;
-    } catch (error) {
-      logger.error('Error deleting memory', error as Error, { service: 'memory' });
-      return false;
-    }
+    return this.databaseOps.deleteMemory(memoryId, userId);
   }
 
   // Get memory service performance stats
@@ -680,22 +348,17 @@ Use this remembered information to personalize your responses naturally. Don't e
     pendingUpdates: number;
     cacheHitRate: string;
   } {
-    return this.backgroundProcessingManager.getPerformanceStats();
+    return this.performanceUtils.getPerformanceStats();
   }
 
   // Force cache cleanup for memory management
   forceCacheCleanup(): void {
-    this.cacheManager.forceCacheCleanup();
+    this.performanceUtils.forceCacheCleanup();
   }
 
   // Preload user memories for better performance
   async preloadUserMemories(userId: number): Promise<void> {
-    try {
-      await this.getUserMemories(userId);
-      console.log(`[MemoryService] Preloaded memories for user ${userId}`);
-    } catch (error) {
-      console.error('[MemoryService] Failed to preload user memories:', error);
-    }
+    return this.performanceUtils.preloadUserMemories(userId, (userId) => this.getUserMemories(userId));
   }
 }
 

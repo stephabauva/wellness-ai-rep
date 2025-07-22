@@ -113,9 +113,7 @@ export function useMemoryFilters(initialMemories: MemoryEntry[] = []): MemoryFil
     setSelectedMemoryIds(newSelection);
   };
 
-  const handleSelectAll = () => {
-    setSelectedMemoryIds(new Set(memories.map((memory) => memory.id)));
-  };
+  // We'll define this after filteredMemories
 
   const handleDeselectAll = () => {
     setSelectedMemoryIds(new Set());
@@ -135,6 +133,33 @@ export function useMemoryFilters(initialMemories: MemoryEntry[] = []): MemoryFil
     setIsSelectionMode(false);
     setSelectedMemoryIds(new Set());
     setShowAllCategories(false);
+  };
+
+  // Apply filters to memories
+  const filteredMemories = useMemo(() => {
+    let filtered = memories;
+    
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter((memory) => memory.category === selectedCategory);
+    }
+    
+    // Filter by selected labels
+    if (selectedLabels.size > 0) {
+      filtered = filtered.filter((memory) => {
+        if (!memory.labels || memory.labels.length === 0) {
+          return false;
+        }
+        // Check if memory has any of the selected labels
+        return memory.labels.some((label: string) => selectedLabels.has(label));
+      });
+    }
+    
+    return filtered;
+  }, [memories, selectedCategory, selectedLabels]);
+
+  const handleSelectAll = () => {
+    setSelectedMemoryIds(new Set(filteredMemories.map((memory) => memory.id)));
   };
 
   return {
@@ -167,7 +192,7 @@ export function useMemoryFilters(initialMemories: MemoryEntry[] = []): MemoryFil
     
     // Memory updates
     updateMemories,
-    memories,
+    memories: filteredMemories,
     
     // Refetch callback
     setRefetchCallback,

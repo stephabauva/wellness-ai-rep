@@ -55,7 +55,11 @@ export function MemoryLabelFilter({
               <Badge
                 key={label}
                 variant={selectedLabels.has(label) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-gray-100 text-xs min-h-[44px] px-3 py-2 flex items-center justify-center touch-manipulation"
+                className={`cursor-pointer text-xs min-h-[44px] px-3 py-2 flex items-center justify-center touch-manipulation transition-colors ${
+                  selectedLabels.has(label)
+                    ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 border-gray-300"
+                }`}
                 onClick={() => onLabelToggle(label)}
               >
                 {label} ({count})

@@ -1,6 +1,6 @@
 {
   "domain": "shared",
-  "lastUpdated": "2025-07-22T08:51:26.175Z",
+  "lastUpdated": "2025-07-22T10:17:51.054Z",
   "dependencies": {
     "client/src/services/audio-service.ts": {
       "domain": "shared/services",
@@ -17,40 +17,6 @@
           "imports": [
             "audioService",
             "TranscriptionResult"
-          ]
-        }
-      ],
-      "crossDomain": true,
-      "usageCount": 1
-    },
-    "client/src/components/StreamingText.tsx": {
-      "domain": "shared/ui-components",
-      "exports": [
-        "StreamingText"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/ui/chat-message.tsx",
-          "domain": "shared/ui-components",
-          "imports": [
-            "StreamingText"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 1
-    },
-    "client/src/components/SectionSkeleton.tsx": {
-      "domain": "shared/ui-components",
-      "exports": [
-        "default"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/pages/home.tsx",
-          "domain": "app/pages",
-          "imports": [
-            "SectionSkeleton"
           ]
         }
       ],
@@ -239,6 +205,40 @@
           "domain": "memory",
           "imports": [
             "useInfiniteMemories"
+          ]
+        }
+      ],
+      "crossDomain": true,
+      "usageCount": 1
+    },
+    "client/src/components/StreamingText.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "StreamingText"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ui/chat-message.tsx",
+          "domain": "shared/ui-components",
+          "imports": [
+            "StreamingText"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/SectionSkeleton.tsx": {
+      "domain": "shared/ui-components",
+      "exports": [
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "SectionSkeleton"
           ]
         }
       ],

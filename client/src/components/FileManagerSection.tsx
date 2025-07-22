@@ -296,7 +296,7 @@ const FileManagerSection: React.FC = () => {
       </div>
 
       {/* QR Code Modal */}
-      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+      <Dialog open={showQRCode} onOpenChange={setShowQRCode} modal={true}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

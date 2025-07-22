@@ -19,7 +19,7 @@ export const QrCodeDialog: React.FC<QrCodeDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange} modal={true}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

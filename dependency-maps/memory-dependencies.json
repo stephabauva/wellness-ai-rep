@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-22T10:51:34.083Z",
+  "lastUpdated": "2025-07-22T18:02:43.669Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -422,6 +422,29 @@
           "domain": "memory",
           "imports": [
             "MemoryAddFAB"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/DuplicateMemoryNotification.tsx": {
+      "domain": "memory",
+      "exports": [
+        "SimilarMemory",
+        "DuplicateDetectionResult",
+        "createDuplicateNotificationContent",
+        "useDuplicateMemoryNotification",
+        "formatSimilarityScore",
+        "getSimilarityLevel",
+        "getSimilarityColorClass"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "createDuplicateNotificationContent"
           ]
         }
       ],

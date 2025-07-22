@@ -19,6 +19,7 @@ import { MemoryLabelFilter } from "./memory/MemoryLabelFilter";
 import { MemoryEmptyState } from "./memory/MemoryEmptyState";
 import { MemoryLoadingSkeleton } from "./memory/MemoryLoadingSkeleton";
 import { MemoryAddFAB } from "./memory/MemoryAddFAB";
+import { SimpleDuplicateModal, type SimilarMemory } from "./memory/SimpleDuplicateModal";
 
 
 
@@ -29,6 +30,23 @@ export default function MemorySection() {
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [memoriesLoaded, setMemoriesLoaded] = useState<boolean>(false);
   const [useInfiniteScrolling, setUseInfiniteScrolling] = useState<boolean>(true);
+  
+  // Ref for scrolling to form
+  const formSectionRef = React.useRef<HTMLDivElement>(null);
+  
+  // Simple duplicate modal state
+  const [duplicateModal, setDuplicateModal] = useState<{
+    isOpen: boolean;
+    newMemoryContent: string;
+    newMemoryCategory: string;
+    similarMemories: SimilarMemory[];
+    pendingData?: ManualMemoryFormData;
+  }>({
+    isOpen: false,
+    newMemoryContent: "",
+    newMemoryCategory: "",
+    similarMemories: [],
+  });
   const { toast } = useToast();
 
   // Memory filtering and selection management
@@ -69,55 +87,85 @@ export default function MemorySection() {
     setEditingMemoryContent,
   } = useMemoryEdit();
 
-  // Handle form submission from MemoryForm component with duplicate detection
+  // Simple duplicate detection - uses modal instead of complex toast system
   const handleMemoryFormSubmit = async (data: ManualMemoryFormData) => {
     try {
-      // First check for duplicates
       const duplicateCheck = await checkDuplicatesMutation.mutateAsync(data);
       
       if (duplicateCheck.hasDuplicates && duplicateCheck.similarMemories.length > 0) {
-        // Show duplicate notification toast with action buttons
-        toast({
-          title: "Similar Memory Found",
-          description: `Found ${duplicateCheck.similarMemories.length} similar memory. Do you want to continue?`,
-          action: (
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  // User chose to save anyway
-                  createManualMemoryMutation.mutate(data);
-                  setIsManualEntryOpen(false);
-                }}
-                className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
-              >
-                Save Anyway
-              </button>
-              <button
-                onClick={() => {
-                  // User chose to cancel
-                  toast({
-                    title: "Cancelled",
-                    description: "Memory creation cancelled. You can edit and try again.",
-                  });
-                }}
-                className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
-          )
+        // Show simple modal
+        setDuplicateModal({
+          isOpen: true,
+          newMemoryContent: data.content,
+          newMemoryCategory: data.category,
+          similarMemories: duplicateCheck.similarMemories,
+          pendingData: data
         });
       } else {
-        // No duplicates found, proceed with creation
+        // No duplicates - proceed normally
         createManualMemoryMutation.mutate(data);
         setIsManualEntryOpen(false);
       }
     } catch (error) {
       console.warn('[Duplicate Check] Failed, proceeding with creation:', error);
-      // Fallback: proceed with creation if duplicate check fails
       createManualMemoryMutation.mutate(data);
       setIsManualEntryOpen(false);
     }
+  };
+
+  // Simple modal handlers
+  const handleDuplicateSaveAnyway = () => {
+    if (duplicateModal.pendingData) {
+      createManualMemoryMutation.mutate(duplicateModal.pendingData);
+    }
+    setDuplicateModal(prev => ({ ...prev, isOpen: false }));
+    setIsManualEntryOpen(false);
+  };
+
+  const handleDuplicateCancel = () => {
+    setDuplicateModal(prev => ({ ...prev, isOpen: false }));
+    toast({
+      title: "Memory Creation Cancelled",
+      description: "You can edit your memory and try again.",
+    });
+  };
+
+  const handleDuplicateReplace = async () => {
+    if (duplicateModal.pendingData && duplicateModal.similarMemories.length > 0) {
+      // Delete the old memory first
+      const oldMemoryId = duplicateModal.similarMemories[0].id;
+      try {
+        await deleteMemoryMutation.mutateAsync(oldMemoryId);
+        // Then create the new one
+        createManualMemoryMutation.mutate(duplicateModal.pendingData);
+        toast({
+          title: "Memory Replaced",
+          description: "Old memory deleted and new memory saved.",
+        });
+      } catch (error) {
+        console.error('Failed to delete old memory:', error);
+        // Still create the new memory even if delete fails
+        createManualMemoryMutation.mutate(duplicateModal.pendingData);
+        toast({
+          title: "Memory Saved",
+          description: "New memory saved (couldn't delete old memory).",
+        });
+      }
+    }
+    setDuplicateModal(prev => ({ ...prev, isOpen: false }));
+    setIsManualEntryOpen(false);
+  };
+
+  // Handle opening form and scrolling to it
+  const handleOpenForm = () => {
+    setIsManualEntryOpen(true);
+    // Scroll to form after a short delay to ensure it's rendered
+    setTimeout(() => {
+      formSectionRef.current?.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "start" 
+      });
+    }, 100);
   };
 
   // Optimized overview query - lightweight, runs once on mount
@@ -253,22 +301,24 @@ export default function MemorySection() {
           <div className="max-w-7xl mx-auto space-y-6">
           <MemoryOverviewHeader />
 
-          <MemorySummaryCard
-            memoryOverview={memoryOverview}
-            memoriesLoaded={memoriesLoaded}
-            memories={memories}
-            selectedCategory={selectedCategory}
-            showAllCategories={showAllCategories}
-            isManualEntryOpen={isManualEntryOpen}
-            isSelectionMode={isSelectionMode}
-            createManualMemoryMutation={createManualMemoryMutation}
-            voiceInput={voiceInput}
-            onCategoryChange={handleCategoryChange}
-            onToggleShowAllCategories={toggleShowAllCategories}
-            onToggleSelectionMode={handleToggleSelectionMode}
-            onManualEntryClose={() => setIsManualEntryOpen(false)}
-            onMemoryFormSubmit={handleMemoryFormSubmit}
-          />
+          <div ref={formSectionRef}>
+            <MemorySummaryCard
+              memoryOverview={memoryOverview}
+              memoriesLoaded={memoriesLoaded}
+              memories={memories}
+              selectedCategory={selectedCategory}
+              showAllCategories={showAllCategories}
+              isManualEntryOpen={isManualEntryOpen}
+              isSelectionMode={isSelectionMode}
+              createManualMemoryMutation={createManualMemoryMutation}
+              voiceInput={voiceInput}
+              onCategoryChange={handleCategoryChange}
+              onToggleShowAllCategories={toggleShowAllCategories}
+              onToggleSelectionMode={handleToggleSelectionMode}
+              onManualEntryClose={() => setIsManualEntryOpen(false)}
+              onMemoryFormSubmit={handleMemoryFormSubmit}
+            />
+          </div>
 
           <div className="space-y-4">
               <MemoryInsights 
@@ -329,7 +379,18 @@ export default function MemorySection() {
       </div>
 
       {/* Floating Action Button for Add Memory - positioned in mobile thumb zone */}
-      <MemoryAddFAB onClick={() => setIsManualEntryOpen(!isManualEntryOpen)} />
+      <MemoryAddFAB onClick={handleOpenForm} />
+
+      {/* Simple Duplicate Modal - guaranteed to appear on top */}
+      <SimpleDuplicateModal
+        isOpen={duplicateModal.isOpen}
+        newMemoryContent={duplicateModal.newMemoryContent}
+        newMemoryCategory={duplicateModal.newMemoryCategory}
+        similarMemories={duplicateModal.similarMemories}
+        onSaveAnyway={handleDuplicateSaveAnyway}
+        onReplace={handleDuplicateReplace}
+        onCancel={handleDuplicateCancel}
+      />
       </div>
     </TooltipProvider>
   );

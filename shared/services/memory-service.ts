@@ -51,6 +51,7 @@ import { MemoryDatabaseOperations } from './memory/database-operations';
 import { MemoryLoggingUtils } from './memory/logging-utils';
 import { MemoryQueryOperations } from './memory/query-operations';
 import { MemorySimilarityOperations } from './memory/similarity-operations';
+import { MemoryMessageProcessor } from './memory/message-processor';
 
 
 class MemoryService {
@@ -72,6 +73,7 @@ class MemoryService {
   private loggingUtils: MemoryLoggingUtils;
   private queryOps: MemoryQueryOperations;
   private similarityOps: MemorySimilarityOperations;
+  private messageProcessor: MemoryMessageProcessor;
 
   constructor() {
     this.openai = new OpenAI({
@@ -135,6 +137,14 @@ class MemoryService {
     this.similarityOps = new MemorySimilarityOperations(
       this.cacheManager,
       this.backgroundProcessingManager
+    );
+    
+    // Initialize message processor
+    this.messageProcessor = new MemoryMessageProcessor(
+      this.contentValidator,
+      this.cacheManager,
+      this.backgroundProcessingManager,
+      this.databaseOps
     );
   }
 
@@ -258,65 +268,7 @@ class MemoryService {
     autoDetectedMemory?: MemoryEntry;
     triggers: any[];
   }> {
-    const results: {
-      explicitMemory?: MemoryEntry;
-      autoDetectedMemory?: MemoryEntry;
-      triggers: any[];
-    } = { triggers: [] };
-
-    try {
-      // Check for explicit triggers (immediate processing for user-requested saves)
-      const explicitTrigger = this.contentValidator.detectExplicitMemoryTriggers(message);
-      if (explicitTrigger) {
-        // Save explicit memory trigger
-        const triggerData: InsertMemoryTrigger = {
-          messageId,
-          triggerType: explicitTrigger.type,
-          triggerPhrase: explicitTrigger.content,
-          confidence: explicitTrigger.confidence,
-        };
-
-        const [trigger] = await db.insert(memoryTriggers).values(triggerData).returning();
-        results.triggers.push(trigger);
-
-        // Save the memory immediately for explicit requests
-        const memory = await this.saveMemoryEntry(userId, explicitTrigger.content, {
-          category: 'instructions',
-          importance_score: 0.9,
-          sourceConversationId: conversationId,
-          sourceMessageId: messageId,
-        });
-
-        if (memory) {
-          results.explicitMemory = memory;
-          // Update trigger with memory ID
-          await db
-            .update(memoryTriggers)
-            .set({ memoryEntryId: memory.id, processed: true })
-            .where(eq(memoryTriggers.id, trigger.id));
-          
-          // Debounced cache invalidation for immediate updates
-          this.cacheManager.invalidateUserMemoryCache(userId, 500); // Faster invalidation for explicit saves
-        }
-      }
-
-      // Tier 2 C: Background processing for automatic memory detection
-      // This prevents blocking the main response flow
-      
-      // Always queue background memory processing for user messages (messageId can be undefined during streaming)
-      this.backgroundProcessingManager.addBackgroundTask('memory_processing', {
-        userId,
-        message,
-        conversationId,
-        messageId: messageId || null,
-        conversationHistory
-      }, 3); // Medium priority
-
-      return results;
-    } catch (error) {
-      logger.error('Error processing message for memory', error as Error, { service: 'memory' });
-      return { triggers: [] };
-    }
+    return this.messageProcessor.processMessageForMemory(userId, message, conversationId, messageId, conversationHistory);
   }
 
   // Log memory usage for analytics

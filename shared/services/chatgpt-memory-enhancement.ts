@@ -152,10 +152,12 @@ Use this information naturally in your responses to provide personalized guidanc
       // Handle different deduplication actions
       switch (deduplicationResult.action) {
         case 'create':
-          // Generate proper UUID for conversation ID if test format
-          const validConversationId = conversationId.startsWith('test-') 
-            ? crypto.randomUUID() 
-            : conversationId;
+          // Generate proper UUID for conversation ID if test format, or null for empty string
+          const validConversationId = conversationId === '' || !conversationId
+            ? null
+            : conversationId.startsWith('test-') 
+              ? crypto.randomUUID() 
+              : conversationId;
           await createNewMemory(userId, detection, validConversationId, semanticHash);
           break;
         case 'update':

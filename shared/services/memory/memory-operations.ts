@@ -15,14 +15,14 @@ import crypto from 'crypto';
 export async function createNewMemory(
   userId: number,
   detection: any,
-  conversationId: string,
+  conversationId: string | null,
   semanticHash: string
 ): Promise<void> {
   const memoryOptions = {
     category: detection.category,
     labels: detection.labels || [],
     importance_score: detection.importance,
-    sourceConversationId: conversationId,
+    sourceConversationId: conversationId || undefined,
     keywords: detection.keywords
   };
 

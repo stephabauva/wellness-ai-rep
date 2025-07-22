@@ -1,7 +1,7 @@
 {
-  "lastGenerated": "2025-07-21T22:50:37.147Z",
+  "lastGenerated": "2025-07-22T08:51:26.178Z",
   "totalDomains": 17,
-  "totalDependencies": 184,
+  "totalDependencies": 185,
   "domainFiles": [
     {
       "domain": "app",
@@ -11,7 +11,7 @@
     {
       "domain": "file-manager",
       "filename": "file-manager-dependencies.json",
-      "fileCount": 13
+      "fileCount": 14
     },
     {
       "domain": "shared",
@@ -19,8 +19,8 @@
       "fileCount": 36
     },
     {
-      "domain": "app/pages",
-      "filename": "app-pages-dependencies.json",
+      "domain": "app/navigation",
+      "filename": "app-navigation-dependencies.json",
       "fileCount": 2
     },
     {
@@ -32,11 +32,6 @@
       "domain": "chat",
       "filename": "chat-dependencies.json",
       "fileCount": 8
-    },
-    {
-      "domain": "app/navigation",
-      "filename": "app-navigation-dependencies.json",
-      "fileCount": 2
     },
     {
       "domain": "memory",
@@ -62,6 +57,11 @@
       "domain": "chat/attachments",
       "filename": "chat-attachments-dependencies.json",
       "fileCount": 1
+    },
+    {
+      "domain": "app/pages",
+      "filename": "app-pages-dependencies.json",
+      "fileCount": 2
     },
     {
       "domain": "health/hooks",

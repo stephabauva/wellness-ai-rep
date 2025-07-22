@@ -39,11 +39,9 @@ import { MemoryRetrievalService } from './memory/retrieval-service';
 import { BackgroundProcessingManager } from './memory/background-processing-manager';
 import { MemoryContentValidator } from './memory/content-validation';
 import { MemoryCacheManager } from './memory/cache-management';
-
-interface RelevantMemory extends MemoryEntry {
-  relevanceScore: number;
-  retrievalReason: string;
-}
+import type { RelevantMemory } from './memory/memory-types';
+import { buildSystemPromptWithMemories } from './memory/prompt-utils';
+import { mapAndSortMemories, mapMemoryFields, processRecentMemoriesForOverview } from './memory/memory-mappers';
 
 
 class MemoryService {
@@ -371,22 +369,7 @@ class MemoryService {
 
   // Build system prompt with relevant memories
   buildSystemPromptWithMemories(memories: RelevantMemory[], basePersona?: string): string {
-    const persona = basePersona || "You are a helpful AI wellness coach. Provide personalized advice based on the conversation.";
-    
-    if (memories.length === 0) {
-      return persona;
-    }
-
-    const memoryContext = memories.map(memory => 
-      `- ${memory.content} (${memory.category}, importance: ${memory.importanceScore})`
-    ).join('\n');
-
-    return `${persona}
-
-REMEMBERED INFORMATION ABOUT THIS USER:
-${memoryContext}
-
-Use this remembered information to personalize your responses naturally. Don't explicitly mention that you're using stored information unless directly relevant to the conversation.`;
+    return buildSystemPromptWithMemories(memories, basePersona);
   }
 
   // Tier 2 C: Optimized user memories with caching and filtering
@@ -408,25 +391,8 @@ Use this remembered information to personalize your responses naturally. Don't e
         filteredMemories = allMemories.filter((memory: any) => memory.category === category);
       }
 
-      // Map database fields to frontend expected format
-      const mappedMemories = filteredMemories.map((memory: any) => ({
-        ...memory,
-        importanceScore: memory.importanceScore,
-        accessCount: memory.accessCount || 0,
-        lastAccessed: memory.lastAccessed || memory.createdAt,
-        createdAt: memory.createdAt,
-        keywords: memory.keywords || []
-      }));
-
-      // Sort by importance and creation date
-      const sortedMemories = mappedMemories.sort((a: any, b: any) => {
-        if (a.importanceScore !== b.importanceScore) {
-          return b.importanceScore - a.importanceScore;
-        }
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      // Map and sort memories using utility functions
+      const sortedMemories = mapAndSortMemories(filteredMemories);
       
       logger.memory('getUserMemories', { userId, count: sortedMemories.length });
       return sortedMemories;
@@ -487,14 +453,7 @@ Use this remembered information to personalize your responses naturally. Don't e
       const hasMore = offset + limit < totalCount;
 
       // Map database fields to frontend expected format
-      const mappedMemories = memories.map((memory: any) => ({
-        ...memory,
-        importanceScore: memory.importanceScore,
-        accessCount: memory.accessCount || 0,
-        lastAccessed: memory.lastAccessed || memory.createdAt,
-        createdAt: memory.createdAt,
-        keywords: memory.keywords || []
-      }));
+      const mappedMemories = memories.map(mapMemoryFields);
 
       logger.memory('getUserMemoriesPaginated', { 
         userId, 
@@ -597,12 +556,7 @@ Use this remembered information to personalize your responses naturally. Don't e
       }
 
       // Process recent memories with truncated content
-      const processedRecentMemories = recentMemories.map((memory: any) => ({
-        id: memory.id,
-        content: memory.content.substring(0, 100) + (memory.content.length > 100 ? '...' : ''),
-        category: memory.category,
-        createdAt: memory.createdAt.toISOString()
-      }));
+      const processedRecentMemories = processRecentMemoriesForOverview(recentMemories);
 
       logger.memory('getMemoryOverviewOptimized', { userId, count: processedRecentMemories.length });
 

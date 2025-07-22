@@ -1,6 +1,6 @@
 {
   "domain": "chat",
-  "lastUpdated": "2025-07-22T09:20:11.632Z",
+  "lastUpdated": "2025-07-22T10:17:51.054Z",
   "dependencies": {
     "client/src/hooks/useStreamingChat.ts": {
       "domain": "chat",

@@ -1,30 +1,41 @@
 /**
  * Memory Database Utilities
- * Database operations for memory service
+ * Stub implementation to fix server startup - needs proper implementation later
  */
 
-import { db } from "@shared/database/db";
+import { db } from '@shared/database/db';
 import { memoryEntries } from '../../schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 /**
- * Check for semantic duplicate memories in database
+ * Checks if a semantic duplicate already exists for a user
+ * @param userId - The user ID to check for
+ * @param semanticHash - The semantic hash to check for duplicates
+ * @returns Promise<boolean> - True if duplicate exists, false otherwise
  */
 export async function checkSemanticDuplicate(userId: number, semanticHash: string): Promise<boolean> {
   try {
-    const existing = await db
+    // Stub implementation - basic duplicate checking
+    if (!userId || !semanticHash) {
+      return false;
+    }
+    
+    // Check if a memory with this semantic hash already exists for this user
+    const existingMemory = await db
       .select({ id: memoryEntries.id })
       .from(memoryEntries)
-      .where(and(
-        eq(memoryEntries.userId, userId),
-        sql`${memoryEntries.content} ILIKE '%' || ${semanticHash.slice(0, 8)} || '%'`,
-        eq(memoryEntries.isActive, true)
-      ))
+      .where(
+        and(
+          eq(memoryEntries.userId, userId),
+          eq(memoryEntries.semanticHash, semanticHash)
+        )
+      )
       .limit(1);
-
-    return existing.length > 0;
+    
+    return existingMemory.length > 0;
   } catch (error) {
-    console.error('[MemoryService] Duplicate check failed:', error);
+    console.error('Error checking semantic duplicate:', error);
+    // Return false on error to allow processing to continue
     return false;
   }
 }

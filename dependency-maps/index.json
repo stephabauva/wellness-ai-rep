@@ -1,7 +1,7 @@
 {
-  "lastGenerated": "2025-07-22T09:20:11.636Z",
+  "lastGenerated": "2025-07-22T10:17:51.058Z",
   "totalDomains": 17,
-  "totalDependencies": 184,
+  "totalDependencies": 186,
   "domainFiles": [
     {
       "domain": "app",
@@ -11,7 +11,7 @@
     {
       "domain": "file-manager",
       "filename": "file-manager-dependencies.json",
-      "fileCount": 13
+      "fileCount": 15
     },
     {
       "domain": "shared",

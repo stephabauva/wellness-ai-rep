@@ -10,9 +10,9 @@ import { execSync } from 'child_process';
 console.log('🚀 Quick Functional Validation\n');
 
 const checks = [
-  { name: 'Database Connectivity', cmd: 'node scripts/validate-db-connectivity.js' },
-  { name: 'Memory Data Services', cmd: 'node scripts/validate-memory-data.js' },
-  { name: 'Memory API Endpoints', cmd: 'node scripts/validate-memory-endpoints.js' }
+  { name: 'Database Connectivity', cmd: 'node scripts/validate-db-connectivity.cjs' },
+  { name: 'Memory Data Services', cmd: 'node scripts/validate-memory-data.cjs' },
+  { name: 'Memory API Endpoints', cmd: 'node scripts/validate-memory-endpoints.cjs' }
 ];
 
 let allPassed = true;

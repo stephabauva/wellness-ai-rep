@@ -12,7 +12,7 @@ function validateMemoryData() {
   console.log('💾 Validating Memory Data Services...\n');
   
   const testScript = `
-    const { MemoryQueryOperations } = require('./shared/services/memory/query-operations');
+    import { MemoryQueryOperations } from './shared/services/memory/query-operations';
     
     async function testMemoryOperations() {
       const queryOps = new MemoryQueryOperations();
@@ -78,8 +78,9 @@ function validateMemoryData() {
   `;
   
   try {
-    require('fs').writeFileSync('/tmp/memory-data-test.js', testScript);
-    execSync('cd /Users/urdoom/wellness-ai-rep && node /tmp/memory-data-test.js', { 
+    require('fs').writeFileSync('/Users/urdoom/wellness-ai-rep/temp-memory-data-test.ts', testScript);
+    execSync('npx tsx temp-memory-data-test.ts', { 
+      cwd: '/Users/urdoom/wellness-ai-rep',
       stdio: 'inherit',
       timeout: 15000 
     });

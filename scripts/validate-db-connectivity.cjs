@@ -15,9 +15,9 @@ function testDatabaseConnection() {
   try {
     // Test 1: Check if we can connect to database
     const testScript = `
-      const { db } = require('./shared/database/db');
-      const { memoryEntries, users } = require('./shared/schema');
-      const { count, eq } = require('drizzle-orm');
+      import { db } from './shared/database/db';
+      import { memoryEntries, users } from './shared/schema';
+      import { count, eq } from 'drizzle-orm';
       
       async function test() {
         try {
@@ -50,8 +50,9 @@ function testDatabaseConnection() {
     `;
     
     // Write and execute the test
-    require('fs').writeFileSync('/tmp/db-test.js', testScript);
-    execSync('cd /Users/urdoom/wellness-ai-rep && node /tmp/db-test.js', { 
+    require('fs').writeFileSync('/Users/urdoom/wellness-ai-rep/temp-db-test.ts', testScript);
+    execSync('npx tsx temp-db-test.ts', { 
+      cwd: '/Users/urdoom/wellness-ai-rep',
       stdio: 'inherit',
       timeout: 10000 
     });

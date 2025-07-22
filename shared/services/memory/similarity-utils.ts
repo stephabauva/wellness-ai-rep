@@ -3,6 +3,9 @@
  * Pure mathematical functions for memory content similarity analysis
  */
 
+import { cosineSimilaritySync } from './memory-utils';
+import { goMemoryService } from '../../../server/services/go-memory-service';
+
 /**
  * Calculate Jaccard similarity (intersection over union)
  */
@@ -86,4 +89,24 @@ export function levenshteinDistance(str1: string, str2: string): number {
   }
   
   return matrix[str2.length][str1.length];
+}
+
+/**
+ * Calculate cosine similarity with Go service fallback for performance
+ */
+export async function calculateCosineSimilarityWithFallback(
+  a: number[], 
+  b: number[]
+): Promise<number> {
+  // Try Go service first for better performance
+  if (goMemoryService.isAvailable() && a.length > 100) {
+    try {
+      return await goMemoryService.calculateCosineSimilarity(a, b);
+    } catch (error) {
+      console.warn('[MemoryService] Go service fallback to TypeScript implementation:', error);
+    }
+  }
+  
+  // Fallback to TypeScript implementation
+  return cosineSimilaritySync(a, b);
 }

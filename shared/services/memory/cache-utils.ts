@@ -3,6 +3,10 @@
  * Pure utility functions for cache validation and cleanup
  */
 
+import { createSimilarityCacheKey } from './memory-utils';
+import type { BackgroundProcessingManager } from './background-processing-manager';
+import type { MemoryCacheManager } from './cache-management';
+
 /**
  * Check if cache entry is still valid with custom TTL support
  */
@@ -65,4 +69,28 @@ export function cleanExpiredCaches(
     caches.hashGenerationCache.delete(key);
     cacheTimestamps.delete(key);
   });
+}
+
+/**
+ * Get cached vector similarity with background calculation fallback
+ */
+export function getCachedSimilarityWithFallback(
+  vectorA: number[], 
+  vectorB: number[], 
+  cacheManager: MemoryCacheManager,
+  backgroundProcessingManager: BackgroundProcessingManager
+): number | null {
+  const cached = cacheManager.getCachedSimilarity(vectorA, vectorB);
+  
+  if (cached !== null) {
+    return cached;
+  }
+  
+  // Schedule background calculation if not cached
+  const cacheKey = createSimilarityCacheKey(vectorA, vectorB);
+  backgroundProcessingManager.addBackgroundTask('similarity_calculation', {
+    vectorA, vectorB, cacheKey
+  }, 2);
+  
+  return null;
 }

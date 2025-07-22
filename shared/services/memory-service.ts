@@ -42,6 +42,9 @@ import { MemoryCacheManager } from './memory/cache-management';
 import type { RelevantMemory } from './memory/memory-types';
 import { buildSystemPromptWithMemories } from './memory/prompt-utils';
 import { mapAndSortMemories, mapMemoryFields, processRecentMemoriesForOverview } from './memory/memory-mappers';
+import { calculateCosineSimilarityWithFallback } from './memory/similarity-utils';
+import { getCachedSimilarityWithFallback } from './memory/cache-utils';
+import { checkSemanticDuplicate } from './memory/database-utils';
 
 
 class MemoryService {
@@ -106,19 +109,7 @@ class MemoryService {
 
   // Get cached vector similarity with background calculation
   private getCachedSimilarity(vectorA: number[], vectorB: number[]): number | null {
-    const cached = this.cacheManager.getCachedSimilarity(vectorA, vectorB);
-    
-    if (cached !== null) {
-      return cached;
-    }
-    
-    // Schedule background calculation if not cached
-    const cacheKey = createSimilarityCacheKey(vectorA, vectorB);
-    this.backgroundProcessingManager.addBackgroundTask('similarity_calculation', {
-      vectorA, vectorB, cacheKey
-    }, 2);
-    
-    return null;
+    return getCachedSimilarityWithFallback(vectorA, vectorB, this.cacheManager, this.backgroundProcessingManager);
   }
 
   // Fast semantic deduplication using imported utility
@@ -127,22 +118,7 @@ class MemoryService {
   }
 
   private async checkSemanticDuplicate(userId: number, semanticHash: string): Promise<boolean> {
-    try {
-      const existing = await db
-        .select({ id: memoryEntries.id })
-        .from(memoryEntries)
-        .where(and(
-          eq(memoryEntries.userId, userId),
-          sql`${memoryEntries.content} ILIKE '%' || ${semanticHash.slice(0, 8)} || '%'`,
-          eq(memoryEntries.isActive, true)
-        ))
-        .limit(1);
-
-      return existing.length > 0;
-    } catch (error) {
-      console.error('[MemoryService] Duplicate check failed:', error);
-      return false;
-    }
+    return checkSemanticDuplicate(userId, semanticHash);
   }
 
   // Fast pattern-based memory detection
@@ -234,17 +210,7 @@ class MemoryService {
   // Calculate cosine similarity between two vectors
   // Tier 3 A: Use Go service for performance-critical similarity calculations
   async cosineSimilarity(a: number[], b: number[]): Promise<number> {
-    // Try Go service first for better performance
-    if (goMemoryService.isAvailable() && a.length > 100) {
-      try {
-        return await goMemoryService.calculateCosineSimilarity(a, b);
-      } catch (error) {
-        console.warn('[MemoryService] Go service fallback to TypeScript implementation:', error);
-      }
-    }
-    
-    // Fallback to TypeScript implementation
-    return this.cosineSimilaritySync(a, b);
+    return calculateCosineSimilarityWithFallback(a, b);
   }
 
   // Synchronous cosine similarity using imported utility

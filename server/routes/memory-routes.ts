@@ -8,6 +8,7 @@ import {
   chatGPTMemoryEnhancement
 } from "./shared-dependencies.js";
 import { memoryGraphService } from "../services/memory-graph-service-instance.js";
+import { findSimilarMemory, getRecentMemories } from "../../shared/services/memory/deduplication-helpers.js";
 
 
 export async function registerMemoryRoutes(app: Express): Promise<void> {
@@ -126,6 +127,98 @@ export async function registerMemoryRoutes(app: Express): Promise<void> {
     } catch (error) {
       console.error('Error deleting memory:', error);
       res.status(500).json({ message: "Failed to delete memory" });
+    }
+  });
+
+  // Check for duplicate memories before creation
+  app.post("/api/memories/check-duplicates", async (req, res) => {
+    try {
+      const { content, category } = req.body;
+      const userId = 1; // Default user ID
+
+      // Validation
+      if (!content || typeof content !== "string" || content.trim().length < 10) {
+        return res.status(400).json({ message: "Memory content must be at least 10 characters" });
+      }
+
+      if (!["preferences", "personal_context", "instructions", "food_diet", "goals"].includes(category)) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
+
+      console.log(`[DuplicateCheck] Checking for duplicates for user ${userId}`);
+
+      const startTime = performance.now();
+      
+      // Get recent memories for comparison
+      const recentMemories = await getRecentMemories(userId, 24 * 7); // Last 7 days
+      
+      // Find similar memories using existing deduplication logic
+      const embeddingCache = new Map<string, number[]>();
+      const similarityResultCache = new Map<string, number>();
+      const cacheTimestamps = new Map<string, number>();
+      
+      const isCacheValid = (key: string, ttl: number = 300000): boolean => {
+        const timestamp = cacheTimestamps.get(key);
+        return timestamp ? (Date.now() - timestamp) < ttl : false;
+      };
+
+      const findFuzzyMatch = (content: string, memories: any[]) => {
+        const normalizedContent = content.toLowerCase().trim();
+        for (const memory of memories) {
+          const normalizedMemory = memory.content.toLowerCase().trim();
+          if (normalizedMemory.includes(normalizedContent) || normalizedContent.includes(normalizedMemory)) {
+            return {
+              id: memory.id,
+              content: memory.content,
+              similarity: 0.8 // High fuzzy match score
+            };
+          }
+        }
+        return null;
+      };
+
+      const similarMemory = await findSimilarMemory(
+        content.trim(),
+        recentMemories,
+        embeddingCache,
+        similarityResultCache,
+        cacheTimestamps,
+        isCacheValid,
+        300000, // 5 minute cache TTL
+        findFuzzyMatch
+      );
+
+      const duration = performance.now() - startTime;
+      console.log(`[DuplicateCheck] Duration: ${duration.toFixed(2)}ms`);
+
+      if (similarMemory && similarMemory.similarity >= 0.3) {
+        // Found potential duplicate
+        res.json({
+          hasDuplicates: true,
+          similarMemories: [{
+            id: similarMemory.id,
+            content: similarMemory.content,
+            similarity: similarMemory.similarity,
+            category: recentMemories.find(m => m.id === similarMemory.id)?.category || category
+          }],
+          processingTime: `${duration.toFixed(2)}ms`
+        });
+      } else {
+        // No duplicates found
+        res.json({
+          hasDuplicates: false,
+          similarMemories: [],
+          processingTime: `${duration.toFixed(2)}ms`
+        });
+      }
+
+    } catch (error) {
+      console.error('Error checking for duplicates:', error);
+      res.status(500).json({ 
+        message: "Failed to check for duplicates",
+        hasDuplicates: false,
+        similarMemories: []
+      });
     }
   });
 

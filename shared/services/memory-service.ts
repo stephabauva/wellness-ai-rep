@@ -45,6 +45,8 @@ import { mapAndSortMemories, mapMemoryFields, processRecentMemoriesForOverview }
 import { calculateCosineSimilarityWithFallback } from './memory/similarity-utils';
 import { getCachedSimilarityWithFallback } from './memory/cache-utils';
 import { checkSemanticDuplicate } from './memory/database-utils';
+import { MemoryPerformanceUtils } from './memory/performance-utils';
+import { MemoryHashUtils } from './memory/hash-utils';
 
 
 class MemoryService {
@@ -60,6 +62,8 @@ class MemoryService {
   private backgroundProcessingManager: BackgroundProcessingManager;
   private contentValidator: MemoryContentValidator;
   private cacheManager: MemoryCacheManager;
+  private performanceUtils: MemoryPerformanceUtils;
+  private hashUtils: MemoryHashUtils;
 
   constructor() {
     this.openai = new OpenAI({
@@ -97,6 +101,15 @@ class MemoryService {
     
     // Initialize cache manager
     this.cacheManager = new MemoryCacheManager(this.memoryCache);
+    
+    // Initialize performance utilities
+    this.performanceUtils = new MemoryPerformanceUtils(
+      this.backgroundProcessingManager,
+      this.cacheManager
+    );
+    
+    // Initialize hash utilities
+    this.hashUtils = new MemoryHashUtils();
   }
 
 
@@ -112,13 +125,13 @@ class MemoryService {
     return getCachedSimilarityWithFallback(vectorA, vectorB, this.cacheManager, this.backgroundProcessingManager);
   }
 
-  // Fast semantic deduplication using imported utility
+  // Fast semantic deduplication using hash utilities
   private generateSemanticHash(message: string): string {
-    return generateSemanticHash(message);
+    return this.hashUtils.generateSemanticHash(message);
   }
 
   private async checkSemanticDuplicate(userId: number, semanticHash: string): Promise<boolean> {
-    return checkSemanticDuplicate(userId, semanticHash);
+    return this.hashUtils.checkSemanticDuplicate(userId, semanticHash);
   }
 
   // Fast pattern-based memory detection
@@ -600,22 +613,17 @@ class MemoryService {
     pendingUpdates: number;
     cacheHitRate: string;
   } {
-    return this.backgroundProcessingManager.getPerformanceStats();
+    return this.performanceUtils.getPerformanceStats();
   }
 
   // Force cache cleanup for memory management
   forceCacheCleanup(): void {
-    this.cacheManager.forceCacheCleanup();
+    this.performanceUtils.forceCacheCleanup();
   }
 
   // Preload user memories for better performance
   async preloadUserMemories(userId: number): Promise<void> {
-    try {
-      await this.getUserMemories(userId);
-      console.log(`[MemoryService] Preloaded memories for user ${userId}`);
-    } catch (error) {
-      console.error('[MemoryService] Failed to preload user memories:', error);
-    }
+    return this.performanceUtils.preloadUserMemories(userId, (userId) => this.getUserMemories(userId));
   }
 }
 

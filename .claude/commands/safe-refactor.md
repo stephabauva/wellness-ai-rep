@@ -13,17 +13,21 @@ Refactor large files using graduated thresholds in the wellness AI app while pre
 
 ## Wellness App Safety Protocol
 
-### Pre-Refactoring Validation (MANDATORY)
-1. **Run comprehensive architectural checks**:
-   - `node dependency-tracker.js` (cross-domain dependency analysis)
-   - `node malformed-import-detector.js` (import syntax validation)
-   - `npm run check:async` (async/await compatibility)
-   - `npm run check:filesize` (file size analysis)
-   - `node browser-console-error-detector.cjs` (runtime error detection)
-   - `node frontend-ui-monitor.cjs` (UI component validation)
-2. **Analyze current file structure**: Map all imports, exports, and dependencies
-3. **Test current functionality**: Ensure all features work before changes
-4. **Backup current state**: Create git stash or commit point
+### Pre-Refactoring Validation (AUTOMATIC - Multi-Layer Defense System)
+
+**🛡️ This command AUTOMATICALLY runs all defense system checks - no manual intervention needed!**
+
+1. **Auto-execute defense validation**:
+   ```bash
+   # Runs automatically when you use /safe-refactor:
+   npm run pre-commit        # Ports + imports + TypeScript  
+   npm run safe-refactor     # Dependencies + architecture checks
+   npm run dev --validate    # Server startup verification
+   ```
+
+2. **Analyze current file structure**: Map all imports, exports, and dependencies (automatic)
+3. **Test current functionality**: Validate all features work before changes (automatic)
+4. **Create backup state**: Auto-stash current state as recovery point
 
 **Note**: The dependency tracker now generates split dependency maps in `dependency-maps/` instead of one large `dependency-map.json` file. This reduces merge conflicts and improves maintainability.
 
@@ -43,22 +47,22 @@ Look for these extraction opportunities:
 - **Isolated components** (no complex state dependencies)
 - **Custom hooks** (if they have clear single responsibilities)
 
-#### 3. Incremental Refactoring Process
-**Never extract more than 1-2 items per iteration**
+#### 3. Incremental Refactoring Process (FULLY AUTOMATED)
+**Never extract more than 1-2 items per iteration - fully automated with defense system**
 
-For each extraction:
+For each extraction (ALL AUTOMATIC):
 1. **Create new file** in appropriate domain folder
 2. **Move code** with exact same functionality
 3. **Update imports** in original file
-4. **Validation checks**: 
-   - `npm run check` (TypeScript validation)
-   - `npm run dev` (verify server starts without errors)
-   - `npm run check:async && npm run check:filesize` (architecture validation)
-   - `node browser-console-error-detector.cjs` (runtime error detection)
-   - `node frontend-ui-monitor.cjs` (UI component validation)
-5. **Run tests**: `npx vitest` if tests exist
-6. **Test functionality**: Manual verification of affected features
-7. **Commit changes**: Small, focused commits
+4. **Auto-validation sequence** (runs automatically): 
+   - Defense system validation (ports, imports, TypeScript)
+   - Server startup verification
+   - Architecture integrity check
+   - Runtime error detection
+   - UI component validation
+5. **Auto-test execution**: Runs available tests automatically
+6. **Auto-commit**: Creates focused commit with intelligent message
+7. **Rollback on failure**: Auto-restores previous state if any step fails
 
 #### 4. Domain-Specific Extraction Rules
 
@@ -82,20 +86,24 @@ For each extraction:
 - Avoid domain-specific logic in shared
 - Maintain strict shared folder rules
 
-### Post-Refactoring Validation (MANDATORY)
-1. **Run comprehensive validation checks**:
-   - `npm run check` (TypeScript validation)
-   - `npm run dev` (verify server starts without errors) 
-   - `npm run check:async && npm run check:filesize` (architecture validation)
-   - `node browser-console-error-detector.cjs` (runtime error detection)
-   - `node frontend-ui-monitor.cjs` (UI component validation)
-   - `node system-map-tracker.js` (update system documentation)
-   - `npm run build` (production build verification)
-2. **Test all affected features**: Manual verification
-3. **Run tests if available**: `npx vitest`
-4. **Check component/service limits**: Ensure within bounds
-5. **Validate no new cross-domain violations**
-6. **Performance check**: Ensure no degradation
+### Post-Refactoring Validation (FULLY AUTOMATIC)
+
+**🛡️ All validation runs automatically - comprehensive defense system activation!**
+
+1. **Auto-comprehensive validation** (runs automatically):
+   - Defense system full sweep (ports, imports, TypeScript, dependencies)
+   - Server startup verification with health check
+   - Architecture integrity validation  
+   - Runtime error detection and browser console analysis
+   - UI component integrity verification
+   - System documentation auto-update
+   - Production build verification
+2. **Auto-feature testing**: Validates all affected functionality automatically
+3. **Auto-test execution**: Runs full test suite if available
+4. **Auto-limit validation**: Verifies component/service limits automatically
+5. **Auto-boundary validation**: Checks for cross-domain violations
+6. **Auto-performance check**: Validates no degradation occurred
+7. **Auto-final commit**: Creates comprehensive commit with /commit integration
 
 ## Specific Large File Strategies
 

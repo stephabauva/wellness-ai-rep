@@ -5,17 +5,27 @@
 
 ## Investigation Process
 
-### 1. Deep System Analysis
+### 1. Deep System Analysis (AUTO-DEFENSE INTEGRATED)
+**🛡️ Defense system runs automatically - comprehensive diagnostic sweep!**
+
 ```bash
-# Start with these commands
-node system-map-tracker.js              # What's documented?
-node dependency-tracker.js              # What depends on what? (check dependency-maps/ directory)
-node system-map-cross-domain-validator-v2.js  # Architecture violations?
-npm run check:all                       # Comprehensive component analysis (UI, visual, integration, async, filesize)
-node browser-console-error-detector.cjs # Runtime error patterns & browser tests?
-git status                              # Recent changes?
-git log --oneline -10                   # Recent commits?
+# Runs automatically when you use /zapper:
+npm run pre-commit                      # Defense Layer 1: Ports + imports + TypeScript
+npm run safe-refactor                   # Defense Layer 2: Dependencies + architecture
+node browser-console-error-detector.cjs # Defense Layer 3: Runtime error detection
+npm run check:all                       # UI, visual, integration, async, filesize analysis
+node system-map-tracker.js              # Documentation validation
+git status && git log --oneline -10     # Recent changes analysis
 ```
+
+**Auto-diagnostic includes**:
+- Port configuration validation (prevent startup failures)
+- Import resolution verification (catch missing modules)
+- Cross-domain dependency analysis (identify architectural issues)
+- Runtime error pattern detection (browser console analysis)
+- UI component integrity check (prop mismatches, rendering issues)
+- Visual regression testing (layout conflicts, z-index issues)
+- Integration test coverage analysis (missing critical user flows)
 
 ### 2. Problem Mapping Template
 ```markdown
@@ -158,16 +168,26 @@ useEffect(() => {
 }, [specificState]);
 ```
 
-## Fix Verification Process
+## Fix Verification Process (AUTO-DEFENSE INTEGRATED)
 
-### Before Declaring Fixed
-1. **Reproduce original issue** - Confirm you can trigger it
-2. **Apply fix** - Make minimal change
-3. **Test fix** - Verify issue resolved
-4. **Test side effects** - Check nothing else broke
-5. **Remove debug code** - Clean up logging
-6. **Run test suite** - Ensure all tests pass
-7. **Update documentation** - System maps if needed
+### Before Declaring Fixed (AUTOMATIC VALIDATION)
+**🛡️ Complete defense system verification - all checks automatic!**
+
+1. **Reproduce original issue** - Confirm you can trigger it (manual)
+2. **Apply fix** - Make minimal change (manual)
+3. **Auto-defense validation** - Full defense system sweep (automatic):
+   ```bash
+   # Runs automatically after fix is applied:
+   npm run pre-commit      # Ports + imports + TypeScript validation
+   npm run safe-refactor   # Dependencies + architecture verification  
+   npm run check:all       # UI, visual, integration, async, filesize
+   npm run dev --validate  # Server startup verification
+   ```
+4. **Auto-side effect testing** - Validates nothing else broke (automatic)
+5. **Auto-cleanup** - Removes debug code automatically (automatic)
+6. **Auto-test execution** - Runs full test suite automatically (automatic)
+7. **Auto-documentation** - Updates system maps automatically (automatic)
+8. **Auto-commit** - Creates fix commit with /commit integration (automatic)
 
 ### Multi-Browser Testing
 - Chrome DevTools

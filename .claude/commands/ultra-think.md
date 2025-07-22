@@ -23,9 +23,24 @@ Pre-planning brainstorming specifically for wellness AI app features, considerin
 - **home/** - Dashboard, landing page, user flows
 - **auth/** - Authentication, session management
 
-## Deep Problem Analysis Process
+## Deep Problem Analysis Process (AUTO-DEFENSE INTEGRATED)
 
-### 1. Wellness Context Mapping
+### 1. System Health Baseline (AUTOMATIC)
+**🛡️ Defense system validates current system health before strategic thinking begins!**
+
+```bash
+# Runs automatically when you use /ultra-think:
+npm run pre-commit      # Baseline validation: ports, imports, TypeScript
+npm run safe-refactor   # Architecture health: dependencies + system integrity
+```
+
+**Pre-strategic analysis validation:**
+- Ensures system is in healthy state for complex feature planning
+- Validates no existing architectural issues that would complicate new features
+- Confirms system maps are current and accurate for strategic decision making
+- Prevents planning based on outdated or broken system state
+
+### 2. Wellness Context Mapping  
 - **User journey impact**: Which coaching modes affected? (weight-loss, muscle-gain, fitness, mental-wellness, nutrition)
 - **Health data implications**: Will this process Apple Health XML, Google Fit JSON, or CDA XML?
 - **Memory system effects**: How does this integrate with ChatGPT-style memory and deduplication?

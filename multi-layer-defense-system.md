@@ -39,7 +39,7 @@
   Server Status: ✅ WORKING
 
   Memory routes registered successfully
-  Server running on port 5002
+  Server running on port 5000
 
   Key Lessons:
 

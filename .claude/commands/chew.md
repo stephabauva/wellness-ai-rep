@@ -5,11 +5,25 @@
 
 ## Required Planning Process
 
-### 1. Pre-Planning Investigation
-- Navigate the codebase thoroughly
-- Check relevant system maps in `.system-maps/json-system-maps/`
-- Run dependency tracker to understand connections (generates split dependency maps in dependency-maps/)
-- Consider ALL possible impacts
+### 1. Pre-Planning Investigation (AUTO-DEFENSE INTEGRATED)
+**🛡️ Defense system runs automatically during planning - comprehensive system analysis!**
+
+```bash
+# Runs automatically when you use /chew:
+npm run pre-commit      # Defense baseline: ports, imports, TypeScript
+npm run safe-refactor   # Architecture analysis: dependencies + system health
+npm run check:all       # UI, visual, integration, async, filesize validation  
+node system-map-tracker.js  # Documentation validation
+```
+
+**Auto-investigation includes:**
+- Navigate the codebase thoroughly (with defense system validation)
+- System maps analysis with validation (`.system-maps/json-system-maps/`)
+- Dependency tracker analysis (generates split dependency maps in `dependency-maps/`)
+- Port configuration validation (prevent future startup issues)
+- Import resolution verification (catch potential module conflicts)  
+- Architecture integrity verification (identify system stress points)
+- Consider ALL possible impacts (with comprehensive system health check)
 
 ### 2. Create Written Plan
 **Always write to** `tasks/todo-[title].md` before coding

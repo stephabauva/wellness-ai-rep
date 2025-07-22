@@ -5,16 +5,25 @@
 
 ## Development Workflow
 
-### 1. Pre-Execution
+### 1. Pre-Execution (AUTO-DEFENSE INTEGRATED)
+**🛡️ Defense system runs automatically - no manual intervention needed!**
+
 - [ ] Plan approved by user (from chew.md process)
 - [ ] TodoWrite tasks created and prioritized
-- [ ] Architecture validated (clean-code.md checks completed)
+- [ ] **Auto-defense validation**: Architecture validated with comprehensive defense system
+  ```bash
+  # Runs automatically when you use /workit:
+  npm run pre-commit      # Ports + imports + TypeScript
+  npm run safe-refactor   # Dependencies + architecture  
+  npm run dev --validate  # Server startup verification
+  ```
 
-### 2. During Development
+### 2. During Development (AUTO-DEFENSE INTEGRATED)
 1. **Mark TodoWrite tasks** as in_progress/completed in real-time
 2. **High-level updates** to user during execution
-3. **Test incrementally** - don't wait until end
-4. **Update system maps** as you modify features
+3. **Auto-incremental testing** - defense system validates every change
+4. **Auto-system maps update** - system maps updated automatically
+5. **Auto-commits** - each completed task creates automatic safe commit with /commit integration
 
 ### 3. Execution Principles
 - **Simplicity first**: Minimal code changes that solve the problem
@@ -83,17 +92,26 @@
 - [ ] No console.logs in production code
 - [ ] System maps updated if architecture changed
 
-### Final Validation
+### Final Validation (AUTO-DEFENSE INTEGRATED)
+**🛡️ Complete defense system activation - all validation automatic!**
+
 ```bash
-# Essential checks before completion:
-npm run check        # TypeScript strict validation
-npx vitest          # All tests passing
-npm run build       # Production build works
-npm run check:all    # Comprehensive component analysis (UI, visual, integration)
+# Runs automatically when you use /workit (comprehensive defense):
+npm run safe-refactor          # Full architecture + dependency analysis  
+npm run check:all              # UI, visual, integration, async, filesize
+npm run build                  # Production build verification
 node browser-console-error-detector.cjs  # Runtime error detection
-node frontend-ui-monitor.cjs  # UI component validation
-node system-map-tracker.js    # Documentation updates
+/commit "Complete feature implementation with full validation"  # Auto-commit with defense
 ```
+
+**Auto-execution includes**:
+- Defense system full sweep (ports, imports, TypeScript, dependencies)
+- Comprehensive component analysis (UI integrity, visual regression, integration tests)  
+- Server startup verification with health check
+- Production build verification
+- Runtime error detection and browser console analysis
+- System documentation auto-update
+- Intelligent commit with comprehensive validation message
 
 ## Critical Replit Constraints
 - **Never modify**: vite.config.ts, WebSocket handling, compression settings

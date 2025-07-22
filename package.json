@@ -20,7 +20,12 @@
     "check:ui": "node frontend-ui-monitor.cjs",
     "check:visual": "node visual-regression-detector.cjs",
     "check:integration": "node component-integration-test.cjs",
-    "check:all": "npm run check:ui && npm run check:visual && npm run check:integration && npm run check:async && npm run check:filesize"
+    "check:all": "npm run check:ui && npm run check:visual && npm run check:integration && npm run check:async && npm run check:filesize",
+    "check:ports": "node port-validator.js",
+    "check:imports": "node malformed-import-detector.js",
+    "check:dependencies": "node dependency-tracker.js",
+    "pre-commit": "npm run check:ports && npm run check:imports && npm run check",
+    "safe-refactor": "npm run check:dependencies && npm run check:all"
   },
   "dependencies": {
     "@capacitor/app": "^7.0.1",

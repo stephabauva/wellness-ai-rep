@@ -139,7 +139,7 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 ## Production Configuration
 - **Build Process**: Vite client build + esbuild server bundle
 - **Service Management**: Express server with graceful shutdown and connection pooling
-- **Port Configuration**: Automated port mapping (5000 → 80) for Replit deployment
+- **Port Configuration**: Automated port mapping (5000 → 80) for Replit deployment (protected by multi-layer defense system)
 - **Environment**: Environment-based configuration with fallback defaults
 
 ## Performance Optimizations

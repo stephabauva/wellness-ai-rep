@@ -1,17 +1,29 @@
-# Architecture Guardian
+# Architecture Guardian (DEFENSE-SYSTEM INTEGRATED)
 
-Guards against architectural drift and maintains clean code boundaries.
+Guards against architectural drift and maintains clean code boundaries with multi-layer defense system protection.
 
-## Auto-Execution by Claude AI
-**Claude automatically runs these checks before any code implementation:**
+## Auto-Execution by Claude AI (DEFENSE-SYSTEM POWERED)
+**🛡️ Claude automatically runs full defense system before any code implementation - no manual intervention needed!**
+
+**Multi-Layer Defense Activation:**
+- **Layer 1**: Port validation + import resolution + TypeScript compilation
+- **Layer 2**: Cross-domain dependency analysis + comprehensive architecture checks  
+- **Layer 3**: Runtime error detection + browser console analysis + UI integrity verification
+
+**Auto-triggered:**
 - Before creating new components/services
 - Before adding features
-- When asked to implement functionality
-- Comprehensive component analysis (npm run check:all) including UI, visual, integration, async, and filesize checks
-- Browser console error detection for runtime issues
-- Frontend UI component validation for prop mismatches and rendering problems with severity escalation
-- Visual regression detection for component rendering and layout issues
-- Integration test analysis for user interaction flows and missing test coverage
+- When asked to implement functionality  
+- Before any architectural changes
+- After any significant modifications
+
+```bash
+# Runs automatically when you use /arch-guard or any development command:
+npm run pre-commit      # Defense Layer 1: Core validation
+npm run safe-refactor   # Defense Layer 2: Architecture analysis  
+npm run check:all       # UI, visual, integration, async, filesize
+node browser-console-error-detector.cjs # Runtime error detection
+```
 
 ## Manual Usage
 ```bash
@@ -32,11 +44,14 @@ This command runs a comprehensive architectural health check:
 9. **Visual Regression Detection**: Tests component rendering, modal visibility, z-index conflicts, and layout issues
 10. **Integration Test Analysis**: Generates user interaction tests and identifies missing test coverage for critical flows
 
-## When to run
-- Before starting any new feature
-- Before creating new components/services
-- Weekly as part of maintenance
-- Before major releases
+## When to run (AUTO-DEFENSE INTEGRATED)
+**🛡️ Runs automatically with full defense system validation!**
+
+- **Auto-triggered** before starting any new feature (with pre-commit validation)
+- **Auto-triggered** before creating new components/services (with architecture analysis)  
+- **Auto-scheduled** weekly as part of maintenance (with comprehensive checks)
+- **Auto-triggered** before major releases (with production build verification)
+- **Auto-commit** after successful validation passes (with /commit integration)
 
 ## Guardrails enforced
 - Max 25 UI components total

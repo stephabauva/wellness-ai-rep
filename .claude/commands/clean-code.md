@@ -51,6 +51,12 @@ node browser-console-error-detector.cjs  # Runtime error patterns
 node frontend-ui-monitor.cjs        # UI component validation
 npm run build                       # Build verification
 npx vitest                         # Test verification
+node dependency-tracker.js          # Check cross-domain violations (creates split dependency maps)
+node malformed-import-detector.js   # Check import syntax
+npm run check:all                   # Comprehensive component analysis (UI, visual, integration, async, filesize)
+node browser-console-error-detector.cjs  # Check runtime error patterns
+npm run build                       # Ensure it builds
+npx vitest                         # Ensure tests pass
 ```
 
 ### 5. Import Rules

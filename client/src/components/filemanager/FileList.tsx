@@ -85,8 +85,14 @@ export const FileList: React.FC<FileListProps> = ({
               <div
                 key={file.id}
                 className={cn(
-                  "relative border rounded-lg p-3 transition-colors cursor-pointer aspect-square flex flex-col justify-between items-center",
-                  selectedFiles.has(file.id) ? "bg-accent border-primary ring-1 ring-primary" : "hover:bg-muted/50"
+                  "relative border rounded-xl p-3 cursor-pointer aspect-square flex flex-col justify-between items-center group",
+                  "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
+                  "transition-all duration-300 ease-out transform-gpu will-change-transform",
+                  "hover:scale-[1.03] hover:-translate-y-1 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600",
+                  "active:scale-[0.97] active:translate-y-0",
+                  selectedFiles.has(file.id) 
+                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 ring-1 ring-blue-500 scale-[1.02] shadow-md" 
+                    : ""
                 )}
                 onClick={() => onSelectFile(file.id)}
               >
@@ -121,24 +127,17 @@ export const FileList: React.FC<FileListProps> = ({
                 </div>
 
                 <div className="flex flex-col items-center justify-center text-center space-y-1 pt-8 flex-grow w-full overflow-hidden">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center bg-muted rounded-lg overflow-hidden mb-2 shadow-sm">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-xl overflow-hidden mb-2 shadow-sm group-hover:shadow-md transition-all duration-300 ease-out">
                     {file.fileType.startsWith('image/') ? (
                       <img
                         src={file.url || `/uploads/${file.fileName}`} // Use file.url if available
                         alt={file.displayName}
                         className="w-full h-full object-cover rounded-lg"
                         onLoad={() => {
-                          console.log(`✅ Image loaded successfully: ${file.fileName}`, { url: file.url, fallbackUrl: `/uploads/${file.fileName}` });
+                          // Image loaded successfully
                         }}
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
-                          const attemptedUrl = target.src;
-                          console.log(`❌ Image load failed: ${file.fileName}`, { 
-                            attemptedUrl, 
-                            fileUrl: file.url, 
-                            fallbackUrl: `/uploads/${file.fileName}`,
-                            fileType: file.fileType 
-                          });
                           target.style.display = 'none'; // Hide broken image
                           const fallbackIcon = target.nextElementSibling; // Assuming next sibling is the icon div
                           if (fallbackIcon) fallbackIcon.classList.remove('hidden');
@@ -163,8 +162,14 @@ export const FileList: React.FC<FileListProps> = ({
                     <Badge
                       variant="secondary"
                       className={cn(
-                        getRetentionBadgeColor(file.retentionInfo?.category),
-                        "px-1.5 py-0.5 text-[10px]" // Smaller badge
+                        "px-1.5 py-0.5 text-[10px] font-medium rounded-md transition-all duration-200",
+                        file.retentionInfo?.category === 'high' 
+                          ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 border-green-200 dark:border-green-800"
+                          : file.retentionInfo?.category === 'medium'
+                          ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                          : file.retentionInfo?.category === 'low'
+                          ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 border-red-200 dark:border-red-800"
+                          : "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300 border-gray-200 dark:border-gray-800"
                       )}
                       title={file.retentionInfo?.reason}
                     >
@@ -214,8 +219,14 @@ export const FileList: React.FC<FileListProps> = ({
           <div
             key={file.id}
             className={cn(
-              "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border transition-colors cursor-pointer",
-              selectedFiles.has(file.id) ? "bg-accent border-primary ring-1 ring-primary" : "hover:bg-muted/50"
+              "flex items-center gap-2 sm:gap-3 p-3 rounded-xl border cursor-pointer group",
+              "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700",
+              "transition-all duration-300 ease-out transform-gpu will-change-transform",
+              "hover:scale-[1.01] hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600",
+              "active:scale-[0.99]",
+              selectedFiles.has(file.id)
+                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 ring-1 ring-blue-500 shadow-sm"
+                : ""
             )}
              onClick={() => onSelectFile(file.id)}
           >
@@ -226,24 +237,17 @@ export const FileList: React.FC<FileListProps> = ({
               aria-label={`Select file ${file.displayName}`}
             />
 
-            <div className="flex-shrink-0 w-12 h-12 bg-muted rounded-lg overflow-hidden flex items-center justify-center shadow-sm">
+            <div className="flex-shrink-0 w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl overflow-hidden flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 ease-out">
               {file.fileType.startsWith('image/') ? (
                 <img
                   src={file.url || `/uploads/${file.fileName}`} // Use file.url if available
                   alt={file.displayName}
                   className="w-full h-full object-cover"
                   onLoad={() => {
-                    console.log(`✅ List view image loaded: ${file.fileName}`, { url: file.url, fallbackUrl: `/uploads/${file.fileName}` });
+                    // List view image loaded successfully
                   }}
                   onError={(e) => {
                     const target = e.currentTarget as HTMLImageElement;
-                    const attemptedUrl = target.src;
-                    console.log(`❌ List view image load failed: ${file.fileName}`, { 
-                      attemptedUrl, 
-                      fileUrl: file.url, 
-                      fallbackUrl: `/uploads/${file.fileName}`,
-                      fileType: file.fileType 
-                    });
                     target.style.display = 'none';
                     const fallbackIcon = target.nextElementSibling;
                     if (fallbackIcon) fallbackIcon.classList.remove('hidden');
@@ -265,8 +269,14 @@ export const FileList: React.FC<FileListProps> = ({
                 <Badge
                   variant="secondary"
                   className={cn(
-                    getRetentionBadgeColor(file.retentionInfo?.category),
-                    "text-xs self-start sm:self-center whitespace-nowrap px-1.5 py-0.5 text-[10px]"
+                    "text-xs self-start sm:self-center whitespace-nowrap px-1.5 py-0.5 text-[10px] font-medium rounded-md transition-all duration-200",
+                    file.retentionInfo?.category === 'high' 
+                      ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 border-green-200 dark:border-green-800"
+                      : file.retentionInfo?.category === 'medium'
+                      ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                      : file.retentionInfo?.category === 'low'
+                      ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 border-red-200 dark:border-red-800"
+                      : "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-300 border-gray-200 dark:border-gray-800"
                   )}
                   title={file.retentionInfo?.reason}
                 >

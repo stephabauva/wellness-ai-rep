@@ -550,6 +550,7 @@ class DependencyTracker {
     }
     
     // Create index file for easy access
+    const indexPath = path.join(dependencyMapsDir, 'index.json');
     const index = {
       lastGenerated: new Date().toISOString(),
       totalDomains: mapsCreated,
@@ -561,8 +562,33 @@ class DependencyTracker {
       }))
     };
     
-    fs.writeFileSync(path.join(dependencyMapsDir, 'index.json'), JSON.stringify(index, null, 2));
-    console.log(`   📋 Updated dependency maps index: ${mapsUpdated}/${mapsCreated} domains changed`);
+    // Only update index.json if content actually changed (excluding timestamp)
+    let shouldWriteIndex = true;
+    if (fs.existsSync(indexPath)) {
+      try {
+        const existingIndex = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+        const existingForComparison = { ...existingIndex };
+        const newForComparison = { ...index };
+        
+        // Remove timestamp fields for comparison
+        delete existingForComparison.lastGenerated;
+        delete newForComparison.lastGenerated;
+        
+        if (JSON.stringify(existingForComparison, null, 2) === JSON.stringify(newForComparison, null, 2)) {
+          shouldWriteIndex = false;
+        }
+      } catch (error) {
+        // If we can't read/parse existing file, write new one
+        shouldWriteIndex = true;
+      }
+    }
+    
+    if (shouldWriteIndex) {
+      fs.writeFileSync(indexPath, JSON.stringify(index, null, 2));
+      console.log(`   📋 Updated dependency maps index: ${mapsUpdated}/${mapsCreated} domains changed`);
+    } else {
+      console.log(`   ⏭️  Skipped dependency maps index: no structural changes (${mapsUpdated}/${mapsCreated} domains changed)`);
+    }
     
     return mapsCreated;
   }

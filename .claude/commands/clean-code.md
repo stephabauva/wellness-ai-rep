@@ -44,9 +44,10 @@ Ensures every new code addition maintains architectural quality.
 **Note**: These are automatically run by `/arch-guard` command - no need to run manually
 ```bash
 # Comprehensive validation (use /arch-guard instead):
-node dependency-tracker.js          # Cross-domain violations
+node dependency-tracker.js          # Cross-domain violations (creates split dependency maps)
 node malformed-import-detector.js   # Import syntax  
-node browser-console-error-detector.cjs  # Runtime errors
+npm run check:all                   # Comprehensive component analysis (UI, visual, integration, async, filesize)
+node browser-console-error-detector.cjs  # Runtime error patterns
 node frontend-ui-monitor.cjs        # UI component validation
 npm run build                       # Build verification
 npx vitest                         # Test verification

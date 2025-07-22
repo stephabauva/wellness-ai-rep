@@ -162,13 +162,42 @@ function checkDialogIssues(filePath, content, lines) {
   // Check for dialogs using shared components that might be broken
   if (content.includes('@shared/components/ui/dialog')) {
     const fileShort = path.relative(process.cwd(), filePath);
+    
+    // SEVERITY ESCALATION RULES: Escalate to HIGH for critical user flows
+    let severity = 'medium';
+    const criticalFlows = [
+      'Upload', 'Login', 'Payment', 'Checkout', 'Auth', 'Register',
+      'Delete', 'Remove', 'Submit', 'Confirm', 'Save', 'Create'
+    ];
+    
+    const isCriticalFlow = criticalFlows.some(flow => 
+      filePath.toLowerCase().includes(flow.toLowerCase()) ||
+      content.toLowerCase().includes(`${flow.toLowerCase()}dialog`) ||
+      content.toLowerCase().includes(`${flow.toLowerCase()}modal`)
+    );
+    
+    if (isCriticalFlow) {
+      severity = 'high';
+    }
+    
+    // Additional checks for broken Dialog patterns
+    const hasBrokenPatterns = [
+      content.includes('DialogContent') && !content.includes('DialogPortal'),
+      content.includes('open={') && content.includes('onOpenChange={'),
+      content.includes('modal={true}') // This often indicates Radix Dialog issues
+    ].some(Boolean);
+    
+    if (hasBrokenPatterns && isCriticalFlow) {
+      severity = 'critical';
+    }
+    
     issues.push({
       file: filePath,
       line: 1,
       type: 'SHARED_DIALOG_USAGE',
-      severity: 'medium',
-      message: 'Uses @shared/components/ui/dialog which has known rendering issues',
-      suggestion: 'Consider using custom HTML modal implementation for critical dialogs'
+      severity: severity,
+      message: `Uses @shared/components/ui/dialog which has known rendering issues${isCriticalFlow ? ' (CRITICAL USER FLOW)' : ''}`,
+      suggestion: `${severity === 'critical' ? 'IMMEDIATELY ' : ''}Replace with custom HTML modal implementation for ${isCriticalFlow ? 'critical' : 'reliable'} dialogs`
     });
   }
 }
@@ -193,7 +222,7 @@ console.log('📋 Scanning client/src/components for UI issues...\n');
 scanForUIIssues('./client/src/components');
 
 // Sort issues by severity
-const severityOrder = { high: 0, medium: 1, low: 2 };
+const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
 issues.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
 // Generate report
@@ -224,16 +253,20 @@ if (issues.length === 0) {
 // Summary and recommendations
 console.log('📈 Summary:');
 console.log(`   Total issues found: ${issues.length}`);
+console.log(`   Critical severity: ${issues.filter(i => i.severity === 'critical').length}`);
 console.log(`   High severity: ${issues.filter(i => i.severity === 'high').length}`);
 console.log(`   Medium severity: ${issues.filter(i => i.severity === 'medium').length}`);
 console.log(`   Low severity: ${issues.filter(i => i.severity === 'low').length}\n`);
 
 console.log('🎯 Recommendations:');
-console.log('   1. Fix high severity issues immediately (prop mismatches, z-index)');
-console.log('   2. Add component prop validation with TypeScript strict mode');
-console.log('   3. Create UI component testing guidelines');
-console.log('   4. Consider creating a custom dialog/modal component library');
-console.log('   5. Run this script regularly during development\n');
+console.log('   1. ⚠️  Fix CRITICAL severity issues IMMEDIATELY (breaks user functionality)');
+console.log('   2. 🔥 Fix HIGH severity issues before deployment (prop mismatches, critical dialogs)');
+console.log('   3. 📋 Address MEDIUM severity issues in next sprint (styling, non-critical components)');
+console.log('   4. 📝 Plan LOW severity issues for maintenance windows (error boundaries, cleanup)');
+console.log('   5. Add component prop validation with TypeScript strict mode');
+console.log('   6. Create UI component testing guidelines');
+console.log('   7. Consider creating a custom dialog/modal component library');
+console.log('   8. Run this script regularly during development\n');
 
 console.log('🔧 Integration suggestions:');
 console.log('   - Add to package.json: "check:ui": "node frontend-ui-monitor.cjs"');

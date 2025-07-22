@@ -17,7 +17,9 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Async/await compatibility**: async-await-detector.js prevents "Cannot read properties of undefined" errors by detecting service getter async mismatches
 **File size analysis**: file-size-analyzer.js enforces line limits (300 for routes/components, 200 for services) and identifies oversized files needing refactoring
 **Browser console error detection**: browser-console-error-detector.cjs scans for runtime error patterns, checks lazy loading, and generates browser console tests
-**Frontend UI component monitoring**: frontend-ui-monitor.cjs detects component prop mismatches, missing required props, styling issues, and shared Dialog component problems
+**Frontend UI component monitoring**: frontend-ui-monitor.cjs detects component prop mismatches, missing required props, styling issues, and shared Dialog component problems with severity escalation for critical user flows
+**Visual regression detection**: visual-regression-detector.cjs tests component rendering, modal visibility, z-index conflicts, and layout issues
+**Integration testing analysis**: component-integration-test.cjs generates user interaction tests and identifies missing test coverage for critical user flows
 
 ### Key Commands
 - `npm run dev` - Start development server
@@ -30,8 +32,11 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `node system-map-cross-domain-validator-v2.js` - Validate system maps against actual code
 - `npm run check:async` - Check async/await compatibility to prevent undefined errors
 - `npm run check:filesize` - Analyze file sizes using graduated thresholds (see .claude/commands/safe-refactor.md)
+- `npm run check:ui` - Analyze UI components for prop mismatches, styling issues, and rendering problems with severity escalation
+- `npm run check:visual` - Test component rendering, modal visibility, z-index conflicts, and layout issues
+- `npm run check:integration` - Generate user interaction tests and identify missing test coverage for critical flows
+- `npm run check:all` - Run all component analysis checks (ui, visual, integration, async, filesize)
 - `node browser-console-error-detector.cjs` - Detect runtime browser console errors and generate test script
-- `node frontend-ui-monitor.cjs` - Analyze UI components for prop mismatches, styling issues, and rendering problems
 - `./setup-dependency-hook.sh` - Install pre-commit dependency check hook
 
 ### Architecture Patterns & Rules
@@ -52,12 +57,13 @@ This file provides guidance to Claude Code when working with this wellness AI ap
   - System map's guide : `.system-maps/optimized-complete-map-blue-original.md`
 
 ### Before Adding ANY New Code (Claude AI Responsibility)
-1. **ALWAYS run architectural checks first**: `node dependency-tracker.js` (creates domain-specific dependency maps), `node malformed-import-detector.js`, `npm run check:async`, `npm run check:filesize`, `node browser-console-error-detector.cjs`, and `node frontend-ui-monitor.cjs`
+1. **ALWAYS run comprehensive architectural checks first**: `npm run check:all` (includes UI, visual, integration, async, filesize analysis) plus `node dependency-tracker.js`, `node malformed-import-detector.js`, and `node browser-console-error-detector.cjs`
 2. Ask: "Does this belong in shared/ or a specific domain?"
 3. Ask: "Can I enhance existing components vs creating new ones?"
 4. Ask: "Is this service necessary or can it be a simple function?"
-5. **Automatically validate**: Run arch-guard checks before implementing features
-6. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
+5. **Critical component check**: For Dialog/Modal components, immediately use custom HTML implementation instead of @shared/components/ui/dialog
+6. **Automatically validate**: Run arch-guard checks before implementing features
+7. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
 
 ### Replit Constraints (Critical)
 - **Do NOT Touch**: vite.config.ts, WebSocket handling, Build systems, Compression settings

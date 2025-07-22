@@ -50,6 +50,7 @@ import { MemoryHashUtils } from './memory/hash-utils';
 import { MemoryDatabaseOperations } from './memory/database-operations';
 import { MemoryLoggingUtils } from './memory/logging-utils';
 import { MemoryQueryOperations } from './memory/query-operations';
+import { MemorySimilarityOperations } from './memory/similarity-operations';
 
 
 class MemoryService {
@@ -70,6 +71,7 @@ class MemoryService {
   private databaseOps: MemoryDatabaseOperations;
   private loggingUtils: MemoryLoggingUtils;
   private queryOps: MemoryQueryOperations;
+  private similarityOps: MemorySimilarityOperations;
 
   constructor() {
     this.openai = new OpenAI({
@@ -128,6 +130,12 @@ class MemoryService {
     
     // Initialize query operations
     this.queryOps = new MemoryQueryOperations(this.qualityService);
+    
+    // Initialize similarity operations
+    this.similarityOps = new MemorySimilarityOperations(
+      this.cacheManager,
+      this.backgroundProcessingManager
+    );
   }
 
 
@@ -140,7 +148,7 @@ class MemoryService {
 
   // Get cached vector similarity with background calculation
   private getCachedSimilarity(vectorA: number[], vectorB: number[]): number | null {
-    return getCachedSimilarityWithFallback(vectorA, vectorB, this.cacheManager, this.backgroundProcessingManager);
+    return this.similarityOps.getCachedSimilarity(vectorA, vectorB);
   }
 
   // Fast semantic deduplication using hash utilities
@@ -221,12 +229,12 @@ class MemoryService {
   // Calculate cosine similarity between two vectors
   // Tier 3 A: Use Go service for performance-critical similarity calculations
   async cosineSimilarity(a: number[], b: number[]): Promise<number> {
-    return calculateCosineSimilarityWithFallback(a, b);
+    return this.similarityOps.cosineSimilarity(a, b);
   }
 
   // Synchronous cosine similarity using imported utility
   cosineSimilaritySync(a: number[], b: number[]): number {
-    return cosineSimilaritySync(a, b);
+    return this.similarityOps.cosineSimilaritySync(a, b);
   }
 
   // Retrieve relevant memories based on context

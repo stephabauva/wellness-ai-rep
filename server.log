@@ -1,0 +1,408 @@
+
+> rest-express@1.0.0 dev:local
+> NODE_ENV=development USE_LOCAL_DB=true tsx server/index.ts
+
+[dotenv@16.6.0] injecting env (8) from .env.local
+🔧 Local development mode detected (using .env.local)
+[NutritionAggregationService] NutritionAggregationService initialized 
+2:06:53 PM [DEBUG] [memory] Initializing background processor
+2:06:53 PM [DEBUG] [memory] Enhanced Memory Service initialized for background processing coordination
+[ChatContextService] ChatContextService initialized 
+[OpenAIProvider] OpenAIProvider initialized 
+[AiService] OpenAI provider registered. 
+[GoogleProvider] GoogleProvider initialized 
+[AiService] Google provider registered. 
+[NutritionInferenceService] NutritionInferenceService initialized 
+2:06:53 PM [INFO ] [system] Initializing local database connection...
+🔧 Using local PostgreSQL database
+✅ Local PostgreSQL connection established
+2:06:53 PM [INFO ] [system] Local database connection initialized
+Memory routes registered successfully
+Default categories seeded on startup
+File routes registered successfully
+Settings routes registered successfully
+Monitoring routes registered successfully
+2:06:53 PM [INFO ] [system] Server running on port 5000
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[MemoryQuery] Getting quality metrics for user 1
+2:06:55 PM [DEBUG] [express] GET /api/memories/quality-metrics 304 (1ms)
+[MemoryQuery] Getting optimized overview for user 1
+[Memory Overview API Performance] Duration: 0.12ms (Target: <100ms)
+2:06:55 PM [DEBUG] [express] GET /api/memories/overview 304 (0ms)
+2:06:55 PM [DEBUG] [express] GET /api/settings 304 (29ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 20, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.53ms (Target: <100ms)
+2:06:55 PM [DEBUG] [express] GET /api/memories 304 (2ms)
+[CacheService] Cache MISS for health data - userId: 1, range: 7days
+[DatabaseStorage] Fetching health data for user 1, range: 7days, startDate: 2025-07-14T22:00:00.000Z
+[DatabaseStorage] Found 3 health records for range 7days
+[CacheService] Cached health data - userId: 1, range: 7days, count: 3
+2:06:56 PM [DEBUG] [express] GET /api/health-data 200 (6ms)
+2:06:56 PM [DEBUG] [express] GET /api/files 304 (10ms)
+2:06:56 PM [DEBUG] [express] GET /api/categories 304 (29ms)
+[ManualMemory] Processing manual memory with ChatGPT deduplication for user 1
+[ManualMemory] ChatGPT deduplication processing completed successfully
+[MemoryPerformance] Starting forced cache cleanup
+[MemoryPerformance] Cache cleanup complete
+[MemoryQuery] Getting memories for user 1, category: undefined
+2:07:21 PM [DEBUG] [express] POST /api/memories/manual 200 (2670ms) (2670ms)
+2:12:46 PM [WARN ] [express] POST /api/messages 400
+2:13:11 PM [WARN ] [express] POST /api/messages 500
+[STREAMING_DEBUG] Starting streaming request: {
+  conversationId: null,
+  hasContent: true,
+  timestamp: '2025-07-22T12:13:35.271Z'
+}
+[CONVERSATION_MANAGER] Created new conversation: {
+  conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+  title: 'I have a severe peanut allergy and need to avoid a...'
+}
+[MESSAGE_HANDLER] Saved user message: {
+  messageId: '423a989b-83ef-4853-b525-c850c1abc1b4',
+  conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6'
+}
+[AiService] Using AI provider for streaming: openai, Model: gpt-4o 
+[AiService] [AiService] Starting ChatGPT memory deduplication processing {
+  userId: 1,
+  conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+  messageLength: 73
+}
+[ChatContextService] Building chat context for conversation f8c573cc-cd4a-4797-8cc7-2e12fcde76f6 with provider openai 
+[MemoryRetrievalService] getContextualMemories called for user 1, message: "I have a severe peanut allergy and need to avoid all tree nuts in my diet"
+[MemoryRetrievalService] Context built: "I have a severe peanut allergy and need to avoid all tree nuts in my diet"
+[MemoryRetrievalService] getContextualMemories called for user 1, message: "I have a severe peanut allergy and need to avoid all tree nuts in my diet"
+[MemoryRetrievalService] Context built: "I have a severe peanut allergy and need to avoid all tree nuts in my diet"
+2:13:35 PM [DEBUG] [memory] [MemoryRetrievalService] Contextual memories cache miss for user 1
+2:13:35 PM [DEBUG] [memory] [MemoryRetrievalService] Contextual memories cache miss for user 1
+[ChatContextService] Retrieved 4 relevant memories. 
+[ChatContextService] Filtered 0 total history messages to 0 for current session. 
+[ChatContextService] Built context with 2 messages. 
+[ChatContextService] Total image_url parts in final context: 0 
+[OpenAIProvider] Generating streaming chat response with model: gpt-4o { numMessages: 2 }
+[AiService] [AiService] ChatGPT memory deduplication completed successfully { userId: 1, conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6' }
+[STREAMING_DEBUG] Starting streaming request: {
+  conversationId: null,
+  hasContent: true,
+  timestamp: '2025-07-22T12:13:53.419Z'
+}
+[CONVERSATION_MANAGER] Created new conversation: {
+  conversationId: '9a8311f3-4979-4369-a861-82f035443654',
+  title: 'My fitness goal is to lose 20 pounds in the next 6...'
+}
+[MESSAGE_HANDLER] Saved user message: {
+  messageId: 'e1feecec-bfe2-424d-b0ba-f8a979f64c7f',
+  conversationId: '9a8311f3-4979-4369-a861-82f035443654'
+}
+[AiService] Using AI provider for streaming: openai, Model: gpt-4o 
+[AiService] [AiService] Starting ChatGPT memory deduplication processing {
+  userId: 1,
+  conversationId: '9a8311f3-4979-4369-a861-82f035443654',
+  messageLength: 111
+}
+[ChatContextService] Building chat context for conversation 9a8311f3-4979-4369-a861-82f035443654 with provider openai 
+[MemoryRetrievalService] getContextualMemories called for user 1, message: "My fitness goal is to lose 20 pounds in the next 6 months through a combination of cardio and strength training"
+[MemoryRetrievalService] Context built: "My fitness goal is to lose 20 pounds in the next 6 months through a combination of cardio and strength training"
+[MemoryRetrievalService] getContextualMemories called for user 1, message: "My fitness goal is to lose 20 pounds in the next 6 months through a combination of cardio and strength training"
+[MemoryRetrievalService] Context built: "My fitness goal is to lose 20 pounds in the next 6 months through a combination of cardio and strength training"
+2:13:53 PM [DEBUG] [memory] [MemoryRetrievalService] Contextual memories cache miss for user 1
+2:13:53 PM [DEBUG] [memory] [MemoryRetrievalService] Contextual memories cache miss for user 1
+[ChatContextService] Retrieved 4 relevant memories. 
+[ChatContextService] Filtered 0 total history messages to 0 for current session. 
+[ChatContextService] Built context with 2 messages. 
+[ChatContextService] Total image_url parts in final context: 0 
+[OpenAIProvider] Generating streaming chat response with model: gpt-4o { numMessages: 2 }
+[AiService] [AiService] ChatGPT memory deduplication completed successfully { userId: 1, conversationId: '9a8311f3-4979-4369-a861-82f035443654' }
+[OpenAIProvider] OpenAI streaming response completed 
+[MemoryOps] 2025-07-22T12:14:08.835Z - MemoryUsage {
+  conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+  memoriesCount: 4,
+  usedInResponse: true,
+  memoryIds: [
+    '265083ec-7a75-476e-8f17-57de437f25a4',
+    '2825dc15-814d-430c-91ad-6a3e2d30113c',
+    'ee70d385-fd79-4be5-b9d1-a1445c28e11e',
+    '74c31b28-6580-4120-8fd9-79d7d282630b'
+  ]
+}
+[MESSAGE_HANDLER] Saved AI message: {
+  messageId: '7c3c1071-9a9b-4cdc-a5ad-65dac91fa944',
+  conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+  responseLength: 1220
+}
+[NUTRITION_PROCESSING] Starting nutrition data extraction
+[NutritionInferenceService] Extracting nutrition data from AI response 
+[DateContextParser] Parsing date context from text { textLength: 1294 }
+[DateContextParser] No specific date context found, defaulting to current date 
+[NutritionInferenceService] Successfully parsed date context {
+  date: '2025-07-22T12:14:08.840Z',
+  confidence: 'low',
+  source: 'default'
+}
+[MemoryQuery] Getting memories for user 1, category: food_diet
+[MemoryQuery] Getting memories for user 1, category: food_diet
+[MemoryQuery] Getting memories for user 1, category: goals
+[NutritionInferenceService] Successfully extracted nutrition data {
+  calories: undefined,
+  confidence: 'medium',
+  source: 'ai_inferred',
+  foodItems: 4
+}
+[NUTRITION_PROCESSING] Nutrition data extracted: {
+  calories: undefined,
+  confidence: 'medium',
+  source: 'ai_inferred',
+  foodItems: 4
+}
+[CONVERSATION_MANAGER] Conversation timestamp updated: {
+  conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+  updateResult: [
+    {
+      id: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+      userId: 1,
+      title: 'I have a severe peanut allergy and need to avoid a...',
+      createdAt: 2025-07-22T14:13:35.272Z,
+      updatedAt: 2025-07-22T12:14:08.841Z
+    }
+  ],
+  newTimestamp: '2025-07-22T12:14:08.845Z'
+}
+[CONVERSATION_MANAGER] Updated conversation verified: {
+  conversationId: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+  dbRecord: {
+    id: 'f8c573cc-cd4a-4797-8cc7-2e12fcde76f6',
+    userId: 1,
+    title: 'I have a severe peanut allergy and need to avoid a...',
+    createdAt: 2025-07-22T14:13:35.272Z,
+    updatedAt: 2025-07-22T12:14:08.841Z
+  },
+  updatedAt: 2025-07-22T12:14:08.841Z
+}
+[OpenAIProvider] OpenAI streaming response completed 
+[MemoryOps] 2025-07-22T12:14:44.662Z - MemoryUsage {
+  conversationId: '9a8311f3-4979-4369-a861-82f035443654',
+  memoriesCount: 4,
+  usedInResponse: true,
+  memoryIds: [
+    '265083ec-7a75-476e-8f17-57de437f25a4',
+    '2825dc15-814d-430c-91ad-6a3e2d30113c',
+    'ee70d385-fd79-4be5-b9d1-a1445c28e11e',
+    '74c31b28-6580-4120-8fd9-79d7d282630b'
+  ]
+}
+[MESSAGE_HANDLER] Saved AI message: {
+  messageId: 'b060d775-c626-4b3f-ac2d-ed5d2bab3598',
+  conversationId: '9a8311f3-4979-4369-a861-82f035443654',
+  responseLength: 1894
+}
+[NUTRITION_PROCESSING] Starting nutrition data extraction
+[NutritionInferenceService] Extracting nutrition data from AI response 
+[DateContextParser] Parsing date context from text { textLength: 2006 }
+[NutritionInferenceService] Parsed date is outside reasonable range, using current date {
+  parsedDate: '2025-02-02T23:00:00.000Z',
+  currentDate: '2025-07-22T12:14:44.686Z'
+}
+[MemoryQuery] Getting memories for user 1, category: food_diet
+[MemoryQuery] Getting memories for user 1, category: food_diet
+[MemoryQuery] Getting memories for user 1, category: goals
+[NutritionInferenceService] Successfully extracted nutrition data {
+  calories: undefined,
+  confidence: 'low',
+  source: 'ai_inferred',
+  foodItems: 2
+}
+[NUTRITION_PROCESSING] Nutrition data extracted: {
+  calories: undefined,
+  confidence: 'low',
+  source: 'ai_inferred',
+  foodItems: 2
+}
+[CONVERSATION_MANAGER] Conversation timestamp updated: {
+  conversationId: '9a8311f3-4979-4369-a861-82f035443654',
+  updateResult: [
+    {
+      id: '9a8311f3-4979-4369-a861-82f035443654',
+      userId: 1,
+      title: 'My fitness goal is to lose 20 pounds in the next 6...',
+      createdAt: 2025-07-22T14:13:53.419Z,
+      updatedAt: 2025-07-22T12:14:44.686Z
+    }
+  ],
+  newTimestamp: '2025-07-22T12:14:44.690Z'
+}
+[CONVERSATION_MANAGER] Updated conversation verified: {
+  conversationId: '9a8311f3-4979-4369-a861-82f035443654',
+  dbRecord: {
+    id: '9a8311f3-4979-4369-a861-82f035443654',
+    userId: 1,
+    title: 'My fitness goal is to lose 20 pounds in the next 6...',
+    createdAt: 2025-07-22T14:13:53.419Z,
+    updatedAt: 2025-07-22T12:14:44.686Z
+  },
+  updatedAt: 2025-07-22T12:14:44.686Z
+}
+2:14:44 PM [DEBUG] [express] POST /api/messages/stream 200 (51274ms) (51274ms)
+[MemoryQuery] Getting optimized overview for user 1
+[Memory Overview API Performance] Duration: 0.13ms (Target: <100ms)
+2:14:58 PM [DEBUG] [express] GET /api/memories/overview 200 (0ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 20, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.15ms (Target: <100ms)
+2:15:03 PM [DEBUG] [express] GET /api/memories 200 (0ms)
+[PerformanceCore] Retrieved 3 memories in 12ms
+2:16:19 PM [DEBUG] [express] POST /api/memory/enhanced-retrieve 200 (68ms)
+[STREAMING_DEBUG] Starting streaming request: {
+  conversationId: null,
+  hasContent: true,
+  timestamp: '2025-07-22T12:16:45.554Z'
+}
+[CONVERSATION_MANAGER] Created new conversation: {
+  conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+  title: 'I prefer to workout early in the morning around 6 ...'
+}
+[MESSAGE_HANDLER] Saved user message: {
+  messageId: '2f18d86d-dff6-47fc-be52-e126b25db9f5',
+  conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff'
+}
+[AiService] Using AI provider for streaming: openai, Model: gpt-4o 
+[AiService] [AiService] Starting ChatGPT memory deduplication processing {
+  userId: 1,
+  conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+  messageLength: 84
+}
+[ChatContextService] Building chat context for conversation a157301c-6e68-4715-bf87-f1d4f9be45ff with provider openai 
+[MemoryRetrievalService] getContextualMemories called for user 1, message: "I prefer to workout early in the morning around 6 AM because I have more energy then"
+[MemoryRetrievalService] Context built: "I prefer to workout early in the morning around 6 AM because I have more energy then"
+[MemoryRetrievalService] getContextualMemories called for user 1, message: "I prefer to workout early in the morning around 6 AM because I have more energy then"
+[MemoryRetrievalService] Context built: "I prefer to workout early in the morning around 6 AM because I have more energy then"
+2:16:45 PM [DEBUG] [memory] [MemoryRetrievalService] Contextual memories cache miss for user 1
+2:16:45 PM [DEBUG] [memory] [MemoryRetrievalService] Contextual memories cache miss for user 1
+[ChatContextService] Retrieved 4 relevant memories. 
+[ChatContextService] Filtered 0 total history messages to 0 for current session. 
+[ChatContextService] Built context with 2 messages. 
+[ChatContextService] Total image_url parts in final context: 0 
+[OpenAIProvider] Generating streaming chat response with model: gpt-4o { numMessages: 2 }
+[AiService] [AiService] ChatGPT memory deduplication completed successfully { userId: 1, conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff' }
+[OpenAIProvider] OpenAI streaming response completed 
+[MemoryOps] 2025-07-22T12:17:14.736Z - MemoryUsage {
+  conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+  memoriesCount: 4,
+  usedInResponse: true,
+  memoryIds: [
+    '265083ec-7a75-476e-8f17-57de437f25a4',
+    '2825dc15-814d-430c-91ad-6a3e2d30113c',
+    'ee70d385-fd79-4be5-b9d1-a1445c28e11e',
+    '74c31b28-6580-4120-8fd9-79d7d282630b'
+  ]
+}
+[MESSAGE_HANDLER] Saved AI message: {
+  messageId: '311779bd-3e7f-420a-84f2-2ae16c6a2b04',
+  conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+  responseLength: 1073
+}
+[NUTRITION_PROCESSING] Starting nutrition data extraction
+[NutritionInferenceService] Extracting nutrition data from AI response 
+[DateContextParser] Parsing date context from text { textLength: 1158 }
+[NutritionInferenceService] Successfully parsed date context {
+  date: '2025-07-22T05:00:00.000Z',
+  confidence: 'medium',
+  source: 'inferred'
+}
+[MemoryQuery] Getting memories for user 1, category: food_diet
+[MemoryQuery] Getting memories for user 1, category: food_diet
+[MemoryQuery] Getting memories for user 1, category: goals
+[NutritionInferenceService] Successfully extracted nutrition data {
+  calories: undefined,
+  confidence: 'medium',
+  source: 'ai_inferred',
+  foodItems: 3
+}
+[NUTRITION_PROCESSING] Nutrition data extracted: {
+  calories: undefined,
+  confidence: 'medium',
+  source: 'ai_inferred',
+  foodItems: 3
+}
+[CONVERSATION_MANAGER] Conversation timestamp updated: {
+  conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+  updateResult: [
+    {
+      id: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+      userId: 1,
+      title: 'I prefer to workout early in the morning around 6 ...',
+      createdAt: 2025-07-22T14:16:45.554Z,
+      updatedAt: 2025-07-22T12:17:14.739Z
+    }
+  ],
+  newTimestamp: '2025-07-22T12:17:14.741Z'
+}
+[CONVERSATION_MANAGER] Updated conversation verified: {
+  conversationId: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+  dbRecord: {
+    id: 'a157301c-6e68-4715-bf87-f1d4f9be45ff',
+    userId: 1,
+    title: 'I prefer to workout early in the morning around 6 ...',
+    createdAt: 2025-07-22T14:16:45.554Z,
+    updatedAt: 2025-07-22T12:17:14.739Z
+  },
+  updatedAt: 2025-07-22T12:17:14.739Z
+}
+2:17:14 PM [DEBUG] [express] POST /api/messages/stream 200 (29190ms) (29190ms)
+[CacheService] Cache HIT for health data - userId: 1, range: 7days, count: 3
+[DatabaseStorage] Returning cached health data for user 1, range: 7days, count: 3
+2:21:47 PM [DEBUG] [express] GET /api/health-data 200 (2ms)
+2:21:47 PM [DEBUG] [express] GET /api/categories 304 (47ms)
+2:21:47 PM [DEBUG] [express] GET /api/files 304 (50ms)
+2:21:47 PM [DEBUG] [express] GET /api/settings 304 (60ms)
+[MemoryQuery] Getting quality metrics for user 1
+2:22:02 PM [DEBUG] [express] GET /api/memories/quality-metrics 304 (0ms)
+[MemoryQuery] Getting optimized overview for user 1
+[Memory Overview API Performance] Duration: 0.04ms (Target: <100ms)
+2:22:02 PM [DEBUG] [express] GET /api/memories/overview 304 (0ms)
+2:22:02 PM [DEBUG] [express] GET /api/settings 304 (22ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 20, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.44ms (Target: <100ms)
+2:22:02 PM [DEBUG] [express] GET /api/memories 304 (1ms)
+[CacheService] Cache HIT for health data - userId: 1, range: 7days, count: 3
+[DatabaseStorage] Returning cached health data for user 1, range: 7days, count: 3
+2:22:03 PM [DEBUG] [express] GET /api/health-data 200 (1ms)
+2:22:03 PM [DEBUG] [express] GET /api/files 304 (12ms)
+2:22:03 PM [DEBUG] [express] GET /api/categories 304 (14ms)
+[MemoryQuery] Getting quality metrics for user 1
+2:22:11 PM [DEBUG] [express] GET /api/memories/quality-metrics 304 (8ms)
+[MemoryQuery] Getting optimized overview for user 1
+[Memory Overview API Performance] Duration: 0.60ms (Target: <100ms)
+2:22:11 PM [DEBUG] [express] GET /api/memories/overview 304 (2ms)
+2:22:11 PM [DEBUG] [express] GET /api/settings 304 (33ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 20, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.27ms (Target: <100ms)
+2:22:11 PM [DEBUG] [express] GET /api/memories 304 (1ms)
+[CacheService] Cache HIT for health data - userId: 1, range: 7days, count: 3
+[DatabaseStorage] Returning cached health data for user 1, range: 7days, count: 3
+2:22:12 PM [DEBUG] [express] GET /api/health-data 200 (1ms)
+2:22:12 PM [DEBUG] [express] GET /api/files 304 (8ms)
+2:22:12 PM [DEBUG] [express] GET /api/categories 304 (8ms)
+[MemoryQuery] Getting optimized overview for user 1
+[Memory Overview API Performance] Duration: 0.52ms (Target: <100ms)
+2:27:13 PM [DEBUG] [express] GET /api/memories/overview 200 (1ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 20, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.27ms (Target: <100ms)
+2:27:24 PM [DEBUG] [express] GET /api/memories 200 (0ms)
+[PerformanceCore] Retrieved 3 memories in 7ms
+2:27:50 PM [DEBUG] [express] POST /api/memory/enhanced-retrieve 200 (7ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 5, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.13ms (Target: <100ms)
+2:28:12 PM [DEBUG] [express] GET /api/memories 200 (0ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 3, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.13ms (Target: <100ms)
+2:28:26 PM [DEBUG] [express] GET /api/memories 200 (0ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 3, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.13ms (Target: <100ms)
+2:28:36 PM [DEBUG] [express] GET /api/memories 200 (0ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 3, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.11ms (Target: <100ms)
+2:28:50 PM [DEBUG] [express] GET /api/memories 200 (1ms)
+[MemoryQuery] Getting paginated memories for user 1 { page: 1, limit: 2, offset: 0, category: undefined }
+[Memory API Performance] Paginated query: 0.17ms (Target: <100ms)
+2:29:18 PM [DEBUG] [express] GET /api/memories 200 (0ms)
+Closing database pool...

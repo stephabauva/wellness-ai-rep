@@ -1,7 +1,7 @@
 {
-  "lastGenerated": "2025-07-22T10:51:34.086Z",
+  "lastGenerated": "2025-07-22T12:03:52.495Z",
   "totalDomains": 17,
-  "totalDependencies": 186,
+  "totalDependencies": 187,
   "domainFiles": [
     {
       "domain": "app",
@@ -46,7 +46,7 @@
     {
       "domain": "unknown",
       "filename": "unknown-dependencies.json",
-      "fileCount": 2
+      "fileCount": 3
     },
     {
       "domain": "health/devices",

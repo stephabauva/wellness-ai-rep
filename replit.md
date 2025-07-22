@@ -26,11 +26,12 @@ This is a sophisticated AI-powered wellness chat application built with a modern
 
 ### Before Adding ANY New Code (Claude AI Responsibility)
 1. **ALWAYS run comprehensive architectural checks first**: `npm run check:all` (includes UI, visual, integration, async, filesize analysis) plus `node dependency-tracker.js`, `node malformed-import-detector.js`, and `node browser-console-error-detector.cjs`
-2. Ask: "Does this belong in shared/ or a specific domain?"
-3. Ask: "Can I enhance existing components vs creating new ones?"
-4. Ask: "Is this service necessary or can it be a simple function?"
-5. **Automatically validate**: Run arch-guard checks before implementing features
-6. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
+2. **Functional validation required**: `npm run validate:quick` to catch stub implementations and ensure database/API integrity
+3. Ask: "Does this belong in shared/ or a specific domain?"
+4. Ask: "Can I enhance existing components vs creating new ones?"
+5. Ask: "Is this service necessary or can it be a simple function?"
+6. **Automatically validate**: Run arch-guard checks before implementing features
+7. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
 
 ### Important References
 - **Architecture Guardian**: See .claude/commands/arch-guard.md
@@ -604,6 +605,17 @@ Changelog:
   - **Merge-Friendly**: Individual domain files prevent conflicts when different teams work on separate domains
   - **Updated Documentation**: Enhanced safe-refactor.md and replit.md with new dependency tracking approach
   - **Benefits**: Faster processing, better organization, reduced git conflicts, domain isolation
+
+- July 22, 2025. **Functional Validation System - Preventing Stub Implementation Issues**:
+  - **Problem Identified**: Previous refactoring left stub implementations returning empty arrays instead of actual database queries
+  - **Functional Validation Scripts**: Created 4 simple validation scripts in `scripts/` directory to catch stub implementations
+  - **Database Connectivity Validation**: `npm run validate:db` tests database connection and query execution
+  - **Service Method Validation**: `npm run validate:data` ensures service methods return actual data, not empty stubs
+  - **API Endpoint Validation**: `npm run validate:memory` tests memory API endpoints return expected data structures
+  - **Quick Validation Suite**: `npm run validate:quick` runs all functional validations with summary report
+  - **Defense System Integration**: Added functional validation to `npm run safe-refactor` and multi-layer defense system
+  - **Documentation Updates**: Enhanced CLAUDE.md, zapper.md, workit.md, and safe-refactor.md with functional validation instructions
+  - **Benefits**: Prevents stub implementation regressions, catches data flow issues, validates functional behavior beyond TypeScript compliance
 
 # User Preferences
 

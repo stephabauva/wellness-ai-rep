@@ -40,10 +40,16 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `./setup-dependency-hook.sh` - Install pre-commit dependency check hook
 - **Multi-Layer Defense System Commands**:
   - `npm run pre-commit` - Ports + imports + TypeScript validation (use before any commit)
-  - `npm run safe-refactor` - Dependencies + comprehensive architecture checks (use before refactoring)
+  - `npm run safe-refactor` - Dependencies + comprehensive architecture checks + functional validation (use before refactoring)
   - `npm run check:ports` - Port configuration validation 
   - `npm run check:imports` - Import path validation
   - `npm run check:dependencies` - Cross-domain dependency analysis
+- **Functional Validation Commands** (prevent stub implementation issues):
+  - `npm run validate:quick` - Quick functional health check (all validations)
+  - `npm run validate:db` - Database connectivity validation
+  - `npm run validate:data` - Memory service data validation (catch stub implementations)
+  - `npm run validate:memory` - Memory API endpoint validation
+  - `npm run validate:functional` - Full functional validation suite
 
 ### Architecture Patterns & Rules
 - **Modular routes**: Graduated size thresholds (300 ideal, 500 review, 800+ refactor)
@@ -63,14 +69,15 @@ This file provides guidance to Claude Code when working with this wellness AI ap
   - System map's guide : `.system-maps/optimized-complete-map-blue-original.md`
 
 ### Before Adding ANY New Code (Claude AI Responsibility) - Multi-Layer Defense Protocol
-1. **ALWAYS run multi-layer defense checks first**: `npm run pre-commit` + `npm run safe-refactor` to validate ports, imports, dependencies, and architecture
+1. **ALWAYS run multi-layer defense checks first**: `npm run pre-commit` + `npm run safe-refactor` to validate ports, imports, dependencies, architecture, and functional behavior
 2. **Mandatory safety sequence for ANY memory system changes**: `npm run pre-commit && npm run safe-refactor && npm run dev` (verify server startup)
-3. Ask: "Does this belong in shared/ or a specific domain?"
-4. Ask: "Can I enhance existing components vs creating new ones?"
-5. Ask: "Is this service necessary or can it be a simple function?"
-6. **Critical component check**: For Dialog/Modal components, immediately use custom HTML implementation instead of @shared/components/ui/dialog
-7. **Automatically validate**: Run arch-guard checks before implementing features
-8. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
+3. **Functional validation**: `npm run validate:quick` to catch stub implementations and data flow issues
+4. Ask: "Does this belong in shared/ or a specific domain?"
+5. Ask: "Can I enhance existing components vs creating new ones?"
+6. Ask: "Is this service necessary or can it be a simple function?"
+7. **Critical component check**: For Dialog/Modal components, immediately use custom HTML implementation instead of @shared/components/ui/dialog
+8. **Automatically validate**: Run arch-guard checks before implementing features
+9. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
 
 ### Replit Constraints (Critical)
 - **Do NOT Touch**: vite.config.ts, WebSocket handling, Build systems, Compression settings

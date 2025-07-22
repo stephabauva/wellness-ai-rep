@@ -11,8 +11,9 @@
 ```bash
 # Runs automatically when you use /zapper:
 npm run pre-commit                      # Defense Layer 1: Ports + imports + TypeScript
-npm run safe-refactor                   # Defense Layer 2: Dependencies + architecture
-node browser-console-error-detector.cjs # Defense Layer 3: Runtime error detection
+npm run safe-refactor                   # Defense Layer 2: Dependencies + architecture + functional validation
+npm run validate:quick                  # Defense Layer 3: Functional validation (catch stub implementations)
+node browser-console-error-detector.cjs # Defense Layer 4: Runtime error detection
 npm run check:all                       # UI, visual, integration, async, filesize analysis
 node system-map-tracker.js              # Documentation validation
 git status && git log --oneline -10     # Recent changes analysis
@@ -22,6 +23,8 @@ git status && git log --oneline -10     # Recent changes analysis
 - Port configuration validation (prevent startup failures)
 - Import resolution verification (catch missing modules)
 - Cross-domain dependency analysis (identify architectural issues)
+- **Functional validation** (database connectivity, service method integrity, API endpoint validation)
+- **Stub implementation detection** (catch methods returning empty arrays instead of actual data)
 - Runtime error pattern detection (browser console analysis)
 - UI component integrity check (prop mismatches, rendering issues)
 - Visual regression testing (layout conflicts, z-index issues)
@@ -61,6 +64,8 @@ git status && git log --oneline -10     # Recent changes analysis
    - Route handler error?
    - Middleware conflict?
    - Database query issue?
+   - **Stub implementation** (methods returning empty data instead of actual queries)?
+   - **Service method integrity** (methods not executing database queries)?
    - Session/auth problem?
    
 3. **Integration**
@@ -224,6 +229,12 @@ npx vitest            # Tests passing?
 npm run build         # Build successful?
 npm run check:all      # Comprehensive component analysis (UI, visual, integration, async, filesize)
 node browser-console-error-detector.cjs  # Browser runtime errors?
+
+# Functional validation (catch stub implementations)
+npm run validate:quick    # Quick functional health check
+npm run validate:db       # Database connectivity validation
+npm run validate:data     # Service method integrity (catch stub methods)
+npm run validate:memory   # Memory API endpoint validation
 
 # Dependency check
 npm ls                # Dependency tree

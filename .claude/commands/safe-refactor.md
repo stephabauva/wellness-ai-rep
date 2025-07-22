@@ -21,13 +21,21 @@ Refactor large files using graduated thresholds in the wellness AI app while pre
    ```bash
    # Runs automatically when you use /safe-refactor:
    npm run pre-commit        # Ports + imports + TypeScript  
-   npm run safe-refactor     # Dependencies + architecture checks
+   npm run safe-refactor     # Dependencies + architecture + functional validation
    npm run dev --validate    # Server startup verification
    ```
 
-2. **Analyze current file structure**: Map all imports, exports, and dependencies (automatic)
-3. **Test current functionality**: Validate all features work before changes (automatic)
-4. **Create backup state**: Auto-stash current state as recovery point
+2. **Functional validation** (prevents stub implementation issues):
+   ```bash
+   npm run validate:quick    # Quick functional health check
+   npm run validate:db       # Database connectivity validation  
+   npm run validate:data     # Service method validation (catch stub methods)
+   npm run validate:memory   # API endpoint validation
+   ```
+
+3. **Analyze current file structure**: Map all imports, exports, and dependencies (automatic)
+4. **Test current functionality**: Validate all features work before changes (automatic)
+5. **Create backup state**: Auto-stash current state as recovery point
 
 **Note**: The dependency tracker now generates split dependency maps in `dependency-maps/` instead of one large `dependency-map.json` file. This reduces merge conflicts and improves maintainability.
 
@@ -56,6 +64,7 @@ For each extraction (ALL AUTOMATIC):
 3. **Update imports** in original file
 4. **Auto-validation sequence** (runs automatically): 
    - Defense system validation (ports, imports, TypeScript)
+   - Functional validation (database connectivity, service methods, API endpoints)
    - Server startup verification
    - Architecture integrity check
    - Runtime error detection

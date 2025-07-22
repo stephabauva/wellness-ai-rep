@@ -14,7 +14,8 @@
   ```bash
   # Runs automatically when you use /workit:
   npm run pre-commit      # Ports + imports + TypeScript
-  npm run safe-refactor   # Dependencies + architecture  
+  npm run safe-refactor   # Dependencies + architecture + functional validation
+  npm run validate:quick  # Functional validation (database, services, APIs)
   npm run dev --validate  # Server startup verification
   ```
 
@@ -54,12 +55,15 @@
 ### Testing During Development
 - `npx vitest` - Run affected tests frequently
 - `npx vitest [file]` - Test specific functionality immediately
+- `npm run validate:quick` - Quick functional validation (database, services, APIs)
+- `npm run validate:data` - Validate service methods return actual data (catch stub implementations)
 - `npm run check:ui` - Check UI components for prop mismatches and rendering issues
 - `npm run check:visual` - Test component rendering, modal visibility, z-index conflicts, and layout issues
 - `npm run check:integration` - Generate user interaction tests and identify missing test coverage for critical flows
 - `npm run check:all` - Run all component analysis checks (ui, visual, integration, async, filesize)
 - **Unit tests**: Every new function, especially utilities
 - **Integration tests**: API endpoints with realistic data
+- **Functional tests**: Database queries, service method integrity, API response validation
 - **Performance tests**: Memory operations, file processing
 - **Component tests**: React components with real user interactions
 
@@ -97,7 +101,8 @@
 
 ```bash
 # Runs automatically when you use /workit (comprehensive defense):
-npm run safe-refactor          # Full architecture + dependency analysis  
+npm run safe-refactor          # Full architecture + dependency + functional validation
+npm run validate:functional    # Complete functional validation suite  
 npm run check:all              # UI, visual, integration, async, filesize
 npm run build                  # Production build verification
 node browser-console-error-detector.cjs  # Runtime error detection
@@ -106,6 +111,8 @@ node browser-console-error-detector.cjs  # Runtime error detection
 
 **Auto-execution includes**:
 - Defense system full sweep (ports, imports, TypeScript, dependencies)
+- **Functional validation** (database connectivity, service method integrity, API endpoint validation)
+- **Stub implementation detection** (ensure methods return actual data, not empty arrays)
 - Comprehensive component analysis (UI integrity, visual regression, integration tests)  
 - Server startup verification with health check
 - Production build verification

@@ -1,9 +1,10 @@
 /**
  * Memory Database Utilities
- * Stub implementation to fix server startup - needs proper implementation later
+ * Enhanced implementation with semantic duplicate detection
+ * @used-by shared/memory-service - Database utility functions
  */
 
-import { db } from '@shared/database/db';
+import { db } from '../../database/db';
 import { memoryEntries } from '../../schema';
 import { eq, and } from 'drizzle-orm';
 

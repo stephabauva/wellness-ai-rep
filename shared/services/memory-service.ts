@@ -9,7 +9,7 @@
  */
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { db } from "@shared/database/db";
+import { db } from "../database/db";
 import { 
   memoryEntries, 
   memoryTriggers, 
@@ -21,11 +21,11 @@ import {
   type InsertMemoryAccessLog,
   type MemoryEntry,
   type MemoryCategory
-} from '../../shared/schema';
+} from '../schema';
 import { eq, desc, and, sql, gt } from 'drizzle-orm';
-import { cacheService } from "@shared/services/cache-service";
+import { cacheService } from "./cache-service";
 import { goMemoryService } from '../../server/services/go-memory-service';
-import { logger } from "@shared/services/logger-service";
+import { logger } from "./logger-service";
 import {
   generateSemanticHash,
   cosineSimilaritySync,
@@ -52,6 +52,7 @@ import { MemoryLoggingUtils } from './memory/logging-utils';
 import { MemoryQueryOperations } from './memory/query-operations';
 import { MemorySimilarityOperations } from './memory/similarity-operations';
 import { MemoryMessageProcessor } from './memory/message-processor';
+import { MemoryServiceFactory, type MemoryServiceDependencies } from './memory/service-factory';
 
 
 class MemoryService {
@@ -76,70 +77,31 @@ class MemoryService {
   private messageProcessor: MemoryMessageProcessor;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    const dependencies = MemoryServiceFactory.createDependencies();
     
-    this.google = new GoogleGenerativeAI(
-      process.env.GOOGLE_API_KEY || ''
-    );
+    // Assign all dependencies
+    this.openai = dependencies.openai;
+    this.google = dependencies.google;
+    this.memoryCache = dependencies.memoryCache;
+    this.aiDetector = dependencies.aiDetector;
+    this.embeddingService = dependencies.embeddingService;
+    this.qualityService = dependencies.qualityService;
+    this.retrievalService = dependencies.retrievalService;
+    this.backgroundProcessingManager = dependencies.backgroundProcessingManager;
+    this.contentValidator = dependencies.contentValidator;
+    this.cacheManager = dependencies.cacheManager;
+    this.performanceUtils = dependencies.performanceUtils;
+    this.hashUtils = dependencies.hashUtils;
+    this.databaseOps = dependencies.databaseOps;
+    this.loggingUtils = dependencies.loggingUtils;
+    this.queryOps = dependencies.queryOps;
+    this.similarityOps = dependencies.similarityOps;
+    this.messageProcessor = dependencies.messageProcessor;
     
-    // Initialize cache manager
-    this.memoryCache = new MemoryCache();
+    // Fix the database operations binding
+    this.databaseOps = new MemoryDatabaseOperations();
     
-    // Initialize AI detector
-    this.aiDetector = new AIMemoryDetector(this.openai);
-    
-    // Initialize embedding service
-    this.embeddingService = new EmbeddingService(this.openai);
-    
-    // Initialize quality metrics service
-    this.qualityService = new MemoryQualityService();
-    
-    // Initialize memory retrieval service
-    this.retrievalService = new MemoryRetrievalService(this.embeddingService, this.memoryCache);
-    
-    // Initialize background processing manager
-    this.backgroundProcessingManager = new BackgroundProcessingManager(
-      this.memoryCache,
-      this.aiDetector,
-      this.embeddingService
-    );
-    
-    // Initialize content validator
-    this.contentValidator = new MemoryContentValidator();
-    
-    // Initialize cache manager
-    this.cacheManager = new MemoryCacheManager(this.memoryCache);
-    
-    // Initialize performance utilities
-    this.performanceUtils = new MemoryPerformanceUtils(
-      this.backgroundProcessingManager,
-      this.cacheManager
-    );
-    
-    // Initialize hash utilities
-    this.hashUtils = new MemoryHashUtils();
-    
-    // Initialize database operations
-    this.databaseOps = new MemoryDatabaseOperations(
-      this.cacheManager,
-      this.generateEmbedding.bind(this)
-    );
-    
-    // Initialize logging utilities
-    this.loggingUtils = new MemoryLoggingUtils();
-    
-    // Initialize query operations
-    this.queryOps = new MemoryQueryOperations(this.qualityService);
-    
-    // Initialize similarity operations
-    this.similarityOps = new MemorySimilarityOperations(
-      this.cacheManager,
-      this.backgroundProcessingManager
-    );
-    
-    // Initialize message processor
+    // Re-initialize message processor with updated database operations
     this.messageProcessor = new MemoryMessageProcessor(
       this.contentValidator,
       this.cacheManager,

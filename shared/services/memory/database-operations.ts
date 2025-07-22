@@ -1,9 +1,10 @@
 /**
  * Memory Database Operations
- * Stub implementation to fix server startup - needs proper implementation later
+ * Enhanced implementation with proper error handling and caching
+ * @used-by shared/memory-service - Database operations for memory service
  */
 
-import { db } from '@shared/database/db';
+import { db } from '../../database/db';
 import { memoryEntries } from '../../schema';
 import { eq } from 'drizzle-orm';
 

@@ -47,6 +47,8 @@ import { getCachedSimilarityWithFallback } from './memory/cache-utils';
 import { checkSemanticDuplicate } from './memory/database-utils';
 import { MemoryPerformanceUtils } from './memory/performance-utils';
 import { MemoryHashUtils } from './memory/hash-utils';
+import { MemoryDatabaseOperations } from './memory/database-operations';
+import { MemoryLoggingUtils } from './memory/logging-utils';
 
 
 class MemoryService {
@@ -64,6 +66,8 @@ class MemoryService {
   private cacheManager: MemoryCacheManager;
   private performanceUtils: MemoryPerformanceUtils;
   private hashUtils: MemoryHashUtils;
+  private databaseOps: MemoryDatabaseOperations;
+  private loggingUtils: MemoryLoggingUtils;
 
   constructor() {
     this.openai = new OpenAI({
@@ -110,6 +114,15 @@ class MemoryService {
     
     // Initialize hash utilities
     this.hashUtils = new MemoryHashUtils();
+    
+    // Initialize database operations
+    this.databaseOps = new MemoryDatabaseOperations(
+      this.cacheManager,
+      this.generateEmbedding.bind(this)
+    );
+    
+    // Initialize logging utilities
+    this.loggingUtils = new MemoryLoggingUtils();
   }
 
 
@@ -197,27 +210,7 @@ class MemoryService {
       keywords?: string[];
     }
   ): Promise<MemoryEntry | null> {
-    try {
-      const embedding = await this.generateEmbedding(content);
-      
-      const memoryData: InsertMemoryEntry = {
-        userId,
-        content,
-        category: options.category,
-        labels: options.labels || [],
-        importanceScore: options.importance_score,
-        keywords: options.keywords || [],
-        embedding: JSON.stringify(embedding),
-        sourceConversationId: options.sourceConversationId || null,
-        sourceMessageId: options.sourceMessageId || null,
-      };
-
-      const [memory] = await db.insert(memoryEntries).values(memoryData).returning();
-      return memory;
-    } catch (error) {
-      console.error('Error saving memory entry:', error);
-      return null;
-    }
+    return this.databaseOps.saveMemoryEntry(userId, content, options);
   }
 
   // Calculate cosine similarity between two vectors
@@ -319,31 +312,7 @@ class MemoryService {
     conversationId: string, 
     usedInResponse: boolean = true
   ): Promise<void> {
-    try {
-      const accessLogs: InsertMemoryAccessLog[] = memories.map(memory => ({
-        memoryEntryId: memory.id,
-        conversationId: conversationId || null,
-        relevanceScore: memory.relevanceScore,
-        usedInResponse,
-      }));
-
-      if (accessLogs.length > 0) {
-        await db.insert(memoryAccessLog).values(accessLogs);
-
-        // Update access count and last accessed timestamp
-        for (const memory of memories) {
-          await db
-            .update(memoryEntries)
-            .set({ 
-              accessCount: sql`${memoryEntries.accessCount} + 1`,
-              lastAccessed: new Date()
-            })
-            .where(eq(memoryEntries.id, memory.id));
-        }
-      }
-    } catch (error) {
-      logger.error('Error logging memory usage', error as Error, { service: 'memory' });
-    }
+    return this.loggingUtils.logMemoryUsage(memories, conversationId, usedInResponse);
   }
 
   // Build system prompt with relevant memories
@@ -582,28 +551,7 @@ class MemoryService {
 
   // Tier 2 C: Delete memory with optimized cache invalidation
   async deleteMemory(memoryId: string, userId: number): Promise<boolean> {
-    try {
-      const [deleted] = await db
-        .update(memoryEntries)
-        .set({ isActive: false })
-        .where(and(
-          eq(memoryEntries.id, memoryId),
-          eq(memoryEntries.userId, userId)
-        ))
-        .returning();
-
-      if (deleted) {
-        // Clear user cache
-        this.cacheManager.clearUserCache(userId);
-        
-        logger.debug(`Memory ${memoryId} marked as inactive and cache cleared`, { service: 'memory' });
-      }
-
-      return !!deleted;
-    } catch (error) {
-      logger.error('Error deleting memory', error as Error, { service: 'memory' });
-      return false;
-    }
+    return this.databaseOps.deleteMemory(memoryId, userId);
   }
 
   // Get memory service performance stats

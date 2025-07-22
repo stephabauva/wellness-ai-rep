@@ -29,6 +29,24 @@ export function useMemoryActions({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Duplicate check mutation for pre-submission validation
+  const checkDuplicatesMutation = useMutation({
+    mutationFn: async (data: ManualMemoryFormData) => {
+      const importanceMap = { low: 0.3, medium: 0.6, high: 0.9 };
+      const importanceScore = importanceMap[data.importance];
+
+      return apiRequest("/api/memories/check-duplicates", "POST", {
+        content: data.content,
+        category: data.category,
+        importance: importanceScore,
+      });
+    },
+    onError: (error: any) => {
+      console.error('[Duplicate Check] Error:', error);
+      // Don't show error toast - parent component will handle graceful fallback
+    }
+  });
+
   // Manual memory creation mutation with smart defaults tracking and performance monitoring
   const createManualMemoryMutation = useMutation({
     mutationFn: async (data: ManualMemoryFormData) => {
@@ -245,6 +263,7 @@ export function useMemoryActions({
     deleteMemoryMutation,
     editMemoryMutation,
     bulkDeleteMutation,
+    checkDuplicatesMutation,
     
     // Helper functions
     handleDeleteMemory,

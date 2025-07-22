@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@shared/components/ui/use-toast";
 import { useVoiceHandlers } from "../hooks/memory/useVoiceHandlers";
@@ -69,10 +69,55 @@ export default function MemorySection() {
     setEditingMemoryContent,
   } = useMemoryEdit();
 
-  // Handle form submission from MemoryForm component
-  const handleMemoryFormSubmit = (data: ManualMemoryFormData) => {
-    createManualMemoryMutation.mutate(data);
-    setIsManualEntryOpen(false);
+  // Handle form submission from MemoryForm component with duplicate detection
+  const handleMemoryFormSubmit = async (data: ManualMemoryFormData) => {
+    try {
+      // First check for duplicates
+      const duplicateCheck = await checkDuplicatesMutation.mutateAsync(data);
+      
+      if (duplicateCheck.hasDuplicates && duplicateCheck.similarMemories.length > 0) {
+        // Show duplicate notification toast with action buttons
+        toast({
+          title: "Similar Memory Found",
+          description: `Found ${duplicateCheck.similarMemories.length} similar memory. Do you want to continue?`,
+          action: (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  // User chose to save anyway
+                  createManualMemoryMutation.mutate(data);
+                  setIsManualEntryOpen(false);
+                }}
+                className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
+              >
+                Save Anyway
+              </button>
+              <button
+                onClick={() => {
+                  // User chose to cancel
+                  toast({
+                    title: "Cancelled",
+                    description: "Memory creation cancelled. You can edit and try again.",
+                  });
+                }}
+                className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          )
+        });
+      } else {
+        // No duplicates found, proceed with creation
+        createManualMemoryMutation.mutate(data);
+        setIsManualEntryOpen(false);
+      }
+    } catch (error) {
+      console.warn('[Duplicate Check] Failed, proceeding with creation:', error);
+      // Fallback: proceed with creation if duplicate check fails
+      createManualMemoryMutation.mutate(data);
+      setIsManualEntryOpen(false);
+    }
   };
 
   // Optimized overview query - lightweight, runs once on mount
@@ -148,6 +193,7 @@ export default function MemorySection() {
     deleteMemoryMutation,
     editMemoryMutation,
     bulkDeleteMutation,
+    checkDuplicatesMutation,
     handleDeleteMemory,
     handleEditMemory,
     handleBulkDelete

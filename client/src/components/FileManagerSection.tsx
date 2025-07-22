@@ -4,11 +4,12 @@ import { RotateCcw, FileText as DefaultFileIcon, QrCode, X, Download } from 'luc
 
 import { Skeleton } from "@shared/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardContent } from '@shared/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/components/ui/dialog';
+// Removed problematic Dialog import - using custom modal implementation
 import { Button } from '@shared/components/ui/button';
 import { Badge } from '@shared/components/ui/badge';
 import { Checkbox } from "@shared/components/ui/checkbox";
 import { cn } from '@shared';
+import ErrorBoundary from './ErrorBoundary';
 
 // Import hooks
 import { useFileApi } from '@/hooks/useFileApi';
@@ -284,66 +285,103 @@ const FileManagerSection: React.FC = () => {
             </div>
           )}
 
-          <FileListComponent
-            files={activeFiles}
-            selectedFiles={selectedFiles}
-            onSelectFile={handleSelectFile}
-            onSelectAll={() => handleSelectAll(activeFiles)}
-            viewMode={viewMode}
-            categories={categories}
-          />
+          <ErrorBoundary componentName="FileList" fallbackComponent={
+            <div className="bg-red-50 dark:bg-red-900/20 p-8 rounded-xl text-center">
+              <p className="text-red-600 dark:text-red-400">File list could not load. Please refresh to try again.</p>
+            </div>
+          }>
+            <FileListComponent
+              files={activeFiles}
+              selectedFiles={selectedFiles}
+              onSelectFile={handleSelectFile}
+              onSelectAll={() => handleSelectAll(activeFiles)}
+              viewMode={viewMode}
+              categories={categories}
+            />
+          </ErrorBoundary>
         </div>
       </div>
 
-      {/* QR Code Modal */}
-      <Dialog open={showQRCode} onOpenChange={setShowQRCode} modal={true}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5" />
-              Share Files via QR Code
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground text-center">
-              Scan this QR code with any device to download the selected files
-            </div>
-            {qrCodeData && (
-              <div className="flex justify-center">
-                <img 
-                  src={qrCodeData} 
-                  alt="QR Code for file sharing" 
-                  className="border rounded-lg"
-                />
-              </div>
-            )}
-            <div className="text-xs text-muted-foreground text-center space-y-1">
-              <p>• Single file: Direct download link</p>
-              <p>• Multiple files: JSON data with all download links</p>
-              <p>• Files will be downloaded to the device's Downloads folder</p>
-            </div>
-            <div className="flex justify-center">
-              <Button variant="outline" onClick={() => setShowQRCode(false)}>
-                <X className="h-4 w-4 mr-2" />
-                Close
-              </Button>
+      {/* Custom QR Code Modal - Replaced problematic Dialog component */}
+      {showQRCode && (
+        <ErrorBoundary componentName="QRCodeModal" fallbackComponent={
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md mx-4 text-center">
+              <p className="text-red-600 dark:text-red-400 mb-4">QR Code could not be generated</p>
+              <Button onClick={() => setShowQRCode(false)}>Close</Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        }>
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowQRCode(false)}
+          >
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md mx-4 relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <QrCode className="h-5 w-5" />
+                  Share Files via QR Code
+                </h3>
+              </div>
+              
+              {/* Modal Content */}
+              <div className="space-y-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                  Scan this QR code with any device to download the selected files
+                </div>
+                {qrCodeData && (
+                  <div className="flex justify-center">
+                    <img 
+                      src={qrCodeData} 
+                      alt="QR Code for file sharing" 
+                      className="border rounded-lg"
+                    />
+                  </div>
+                )}
+                <div className="text-xs text-gray-500 dark:text-gray-400 text-center space-y-1">
+                  <p>• Single file: Direct download link</p>
+                  <p>• Multiple files: JSON data with all download links</p>
+                  <p>• Files will be downloaded to the device's Downloads folder</p>
+                </div>
+                <div className="flex justify-center">
+                  <Button variant="outline" onClick={() => setShowQRCode(false)}>
+                    <X className="h-4 w-4 mr-2" />
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ErrorBoundary>
+      )}
 
       {/* File Upload Modal */}
-      <FileUploadDialog
-        isOpen={isUploadDialogOpen}
-        onClose={() => {
-          setIsUploadDialogOpen(false);
-        }}
-        onUploadSuccess={() => {
-          refetchFiles();
-          // Optionally, you might want to clear selection or reset active tab here
-          // depending on desired UX after upload.
-        }}
-      />
+      <ErrorBoundary componentName="FileUploadDialog" fallbackComponent={
+        isUploadDialogOpen ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md mx-4 text-center">
+              <p className="text-red-600 dark:text-red-400 mb-4">File upload dialog could not load</p>
+              <Button onClick={() => setIsUploadDialogOpen(false)}>Close</Button>
+            </div>
+          </div>
+        ) : null
+      }>
+        <FileUploadDialog
+          isOpen={isUploadDialogOpen}
+          onClose={() => {
+            setIsUploadDialogOpen(false);
+          }}
+          onUploadSuccess={() => {
+            refetchFiles();
+            // Optionally, you might want to clear selection or reset active tab here
+            // depending on desired UX after upload.
+          }}
+        />
+      </ErrorBoundary>
 
       {/* Floating Action Button for Upload */}
       <FloatingActionButton

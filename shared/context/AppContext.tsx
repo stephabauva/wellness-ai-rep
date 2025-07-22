@@ -104,7 +104,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (userSettings) {
-      console.log("[AppContext] User settings loaded:", userSettings);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] User settings loaded:", userSettings);
+      }
       setIsSettingsLoaded(true);
     }
   }, [userSettings]);
@@ -112,7 +114,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Priority loading logic - implement staggered loading after settings are ready
   useEffect(() => {
     if (isSettingsLoaded && !isLoadingSettings) {
-      console.log("[AppContext] Starting staggered section loading...");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] Starting staggered section loading...");
+      }
       
       // Phase 1: Chat is already loaded immediately
       // Phase 2: Load memory overview after 200ms (lightweight)
@@ -155,11 +159,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Message Loading useEffect - CHATGPT-STYLE PERFORMANCE FIX
   useEffect(() => {
-    console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "isStreamingActive:", isStreamingActive, "activeMessages.length:", activeMessages.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[AppContext useEffect messages] Running. currentConversationId:", currentConversationId, "newlyCreatedConvId:", newlyCreatedConvId, "isStreamingActive:", isStreamingActive, "activeMessages.length:", activeMessages.length);
+    }
     
     // CHATGPT-STYLE FIX 1: Skip ALL loading during streaming to prevent reload flickering
     if (isStreamingActive) {
-      console.log("[AppContext] CHATGPT-STYLE: Streaming active - preserving current state");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] CHATGPT-STYLE: Streaming active - preserving current state");
+      }
       setIsLoadingMessages(false);
       return;
     }
@@ -173,7 +181,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       );
       
       if (hasRealMessages || activeMessages.length > 1) {
-        console.log("[AppContext] CHATGPT-STYLE: Preserving", activeMessages.length, "messages - no reload needed");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("[AppContext] CHATGPT-STYLE: Preserving", activeMessages.length, "messages - no reload needed");
+        }
         setIsLoadingMessages(false);
         if (newlyCreatedConvId) {
           setNewlyCreatedConvId(null);
@@ -192,7 +202,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     );
 
     if (!shouldLoadFromDatabase) {
-      console.log("[AppContext] CHATGPT-STYLE: No database load needed");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] CHATGPT-STYLE: No database load needed");
+      }
       setIsLoadingMessages(false);
       if (newlyCreatedConvId) {
         setNewlyCreatedConvId(null);
@@ -212,7 +224,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // This prevents the visible reload that causes flickering
       const currentConvMessages = activeMessages.filter(msg => msg.id !== "welcome");
       if (currentConvMessages.length > 0) {
-        console.log("[AppContext] CRITICAL FIX: Conversation has existing messages, preventing database reload to eliminate flickering");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("[AppContext] CRITICAL FIX: Conversation has existing messages, preventing database reload to eliminate flickering");
+        }
         setIsLoadingMessages(false);
         return;
       }
@@ -234,7 +248,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               type: att.fileType || att.type || 'application/octet-stream'
             })) || undefined
           }));
-          console.log("[AppContext useEffect messages] Fetched initial messages, about to call setActiveMessages. Count:", formattedMessages.length);
+          if (process.env.NODE_ENV === 'development') {
+            console.log("[AppContext useEffect messages] Fetched initial messages, about to call setActiveMessages. Count:", formattedMessages.length);
+          }
           setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
         } else {
           console.error("[AppContext] Error fetching initial messages:", response.status, response.statusText);
@@ -251,11 +267,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // CHATGPT-STYLE: Completely eliminate database reloads after streaming
     // Only load messages if we truly need to (new conversation with no messages)
     if (currentConversationId && activeMessages.length === 0) {
-      console.log("[AppContext] CHATGPT-STYLE: Loading messages for conversation with no messages");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] CHATGPT-STYLE: Loading messages for conversation with no messages");
+      }
       loadConversationMessages();
     } else if (currentConversationId === null && activeMessages.length > 1) {
       // Handle welcome message for null conversation (but preserve if we have messages)
-      console.log("[AppContext] CHATGPT-STYLE: Resetting to welcome message for null conversation");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] CHATGPT-STYLE: Resetting to welcome message for null conversation");
+      }
       setActiveMessages([welcomeMessage]);
       setIsLoadingMessages(false);
     } else if (currentConversationId === null && activeMessages.length === 0) {
@@ -263,7 +283,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setActiveMessages([welcomeMessage]);
       setIsLoadingMessages(false);
     } else {
-      console.log("[AppContext] CHATGPT-STYLE: Preserving", activeMessages.length, "messages - no reload needed");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] CHATGPT-STYLE: Preserving", activeMessages.length, "messages - no reload needed");
+      }
       setIsLoadingMessages(false);
     }
   }, [currentConversationId, newlyCreatedConvId]);
@@ -279,7 +301,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         aiModel: aiModel || appSettings.aiModel,
         automaticModelSelection: automaticModelSelection ?? appSettings.automaticModelSelection
       };
-      console.log("[AppContext mutationFn] Sending to /api/messages. Request Body:", JSON.stringify(requestBody, null, 2));
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext mutationFn] Sending to /api/messages. Request Body:", JSON.stringify(requestBody, null, 2));
+      }
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -292,11 +316,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-      console.log("[AppContext mutationFn] Response from /api/messages:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext mutationFn] Response from /api/messages:", data);
+      }
       return data;
     },
     onMutate: async (variables) => {
-      console.log("[AppContext onMutate] Setting optimistic message");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext onMutate] Setting optimistic message");
+      }
       const optimisticMessage: Message = {
         id: `temp-${Date.now()}`,
         content: variables.content,
@@ -311,7 +339,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       return { optimisticMessage };
     },
     onSuccess: (data, variables, context) => {
-      console.log("[AppContext onSuccess] Received server data:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext onSuccess] Received server data:", data);
+      }
       setActiveMessages(prevMessages => {
         const filteredMessages = context?.optimisticMessage
           ? prevMessages.filter(msg => msg.id !== context.optimisticMessage!.id)
@@ -342,15 +372,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return [...filteredMessages, ...newMessagesFromServer].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       });
       if (data.conversationId && currentConversationId !== data.conversationId) {
-        console.log("[AppContext sendMessage onSuccess] Changing currentConversationId from", currentConversationId, "to:", data.conversationId);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("[AppContext sendMessage onSuccess] Changing currentConversationId from", currentConversationId, "to:", data.conversationId);
+        }
         setCurrentConversationIdState(data.conversationId);
       }
       // Always invalidate conversations query to refresh history after ANY message
-      console.log('[QUERY_INVALIDATION_DEBUG] Invalidating conversations query after message:', {
-        conversationId: data.conversationId,
-        isNewConversation: variables.conversationId === null,
-        timestamp: new Date().toISOString()
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[QUERY_INVALIDATION_DEBUG] Invalidating conversations query after message:', {
+          conversationId: data.conversationId,
+          isNewConversation: variables.conversationId === null,
+          timestamp: new Date().toISOString()
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
       
       if (variables.conversationId === null && data.conversationId) {
@@ -379,27 +413,33 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   const selectConversationHandler = useCallback((id: string | null) => {
-    console.log("[AppContext selectConversationHandler] Setting currentConversationId to:", id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[AppContext selectConversationHandler] Setting currentConversationId to:", id);
+    }
     
     // Only update if the conversation ID is actually different
     if (id !== currentConversationId) {
       setCurrentConversationIdState(id);
       
       if (id) {
-        console.log("[AppContext selectConversationHandler] New conversation detected, clearing messages and loading");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("[AppContext selectConversationHandler] New conversation detected, clearing messages and loading");
+        }
         // Clear messages immediately to show loading state
         setActiveMessages([]);
         setIsLoadingMessages(true);
         // DON'T set newlyCreatedConvId for existing conversations
         setNewlyCreatedConvId(null);
       }
-    } else {
+    } else if (process.env.NODE_ENV === 'development') {
       console.log("[AppContext selectConversationHandler] Same conversation ID, no update needed");
     }
   }, [currentConversationId]);
 
   const newChatHandler = useCallback(() => {
-    console.log("[AppContext newChatHandler] Resetting to new chat");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[AppContext newChatHandler] Resetting to new chat");
+    }
     setCurrentConversationIdState(null);
     setActiveMessages([welcomeMessage]);
     setNewlyCreatedConvId(null);
@@ -411,14 +451,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [sendMessageMutation]);
 
   const refreshMessagesHandler = useCallback(async () => {
-    console.log("[AppContext] Manual refresh triggered for conversation:", currentConversationId);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[AppContext] Manual refresh triggered for conversation:", currentConversationId);
+    }
     if (!currentConversationId) {
-      console.log("[AppContext] No currentConversationId, skipping refresh");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] No currentConversationId, skipping refresh");
+      }
       return;
     }
     
     try {
-      console.log("[AppContext] Clearing newlyCreatedConvId before refresh");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[AppContext] Clearing newlyCreatedConvId before refresh");
+      }
       setNewlyCreatedConvId(null);
       
       let attempt = 0;
@@ -426,15 +472,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
       while (attempt < maxAttempts) {
         try {
-          console.log(`[AppContext] Refresh attempt ${attempt + 1}, URL: /api/conversations/${currentConversationId}/messages`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[AppContext] Refresh attempt ${attempt + 1}, URL: /api/conversations/${currentConversationId}/messages`);
+          }
           const response = await fetch(`/api/conversations/${currentConversationId}/messages?_t=${Date.now()}&attempt=${attempt}`);
-          console.log(`[AppContext] Response status: ${response.status}, ok: ${response.ok}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[AppContext] Response status: ${response.status}, ok: ${response.ok}`);
+          }
           
           if (response.ok) {
             const convMessages = await response.json();
-            console.log("[AppContext] Raw API response:", convMessages);
+            if (process.env.NODE_ENV === 'development') {
+              console.log("[AppContext] Raw API response:", convMessages);
+            }
             const messagesArray = Array.isArray(convMessages) ? convMessages : [];
-            console.log("[AppContext] Messages array length:", messagesArray.length);
+            if (process.env.NODE_ENV === 'development') {
+              console.log("[AppContext] Messages array length:", messagesArray.length);
+            }
             
             if (messagesArray.length > 0) {
               const formattedMessages: Message[] = messagesArray.map((msg: any) => ({
@@ -448,7 +502,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 })) || undefined
               }));
               
-              console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
+              if (process.env.NODE_ENV === 'development') {
+                console.log("[AppContext] Manual refresh completed, setting", formattedMessages.length, "messages");
+              }
               setActiveMessages(formattedMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()));
               
               queryClient.invalidateQueries({ queryKey: ["conversations", currentConversationId, "messages"] });
@@ -467,7 +523,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         
         attempt++;
         if (attempt < maxAttempts) {
-          console.log(`[AppContext] Refresh attempt ${attempt} failed, retrying...`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[AppContext] Refresh attempt ${attempt} failed, retrying...`);
+          }
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
@@ -477,13 +535,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [currentConversationId, queryClient]);
 
   const setStreamingActiveHandler = useCallback((active: boolean) => {
-    console.log("[AppContext] Setting streaming active:", active);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[AppContext] Setting streaming active:", active);
+    }
     setIsStreamingActive(active);
   }, []);
 
   // CHATGPT-STYLE: Optimistic message management for seamless streaming
   const addOptimisticMessageHandler = useCallback((message: Message) => {
-    console.log("[AppContext] CHATGPT-STYLE: Adding optimistic message:", message.id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[AppContext] CHATGPT-STYLE: Adding optimistic message:", message.id);
+    }
     setActiveMessages(prevMessages => {
       // Check if this exact message already exists
       const existingIndex = prevMessages.findIndex(msg => msg.id === message.id);
@@ -500,7 +562,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   const updateOptimisticMessageHandler = useCallback((id: string, updates: Partial<Message>) => {
-    console.log("[AppContext] CHATGPT-STYLE: Updating optimistic message:", id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[AppContext] CHATGPT-STYLE: Updating optimistic message:", id);
+    }
     setActiveMessages(prevMessages => 
       prevMessages.map(msg => 
         msg.id === id ? { ...msg, ...updates } : msg

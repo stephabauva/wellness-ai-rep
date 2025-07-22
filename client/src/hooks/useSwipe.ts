@@ -16,7 +16,7 @@ export const useSwipe = (
   handlers: SwipeHandlers,
   options: SwipeOptions = {}
 ) => {
-  const elementRef = useRef<HTMLElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null);
   const [isSwiping, setIsSwiping] = useState(false);
 

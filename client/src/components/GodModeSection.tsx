@@ -29,10 +29,10 @@ export default function GodModeSection() {
   // Memory quality metrics query
   const { data: memoryQualityMetrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["memory-quality-metrics"],
-    queryFn: async () => {
+    queryFn: async (): Promise<MemoryQualityMetrics> => {
       const response = await fetch(`/api/memories/quality-metrics`);
       if (!response.ok) throw new Error("Failed to fetch memory quality metrics");
-      return response.json() as MemoryQualityMetrics;
+      return response.json();
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     refetchOnWindowFocus: false,
@@ -41,10 +41,10 @@ export default function GodModeSection() {
   // Memory overview for categories
   const { data: memoryOverview, isLoading: overviewLoading } = useQuery({
     queryKey: ["memory-overview"],
-    queryFn: async () => {
+    queryFn: async (): Promise<MemoryOverview> => {
       const response = await fetch(`/api/memories/overview`);
       if (!response.ok) throw new Error("Failed to fetch memory overview");
-      return response.json() as MemoryOverview;
+      return response.json();
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,

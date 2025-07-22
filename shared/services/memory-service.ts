@@ -320,7 +320,7 @@ class MemoryService {
 
   // Preload user memories for better performance
   async preloadUserMemories(userId: number): Promise<void> {
-    return this.performanceUtils.preloadUserMemories(userId, (userId) => this.getUserMemories(userId));
+    return this.performanceUtils.preloadUserMemories(userId);
   }
 }
 

@@ -49,21 +49,23 @@ export class MemoryQueryOperations {
     // Filter by importance threshold
     if (criteria.minImportance) {
       filtered = filtered.filter(memory => 
-        (memory.importance || 0.5) >= criteria.minImportance
+        (memory.importanceScore || 0.5) >= criteria.minImportance
       );
     }
 
     // Filter by date range
     if (criteria.startDate) {
-      filtered = filtered.filter(memory => 
-        new Date(memory.timestamp) >= new Date(criteria.startDate)
-      );
+      filtered = filtered.filter(memory => {
+        const createdAt = memory.createdAt;
+        return createdAt && new Date(createdAt) >= new Date(criteria.startDate);
+      });
     }
 
     if (criteria.endDate) {
-      filtered = filtered.filter(memory => 
-        new Date(memory.timestamp) <= new Date(criteria.endDate)
-      );
+      filtered = filtered.filter(memory => {
+        const createdAt = memory.createdAt;
+        return createdAt && new Date(createdAt) <= new Date(criteria.endDate);
+      });
     }
 
     // Filter by content keywords
@@ -102,6 +104,132 @@ export class MemoryQueryOperations {
   }
 
   /**
+   * Gets user memories with optional category filtering
+   * @param userId - User ID to get memories for
+   * @param category - Optional category filter
+   * @returns Promise with array of user memories
+   */
+  async getUserMemories(userId: number, category?: any): Promise<any[]> {
+    try {
+      // Stub implementation - return empty array
+      console.log(`[MemoryQuery] Getting memories for user ${userId}, category: ${category}`);
+      
+      // TODO: Implement actual database query
+      return [];
+    } catch (error) {
+      console.error('Error getting user memories:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Gets paginated user memories
+   * @param userId - User ID to get memories for
+   * @param options - Pagination and filter options
+   * @returns Promise with paginated memory results
+   */
+  async getUserMemoriesPaginated(
+    userId: number, 
+    options: {
+      page: number;
+      limit: number;
+      offset: number;
+      category?: any;
+    }
+  ): Promise<{
+    memories: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
+      hasMore: boolean;
+    };
+  }> {
+    try {
+      // Stub implementation - return empty results
+      console.log(`[MemoryQuery] Getting paginated memories for user ${userId}`, options);
+      
+      // TODO: Implement actual database query with pagination
+      return {
+        memories: [],
+        pagination: {
+          page: options.page,
+          limit: options.limit,
+          totalCount: 0,
+          totalPages: 0,
+          hasMore: false
+        }
+      };
+    } catch (error) {
+      console.error('Error getting paginated user memories:', error);
+      return {
+        memories: [],
+        pagination: {
+          page: options.page,
+          limit: options.limit,
+          totalCount: 0,
+          totalPages: 0,
+          hasMore: false
+        }
+      };
+    }
+  }
+
+  /**
+   * Gets optimized memory overview for user
+   * @param userId - User ID
+   * @returns Promise with memory overview
+   */
+  async getMemoryOverviewOptimized(userId: number): Promise<any> {
+    try {
+      // Stub implementation
+      console.log(`[MemoryQuery] Getting optimized overview for user ${userId}`);
+      return {
+        total: 0,
+        categories: {},
+        qualityMetrics: {
+          duplicateRate: 0,
+          averageImportanceScore: 0.5
+        }
+      };
+    } catch (error) {
+      console.error('Error getting memory overview:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Gets memory quality metrics for user
+   * @param userId - User ID
+   * @returns Promise with quality metrics
+   */
+  async getMemoryQualityMetrics(userId: number): Promise<any> {
+    try {
+      // Stub implementation
+      console.log(`[MemoryQuery] Getting quality metrics for user ${userId}`);
+      return {
+        totalMemories: 0,
+        duplicateRate: 0,
+        averageImportanceScore: 0.5,
+        averageFreshness: 0.8,
+        categoryDistribution: {},
+        qualityScore: 0.7,
+        potentialDuplicates: 0,
+        memoryAgeDistribution: {
+          lastWeek: 0,
+          lastMonth: 0,
+          lastYear: 0,
+          older: 0
+        }
+      };
+    } catch (error) {
+      console.error('Error getting quality metrics:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Calculates basic relevance score for a memory
    * @param memory - Memory to score
    * @param queryKeywords - Keywords from query
@@ -119,10 +247,11 @@ export class MemoryQueryOperations {
     }
 
     // Add importance weight
-    score += (memory.importance || 0.5) * 0.4;
+    score += (memory.importanceScore || 0.5) * 0.4;
 
     // Add recency weight (newer memories get slight boost)
-    const daysSinceCreation = (Date.now() - new Date(memory.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+    const createdAt = memory.createdAt;
+    const daysSinceCreation = createdAt ? (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24) : 30;
     const recencyScore = Math.max(0, 1 - daysSinceCreation / 30); // Decay over 30 days
     score += recencyScore * 0.3;
 

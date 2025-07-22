@@ -44,10 +44,10 @@ func init() {
 }
 
 func main() {
-	// Get port from environment or default to 3001
+	// Get port from environment or default to 5001
 	port := os.Getenv("GO_MEMORY_SERVICE_PORT")
 	if port == "" {
-		port = "3001"
+		port = "5001"
 	}
 
 	// Set up router

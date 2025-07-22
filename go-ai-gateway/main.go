@@ -78,7 +78,7 @@ func NewAIGateway() *AIGateway {
 // loadConfig loads configuration from environment variables
 func loadConfig() ServiceConfig {
 	config := ServiceConfig{
-		Port:              8081, // Different from file service port
+		Port:              5003, // Standardized Go service port
 		LogLevel:          getEnv("LOG_LEVEL", "info"),
 		MaxWorkers:        getEnvInt("MAX_WORKERS", runtime.NumCPU()*2),
 		QueueSize:         getEnvInt("QUEUE_SIZE", 1000),

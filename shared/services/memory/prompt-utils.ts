@@ -22,7 +22,7 @@ export function buildSystemPromptWithMemories(
     prompt += "\n\nRelevant context from previous conversations:";
     
     memories.forEach((memory, index) => {
-      prompt += `\n${index + 1}. ${memory.content || memory.text || 'Memory content'}`;
+      prompt += `\n${index + 1}. ${memory.content || 'Memory content'}`;
     });
     
     prompt += "\n\nPlease use this context to provide more personalized and relevant responses.";

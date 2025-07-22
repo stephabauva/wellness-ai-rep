@@ -14,7 +14,11 @@ import { isGodModeEnabled } from "@shared/config/god-mode";
 
 const Home: React.FC = () => {
   const { activeSection, loadedSections } = useAppContext(); // Add loadedSections
-  console.log("[Home] Component body execution. activeSection:", activeSection); // Adjusted log
+  
+  // Development logging only
+  if (process.env.NODE_ENV === 'development') {
+    console.log("[Home] Component body execution. activeSection:", activeSection);
+  }
   
   // Memoize section components with conditional rendering based on loaded sections
   const chatSectionComponent = useMemo(() => <ChatSection />, []);

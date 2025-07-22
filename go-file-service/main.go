@@ -144,7 +144,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "5002"
 	}
 
 	log.Printf("File processing service starting on port %s", port)

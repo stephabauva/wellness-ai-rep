@@ -71,7 +71,7 @@ export class MemorySimilarityOperations {
     }
 
     const clusters: RelevantMemory[][] = [];
-    const processed = new Set<number>();
+    const processed = new Set<string>();
 
     for (const memory of memories) {
       if (processed.has(memory.id)) continue;
@@ -121,29 +121,60 @@ export class MemorySimilarityOperations {
   }
 
   /**
-   * Calculates cosine similarity between memory embeddings (stub implementation)
-   * @param embedding1 - First embedding vector
-   * @param embedding2 - Second embedding vector
+   * Gets cached similarity between two vectors (stub implementation)
+   * @param vectorA - First vector
+   * @param vectorB - Second vector
+   * @returns Cached similarity score or null if not cached
+   */
+  getCachedSimilarity(vectorA: number[], vectorB: number[]): number | null {
+    // Stub implementation - no caching for now
+    return null;
+  }
+
+  /**
+   * Calculates cosine similarity between two vectors (async version)
+   * @param a - First vector
+   * @param b - Second vector
+   * @returns Promise with cosine similarity score
+   */
+  async cosineSimilarity(a: number[], b: number[]): Promise<number> {
+    // Stub implementation - delegate to sync version
+    return this.cosineSimilaritySync(a, b);
+  }
+
+  /**
+   * Calculates cosine similarity between two vectors (sync version)
+   * @param a - First vector
+   * @param b - Second vector
    * @returns Cosine similarity score
    */
-  calculateCosineSimilarity(embedding1: number[], embedding2: number[]): number {
-    // Stub implementation - return basic similarity
-    if (!embedding1 || !embedding2) return 0;
-    if (embedding1.length !== embedding2.length) return 0;
+  cosineSimilaritySync(a: number[], b: number[]): number {
+    if (!a || !b) return 0;
+    if (a.length !== b.length) return 0;
 
     // Basic cosine similarity calculation
     let dotProduct = 0;
     let norm1 = 0;
     let norm2 = 0;
 
-    for (let i = 0; i < embedding1.length; i++) {
-      dotProduct += embedding1[i] * embedding2[i];
-      norm1 += embedding1[i] * embedding1[i];
-      norm2 += embedding2[i] * embedding2[i];
+    for (let i = 0; i < a.length; i++) {
+      dotProduct += a[i] * b[i];
+      norm1 += a[i] * a[i];
+      norm2 += b[i] * b[i];
     }
 
     if (norm1 === 0 || norm2 === 0) return 0;
 
     return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+  }
+
+  /**
+   * Calculates cosine similarity between memory embeddings (stub implementation)
+   * @param embedding1 - First embedding vector
+   * @param embedding2 - Second embedding vector
+   * @returns Cosine similarity score
+   */
+  calculateCosineSimilarity(embedding1: number[], embedding2: number[]): number {
+    return this.cosineSimilaritySync(embedding1, embedding2);
   }
 }

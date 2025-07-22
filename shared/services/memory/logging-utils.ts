@@ -75,6 +75,29 @@ export class MemoryLoggingUtils {
   }
 
   /**
+   * Logs memory usage in conversations
+   * @param memories - Array of memories used
+   * @param conversationId - ID of the conversation
+   * @param usedInResponse - Whether memories were used in response
+   */
+  async logMemoryUsage(
+    memories: any[], 
+    conversationId?: string, 
+    usedInResponse: boolean = true
+  ): Promise<void> {
+    try {
+      this.logMemoryOperation('MemoryUsage', {
+        conversationId,
+        memoriesCount: memories?.length || 0,
+        usedInResponse,
+        memoryIds: memories?.map(m => m.id) || []
+      });
+    } catch (error) {
+      this.logError('LogMemoryUsage', error);
+    }
+  }
+
+  /**
    * Gets log statistics
    * @returns Object with logging statistics
    */

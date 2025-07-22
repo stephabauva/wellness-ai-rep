@@ -63,13 +63,13 @@ func main() {
         // Batch processing endpoint
         r.POST("/accelerate/batch-process", handleBatchProcessing)
 
-        log.Println("Go File Accelerator Service starting on port 5001")
+        log.Println("Go File Accelerator Service starting on port 5004")
         log.Println("Endpoints available:")
         log.Println("  GET  /accelerate/health")
         log.Println("  POST /accelerate/compress-large")
         log.Println("  POST /accelerate/batch-process")
         
-        r.Run(":5001")
+        r.Run(":5004")
 }
 
 func handleHealthCheck(c *gin.Context) {

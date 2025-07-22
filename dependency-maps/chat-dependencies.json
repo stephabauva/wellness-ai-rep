@@ -1,7 +1,73 @@
 {
   "domain": "chat",
-  "lastUpdated": "2025-07-22T08:48:16.386Z",
+  "lastUpdated": "2025-07-22T09:20:11.632Z",
   "dependencies": {
+    "client/src/hooks/useStreamingChat.ts": {
+      "domain": "chat",
+      "exports": [
+        "useStreamingChat"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/hooks/useChatActions.ts",
+          "domain": "chat",
+          "imports": [
+            "useStreamingChat"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/useChatMessages.ts": {
+      "domain": "chat",
+      "exports": [
+        "useChatMessages"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/hooks/useChatActions.ts",
+          "domain": "chat",
+          "imports": [
+            "useChatMessages"
+          ]
+        },
+        {
+          "file": "client/src/components/ChatSection.tsx",
+          "domain": "chat",
+          "imports": [
+            "useChatMessages"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
+    },
+    "client/src/hooks/useChatActions.ts": {
+      "domain": "chat",
+      "exports": [
+        "useChatActions",
+        "UseChatActionsReturn"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/ChatSection.tsx",
+          "domain": "chat",
+          "imports": [
+            "useChatActions"
+          ]
+        },
+        {
+          "file": "client/src/components/ChatInputArea.tsx",
+          "domain": "chat",
+          "imports": [
+            "UseChatActionsReturn"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 2
+    },
     "client/src/components/MessageDisplayArea.tsx": {
       "domain": "chat",
       "exports": [
@@ -86,72 +152,6 @@
       ],
       "crossDomain": false,
       "usageCount": 1
-    },
-    "client/src/hooks/useStreamingChat.ts": {
-      "domain": "chat",
-      "exports": [
-        "useStreamingChat"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/hooks/useChatActions.ts",
-          "domain": "chat",
-          "imports": [
-            "useStreamingChat"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 1
-    },
-    "client/src/hooks/useChatMessages.ts": {
-      "domain": "chat",
-      "exports": [
-        "useChatMessages"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/ChatSection.tsx",
-          "domain": "chat",
-          "imports": [
-            "useChatMessages"
-          ]
-        },
-        {
-          "file": "client/src/hooks/useChatActions.ts",
-          "domain": "chat",
-          "imports": [
-            "useChatMessages"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 2
-    },
-    "client/src/hooks/useChatActions.ts": {
-      "domain": "chat",
-      "exports": [
-        "useChatActions",
-        "UseChatActionsReturn"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/ChatSection.tsx",
-          "domain": "chat",
-          "imports": [
-            "useChatActions"
-          ]
-        },
-        {
-          "file": "client/src/components/ChatInputArea.tsx",
-          "domain": "chat",
-          "imports": [
-            "UseChatActionsReturn"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 2
     }
   }
 }

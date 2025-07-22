@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-22T08:48:16.386Z",
+  "lastUpdated": "2025-07-22T09:20:11.632Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -19,6 +19,74 @@
       "crossDomain": true,
       "usageCount": 1
     },
+    "client/src/hooks/memory/useVoiceHandlers.ts": {
+      "domain": "memory",
+      "exports": [
+        "useVoiceHandlers"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useVoiceHandlers"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/memory/useMemoryFilters.ts": {
+      "domain": "memory",
+      "exports": [
+        "useMemoryFilters"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useMemoryFilters"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/memory/useMemoryEdit.ts": {
+      "domain": "memory",
+      "exports": [
+        "useMemoryEdit"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useMemoryEdit"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/hooks/memory/useMemoryActions.ts": {
+      "domain": "memory",
+      "exports": [
+        "useMemoryActions"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "useMemoryActions"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
     "client/src/components/memory/utils.ts": {
       "domain": "memory",
       "exports": [
@@ -33,6 +101,15 @@
       ],
       "usedBy": [
         {
+          "file": "client/src/hooks/memory/useMemoryActions.ts",
+          "domain": "memory",
+          "imports": [
+            "saveSmartDefault",
+            "getSmartDefaults",
+            "getRecentValues"
+          ]
+        },
+        {
           "file": "client/src/components/memory/MemoryForm.tsx",
           "domain": "memory",
           "imports": [
@@ -44,15 +121,6 @@
             "saveSmartDefault",
             "getRecentValues",
             "getContextualPresets"
-          ]
-        },
-        {
-          "file": "client/src/hooks/memory/useMemoryActions.ts",
-          "domain": "memory",
-          "imports": [
-            "saveSmartDefault",
-            "getSmartDefaults",
-            "getRecentValues"
           ]
         }
       ],
@@ -73,6 +141,20 @@
       "usedBy": [
         {
           "file": "client/src/components/MemorySection.tsx",
+          "domain": "memory",
+          "imports": [
+            "ManualMemoryFormData"
+          ]
+        },
+        {
+          "file": "client/src/hooks/memory/useMemoryFilters.ts",
+          "domain": "memory",
+          "imports": [
+            "MemoryEntry"
+          ]
+        },
+        {
+          "file": "client/src/hooks/memory/useMemoryActions.ts",
           "domain": "memory",
           "imports": [
             "ManualMemoryFormData"
@@ -119,20 +201,6 @@
           "domain": "memory",
           "imports": [
             "explanationCards"
-          ]
-        },
-        {
-          "file": "client/src/hooks/memory/useMemoryFilters.ts",
-          "domain": "memory",
-          "imports": [
-            "MemoryEntry"
-          ]
-        },
-        {
-          "file": "client/src/hooks/memory/useMemoryActions.ts",
-          "domain": "memory",
-          "imports": [
-            "ManualMemoryFormData"
           ]
         }
       ],
@@ -354,74 +422,6 @@
           "domain": "memory",
           "imports": [
             "MemoryAddFAB"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 1
-    },
-    "client/src/hooks/memory/useVoiceHandlers.ts": {
-      "domain": "memory",
-      "exports": [
-        "useVoiceHandlers"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/MemorySection.tsx",
-          "domain": "memory",
-          "imports": [
-            "useVoiceHandlers"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 1
-    },
-    "client/src/hooks/memory/useMemoryFilters.ts": {
-      "domain": "memory",
-      "exports": [
-        "useMemoryFilters"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/MemorySection.tsx",
-          "domain": "memory",
-          "imports": [
-            "useMemoryFilters"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 1
-    },
-    "client/src/hooks/memory/useMemoryEdit.ts": {
-      "domain": "memory",
-      "exports": [
-        "useMemoryEdit"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/MemorySection.tsx",
-          "domain": "memory",
-          "imports": [
-            "useMemoryEdit"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 1
-    },
-    "client/src/hooks/memory/useMemoryActions.ts": {
-      "domain": "memory",
-      "exports": [
-        "useMemoryActions"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/MemorySection.tsx",
-          "domain": "memory",
-          "imports": [
-            "useMemoryActions"
           ]
         }
       ],

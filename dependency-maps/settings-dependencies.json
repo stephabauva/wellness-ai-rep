@@ -1,25 +1,7 @@
 {
   "domain": "settings",
-  "lastUpdated": "2025-07-27T08:14:19.790Z",
+  "lastUpdated": "2025-07-27T08:20:39.809Z",
   "dependencies": {
-    "client/src/components/SettingsSection.tsx": {
-      "domain": "settings",
-      "exports": [
-        "CombinedSettingsFormValues",
-        "default"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/pages/home.tsx",
-          "domain": "app/pages",
-          "imports": [
-            "SettingsSection"
-          ]
-        }
-      ],
-      "crossDomain": true,
-      "usageCount": 1
-    },
     "client/src/hooks/useUserSettings.ts": {
       "domain": "settings",
       "exports": [
@@ -30,19 +12,19 @@
       ],
       "usedBy": [
         {
+          "file": "client/src/hooks/useTheme.ts",
+          "domain": "shared/hooks",
+          "imports": [
+            "useUserSettings"
+          ]
+        },
+        {
           "file": "client/src/components/SettingsSection.tsx",
           "domain": "settings",
           "imports": [
             "useUserSettings",
             "UserSettingsFormValues",
             "settingsFormSchema as userSettingsFormSchema"
-          ]
-        },
-        {
-          "file": "client/src/hooks/useTheme.ts",
-          "domain": "shared/hooks",
-          "imports": [
-            "useUserSettings"
           ]
         },
         {
@@ -102,6 +84,24 @@
         }
       ],
       "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/SettingsSection.tsx": {
+      "domain": "settings",
+      "exports": [
+        "CombinedSettingsFormValues",
+        "default"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/pages/home.tsx",
+          "domain": "app/pages",
+          "imports": [
+            "SettingsSection"
+          ]
+        }
+      ],
+      "crossDomain": true,
       "usageCount": 1
     },
     "client/src/components/settings/PerformanceSettings.tsx": {

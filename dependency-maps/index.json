@@ -1,5 +1,5 @@
 {
-  "lastGenerated": "2025-07-27T08:14:19.796Z",
+  "lastGenerated": "2025-07-27T08:20:39.813Z",
   "totalDomains": 17,
   "totalDependencies": 189,
   "domainFiles": [
@@ -24,11 +24,6 @@
       "fileCount": 2
     },
     {
-      "domain": "app/navigation",
-      "filename": "app-navigation-dependencies.json",
-      "fileCount": 2
-    },
-    {
       "domain": "settings",
       "filename": "settings-dependencies.json",
       "fileCount": 10
@@ -37,6 +32,11 @@
       "domain": "chat",
       "filename": "chat-dependencies.json",
       "fileCount": 8
+    },
+    {
+      "domain": "app/navigation",
+      "filename": "app-navigation-dependencies.json",
+      "fileCount": 2
     },
     {
       "domain": "memory",

@@ -65,7 +65,15 @@ export class SampleHealthDataGenerator {
         const date = new Date();
         // Subtract days and add hours for variation within the day
         date.setDate(date.getDate() - dayOffset);
-        date.setHours(8 + (entryIndex * 8)); // 8am, 4pm, midnight
+        
+        // Ensure we have data for recent time periods by setting realistic times
+        // For recent days (0-6), spread data across the day
+        if (dayOffset < 7) {
+          date.setHours(8 + (entryIndex * 6)); // 8am, 2pm, 8pm for recent days
+        } else {
+          date.setHours(12); // Noon for older days
+        }
+        
         date.setMinutes(Math.floor(Math.random() * 60));
         date.setSeconds(0);
         date.setMilliseconds(0);

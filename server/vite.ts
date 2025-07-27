@@ -8,7 +8,7 @@ import {
   type ServerOptions,
 } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
+import viteConfigFunc from "../vite.config";
 import { nanoid } from "nanoid";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -33,8 +33,8 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true,
   };
 
-  // Resolve the vite config since it's an async function
-  const resolvedViteConfig = await viteConfig();
+  // Resolve the vite config - we don't need to call it, just use it directly
+  const resolvedViteConfig = viteConfigFunc;
 
   const vite = await createViteServer({
     ...resolvedViteConfig,

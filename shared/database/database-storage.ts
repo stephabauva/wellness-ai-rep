@@ -24,6 +24,7 @@ import { calculateStartDate } from "./time-range-utils";
 import { NutritionDelegationMixin } from "./nutrition-delegation";
 import { processUserSettingsDetailed } from "./user-settings-utils";
 import { prepareDeviceUpdateSettings } from "./device-utils";
+import { SampleHealthDataGenerator } from "../sampleHealthDataGenerator";
 import type { IStorage } from "./storage";
 
 // Database implementation
@@ -261,19 +262,19 @@ export class DatabaseStorage extends NutritionDelegationMixin implements IStorag
     // Clear existing health data for the user
     await this.clearAllHealthData(userId);
     
-    // Get all sample data from the sample table
-    const sampleData = await db.select().from(sampleHealthData);
+    // Generate fresh sample data with current timestamps
+    const freshSampleData = SampleHealthDataGenerator.generateSampleDataForTimeRange('90days', userId);
     
-    // Convert sample data to health data format with userId
-    const insertData = sampleData.map((sample: any) => ({
-      userId,
+    // Convert to insert format
+    const insertData = freshSampleData.map((sample: any) => ({
+      userId: sample.userId,
       dataType: sample.dataType,
       value: sample.value,
       unit: sample.unit,
       timestamp: sample.timestamp,
-      source: sample.source,
+      source: "sample_generator",
       category: sample.category,
-      metadata: sample.metadata
+      metadata: null
     }));
     
     // Insert the data in batches

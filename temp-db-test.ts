@@ -1,20 +1,4 @@
-#!/usr/bin/env node
 
-/**
- * Simple Database Connectivity Validation Script
- * Tests that database queries execute and return expected results
- */
-
-const path = require('path');
-const { execSync } = require('child_process');
-
-// Simple database connectivity test using existing infrastructure
-function testDatabaseConnection() {
-  console.log('🔗 Testing Database Connectivity...\n');
-  
-  try {
-    // Test 1: Check if we can connect to database
-    const testScript = `
       import { db, initializeDatabase } from './shared/database/db';
       import { memoryEntries, users } from './shared/schema';
       import { count, eq } from 'drizzle-orm';
@@ -50,23 +34,4 @@ function testDatabaseConnection() {
       }
       
       test();
-    `;
     
-    // Write and execute the test
-    require('fs').writeFileSync('/Users/urdoom/wellness-ai-rep/temp-db-test.ts', testScript);
-    execSync('npx tsx temp-db-test.ts', { 
-      cwd: '/Users/urdoom/wellness-ai-rep',
-      stdio: 'inherit',
-      timeout: 10000 
-    });
-    
-  } catch (error) {
-    console.log('❌ Database Connectivity: FAIL');
-    console.error('Error:', error.message);
-    process.exit(1);
-  }
-}
-
-if (require.main === module) {
-  testDatabaseConnection();
-}

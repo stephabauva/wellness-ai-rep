@@ -1,11 +1,10 @@
-import { db, initializeDatabase } from "../server/db.js";
-import { sampleHealthData } from "../shared/schema.js";
-import { SampleHealthDataGenerator } from "../shared/sampleHealthDataGenerator.js";
+import { db } from "../shared/database/db";
+import { sampleHealthData } from "../shared/schema";
+import { SampleHealthDataGenerator } from "../shared/sampleHealthDataGenerator";
 
 async function populateSampleData() {
   try {
-    // Initialize database connection first
-    await initializeDatabase();
+    // Database connection is already initialized
     console.log('Generating sample health data...');
     
     // Generate 90 days of sample data (without userId)

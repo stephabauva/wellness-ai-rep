@@ -76,14 +76,14 @@
 
 ## Tasks
 
-### Task 1: Create Duplicate Detection API Endpoint
+### [x]Task 1: Create Duplicate Detection API Endpoint
 - **Problem**: Need to detect duplicates before saving memory
 - **Solution**: New `/api/memories/check-duplicates` endpoint using existing deduplication logic
 - **Files affected**:
   - `server/routes/memory-routes.ts` (line ~80, new endpoint)
   - `shared/services/memory/deduplication-helpers.ts` (export existing `findSimilarMemory`)
 
-### Task 2: Enhance Memory Form with Duplicate Detection
+### [x]Task 2: Enhance Memory Form with Duplicate Detection
 - **Problem**: Current form submits directly without duplicate checking
 - **Solution**: Add intermediate step to check duplicates before submission
 - **Files affected**:

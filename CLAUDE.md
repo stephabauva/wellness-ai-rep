@@ -20,7 +20,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Frontend UI component monitoring**: frontend-ui-monitor.cjs detects component prop mismatches, missing required props, styling issues, and shared Dialog component problems with severity escalation for critical user flows
 **Visual regression detection**: visual-regression-detector.cjs tests component rendering, modal visibility, z-index conflicts, and layout issues
 **Integration testing analysis**: component-integration-test.cjs generates user interaction tests and identifies missing test coverage for critical user flows
-**Specialized Subagents**: 7 domain-expert subagents in .claude/agents/ provide specialized assistance with automated hook integration
+**Specialized Subagents**: 8 domain-expert subagents in .claude/agents/ provide specialized assistance with automated hook integration
 **Claude Code Hooks**: Automated validation, context enhancement, and guidance system in .claude/hooks/ integrates with multi-layer defense
 
 ### Key Commands
@@ -79,6 +79,7 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - **memory-system-specialist**: ChatGPT-style memory expert for deduplication, retrieval, performance optimization
 - **health-data-validator**: HealthKit/Google Fit integration, nutrition inference, data validation specialist  
 - **mobile-ui-optimizer**: Mobile-first UI/UX specialist for responsive design, touch interactions, performance
+- **mobile-capacitor-specialist**: Capacitor deployment expert for converting web apps to native iOS/Android apps
 - **go-microservice-expert**: Go services specialist for AI gateway, file processing, memory services
 - **ci-pipeline-auditor**: CI/CD pipeline optimization and GitHub Actions expert
 - **wellness-domain-architect**: Domain boundary specialist enforcing strict architectural rules

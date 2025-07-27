@@ -27,6 +27,11 @@ SUBAGENT_EXPERTISE = {
         "description": "Mobile-first UI/UX specialist",
         "use_for": ["mobile issues", "UI improvements", "cross-device compatibility"]
     },
+    "mobile-capacitor-specialist": {
+        "patterns": [r"capacitor", r"native.*app", r"app.*store", r"mobile.*deployment", r"webview", r"native.*plugin", r"ios.*build", r"android.*build"],
+        "description": "Mobile Capacitor deployment specialist",
+        "use_for": ["Capacitor setup", "native app conversion", "mobile deployment", "native API integration"]
+    },
     "go-microservice-expert": {
         "patterns": [r"\bgo\b", r"microservice", r"gateway", r"file.*processing", r"concurrent"],
         "description": "Go microservices specialist",

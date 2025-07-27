@@ -5,26 +5,21 @@
 
 ## Development Workflow
 
-### 1. Pre-Execution (AUTO-DEFENSE INTEGRATED)
-**🛡️ Defense system runs automatically - no manual intervention needed!**
+### 1. Pre-Execution (CI PIPELINE INTEGRATED)
+**🛡️ Use CI pipeline commands from CLAUDE.md for validation**
 
 - [ ] Plan approved by user (from chew.md process)
 - [ ] TodoWrite tasks created and prioritized
-- [ ] **Auto-defense validation**: Architecture validated with comprehensive defense system
-  ```bash
-  # Runs automatically when you use /workit:
-  npm run pre-commit      # Ports + imports + TypeScript
-  npm run safe-refactor   # Dependencies + architecture + functional validation
-  npm run validate:quick  # Functional validation (database, services, APIs)
-  npm run dev --validate  # Server startup verification
-  ```
+- [ ] **CI validation**: Run appropriate CI command (see CLAUDE.md Key Commands)
+  - `npm run ci:full` for comprehensive validation
+  - `npm run ci` for core validation during iteration
 
-### 2. During Development (AUTO-DEFENSE INTEGRATED)
+### 2. During Development (CI PIPELINE INTEGRATED)
 1. **Mark TodoWrite tasks** as in_progress/completed in real-time
 2. **High-level updates** to user during execution
-3. **Auto-incremental testing** - defense system validates every change
+3. **Incremental CI validation** - use CLAUDE.md CI commands after changes
 4. **Auto-system maps update** - system maps updated automatically
-5. **Auto-commits** - each completed task creates automatic safe commit with /commit integration
+5. **CI-validated commits** - use /commit with CI validation
 
 ### 3. Execution Principles
 - **Simplicity first**: Minimal code changes that solve the problem
@@ -53,19 +48,11 @@
 - Automatic model selection based on complexity
 
 ### Testing During Development
-- `npx vitest` - Run affected tests frequently
-- `npx vitest [file]` - Test specific functionality immediately
-- `npm run validate:quick` - Quick functional validation (database, services, APIs)
-- `npm run validate:data` - Validate service methods return actual data (catch stub implementations)
-- `npm run check:ui` - Check UI components for prop mismatches and rendering issues
-- `npm run check:visual` - Test component rendering, modal visibility, z-index conflicts, and layout issues
-- `npm run check:integration` - Generate user interaction tests and identify missing test coverage for critical flows
-- `npm run check:all` - Run all component analysis checks (ui, visual, integration, async, filesize)
-- **Unit tests**: Every new function, especially utilities
-- **Integration tests**: API endpoints with realistic data
-- **Functional tests**: Database queries, service method integrity, API response validation
-- **Performance tests**: Memory operations, file processing
-- **Component tests**: React components with real user interactions
+**Refer to CLAUDE.md Key Commands for CI pipeline commands**
+- Use `npm run ci:local` for interactive validation during development
+- Use `npm run ci` for quick validation after changes
+- Use `npx vitest [file]` for targeted testing
+- **Focus areas**: Unit tests for new functions, integration tests for APIs, component tests for UI
 
 ## Performance Guidelines
 
@@ -96,29 +83,12 @@
 - [ ] No console.logs in production code
 - [ ] System maps updated if architecture changed
 
-### Final Validation (AUTO-DEFENSE INTEGRATED)
-**🛡️ Complete defense system activation - all validation automatic!**
+### Final Validation (CI PIPELINE INTEGRATED)
+**🛡️ Use CLAUDE.md CI pipeline for comprehensive validation**
 
-```bash
-# Runs automatically when you use /workit (comprehensive defense):
-npm run safe-refactor          # Full architecture + dependency + functional validation
-npm run validate:functional    # Complete functional validation suite  
-npm run check:all              # UI, visual, integration, async, filesize
-npm run build                  # Production build verification
-node browser-console-error-detector.cjs  # Runtime error detection
-/commit "Complete feature implementation with full validation"  # Auto-commit with defense
-```
-
-**Auto-execution includes**:
-- Defense system full sweep (ports, imports, TypeScript, dependencies)
-- **Functional validation** (database connectivity, service method integrity, API endpoint validation)
-- **Stub implementation detection** (ensure methods return actual data, not empty arrays)
-- Comprehensive component analysis (UI integrity, visual regression, integration tests)  
-- Server startup verification with health check
-- Production build verification
-- Runtime error detection and browser console analysis
-- System documentation auto-update
-- Intelligent commit with comprehensive validation message
+- Run `npm run ci:full` for complete validation before completion
+- Use `/commit` command which includes CI validation
+- Refer to CLAUDE.md Key Commands for specific validation needs
 
 ## Critical Replit Constraints
 - **Never modify**: vite.config.ts, WebSocket handling, compression settings

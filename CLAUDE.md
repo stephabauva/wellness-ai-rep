@@ -38,12 +38,16 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - `npm run check:all` - Run all component analysis checks (ui, visual, integration, async, filesize)
 - `node browser-console-error-detector.cjs` - Detect runtime browser console errors and generate test script
 - `./setup-dependency-hook.sh` - Install pre-commit dependency check hook
-- **Multi-Layer Defense System Commands**:
-  - `npm run pre-commit` - Ports + imports + TypeScript validation (use before any commit)
-  - `npm run safe-refactor` - Dependencies + comprehensive architecture checks + functional validation (use before refactoring)
-  - `npm run check:ports` - Port configuration validation 
-  - `npm run check:imports` - Import path validation
-  - `npm run check:dependencies` - Cross-domain dependency analysis
+- **CI Pipeline Commands** (implement Multi-Layer Defense System):
+  - `npm run ci` - Core CI pipeline (ports + imports + TypeScript + build + functional validation)
+  - `npm run ci:full` - Complete CI with comprehensive architecture checks and test coverage
+  - `npm run ci:with-tests` - CI including full test suite execution
+  - `npm run ci:local` - Interactive local CI runner with progress display
+  - `npm run test:go` - Test all Go microservices
+- **Multi-Layer Defense System Commands** (integrated into CI pipeline):
+  - `npm run pre-commit` - Defense Layer 1: Ports + imports + TypeScript validation
+  - `npm run safe-refactor` - Defense Layer 2: Dependencies + comprehensive architecture checks + functional validation
+  - Individual validation tools for Layer 3 (runtime error detection)
 - **Functional Validation Commands** (prevent stub implementation issues):
   - `npm run validate:quick` - Quick functional health check (all validations)
   - `npm run validate:db` - Database connectivity validation

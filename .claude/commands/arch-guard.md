@@ -5,10 +5,10 @@ Guards against architectural drift and maintains clean code boundaries with mult
 ## Auto-Execution by Claude AI (DEFENSE-SYSTEM POWERED)
 **🛡️ Claude automatically runs full defense system before any code implementation - no manual intervention needed!**
 
-**Multi-Layer Defense Activation:**
-- **Layer 1**: Port validation + import resolution + TypeScript compilation
-- **Layer 2**: Cross-domain dependency analysis + comprehensive architecture checks  
-- **Layer 3**: Runtime error detection + browser console analysis + UI integrity verification
+**Multi-Layer Defense System (via CI Pipeline):**
+- **Layer 1**: `npm run ci` includes pre-commit validation (ports + imports + TypeScript)
+- **Layer 2**: `npm run ci:full` includes safe-refactor validation (dependencies + architecture)  
+- **Layer 3**: Individual validation tools for runtime error detection
 
 **Auto-triggered:**
 - Before creating new components/services
@@ -17,13 +17,10 @@ Guards against architectural drift and maintains clean code boundaries with mult
 - Before any architectural changes
 - After any significant modifications
 
-```bash
-# Runs automatically when you use /arch-guard or any development command:
-npm run pre-commit      # Defense Layer 1: Core validation
-npm run safe-refactor   # Defense Layer 2: Architecture analysis  
-npm run check:all       # UI, visual, integration, async, filesize
-node browser-console-error-detector.cjs # Runtime error detection
-```
+**CI Pipeline implements Defense System:**
+- `npm run ci:full` - Complete multi-layer defense activation
+- `npm run ci` - Core defense layers for normal development
+- See CLAUDE.md Key Commands and defense-system.md for details
 
 ## Manual Usage
 ```bash

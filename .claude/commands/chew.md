@@ -5,25 +5,20 @@
 
 ## Required Planning Process
 
-### 1. Pre-Planning Investigation (AUTO-DEFENSE INTEGRATED)
-**🛡️ Defense system runs automatically during planning - comprehensive system analysis!**
+### 1. Pre-Planning Investigation (CI PIPELINE INTEGRATED)
+**🛡️ CI pipeline implements multi-layer defense system for comprehensive analysis**
 
-```bash
-# Runs automatically when you use /chew:
-npm run pre-commit      # Defense baseline: ports, imports, TypeScript
-npm run safe-refactor   # Architecture analysis: dependencies + system health
-npm run check:all       # UI, visual, integration, async, filesize validation  
-node system-map-tracker.js  # Documentation validation
-```
+**Investigation approach:**
+- Run `npm run ci:full` for complete system health baseline
+- Use individual validation tools from CLAUDE.md Key Commands as needed
+- Check `node system-map-tracker.js` for documentation validation
 
-**Auto-investigation includes:**
-- Navigate the codebase thoroughly (with defense system validation)
-- System maps analysis with validation (`.system-maps/json-system-maps/`)
-- Dependency tracker analysis (generates split dependency maps in `dependency-maps/`)
-- Port configuration validation (prevent future startup issues)
-- Import resolution verification (catch potential module conflicts)  
-- Architecture integrity verification (identify system stress points)
-- Consider ALL possible impacts (with comprehensive system health check)
+**Investigation includes:**
+- Navigate codebase thoroughly (with CI validation)
+- System maps analysis (`.system-maps/json-system-maps/`)
+- Dependency tracker analysis (split maps in `dependency-maps/`)
+- Complete defense system validation via CI pipeline
+- Consider ALL possible impacts with comprehensive health check
 
 ### 2. Create Written Plan
 **Always write to** `tasks/todo-[title].md` before coding

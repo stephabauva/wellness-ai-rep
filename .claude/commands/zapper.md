@@ -5,30 +5,20 @@
 
 ## Investigation Process
 
-### 1. Deep System Analysis (AUTO-DEFENSE INTEGRATED)
-**🛡️ Defense system runs automatically - comprehensive diagnostic sweep!**
+### 1. Deep System Analysis (CI PIPELINE INTEGRATED)
+**🛡️ Use CLAUDE.md CI pipeline for comprehensive diagnostics**
 
-```bash
-# Runs automatically when you use /zapper:
-npm run pre-commit                      # Defense Layer 1: Ports + imports + TypeScript
-npm run safe-refactor                   # Defense Layer 2: Dependencies + architecture + functional validation
-npm run validate:quick                  # Defense Layer 3: Functional validation (catch stub implementations)
-node browser-console-error-detector.cjs # Defense Layer 4: Runtime error detection
-npm run check:all                       # UI, visual, integration, async, filesize analysis
-node system-map-tracker.js              # Documentation validation
-git status && git log --oneline -10     # Recent changes analysis
-```
+**Diagnostic approach:**
+- Run `npm run ci:local` for interactive diagnostic session
+- Use `npm run ci:full` for comprehensive system health check
+- Refer to CLAUDE.md Key Commands for specific validation tools
+- Check `git status && git log --oneline -10` for recent changes analysis
 
-**Auto-diagnostic includes**:
-- Port configuration validation (prevent startup failures)
-- Import resolution verification (catch missing modules)
-- Cross-domain dependency analysis (identify architectural issues)
-- **Functional validation** (database connectivity, service method integrity, API endpoint validation)
-- **Stub implementation detection** (catch methods returning empty arrays instead of actual data)
-- Runtime error pattern detection (browser console analysis)
-- UI component integrity check (prop mismatches, rendering issues)
-- Visual regression testing (layout conflicts, z-index issues)
-- Integration test coverage analysis (missing critical user flows)
+**Diagnostic coverage** (via CI pipeline):
+- Port configuration, import resolution, TypeScript validation
+- Cross-domain dependency analysis, functional validation
+- Runtime error detection, UI component integrity
+- Visual regression testing, integration test coverage
 
 ### 2. Problem Mapping Template
 ```markdown
@@ -178,21 +168,14 @@ useEffect(() => {
 ### Before Declaring Fixed (AUTOMATIC VALIDATION)
 **🛡️ Complete defense system verification - all checks automatic!**
 
-1. **Reproduce original issue** - Confirm you can trigger it (manual)
-2. **Apply fix** - Make minimal change (manual)
-3. **Auto-defense validation** - Full defense system sweep (automatic):
-   ```bash
-   # Runs automatically after fix is applied:
-   npm run pre-commit      # Ports + imports + TypeScript validation
-   npm run safe-refactor   # Dependencies + architecture verification  
-   npm run check:all       # UI, visual, integration, async, filesize
-   npm run dev --validate  # Server startup verification
-   ```
-4. **Auto-side effect testing** - Validates nothing else broke (automatic)
-5. **Auto-cleanup** - Removes debug code automatically (automatic)
-6. **Auto-test execution** - Runs full test suite automatically (automatic)
-7. **Auto-documentation** - Updates system maps automatically (automatic)
-8. **Auto-commit** - Creates fix commit with /commit integration (automatic)
+1. **Reproduce original issue** - Confirm you can trigger it
+2. **Apply fix** - Make minimal change
+3. **CI validation** - Use appropriate CI command:
+   - `npm run ci` for core validation
+   - `npm run ci:full` for comprehensive validation
+4. **Side effect testing** - Run `npm run ci:local` to check for regressions
+5. **Cleanup** - Remove debug code
+6. **Commit** - Use `/commit` with CI validation included
 
 ### Multi-Browser Testing
 - Chrome DevTools
@@ -222,19 +205,18 @@ psql $DATABASE_URL -c "SELECT 1"
 ```
 
 ### Quick Diagnostic Commands
+**Use CI pipeline for comprehensive diagnostics:**
 ```bash
-# System health
-npm run check          # TypeScript errors?
-npx vitest            # Tests passing?
-npm run build         # Build successful?
-npm run check:all      # Comprehensive component analysis (UI, visual, integration, async, filesize)
-node browser-console-error-detector.cjs  # Browser runtime errors?
+# CI Pipeline diagnostics (implements defense system)
+npm run ci:local       # Interactive diagnostic session
+npm run ci             # Core validation (TypeScript, ports, imports, build)
+npm run ci:full        # Complete validation (includes all checks)
 
-# Functional validation (catch stub implementations)
+# Individual validation (when targeting specific issues)
 npm run validate:quick    # Quick functional health check
-npm run validate:db       # Database connectivity validation
-npm run validate:data     # Service method integrity (catch stub methods)
-npm run validate:memory   # Memory API endpoint validation
+npx vitest [file]         # Targeted test execution
+node browser-console-error-detector.cjs  # Runtime error detection
+```
 
 # Dependency check
 npm ls                # Dependency tree

@@ -13,29 +13,14 @@ Refactor large files using graduated thresholds in the wellness AI app while pre
 
 ## Wellness App Safety Protocol
 
-### Pre-Refactoring Validation (AUTOMATIC - Multi-Layer Defense System)
+### Pre-Refactoring Validation (CI PIPELINE INTEGRATED)
 
-**🛡️ This command AUTOMATICALLY runs all defense system checks - no manual intervention needed!**
+**🛡️ Use CLAUDE.md CI pipeline for comprehensive validation**
 
-1. **Auto-execute defense validation**:
-   ```bash
-   # Runs automatically when you use /safe-refactor:
-   npm run pre-commit        # Ports + imports + TypeScript  
-   npm run safe-refactor     # Dependencies + architecture + functional validation
-   npm run dev --validate    # Server startup verification
-   ```
-
-2. **Functional validation** (prevents stub implementation issues):
-   ```bash
-   npm run validate:quick    # Quick functional health check
-   npm run validate:db       # Database connectivity validation  
-   npm run validate:data     # Service method validation (catch stub methods)
-   npm run validate:memory   # API endpoint validation
-   ```
-
-3. **Analyze current file structure**: Map all imports, exports, and dependencies (automatic)
-4. **Test current functionality**: Validate all features work before changes (automatic)
-5. **Create backup state**: Auto-stash current state as recovery point
+1. **Pre-validation**: Run `npm run ci:full` for complete system health check
+2. **Analyze current file structure**: Map all imports, exports, and dependencies
+3. **Test current functionality**: Validate all features work before changes
+4. **Create backup state**: Stash current state as recovery point
 
 **Note**: The dependency tracker now generates split dependency maps in `dependency-maps/` instead of one large `dependency-map.json` file. This reduces merge conflicts and improves maintainability.
 
@@ -55,23 +40,17 @@ Look for these extraction opportunities:
 - **Isolated components** (no complex state dependencies)
 - **Custom hooks** (if they have clear single responsibilities)
 
-#### 3. Incremental Refactoring Process (FULLY AUTOMATED)
-**Never extract more than 1-2 items per iteration - fully automated with defense system**
+#### 3. Incremental Refactoring Process (CI PIPELINE INTEGRATED)
+**Never extract more than 1-2 items per iteration - use CI pipeline for validation**
 
-For each extraction (ALL AUTOMATIC):
+For each extraction:
 1. **Create new file** in appropriate domain folder
 2. **Move code** with exact same functionality
 3. **Update imports** in original file
-4. **Auto-validation sequence** (runs automatically): 
-   - Defense system validation (ports, imports, TypeScript)
-   - Functional validation (database connectivity, service methods, API endpoints)
-   - Server startup verification
-   - Architecture integrity check
-   - Runtime error detection
-   - UI component validation
-5. **Auto-test execution**: Runs available tests automatically
-6. **Auto-commit**: Creates focused commit with intelligent message
-7. **Rollback on failure**: Auto-restores previous state if any step fails
+4. **CI validation** - Run `npm run ci` to validate changes
+5. **Test execution** - Run targeted tests if available
+6. **Commit** - Use `/commit` for focused commit with validation
+7. **Rollback on failure** - Restore previous state if any step fails
 
 #### 4. Domain-Specific Extraction Rules
 
@@ -95,24 +74,17 @@ For each extraction (ALL AUTOMATIC):
 - Avoid domain-specific logic in shared
 - Maintain strict shared folder rules
 
-### Post-Refactoring Validation (FULLY AUTOMATIC)
+### Post-Refactoring Validation (CI PIPELINE INTEGRATED)
 
-**🛡️ All validation runs automatically - comprehensive defense system activation!**
+**🛡️ Use CLAUDE.md CI pipeline for comprehensive validation**
 
-1. **Auto-comprehensive validation** (runs automatically):
-   - Defense system full sweep (ports, imports, TypeScript, dependencies)
-   - Server startup verification with health check
-   - Architecture integrity validation  
-   - Runtime error detection and browser console analysis
-   - UI component integrity verification
-   - System documentation auto-update
-   - Production build verification
-2. **Auto-feature testing**: Validates all affected functionality automatically
-3. **Auto-test execution**: Runs full test suite if available
-4. **Auto-limit validation**: Verifies component/service limits automatically
-5. **Auto-boundary validation**: Checks for cross-domain violations
-6. **Auto-performance check**: Validates no degradation occurred
-7. **Auto-final commit**: Creates comprehensive commit with /commit integration
+1. **Comprehensive validation**: Run `npm run ci:full` for complete system check
+2. **Feature testing**: Validate all affected functionality manually
+3. **Test execution**: Run full test suite with `npm run test`
+4. **Limit validation**: Check component/service limits with validation tools
+5. **Boundary validation**: Check for cross-domain violations
+6. **Performance check**: Ensure no degradation occurred
+7. **Final commit**: Use `/commit` with comprehensive validation
 
 ## Specific Large File Strategies
 

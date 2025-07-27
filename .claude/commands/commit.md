@@ -7,13 +7,10 @@ Automate the entire commit process with built-in defense system protection, ensu
 
 ## What This Command Does
 
-### 1. Pre-Commit Defense System Validation (Automatic)
-```bash
-npm run pre-commit
-```
-- **Port validation**: Ensures all ports are configured to 5000
-- **Import validation**: Validates all import paths resolve correctly  
-- **TypeScript validation**: Catches type errors before commit
+### 1. Pre-Commit CI Pipeline Validation (Automatic)
+**Refer to CLAUDE.md Key Commands for CI pipeline**
+- Uses `npm run pre-commit` for core validation (ports, imports, TypeScript)
+- Can escalate to `npm run ci` or `npm run ci:full` for comprehensive validation
 
 ### 2. Git Status Analysis
 - Analyze staged and unstaged changes

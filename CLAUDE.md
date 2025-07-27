@@ -20,6 +20,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 **Frontend UI component monitoring**: frontend-ui-monitor.cjs detects component prop mismatches, missing required props, styling issues, and shared Dialog component problems with severity escalation for critical user flows
 **Visual regression detection**: visual-regression-detector.cjs tests component rendering, modal visibility, z-index conflicts, and layout issues
 **Integration testing analysis**: component-integration-test.cjs generates user interaction tests and identifies missing test coverage for critical user flows
+**Specialized Subagents**: 7 domain-expert subagents in .claude/agents/ provide specialized assistance with automated hook integration
+**Claude Code Hooks**: Automated validation, context enhancement, and guidance system in .claude/hooks/ integrates with multi-layer defense
 
 ### Key Commands
 - `npm run dev` - Start development server
@@ -72,16 +74,36 @@ This file provides guidance to Claude Code when working with this wellness AI ap
   - System maps: `.system-maps/json-system-maps/` 
   - System map's guide : `.system-maps/optimized-complete-map-blue-original.md`
 
+### Specialized Subagents & Hook Integration
+**Available Subagents** (use Task tool with appropriate subagent_type):
+- **memory-system-specialist**: ChatGPT-style memory expert for deduplication, retrieval, performance optimization
+- **health-data-validator**: HealthKit/Google Fit integration, nutrition inference, data validation specialist  
+- **mobile-ui-optimizer**: Mobile-first UI/UX specialist for responsive design, touch interactions, performance
+- **go-microservice-expert**: Go services specialist for AI gateway, file processing, memory services
+- **ci-pipeline-auditor**: CI/CD pipeline optimization and GitHub Actions expert
+- **wellness-domain-architect**: Domain boundary specialist enforcing strict architectural rules
+- **multi-layer-defense-auditor**: Architecture validation specialist preventing violations and conflicts
+- **general-purpose**: Complex research, multi-step tasks, and code searching
+
+**Claude Code Hooks** (automatic when using Claude Code):
+- **Pre-edit validation**: Runs defense checks before file modifications
+- **Post-edit validation**: Validates changes after edits (TypeScript, imports, system integrity)
+- **Bash command validation**: Suggests improvements, blocks dangerous operations
+- **Prompt enhancement**: Auto-adds wellness app context, suggests optimal subagents
+- **Subagent optimization**: Validates subagent selection, provides completion guidance
+- **Session validation**: Ensures system integrity at session end, suggests follow-ups
+
 ### Before Adding ANY New Code (Claude AI Responsibility) - Multi-Layer Defense Protocol
 1. **ALWAYS run multi-layer defense checks first**: `npm run pre-commit` + `npm run safe-refactor` to validate ports, imports, dependencies, architecture, and functional behavior
 2. **Mandatory safety sequence for ANY memory system changes**: `npm run pre-commit && npm run safe-refactor && npm run dev` (verify server startup)
 3. **Functional validation**: `npm run validate:quick` to catch stub implementations and data flow issues
-4. Ask: "Does this belong in shared/ or a specific domain?"
-5. Ask: "Can I enhance existing components vs creating new ones?"
-6. Ask: "Is this service necessary or can it be a simple function?"
-7. **Critical component check**: For Dialog/Modal components, immediately use custom HTML implementation instead of @shared/components/ui/dialog
-8. **Automatically validate**: Run arch-guard checks before implementing features
-9. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
+4. **Use specialized subagents**: Choose appropriate subagent for domain-specific tasks (hooks will suggest optimal choice)
+5. Ask: "Does this belong in shared/ or a specific domain?"
+6. Ask: "Can I enhance existing components vs creating new ones?"
+7. Ask: "Is this service necessary or can it be a simple function?"
+8. **Critical component check**: For Dialog/Modal components, immediately use custom HTML implementation instead of @shared/components/ui/dialog
+9. **Automatically validate**: Run arch-guard checks before implementing features (hooks assist with this)
+10. **Enforce limits**: Refuse to create new components/services if limits exceeded without consolidation plan
 
 ### Replit Constraints (Critical)
 - **Do NOT Touch**: vite.config.ts, WebSocket handling, Build systems, Compression settings
@@ -95,6 +117,8 @@ This file provides guidance to Claude Code when working with this wellness AI ap
 - **Clean Code Checklist**: See commands/clean-code.md
 - **Multi-Layer Defense System**: See commands/defense-system.md
 - **Safe Refactoring**: See commands/safe-refactor.md (now includes defense protocols)
+- **Specialized Subagents**: See .claude/agents/ for domain expert descriptions and capabilities
+- **Hook System Documentation**: See .claude/hooks/README.md for automated validation and enhancement details
 
 ### Manage your memory ##
 You are responsible to manage the size of the conversation context for your best performance. If a task in a todo list is taking a lot of work and the amount of tokens in the context is getting long, you can use the /compact command.

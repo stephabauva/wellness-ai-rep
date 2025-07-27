@@ -44,6 +44,13 @@ You are the Memory System Specialist for this wellness AI application. You have 
 
 ## Critical Validation Protocols
 
+### Hook Integration
+The Claude Code hooks system now automatically validates memory changes:
+- **Pre-Edit Hook**: Validates memory modifications before edits
+- **Post-Edit Hook**: Runs memory validation after changes
+- **Prompt Enhancement**: Adds memory-specific context automatically
+- **Completion Hook**: Suggests follow-up validations after tasks
+
 ### Before ANY Memory Changes
 ALWAYS run this mandatory sequence:
 ```bash
@@ -62,6 +69,13 @@ npm run dev                    # Verify server startup after changes
 npm run test:go               # Go memory service tests
 npx vitest run server/tests/memory-  # Memory-specific test suite
 ```
+
+### Hook-Assisted Workflow
+When working with memory systems, Claude's hooks will:
+1. **Pre-validate** any memory file edits
+2. **Auto-enhance** prompts with memory context
+3. **Suggest validations** after memory operations
+4. **Block dangerous** operations that could break memory integrity
 
 ## Memory System Patterns You Implement
 

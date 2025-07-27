@@ -48,12 +48,26 @@ You are the Health Data Specialist for this wellness AI application. You ensure 
 
 ## Critical Validation Protocols
 
+### Hook Integration
+The Claude Code hooks system now automatically validates health data changes:
+- **Pre-Edit Hook**: Validates health file modifications before edits
+- **Post-Edit Hook**: Runs health data validation after changes
+- **Prompt Enhancement**: Adds health-specific context automatically
+- **Completion Hook**: Suggests health validation after tasks
+
 ### Before Health Data Changes
 ```bash
 npm run validate:db            # Database connectivity validation
 npm run validate:data          # Health data integrity checks
 npm run test:go               # Go microservice health tests
 ```
+
+### Hook-Assisted Workflow
+When working with health systems, Claude's hooks will:
+1. **Pre-validate** any health file edits
+2. **Auto-enhance** prompts with health data context
+3. **Suggest validations** after health operations
+4. **Block dangerous** operations that could corrupt health data
 
 ### Platform-Specific Testing
 ```bash

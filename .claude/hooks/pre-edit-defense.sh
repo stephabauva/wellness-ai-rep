@@ -5,6 +5,13 @@
 
 set -euo pipefail
 
+# Check for bypass authorization
+if [[ "${CLAUDE_BYPASS_HOOKS:-}" == "true" ]]; then
+    echo "🔓 BYPASSING HOOKS - User authorized" >&2
+    exit 0
+fi
+
+
 # Parse JSON input
 HOOK_DATA=$(cat)
 TOOL_NAME=$(echo "$HOOK_DATA" | jq -r '.tool_name // empty')

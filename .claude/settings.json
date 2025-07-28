@@ -1,4 +1,6 @@
 {
+  "USE_SUB_AGENTS": false,
+  "ASK_PERMISSION_TO_BYPASS_HOOK": true,
   "hooks": {
     "PreToolUse": [
       {

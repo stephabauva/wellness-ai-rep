@@ -135,7 +135,23 @@ def check_wellness_specific_patterns(prompt: str) -> List[str]:
     
     return issues
 
+def load_settings() -> Dict:
+    """Load settings from .claude/settings.json"""
+    try:
+        import os
+        settings_path = os.path.join(os.environ.get('CLAUDE_PROJECT_DIR', ''), '.claude', 'settings.json')
+        with open(settings_path, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"USE_SUB_AGENTS": True, "ASK_PERMISSION_TO_BYPASS_HOOK": False}
+
 def main():
+    # Check for bypass authorization
+    import os
+    if os.environ.get('CLAUDE_BYPASS_HOOKS') == 'true':
+        print("🔓 BYPASSING HOOKS - User authorized", file=sys.stderr)
+        sys.exit(0)
+    
     try:
         input_data = json.load(sys.stdin)
     except json.JSONDecodeError as e:
@@ -146,6 +162,15 @@ def main():
     tool_input = input_data.get("tool_input", {})
     
     if tool_name != "Task":
+        sys.exit(0)
+    
+    # Check if subagents are disabled
+    settings = load_settings()
+    if not settings.get("USE_SUB_AGENTS", True):
+        if tool_input.get("subagent_type"):
+            print("❌ SUBAGENT BLOCKED: USE_SUB_AGENTS is disabled in .claude/settings.json", file=sys.stderr)
+            sys.exit(2)
+        # Allow general tasks without subagent specification
         sys.exit(0)
     
     prompt = tool_input.get("prompt", "")

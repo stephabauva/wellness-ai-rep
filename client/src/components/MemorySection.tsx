@@ -19,7 +19,6 @@ import { MemoryLabelFilter } from "./memory/MemoryLabelFilter";
 import { MemoryEmptyState } from "./memory/MemoryEmptyState";
 import { MemoryLoadingSkeleton } from "./memory/MemoryLoadingSkeleton";
 import { MemoryAddFAB } from "./memory/MemoryAddFAB";
-import { SimpleDuplicateModal, type SimilarMemory } from "./memory/SimpleDuplicateModal";
 
 
 
@@ -34,19 +33,6 @@ export default function MemorySection() {
   // Ref for scrolling to form
   const formSectionRef = React.useRef<HTMLDivElement>(null);
   
-  // Simple duplicate modal state
-  const [duplicateModal, setDuplicateModal] = useState<{
-    isOpen: boolean;
-    newMemoryContent: string;
-    newMemoryCategory: string;
-    similarMemories: SimilarMemory[];
-    pendingData?: ManualMemoryFormData;
-  }>({
-    isOpen: false,
-    newMemoryContent: "",
-    newMemoryCategory: "",
-    similarMemories: [],
-  });
   const { toast } = useToast();
 
   // Memory filtering and selection management
@@ -87,74 +73,12 @@ export default function MemorySection() {
     setEditingMemoryContent,
   } = useMemoryEdit();
 
-  // Simple duplicate detection - uses modal instead of complex toast system
-  const handleMemoryFormSubmit = async (data: ManualMemoryFormData) => {
-    try {
-      const duplicateCheck = await checkDuplicatesMutation.mutateAsync(data);
-      
-      if (duplicateCheck.hasDuplicates && duplicateCheck.similarMemories.length > 0) {
-        // Show simple modal
-        setDuplicateModal({
-          isOpen: true,
-          newMemoryContent: data.content,
-          newMemoryCategory: data.category,
-          similarMemories: duplicateCheck.similarMemories,
-          pendingData: data
-        });
-      } else {
-        // No duplicates - proceed normally
-        createManualMemoryMutation.mutate(data);
-        setIsManualEntryOpen(false);
-      }
-    } catch (error) {
-      console.warn('[Duplicate Check] Failed, proceeding with creation:', error);
-      createManualMemoryMutation.mutate(data);
-      setIsManualEntryOpen(false);
-    }
-  };
-
-  // Simple modal handlers
-  const handleDuplicateSaveAnyway = () => {
-    if (duplicateModal.pendingData) {
-      createManualMemoryMutation.mutate(duplicateModal.pendingData);
-    }
-    setDuplicateModal(prev => ({ ...prev, isOpen: false }));
+  // Memory creation - deduplication is handled automatically by Go service
+  const handleMemoryFormSubmit = (data: ManualMemoryFormData) => {
+    createManualMemoryMutation.mutate(data);
     setIsManualEntryOpen(false);
   };
 
-  const handleDuplicateCancel = () => {
-    setDuplicateModal(prev => ({ ...prev, isOpen: false }));
-    toast({
-      title: "Memory Creation Cancelled",
-      description: "You can edit your memory and try again.",
-    });
-  };
-
-  const handleDuplicateReplace = async () => {
-    if (duplicateModal.pendingData && duplicateModal.similarMemories.length > 0) {
-      // Delete the old memory first
-      const oldMemoryId = duplicateModal.similarMemories[0].id;
-      try {
-        await deleteMemoryMutation.mutateAsync(oldMemoryId);
-        // Then create the new one
-        createManualMemoryMutation.mutate(duplicateModal.pendingData);
-        toast({
-          title: "Memory Replaced",
-          description: "Old memory deleted and new memory saved.",
-        });
-      } catch (error) {
-        console.error('Failed to delete old memory:', error);
-        // Still create the new memory even if delete fails
-        createManualMemoryMutation.mutate(duplicateModal.pendingData);
-        toast({
-          title: "Memory Saved",
-          description: "New memory saved (couldn't delete old memory).",
-        });
-      }
-    }
-    setDuplicateModal(prev => ({ ...prev, isOpen: false }));
-    setIsManualEntryOpen(false);
-  };
 
   // Handle opening form and scrolling to it
   const handleOpenForm = () => {
@@ -169,11 +93,22 @@ export default function MemorySection() {
   };
 
   // Optimized overview query - lightweight, runs once on mount
-  const { data: memoryOverview = { total: 0, categories: {}, qualityMetrics: {} }, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
+  const { data: memoryOverview = { 
+    total: 0, 
+    categories: { 
+      preferences: 0, 
+      personal_context: 0, 
+      goals: 0, 
+      food_diet: 0, 
+      instructions: 0 
+    }, 
+    qualityMetrics: {}, 
+    preferences: {} 
+  }, isLoading: overviewLoading, refetch: refetchOverview } = useQuery({
     queryKey: ["memory-overview"],
     queryFn: async () => {
       const startTime = performance.now();
-      const response = await fetch(`/api/memories/overview`);
+      const response = await fetch(`http://localhost:8081/api/memories/overview`);
       if (!response.ok) throw new Error("Failed to fetch memory overview");
       
       const data = await response.json();
@@ -185,7 +120,24 @@ export default function MemorySection() {
         console.warn(`[Memory Overview Performance] Slower than target: ${duration.toFixed(2)}ms > 100ms`);
       }
       
-      return data;
+      // Transform Go service response to match frontend expectations
+      const categoryCounts = data.categoryCounts || {};
+      return {
+        total: data.totalMemories || 0,
+        categories: {
+          preferences: categoryCounts.preferences || 0,
+          personal_context: categoryCounts.personal_context || 0,
+          goals: categoryCounts.goals || 0,
+          food_diet: categoryCounts.food_diet || 0,
+          instructions: categoryCounts.instructions || 0,
+          ...categoryCounts
+        },
+        qualityMetrics: {
+          averageImportance: data.averageImportance || 0,
+          recentMemoriesCount: data.recentMemoriesCount || 0
+        },
+        preferences: {} // Default empty preferences
+      };
     },
     staleTime: 10 * 60 * 1000, // Increased to 10 minutes cache
     gcTime: 15 * 60 * 1000, // Keep in memory for 15 minutes
@@ -218,7 +170,7 @@ export default function MemorySection() {
   const { data: allMemories = [], isLoading: allMemoriesLoading, refetch: refetchMemories } = useQuery({
     queryKey: ["memories"],
     queryFn: async () => {
-      const response = await fetch(`/api/memories`);
+      const response = await fetch(`http://localhost:8081/api/memories`);
       if (!response.ok) throw new Error("Failed to fetch memories");
       const data = await response.json();
       // Handle both paginated and non-paginated responses
@@ -241,7 +193,6 @@ export default function MemorySection() {
     deleteMemoryMutation,
     editMemoryMutation,
     bulkDeleteMutation,
-    checkDuplicatesMutation,
     handleDeleteMemory,
     handleEditMemory,
     handleBulkDelete
@@ -381,16 +332,6 @@ export default function MemorySection() {
       {/* Floating Action Button for Add Memory - positioned in mobile thumb zone */}
       <MemoryAddFAB onClick={handleOpenForm} />
 
-      {/* Simple Duplicate Modal - guaranteed to appear on top */}
-      <SimpleDuplicateModal
-        isOpen={duplicateModal.isOpen}
-        newMemoryContent={duplicateModal.newMemoryContent}
-        newMemoryCategory={duplicateModal.newMemoryCategory}
-        similarMemories={duplicateModal.similarMemories}
-        onSaveAnyway={handleDuplicateSaveAnyway}
-        onReplace={handleDuplicateReplace}
-        onCancel={handleDuplicateCancel}
-      />
       </div>
     </TooltipProvider>
   );

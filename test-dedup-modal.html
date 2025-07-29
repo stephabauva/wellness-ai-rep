@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Deduplication Modal</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea, select, button { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        .response { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Memory Deduplication Modal</h1>
+        
+        <form id="memoryForm">
+            <div class="form-group">
+                <label for="content">Memory Content:</label>
+                <textarea id="content" name="content" rows="4" placeholder="Enter memory content here...">I love eating healthy organic vegetables</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <select id="category" name="category">
+                    <option value="food_diet">Food & Diet</option>
+                    <option value="preferences">Preferences</option>
+                    <option value="personal_context">Personal Context</option>
+                    <option value="instructions">Instructions</option>
+                    <option value="goals">Goals</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="importance">Importance:</label>
+                <select id="importance" name="importance">
+                    <option value="0.3">Low</option>
+                    <option value="0.6">Medium</option>
+                    <option value="0.8" selected>High</option>
+                </select>
+            </div>
+            
+            <button type="submit">Create Memory</button>
+        </form>
+        
+        <div id="response" class="response" style="display: none;"></div>
+        
+        <div style="margin-top: 30px;">
+            <h3>Test Similar Memories:</h3>
+            <button onclick="testSimilar1()">Test: "I really enjoy eating healthy organic vegetables"</button>
+            <button onclick="testSimilar2()">Test: "I love organic vegetarian food"</button>
+            <button onclick="testDifferent()">Test: "I prefer morning coffee"</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8081/api/memories/manual';
+        
+        document.getElementById('memoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                content: formData.get('content'),
+                category: formData.get('category'),
+                importance: parseFloat(formData.get('importance'))
+            };
+            
+            await createMemory(data);
+        });
+        
+        async function createMemory(data) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = 'Creating memory...';
+            responseDiv.className = 'response';
+            
+            try {
+                console.log('[TEST] Sending request to:', API_BASE);
+                console.log('[TEST] Request data:', data);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                console.log('[TEST] Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('[TEST] Full response:', result);
+                
+                // Check deduplication logic
+                if (result.deduplicationOccurred && result.similarMemories && result.similarMemories.length > 0) {
+                    console.log('[TEST] ✅ DEDUPLICATION DETECTED!');
+                    console.log('[TEST] Similar memories:', result.similarMemories);
+                    console.log('[TEST] Confidence:', result.confidence);
+                    console.log('[TEST] Action:', result.action);
+                    
+                    responseDiv.className = 'response success';
+                    responseDiv.innerHTML = `
+                        <h4>🔍 DUPLICATE DETECTED!</h4>
+                        <p><strong>Action:</strong> ${result.action}</p>
+                        <p><strong>Confidence:</strong> ${Math.round(result.confidence * 100)}%</p>
+                        <p><strong>Reasoning:</strong> ${result.reasoning}</p>
+                        <h5>Similar Memories Found:</h5>
+                        <ul>
+                            ${result.similarMemories.map(mem => `
+                                <li>
+                                    <strong>Content:</strong> ${mem.content}<br>
+                                    <strong>Similarity:</strong> ${Math.round(mem.similarity * 100)}%<br>
+                                    <strong>Created:</strong> ${new Date(mem.createdAt).toLocaleString()}
+                                </li>
+                            `).join('')}
+                        </ul>
+                        
+                        <div style="margin-top: 15px; padding: 10px; background: #fff3cd; color: #856404; border-radius: 4px;">
+                            <strong>Modal Should Show Here!</strong><br>
+                            In the real app, this would trigger the DuplicateMemoryNotification modal with action buttons.
+                        </div>
+                    `;
+                } else {
+                    console.log('[TEST] ✅ NEW MEMORY CREATED');
+                    responseDiv.className = 'response success';
+                    responseDiv.innerHTML = `
+                        <h4>✅ NEW MEMORY CREATED</h4>
+                        <p><strong>ID:</strong> ${result.memory.id}</p>
+                        <p><strong>Content:</strong> ${result.memory.content}</p>
+                        <p><strong>Category:</strong> ${result.memory.category}</p>
+                        <p><strong>Created:</strong> ${new Date(result.memory.createdAt).toLocaleString()}</p>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('[TEST] Error:', error);
+                responseDiv.className = 'response error';
+                responseDiv.innerHTML = `<h4>❌ ERROR</h4><p>${error.message}</p>`;
+            }
+        }
+        
+        function testSimilar1() {
+            document.getElementById('content').value = 'I really enjoy eating healthy organic vegetables';
+            document.getElementById('memoryForm').dispatchEvent(new Event('submit'));
+        }
+        
+        function testSimilar2() {
+            document.getElementById('content').value = 'I love organic vegetarian food';
+            document.getElementById('memoryForm').dispatchEvent(new Event('submit'));
+        }
+        
+        function testDifferent() {
+            document.getElementById('content').value = 'I prefer morning coffee';
+            document.getElementById('memoryForm').dispatchEvent(new Event('submit'));
+        }
+    </script>
+</body>
+</html>

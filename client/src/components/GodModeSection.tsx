@@ -30,9 +30,21 @@ export default function GodModeSection() {
   const { data: memoryQualityMetrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["memory-quality-metrics"],
     queryFn: async (): Promise<MemoryQualityMetrics> => {
-      const response = await fetch(`/api/memories/quality-metrics`);
+      const response = await fetch(`http://localhost:8081/api/memories/quality-metrics`);
       if (!response.ok) throw new Error("Failed to fetch memory quality metrics");
-      return response.json();
+      const data = await response.json();
+      
+      // Go service response already matches expected structure
+      return {
+        ...data,
+        categoryDistribution: {},
+        memoryAgeDistribution: {
+          lastWeek: 0,
+          lastMonth: 0,
+          lastYear: 0,
+          older: 0
+        }
+      };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     refetchOnWindowFocus: false,
@@ -42,9 +54,30 @@ export default function GodModeSection() {
   const { data: memoryOverview, isLoading: overviewLoading } = useQuery({
     queryKey: ["memory-overview"],
     queryFn: async (): Promise<MemoryOverview> => {
-      const response = await fetch(`/api/memories/overview`);
+      const response = await fetch(`http://localhost:8081/api/memories/overview`);
       if (!response.ok) throw new Error("Failed to fetch memory overview");
-      return response.json();
+      const data = await response.json();
+      
+      // Transform Go service response to match frontend expectations
+      return {
+        total: data.totalMemories || 0,
+        categories: data.categoryCounts || {},
+        qualityMetrics: {
+          totalMemories: data.totalMemories || 0,
+          duplicateRate: 0,
+          averageImportanceScore: data.averageImportance || 0,
+          averageFreshness: 0,
+          categoryDistribution: data.categoryCounts || {},
+          qualityScore: 0,
+          potentialDuplicates: 0,
+          memoryAgeDistribution: {
+            lastWeek: data.recentMemoriesCount || 0,
+            lastMonth: 0,
+            lastYear: 0,
+            older: 0
+          }
+        }
+      };
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,

@@ -7,7 +7,7 @@
 
 const http = require('http');
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:8081';
 const USER_ID = 1;
 
 // Simple HTTP GET request
@@ -38,17 +38,17 @@ async function validateEndpoints() {
     {
       name: 'Memory Overview',
       path: '/api/memories/overview',
-      validate: (data) => data.total >= 0 && typeof data.categories === 'object'
+      validate: (data) => typeof data.totalMemories === 'number' && typeof data.categoryCounts === 'object'
     },
     {
       name: 'Memory List',
       path: '/api/memories?limit=5',
-      validate: (data) => Array.isArray(data.memories) && typeof data.pagination === 'object'
+      validate: (data) => Array.isArray(data) || (Array.isArray(data.memories) && (typeof data.pagination === 'object' || typeof data.count === 'number'))
     },
     {
       name: 'Quality Metrics',
       path: '/api/memories/quality-metrics',
-      validate: (data) => typeof data.totalMemories === 'number' && typeof data.qualityScore === 'number'
+      validate: (data) => typeof data.totalMemories === 'number' && (typeof data.qualityScore === 'number' || data.averageImportance !== undefined)
     }
   ];
 

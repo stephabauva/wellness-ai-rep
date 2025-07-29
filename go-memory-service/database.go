@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,12 +13,19 @@ import (
 // DatabaseLayer handles all database operations for memory storage
 type DatabaseLayer struct {
 	logger *logrus.Logger
+	// In-memory storage for immediate functionality
+	memories map[string]*Memory
+	memoryMutex sync.RWMutex
+	userMemories map[int64][]string // userID -> list of memory IDs
+	userMutex sync.RWMutex
 }
 
 // NewDatabaseLayer creates a new database layer instance
 func NewDatabaseLayer(logger *logrus.Logger) *DatabaseLayer {
 	return &DatabaseLayer{
 		logger: logger,
+		memories: make(map[string]*Memory),
+		userMemories: make(map[int64][]string),
 	}
 }
 
@@ -24,46 +33,162 @@ func NewDatabaseLayer(logger *logrus.Logger) *DatabaseLayer {
 
 // StoreMemory stores a memory in the database
 func (db *DatabaseLayer) StoreMemory(ctx context.Context, memory *Memory) error {
-	// Placeholder for database storage
-	db.logger.WithField("memoryId", memory.ID).Debug("Storing memory in database")
+	db.memoryMutex.Lock()
+	defer db.memoryMutex.Unlock()
+	
+	// Store memory by ID
+	db.memories[memory.ID] = memory
+	
+	// Add to user's memory list
+	db.userMutex.Lock()
+	defer db.userMutex.Unlock()
+	
+	userID := int64(memory.UserID)
+	if db.userMemories[userID] == nil {
+		db.userMemories[userID] = make([]string, 0)
+	}
+	db.userMemories[userID] = append(db.userMemories[userID], memory.ID)
+	
+	db.logger.WithField("memoryId", memory.ID).Info("Successfully stored memory in database")
 	return nil
 }
 
 // GetMemoryByID retrieves a memory by ID from the database
 func (db *DatabaseLayer) GetMemoryByID(ctx context.Context, memoryID string) (*Memory, error) {
-	// Placeholder implementation - will be replaced with actual database query
-	return &Memory{
-		ID:       memoryID,
-		UserID:   1,
-		Content:  "placeholder content",
-		Category: "personal_context",
-	}, nil
+	db.memoryMutex.RLock()
+	defer db.memoryMutex.RUnlock()
+	
+	memory, exists := db.memories[memoryID]
+	if !exists {
+		return nil, fmt.Errorf("memory not found: %s", memoryID)
+	}
+	
+	// Update access count and last accessed
+	memory.AccessCount++
+	memory.LastAccessed = time.Now()
+	
+	return memory, nil
 }
 
 // QueryMemoriesFromDB retrieves memories for a user from the database
 func (db *DatabaseLayer) QueryMemoriesFromDB(ctx context.Context, userID int64, limit int) ([]*Memory, error) {
-	// Placeholder for database query
-	return []*Memory{}, nil
+	db.userMutex.RLock()
+	defer db.userMutex.RUnlock()
+	
+	memoryIDs, exists := db.userMemories[userID]
+	if !exists {
+		return []*Memory{}, nil
+	}
+	
+	db.memoryMutex.RLock()
+	defer db.memoryMutex.RUnlock()
+	
+	memories := make([]*Memory, 0, len(memoryIDs))
+	
+	// Get memories and sort by creation date (newest first)
+	for _, memoryID := range memoryIDs {
+		if memory, exists := db.memories[memoryID]; exists && memory.IsActive {
+			memories = append(memories, memory)
+		}
+	}
+	
+	// Sort by creation date (newest first)
+	sort.Slice(memories, func(i, j int) bool {
+		return memories[i].CreatedAt.After(memories[j].CreatedAt)
+	})
+	
+	// Apply limit
+	if limit > 0 && len(memories) > limit {
+		memories = memories[:limit]
+	}
+	
+	db.logger.WithFields(logrus.Fields{
+		"userId": userID,
+		"count": len(memories),
+		"limit": limit,
+	}).Debug("Retrieved memories from database")
+	
+	return memories, nil
 }
 
 // UpdateMemoryInDB updates a memory in the database
 func (db *DatabaseLayer) UpdateMemoryInDB(ctx context.Context, memory *Memory) error {
-	// Placeholder for database update
-	db.logger.WithField("memoryId", memory.ID).Debug("Updating memory in database")
+	db.memoryMutex.Lock()
+	defer db.memoryMutex.Unlock()
+	
+	if _, exists := db.memories[memory.ID]; !exists {
+		return fmt.Errorf("memory not found: %s", memory.ID)
+	}
+	
+	db.memories[memory.ID] = memory
+	db.logger.WithField("memoryId", memory.ID).Debug("Updated memory in database")
 	return nil
 }
 
 // SoftDeleteMemoryInDB soft-deletes a memory in the database
 func (db *DatabaseLayer) SoftDeleteMemoryInDB(ctx context.Context, memoryID string) error {
-	// Placeholder for database soft delete
-	db.logger.WithField("memoryId", memoryID).Debug("Soft deleting memory in database")
+	db.memoryMutex.Lock()
+	defer db.memoryMutex.Unlock()
+	
+	memory, exists := db.memories[memoryID]
+	if !exists {
+		return fmt.Errorf("memory not found: %s", memoryID)
+	}
+	
+	memory.IsActive = false
+	db.memories[memoryID] = memory
+	db.logger.WithField("memoryId", memoryID).Info("Soft deleted memory in database")
 	return nil
 }
 
 // GetRecentMemoriesForUser retrieves recent memories for deduplication
 func (db *DatabaseLayer) GetRecentMemoriesForUser(ctx context.Context, userID int64, limit int) ([]MemoryCandidate, error) {
-	// Placeholder implementation - will be replaced with actual database query
-	return []MemoryCandidate{}, nil
+	db.userMutex.RLock()
+	defer db.userMutex.RUnlock()
+	
+	memoryIDs, exists := db.userMemories[userID]
+	if !exists {
+		return []MemoryCandidate{}, nil
+	}
+	
+	db.memoryMutex.RLock()
+	defer db.memoryMutex.RUnlock()
+	
+	candidates := make([]MemoryCandidate, 0, len(memoryIDs))
+	
+	// Get memories and convert to candidates
+	for _, memoryID := range memoryIDs {
+		if memory, exists := db.memories[memoryID]; exists && memory.IsActive {
+			candidate := MemoryCandidate{
+				ID:          memory.ID,
+				Content:     memory.Content,
+				Category:    memory.Category,
+				Keywords:    memory.Keywords,
+				CreatedAt:   memory.CreatedAt,
+				Embedding:   memory.Embedding,
+				SemanticHash: "", // Will be generated by deduplication engine
+			}
+			candidates = append(candidates, candidate)
+		}
+	}
+	
+	// Sort by creation date (newest first)
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].CreatedAt.After(candidates[j].CreatedAt)
+	})
+	
+	// Apply limit
+	if limit > 0 && len(candidates) > limit {
+		candidates = candidates[:limit]
+	}
+	
+	db.logger.WithFields(logrus.Fields{
+		"userId": userID,
+		"candidatesCount": len(candidates),
+		"limit": limit,
+	}).Debug("Retrieved memory candidates for deduplication")
+	
+	return candidates, nil
 }
 
 // Memory content operations

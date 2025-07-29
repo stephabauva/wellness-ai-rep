@@ -1,0 +1,53 @@
+--- a/go-memory-service/memory_service.go
++++ b/go-memory-service/memory_service.go
+@@ -336,32 +336,23 @@ func (ms *MemoryService) CreateMemoryWithDeduplication(ctx context.Context, us
+ 	}).Info("DEBUG: Deduplication result")
+ 	
+ 	switch dedupResult.Action {
+-	case ActionSkip:
++	case ActionSkip, ActionMerge, ActionUpdate:
+ 		ms.logger.WithFields(logrus.Fields{
+-			"action": "skip",
++			"action": dedupResult.Action,
+ 			"existingId": dedupResult.ExistingMemoryID,
+ 			"confidence": dedupResult.Confidence,
+-		}).Info("Skipping duplicate memory creation")
++		}).Info("Similar memory found - returning original for user decision")
+ 		
+-		// Return existing memory with deduplication result
+-		memory, err := ms.database.GetMemoryByID(ctx, dedupResult.ExistingMemoryID)
+-		return memory, dedupResult, err
+-		
+-	case ActionMerge:
+-		ms.logger.WithFields(logrus.Fields{
+-			"action": "merge",
+-			"existingId": dedupResult.ExistingMemoryID,
+-			"confidence": dedupResult.Confidence,
+-		}).Info("Merging with existing memory")
+-		
+-		memory, err := ms.database.MergeWithExistingMemory(ctx, dedupResult.ExistingMemoryID, content)
+-		return memory, dedupResult, err
+-		
+-	case ActionUpdate:
+-		ms.logger.WithFields(logrus.Fields{
+-			"action": "update",
+-			"existingId": dedupResult.ExistingMemoryID,
+-			"confidence": dedupResult.Confidence,
+-		}).Info("Updating existing memory")
++		// CRITICAL FIX: Do NOT modify the original memory!
++		// Just return the existing memory unchanged so user can see it in the notification
++		// The user will decide whether to save the new memory or not
++		originalMemory, err := ms.database.GetMemoryByID(ctx, dedupResult.ExistingMemoryID)
++		if err != nil {
++			ms.logger.WithError(err).Error("Failed to retrieve original memory for deduplication")
++			return nil, dedupResult, err
++		}
+ 		
+-		memory, err := ms.database.UpdateExistingMemoryContent(ctx, dedupResult.ExistingMemoryID, content)
+-		return memory, dedupResult, err
++		// Return the ORIGINAL UNCHANGED memory
++		// Frontend will show this in "similar memories" and let user choose
++		return originalMemory, dedupResult, nil
+ 	}
+ 
+ 	// Create new memory (ActionCreate)

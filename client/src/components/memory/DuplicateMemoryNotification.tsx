@@ -179,11 +179,25 @@ export function useDuplicateMemoryNotification() {
     const notificationContent = createDuplicateNotificationContent(props);
     
     toast({
-      title: "Memory Similarity Detected",
+      title: "🔍 Similar Memory Found!",
       description: notificationContent,
       duration: 30000, // 30 seconds to give user time to review
-      className: "max-w-lg",
+      className: "max-w-2xl",
+      style: {
+        backgroundColor: '#fff3cd',
+        borderColor: '#ffeaa7',
+        color: '#856404',
+        border: '2px solid #ffeaa7',
+        boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
+        zIndex: 9999,
+        fontSize: '14px',
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+      },
     });
+    
+    console.log('🔍 Duplicate memory notification shown');
   };
 
   return { showDuplicateNotification };

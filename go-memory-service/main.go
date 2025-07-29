@@ -41,10 +41,10 @@ func init() {
 }
 
 func main() {
-	// Get port from environment or default to 5001
+	// Get port from environment or default to 8081 (standard memory service port)
 	port := os.Getenv("GO_MEMORY_SERVICE_PORT")
 	if port == "" {
-		port = "5001"
+		port = "8081"
 	}
 
 	// Set up router
@@ -78,6 +78,8 @@ func main() {
 	router.HandleFunc("/api/memory/stats", statsHandler).Methods("GET")
 	router.HandleFunc("/api/memory/batch-similarity", batchSimilarityHandler).Methods("POST")
 	router.HandleFunc("/api/memory/embeddings", embeddingHandler).Methods("POST")
+	
+	// Core memory system - focus on essential functionality
 
 	// CORS middleware
 	c := cors.New(cors.Options{

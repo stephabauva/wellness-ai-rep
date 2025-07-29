@@ -1,0 +1,38 @@
+2025/07/29 14:31:34 Warning: .env file not found: open ../.env: no such file or directory
+time="2025-07-29T14:31:34+02:00" level=info msg="Started background processor" workers=24
+{"goroutines":28,"level":"info","msg":"Starting Go Memory Service","port":"8081","time":"2025-07-29T14:31:34+02:00"}
+time="2025-07-29T14:32:50+02:00" level=info msg="Creating new memory with deduplication" contentLength=57 userId=1
+time="2025-07-29T14:32:50+02:00" level=info msg="Initialized deduplication engine"
+time="2025-07-29T14:32:50+02:00" level=info msg="Successfully stored memory in database" memoryId=mem_1753792370536003000
+time="2025-07-29T14:32:50+02:00" level=info msg="Successfully created new memory" memoryId=mem_1753792370536003000
+time="2025-07-29T14:33:11+02:00" level=info msg="Creating new memory with deduplication" contentLength=54 userId=1
+time="2025-07-29T14:33:11+02:00" level=info msg="Updating existing memory" action=update confidence=0.5213833777331246 existingId=mem_1753792370536003000
+time="2025-07-29T14:34:38+02:00" level=info msg="Creating new memory with deduplication" contentLength=26 userId=1
+time="2025-07-29T14:34:38+02:00" level=info msg="Successfully stored memory in database" memoryId=mem_1753792478723352000
+time="2025-07-29T14:34:38+02:00" level=info msg="Successfully created new memory" memoryId=mem_1753792478723352000
+time="2025-07-29T14:35:50+02:00" level=info msg="Creating new memory with deduplication" contentLength=35 userId=1
+time="2025-07-29T14:35:50+02:00" level=info msg="Successfully stored memory in database" memoryId=mem_1753792550339389000
+time="2025-07-29T14:35:50+02:00" level=info msg="Successfully created new memory" memoryId=mem_1753792550339389000
+time="2025-07-29T14:40:22+02:00" level=info msg="Creating new memory with deduplication" contentLength=26 userId=1
+time="2025-07-29T14:40:22+02:00" level=info msg="Successfully stored memory in database" memoryId=mem_1753792822294250000
+time="2025-07-29T14:40:22+02:00" level=info msg="Successfully created new memory" memoryId=mem_1753792822294250000
+time="2025-07-29T14:40:22+02:00" level=info msg="Creating new memory with deduplication" contentLength=33 userId=1
+time="2025-07-29T14:40:22+02:00" level=info msg="Updating existing memory" action=update confidence=0.4584372653647653 existingId=mem_1753792370536003000
+time="2025-07-29T14:40:22+02:00" level=info msg="Creating new memory with deduplication" contentLength=48 userId=1
+time="2025-07-29T14:40:22+02:00" level=info msg="Merging with existing memory" action=merge confidence=0.6509566853639362 existingId=mem_1753792370536003000
+time="2025-07-29T14:42:10+02:00" level=info msg="Creating new memory with deduplication" contentLength=40 userId=1
+time="2025-07-29T14:42:10+02:00" level=info msg="Merging with existing memory" action=merge confidence=0.7737686850040696 existingId=mem_1753792370536003000
+time="2025-07-29T14:45:36+02:00" level=info msg="Creating new memory with deduplication" contentLength=26 userId=1
+time="2025-07-29T14:45:36+02:00" level=info msg="Successfully stored memory in database" memoryId=mem_1753793136237638000
+time="2025-07-29T14:45:36+02:00" level=info msg="Successfully created new memory" memoryId=mem_1753793136237638000
+time="2025-07-29T14:47:48+02:00" level=info msg="Creating new memory with deduplication" contentLength=26 userId=1
+time="2025-07-29T14:47:48+02:00" level=info msg="Skipping duplicate memory creation" action=skip confidence=1.0000000000000002 existingId=mem_1753793136237638000
+time="2025-07-29T14:48:16+02:00" level=info msg="Creating new memory with deduplication" contentLength=35 userId=1
+time="2025-07-29T14:48:16+02:00" level=info msg="Updating existing memory" action=update confidence=0.5838729293171618 existingId=mem_1753793136237638000
+time="2025-07-29T14:48:40+02:00" level=info msg="Creating new memory with deduplication" contentLength=49 userId=1
+time="2025-07-29T14:48:40+02:00" level=info msg="Successfully stored memory in database" memoryId=mem_1753793320459566000
+time="2025-07-29T14:48:40+02:00" level=info msg="Successfully created new memory" memoryId=mem_1753793320459566000
+time="2025-07-29T14:49:07+02:00" level=info msg="Creating new memory with deduplication" contentLength=25 userId=1
+time="2025-07-29T14:49:07+02:00" level=info msg="Updating existing memory" action=update confidence=0.5450628859665789 existingId=mem_1753793320459566000
+time="2025-07-29T15:02:37+02:00" level=info msg="Creating new memory with deduplication" contentLength=38 userId=1
+time="2025-07-29T15:02:37+02:00" level=info msg="Updating existing memory" action=update confidence=0.5516598908095216 existingId=mem_1753793136237638000

@@ -297,29 +297,76 @@ func (ms *MemoryService) CreateMemoryWithDeduplication(ctx context.Context, user
 		candidates = []MemoryCandidate{}
 	}
 
+	// DEBUG: Log candidate count and details
+	ms.logger.WithFields(logrus.Fields{
+		"candidateCount": len(candidates),
+		"userID": userID,
+		"contentPreview": func() string {
+			if len(content) > 50 {
+				return content[:50]
+			}
+			return content
+		}(),
+	}).Info("DEBUG: Retrieved candidates for deduplication")
+	
+	for i, candidate := range candidates {
+		if i < 3 { // Log first 3 candidates for debugging
+			ms.logger.WithFields(logrus.Fields{
+				"candidateIndex": i,
+				"candidateID": candidate.ID,
+				"candidateContent": func() string {
+					if len(candidate.Content) > 50 {
+						return candidate.Content[:50]
+					}
+					return candidate.Content
+				}(),
+			}).Info("DEBUG: Candidate memory")
+		}
+	}
+
 	// Run deduplication check
 	dedupResult := ms.dedup.CheckForDuplicate(content, candidates)
 	
+	// DEBUG: Log deduplication result
+	ms.logger.WithFields(logrus.Fields{
+		"action": dedupResult.Action,
+		"confidence": dedupResult.Confidence,
+		"reasoning": dedupResult.Reasoning,
+		"similarityScore": dedupResult.SimilarityScore,
+		"existingMemoryID": dedupResult.ExistingMemoryID,
+	}).Info("DEBUG: Deduplication result")
+	
 	switch dedupResult.Action {
-	case ActionSkip, ActionMerge, ActionUpdate:
+	case ActionSkip:
 		ms.logger.WithFields(logrus.Fields{
-			"action": dedupResult.Action,
+			"action": "skip",
 			"existingId": dedupResult.ExistingMemoryID,
 			"confidence": dedupResult.Confidence,
-		}).Info("Similar memory found - returning original for user decision")
+		}).Info("Skipping duplicate memory creation")
 		
-		// CRITICAL FIX: Do NOT modify the original memory!
-		// Just return the existing memory unchanged so user can see it in the notification
-		// The user will decide whether to save the new memory or not
-		originalMemory, err := ms.database.GetMemoryByID(ctx, dedupResult.ExistingMemoryID)
-		if err != nil {
-			ms.logger.WithError(err).Error("Failed to retrieve original memory for deduplication")
-			return nil, dedupResult, err
-		}
+		// Return existing memory with deduplication result
+		memory, err := ms.database.GetMemoryByID(ctx, dedupResult.ExistingMemoryID)
+		return memory, dedupResult, err
 		
-		// Return the ORIGINAL UNCHANGED memory
-		// Frontend will show this in "similar memories" and let user choose
-		return originalMemory, dedupResult, nil
+	case ActionMerge:
+		ms.logger.WithFields(logrus.Fields{
+			"action": "merge",
+			"existingId": dedupResult.ExistingMemoryID,
+			"confidence": dedupResult.Confidence,
+		}).Info("Merging with existing memory")
+		
+		memory, err := ms.database.MergeWithExistingMemory(ctx, dedupResult.ExistingMemoryID, content)
+		return memory, dedupResult, err
+		
+	case ActionUpdate:
+		ms.logger.WithFields(logrus.Fields{
+			"action": "update",
+			"existingId": dedupResult.ExistingMemoryID,
+			"confidence": dedupResult.Confidence,
+		}).Info("Updating existing memory")
+		
+		memory, err := ms.database.UpdateExistingMemoryContent(ctx, dedupResult.ExistingMemoryID, content)
+		return memory, dedupResult, err
 	}
 
 	// Create new memory (ActionCreate)

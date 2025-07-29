@@ -15,13 +15,10 @@ interface Memory {
 
 interface MemoryPage {
   memories: Memory[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-    hasMore: boolean;
-  };
+  hasMore: boolean;
+  page: number;
+  limit: number;
+  count: number;
 }
 
 interface UseInfiniteMemoriesOptions {
@@ -50,7 +47,7 @@ export function useInfiniteMemories({
         params.append('category', category);
       }
       
-      const response = await fetch(`/api/memories?${params}`);
+      const response = await fetch(`http://localhost:8081/api/memories?${params}`);
       if (!response.ok) throw new Error('Failed to fetch memories');
       
       const data = await response.json();
@@ -65,7 +62,7 @@ export function useInfiniteMemories({
       return data;
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined;
+      return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
     initialPageParam: 1,
     enabled,
@@ -79,7 +76,7 @@ export function useInfiniteMemories({
   // Flatten all memories from all pages
   const memories = query.data?.pages.flatMap(page => page.memories) || [];
   
-  const totalCount = query.data?.pages[0]?.pagination.totalCount || 0;
+  const totalCount = query.data?.pages.reduce((total, page) => total + page.count, 0) || 0;
   const hasMore = query.hasNextPage;
   const isLoading = query.isLoading;
   const isFetchingNextPage = query.isFetchingNextPage;

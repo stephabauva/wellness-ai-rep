@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -163,7 +164,7 @@ func getMemoriesHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// Create manual memory
+// Create manual memory with deduplication support
 func createMemoryHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := int64(1) // Default user ID
@@ -203,28 +204,76 @@ func createMemoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	memory, err := memoryService.CreateMemory(ctx, userID, req.Content)
+	// Create memory with deduplication - this will return both memory and deduplication info
+	memory, dedupResult, err := memoryService.CreateMemoryWithDeduplication(ctx, userID, req.Content)
 	if err != nil {
 		logger.WithError(err).Error("Failed to create memory")
 		http.Error(w, "Failed to create memory", http.StatusInternalServerError)
 		return
 	}
 	
-	response := map[string]interface{}{
-		"success": true,
-		"memory": map[string]interface{}{
-			"id":         memory.ID,
-			"content":    memory.Content,
-			"category":   memory.Category,
-			"importance": memory.ImportanceScore,
-			"createdAt":  memory.CreatedAt,
-		},
-		"message": "Memory processed and saved successfully",
+	// Handle different deduplication scenarios
+	switch dedupResult.Action {
+	case ActionSkip, ActionMerge, ActionUpdate:
+		// Deduplication occurred - return similar memory information for frontend modal
+		similarMemories := []map[string]interface{}{}
+		
+		if dedupResult.ExistingMemoryID != "" {
+			// Get the existing memory details
+			existingMemory, getErr := memoryService.database.GetMemoryByID(ctx, dedupResult.ExistingMemoryID)
+			if getErr == nil {
+				similarMemories = append(similarMemories, map[string]interface{}{
+					"id":         existingMemory.ID,
+					"content":    existingMemory.Content,
+					"similarity": dedupResult.SimilarityScore,
+					"category":   existingMemory.Category,
+					"createdAt":  existingMemory.CreatedAt,
+					"importance": existingMemory.ImportanceScore,
+				})
+			}
+		}
+		
+		response := map[string]interface{}{
+			"success":          true,
+			"action":           string(dedupResult.Action),
+			"deduplicationOccurred": true,
+			"similarMemories":  similarMemories,
+			"confidence":       dedupResult.Confidence,
+			"reasoning":        dedupResult.Reasoning,
+			"memory": map[string]interface{}{
+				"id":         memory.ID,
+				"content":    memory.Content,
+				"category":   memory.Category,
+				"importance": memory.ImportanceScore,
+				"createdAt":  memory.CreatedAt,
+			},
+			"message": fmt.Sprintf("Similar memory found (%.1f%% match) - %s", dedupResult.SimilarityScore*100, dedupResult.Reasoning),
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		
+	default:
+		// ActionCreate - new memory created normally
+		response := map[string]interface{}{
+			"success":          true,
+			"action":           "create",
+			"deduplicationOccurred": false,
+			"memory": map[string]interface{}{
+				"id":         memory.ID,
+				"content":    memory.Content,
+				"category":   memory.Category,
+				"importance": memory.ImportanceScore,
+				"createdAt":  memory.CreatedAt,
+			},
+			"message": "Memory processed and saved successfully",
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(response)
 	}
-	
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
 }
 
 // Check for duplicate memories
@@ -613,3 +662,5 @@ func consolidationStatsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
 }
+
+// Core memory system handlers - essential functionality only

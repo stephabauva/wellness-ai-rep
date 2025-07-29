@@ -1,6 +1,6 @@
 {
   "domain": "memory",
-  "lastUpdated": "2025-07-27T08:20:39.809Z",
+  "lastUpdated": "2025-07-29T13:23:38.058Z",
   "dependencies": {
     "client/src/components/MemorySection.tsx": {
       "domain": "memory",
@@ -206,25 +206,6 @@
       ],
       "crossDomain": false,
       "usageCount": 8
-    },
-    "client/src/components/memory/SimpleDuplicateModal.tsx": {
-      "domain": "memory",
-      "exports": [
-        "SimilarMemory",
-        "SimpleDuplicateModal"
-      ],
-      "usedBy": [
-        {
-          "file": "client/src/components/MemorySection.tsx",
-          "domain": "memory",
-          "imports": [
-            "SimpleDuplicateModal",
-            "type SimilarMemory"
-          ]
-        }
-      ],
-      "crossDomain": false,
-      "usageCount": 1
     },
     "client/src/components/memory/SelectionModeControls.tsx": {
       "domain": "memory",
@@ -441,6 +422,29 @@
           "domain": "memory",
           "imports": [
             "MemoryAddFAB"
+          ]
+        }
+      ],
+      "crossDomain": false,
+      "usageCount": 1
+    },
+    "client/src/components/memory/DuplicateMemoryNotification.tsx": {
+      "domain": "memory",
+      "exports": [
+        "SimilarMemory",
+        "DuplicateDetectionResult",
+        "createDuplicateNotificationContent",
+        "useDuplicateMemoryNotification",
+        "formatSimilarityScore",
+        "getSimilarityLevel",
+        "getSimilarityColorClass"
+      ],
+      "usedBy": [
+        {
+          "file": "client/src/hooks/memory/useMemoryActions.ts",
+          "domain": "memory",
+          "imports": [
+            "useDuplicateMemoryNotification"
           ]
         }
       ],

@@ -185,6 +185,21 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Devices endpoint for health integration
+  app.get('/api/devices', async (req, res) => {
+    try {
+      const devices = [
+        { id: 'iphone', name: 'iPhone', type: 'mobile', connected: false, lastSync: null },
+        { id: 'apple_watch', name: 'Apple Watch', type: 'wearable', connected: false, lastSync: null },
+        { id: 'fitbit', name: 'Fitbit', type: 'wearable', connected: false, lastSync: null }
+      ];
+      res.json(devices);
+    } catch (error: any) {
+      console.error('Error fetching devices:', error);
+      res.status(500).json({ message: 'Failed to fetch devices', error: error.message });
+    }
+  });
+
   // AI Models endpoint
   app.get('/api/ai-models', async (req, res) => {
     try {

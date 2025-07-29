@@ -13,17 +13,20 @@ import (
 
 // MemoryService provides high-performance memory operations
 type MemoryService struct {
-	config              *MemoryServiceConfig
-	similarityEngine    *SimilarityEngine
-	similarityCache     *SimilarityCache
-	backgroundProcessor *BackgroundProcessor
-	database            *DatabaseLayer
-	statsManager        *StatsManager
-	embeddingProcessor  *EmbeddingProcessor
-	shutdown            chan struct{}
-	wg                  sync.WaitGroup
-	dedup               *DeduplicationEngine
-	logger              *logrus.Logger
+	config               *MemoryServiceConfig
+	similarityEngine     *SimilarityEngine
+	similarityCache      *SimilarityCache
+	backgroundProcessor  *BackgroundProcessor
+	database             *DatabaseLayer
+	statsManager         *StatsManager
+	embeddingProcessor   *EmbeddingProcessor
+	relationshipDetector *RelationshipDetector
+	consolidationEngine  *ConsolidationEngine
+	performanceMonitor   *PerformanceMonitor
+	shutdown             chan struct{}
+	wg                   sync.WaitGroup
+	dedup                *DeduplicationEngine
+	logger               *logrus.Logger
 }
 
 
@@ -79,6 +82,11 @@ func NewMemoryService() (*MemoryService, error) {
 	
 	// Initialize embedding processor
 	ms.embeddingProcessor = NewEmbeddingProcessor(ms.similarityEngine, ms.statsManager, logger)
+	
+	// Phase 4: Initialize advanced features
+	ms.performanceMonitor = NewPerformanceMonitor(logger)
+	ms.relationshipDetector = NewRelationshipDetector(ms, logger)
+	ms.consolidationEngine = NewConsolidationEngine(ms, ms.relationshipDetector, ms.database, logger)
 
 	// Start background services
 	ms.startBackgroundServices()

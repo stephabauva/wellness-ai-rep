@@ -149,3 +149,75 @@ type MemoryServiceConfig struct {
 	EnableMetrics       bool          `json:"enableMetrics"`
 	EnableProfiling     bool          `json:"enableProfiling"`
 }
+
+// Phase 4: Advanced Features Types
+
+// MemoryRelationship represents a relationship between two memories
+type MemoryRelationship struct {
+	ID               string    `json:"id"`
+	UserID           int64     `json:"userId"`
+	SourceMemoryID   string    `json:"sourceMemoryId"`
+	TargetMemoryID   string    `json:"targetMemoryId"`
+	RelationshipType string    `json:"relationshipType"` // "duplicate", "related", "builds_on", "contradicts", "supports"
+	Strength         float64   `json:"strength"`         // 0.0 to 1.0
+	CreatedAt        time.Time `json:"createdAt"`
+	Confidence       float64   `json:"confidence"`       // AI confidence in this relationship
+	Metadata         map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// Note: MemoryCandidate is defined in deduplication.go to avoid duplication
+
+// ConsolidationRequest represents a request to consolidate memories
+type ConsolidationRequest struct {
+	UserID           int64    `json:"userId"`
+	SourceMemoryIDs  []string `json:"sourceMemoryIds"`
+	ConsolidationType string  `json:"consolidationType"` // "merge", "link", "supersede"
+	Reason           string   `json:"reason"`
+}
+
+// ConsolidationResult represents the result of memory consolidation
+type ConsolidationResult struct {
+	Success          bool                   `json:"success"`
+	NewMemoryID      string                 `json:"newMemoryId,omitempty"`
+	ConsolidatedIDs  []string               `json:"consolidatedIds"`
+	ConsolidationType string                `json:"consolidationType"`
+	Reason           string                 `json:"reason"`
+	Metadata         map[string]interface{} `json:"metadata,omitempty"`
+	Timestamp        time.Time              `json:"timestamp"`
+}
+
+// PerformanceMetrics represents advanced performance monitoring
+type PerformanceMetrics struct {
+	RelationshipDetection struct {
+		TotalProcessed    int64         `json:"totalProcessed"`
+		AverageTime       time.Duration `json:"averageTime"`
+		SuccessRate       float64       `json:"successRate"`
+		LastProcessedAt   time.Time     `json:"lastProcessedAt"`
+	} `json:"relationshipDetection"`
+	
+	Consolidation struct {
+		TotalConsolidations int64         `json:"totalConsolidations"`
+		AverageTime         time.Duration `json:"averageTime"`
+		SuccessRate         float64       `json:"successRate"`
+		LastConsolidatedAt  time.Time     `json:"lastConsolidatedAt"`
+	} `json:"consolidation"`
+	
+	MemoryOperations struct {
+		CreatedPerMinute    float64   `json:"createdPerMinute"`
+		QueriedPerMinute    float64   `json:"queriedPerMinute"`
+		UpdatedPerMinute    float64   `json:"updatedPerMinute"`
+		DeletedPerMinute    float64   `json:"deletedPerMinute"`
+		LastOperationAt     time.Time `json:"lastOperationAt"`
+	} `json:"memoryOperations"`
+	
+	SystemHealth struct {
+		MemoryUsageMB       float64   `json:"memoryUsageMB"`
+		GoroutineCount      int       `json:"goroutineCount"`
+		DatabaseConnections int       `json:"databaseConnections"`
+		CacheHitRate        float64   `json:"cacheHitRate"`
+		ResponseTimes       []float64 `json:"responseTimes"` // Last 100 response times
+		ErrorRate           float64   `json:"errorRate"`
+		Uptime              time.Duration `json:"uptime"`
+		LastHealthCheck     time.Time `json:"lastHealthCheck"`
+	} `json:"systemHealth"`
+}

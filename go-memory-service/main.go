@@ -62,6 +62,15 @@ func main() {
 	router.HandleFunc("/api/memories/overview", memoryOverviewHandler).Methods("GET")
 	router.HandleFunc("/api/memories/quality-metrics", qualityMetricsHandler).Methods("GET")
 	
+	// Phase 4: Advanced Features endpoints (specific routes BEFORE parameterized routes)
+	router.HandleFunc("/api/memories/stats/relationships", relationshipStatsHandler).Methods("GET")
+	router.HandleFunc("/api/memories/stats/consolidation", consolidationStatsHandler).Methods("GET")
+	router.HandleFunc("/api/memories/duplicates/advanced", detectDuplicatesAdvancedHandler).Methods("GET")
+	router.HandleFunc("/api/memories/metrics/advanced", advancedMetricsHandler).Methods("GET")
+	router.HandleFunc("/api/memories/consolidate", consolidateMemoriesHandler).Methods("POST")
+	router.HandleFunc("/api/memories/{id}/relationships", detectRelationshipsHandler).Methods("GET")
+	router.HandleFunc("/api/system/health", systemHealthHandler).Methods("GET")
+	
 	// Memory service endpoints (internal)
 	router.HandleFunc("/api/memory/similarity", similarityHandler).Methods("POST")
 	router.HandleFunc("/api/memory/contextual", contextualMemoryHandler).Methods("POST")

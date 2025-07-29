@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { History, MessageSquare, Clock, Search, X } from "lucide-react";
 import { Button } from "@shared/components/ui/button";
 import { Input } from "@shared/components/ui/input";
@@ -57,8 +58,8 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   ) || [];
 
   // Use conditional rendering instead of early return to avoid hook violations
-  return isOpen ? (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center">
       <Card className="w-full max-w-2xl h-[80vh] mx-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="flex items-center gap-2">
@@ -140,5 +141,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         </CardContent>
       </Card>
     </div>
-  ) : null;
+  );
+
+  return isOpen ? createPortal(modalContent, document.body) : null;
 };

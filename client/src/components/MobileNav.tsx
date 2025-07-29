@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { 
   Menu, 
   MessageSquare, 
@@ -43,6 +44,16 @@ const MobileNav: React.FC = () => {
 
   const toggleNav = useCallback(() => setIsOpen(prev => !prev), []);
 
+  // Listen for custom events to toggle nav from other components
+  React.useEffect(() => {
+    const handleToggleNav = () => {
+      setIsOpen(prev => !prev);
+    };
+
+    window.addEventListener('toggleMobileNav', handleToggleNav);
+    return () => window.removeEventListener('toggleMobileNav', handleToggleNav);
+  }, []);
+
   const handleNavClick = useCallback((section: "chat" | "health" | "devices" | "memory" | "files" | "settings") => {
     setActiveSection(section);
     setIsOpen(false);
@@ -72,9 +83,18 @@ const MobileNav: React.FC = () => {
         </div>
       </div>
       
+      {/* Backdrop - Click to close navigation - rendered to document body */}
+      {isOpen && createPortal(
+        <div 
+          className="fixed inset-0 bg-transparent z-[45]"
+          onClick={() => setIsOpen(false)}
+        />,
+        document.body
+      )}
+
       {/* Mobile Navigation (Hidden by default) */}
       <div className={cn(
-        "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl absolute w-full left-0 p-4 border-b border-gray-200/80 dark:border-gray-700/80 shadow-lg transition-all duration-300 ease-out",
+        "bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl absolute w-full left-0 p-4 border-b border-gray-200/80 dark:border-gray-700/80 shadow-lg transition-all duration-300 ease-out z-50",
         isOpen ? "block" : "hidden"
       )}>
         <nav className="grid grid-cols-6 gap-3">

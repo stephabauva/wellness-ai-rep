@@ -151,6 +151,40 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Health consent visibility endpoint
+  app.get('/api/health-consent/visibility', async (req, res) => {
+    try {
+      const consentSettings = {
+        showConsent: true,
+        requireConsent: false,
+        consentVersion: '1.0',
+        lastUpdated: '2025-01-01T00:00:00.000Z'
+      };
+      res.json(consentSettings);
+    } catch (error: any) {
+      console.error('Error fetching health consent visibility:', error);
+      res.status(500).json({ message: 'Failed to fetch consent settings', error: error.message });
+    }
+  });
+
+  // Health data categories endpoint
+  app.get('/api/health-data/categories', async (req, res) => {
+    try {
+      const categories = [
+        { id: 'steps', name: 'Steps', type: 'quantity', unit: 'count' },
+        { id: 'heart_rate', name: 'Heart Rate', type: 'quantity', unit: 'bpm' },
+        { id: 'sleep', name: 'Sleep', type: 'category', unit: 'hours' },
+        { id: 'weight', name: 'Weight', type: 'quantity', unit: 'kg' },
+        { id: 'blood_pressure', name: 'Blood Pressure', type: 'quantity', unit: 'mmHg' },
+        { id: 'exercise', name: 'Exercise', type: 'category', unit: 'minutes' }
+      ];
+      res.json(categories);
+    } catch (error: any) {
+      console.error('Error fetching health data categories:', error);
+      res.status(500).json({ message: 'Failed to fetch health categories', error: error.message });
+    }
+  });
+
   // AI Models endpoint
   app.get('/api/ai-models', async (req, res) => {
     try {

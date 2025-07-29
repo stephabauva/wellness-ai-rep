@@ -78,7 +78,7 @@ export class GoMemoryService {
       baseUrl: process.env.GO_MEMORY_SERVICE_URL || 'http://localhost:8081',
       timeout: 30000, // 30 seconds
       retries: 3,
-      enabled: process.env.GO_MEMORY_SERVICE_ENABLED === 'true' || false
+      enabled: process.env.GO_MEMORY_SERVICE_ENABLED !== 'false' // Default to enabled
     };
     
     // Start health monitoring

@@ -75,7 +75,7 @@ export class GoMemoryService {
 
   constructor() {
     this.config = {
-      baseUrl: process.env.GO_MEMORY_SERVICE_URL || 'http://localhost:5001',
+      baseUrl: process.env.GO_MEMORY_SERVICE_URL || 'http://localhost:8081',
       timeout: 30000, // 30 seconds
       retries: 3,
       enabled: process.env.GO_MEMORY_SERVICE_ENABLED === 'true' || false

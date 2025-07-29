@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"time"
 )
 
@@ -118,6 +119,16 @@ type CacheEntry struct {
 	Similarity float64   `json:"similarity"`
 	Timestamp  time.Time `json:"timestamp"`
 	AccessCount int      `json:"accessCount"`
+}
+
+// SimilarityCache provides thread-safe caching for similarity calculations
+type SimilarityCache struct {
+	cache      map[string]*CacheEntry
+	mutex      sync.RWMutex
+	maxSize    int
+	ttl        time.Duration
+	hitCount   int64
+	missCount  int64
 }
 
 // WorkerPool configuration

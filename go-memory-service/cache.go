@@ -1,8 +1,6 @@
 package main
 
 import (
-	"runtime"
-	"sync"
 	"time"
 )
 
@@ -119,145 +117,25 @@ func (sc *SimilarityCache) Clear() {
 	sc.missCount = 0
 }
 
-// cacheCleanupRoutine runs periodic cleanup of expired cache entries
-func (ms *MemoryService) cacheCleanupRoutine() {
-	defer ms.wg.Done()
-	
-	ticker := time.NewTicker(ms.config.CleanupInterval)
-	defer ticker.Stop()
-	
-	for {
-		select {
-		case <-ticker.C:
-			removed := ms.similarityCache.Cleanup()
-			if removed > 0 {
-				ms.logger.WithField("removed_entries", removed).Debug("Cache cleanup completed")
-			}
-			
-			// Force garbage collection if cache cleanup removed many entries
-			if removed > 1000 {
-				runtime.GC()
-			}
-			
-		case <-ms.shutdown:
-			return
-		}
-	}
+// cacheCleanupRoutine runs periodic cleanup of expired cache entries - moved to background.go
+// This function is now handled by BackgroundProcessor
+
+// Cache helper functions for memory operations
+
+// getFromCache retrieves data from cache (placeholder)
+func (ms *MemoryService) getFromCache(key string) interface{} {
+	// Placeholder for cache get
+	return nil
 }
 
-// metricsRoutine collects and updates service metrics
-func (ms *MemoryService) metricsRoutine() {
-	defer ms.wg.Done()
-	
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-	
-	for {
-		select {
-		case <-ticker.C:
-			ms.updateMetrics()
-			
-		case <-ms.shutdown:
-			return
-		}
-	}
+// cacheMemories stores memories in cache (placeholder)
+func (ms *MemoryService) cacheMemories(key string, memories []*Memory) {
+	// Placeholder for cache set
+	ms.logger.WithField("cacheKey", key).Debug("Caching memories")
 }
 
-// updateMetrics collects current service metrics
-func (ms *MemoryService) updateMetrics() {
-	ms.statsMutex.Lock()
-	defer ms.statsMutex.Unlock()
-	
-	// Update cache statistics
-	cacheStats := ms.similarityCache.GetStats()
-	ms.stats.CacheSize = cacheStats["size"].(int)
-	ms.stats.CacheHitRate = cacheStats["hit_rate"].(float64)
-	
-	// Update memory usage
-	var memStats runtime.MemStats
-	runtime.ReadMemStats(&memStats)
-	ms.stats.MemoryUsageMB = float64(memStats.Alloc) / 1024 / 1024
-	
-	// Update goroutine count
-	ms.stats.GoroutineCount = runtime.NumGoroutine()
-	
-	// Update uptime
-	ms.stats.Uptime = time.Since(ms.startTime)
-	
-	// Update timestamp
-	ms.stats.Timestamp = time.Now()
-}
-
-// updateTaskStats updates statistics for processed tasks
-func (ms *MemoryService) updateTaskStats(taskType string, duration time.Duration) {
-	ms.statsMutex.Lock()
-	defer ms.statsMutex.Unlock()
-	
-	// Update average processing time
-	currentAvg := ms.stats.AverageProcessingTime
-	totalTasks := ms.stats.ProcessedTasks + 1
-	
-	newDuration := float64(duration.Milliseconds())
-	ms.stats.AverageProcessingTime = (currentAvg*float64(ms.stats.ProcessedTasks) + newDuration) / float64(totalTasks)
-	
-	// Update task type statistics
-	ms.stats.TaskTypeStats[taskType]++
-}
-
-// updateSimilarityStats updates similarity calculation statistics
-func (ms *MemoryService) updateSimilarityStats() {
-	ms.statsMutex.Lock()
-	defer ms.statsMutex.Unlock()
-	
-	ms.stats.TotalSimilarityCalcs++
-}
-
-// updatePerformanceMetric updates a specific performance metric
-func (ms *MemoryService) updatePerformanceMetric(metric string, value float64) {
-	ms.statsMutex.Lock()
-	defer ms.statsMutex.Unlock()
-	
-	ms.stats.PerformanceMetrics[metric] = value
-}
-
-// GetStats returns current service statistics
-func (ms *MemoryService) GetStats() ServiceStats {
-	ms.statsMutex.RLock()
-	defer ms.statsMutex.RUnlock()
-	
-	// Create a copy to avoid race conditions
-	statsCopy := *ms.stats
-	statsCopy.QueueSize = len(ms.taskQueue)
-	
-	return statsCopy
-}
-
-// Shutdown gracefully shuts down the memory service
-func (ms *MemoryService) Shutdown() {
-	ms.logger.Info("Shutting down memory service...")
-	
-	// Signal shutdown to all goroutines
-	close(ms.shutdown)
-	
-	// Shutdown worker pool
-	close(ms.workerPool.shutdown)
-	
-	// Wait for workers to finish with timeout
-	done := make(chan struct{})
-	go func() {
-		ms.workerPool.wg.Wait()
-		close(done)
-	}()
-	
-	select {
-	case <-done:
-		ms.logger.Info("Worker pool shutdown completed")
-	case <-time.After(ms.config.WorkerPool.ShutdownTimeout):
-		ms.logger.Warn("Worker pool shutdown timed out")
-	}
-	
-	// Wait for other background goroutines
-	ms.wg.Wait()
-	
-	ms.logger.Info("Memory service shutdown completed")
+// invalidateUserCache removes user-specific cache entries
+func (ms *MemoryService) invalidateUserCache(userID int64) {
+	// Placeholder for cache invalidation
+	ms.logger.WithField("userId", userID).Debug("Invalidating user cache")
 }

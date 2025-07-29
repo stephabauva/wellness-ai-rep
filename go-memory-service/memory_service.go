@@ -34,6 +34,9 @@ type MemoryService struct {
 	shutdown     chan struct{}
 	wg           sync.WaitGroup
 	
+	// Deduplication engine integration
+	dedup        *DeduplicationEngine
+	
 	logger       *logrus.Logger
 }
 
@@ -611,3 +614,298 @@ func min(a, b int) int {
 	}
 	return b
 }
+// Core Memory CRUD Operations - Phase 2 Integration
+
+// CreateMemory creates a new memory with deduplication
+func (ms *MemoryService) CreateMemory(ctx context.Context, userID int64, content string) (*Memory, error) {
+	start := time.Now()
+	defer func() {
+		ms.updatePerformanceMetric("create_memory_time", float64(time.Since(start).Milliseconds()))
+	}()
+
+	ms.logger.WithFields(logrus.Fields{
+		"userId": userID,
+		"contentLength": len(content),
+	}).Info("Creating new memory with deduplication")
+
+	// Initialize deduplication engine if not exists
+	if ms.dedup == nil {
+		ms.dedup = NewDeduplicationEngine()
+	}
+
+	// Get recent memories for deduplication comparison
+	candidates, err := ms.getRecentMemoriesForUser(ctx, userID, 50)
+	if err != nil {
+		ms.logger.WithError(err).Warn("Failed to get recent memories for deduplication")
+		candidates = []MemoryCandidate{}
+	}
+
+	// Run deduplication check
+	dedupResult := ms.dedup.CheckForDuplicate(content, candidates)
+	
+	switch dedupResult.Action {
+	case ActionSkip:
+		ms.logger.WithFields(logrus.Fields{
+			"action": "skip",
+			"existingId": dedupResult.ExistingMemoryID,
+			"confidence": dedupResult.Confidence,
+		}).Info("Skipping duplicate memory creation")
+		
+		// Return existing memory
+		return ms.getMemoryByID(ctx, dedupResult.ExistingMemoryID)
+		
+	case ActionMerge:
+		ms.logger.WithFields(logrus.Fields{
+			"action": "merge",
+			"existingId": dedupResult.ExistingMemoryID,
+			"confidence": dedupResult.Confidence,
+		}).Info("Merging with existing memory")
+		
+		return ms.mergeWithExistingMemory(ctx, dedupResult.ExistingMemoryID, content)
+		
+	case ActionUpdate:
+		ms.logger.WithFields(logrus.Fields{
+			"action": "update",
+			"existingId": dedupResult.ExistingMemoryID,
+			"confidence": dedupResult.Confidence,
+		}).Info("Updating existing memory")
+		
+		return ms.updateExistingMemoryContent(ctx, dedupResult.ExistingMemoryID, content)
+	}
+
+	// Create new memory (ActionCreate)
+	memory := &Memory{
+		ID:              ms.generateMemoryID(),
+		UserID:          int(userID),
+		Content:         content,
+		Category:        "personal_context", // Default category
+		ImportanceScore: 0.7,               // Default importance
+		CreatedAt:       time.Now(),
+		LastAccessed:    time.Now(),
+		IsActive:        true,
+		Keywords:        []string{},
+		Embedding:       []float64{},
+		AccessCount:     0,
+	}
+
+	// Store memory (placeholder - will be implemented with database layer)
+	err = ms.storeMemory(ctx, memory)
+	if err != nil {
+		return nil, fmt.Errorf("failed to store memory: %w", err)
+	}
+
+	// Generate embedding in background
+	ms.AddBackgroundTask(ProcessMemoryRequest{
+		Type:     "embedding_generation",
+		Priority: 1, // normal priority
+		Payload: map[string]interface{}{
+			"memoryId": memory.ID,
+			"content":  content,
+		},
+	})
+
+	ms.logger.WithField("memoryId", memory.ID).Info("Successfully created new memory")
+	return memory, nil
+}
+
+// GetMemoriesForUser retrieves memories for a specific user
+func (ms *MemoryService) GetMemoriesForUser(ctx context.Context, userID int64, limit int) ([]*Memory, error) {
+	start := time.Now()
+	defer func() {
+		ms.updatePerformanceMetric("get_memories_time", float64(time.Since(start).Milliseconds()))
+	}()
+
+	// Check cache first
+	cacheKey := fmt.Sprintf("user_memories:%d:%d", userID, limit)
+	if cached := ms.getFromCache(cacheKey); cached != nil {
+		if memories, ok := cached.([]*Memory); ok {
+			return memories, nil
+		}
+	}
+
+	// Get from database (placeholder)
+	memories, err := ms.queryMemoriesFromDB(ctx, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query memories: %w", err)
+	}
+
+	// Cache the result
+	ms.cacheMemories(cacheKey, memories)
+
+	return memories, nil
+}
+
+// UpdateMemory updates an existing memory
+func (ms *MemoryService) UpdateMemory(ctx context.Context, memoryID string, updates map[string]interface{}) (*Memory, error) {
+	start := time.Now()
+	defer func() {
+		ms.updatePerformanceMetric("update_memory_time", float64(time.Since(start).Milliseconds()))
+	}()
+
+	// Get existing memory
+	memory, err := ms.getMemoryByID(ctx, memoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply updates
+	if content, ok := updates["content"].(string); ok && content != "" {
+		memory.Content = content
+		// Update last accessed time when content changes
+		memory.LastAccessed = time.Now()
+	}
+	
+	if importance, ok := updates["importance"].(float64); ok {
+		memory.ImportanceScore = importance
+	}
+
+	memory.LastAccessed = time.Now()
+	memory.AccessCount++
+
+	// Update in database (placeholder)
+	err = ms.updateMemoryInDB(ctx, memory)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update memory: %w", err)
+	}
+
+	// Clear user cache
+	ms.invalidateUserCache(int64(memory.UserID))
+
+	ms.logger.WithField("memoryId", memoryID).Info("Successfully updated memory")
+	return memory, nil
+}
+
+// DeleteMemory soft-deletes a memory
+func (ms *MemoryService) DeleteMemory(ctx context.Context, memoryID string) error {
+	start := time.Now()
+	defer func() {
+		ms.updatePerformanceMetric("delete_memory_time", float64(time.Since(start).Milliseconds()))
+	}()
+
+	// Get memory to check ownership
+	memory, err := ms.getMemoryByID(ctx, memoryID)
+	if err != nil {
+		return err
+	}
+
+	// Soft delete in database (placeholder)
+	err = ms.softDeleteMemoryInDB(ctx, memoryID)
+	if err != nil {
+		return fmt.Errorf("failed to delete memory: %w", err)
+	}
+
+	// Clear caches
+	ms.invalidateUserCache(int64(memory.UserID))
+
+	ms.logger.WithField("memoryId", memoryID).Info("Successfully deleted memory")
+	return nil
+}
+
+// Helper methods for database operations (placeholders for Phase 2)
+
+func (ms *MemoryService) generateMemoryID() string {
+	return fmt.Sprintf("mem_%d", time.Now().UnixNano())
+}
+
+func (ms *MemoryService) getRecentMemoriesForUser(ctx context.Context, userID int64, limit int) ([]MemoryCandidate, error) {
+	// Placeholder implementation - will be replaced with actual database query
+	return []MemoryCandidate{}, nil
+}
+
+func (ms *MemoryService) getMemoryByID(ctx context.Context, memoryID string) (*Memory, error) {
+	// Placeholder implementation - will be replaced with actual database query
+	return &Memory{
+		ID:       memoryID,
+		UserID:   1,
+		Content:  "placeholder content",
+		Category: "personal_context",
+	}, nil
+}
+
+func (ms *MemoryService) mergeWithExistingMemory(ctx context.Context, existingID string, newContent string) (*Memory, error) {
+	memory, err := ms.getMemoryByID(ctx, existingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Simple merge - combine content if new content is longer
+	if len(newContent) > len(memory.Content) {
+		memory.Content = newContent
+	}
+	memory.LastAccessed = time.Now()
+	memory.AccessCount++
+
+	// Update in database
+	err = ms.updateMemoryInDB(ctx, memory)
+	if err != nil {
+		return nil, err
+	}
+
+	return memory, nil
+}
+
+func (ms *MemoryService) updateExistingMemoryContent(ctx context.Context, existingID string, newContent string) (*Memory, error) {
+	memory, err := ms.getMemoryByID(ctx, existingID)
+	if err != nil {
+		return nil, err
+	}
+
+	memory.Content = newContent
+	memory.LastAccessed = time.Now()
+	memory.AccessCount++
+
+	// Update in database
+	err = ms.updateMemoryInDB(ctx, memory)
+	if err != nil {
+		return nil, err
+	}
+
+	return memory, nil
+}
+
+func (ms *MemoryService) storeMemory(ctx context.Context, memory *Memory) error {
+	// Placeholder for database storage
+	ms.logger.WithField("memoryId", memory.ID).Debug("Storing memory in database")
+	return nil
+}
+
+func (ms *MemoryService) queryMemoriesFromDB(ctx context.Context, userID int64, limit int) ([]*Memory, error) {
+	// Placeholder for database query
+	return []*Memory{}, nil
+}
+
+func (ms *MemoryService) updateMemoryInDB(ctx context.Context, memory *Memory) error {
+	// Placeholder for database update
+	ms.logger.WithField("memoryId", memory.ID).Debug("Updating memory in database")
+	return nil
+}
+
+func (ms *MemoryService) softDeleteMemoryInDB(ctx context.Context, memoryID string) error {
+	// Placeholder for database soft delete
+	ms.logger.WithField("memoryId", memoryID).Debug("Soft deleting memory in database")
+	return nil
+}
+
+func (ms *MemoryService) getFromCache(key string) interface{} {
+	// Placeholder for cache get
+	return nil
+}
+
+func (ms *MemoryService) cacheMemories(key string, memories []*Memory) {
+	// Placeholder for cache set
+	ms.logger.WithField("cacheKey", key).Debug("Caching memories")
+}
+
+func (ms *MemoryService) invalidateUserCache(userID int64) {
+	// Placeholder for cache invalidation
+	ms.logger.WithField("userId", userID).Debug("Invalidating user cache")
+}
+
+// Integration with existing deduplication engine
+func (ms *MemoryService) initializeDeduplication() {
+	if ms.dedup == nil {
+		ms.dedup = NewDeduplicationEngine()
+		ms.logger.Info("Initialized deduplication engine")
+	}
+}
+

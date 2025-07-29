@@ -116,6 +116,16 @@ export function ChatInputArea({
     }, 'image/png', 0.9);
   };
 
+  // Listen for camera open events from floating action button
+  useEffect(() => {
+    const handleOpenCamera = () => {
+      openCamera();
+    };
+
+    window.addEventListener('openCamera', handleOpenCamera);
+    return () => window.removeEventListener('openCamera', handleOpenCamera);
+  }, []);
+
   // Cleanup effect to stop camera stream when component unmounts
   useEffect(() => {
     return () => {
@@ -126,54 +136,27 @@ export function ChatInputArea({
   }, [cameraStream]);
 
   return (
-    <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/80 dark:border-gray-700/80 p-4 safe-area-inset shadow-sm">
-      {/* Mobile-optimized input container */}
-      <div className="flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 rounded-2xl p-3 shadow-md border border-gray-200/60 dark:border-gray-700/60">
-        {/* Left action buttons group */}
-        <div className="flex items-center gap-1">
-          {/* File Upload Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadFileMutation.isPending}
-            aria-label="Attach file"
-            className="rounded-xl h-11 w-11 min-h-[48px] min-w-[48px] hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-all duration-300 ease-out hover:scale-110 active:scale-95 touch-ripple"
-          >
-            <Paperclip className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          </Button>
+    <div className="p-4 safe-area-inset">
+      {/* Simplified input container - single border */}
+      <div className="flex items-center gap-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl p-4 border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
+        {/* Audio Recording */}
+        <AudioRecorder
+          onTranscriptionComplete={(text) => {
+            // Append transcription to existing message if there's already text
+            setInputMessage(prev => prev.trim() ? `${prev} ${text}` : text);
+          }}
+          provider={(settings?.transcriptionProvider as any) || "webspeech"}
+        />
 
-          {/* Camera Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={openCamera}
-            disabled={uploadFileMutation.isPending}
-            aria-label="Use camera"
-            className="rounded-xl h-11 w-11 min-h-[48px] min-w-[48px] hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-all duration-300 ease-out hover:scale-110 active:scale-95 touch-ripple"
-          >
-            <Camera className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          </Button>
-
-          {/* Audio Recording */}
-          <AudioRecorder
-            onTranscriptionComplete={(text) => {
-              // Append transcription to existing message if there's already text
-              setInputMessage(prev => prev.trim() ? `${prev} ${text}` : text);
-            }}
-            provider={(settings?.transcriptionProvider as any) || "webspeech"}
-          />
-        </div>
-
-        {/* Text Input - Centered and prominent */}
-        <div className="flex-1 mx-2">
+        {/* Text Input - Takes most of the space */}
+        <div className="flex-1">
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
             disabled={sendMessageMutation.isPending}
-            className="rounded-xl h-11 min-h-[48px] bg-white dark:bg-gray-900 border-0 focus:ring-2 focus:ring-blue-500/50 shadow-sm transition-all duration-300 ease-out focus:shadow-md text-base px-4"
+            className="h-12 min-h-[48px] bg-gray-50/80 dark:bg-gray-700/50 border-0 focus:ring-2 focus:ring-blue-500/50 shadow-none transition-all duration-300 ease-out focus:bg-white dark:focus:bg-gray-600/80 text-base px-4"
           />
         </div>
 
@@ -187,7 +170,7 @@ export function ChatInputArea({
             )
           }
           aria-label="Send message"
-          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-white rounded-xl h-11 w-11 min-h-[48px] min-w-[48px] transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 shadow-md"
+          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-white h-12 w-12 min-h-[48px] min-w-[48px] transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 shadow-md"
         >
           <Send className="h-5 w-5" />
         </Button>

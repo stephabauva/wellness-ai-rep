@@ -69,12 +69,12 @@ const MobileNav: React.FC = () => {
           <span className="font-bold text-xl text-gray-900 dark:text-white tracking-tight">WellnessAI</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="rounded-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-800/80 transition-all duration-300 ease-out">
+          <div className="p-2 transition-all duration-300 ease-out">
             <ThemeToggle />
           </div>
           <button 
             type="button"
-            className="p-2.5 rounded-xl text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 ease-out hover:scale-105 active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 ease-out hover:scale-105 active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={toggleNav}
             aria-label="Toggle mobile menu"
           >

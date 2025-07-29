@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { Plus, MessageSquare, History, Menu, X } from 'lucide-react';
+import { Plus, MessageSquare, History, Menu, X, Paperclip, Camera } from 'lucide-react';
 import { useAppContext } from "@shared";
 
 interface ChatFloatingActionButtonProps {
   onNewChat?: () => void;
   onOpenHistory?: () => void;
   isHistoryOpen?: boolean;
+  onOpenFileUpload?: () => void;
+  onOpenCamera?: () => void;
 }
 
 const ChatFloatingActionButton: React.FC<ChatFloatingActionButtonProps> = ({ 
   onNewChat, 
   onOpenHistory,
-  isHistoryOpen = false
+  isHistoryOpen = false,
+  onOpenFileUpload,
+  onOpenCamera
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { setActiveSection } = useAppContext();
@@ -34,6 +38,26 @@ const ChatFloatingActionButton: React.FC<ChatFloatingActionButtonProps> = ({
       color: 'bg-purple-500 hover:bg-purple-600',
       onClick: () => {
         onOpenHistory?.();
+        setIsExpanded(false);
+      }
+    },
+    {
+      icon: Paperclip,
+      label: 'File Upload',
+      action: 'file-upload',
+      color: 'bg-orange-500 hover:bg-orange-600',
+      onClick: () => {
+        onOpenFileUpload?.();
+        setIsExpanded(false);
+      }
+    },
+    {
+      icon: Camera,
+      label: 'Camera',
+      action: 'camera',
+      color: 'bg-teal-500 hover:bg-teal-600',
+      onClick: () => {
+        onOpenCamera?.();
         setIsExpanded(false);
       }
     },

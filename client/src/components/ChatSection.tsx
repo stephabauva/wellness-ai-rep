@@ -142,6 +142,15 @@ function ChatSection() {
           onNewChat={handleNewChat}
           onOpenHistory={() => setIsConversationHistoryOpen(true)}
           isHistoryOpen={isConversationHistoryOpen}
+          onOpenFileUpload={() => {
+            // Trigger file input click
+            const fileInput = document.querySelector('[data-testid="file-input-upload"]') as HTMLInputElement;
+            fileInput?.click();
+          }}
+          onOpenCamera={() => {
+            // Trigger camera functionality
+            window.dispatchEvent(new CustomEvent('openCamera'));
+          }}
         />
       </ChatErrorBoundary>
     </div>

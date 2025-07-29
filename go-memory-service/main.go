@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -54,7 +53,16 @@ func main() {
 	// Health check endpoint
 	router.HandleFunc("/health", healthHandler).Methods("GET")
 	
-	// Memory service endpoints
+	// Memory CRUD endpoints (frontend integration)
+	router.HandleFunc("/api/memories", getMemoriesHandler).Methods("GET")
+	router.HandleFunc("/api/memories/manual", createMemoryHandler).Methods("POST")
+	router.HandleFunc("/api/memories/check-duplicates", checkDuplicatesHandler).Methods("POST")
+	router.HandleFunc("/api/memories/{id}", updateMemoryHandler).Methods("PUT")
+	router.HandleFunc("/api/memories/{id}", deleteMemoryHandler).Methods("DELETE")
+	router.HandleFunc("/api/memories/overview", memoryOverviewHandler).Methods("GET")
+	router.HandleFunc("/api/memories/quality-metrics", qualityMetricsHandler).Methods("GET")
+	
+	// Memory service endpoints (internal)
 	router.HandleFunc("/api/memory/similarity", similarityHandler).Methods("POST")
 	router.HandleFunc("/api/memory/contextual", contextualMemoryHandler).Methods("POST")
 	router.HandleFunc("/api/memory/process", processMemoryHandler).Methods("POST")
@@ -115,116 +123,3 @@ func main() {
 	logger.Info("Go Memory Service stopped")
 }
 
-// Health check handler
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	stats := memoryService.GetStats()
-	
-	health := map[string]interface{}{
-		"status":     "healthy",
-		"timestamp":  time.Now(),
-		"stats":      stats,
-		"goroutines": runtime.NumGoroutine(),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(health)
-}
-
-// Vector similarity calculation handler
-func similarityHandler(w http.ResponseWriter, r *http.Request) {
-	var req SimilarityRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	similarity := memoryService.CalculateCosineSimilarity(req.VectorA, req.VectorB)
-	
-	response := SimilarityResponse{
-		Similarity: similarity,
-		Timestamp:  time.Now(),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-// Contextual memory retrieval handler
-func contextualMemoryHandler(w http.ResponseWriter, r *http.Request) {
-	var req ContextualMemoryRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	memories, err := memoryService.GetContextualMemories(r.Context(), req)
-	if err != nil {
-		logger.WithError(err).Error("Failed to get contextual memories")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(memories)
-}
-
-// Background memory processing handler
-func processMemoryHandler(w http.ResponseWriter, r *http.Request) {
-	var req ProcessMemoryRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Add to background processing queue
-	memoryService.AddBackgroundTask(req)
-
-	response := map[string]interface{}{
-		"status":    "queued",
-		"timestamp": time.Now(),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-// Statistics handler
-func statsHandler(w http.ResponseWriter, r *http.Request) {
-	stats := memoryService.GetStats()
-	
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
-}
-
-// Batch similarity calculation handler
-func batchSimilarityHandler(w http.ResponseWriter, r *http.Request) {
-	var req BatchSimilarityRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	results := memoryService.CalculateBatchSimilarity(req.BaseVector, req.Vectors)
-	
-	response := BatchSimilarityResponse{
-		Results:   results,
-		Timestamp: time.Now(),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-// Embedding processing handler
-func embeddingHandler(w http.ResponseWriter, r *http.Request) {
-	var req EmbeddingRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	result := memoryService.ProcessEmbedding(req)
-	
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}

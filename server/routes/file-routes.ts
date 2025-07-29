@@ -428,5 +428,23 @@ export async function registerFileRoutes(app: Express): Promise<void> {
     console.error('Failed to seed default categories on startup:', error);
   }
 
+  // Retention settings endpoint
+  app.get('/api/retention-settings', async (req, res) => {
+    try {
+      const retentionSettings = {
+        autoDelete: false,
+        retentionDays: 90,
+        maxFileSize: 50, // MB
+        allowedTypes: ['image', 'document', 'video', 'audio'],
+        compressionEnabled: true,
+        backupEnabled: false
+      };
+      res.json(retentionSettings);
+    } catch (error: any) {
+      console.error('Error fetching retention settings:', error);
+      res.status(500).json({ message: 'Failed to fetch retention settings', error: error.message });
+    }
+  });
+
   console.log('File routes registered successfully');
 }

@@ -151,5 +151,21 @@ export async function registerSettingsRoutes(app: Express): Promise<void> {
     }
   });
 
+  // AI Models endpoint
+  app.get('/api/ai-models', async (req, res) => {
+    try {
+      const models = [
+        { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', capabilities: ['chat', 'vision'] },
+        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', capabilities: ['chat'] },
+        { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', provider: 'google', capabilities: ['chat', 'vision'] },
+        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'google', capabilities: ['chat', 'vision'] }
+      ];
+      res.json(models);
+    } catch (error: any) {
+      console.error('Error fetching AI models:', error);
+      res.status(500).json({ message: 'Failed to fetch AI models', error: error.message });
+    }
+  });
+
   console.log('Settings routes registered successfully');
 }

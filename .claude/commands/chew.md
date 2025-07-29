@@ -58,6 +58,7 @@
    - Problem: [specific issue]
    - Solution: [detailed approach]
    - Files affected: [list with line numbers]
+   - How the user can manually test it
 - [ ] Task 2
    - ...
 
@@ -76,9 +77,7 @@
 - Performance impact verification
 
 ## Rollback Plan
-If something breaks:
-- Steps to revert
-- Dependencies to check
+No rollbacks, the user will do a git reset --hard commit-id
 
 ## Review
 [To be filled after completion]
@@ -104,7 +103,7 @@ If something breaks:
 - Write new plan respecting I1
 
 ### Complexity Management
-- If task affects >3 files, break it down
+- If task affects >2 files, break it down
 - If task crosses domains, plan extra carefully
 - If touching shared components, list ALL consumers
 

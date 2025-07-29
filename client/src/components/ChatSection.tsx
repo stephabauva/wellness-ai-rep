@@ -60,29 +60,29 @@ function ChatSection() {
   console.log("[ChatSection] Component render - Messages:", messages?.length, "ConversationId:", currentConversationId, "Loading:", loadingMessages);
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col h-full bg-background">
       <ChatErrorBoundary onReset={() => {
         handleNewChat();
         setIsConversationHistoryOpen(false);
       }}>
         {/* Loading state */}
         {loadingMessages && !currentConversationId ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center">
-              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading conversation...</p>
+              <div className="spinner mx-auto mb-4"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Loading conversation...</p>
             </div>
           </div>
         ) : (
           <>
-            {/* Header */}
-            <div className="border-b p-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">AI Wellness Coach</h2>
-              <div className="flex items-center gap-2">
+            {/* Mobile-only action bar - compact design */}
+            <div className="md:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60 px-4 py-2">
+              <div className="flex items-center justify-end gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleNewChat}
+                  className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300/60 dark:border-gray-600/60 hover:border-gray-400 dark:hover:border-gray-500 rounded-xl px-3 py-2 min-h-[40px] text-sm font-medium transition-all duration-300 ease-out hover:scale-105 hover:shadow-sm active:scale-95 touch-ripple"
                 >
                   New Chat
                 </Button>
@@ -90,10 +90,39 @@ function ChatSection() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsConversationHistoryOpen(true)}
+                  className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300/60 dark:border-gray-600/60 hover:border-gray-400 dark:hover:border-gray-500 rounded-xl px-3 py-2 min-h-[40px] text-sm font-medium transition-all duration-300 ease-out hover:scale-105 hover:shadow-sm active:scale-95 touch-ripple flex items-center gap-2"
                 >
-                  <History className="h-4 w-4 mr-2" />
+                  <History className="h-4 w-4" />
                   History
                 </Button>
+              </div>
+            </div>
+
+            {/* Desktop-only sticky header */}
+            <div className="hidden md:block sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/80 dark:border-gray-700/80 px-4 py-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3 min-h-[48px]">
+                <div className="flex-1 min-w-0 mr-3">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate tracking-tight">AI Wellness Coach</h2>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNewChat}
+                    className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300/60 dark:border-gray-600/60 hover:border-gray-400 dark:hover:border-gray-500 rounded-xl px-4 py-2.5 min-h-[48px] min-w-[48px] text-sm font-semibold transition-all duration-300 ease-out hover:scale-105 hover:shadow-md active:scale-95 touch-ripple whitespace-nowrap"
+                  >
+                    New Chat
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsConversationHistoryOpen(true)}
+                    className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-300/60 dark:border-gray-600/60 hover:border-gray-400 dark:hover:border-gray-500 rounded-xl px-4 py-2.5 min-h-[48px] min-w-[48px] text-sm font-semibold transition-all duration-300 ease-out hover:scale-105 hover:shadow-md active:scale-95 touch-ripple flex items-center gap-2.5 whitespace-nowrap"
+                  >
+                    <History className="h-4 w-4" />
+                    History
+                  </Button>
+                </div>
               </div>
             </div>
 

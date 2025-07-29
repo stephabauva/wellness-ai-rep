@@ -263,3 +263,82 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
 }
+
+/* Style Guide Components */
+.card {
+  @apply bg-white dark:bg-gray-800 
+         rounded-xl 
+         shadow-sm 
+         border border-gray-200 dark:border-gray-700
+         transition-all duration-300 ease-out
+         hover:shadow-lg hover:scale-[1.03] hover:-translate-y-1
+         active:scale-[0.97] active:translate-y-0;
+}
+
+.mobile-header {
+  @apply sticky top-0 z-10 
+         bg-white/80 dark:bg-gray-900/80 
+         backdrop-blur-md 
+         border-b border-gray-200 dark:border-gray-700;
+}
+
+.spinner {
+  @apply animate-spin h-8 w-8 
+         border-2 border-primary border-t-transparent 
+         rounded-full;
+}
+
+.touch-ripple {
+  @apply relative overflow-hidden;
+}
+.touch-ripple::after {
+  @apply absolute inset-0 bg-white/20 opacity-0 
+         active:opacity-100 transition-opacity duration-150;
+}
+
+.horizontal-scroll {
+  @apply overflow-x-auto scrollbar-hide scroll-smooth;
+  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+}
+
+.fab {
+  @apply fixed bottom-6 right-6 z-50
+         p-4 rounded-full
+         bg-gradient-to-r from-blue-500 to-purple-600
+         text-white shadow-lg
+         transition-all duration-300 ease-out
+         hover:scale-110 hover:shadow-xl
+         active:scale-95;
+}
+
+.skeleton {
+  @apply bg-gray-300 dark:bg-gray-700 rounded animate-pulse;
+}
+
+.icon-container {
+  @apply p-2 rounded-lg
+         transition-transform duration-300 ease-out
+         group-hover:scale-110;
+}
+
+.hero-section {
+  @apply relative rounded-2xl overflow-hidden;
+  background: linear-gradient(to bottom right, 
+    hsl(var(--hero-gradient-from)), 
+    hsl(var(--hero-gradient-via)), 
+    hsl(var(--hero-gradient-to))
+  );
+}
+
+.hero-overlay {
+  @apply absolute inset-0 backdrop-blur-sm;
+  background: hsl(var(--hero-overlay));
+  opacity: var(--hero-overlay-opacity);
+}
+
+/* Safe area insets for mobile devices */
+.safe-area-inset {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}

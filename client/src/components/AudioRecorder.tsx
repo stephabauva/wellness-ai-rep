@@ -161,16 +161,8 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
   };
 
   const getButtonIcon = () => {
-    if (isProcessing || isRecording || isListening) return <Mic className="h-4 w-4 text-red-500 animate-pulse" />;
-    return <Mic className="h-4 w-4" />;
-  };
-
-  const getButtonText = () => {
-    if (isProcessing) return "Processing...";
-    if (provider === 'webspeech') {
-      return isListening ? "Stop listening" : "Start speaking";
-    }
-    return isRecording ? "Stop recording" : "Start recording";
+    if (isProcessing || isRecording || isListening) return <Mic className="h-5 w-5 text-red-500 animate-pulse" />;
+    return <Mic className="h-5 w-5 text-gray-700 dark:text-gray-300" />;
   };
 
   const providerStatus = getProviderStatus();
@@ -182,38 +174,18 @@ export function AudioRecorder({ onTranscriptionComplete, provider, disabled = fa
     (requiresInternet && !isOnline);
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant={getButtonVariant()}
-        size="sm"
-        onClick={handleRecording}
-        disabled={isDisabled}
-        className="flex items-center gap-2"
-      >
-        {getButtonIcon()}
-        <span className="hidden sm:inline">{getButtonText()}</span>
-      </Button>
-      
-      {requiresInternet && (
-        <div className="flex items-center">
-          {isOnline ? (
-            <Wifi className="h-4 w-4 text-green-500" />
-          ) : (
-            <WifiOff className="h-4 w-4 text-red-500" />
-          )}
-        </div>
-      )}
-      
-      {hasPermission === false && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={checkMicrophonePermission}
-          className="text-xs"
-        >
-          Grant mic access
-        </Button>
-      )}
-    </div>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleRecording}
+      disabled={isDisabled}
+      aria-label={provider === 'webspeech' ? 
+        (isListening ? "Stop listening" : "Start voice input") : 
+        (isRecording ? "Stop recording" : "Start recording")
+      }
+      className="rounded-xl h-11 w-11 min-h-[48px] min-w-[48px] hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-all duration-300 ease-out hover:scale-110 active:scale-95 touch-ripple"
+    >
+      {getButtonIcon()}
+    </Button>
   );
 }

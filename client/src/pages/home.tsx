@@ -58,7 +58,7 @@ const Home: React.FC = () => {
       <MobileNav />
       
       {/* Main Content */}
-      <div className="flex flex-col flex-1 w-0 min-h-0 md:pt-0 pt-12">
+      <div className="flex flex-col flex-1 w-0 min-h-0 md:pt-0 pt-20">
         {/* Render all sections, control visibility with display style */}
         <div style={{ display: activeSection === 'chat' ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1, height: '100%' }}>
           {chatSectionComponent}

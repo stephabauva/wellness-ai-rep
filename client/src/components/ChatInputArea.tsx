@@ -126,63 +126,70 @@ export function ChatInputArea({
   }, [cameraStream]);
 
   return (
-    <div className="border-t p-4">
-      <div className="flex items-end gap-2">
-        {/* File Upload Button */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadFileMutation.isPending}
-          aria-label="Attach file"
-        >
-          <Paperclip className="h-4 w-4" />
-        </Button>
+    <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/80 dark:border-gray-700/80 p-4 safe-area-inset shadow-sm">
+      {/* Mobile-optimized input container */}
+      <div className="flex items-center gap-2 bg-white/90 dark:bg-gray-800/90 rounded-2xl p-3 shadow-md border border-gray-200/60 dark:border-gray-700/60">
+        {/* Left action buttons group */}
+        <div className="flex items-center gap-1">
+          {/* File Upload Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadFileMutation.isPending}
+            aria-label="Attach file"
+            className="rounded-xl h-11 w-11 min-h-[48px] min-w-[48px] hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-all duration-300 ease-out hover:scale-110 active:scale-95 touch-ripple"
+          >
+            <Paperclip className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          </Button>
 
-        {/* Camera Button */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={openCamera}
-          disabled={uploadFileMutation.isPending}
-          aria-label="Use camera"
-        >
-          <Camera className="h-4 w-4" />
-        </Button>
+          {/* Camera Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openCamera}
+            disabled={uploadFileMutation.isPending}
+            aria-label="Use camera"
+            className="rounded-xl h-11 w-11 min-h-[48px] min-w-[48px] hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-all duration-300 ease-out hover:scale-110 active:scale-95 touch-ripple"
+          >
+            <Camera className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          </Button>
 
-        {/* Audio Recording */}
-        <AudioRecorder
-          onTranscriptionComplete={(text) => {
-            // Append transcription to existing message if there's already text
-            setInputMessage(prev => prev.trim() ? `${prev} ${text}` : text);
-          }}
-          provider={(settings?.transcriptionProvider as any) || "webspeech"}
-        />
+          {/* Audio Recording */}
+          <AudioRecorder
+            onTranscriptionComplete={(text) => {
+              // Append transcription to existing message if there's already text
+              setInputMessage(prev => prev.trim() ? `${prev} ${text}` : text);
+            }}
+            provider={(settings?.transcriptionProvider as any) || "webspeech"}
+          />
+        </div>
 
-        {/* Text Input */}
-        <div className="flex-1">
+        {/* Text Input - Centered and prominent */}
+        <div className="flex-1 mx-2">
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
             disabled={sendMessageMutation.isPending}
-            className="resize-none" // Consider using Textarea if multi-line is desired and not just auto-height
+            className="rounded-xl h-11 min-h-[48px] bg-white dark:bg-gray-900 border-0 focus:ring-2 focus:ring-blue-500/50 shadow-sm transition-all duration-300 ease-out focus:shadow-md text-base px-4"
           />
         </div>
 
-        {/* Send Button */}
+        {/* Send Button - Primary action */}
         <Button
           onClick={handleSendMessage}
           disabled={
             sendMessageMutation.isPending ||
             (!inputMessage.trim() &&
-             (!attachedFiles || (attachedFiles as AttachedFile[]).length === 0) // Ensure attachedFiles is treated as array
+             (!attachedFiles || (attachedFiles as AttachedFile[]).length === 0)
             )
           }
           aria-label="Send message"
+          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:dark:bg-gray-600 text-white rounded-xl h-11 w-11 min-h-[48px] min-w-[48px] transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95 shadow-md"
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-5 w-5" />
         </Button>
       </div>
 
@@ -208,21 +215,22 @@ export function ChatInputArea({
 
       {/* Camera Modal */}
       {isCameraOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="relative bg-white rounded-lg p-4 max-w-lg w-full max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center mb-4 flex-shrink-0">
-              <h3 className="text-lg font-semibold">Take Photo</h3>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl transform-gpu transition-all duration-300 ease-out">
+            <div className="flex justify-between items-center mb-6 flex-shrink-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Take Photo</h3>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={closeCamera}
                 aria-label="Close camera"
+                className="rounded-xl h-10 w-10 min-h-[44px] min-w-[44px] transition-all duration-300 ease-out hover:scale-110 hover:shadow-lg active:scale-95"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
             
-            <div className="relative flex-1 min-h-0 mb-4 overflow-hidden rounded-lg">
+            <div className="relative flex-1 min-h-0 mb-6 overflow-hidden rounded-2xl">
               <video
                 ref={videoRef}
                 className="w-full h-full object-cover"
@@ -240,7 +248,7 @@ export function ChatInputArea({
                 <Button
                   onClick={capturePhoto}
                   disabled={uploadFileMutation.isPending}
-                  className="px-8 py-3 text-base bg-white/90 hover:bg-white text-black border shadow-lg backdrop-blur-sm"
+                  className="px-8 py-3 text-base bg-white/90 hover:bg-white text-black border shadow-lg backdrop-blur-sm rounded-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl active:scale-95 min-h-[44px]"
                   size="lg"
                 >
                   <Camera className="h-5 w-5 mr-2" />

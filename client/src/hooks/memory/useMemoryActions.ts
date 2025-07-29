@@ -117,10 +117,9 @@ export function useMemoryActions({
               });
             },
             onCancel: () => {
-              toast({
-                title: "Memory handling",
-                description: "Similar memory was found and handled appropriately.",
-              });
+              console.log('🔍 User cancelled memory creation due to duplicates');
+              // Toast dismissal is now handled automatically by the notification component
+              // No additional toast needed here
             },
             onViewSimilar: (memoryId: string) => {
               console.log('View similar memory:', memoryId);

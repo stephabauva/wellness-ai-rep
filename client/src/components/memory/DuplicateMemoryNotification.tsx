@@ -174,13 +174,20 @@ export function useDuplicateMemoryNotification() {
    */
   const showDuplicateNotification = (
     props: DuplicateMemoryNotificationProps,
-    toast: (options: any) => void
+    toast: (options: any) => any
   ) => {
-    const notificationContent = createDuplicateNotificationContent(props);
-    
-    toast({
+    // Capture the toast dismiss function for proper cleanup
+    const toastInstance = toast({
       title: "🔍 Similar Memory Found!",
-      description: notificationContent,
+      description: createDuplicateNotificationContent({
+        ...props,
+        // Override onCancel to properly dismiss the toast
+        onCancel: () => {
+          console.log('🔍 Dismissing duplicate notification toast');
+          toastInstance.dismiss(); // Properly dismiss the toast
+          props.onCancel(); // Call the original onCancel handler
+        }
+      }),
       duration: 30000, // 30 seconds to give user time to review
       className: "max-w-2xl",
       style: {
@@ -197,7 +204,7 @@ export function useDuplicateMemoryNotification() {
       },
     });
     
-    console.log('🔍 Duplicate memory notification shown');
+    console.log('🔍 Duplicate memory notification shown with proper dismiss handling');
   };
 
   return { showDuplicateNotification };

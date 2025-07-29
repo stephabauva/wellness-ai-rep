@@ -93,7 +93,11 @@ export const ChatMessage = React.memo<ChatMessageProps>(({
             />
           ) : (
             <div 
-              className="text-sm leading-relaxed"
+              className={cn(
+                "text-base leading-relaxed font-normal",
+                isUser ? "text-white" : "text-gray-900 dark:text-gray-100"
+              )}
+              style={{ lineHeight: '1.6' }}
               dangerouslySetInnerHTML={{ 
                 __html: (message || '').replace(/\n/g, '<br>') 
               }} 
@@ -113,7 +117,10 @@ export const ChatMessage = React.memo<ChatMessageProps>(({
           </div>
         )}
 
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-3 opacity-75">
+        <div className={cn(
+          "text-xs mt-3 opacity-75",
+          isUser ? "text-white/70" : "text-gray-500 dark:text-gray-400"
+        )}>
           {format(timestamp, 'h:mm a')}
         </div>
       </div>

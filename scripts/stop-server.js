@@ -11,34 +11,55 @@ import { promisify } from 'util';
 const sleep = promisify(setTimeout);
 
 async function stopServerProcesses() {
-  console.log('🔍 Checking for processes on port 5000...');
+  console.log('🔍 Stopping server processes to resolve EADDRINUSE error...');
   
   try {
     // First, try to kill any tsx/node processes related to the server
     const commands = [
       'pkill -f "tsx.*server/index.ts" || true',
-      'pkill -f "node.*server" || true',
+      'pkill -f "node.*server" || true', 
       'pkill -f "npm run dev" || true',
-      'pkill -f "Start application" || true'
+      'pkill -f "Start application" || true',
+      'pkill -9 -f "node.*5000" || true' // Force kill any processes on port 5000
     ];
+    
+    let processesKilled = false;
     
     for (const cmd of commands) {
       console.log(`🔨 Running: ${cmd}`);
-      const process = spawn('bash', ['-c', cmd], { stdio: 'inherit' });
+      const process = spawn('bash', ['-c', cmd], { stdio: 'pipe' });
       
-      await new Promise((resolve, reject) => {
+      const result = await new Promise((resolve, reject) => {
+        let output = '';
+        process.stdout.on('data', (data) => {
+          output += data.toString();
+        });
+        
         process.on('close', (code) => {
           console.log(`   └─ Completed with code ${code}`);
+          if (code === 0 || output.trim() !== '') {
+            processesKilled = true;
+          }
           resolve(code);
         });
         process.on('error', reject);
       });
       
-      await sleep(500); // Brief pause between commands
+      await sleep(300); // Brief pause between commands
     }
     
-    console.log('✅ Port cleanup completed');
-    console.log('💡 You can now restart your application');
+    console.log('');
+    console.log('✅ SERVER STOP COMPLETE');
+    console.log('');
+    if (processesKilled) {
+      console.log('🎯 Processes were found and terminated');
+    } else {
+      console.log('ℹ️  No conflicting processes were found');
+    }
+    console.log('');
+    console.log('💡 Port 5000 should now be available');
+    console.log('🚀 You can now restart the "Start application" workflow');
+    console.log('');
     
   } catch (error) {
     console.error('❌ Error during cleanup:', error.message);

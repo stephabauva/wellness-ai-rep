@@ -99,14 +99,50 @@ app.use((req, res, next) => {
     // this serves both the API and the client.
     // It is the only port that is not firewalled.
     const port = 5000;
-    server.listen({
-      port,
-      host: "0.0.0.0",
-    }, () => {
-      logger.system(`Server running on port ${port}`);
-    });
+
+    const startServer = () => {
+      return new Promise<void>((resolve, reject) => {
+        server.listen({
+          port,
+          host: "0.0.0.0",
+        }, () => {
+          logger.system(`Server running on port ${port}`);
+          resolve();
+        });
+
+        server.on('error', (error: any) => {
+          if (error.code === 'EADDRINUSE') {
+            logger.error(`❌ Port ${port} is already in use (EADDRINUSE error)`);
+            logger.error('🔧 To fix this issue, you need to stop existing processes on port 5000');
+            logger.error('💡 Run this command to stop the server: node scripts/stop-server.js');
+            logger.error('⚠️  Or restart the entire Replit workspace to clear all processes');
+            reject(new Error(`Port ${port} is already in use. Please run 'node scripts/stop-server.js' to fix this.`));
+          } else {
+            logger.error('Server error', error);
+            reject(error);
+          }
+        });
+      });
+    };
+
+    await startServer();
   } catch (error: any) {
     logger.error('Error starting server', error);
+    
+    // Provide helpful instructions for EADDRINUSE errors
+    if (error.message?.includes('EADDRINUSE') || error.code === 'EADDRINUSE') {
+      logger.error('');
+      logger.error('🚨 SERVER STARTUP FAILED - PORT CONFLICT DETECTED');
+      logger.error('');
+      logger.error('This error occurs when another process is already using port 5000.');
+      logger.error('');
+      logger.error('🔧 SOLUTIONS:');
+      logger.error('   1. Run: node scripts/stop-server.js');
+      logger.error('   2. Or restart your Replit workspace');
+      logger.error('   3. Or manually kill processes: pkill -f "tsx.*server"');
+      logger.error('');
+    }
+    
     process.exit(1);
   }
 })();
